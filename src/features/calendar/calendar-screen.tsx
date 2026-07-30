@@ -3,16 +3,16 @@ import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
-  RefreshControl,
   Text,
   View,
+  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
 
 import { useMediShift } from "@/application/medishift-provider";
 import { currentMonth } from "@/engine/calendar";
-import { MonthCard, MONTH_ITEM_HEIGHT } from "@/features/calendar/month-card";
+import { MonthCard } from "@/features/calendar/month-card";
 import {
   appendMonths,
   createMonthWindow,
@@ -31,9 +31,9 @@ function createInitialMonths(): string[] {
 
 export function CalendarScreen() {
   const palette = usePalette();
-  const { ready, error, profile, entries, reload } = useMediShift();
+  const { ready, error, profile, entries } = useMediShift();
   const [months, setMonths] = useState(createInitialMonths);
-  const [refreshing, setRefreshing] = useState(false);
+  const [pageHeight, setPageHeight] = useState(0);
   const lastPrepended = useRef<string | null>(null);
   const lastAppended = useRef<string | null>(null);
 
@@ -50,12 +50,6 @@ export function CalendarScreen() {
 
   if (!ready || profile === null) return <LoadingView />;
 
-  async function refresh() {
-    setRefreshing(true);
-    await reload();
-    setRefreshing(false);
-  }
-
   function selectDate(date: string) {
     if (process.env.EXPO_OS === "ios") {
       void Haptics.selectionAsync();
@@ -71,11 +65,18 @@ export function CalendarScreen() {
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    if (event.nativeEvent.contentOffset.y > 100) return;
+    if (event.nativeEvent.contentOffset.y > pageHeight * 0.2) return;
     const first = months[0];
     if (!first || lastPrepended.current === first) return;
     lastPrepended.current = first;
     setMonths((current) => [...prependMonths(current, EXTENSION_SIZE)]);
+  }
+
+  function measurePager(event: LayoutChangeEvent) {
+    const nextHeight = Math.round(event.nativeEvent.layout.height);
+    if (nextHeight > 0 && nextHeight !== pageHeight) {
+      setPageHeight(nextHeight);
+    }
   }
 
   return (
@@ -87,41 +88,45 @@ export function CalendarScreen() {
           </Text>
         </View>
       ) : null}
-      <FlatList
-        contentInsetAdjustmentBehavior="automatic"
-        data={months}
-        getItemLayout={(_, index) => ({
-          index,
-          length: MONTH_ITEM_HEIGHT,
-          offset: MONTH_ITEM_HEIGHT * index,
-        })}
-        initialNumToRender={3}
-        initialScrollIndex={MONTHS_BEFORE}
-        keyExtractor={(month) => month}
-        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
-        maxToRenderPerBatch={4}
-        onEndReached={extendEnd}
-        onEndReachedThreshold={0.6}
-        onScroll={handleScroll}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            tintColor={palette.primary}
-            onRefresh={() => void refresh()}
+      <View style={{ flex: 1 }} onLayout={measurePager}>
+        {pageHeight > 0 ? (
+          <FlatList
+            key={`month-pager-${pageHeight}`}
+            contentInsetAdjustmentBehavior="automatic"
+            data={months}
+            decelerationRate="fast"
+            disableIntervalMomentum
+            getItemLayout={(_, index) => ({
+              index,
+              length: pageHeight,
+              offset: pageHeight * index,
+            })}
+            initialNumToRender={3}
+            initialScrollIndex={MONTHS_BEFORE}
+            keyExtractor={(month) => month}
+            maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+            maxToRenderPerBatch={4}
+            onEndReached={extendEnd}
+            onEndReachedThreshold={0.6}
+            onScroll={handleScroll}
+            pagingEnabled
+            renderItem={({ item }) => (
+              <MonthCard
+                entries={sortedEntries}
+                month={item}
+                onSelectDate={selectDate}
+                pageHeight={pageHeight}
+                profile={profile}
+              />
+            )}
+            scrollEventThrottle={100}
+            showsVerticalScrollIndicator={false}
+            snapToAlignment="start"
+            snapToInterval={pageHeight}
+            windowSize={5}
           />
-        }
-        renderItem={({ item }) => (
-          <MonthCard
-            entries={sortedEntries}
-            month={item}
-            onSelectDate={selectDate}
-            profile={profile}
-          />
-        )}
-        scrollEventThrottle={250}
-        showsVerticalScrollIndicator={false}
-        windowSize={7}
-      />
+        ) : null}
+      </View>
     </View>
   );
 }
