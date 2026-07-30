@@ -1,50 +1,59 @@
-# Welcome to your Expo app 👋
+# MediShift
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+MediShift ist ein lokaler Dienst- und Terminkalender für iOS und Android. Der MVP läuft mit Expo SDK 54 in Expo Go und benötigt weder Konto noch Backend.
 
-## Get started
+## MVP-Funktionen
 
-1. Install dependencies
+- vertikal durchlaufender Monatskalender
+- mehrere Dienste und Termine pro Tag
+- editierbare Dienstvorlagen mit den CareCheck-Startzeiten
+- Urlaub, Krankheit, Fortbildung und Frei
+- Soll-, Ist- und Saldostunden pro Monat
+- bundesweite und landesweite deutsche Feiertage
+- DST-sichere Berechnung von Diensten über Mitternacht
+- SQLite-Persistenz mit Revisionen und Soft-Delete
+- System-Hell-/Dunkelmodus
 
-   ```bash
-   npm install
-   ```
+## Starten
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+npm.cmd install
+npm.cmd start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Anschließend den QR-Code mit Expo Go öffnen. Für Android kann alternativ `npm.cmd run android` verwendet werden, wenn ein Gerät oder Emulator verbunden ist.
 
-## Learn more
+## Qualität
 
-To learn more about developing your project with Expo, look at the following resources:
+```powershell
+npm.cmd run lint -- --max-warnings 0
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run export:android
+npm.cmd run export:ios
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Die Tests umfassen Kalender- und Feiertagslogik, Sommer-/Winterzeit, Monatsstunden sowie echte SQLite-Migrationen und CRUD-Lebenszyklen.
 
-## Join the community
+## Struktur
 
-Join our community of developers creating universal apps.
+```text
+app/                         Expo-Router-Routen
+src/application/             reaktiver App- und Datenzustand
+src/domain/                  öffentliche Typen und Validierung
+src/engine/                  Kalender-, Feiertags- und Stundenlogik
+src/features/                Kalender, Tageseditor, Vorlagen, Onboarding
+src/infrastructure/database/ Migrationen und SQLite-Repositories
+src/theme/                   MediShift-Farbwelt
+scripts/                     reproduzierbare Markenassets
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Fachliche Grenzen des MVP
+
+Sollzeit wird als `Wochenarbeitszeit ÷ 5 × Werktage` berechnet. Bundesweite und landesweite Feiertage werden berücksichtigt; kommunale Ausnahmen noch nicht. Termine beeinflussen Arbeitsstunden nicht.
+
+Nicht enthalten sind Cloud-Sync, Benutzerkonten, Erinnerungen, externe Kalender, Serien/Rotationen, TVöD-Zuschläge, Gehaltsberechnung, ArbZG-Prüfungen, Exporte, Widgets und Smartwatch-Unterstützung.
+
+## SDK-54-Hinweis
+
+`expo-doctor` bestätigt die vollständige SDK-54-Kompatibilität. Der npm-Audit führt weiterhin transitive Hinweise aus Expo-/React-Native-Buildwerkzeugen auf; die angebotene automatische Behebung würde Expo auf SDK 57 anheben und wurde wegen der festgelegten SDK-54-Vorgabe bewusst nicht angewendet.

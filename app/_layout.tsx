@@ -1,24 +1,53 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { Stack } from "expo-router";
+import { SQLiteProvider } from "expo-sqlite";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "react-native";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { MediShiftProvider } from "@/application/medishift-provider";
+import { migrateDatabase } from "@/infrastructure/database/migrations";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const dark = useColorScheme() === "dark";
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SQLiteProvider databaseName="medishift.db" onInit={migrateDatabase}>
+      <MediShiftProvider>
+        <ThemeProvider value={dark ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              headerBackButtonDisplayMode: "minimal",
+              headerShadowVisible: false,
+              headerTransparent: false,
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="onboarding"
+              options={{ title: "MediShift einrichten", presentation: "fullScreenModal" }}
+            />
+            <Stack.Screen
+              name="day-editor"
+              options={{
+                title: "Tag planen",
+                presentation: "formSheet",
+                sheetAllowedDetents: [0.7, 1],
+                sheetGrabberVisible: true,
+              }}
+            />
+            <Stack.Screen
+              name="template-editor"
+              options={{
+                title: "Dienstvorlage",
+                presentation: "formSheet",
+                sheetAllowedDetents: [0.85, 1],
+                sheetGrabberVisible: true,
+              }}
+            />
+          </Stack>
+          <StatusBar style={dark ? "light" : "dark"} />
+        </ThemeProvider>
+      </MediShiftProvider>
+    </SQLiteProvider>
   );
 }

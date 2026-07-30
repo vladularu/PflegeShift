@@ -1,33 +1,45 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs } from "expo-router";
+import { Text } from "react-native";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from "@/theme/palette";
+
+function TabIcon({ symbol, color }: { readonly symbol: string; readonly color: string }) {
+  return <Text style={{ color, fontSize: 19, fontWeight: "800" }}>{symbol}</Text>;
+}
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+  const palette = usePalette();
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        headerShadowVisible: false,
+        tabBarActiveTintColor: palette.primary,
+        tabBarInactiveTintColor: palette.textMuted,
+        tabBarStyle: {
+          backgroundColor: palette.tabBar,
+          borderTopColor: palette.border,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Kalender",
+          tabBarIcon: ({ color }) => <TabIcon color={color} symbol="▦" />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="templates"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Vorlagen",
+          tabBarIcon: ({ color }) => <TabIcon color={color} symbol="◫" />,
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: "Mehr",
+          tabBarIcon: ({ color }) => <TabIcon color={color} symbol="•••" />,
         }}
       />
     </Tabs>
