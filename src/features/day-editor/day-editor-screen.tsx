@@ -81,7 +81,7 @@ function SecondaryAction({
 }
 
 export function DayEditorScreen() {
-  const params = useLocalSearchParams<{ date?: string }>();
+  const params = useLocalSearchParams<{ date?: string; mode?: string }>();
   const { templates, entries, upsertShift, upsertAppointment, removeEntry } = useMediShift();
   const palette = usePalette();
   const date = useMemo(() => {
@@ -96,8 +96,12 @@ export function DayEditorScreen() {
     [date, entries],
   );
 
-  const [mode, setMode] = useState<EditorMode>("SHIFT");
-  const [formVisible, setFormVisible] = useState(false);
+  const initialMode: EditorMode =
+    params.mode === "APPOINTMENT" ? "APPOINTMENT" : "SHIFT";
+  const [mode, setMode] = useState<EditorMode>(initialMode);
+  const [formVisible, setFormVisible] = useState(
+    initialMode === "APPOINTMENT",
+  );
   const [editing, setEditing] = useState<CalendarEntry | null>(null);
   const [shiftType, setShiftType] = useState<ShiftType>("CUSTOM");
   const [shiftTitle, setShiftTitle] = useState("Dienst");

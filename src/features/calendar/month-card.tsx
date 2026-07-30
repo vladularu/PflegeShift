@@ -1,5 +1,11 @@
 import { useMemo } from "react";
-import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import {
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions,
+  type GestureResponderEvent,
+} from "react-native";
 
 import type { CalendarEntry, UserProfile } from "@/domain/types";
 import {
@@ -56,12 +62,17 @@ export function MonthCard({
   profile,
   pageHeight,
   onSelectDate,
+  selectedDate,
 }: {
   readonly month: string;
   readonly entries: readonly CalendarEntry[];
   readonly profile: UserProfile;
   readonly pageHeight: number;
-  readonly onSelectDate: (date: string) => void;
+  readonly onSelectDate: (
+    date: string,
+    anchor: { readonly x: number; readonly y: number },
+  ) => void;
+  readonly selectedDate: string | null;
 }) {
   const palette = usePalette();
   const { width } = useWindowDimensions();
@@ -170,6 +181,7 @@ export function MonthCard({
             const dayEntries = byDate.get(cell.date) ?? [];
             const holiday = holidays.get(cell.date);
             const isToday = cell.date === currentDate;
+            const isSelected = cell.date === selectedDate;
             return (
               <Pressable
                 key={cell.date}
@@ -177,7 +189,12 @@ export function MonthCard({
                   `${formatDateTitle(cell.date)}, ${dayEntries.length} Einträge${holiday ? `, ${holiday.name}` : ""}`
                 }
                 accessibilityRole="button"
-                onPress={() => onSelectDate(cell.date)}
+                onPress={(event: GestureResponderEvent) =>
+                  onSelectDate(cell.date, {
+                    x: event.nativeEvent.pageX,
+                    y: event.nativeEvent.pageY,
+                  })
+                }
                 style={({ pressed }) => ({
                   width: "14.285714%",
                   height: cellHeight,
@@ -185,11 +202,13 @@ export function MonthCard({
                   borderTopWidth: 1,
                   borderRightWidth: 1,
                   borderColor: palette.border,
-                  backgroundColor: !cell.inMonth
-                    ? palette.outsideMonth
-                    : cell.weekend
-                      ? palette.weekend
-                      : palette.surface,
+                  backgroundColor: isSelected
+                    ? palette.primarySoft
+                    : !cell.inMonth
+                      ? palette.outsideMonth
+                      : cell.weekend
+                        ? palette.weekend
+                        : palette.surface,
                   opacity: pressed ? 0.7 : cell.inMonth ? 1 : 0.82,
                   paddingHorizontal: 3,
                   paddingTop: 5,

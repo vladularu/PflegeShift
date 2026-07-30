@@ -18,6 +18,10 @@ import {
   createMonthWindow,
   prependMonths,
 } from "@/features/calendar/month-window";
+import {
+  QuickEntryPopover,
+  type QuickEntryAnchor,
+} from "@/features/calendar/quick-entry-popover";
 import { usePalette } from "@/theme/palette";
 import { LoadingView } from "@/ui/loading-view";
 
@@ -34,6 +38,7 @@ export function CalendarScreen() {
   const { ready, error, profile, entries } = useMediShift();
   const [months, setMonths] = useState(createInitialMonths);
   const [pageHeight, setPageHeight] = useState(0);
+  const [quickEntry, setQuickEntry] = useState<QuickEntryAnchor | null>(null);
   const lastPrepended = useRef<string | null>(null);
   const lastAppended = useRef<string | null>(null);
 
@@ -50,11 +55,18 @@ export function CalendarScreen() {
 
   if (!ready || profile === null) return <LoadingView />;
 
-  function selectDate(date: string) {
+  function selectDate(date: string, anchor: Omit<QuickEntryAnchor, "date">) {
     if (process.env.EXPO_OS === "ios") {
       void Haptics.selectionAsync();
     }
-    router.push({ pathname: "/day-editor", params: { date } });
+    setQuickEntry({ date, ...anchor });
+  }
+
+  function openEditor(mode: "SHIFT" | "APPOINTMENT") {
+    if (quickEntry === null) return;
+    const date = quickEntry.date;
+    setQuickEntry(null);
+    router.push({ pathname: "/day-editor", params: { date, mode } });
   }
 
   function extendEnd() {
@@ -109,6 +121,7 @@ export function CalendarScreen() {
             onEndReached={extendEnd}
             onEndReachedThreshold={0.6}
             onScroll={handleScroll}
+            onScrollBeginDrag={() => setQuickEntry(null)}
             pagingEnabled
             renderItem={({ item }) => (
               <MonthCard
@@ -117,6 +130,7 @@ export function CalendarScreen() {
                 onSelectDate={selectDate}
                 pageHeight={pageHeight}
                 profile={profile}
+                selectedDate={quickEntry?.date ?? null}
               />
             )}
             scrollEventThrottle={100}
@@ -127,6 +141,12 @@ export function CalendarScreen() {
           />
         ) : null}
       </View>
+      <QuickEntryPopover
+        anchor={quickEntry}
+        onClose={() => setQuickEntry(null)}
+        onSelectAppointment={() => openEditor("APPOINTMENT")}
+        onSelectShift={() => openEditor("SHIFT")}
+      />
     </View>
   );
 }
