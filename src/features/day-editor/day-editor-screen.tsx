@@ -261,13 +261,13 @@ export function DayEditorScreen() {
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 18, padding: 16, paddingBottom: 36 }}
+      contentContainerStyle={{ gap: 20, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 48 }}
     >
       <Stack.Screen options={{ title: formatDateTitle(date) }} />
 
       {dayEntries.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 11, fontWeight: "900", letterSpacing: 0.8 }}>
+          <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "900", letterSpacing: 0.8 }}>
             BEREITS EINGETRAGEN
           </Text>
           {dayEntries.map((entry) => (
@@ -282,17 +282,29 @@ export function DayEditorScreen() {
                 borderRadius: 15,
                 borderCurve: "continuous",
                 backgroundColor: palette.surface,
+                boxShadow: palette.dark ? undefined : "0 2px 8px rgba(24,32,30,0.05)",
                 padding: 10,
               }}
             >
               <View style={{ width: 8, alignSelf: "stretch", borderRadius: 4, backgroundColor: entry.color }} />
-              <Pressable accessibilityRole="button" onPress={() => editEntry(entry)} style={{ flex: 1, gap: 2 }}>
-                <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>{entry.title}</Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontVariant: ["tabular-nums"] }}>
+              <Pressable
+                accessibilityLabel={`${entry.title} bearbeiten`}
+                accessibilityRole="button"
+                onPress={() => editEntry(entry)}
+                style={{ minHeight: 44, flex: 1, justifyContent: "center", gap: 3 }}
+              >
+                <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: "800" }}>{entry.title}</Text>
+                <Text selectable style={{ color: palette.textMuted, fontSize: 13, fontVariant: ["tabular-nums"] }}>
                   {entryTimeLabel(entry)}
                 </Text>
               </Pressable>
-              <Pressable accessibilityLabel={`${entry.title} löschen`} onPress={() => confirmDelete(entry)} style={{ padding: 8 }}>
+              <Pressable
+                accessibilityLabel={`${entry.title} löschen`}
+                accessibilityRole="button"
+                hitSlop={4}
+                onPress={() => confirmDelete(entry)}
+                style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}
+              >
                 <Text style={{ color: palette.danger, fontSize: 18, fontWeight: "900" }}>×</Text>
               </Pressable>
             </View>
@@ -302,7 +314,7 @@ export function DayEditorScreen() {
 
       {editing === null ? (
         <View style={{ gap: 10 }}>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 11, fontWeight: "900", letterSpacing: 0.8 }}>
+          <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "900", letterSpacing: 0.8 }}>
             SCHNELL HINZUFÜGEN
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -313,7 +325,7 @@ export function DayEditorScreen() {
                 disabled={saving}
                 onPress={() => void quickAddTemplate(template.id)}
                 style={({ pressed }) => ({
-                  minHeight: 42,
+                  minHeight: 46,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 7,
@@ -335,7 +347,7 @@ export function DayEditorScreen() {
                 disabled={saving}
                 onPress={() => void quickAddAbsence(type)}
                 style={({ pressed }) => ({
-                  minHeight: 42,
+                  minHeight: 46,
                   alignItems: "center",
                   justifyContent: "center",
                   borderWidth: 1,
@@ -362,7 +374,9 @@ export function DayEditorScreen() {
           flexDirection: "row",
           gap: 4,
           borderRadius: 14,
+          borderCurve: "continuous",
           backgroundColor: palette.outsideMonth,
+          boxShadow: palette.dark ? undefined : "inset 0 1px 2px rgba(24,32,30,0.06)",
           padding: 4,
         }}
       >
@@ -371,7 +385,17 @@ export function DayEditorScreen() {
       </View>
 
       {mode === "SHIFT" ? (
-        <View style={{ gap: 16 }}>
+        <View
+          style={{
+            gap: 16,
+            borderWidth: 1,
+            borderColor: palette.border,
+            borderRadius: 18,
+            borderCurve: "continuous",
+            backgroundColor: palette.surface,
+            padding: 14,
+          }}
+        >
           <View style={{ gap: 8 }}>
             <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>Dienstart</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>
@@ -432,7 +456,17 @@ export function DayEditorScreen() {
           </PrimaryButton>
         </View>
       ) : (
-        <View style={{ gap: 16 }}>
+        <View
+          style={{
+            gap: 16,
+            borderWidth: 1,
+            borderColor: palette.border,
+            borderRadius: 18,
+            borderCurve: "continuous",
+            backgroundColor: palette.surface,
+            padding: 14,
+          }}
+        >
           <Field label="Titel" maxLength={60} onChangeText={setAppointmentTitle} value={appointmentTitle} />
           <View
             style={{

@@ -24,7 +24,7 @@ export function Field({
         placeholderTextColor={palette.textMuted}
         style={[
           {
-            minHeight: props.multiline ? 88 : 46,
+            minHeight: props.multiline ? 96 : 50,
             borderWidth: 1,
             borderColor: palette.border,
             borderRadius: 13,
@@ -59,17 +59,17 @@ export function PrimaryButton({
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 48,
+        minHeight: 52,
         alignItems: "center",
         justifyContent: "center",
         borderRadius: 14,
         borderCurve: "continuous",
         backgroundColor: danger ? palette.danger : palette.primary,
         opacity: disabled ? 0.45 : pressed ? 0.78 : 1,
-        paddingHorizontal: 16,
+        paddingHorizontal: 18,
       })}
     >
-      <Text style={{ color: palette.dark && !danger ? "#10221D" : "#FFFFFF", fontSize: 15, fontWeight: "800" }}>
+      <Text style={{ color: palette.dark && !danger ? "#10221D" : "#FFFFFF", fontSize: 16, fontWeight: "800" }}>
         {children}
       </Text>
     </Pressable>
@@ -92,7 +92,7 @@ export function SegmentedButton({
       accessibilityState={{ selected }}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 42,
+        minHeight: 44,
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
@@ -131,11 +131,11 @@ export function ColorPicker({
             accessibilityState={{ selected: value === color }}
             onPress={() => onChange(color)}
             style={{
-              width: 34,
-              height: 34,
+              width: 38,
+              height: 38,
               borderWidth: value === color ? 3 : 1,
               borderColor: value === color ? palette.text : palette.border,
-              borderRadius: 17,
+              borderRadius: 19,
               backgroundColor: color,
             }}
           />

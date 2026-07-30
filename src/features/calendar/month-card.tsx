@@ -17,6 +17,8 @@ const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 function EntryPill({ entry }: { readonly entry: CalendarEntry }) {
   return (
     <View
+      accessibilityLabel={entry.title}
+      accessible
       style={{
         minHeight: 20,
         flexDirection: "row",
@@ -58,6 +60,7 @@ export function MonthCard({
   const weekCount = grid.length / 7;
   const gridHeight = Math.max(360, pageHeight - 126);
   const cellHeight = gridHeight / weekCount;
+  const visibleEntryCount = cellHeight >= 104 ? 3 : cellHeight >= 78 ? 2 : 1;
   const monthEntries = useMemo(
     () => entries.filter((entry) => entry.date.startsWith(`${month}-`)),
     [entries, month],
@@ -203,10 +206,12 @@ export function MonthCard({
                       </View>
                       {holiday ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: palette.danger }} /> : null}
                     </View>
-                    {dayEntries.slice(0, 2).map((entry) => <EntryPill key={`${entry.kind}-${entry.id}`} entry={entry} />)}
-                    {dayEntries.length > 2 ? (
+                    {dayEntries.slice(0, visibleEntryCount).map((entry) => (
+                      <EntryPill key={`${entry.kind}-${entry.id}`} entry={entry} />
+                    ))}
+                    {dayEntries.length > visibleEntryCount ? (
                       <Text style={{ color: palette.textMuted, fontSize: 10, fontWeight: "800", textAlign: "center" }}>
-                        +{dayEntries.length - 2}
+                        +{dayEntries.length - visibleEntryCount} weitere
                       </Text>
                     ) : holiday && dayEntries.length === 0 ? (
                       <Text numberOfLines={1} style={{ color: palette.danger, fontSize: 9, fontWeight: "700", paddingHorizontal: 2 }}>

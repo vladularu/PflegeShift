@@ -31,7 +31,8 @@ export default function RootLayout() {
               options={{
                 title: "Tag planen",
                 presentation: "formSheet",
-                sheetAllowedDetents: [0.7, 1],
+                contentStyle: { backgroundColor: "transparent" },
+                sheetAllowedDetents: [0.82, 1],
                 sheetGrabberVisible: true,
               }}
             />
@@ -40,7 +41,8 @@ export default function RootLayout() {
               options={{
                 title: "Dienstvorlage",
                 presentation: "formSheet",
-                sheetAllowedDetents: [0.85, 1],
+                contentStyle: { backgroundColor: "transparent" },
+                sheetAllowedDetents: [0.88, 1],
                 sheetGrabberVisible: true,
               }}
             />
