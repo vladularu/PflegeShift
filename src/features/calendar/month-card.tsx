@@ -4,17 +4,26 @@ import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import type { CalendarEntry, UserProfile } from "@/domain/types";
 import {
   createVisibleMonthGrid,
+  formatDateTitle,
   formatMonthTitle,
   today,
 } from "@/engine/calendar";
 import { holidayMapForMonth } from "@/engine/holidays";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
-import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
+import { MonthProgress } from "@/features/calendar/month-progress";
 import { usePalette } from "@/theme/palette";
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const HEADER_HEIGHT = 96;
+const WEEKDAY_HEIGHT = 34;
 
-function EntryPill({ entry }: { readonly entry: CalendarEntry }) {
+function EntryPill({
+  entry,
+  dimmed = false,
+}: {
+  readonly entry: CalendarEntry;
+  readonly dimmed?: boolean;
+}) {
   return (
     <View
       accessibilityLabel={entry.title}
@@ -27,6 +36,7 @@ function EntryPill({ entry }: { readonly entry: CalendarEntry }) {
         overflow: "hidden",
         borderRadius: 4,
         backgroundColor: entry.color,
+        opacity: dimmed ? 0.62 : 1,
         paddingHorizontal: 4,
       }}
     >
@@ -58,22 +68,31 @@ export function MonthCard({
   const contentWidth = Math.min(width - 12, 820);
   const grid = useMemo(() => createVisibleMonthGrid(month), [month]);
   const weekCount = grid.length / 7;
-  const gridHeight = Math.max(360, pageHeight - 126);
+  const gridHeight = Math.max(360, pageHeight - 12 - 2 - HEADER_HEIGHT - WEEKDAY_HEIGHT);
   const cellHeight = gridHeight / weekCount;
   const visibleEntryCount = cellHeight >= 104 ? 3 : cellHeight >= 78 ? 2 : 1;
+  const visibleStart = grid[0]?.date ?? `${month}-01`;
+  const visibleEnd = grid.at(-1)?.date ?? `${month}-31`;
+  const visibleEntries = useMemo(
+    () =>
+      entries.filter(
+        (entry) => entry.date >= visibleStart && entry.date <= visibleEnd,
+      ),
+    [entries, visibleEnd, visibleStart],
+  );
   const monthEntries = useMemo(
     () => entries.filter((entry) => entry.date.startsWith(`${month}-`)),
     [entries, month],
   );
   const byDate = useMemo(() => {
     const map = new Map<string, CalendarEntry[]>();
-    for (const entry of monthEntries) {
+    for (const entry of visibleEntries) {
       const existing = map.get(entry.date) ?? [];
       existing.push(entry);
       map.set(entry.date, existing);
     }
     return map;
-  }, [monthEntries]);
+  }, [visibleEntries]);
   const holidays = useMemo(
     () => holidayMapForMonth(month, profile.federalState),
     [month, profile.federalState],
@@ -117,29 +136,28 @@ export function MonthCard({
             alignItems: "flex-end",
             justifyContent: "space-between",
             gap: 12,
-            minHeight: 76,
+            height: HEADER_HEIGHT,
             paddingHorizontal: 16,
-            paddingTop: 14,
-            paddingBottom: 12,
+            paddingVertical: 12,
           }}
         >
-          <Text selectable style={{ color: palette.text, fontSize: 25, fontWeight: "900", letterSpacing: -0.7 }}>
+          <Text
+            selectable
+            style={{
+              flexShrink: 1,
+              color: palette.text,
+              fontSize: 25,
+              fontWeight: "900",
+              letterSpacing: -0.7,
+              paddingBottom: 4,
+            }}
+          >
             {formatMonthTitle(month)}
           </Text>
-          <View style={{ alignItems: "flex-end", gap: 2 }}>
-            <Text selectable style={{ color: palette.textMuted, fontSize: 10, fontWeight: "800", letterSpacing: 0.7 }}>
-              SOLL · IST · SALDO
-            </Text>
-            <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "800", fontVariant: ["tabular-nums"] }}>
-              {formatMinutes(summary.targetMinutes)} · {formatMinutes(summary.actualMinutes)} ·{" "}
-              <Text style={{ color: summary.balanceMinutes >= 0 ? palette.primary : palette.danger }}>
-                {formatSignedMinutes(summary.balanceMinutes)}
-              </Text>
-            </Text>
-          </View>
+          <MonthProgress summary={summary} />
         </View>
 
-        <View style={{ minHeight: 36, flexDirection: "row", backgroundColor: palette.outsideMonth }}>
+        <View style={{ height: WEEKDAY_HEIGHT, flexDirection: "row", backgroundColor: palette.outsideMonth }}>
           {WEEKDAYS.map((weekday) => (
             <View key={weekday} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
               <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "800" }}>{weekday}</Text>
@@ -156,12 +174,9 @@ export function MonthCard({
               <Pressable
                 key={cell.date}
                 accessibilityLabel={
-                  cell.inMonth
-                    ? `${cell.day}. ${formatMonthTitle(month)}, ${dayEntries.length} Einträge${holiday ? `, ${holiday.name}` : ""}`
-                    : "Außerhalb des Monats"
+                  `${formatDateTitle(cell.date)}, ${dayEntries.length} Einträge${holiday ? `, ${holiday.name}` : ""}`
                 }
-                accessibilityRole={cell.inMonth ? "button" : undefined}
-                disabled={!cell.inMonth}
+                accessibilityRole="button"
                 onPress={() => onSelectDate(cell.date)}
                 style={({ pressed }) => ({
                   width: "14.285714%",
@@ -175,50 +190,80 @@ export function MonthCard({
                     : cell.weekend
                       ? palette.weekend
                       : palette.surface,
-                  opacity: pressed ? 0.7 : 1,
+                  opacity: pressed ? 0.7 : cell.inMonth ? 1 : 0.82,
                   paddingHorizontal: 3,
                   paddingTop: 5,
                 })}
               >
-                {cell.inMonth ? (
-                  <>
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 2 }}>
-                      <View
-                        style={{
-                          minWidth: 28,
-                          height: 28,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: 14,
-                          backgroundColor: isToday ? palette.primary : "transparent",
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: isToday ? (palette.dark ? "#10221D" : "#FFFFFF") : palette.text,
-                            fontSize: 13,
-                            fontWeight: isToday ? "900" : "700",
-                            fontVariant: ["tabular-nums"],
-                          }}
-                        >
-                          {cell.day}
-                        </Text>
-                      </View>
-                      {holiday ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: palette.danger }} /> : null}
-                    </View>
-                    {dayEntries.slice(0, visibleEntryCount).map((entry) => (
-                      <EntryPill key={`${entry.kind}-${entry.id}`} entry={entry} />
-                    ))}
-                    {dayEntries.length > visibleEntryCount ? (
-                      <Text style={{ color: palette.textMuted, fontSize: 10, fontWeight: "800", textAlign: "center" }}>
-                        +{dayEntries.length - visibleEntryCount} weitere
-                      </Text>
-                    ) : holiday && dayEntries.length === 0 ? (
-                      <Text numberOfLines={1} style={{ color: palette.danger, fontSize: 9, fontWeight: "700", paddingHorizontal: 2 }}>
-                        {holiday.name}
-                      </Text>
-                    ) : null}
-                  </>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 2 }}>
+                  <View
+                    style={{
+                      minWidth: 28,
+                      height: 28,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: 14,
+                      backgroundColor: isToday ? palette.primary : "transparent",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: isToday
+                          ? palette.dark
+                            ? "#10221D"
+                            : "#FFFFFF"
+                          : cell.inMonth
+                            ? palette.text
+                            : palette.textMuted,
+                        fontSize: 13,
+                        fontWeight: isToday ? "900" : cell.inMonth ? "700" : "600",
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {cell.day}
+                    </Text>
+                  </View>
+                  {holiday ? (
+                    <View
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: 4,
+                        backgroundColor: palette.danger,
+                      }}
+                    />
+                  ) : null}
+                </View>
+                {dayEntries.slice(0, visibleEntryCount).map((entry) => (
+                  <EntryPill
+                    key={`${entry.kind}-${entry.id}`}
+                    dimmed={!cell.inMonth}
+                    entry={entry}
+                  />
+                ))}
+                {dayEntries.length > visibleEntryCount ? (
+                  <Text
+                    style={{
+                      color: palette.textMuted,
+                      fontSize: 9,
+                      fontWeight: "800",
+                      textAlign: "center",
+                    }}
+                  >
+                    +{dayEntries.length - visibleEntryCount}
+                  </Text>
+                ) : holiday && dayEntries.length === 0 && cell.inMonth ? (
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: palette.danger,
+                      fontSize: 9,
+                      fontWeight: "700",
+                      paddingHorizontal: 2,
+                    }}
+                  >
+                    {holiday.name}
+                  </Text>
                 ) : null}
               </Pressable>
             );

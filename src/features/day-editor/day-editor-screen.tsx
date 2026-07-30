@@ -48,6 +48,38 @@ function entryTimeLabel(entry: CalendarEntry): string {
   return `${entry.startTime}–${entry.endTime} · ${entry.breakMinutes} Min. Pause`;
 }
 
+function SecondaryAction({
+  label,
+  onPress,
+}: {
+  readonly label: string;
+  readonly onPress: () => void;
+}) {
+  const palette = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minHeight: 46,
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: palette.primary,
+        borderRadius: 14,
+        borderCurve: "continuous",
+        backgroundColor: pressed ? palette.primarySoft : palette.surface,
+        paddingHorizontal: 10,
+      })}
+    >
+      <Text style={{ color: palette.primary, fontSize: 13, fontWeight: "900" }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function DayEditorScreen() {
   const params = useLocalSearchParams<{ date?: string }>();
   const { templates, entries, upsertShift, upsertAppointment, removeEntry } = useMediShift();
@@ -65,6 +97,7 @@ export function DayEditorScreen() {
   );
 
   const [mode, setMode] = useState<EditorMode>("SHIFT");
+  const [formVisible, setFormVisible] = useState(false);
   const [editing, setEditing] = useState<CalendarEntry | null>(null);
   const [shiftType, setShiftType] = useState<ShiftType>("CUSTOM");
   const [shiftTitle, setShiftTitle] = useState("Dienst");
@@ -89,9 +122,10 @@ export function DayEditorScreen() {
     }
   }
 
-  function resetEditor(nextMode: EditorMode = mode) {
+  function resetEditor(nextMode: EditorMode = mode, revealForm = false) {
     setEditing(null);
     setMode(nextMode);
+    setFormVisible(revealForm);
     setError(null);
     setShiftType("CUSTOM");
     setShiftTitle("Dienst");
@@ -111,6 +145,7 @@ export function DayEditorScreen() {
 
   function editEntry(entry: CalendarEntry) {
     setEditing(entry);
+    setFormVisible(true);
     setError(null);
     haptic();
     if (entry.kind === "SHIFT") {
@@ -313,9 +348,9 @@ export function DayEditorScreen() {
       ) : null}
 
       {editing === null ? (
-        <View style={{ gap: 10 }}>
+        <View style={{ gap: 12 }}>
           <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "900", letterSpacing: 0.8 }}>
-            SCHNELL HINZUFÜGEN
+            DIENST EINTRAGEN
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {templates.map((template) => (
@@ -325,19 +360,51 @@ export function DayEditorScreen() {
                 disabled={saving}
                 onPress={() => void quickAddTemplate(template.id)}
                 style={({ pressed }) => ({
-                  minHeight: 46,
+                  minHeight: 64,
+                  minWidth: "47%",
+                  flexGrow: 1,
+                  flexBasis: 0,
                   flexDirection: "row",
                   alignItems: "center",
-                  gap: 7,
-                  borderRadius: 13,
+                  gap: 10,
+                  borderWidth: 1,
+                  borderColor: palette.border,
+                  borderRadius: 15,
                   borderCurve: "continuous",
-                  backgroundColor: template.color,
+                  backgroundColor: palette.surface,
                   opacity: pressed ? 0.75 : 1,
-                  paddingHorizontal: 12,
+                  paddingHorizontal: 10,
                 })}
               >
-                <Text style={{ color: "#FFFFFF", fontWeight: "900" }}>{template.symbol}</Text>
-                <Text style={{ color: "#FFFFFF", fontWeight: "800" }}>{template.name}</Text>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 18,
+                    backgroundColor: template.color,
+                  }}
+                >
+                  <Text style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "900" }}>
+                    {template.symbol}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text numberOfLines={1} style={{ color: palette.text, fontSize: 13, fontWeight: "900" }}>
+                    {template.name}
+                  </Text>
+                  <Text
+                    style={{
+                      color: palette.textMuted,
+                      fontSize: 10,
+                      fontWeight: "700",
+                      fontVariant: ["tabular-nums"],
+                    }}
+                  >
+                    {template.startTime}–{template.endTime}
+                  </Text>
+                </View>
               </Pressable>
             ))}
             {(["VACATION", "SICK", "FREE"] as const).map((type) => (
@@ -347,7 +414,8 @@ export function DayEditorScreen() {
                 disabled={saving}
                 onPress={() => void quickAddAbsence(type)}
                 style={({ pressed }) => ({
-                  minHeight: 46,
+                  minHeight: 44,
+                  flexGrow: 1,
                   alignItems: "center",
                   justifyContent: "center",
                   borderWidth: 1,
@@ -362,6 +430,19 @@ export function DayEditorScreen() {
               </Pressable>
             ))}
           </View>
+
+          {!formVisible ? (
+            <View style={{ flexDirection: "row", gap: 8, paddingTop: 2 }}>
+              <SecondaryAction
+                label="+ Eigener Dienst"
+                onPress={() => resetEditor("SHIFT", true)}
+              />
+              <SecondaryAction
+                label="+ Termin"
+                onPress={() => resetEditor("APPOINTMENT", true)}
+              />
+            </View>
+          ) : null}
         </View>
       ) : (
         <Pressable accessibilityRole="button" onPress={() => resetEditor()} style={{ alignSelf: "flex-start", paddingVertical: 4 }}>
@@ -369,22 +450,32 @@ export function DayEditorScreen() {
         </Pressable>
       )}
 
-      <View
-        style={{
-          flexDirection: "row",
-          gap: 4,
-          borderRadius: 14,
-          borderCurve: "continuous",
-          backgroundColor: palette.outsideMonth,
-          boxShadow: palette.dark ? undefined : "inset 0 1px 2px rgba(24,32,30,0.06)",
-          padding: 4,
-        }}
-      >
-        <SegmentedButton label="Dienst" onPress={() => resetEditor("SHIFT")} selected={mode === "SHIFT"} />
-        <SegmentedButton label="Termin" onPress={() => resetEditor("APPOINTMENT")} selected={mode === "APPOINTMENT"} />
-      </View>
+      {formVisible ? (
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 4,
+            borderRadius: 14,
+            borderCurve: "continuous",
+            backgroundColor: palette.outsideMonth,
+            boxShadow: palette.dark ? undefined : "inset 0 1px 2px rgba(24,32,30,0.06)",
+            padding: 4,
+          }}
+        >
+          <SegmentedButton
+            label="Dienst"
+            onPress={() => resetEditor("SHIFT", true)}
+            selected={mode === "SHIFT"}
+          />
+          <SegmentedButton
+            label="Termin"
+            onPress={() => resetEditor("APPOINTMENT", true)}
+            selected={mode === "APPOINTMENT"}
+          />
+        </View>
+      ) : null}
 
-      {mode === "SHIFT" ? (
+      {formVisible && mode === "SHIFT" ? (
         <View
           style={{
             gap: 16,
@@ -455,7 +546,7 @@ export function DayEditorScreen() {
             {saving ? "Wird gespeichert …" : editing ? "Dienst aktualisieren" : "Dienst speichern"}
           </PrimaryButton>
         </View>
-      ) : (
+      ) : formVisible ? (
         <View
           style={{
             gap: 16,
@@ -500,7 +591,7 @@ export function DayEditorScreen() {
             {saving ? "Wird gespeichert …" : editing ? "Termin aktualisieren" : "Termin speichern"}
           </PrimaryButton>
         </View>
-      )}
+      ) : null}
 
       {error ? (
         <Text accessibilityRole="alert" selectable style={{ color: palette.danger, fontWeight: "700" }}>
