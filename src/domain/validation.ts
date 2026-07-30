@@ -2,10 +2,13 @@ import { Temporal } from "@js-temporal/polyfill";
 
 import {
   FEDERAL_STATES,
+  PAY_GROUPS,
+  PAY_LEVELS,
   SHIFT_TYPES,
   type FederalState,
   type SaveAppointmentInput,
   type SaveShiftInput,
+  type SaveProfileInput,
   type SaveShiftTemplateInput,
   type TimedShiftType,
 } from "@/domain/types";
@@ -65,6 +68,28 @@ export function requireWeeklyMinutes(value: number): number {
   return value;
 }
 
+export function validateProfile(input: SaveProfileInput): SaveProfileInput {
+  const tariff = input.tariff;
+  if (tariff !== null && tariff !== undefined) {
+    if (!PAY_GROUPS.includes(tariff.payGroup)) {
+      throw new ValidationError("Bitte eine gültige TVöD-P-Gruppe wählen.");
+    }
+    if (!PAY_LEVELS.includes(tariff.payLevel)) {
+      throw new ValidationError("Bitte eine gültige TVöD-P-Stufe wählen.");
+    }
+    if (tariff.sector !== "BT_K" && tariff.sector !== "BT_B") {
+      throw new ValidationError("Bitte einen gültigen TVöD-Bereich wählen.");
+    }
+    requireWeeklyMinutes(tariff.fullTimeWeeklyMinutes);
+  }
+  return {
+    federalState: requireFederalState(input.federalState),
+    weeklyMinutes: requireWeeklyMinutes(input.weeklyMinutes),
+    timeZone: input.timeZone.trim() || "Europe/Berlin",
+    tariff: tariff ?? null,
+  };
+}
+
 function requireBreakMinutes(value: number): number {
   if (!Number.isInteger(value) || value < 0 || value > 24 * 60) {
     throw new ValidationError("Die Pause muss zwischen 0 und 1.440 Minuten liegen.");
@@ -107,10 +132,18 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
     color: requireColor(input.color),
     symbol: requireNonEmpty(input.symbol, "Symbol").slice(0, 4),
     note: input.note?.trim() || null,
+    overtimeMinutes: input.overtimeMinutes ?? 0,
+    holidayPremiumMode: input.holidayPremiumMode ?? "WITH_TIME_OFF",
   };
+  if (!Number.isInteger(base.overtimeMinutes) || base.overtimeMinutes < 0 || base.overtimeMinutes > 24 * 60) {
+    throw new ValidationError("Überstunden müssen zwischen 0 und 1.440 Minuten liegen.");
+  }
+  if (!["WITH_TIME_OFF", "WITHOUT_TIME_OFF"].includes(base.holidayPremiumMode)) {
+    throw new ValidationError("Ungültige Feiertagsoption.");
+  }
 
   if (input.type === "VACATION" || input.type === "SICK" || input.type === "FREE") {
-    return { ...base, startTime: null, endTime: null, breakMinutes: 0 };
+    return { ...base, startTime: null, endTime: null, breakMinutes: 0, overtimeMinutes: 0 };
   }
 
   const startTime = requireLocalTime(input.startTime ?? "");

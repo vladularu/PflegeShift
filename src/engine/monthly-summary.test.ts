@@ -24,6 +24,8 @@ function entry(overrides: Partial<ShiftEntry> & Pick<ShiftEntry, "id" | "date" |
     color: "#2F80ED",
     symbol: "D",
     note: null,
+    overtimeMinutes: 0,
+    holidayPremiumMode: "WITH_TIME_OFF",
     revision: 1,
     createdAt: "2026-07-01T00:00:00.000Z",
     updatedAt: "2026-07-01T00:00:00.000Z",

@@ -90,6 +90,30 @@ const DEFAULT_TEMPLATES = [
   ["default-day", "Tag", "DAY", "08:00", "16:12", 30, "#2F80ED", "T", 40],
 ] as const;
 
+const MIGRATION_2 = `
+CREATE TABLE IF NOT EXISTS monthly_tariff_decisions (
+  month TEXT PRIMARY KEY NOT NULL CHECK (length(month) = 7),
+  allowance_status TEXT NOT NULL CHECK (allowance_status IN (
+    'NONE','SHIFT_MONTHLY','SHIFT_HOURLY','ALTERNATING_MONTHLY','ALTERNATING_HOURLY'
+  )),
+  revision INTEGER NOT NULL CHECK (revision >= 1),
+  confirmed_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+`;
+
+async function addColumnIfMissing(
+  db: SQLiteDatabase,
+  table: string,
+  column: string,
+  declaration: string,
+): Promise<void> {
+  const columns = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
+  if (!columns.some((item) => item.name === column)) {
+    await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${declaration}`);
+  }
+}
+
 export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
   await db.execAsync("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   await db.execAsync(MIGRATION_1);
@@ -99,6 +123,39 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     1,
     now,
   );
+
+  const migration2 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=2",
+  );
+  if (migration2 === null) {
+    await addColumnIfMissing(db, "user_profile", "pay_group", "TEXT");
+    await addColumnIfMissing(db, "user_profile", "pay_level", "INTEGER");
+    await addColumnIfMissing(db, "user_profile", "tariff_sector", "TEXT");
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "full_time_weekly_minutes",
+      "INTEGER",
+    );
+    await addColumnIfMissing(
+      db,
+      "shift_entries",
+      "overtime_minutes",
+      "INTEGER NOT NULL DEFAULT 0",
+    );
+    await addColumnIfMissing(
+      db,
+      "shift_entries",
+      "holiday_premium_mode",
+      "TEXT NOT NULL DEFAULT 'WITH_TIME_OFF'",
+    );
+    await db.execAsync(MIGRATION_2);
+    await db.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      2,
+      now,
+    );
+  }
 
   for (const template of DEFAULT_TEMPLATES) {
     await db.runAsync(

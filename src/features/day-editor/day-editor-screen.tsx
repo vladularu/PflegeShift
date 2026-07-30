@@ -1,5 +1,6 @@
 import * as Haptics from "expo-haptics";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Temporal } from "@js-temporal/polyfill";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Alert,
@@ -14,10 +15,14 @@ import { useMediShift } from "@/application/medishift-provider";
 import {
   SHIFT_TYPE_LABELS,
   type CalendarEntry,
+  type FederalState,
   type ShiftType,
 } from "@/domain/types";
 import { requireLocalDate } from "@/domain/validation";
 import { formatDateTitle, today } from "@/engine/calendar";
+import { calculateMonthlyCompliance } from "@/engine/compliance";
+import { getPublicHolidays } from "@/engine/holidays";
+import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import { usePalette } from "@/theme/palette";
 import {
   ColorPicker,
@@ -39,6 +44,30 @@ const SHIFT_FORM_TYPES: readonly ShiftType[] = [
   "SICK",
   "FREE",
 ];
+
+function shiftOverlapsHoliday(
+  dateValue: string,
+  startValue: string,
+  endValue: string,
+  federalState: FederalState,
+): boolean {
+  try {
+    const date = Temporal.PlainDate.from(dateValue);
+    const start = Temporal.PlainTime.from(startValue);
+    const end = Temporal.PlainTime.from(endValue);
+    const coveredDates = [date.toString()];
+    if (Temporal.PlainTime.compare(end, start) <= 0 && endValue !== "00:00") {
+      coveredDates.push(date.add({ days: 1 }).toString());
+    }
+    const holidayDates = new Set(
+      [date.year, date.add({ days: 1 }).year].flatMap((year) =>
+        getPublicHolidays(year, federalState).map((holiday) => holiday.date)),
+    );
+    return coveredDates.some((coveredDate) => holidayDates.has(coveredDate));
+  } catch {
+    return false;
+  }
+}
 
 function entryTimeLabel(entry: CalendarEntry): string {
   if (entry.kind === "APPOINTMENT") {
@@ -82,7 +111,7 @@ function SecondaryAction({
 
 export function DayEditorScreen() {
   const params = useLocalSearchParams<{ date?: string; mode?: string }>();
-  const { templates, entries, upsertShift, upsertAppointment, removeEntry } = useMediShift();
+  const { profile, templates, entries, upsertShift, upsertAppointment, removeEntry } = useMediShift();
   const palette = usePalette();
   const date = useMemo(() => {
     try {
@@ -111,6 +140,8 @@ export function DayEditorScreen() {
   const [shiftColor, setShiftColor] = useState("#21A0A0");
   const [shiftSymbol, setShiftSymbol] = useState("D");
   const [shiftNote, setShiftNote] = useState("");
+  const [overtimeMinutes, setOvertimeMinutes] = useState("0");
+  const [holidayPremiumMode, setHolidayPremiumMode] = useState<"WITH_TIME_OFF" | "WITHOUT_TIME_OFF">("WITH_TIME_OFF");
   const [appointmentTitle, setAppointmentTitle] = useState("");
   const [allDay, setAllDay] = useState(true);
   const [appointmentStart, setAppointmentStart] = useState("10:00");
@@ -119,6 +150,12 @@ export function DayEditorScreen() {
   const [appointmentNote, setAppointmentNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const hasHolidayOverlap = useMemo(
+    () => profile
+      ? shiftOverlapsHoliday(date, startTime, endTime, profile.federalState)
+      : false,
+    [date, endTime, profile, startTime],
+  );
 
   function haptic() {
     if (process.env.EXPO_OS === "ios") {
@@ -139,6 +176,8 @@ export function DayEditorScreen() {
     setShiftColor("#21A0A0");
     setShiftSymbol("D");
     setShiftNote("");
+    setOvertimeMinutes("0");
+    setHolidayPremiumMode("WITH_TIME_OFF");
     setAppointmentTitle("");
     setAllDay(true);
     setAppointmentStart("10:00");
@@ -162,6 +201,8 @@ export function DayEditorScreen() {
       setShiftColor(entry.color);
       setShiftSymbol(entry.symbol);
       setShiftNote(entry.note ?? "");
+      setOvertimeMinutes(String(entry.overtimeMinutes));
+      setHolidayPremiumMode(entry.holidayPremiumMode);
     } else {
       setMode("APPOINTMENT");
       setAppointmentTitle(entry.title);
@@ -247,7 +288,7 @@ export function DayEditorScreen() {
       setSaving(true);
       setError(null);
       const existing = editing?.kind === "SHIFT" ? editing : null;
-      await upsertShift({
+      const candidate = {
         ...(existing ? { id: existing.id, expectedRevision: existing.revision } : {}),
         date,
         templateId: null,
@@ -259,7 +300,37 @@ export function DayEditorScreen() {
         color: shiftColor,
         symbol: shiftSymbol,
         note: shiftNote,
-      });
+        overtimeMinutes: Number(overtimeMinutes),
+        holidayPremiumMode,
+      } as const;
+      const netMinutes = profile ? calculateTimedShiftMinutes(
+        {
+          date,
+          startTime: candidate.startTime,
+          endTime: candidate.endTime,
+          breakMinutes: candidate.breakMinutes,
+        },
+        profile.timeZone,
+      ) : 0;
+      if (candidate.overtimeMinutes > netMinutes) {
+        throw new Error("Überstunden dürfen die Nettoarbeitszeit des Dienstes nicht überschreiten.");
+      }
+      const saved = await upsertShift(candidate);
+      if (profile) {
+        const nextShifts = entries
+          .filter((entry): entry is Extract<CalendarEntry, { kind: "SHIFT" }> => entry.kind === "SHIFT" && entry.id !== saved.id)
+          .concat(saved);
+        const result = calculateMonthlyCompliance(date.slice(0, 7), nextShifts, profile.timeZone);
+        const critical = result.issues.find(
+          (issue) => issue.severity === "critical" && issue.relatedShiftIds.includes(saved.id),
+        );
+        if (critical) {
+          Alert.alert("ArbZG-Hinweis", critical.title, [
+            { text: "Verstanden" },
+            { text: "Zur Auswertung", onPress: () => router.push("/analysis") },
+          ]);
+        }
+      }
       resetEditor("SHIFT");
       haptic();
     } catch (saveError) {
@@ -545,6 +616,39 @@ export function DayEditorScreen() {
             </>
           ) : null}
           <Field label="Notiz (optional)" multiline onChangeText={setShiftNote} value={shiftNote} />
+          {shiftIsTimed ? (
+            <>
+              <Field
+                keyboardType="number-pad"
+                label="Bestätigte Überstunden (Min.)"
+                onChangeText={setOvertimeMinutes}
+                value={overtimeMinutes}
+              />
+              {hasHolidayOverlap ? (
+                <View
+                  style={{
+                    minHeight: 54,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    borderWidth: 1,
+                    borderColor: palette.border,
+                    borderRadius: 13,
+                    paddingHorizontal: 14,
+                  }}
+                >
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text selectable style={{ color: palette.text, fontWeight: "800" }}>Ohne Freizeitausgleich</Text>
+                    <Text selectable style={{ color: palette.textMuted, fontSize: 11 }}>135 % statt 35 % Feiertagszuschlag</Text>
+                  </View>
+                  <Switch
+                    value={holidayPremiumMode === "WITHOUT_TIME_OFF"}
+                    onValueChange={(value) => setHolidayPremiumMode(value ? "WITHOUT_TIME_OFF" : "WITH_TIME_OFF")}
+                  />
+                </View>
+              ) : null}
+            </>
+          ) : null}
           <ColorPicker onChange={setShiftColor} value={shiftColor} />
           <PrimaryButton disabled={saving} onPress={() => void saveShiftForm()}>
             {saving ? "Wird gespeichert …" : editing ? "Dienst aktualisieren" : "Dienst speichern"}

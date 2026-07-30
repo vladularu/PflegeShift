@@ -15,6 +15,7 @@ import {
   today,
 } from "@/engine/calendar";
 import { holidayMapForMonth } from "@/engine/holidays";
+import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { MonthProgress } from "@/features/calendar/month-progress";
 import { usePalette } from "@/theme/palette";
@@ -117,6 +118,19 @@ export function MonthCard({
       ),
     [month, monthEntries, profile],
   );
+  const compliance = useMemo(
+    () =>
+      calculateMonthlyCompliance(
+        month,
+        entries.filter((entry): entry is Extract<CalendarEntry, { kind: "SHIFT" }> => entry.kind === "SHIFT"),
+        profile.timeZone,
+      ),
+    [entries, month, profile.timeZone],
+  );
+  const complianceDates = useMemo(
+    () => new Set(compliance.affectedDates),
+    [compliance.affectedDates],
+  );
   const currentDate = today(profile.timeZone);
 
   return (
@@ -182,6 +196,7 @@ export function MonthCard({
             const holiday = holidays.get(cell.date);
             const isToday = cell.date === currentDate;
             const isSelected = cell.date === selectedDate;
+            const hasComplianceIssue = complianceDates.has(cell.date);
             return (
               <Pressable
                 key={cell.date}
@@ -242,16 +257,29 @@ export function MonthCard({
                       {cell.day}
                     </Text>
                   </View>
-                  {holiday ? (
-                    <View
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: 4,
-                        backgroundColor: palette.danger,
-                      }}
-                    />
-                  ) : null}
+                  <View style={{ flexDirection: "row", gap: 3 }}>
+                    {hasComplianceIssue ? (
+                      <View
+                        accessibilityLabel="ArbZG-Hinweis"
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: 4,
+                          backgroundColor: "#F2A93B",
+                        }}
+                      />
+                    ) : null}
+                    {holiday ? (
+                      <View
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: 4,
+                          backgroundColor: palette.danger,
+                        }}
+                      />
+                    ) : null}
+                  </View>
                 </View>
                 {dayEntries.slice(0, visibleEntryCount).map((entry) => (
                   <EntryPill

@@ -41,6 +41,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="analysis"
+        options={{
+          title: "Auswertung",
+          tabBarIcon: ({ color }) => <TabIcon color={color} fallback="A" name="chart.bar.xaxis" />,
+        }}
+      />
+      <Tabs.Screen
         name="templates"
         options={{
           title: "Vorlagen",

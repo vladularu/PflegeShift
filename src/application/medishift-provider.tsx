@@ -11,7 +11,10 @@ import React, {
 import type {
   Appointment,
   CalendarEntry,
+  MonthlyTariffDecision,
   SaveAppointmentInput,
+  SaveMonthlyTariffDecisionInput,
+  SaveProfileInput,
   SaveShiftInput,
   SaveShiftTemplateInput,
   ShiftEntry,
@@ -22,10 +25,12 @@ import {
   deleteCalendarEntry,
   deleteTemplate,
   listCalendarEntries,
+  listMonthlyTariffDecisions,
   listTemplates,
   loadProfile,
   saveAppointment,
   saveProfile,
+  saveMonthlyTariffDecision,
   saveShift,
   saveTemplate,
 } from "@/infrastructure/database/repository";
@@ -36,9 +41,10 @@ interface MediShiftContextValue {
   readonly profile: UserProfile | null;
   readonly templates: readonly ShiftTemplate[];
   readonly entries: readonly CalendarEntry[];
+  readonly tariffDecisions: readonly MonthlyTariffDecision[];
   readonly reload: () => Promise<void>;
   readonly updateProfile: (
-    input: Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">,
+    input: SaveProfileInput,
   ) => Promise<UserProfile>;
   readonly upsertTemplate: (input: SaveShiftTemplateInput) => Promise<ShiftTemplate>;
   readonly removeTemplate: (template: ShiftTemplate) => Promise<void>;
@@ -46,6 +52,9 @@ interface MediShiftContextValue {
   readonly upsertShift: (input: SaveShiftInput) => Promise<ShiftEntry>;
   readonly upsertAppointment: (input: SaveAppointmentInput) => Promise<Appointment>;
   readonly removeEntry: (entry: CalendarEntry) => Promise<void>;
+  readonly upsertTariffDecision: (
+    input: SaveMonthlyTariffDecisionInput,
+  ) => Promise<MonthlyTariffDecision>;
 }
 
 const MediShiftContext = createContext<MediShiftContextValue | null>(null);
@@ -57,17 +66,20 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [templates, setTemplates] = useState<readonly ShiftTemplate[]>([]);
   const [entries, setEntries] = useState<readonly CalendarEntry[]>([]);
+  const [tariffDecisions, setTariffDecisions] = useState<readonly MonthlyTariffDecision[]>([]);
 
   const reload = useCallback(async () => {
     try {
-      const [nextProfile, nextTemplates, nextEntries] = await Promise.all([
+      const [nextProfile, nextTemplates, nextEntries, nextDecisions] = await Promise.all([
         loadProfile(db),
         listTemplates(db),
         listCalendarEntries(db),
+        listMonthlyTariffDecisions(db),
       ]);
       setProfile(nextProfile);
       setTemplates(nextTemplates);
       setEntries(nextEntries);
+      setTariffDecisions(nextDecisions);
       setError(null);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Lokale Daten konnten nicht geladen werden.");
@@ -87,6 +99,7 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
       profile,
       templates,
       entries,
+      tariffDecisions,
       reload,
       async updateProfile(input) {
         const saved = await saveProfile(db, input);
@@ -134,8 +147,13 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
         await deleteCalendarEntry(db, entry);
         setEntries(await listCalendarEntries(db));
       },
+      async upsertTariffDecision(input) {
+        const saved = await saveMonthlyTariffDecision(db, input);
+        setTariffDecisions(await listMonthlyTariffDecisions(db));
+        return saved;
+      },
     }),
-    [db, entries, error, profile, ready, reload, templates],
+    [db, entries, error, profile, ready, reload, tariffDecisions, templates],
   );
 
   return <MediShiftContext value={value}>{children}</MediShiftContext>;

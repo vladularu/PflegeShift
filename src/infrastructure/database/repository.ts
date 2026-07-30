@@ -3,18 +3,23 @@ import type { SQLiteDatabase } from "expo-sqlite";
 import type {
   Appointment,
   CalendarEntry,
+  MonthlyTariffDecision,
+  PayGroup,
+  PayLevel,
+  SaveMonthlyTariffDecisionInput,
   SaveAppointmentInput,
+  SaveProfileInput,
   SaveShiftInput,
   SaveShiftTemplateInput,
   ShiftEntry,
   ShiftTemplate,
+  TariffSector,
   UserProfile,
 } from "@/domain/types";
 import {
   createId,
-  requireFederalState,
-  requireWeeklyMinutes,
   validateAppointment,
+  validateProfile,
   validateShift,
   validateTemplate,
 } from "@/domain/validation";
@@ -23,6 +28,10 @@ interface ProfileRow {
   federal_state: UserProfile["federalState"];
   weekly_minutes: number;
   time_zone: string;
+  pay_group: PayGroup | null;
+  pay_level: PayLevel | null;
+  tariff_sector: TariffSector | null;
+  full_time_weekly_minutes: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +64,8 @@ interface ShiftRow {
   color: string;
   symbol: string;
   note: string | null;
+  overtime_minutes: number;
+  holiday_premium_mode: ShiftEntry["holidayPremiumMode"];
   revision: number;
   created_at: string;
   updated_at: string;
@@ -77,10 +88,23 @@ interface AppointmentRow {
 }
 
 function mapProfile(row: ProfileRow): UserProfile {
+  const tariff =
+    row.pay_group !== null &&
+    row.pay_level !== null &&
+    row.tariff_sector !== null &&
+    row.full_time_weekly_minutes !== null
+      ? {
+          payGroup: row.pay_group as NonNullable<UserProfile["tariff"]>["payGroup"],
+          payLevel: row.pay_level as NonNullable<UserProfile["tariff"]>["payLevel"],
+          sector: row.tariff_sector as NonNullable<UserProfile["tariff"]>["sector"],
+          fullTimeWeeklyMinutes: row.full_time_weekly_minutes,
+        }
+      : null;
   return Object.freeze({
     federalState: row.federal_state,
     weeklyMinutes: row.weekly_minutes,
     timeZone: row.time_zone,
+    tariff,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -118,6 +142,8 @@ function mapShift(row: ShiftRow): ShiftEntry {
     color: row.color,
     symbol: row.symbol,
     note: row.note,
+    overtimeMinutes: row.overtime_minutes,
+    holidayPremiumMode: row.holiday_premium_mode,
     revision: row.revision,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -151,30 +177,40 @@ async function requireChanged(changes: number): Promise<void> {
 
 export async function loadProfile(db: SQLiteDatabase): Promise<UserProfile | null> {
   const row = await db.getFirstAsync<ProfileRow>(
-    "SELECT federal_state,weekly_minutes,time_zone,created_at,updated_at FROM user_profile WHERE id='singleton'",
+    `SELECT federal_state,weekly_minutes,time_zone,pay_group,pay_level,
+      tariff_sector,full_time_weekly_minutes,created_at,updated_at
+     FROM user_profile WHERE id='singleton'`,
   );
   return row === null ? null : mapProfile(row);
 }
 
 export async function saveProfile(
   db: SQLiteDatabase,
-  input: Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">,
+  rawInput: SaveProfileInput,
 ): Promise<UserProfile> {
-  const federalState = requireFederalState(input.federalState);
-  const weeklyMinutes = requireWeeklyMinutes(input.weeklyMinutes);
-  const timeZone = input.timeZone.trim() || "Europe/Berlin";
+  const input = validateProfile(rawInput);
   const now = new Date().toISOString();
   await db.runAsync(
-    `INSERT INTO user_profile(id,federal_state,weekly_minutes,time_zone,created_at,updated_at)
-     VALUES('singleton',?,?,?,?,?)
+    `INSERT INTO user_profile(
+       id,federal_state,weekly_minutes,time_zone,pay_group,pay_level,
+       tariff_sector,full_time_weekly_minutes,created_at,updated_at
+     ) VALUES('singleton',?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        federal_state=excluded.federal_state,
        weekly_minutes=excluded.weekly_minutes,
        time_zone=excluded.time_zone,
+       pay_group=excluded.pay_group,
+       pay_level=excluded.pay_level,
+       tariff_sector=excluded.tariff_sector,
+       full_time_weekly_minutes=excluded.full_time_weekly_minutes,
        updated_at=excluded.updated_at`,
-    federalState,
-    weeklyMinutes,
-    timeZone,
+    input.federalState,
+    input.weeklyMinutes,
+    input.timeZone,
+    input.tariff?.payGroup ?? null,
+    input.tariff?.payLevel ?? null,
+    input.tariff?.sector ?? null,
+    input.tariff?.fullTimeWeeklyMinutes ?? null,
     now,
     now,
   );
@@ -271,7 +307,7 @@ export async function listCalendarEntries(
 ): Promise<readonly CalendarEntry[]> {
   const shifts = await db.getAllAsync<ShiftRow>(
     `SELECT id,date,template_id,title,type,start_time,end_time,break_minutes,color,
-      symbol,note,revision,created_at,updated_at,deleted_at
+      symbol,note,overtime_minutes,holiday_premium_mode,revision,created_at,updated_at,deleted_at
      FROM shift_entries WHERE deleted_at IS NULL AND date BETWEEN ? AND ?`,
     startDate,
     endDate,
@@ -305,8 +341,8 @@ export async function saveShift(
     await db.runAsync(
       `INSERT INTO shift_entries(
         id,date,template_id,title,type,start_time,end_time,break_minutes,color,
-        symbol,note,revision,created_at,updated_at,deleted_at
-      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,1,?,?,NULL)`,
+        symbol,note,overtime_minutes,holiday_premium_mode,revision,created_at,updated_at,deleted_at
+      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,NULL)`,
       id,
       input.date,
       input.templateId ?? null,
@@ -318,6 +354,8 @@ export async function saveShift(
       input.color,
       input.symbol,
       input.note ?? null,
+      input.overtimeMinutes ?? 0,
+      input.holidayPremiumMode ?? "WITH_TIME_OFF",
       now,
       now,
     );
@@ -325,7 +363,8 @@ export async function saveShift(
     const result = await db.runAsync(
       `UPDATE shift_entries SET
         date=?,template_id=?,title=?,type=?,start_time=?,end_time=?,break_minutes=?,
-        color=?,symbol=?,note=?,revision=revision+1,updated_at=?
+        color=?,symbol=?,note=?,overtime_minutes=?,holiday_premium_mode=?,
+        revision=revision+1,updated_at=?
        WHERE id=? AND revision=? AND deleted_at IS NULL`,
       input.date,
       input.templateId ?? null,
@@ -337,6 +376,8 @@ export async function saveShift(
       input.color,
       input.symbol,
       input.note ?? null,
+      input.overtimeMinutes ?? 0,
+      input.holidayPremiumMode ?? "WITH_TIME_OFF",
       now,
       id,
       input.expectedRevision ?? -1,
@@ -346,7 +387,7 @@ export async function saveShift(
 
   const row = await db.getFirstAsync<ShiftRow>(
     `SELECT id,date,template_id,title,type,start_time,end_time,break_minutes,color,
-      symbol,note,revision,created_at,updated_at,deleted_at
+      symbol,note,overtime_minutes,holiday_premium_mode,revision,created_at,updated_at,deleted_at
      FROM shift_entries WHERE id=?`,
     id,
   );
@@ -423,4 +464,77 @@ export async function deleteCalendarEntry(
     entry.revision,
   );
   await requireChanged(result.changes);
+}
+
+interface TariffDecisionRow {
+  month: string;
+  allowance_status: MonthlyTariffDecision["allowanceStatus"];
+  revision: number;
+  confirmed_at: string;
+  updated_at: string;
+}
+
+function mapTariffDecision(row: TariffDecisionRow): MonthlyTariffDecision {
+  return Object.freeze({
+    month: row.month,
+    allowanceStatus: row.allowance_status,
+    revision: row.revision,
+    confirmedAt: row.confirmed_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function listMonthlyTariffDecisions(
+  db: SQLiteDatabase,
+): Promise<readonly MonthlyTariffDecision[]> {
+  const rows = await db.getAllAsync<TariffDecisionRow>(
+    `SELECT month,allowance_status,revision,confirmed_at,updated_at
+     FROM monthly_tariff_decisions ORDER BY month`,
+  );
+  return Object.freeze(rows.map(mapTariffDecision));
+}
+
+export async function saveMonthlyTariffDecision(
+  db: SQLiteDatabase,
+  input: SaveMonthlyTariffDecisionInput,
+): Promise<MonthlyTariffDecision> {
+  if (!/^\d{4}-\d{2}$/.test(input.month)) {
+    throw new Error("Ungültiger Auswertungsmonat.");
+  }
+  const now = new Date().toISOString();
+  const existing = await db.getFirstAsync<TariffDecisionRow>(
+    `SELECT month,allowance_status,revision,confirmed_at,updated_at
+     FROM monthly_tariff_decisions WHERE month=?`,
+    input.month,
+  );
+  if (existing === null) {
+    await db.runAsync(
+      `INSERT INTO monthly_tariff_decisions(
+        month,allowance_status,revision,confirmed_at,updated_at
+      ) VALUES(?,?,1,?,?)`,
+      input.month,
+      input.allowanceStatus,
+      now,
+      now,
+    );
+  } else {
+    const result = await db.runAsync(
+      `UPDATE monthly_tariff_decisions SET allowance_status=?,
+       revision=revision+1,confirmed_at=?,updated_at=?
+       WHERE month=? AND revision=?`,
+      input.allowanceStatus,
+      now,
+      now,
+      input.month,
+      input.expectedRevision ?? existing.revision,
+    );
+    await requireChanged(result.changes);
+  }
+  const saved = await db.getFirstAsync<TariffDecisionRow>(
+    `SELECT month,allowance_status,revision,confirmed_at,updated_at
+     FROM monthly_tariff_decisions WHERE month=?`,
+    input.month,
+  );
+  if (saved === null) throw new Error("Tarifentscheidung konnte nicht gespeichert werden.");
+  return mapTariffDecision(saved);
 }
