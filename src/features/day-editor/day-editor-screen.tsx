@@ -148,6 +148,8 @@ export function DayEditorScreen() {
   const [appointmentEnd, setAppointmentEnd] = useState("11:00");
   const [appointmentColor, setAppointmentColor] = useState("#F2A93B");
   const [appointmentNote, setAppointmentNote] = useState("");
+  const [showShiftOptions, setShowShiftOptions] = useState(false);
+  const [showAppointmentOptions, setShowAppointmentOptions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const hasHolidayOverlap = useMemo(
@@ -184,6 +186,8 @@ export function DayEditorScreen() {
     setAppointmentEnd("11:00");
     setAppointmentColor("#F2A93B");
     setAppointmentNote("");
+    setShowShiftOptions(false);
+    setShowAppointmentOptions(false);
   }
 
   function editEntry(entry: CalendarEntry) {
@@ -192,6 +196,7 @@ export function DayEditorScreen() {
     setError(null);
     haptic();
     if (entry.kind === "SHIFT") {
+      setShowShiftOptions(true);
       setMode("SHIFT");
       setShiftType(entry.type);
       setShiftTitle(entry.title);
@@ -204,6 +209,7 @@ export function DayEditorScreen() {
       setOvertimeMinutes(String(entry.overtimeMinutes));
       setHolidayPremiumMode(entry.holidayPremiumMode);
     } else {
+      setShowAppointmentOptions(true);
       setMode("APPOINTMENT");
       setAppointmentTitle(entry.title);
       setAllDay(entry.allDay);
@@ -554,12 +560,11 @@ export function DayEditorScreen() {
         <View
           style={{
             gap: 16,
-            borderWidth: 1,
-            borderColor: palette.border,
-            borderRadius: 18,
+            borderRadius: 22,
             borderCurve: "continuous",
             backgroundColor: palette.surface,
-            padding: 14,
+            boxShadow: palette.dark ? undefined : "0 4px 18px rgba(28,48,42,0.06)",
+            padding: 18,
           }}
         >
           <View style={{ gap: 8 }}>
@@ -615,16 +620,22 @@ export function DayEditorScreen() {
               </View>
             </>
           ) : null}
-          <Field label="Notiz (optional)" multiline onChangeText={setShiftNote} value={shiftNote} />
-          {shiftIsTimed ? (
+          <AdvancedToggle
+            expanded={showShiftOptions}
+            onPress={() => setShowShiftOptions((value) => !value)}
+          />
+          {showShiftOptions ? (
             <>
-              <Field
-                keyboardType="number-pad"
-                label="Bestätigte Überstunden (Min.)"
-                onChangeText={setOvertimeMinutes}
-                value={overtimeMinutes}
-              />
-              {hasHolidayOverlap ? (
+              <Field label="Notiz (optional)" multiline onChangeText={setShiftNote} value={shiftNote} />
+              {shiftIsTimed ? (
+                <Field
+                  keyboardType="number-pad"
+                  label="Bestätigte Überstunden (Min.)"
+                  onChangeText={setOvertimeMinutes}
+                  value={overtimeMinutes}
+                />
+              ) : null}
+              {shiftIsTimed && hasHolidayOverlap ? (
                 <View
                   style={{
                     minHeight: 54,
@@ -647,9 +658,9 @@ export function DayEditorScreen() {
                   />
                 </View>
               ) : null}
+              <ColorPicker onChange={setShiftColor} value={shiftColor} />
             </>
           ) : null}
-          <ColorPicker onChange={setShiftColor} value={shiftColor} />
           <PrimaryButton disabled={saving} onPress={() => void saveShiftForm()}>
             {saving ? "Wird gespeichert …" : editing ? "Dienst aktualisieren" : "Dienst speichern"}
           </PrimaryButton>
@@ -658,12 +669,11 @@ export function DayEditorScreen() {
         <View
           style={{
             gap: 16,
-            borderWidth: 1,
-            borderColor: palette.border,
-            borderRadius: 18,
+            borderRadius: 22,
             borderCurve: "continuous",
             backgroundColor: palette.surface,
-            padding: 14,
+            boxShadow: palette.dark ? undefined : "0 4px 18px rgba(28,48,42,0.06)",
+            padding: 18,
           }}
         >
           <Field label="Titel" maxLength={60} onChangeText={setAppointmentTitle} value={appointmentTitle} />
@@ -693,8 +703,16 @@ export function DayEditorScreen() {
               </View>
             </View>
           ) : null}
-          <Field label="Notiz (optional)" multiline onChangeText={setAppointmentNote} value={appointmentNote} />
-          <ColorPicker onChange={setAppointmentColor} value={appointmentColor} />
+          <AdvancedToggle
+            expanded={showAppointmentOptions}
+            onPress={() => setShowAppointmentOptions((value) => !value)}
+          />
+          {showAppointmentOptions ? (
+            <>
+              <Field label="Notiz (optional)" multiline onChangeText={setAppointmentNote} value={appointmentNote} />
+              <ColorPicker onChange={setAppointmentColor} value={appointmentColor} />
+            </>
+          ) : null}
           <PrimaryButton disabled={saving} onPress={() => void saveAppointmentForm()}>
             {saving ? "Wird gespeichert …" : editing ? "Termin aktualisieren" : "Termin speichern"}
           </PrimaryButton>
@@ -707,5 +725,39 @@ export function DayEditorScreen() {
         </Text>
       ) : null}
     </ScrollView>
+  );
+}
+
+function AdvancedToggle({
+  expanded,
+  onPress,
+}: {
+  readonly expanded: boolean;
+  readonly onPress: () => void;
+}) {
+  const palette = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded }}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minHeight: 42,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderTopWidth: 1,
+        borderTopColor: palette.border,
+        opacity: pressed ? 0.65 : 1,
+        paddingTop: 10,
+      })}
+    >
+      <Text style={{ color: palette.textMuted, fontSize: 13, fontWeight: "800" }}>
+        Weitere Angaben
+      </Text>
+      <Text style={{ color: palette.textMuted, fontSize: 20 }}>
+        {expanded ? "−" : "+"}
+      </Text>
+    </Pressable>
   );
 }

@@ -26,6 +26,8 @@ export function SettingsScreen() {
   const [payLevel, setPayLevel] = useState<PayLevel>(4);
   const [sector, setSector] = useState<TariffSector>("BT_K");
   const [fullTimeHours, setFullTimeHours] = useState("38,5");
+  const [showFederalStates, setShowFederalStates] = useState(false);
+  const [showTariffEditor, setShowTariffEditor] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,8 +40,10 @@ export function SettingsScreen() {
         setPayLevel(profile.tariff.payLevel);
         setSector(profile.tariff.sector);
         setFullTimeHours(String(profile.tariff.fullTimeWeeklyMinutes / 60).replace(".", ","));
+        setShowTariffEditor(false);
       } else {
         setFullTimeHours(profile.federalState === "BW" ? "39" : "38,5");
+        setShowTariffEditor(true);
       }
     }
   }, [profile]);
@@ -94,10 +98,34 @@ export function SettingsScreen() {
         </Text>
       </View>
 
-      <View style={{ gap: 10 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 16, fontWeight: "800" }}>
-          Bundesland
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: showFederalStates }}
+        onPress={() => setShowFederalStates((value) => !value)}
+        style={{
+          minHeight: 68,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderRadius: 18,
+          backgroundColor: palette.surface,
+          boxShadow: palette.dark ? undefined : "0 3px 14px rgba(28,48,42,0.05)",
+          paddingHorizontal: 16,
+        }}
+      >
+        <View style={{ gap: 3 }}>
+          <Text selectable style={{ color: palette.textMuted, fontSize: 11, fontWeight: "700" }}>
+            Bundesland
+          </Text>
+          <Text selectable style={{ color: palette.text, fontSize: 16, fontWeight: "900" }}>
+            {FEDERAL_STATE_LABELS[federalState]}
+          </Text>
+        </View>
+        <Text style={{ color: palette.textMuted, fontSize: 20 }}>
+          {showFederalStates ? "−" : "›"}
         </Text>
+      </Pressable>
+      {showFederalStates ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {FEDERAL_STATES.map((state) => {
             const selected = state === federalState;
@@ -123,7 +151,7 @@ export function SettingsScreen() {
             );
           })}
         </View>
-      </View>
+      ) : null}
 
       <Field
         label="Wochenarbeitszeit"
@@ -132,13 +160,23 @@ export function SettingsScreen() {
         value={weeklyHours}
       />
 
-      <View style={{ gap: 12, borderWidth: 1, borderColor: palette.border, borderRadius: 18, backgroundColor: palette.surface, padding: 14 }}>
-        <View style={{ gap: 4 }}>
-          <Text selectable style={{ color: palette.text, fontSize: 17, fontWeight: "900" }}>TVöD-P Tarifprofil</Text>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 18 }}>
-            Gruppe, Stufe und Arbeitsbereich bestimmen Tabellenentgelt und Zuschlagsbasis.
-          </Text>
-        </View>
+      <View style={{ gap: 12, borderRadius: 20, backgroundColor: palette.surface, boxShadow: palette.dark ? undefined : "0 3px 14px rgba(28,48,42,0.05)", padding: 16 }}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showTariffEditor }}
+          onPress={() => setShowTariffEditor((value) => !value)}
+          style={{ minHeight: 46, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+        >
+          <View style={{ gap: 3 }}>
+            <Text selectable style={{ color: palette.textMuted, fontSize: 11, fontWeight: "700" }}>TVöD-P Tarifprofil</Text>
+            <Text selectable style={{ color: palette.text, fontSize: 16, fontWeight: "900" }}>
+              {payGroup} · Stufe {payLevel} · {sector === "BT_K" ? "BT-K" : "BT-B"}
+            </Text>
+          </View>
+          <Text style={{ color: palette.textMuted, fontSize: 20 }}>{showTariffEditor ? "−" : "›"}</Text>
+        </Pressable>
+        {showTariffEditor ? (
+          <>
         <Text selectable style={{ color: palette.text, fontWeight: "800" }}>Arbeitsbereich</Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {(["BT_K", "BT_B"] as const).map((item) => (
@@ -171,6 +209,8 @@ export function SettingsScreen() {
           onChangeText={setFullTimeHours}
           value={fullTimeHours}
         />
+          </>
+        ) : null}
       </View>
 
       {message ? <Text selectable style={{ color: palette.primary, fontWeight: "700" }}>{message}</Text> : null}
@@ -182,12 +222,9 @@ export function SettingsScreen() {
 
       <PrimaryButton onPress={() => void submit()}>Einstellungen speichern</PrimaryButton>
 
-      <View style={{ gap: 5, paddingTop: 8 }}>
-        <Text selectable style={{ color: palette.text, fontWeight: "800" }}>Berechnungsgrundlage</Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 13, lineHeight: 19 }}>
-          Sollzeit: Wochenstunden ÷ 5 × Werktage. Bundesweite und landesweite Feiertage werden berücksichtigt; kommunale Ausnahmen noch nicht.
-        </Text>
-      </View>
+      <Text selectable style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16, textAlign: "center" }}>
+        Feiertage werden bundesweit und je Bundesland berücksichtigt.
+      </Text>
     </ScrollView>
   );
 }
