@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "assets": "node scripts/generate-brand-assets.mjs",
+    "export:web": "expo export --platform web --output-dir dist/web",
     "export:ios": "expo export --platform ios --output-dir dist/ios",
     "export:android": "expo export --platform android --output-dir dist/android"
   },

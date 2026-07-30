@@ -23,12 +23,19 @@ npm.cmd start
 
 Anschließend den QR-Code mit Expo Go öffnen. Für Android kann alternativ `npm.cmd run android` verwendet werden, wenn ein Gerät oder Emulator verbunden ist.
 
+Für den Browser:
+
+```powershell
+npm.cmd run web
+```
+
 ## Qualität
 
 ```powershell
 npm.cmd run lint -- --max-warnings 0
 npm.cmd run typecheck
 npm.cmd test
+npm.cmd run export:web
 npm.cmd run export:android
 npm.cmd run export:ios
 ```
