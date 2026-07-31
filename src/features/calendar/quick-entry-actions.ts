@@ -1,0 +1,156 @@
+import {
+  SHIFT_TYPE_LABELS,
+  type SaveShiftInput,
+  type ShiftEntry,
+  type ShiftTemplate,
+} from "@/domain/types";
+import { SHIFT_TYPE_COLORS } from "@/theme/shift-colors";
+
+export type QuickEntryAbsenceType = "VACATION" | "SICK" | "FREE";
+
+export type QuickEntryStampAction =
+  | {
+      readonly kind: "TEMPLATE";
+      readonly key: string;
+      readonly label: string;
+      readonly color: string;
+      readonly symbol: string;
+      readonly template: ShiftTemplate;
+    }
+  | {
+      readonly kind: "ABSENCE";
+      readonly key: string;
+      readonly label: string;
+      readonly color: string;
+      readonly symbol: string;
+      readonly absenceType: QuickEntryAbsenceType;
+    };
+
+export type QuickEntryAction =
+  | QuickEntryStampAction
+  | {
+      readonly kind: "CUSTOM_SHIFT";
+      readonly key: "editor:shift";
+      readonly label: "Dienst";
+    }
+  | {
+      readonly kind: "APPOINTMENT";
+      readonly key: "editor:appointment";
+      readonly label: "Termin";
+    };
+
+const ABSENCE_ACTIONS: readonly QuickEntryStampAction[] = Object.freeze([
+  {
+    kind: "ABSENCE",
+    key: "absence:VACATION",
+    label: "Urlaub",
+    color: SHIFT_TYPE_COLORS.VACATION,
+    symbol: "U",
+    absenceType: "VACATION",
+  },
+  {
+    kind: "ABSENCE",
+    key: "absence:SICK",
+    label: "Krank",
+    color: SHIFT_TYPE_COLORS.SICK,
+    symbol: "K",
+    absenceType: "SICK",
+  },
+  {
+    kind: "ABSENCE",
+    key: "absence:FREE",
+    label: "Frei",
+    color: SHIFT_TYPE_COLORS.FREE,
+    symbol: "–",
+    absenceType: "FREE",
+  },
+]);
+
+export function buildQuickEntryActions(
+  templates: readonly ShiftTemplate[],
+): readonly QuickEntryAction[] {
+  const templateActions = [...templates]
+    .filter((template) => template.deletedAt === null)
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map<QuickEntryStampAction>((template) => Object.freeze({
+      kind: "TEMPLATE",
+      key: `template:${template.id}`,
+      label: template.name,
+      color: template.color,
+      symbol: template.symbol,
+      template,
+    }));
+
+  return Object.freeze([
+    ...templateActions,
+    ...ABSENCE_ACTIONS,
+    Object.freeze({
+      kind: "CUSTOM_SHIFT" as const,
+      key: "editor:shift" as const,
+      label: "Dienst" as const,
+    }),
+    Object.freeze({
+      kind: "APPOINTMENT" as const,
+      key: "editor:appointment" as const,
+      label: "Termin" as const,
+    }),
+  ]);
+}
+
+export function isQuickEntryStampAction(
+  action: QuickEntryAction,
+): action is QuickEntryStampAction {
+  return action.kind === "TEMPLATE" || action.kind === "ABSENCE";
+}
+
+export function quickEntryEditorMode(
+  action: QuickEntryAction,
+): "SHIFT" | "APPOINTMENT" | null {
+  if (action.kind === "CUSTOM_SHIFT") return "SHIFT";
+  if (action.kind === "APPOINTMENT") return "APPOINTMENT";
+  return null;
+}
+
+export function quickEntryEditorTarget(
+  action: QuickEntryAction,
+  date: string,
+): { readonly date: string; readonly mode: "SHIFT" | "APPOINTMENT" } | null {
+  const mode = quickEntryEditorMode(action);
+  return mode === null ? null : Object.freeze({ date, mode });
+}
+
+export function quickEntryShiftInput(
+  action: QuickEntryStampAction,
+  date: string,
+): SaveShiftInput {
+  if (action.kind === "TEMPLATE") {
+    const template = action.template;
+    return Object.freeze({
+      date,
+      templateId: template.id,
+      title: template.name,
+      type: template.type,
+      startTime: template.startTime,
+      endTime: template.endTime,
+      breakMinutes: template.breakMinutes,
+      color: template.color,
+      symbol: template.symbol,
+    });
+  }
+
+  return Object.freeze({
+    date,
+    title: SHIFT_TYPE_LABELS[action.absenceType],
+    type: action.absenceType,
+    color: SHIFT_TYPE_COLORS[action.absenceType],
+    symbol: action.symbol,
+  });
+}
+
+export async function saveQuickEntryAction(
+  action: QuickEntryStampAction,
+  date: string,
+  upsertShift: (input: SaveShiftInput) => Promise<ShiftEntry>,
+): Promise<ShiftEntry> {
+  return upsertShift(quickEntryShiftInput(action, date));
+}

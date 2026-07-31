@@ -102,6 +102,28 @@ CREATE TABLE IF NOT EXISTS monthly_tariff_decisions (
 );
 `;
 
+const MIGRATION_3 = `
+CREATE TABLE IF NOT EXISTS app_preferences (
+  key TEXT PRIMARY KEY NOT NULL,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS dev_test_backups (
+  month TEXT PRIMARY KEY NOT NULL CHECK (length(month) = 7),
+  payload TEXT NOT NULL,
+  run_id TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_shift_entries_test_run
+  ON shift_entries(test_run_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_test_run
+  ON appointments(test_run_id);
+CREATE INDEX IF NOT EXISTS idx_dev_test_backups_run
+  ON dev_test_backups(run_id);
+`;
+
 async function addColumnIfMissing(
   db: SQLiteDatabase,
   table: string,
@@ -153,6 +175,20 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     await db.runAsync(
       "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
       2,
+      now,
+    );
+  }
+
+  const migration3 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=3",
+  );
+  if (migration3 === null) {
+    await addColumnIfMissing(db, "shift_entries", "test_run_id", "TEXT");
+    await addColumnIfMissing(db, "appointments", "test_run_id", "TEXT");
+    await db.execAsync(MIGRATION_3);
+    await db.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      3,
       now,
     );
   }

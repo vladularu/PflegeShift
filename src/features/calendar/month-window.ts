@@ -37,3 +37,32 @@ export function prependMonths(
     ...months,
   ]);
 }
+
+export function shouldRecenterMonthWindow(
+  months: readonly string[],
+  month: string,
+  edgeBuffer = 2,
+): boolean {
+  const index = months.indexOf(month);
+  return index < 0 || index <= edgeBuffer || index >= months.length - 1 - edgeBuffer;
+}
+
+export function monthAtPagerOffset(
+  months: readonly string[],
+  pageHeight: number,
+  offset: number,
+): string | null {
+  if (
+    months.length === 0 ||
+    !Number.isFinite(pageHeight) ||
+    pageHeight <= 0 ||
+    !Number.isFinite(offset)
+  ) {
+    return null;
+  }
+  const index = Math.max(
+    0,
+    Math.min(months.length - 1, Math.round(offset / pageHeight)),
+  );
+  return months[index] ?? null;
+}

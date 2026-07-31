@@ -1,3 +1,4 @@
+/* global Buffer */
 import { deflateSync } from "node:zlib";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";

@@ -2,13 +2,15 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { useMediShift } from "@/application/medishift-provider";
+import { useMediShiftTemplates } from "@/application/medishift-provider";
 import {
   SHIFT_TYPE_LABELS,
   type TimedShiftType,
 } from "@/domain/types";
 import { usePalette } from "@/theme/palette";
-import { ColorPicker, Field, PrimaryButton } from "@/ui/form-controls";
+import { SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { confirmDestructiveAction } from "@/ui/confirm-action";
+import { ColorPicker, Field, PrimaryButton, TimePickerField } from "@/ui/form-controls";
 
 const TEMPLATE_TYPES: readonly TimedShiftType[] = [
   "EARLY",
@@ -22,7 +24,7 @@ const TEMPLATE_TYPES: readonly TimedShiftType[] = [
 export function TemplateEditorScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const palette = usePalette();
-  const { templates, upsertTemplate } = useMediShift();
+  const { templates, upsertTemplate, removeTemplate } = useMediShiftTemplates();
   const existing = useMemo(() => templates.find((item) => item.id === id), [id, templates]);
   const [name, setName] = useState(existing?.name ?? "Neuer Dienst");
   const [type, setType] = useState<TimedShiftType>(existing?.type ?? "CUSTOM");
@@ -61,6 +63,17 @@ export function TemplateEditorScreen() {
     }
   }
 
+  function confirmArchive() {
+    if (!existing) return;
+    confirmDestructiveAction({
+      title: "Vorlage archivieren?",
+      message: `„${existing.name}“ wird aus der Schnellwahl entfernt. Bereits eingetragene Dienste bleiben bestehen.`,
+      onConfirm: () => void removeTemplate(existing)
+        .then(() => router.back())
+        .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Archivieren fehlgeschlagen.")),
+    });
+  }
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
@@ -70,81 +83,63 @@ export function TemplateEditorScreen() {
     >
       <Stack.Screen options={{ title: existing ? "Vorlage bearbeiten" : "Neue Vorlage" }} />
 
-      <Field label="Name" maxLength={40} onChangeText={setName} value={name} />
+      <SurfaceCard style={{ gap: 14, padding: 16 }}>
+        <Field label="Titel" maxLength={40} onChangeText={setName} value={name} />
+        <Field
+          autoCapitalize="characters"
+          label="Symbol / Kürzel"
+          maxLength={4}
+          onChangeText={setSymbol}
+          value={symbol}
+        />
+        <ColorPicker onChange={setColor} value={color} />
+      </SurfaceCard>
 
-      <View style={{ gap: 8 }}>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
-          Dienstart
-        </Text>
+      <View style={{ gap: 10 }}>
+        <SectionHeader title="Dienstart" />
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {TEMPLATE_TYPES.map((candidate) => {
-            const selected = candidate === type;
-            return (
-              <Pressable
-                key={candidate}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                onPress={() => setType(candidate)}
-                style={{
-                  borderWidth: 1,
-                  borderColor: selected ? palette.primary : palette.border,
-                  borderRadius: 999,
-                  backgroundColor: selected ? palette.primarySoft : palette.surface,
-                  paddingHorizontal: 12,
-                  paddingVertical: 9,
-                }}
-              >
-                <Text style={{ color: selected ? palette.primary : palette.text, fontWeight: "700" }}>
-                  {SHIFT_TYPE_LABELS[candidate]}
-                </Text>
-              </Pressable>
-            );
-          })}
+              const selected = candidate === type;
+              return (
+                <Pressable
+                  key={candidate}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  onPress={() => setType(candidate)}
+                  style={{
+                    minHeight: 44,
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: selected ? palette.primary : palette.border,
+                    borderRadius: 22,
+                    backgroundColor: selected ? palette.primarySoft : palette.surface,
+                    paddingHorizontal: 14,
+                  }}
+                >
+                  <Text style={{ color: selected ? palette.primary : palette.text, fontWeight: "800" }}>
+                    {SHIFT_TYPE_LABELS[candidate]}
+                  </Text>
+                </Pressable>
+              );
+            })}
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <Field
-            autoCapitalize="none"
-            label="Beginn (HH:MM)"
-            maxLength={5}
-            onChangeText={setStartTime}
-            value={startTime}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Field
-            autoCapitalize="none"
-            label="Ende (HH:MM)"
-            maxLength={5}
-            onChangeText={setEndTime}
-            value={endTime}
-          />
-        </View>
-      </View>
-
-      <View style={{ flexDirection: "row", gap: 12 }}>
-        <View style={{ flex: 1 }}>
+      <View style={{ gap: 10 }}>
+        <SectionHeader title="Standardwerte" />
+        <SurfaceCard style={{ gap: 14, padding: 16 }}>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
+            <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
+          </View>
           <Field
             keyboardType="number-pad"
             label="Pause in Minuten"
             onChangeText={setBreakMinutes}
             value={breakMinutes}
           />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Field
-            autoCapitalize="characters"
-            label="Kürzel"
-            maxLength={4}
-            onChangeText={setSymbol}
-            value={symbol}
-          />
-        </View>
+        </SurfaceCard>
       </View>
-
-      <ColorPicker onChange={setColor} value={color} />
 
       {error ? (
         <Text accessibilityRole="alert" selectable style={{ color: palette.danger, fontWeight: "700" }}>
@@ -155,6 +150,11 @@ export function TemplateEditorScreen() {
       <PrimaryButton disabled={saving} onPress={() => void submit()}>
         {saving ? "Wird gespeichert …" : "Vorlage speichern"}
       </PrimaryButton>
+      {existing ? (
+        <PrimaryButton danger disabled={saving} onPress={confirmArchive}>
+          Vorlage archivieren
+        </PrimaryButton>
+      ) : null}
     </ScrollView>
   );
 }

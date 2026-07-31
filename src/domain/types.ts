@@ -250,6 +250,7 @@ export interface PremiumLine {
   readonly label: string;
   readonly minutes: number;
   readonly percentage: number;
+  readonly hourlyRate: number;
   readonly amount: number;
 }
 
@@ -280,6 +281,8 @@ export interface MonthlyPayEstimate {
   readonly timePremiumAmount: number;
   readonly overtimeAmount: number;
   readonly allowanceAmount: number;
+  readonly tvoedAllowanceAmount: number;
+  readonly careAllowanceAmount: number;
   readonly estimatedGrossAmount: number | null;
   readonly assessment: TvoedAssessment;
   readonly confirmedAllowance: AllowanceStatus | null;
@@ -295,4 +298,45 @@ export interface SaveAppointmentInput {
   readonly endTime?: string | null;
   readonly color: string;
   readonly note?: string | null;
+}
+
+export const TEST_SCENARIOS = [
+  "NORMAL_ROTATION",
+  "PREMIUM_MONTH",
+  "COMPLIANCE_CASES",
+  "UI_STRESS",
+] as const;
+
+export type TestScenario = (typeof TEST_SCENARIOS)[number];
+export type TestRange = 1 | 3 | 12;
+
+export interface TestRunRequest {
+  readonly startMonth: string;
+  readonly range: TestRange;
+  readonly scenario: TestScenario;
+}
+
+export interface TestRunPreview {
+  readonly request: TestRunRequest;
+  readonly months: readonly string[];
+  readonly existingEntryCount: number;
+  readonly plannedShiftCount: number;
+  readonly plannedAppointmentCount: number;
+  readonly plannedDecisionCount: number;
+  readonly backedUpMonths: readonly string[];
+  readonly warnings: readonly string[];
+}
+
+export interface TestRunResult {
+  readonly runId: string;
+  readonly months: readonly string[];
+  readonly shiftCount: number;
+  readonly appointmentCount: number;
+}
+
+export interface TestBackupSummary {
+  readonly month: string;
+  readonly runId: string;
+  readonly createdAt: string;
+  readonly currentEntryCount: number;
 }

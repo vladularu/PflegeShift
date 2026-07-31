@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo, useRef } from "react";
 import {
   Pressable,
   Text,
@@ -8,315 +8,364 @@ import {
 } from "react-native";
 
 import type { CalendarEntry, UserProfile } from "@/domain/types";
+import { createVisibleMonthGrid, formatDateTitle, today } from "@/engine/calendar";
+import { calendarEntryPreview } from "@/features/calendar/calendar-display";
 import {
-  createVisibleMonthGrid,
-  formatDateTitle,
-  formatMonthTitle,
-  today,
-} from "@/engine/calendar";
+  calculateCalendarGridLayout,
+  type CalendarAnchorRect,
+} from "@/features/calendar/calendar-layout";
+import {
+  calendarEntryListsEqual,
+  calendarMonthEntriesEqual,
+  calendarSelectionTouchesMonth,
+} from "@/features/calendar/calendar-rendering";
+import { holidayShortLabel } from "@/features/calendar/holiday-label";
 import { holidayMapForMonth } from "@/engine/holidays";
-import { calculateMonthlyCompliance } from "@/engine/compliance";
-import { calculateMonthlySummary } from "@/engine/monthly-summary";
-import { MonthProgress } from "@/features/calendar/month-progress";
 import { usePalette } from "@/theme/palette";
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-const HEADER_HEIGHT = 96;
-const WEEKDAY_HEIGHT = 34;
+const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
 
-function EntryPill({
-  entry,
-  dimmed = false,
-}: {
-  readonly entry: CalendarEntry;
-  readonly dimmed?: boolean;
-}) {
-  return (
-    <View
-      accessibilityLabel={entry.title}
-      accessible
-      style={{
-        minHeight: 20,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 2,
-        overflow: "hidden",
-        borderRadius: 4,
-        backgroundColor: entry.color,
-        opacity: dimmed ? 0.62 : 1,
-        paddingHorizontal: 4,
-      }}
-    >
-      <Text
-        numberOfLines={1}
-        style={{ flex: 1, color: "#FFFFFF", fontSize: 10, fontWeight: "900" }}
-      >
-        {entry.kind === "SHIFT" ? `${entry.symbol} ${entry.title}` : `• ${entry.title}`}
-      </Text>
-    </View>
-  );
+type CalendarCell = ReturnType<typeof createVisibleMonthGrid>[number];
+
+interface DayCellProps {
+  readonly cell: CalendarCell;
+  readonly entries: readonly CalendarEntry[];
+  readonly holidayName?: string;
+  readonly isSelected: boolean;
+  readonly isToday: boolean;
+  readonly onOpenEntry: (entry: CalendarEntry) => void;
+  readonly onSelectDate: (date: string, anchor: CalendarAnchorRect) => void;
+  readonly stampMode: boolean;
 }
 
-export function MonthCard({
-  month,
-  entries,
-  profile,
-  pageHeight,
-  onSelectDate,
-  selectedDate,
+const EntryMark = memo(function EntryMark({
+  entry,
+  onPress,
 }: {
-  readonly month: string;
-  readonly entries: readonly CalendarEntry[];
-  readonly profile: UserProfile;
-  readonly pageHeight: number;
-  readonly onSelectDate: (
-    date: string,
-    anchor: { readonly x: number; readonly y: number },
-  ) => void;
-  readonly selectedDate: string | null;
+  readonly entry: CalendarEntry;
+  readonly onPress: (entry: CalendarEntry) => void;
 }) {
+  if (entry.kind === "APPOINTMENT") {
+    return (
+      <Pressable
+        accessibilityLabel={`${entry.title} bearbeiten`}
+        accessibilityRole="button"
+        onPress={(event) => {
+          event.stopPropagation();
+          onPress(entry);
+        }}
+        style={({ pressed }) => ({
+          height: 14,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 3,
+          opacity: pressed ? 0.55 : 1,
+          paddingHorizontal: 2,
+        })}
+      >
+        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: entry.color }} />
+        <Text numberOfLines={1} style={{ flex: 1, color: entry.color, fontSize: 9, fontWeight: "800" }}>
+          {entry.title}
+        </Text>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityLabel={`${entry.title} bearbeiten`}
+      accessibilityRole="button"
+      onPress={(event) => {
+        event.stopPropagation();
+        onPress(entry);
+      }}
+      style={({ pressed }) => ({
+        height: 15,
+        justifyContent: "center",
+        borderRadius: 4,
+        backgroundColor: entry.color,
+        opacity: pressed ? 0.65 : 1,
+        paddingHorizontal: 4,
+      })}
+    >
+      <Text numberOfLines={1} style={{ color: "#FFFFFF", fontSize: 9, fontWeight: "900" }}>
+        {entry.title}
+      </Text>
+    </Pressable>
+  );
+});
+
+const DayCell = memo(function DayCell({
+  cell,
+  entries,
+  holidayName,
+  isSelected,
+  isToday,
+  onOpenEntry,
+  onSelectDate,
+  stampMode,
+}: DayCellProps) {
   const palette = usePalette();
-  const { width } = useWindowDimensions();
-  const contentWidth = Math.min(width - 12, 820);
-  const grid = useMemo(() => createVisibleMonthGrid(month), [month]);
-  const weekCount = grid.length / 7;
-  const gridHeight = Math.max(360, pageHeight - 12 - 2 - HEADER_HEIGHT - WEEKDAY_HEIGHT);
-  const cellHeight = gridHeight / weekCount;
-  const visibleEntryCount = cellHeight >= 104 ? 3 : cellHeight >= 78 ? 2 : 1;
-  const visibleStart = grid[0]?.date ?? `${month}-01`;
-  const visibleEnd = grid.at(-1)?.date ?? `${month}-31`;
-  const visibleEntries = useMemo(
-    () =>
-      entries.filter(
-        (entry) => entry.date >= visibleStart && entry.date <= visibleEnd,
-      ),
-    [entries, visibleEnd, visibleStart],
-  );
-  const monthEntries = useMemo(
-    () => entries.filter((entry) => entry.date.startsWith(`${month}-`)),
-    [entries, month],
-  );
-  const byDate = useMemo(() => {
-    const map = new Map<string, CalendarEntry[]>();
-    for (const entry of visibleEntries) {
-      const existing = map.get(entry.date) ?? [];
-      existing.push(entry);
-      map.set(entry.date, existing);
+  const cellRef = useRef<View>(null);
+  const preview = useMemo(() => calendarEntryPreview(entries), [entries]);
+  const handlePress = (event: GestureResponderEvent) => {
+    const fallbackAnchor = {
+      x: event.nativeEvent.pageX - 24,
+      y: event.nativeEvent.pageY - 24,
+      width: 48,
+      height: 48,
+    };
+    if (cellRef.current === null) {
+      onSelectDate(cell.date, fallbackAnchor);
+      return;
     }
-    return map;
-  }, [visibleEntries]);
-  const holidays = useMemo(
-    () => holidayMapForMonth(month, profile.federalState),
-    [month, profile.federalState],
-  );
-  const summary = useMemo(
-    () =>
-      calculateMonthlySummary(
-        month,
-        monthEntries.filter((entry): entry is Extract<CalendarEntry, { kind: "SHIFT" }> => entry.kind === "SHIFT"),
-        profile,
-      ),
-    [month, monthEntries, profile],
-  );
-  const compliance = useMemo(
-    () =>
-      calculateMonthlyCompliance(
-        month,
-        entries.filter((entry): entry is Extract<CalendarEntry, { kind: "SHIFT" }> => entry.kind === "SHIFT"),
-        profile.timeZone,
-      ),
-    [entries, month, profile.timeZone],
-  );
-  const complianceDates = useMemo(
-    () => new Set(compliance.affectedDates),
-    [compliance.affectedDates],
-  );
-  const currentDate = today(profile.timeZone);
+    cellRef.current.measureInWindow((x, y, width, height) => {
+      onSelectDate(cell.date, { x, y, width, height });
+    });
+  };
 
   return (
     <View
+      ref={cellRef}
       style={{
-        height: pageHeight,
-        alignItems: "center",
-        backgroundColor: palette.background,
-        paddingVertical: 6,
+        flex: 1,
+        minWidth: 0,
+        backgroundColor: isSelected && stampMode
+          ? palette.primarySoft
+          : cell.weekend
+            ? `${palette.weekend}B8`
+            : "transparent",
+        opacity: cell.inMonth ? 1 : 0.3,
+        paddingHorizontal: 2,
+        paddingTop: 5,
       }}
     >
+      <Pressable
+      accessibilityLabel={`${formatDateTitle(cell.date)}, ${entries.length} Einträge${holidayName ? `, ${holidayName}` : ""}${isSelected ? ", ausgewählt" : ""}`}
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
+      onPress={handlePress}
+      style={({ pressed }) => ({
+        position: "absolute",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        backgroundColor: pressed ? palette.primarySoft : "transparent",
+      })}
+      />
       <View
-        style={{
-          width: contentWidth,
-          height: pageHeight - 12,
-          overflow: "hidden",
-          borderWidth: 1,
-          borderColor: palette.border,
-          borderRadius: 20,
-          borderCurve: "continuous",
-          backgroundColor: palette.surface,
-          boxShadow: palette.dark ? undefined : "0 4px 18px rgba(24,32,30,0.06)",
-        }}
+        pointerEvents="none"
+        style={{ height: 32, alignItems: "center", justifyContent: "flex-start" }}
       >
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: 12,
-            height: HEADER_HEIGHT,
-            paddingHorizontal: 16,
-            paddingVertical: 12,
+            width: 24,
+            height: 24,
+            alignItems: "center",
+            justifyContent: "center",
+            borderWidth: isSelected && !isToday ? 2 : 0,
+            borderColor: palette.primary,
+            borderRadius: 12,
+            backgroundColor: isToday ? palette.primary : "transparent",
           }}
         >
           <Text
-            selectable
             style={{
-              flexShrink: 1,
-              color: palette.text,
-              fontSize: 25,
+              color: isToday ? palette.onPrimary : cell.inMonth ? palette.text : palette.textMuted,
+              fontSize: 13,
+              fontWeight: isToday || isSelected ? "900" : "700",
+              fontVariant: ["tabular-nums"],
+            }}
+        >
+            {cell.day}
+          </Text>
+        </View>
+        {holidayName ? (
+          <Text
+            numberOfLines={1}
+            style={{
+              position: "absolute",
+              right: 1,
+              bottom: 0,
+              left: 1,
+              color: palette.warning,
+              fontSize: 7,
               fontWeight: "900",
-              letterSpacing: -0.7,
-              paddingBottom: 4,
+              lineHeight: 8,
+              textAlign: "center",
             }}
           >
-            {formatMonthTitle(month)}
+            {holidayShortLabel(holidayName)}
           </Text>
-          <MonthProgress summary={summary} />
-        </View>
-
-        <View style={{ height: WEEKDAY_HEIGHT, flexDirection: "row", backgroundColor: palette.outsideMonth }}>
-          {WEEKDAYS.map((weekday) => (
-            <View key={weekday} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "800" }}>{weekday}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={{ height: gridHeight, flexDirection: "row", flexWrap: "wrap" }}>
-          {grid.map((cell) => {
-            const dayEntries = byDate.get(cell.date) ?? [];
-            const holiday = holidays.get(cell.date);
-            const isToday = cell.date === currentDate;
-            const isSelected = cell.date === selectedDate;
-            const hasComplianceIssue = complianceDates.has(cell.date);
-            return (
-              <Pressable
-                key={cell.date}
-                accessibilityLabel={
-                  `${formatDateTitle(cell.date)}, ${dayEntries.length} Einträge${holiday ? `, ${holiday.name}` : ""}`
-                }
-                accessibilityRole="button"
-                onPress={(event: GestureResponderEvent) =>
-                  onSelectDate(cell.date, {
-                    x: event.nativeEvent.pageX,
-                    y: event.nativeEvent.pageY,
-                  })
-                }
-                style={({ pressed }) => ({
-                  width: "14.285714%",
-                  height: cellHeight,
-                  gap: 3,
-                  borderTopWidth: 1,
-                  borderRightWidth: 1,
-                  borderColor: palette.border,
-                  backgroundColor: isSelected
-                    ? palette.primarySoft
-                    : !cell.inMonth
-                      ? palette.outsideMonth
-                      : cell.weekend
-                        ? palette.weekend
-                        : palette.surface,
-                  opacity: pressed ? 0.7 : cell.inMonth ? 1 : 0.82,
-                  paddingHorizontal: 3,
-                  paddingTop: 5,
-                })}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 2 }}>
-                  <View
-                    style={{
-                      minWidth: 28,
-                      height: 28,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: 14,
-                      backgroundColor: isToday ? palette.primary : "transparent",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: isToday
-                          ? palette.dark
-                            ? "#10221D"
-                            : "#FFFFFF"
-                          : cell.inMonth
-                            ? palette.text
-                            : palette.textMuted,
-                        fontSize: 13,
-                        fontWeight: isToday ? "900" : cell.inMonth ? "700" : "600",
-                        fontVariant: ["tabular-nums"],
-                      }}
-                    >
-                      {cell.day}
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: "row", gap: 3 }}>
-                    {hasComplianceIssue ? (
-                      <View
-                        accessibilityLabel="ArbZG-Hinweis"
-                        style={{
-                          width: 7,
-                          height: 7,
-                          borderRadius: 4,
-                          backgroundColor: "#F2A93B",
-                        }}
-                      />
-                    ) : null}
-                    {holiday ? (
-                      <View
-                        style={{
-                          width: 7,
-                          height: 7,
-                          borderRadius: 4,
-                          backgroundColor: palette.danger,
-                        }}
-                      />
-                    ) : null}
-                  </View>
-                </View>
-                {dayEntries.slice(0, visibleEntryCount).map((entry) => (
-                  <EntryPill
-                    key={`${entry.kind}-${entry.id}`}
-                    dimmed={!cell.inMonth}
-                    entry={entry}
-                  />
-                ))}
-                {dayEntries.length > visibleEntryCount ? (
-                  <Text
-                    style={{
-                      color: palette.textMuted,
-                      fontSize: 9,
-                      fontWeight: "800",
-                      textAlign: "center",
-                    }}
-                  >
-                    +{dayEntries.length - visibleEntryCount}
-                  </Text>
-                ) : holiday && dayEntries.length === 0 && cell.inMonth ? (
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      color: palette.danger,
-                      fontSize: 9,
-                      fontWeight: "700",
-                      paddingHorizontal: 2,
-                    }}
-                  >
-                    {holiday.name}
-                  </Text>
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </View>
+        ) : null}
+      </View>
+      <View pointerEvents="box-none" style={{ gap: 1 }}>
+        {preview.entries.map((entry) => (
+          <EntryMark
+            key={`${entry.kind}-${entry.id}`}
+            entry={entry}
+            onPress={onOpenEntry}
+          />
+        ))}
+        {preview.overflowCount > 0 ? (
+          <Text style={{ color: palette.textMuted, fontSize: 8, fontWeight: "800", textAlign: "center" }}>
+            +{preview.overflowCount}
+          </Text>
+        ) : null}
       </View>
     </View>
   );
+}, (previous, next) => (
+  previous.cell === next.cell &&
+  calendarEntryListsEqual(previous.entries, next.entries) &&
+  previous.holidayName === next.holidayName &&
+  previous.isSelected === next.isSelected &&
+  previous.isToday === next.isToday &&
+  previous.onOpenEntry === next.onOpenEntry &&
+  previous.onSelectDate === next.onSelectDate &&
+  previous.stampMode === next.stampMode
+));
+
+interface MonthCardProps {
+  readonly month: string;
+  readonly entriesByDate: ReadonlyMap<string, readonly CalendarEntry[]>;
+  readonly profile: UserProfile;
+  readonly pageHeight: number;
+  readonly bottomReserve: number;
+  readonly onOpenEntry: (entry: CalendarEntry) => void;
+  readonly onSelectDate: (date: string, anchor: CalendarAnchorRect) => void;
+  readonly selectedDate: string | null;
+  readonly stampMode?: boolean;
+  readonly showHolidays?: boolean;
+  readonly testData?: boolean;
 }
+
+function monthCardPropsEqual(
+  previous: MonthCardProps,
+  next: MonthCardProps,
+): boolean {
+  if (
+    previous.month !== next.month ||
+    previous.profile !== next.profile ||
+    previous.pageHeight !== next.pageHeight ||
+    previous.bottomReserve !== next.bottomReserve ||
+    previous.onOpenEntry !== next.onOpenEntry ||
+    previous.onSelectDate !== next.onSelectDate ||
+    previous.stampMode !== next.stampMode ||
+    previous.showHolidays !== next.showHolidays ||
+    previous.testData !== next.testData
+  ) {
+    return false;
+  }
+  if (
+    previous.selectedDate !== next.selectedDate &&
+    calendarSelectionTouchesMonth(
+      next.month,
+      previous.selectedDate,
+      next.selectedDate,
+    )
+  ) {
+    return false;
+  }
+  return calendarMonthEntriesEqual(
+    next.month,
+    previous.entriesByDate,
+    next.entriesByDate,
+  );
+}
+
+export const MonthCard = memo(function MonthCard({
+  month,
+  entriesByDate,
+  profile,
+  pageHeight,
+  bottomReserve,
+  onOpenEntry,
+  onSelectDate,
+  selectedDate,
+  stampMode = false,
+  showHolidays = true,
+  testData = false,
+}: MonthCardProps) {
+  const palette = usePalette();
+  const { width } = useWindowDimensions();
+  const grid = useMemo(() => createVisibleMonthGrid(month), [month]);
+  const holidays = useMemo(
+    () => showHolidays ? holidayMapForMonth(month, profile.federalState) : new Map(),
+    [month, profile.federalState, showHolidays],
+  );
+  const currentDate = today(profile.timeZone);
+  const weekCount = grid.length / 7;
+  const contentWidth = Math.min(width, 760);
+  const gridLayout = calculateCalendarGridLayout({
+    pageHeight,
+    weekCount,
+    bottomReserve,
+    testData,
+  });
+  const weeks = Array.from(
+    { length: weekCount },
+    (_, index) => grid.slice(index * 7, index * 7 + 7),
+  );
+
+  return (
+    <View style={{ height: pageHeight, alignItems: "center", backgroundColor: palette.background }}>
+      <View
+        style={{
+          width: contentWidth - 12,
+          overflow: "hidden",
+          borderWidth: 1,
+          borderColor: palette.separator,
+          borderRadius: 22,
+          borderCurve: "continuous",
+          backgroundColor: palette.surface,
+          boxShadow: `0 3px 16px ${palette.shadow}`,
+          marginHorizontal: 6,
+          marginTop: 2,
+        }}
+      >
+        {testData ? (
+          <Text style={{ color: palette.primary, fontSize: 10, fontWeight: "900", letterSpacing: 0.8, paddingHorizontal: 12, paddingTop: 8 }}>
+            TESTDATEN
+          </Text>
+        ) : null}
+        <View style={{ height: 40, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: palette.separator }}>
+          {WEEKDAYS.map((weekday, index) => (
+            <View key={weekday} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: index >= 5 ? palette.textMuted : palette.textSecondary, fontSize: 12, fontWeight: "800" }}>
+                {weekday}
+              </Text>
+            </View>
+          ))}
+        </View>
+        {weeks.map((week, weekIndex) => (
+          <View
+            key={week[0].date}
+            style={{
+              height: gridLayout.rowHeight,
+              flexDirection: "row",
+              borderTopWidth: weekIndex === 0 ? 0 : 1,
+              borderTopColor: palette.separator,
+            }}
+          >
+            {week.map((cell) => (
+              <DayCell
+                key={cell.date}
+                cell={cell}
+                entries={entriesByDate.get(cell.date) ?? EMPTY_ENTRIES}
+                holidayName={holidays.get(cell.date)?.name}
+                isSelected={selectedDate !== null && cell.date === selectedDate}
+                isToday={cell.date === currentDate}
+                onOpenEntry={onOpenEntry}
+                onSelectDate={onSelectDate}
+                stampMode={stampMode}
+              />
+            ))}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}, monthCardPropsEqual);

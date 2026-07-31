@@ -1,30 +1,59 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
-import { useMemo, useState, type ReactNode } from "react";
+import { startTransition, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Pressable,
   ScrollView,
   Text,
   View,
-  useWindowDimensions,
 } from "react-native";
+import Svg, { Circle, G } from "react-native-svg";
 
-import { useMediShift } from "@/application/medishift-provider";
+import {
+  useMediShiftEntries,
+  useMediShiftProfile,
+  useMediShiftStatus,
+  useMediShiftTariff,
+  useMediShiftTestData,
+} from "@/application/medishift-provider";
 import {
   ALLOWANCE_STATUSES,
+  SHIFT_TYPE_LABELS,
   type AllowanceStatus,
   type ShiftEntry,
+  type ShiftType,
 } from "@/domain/types";
 import { currentMonth, formatDateTitle, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import { formatMinutes } from "@/engine/working-time";
-import { usePalette } from "@/theme/palette";
+import { calculateMonthlySummary } from "@/engine/monthly-summary";
+import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
+import {
+  selectAnalysisEntryWindow,
+  type AnalysisEntryWindow,
+} from "@/features/analysis/analysis-data";
+import { buildAnnualReport } from "@/features/analysis/annual-report";
+import {
+  AnalysisPeriodPicker,
+  AnnualReportScreen,
+  type AnalysisPeriod,
+} from "@/features/analysis/annual-report-view";
+import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
+import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
 
-type Detail = "PAY" | "COMPLIANCE" | "ALLOWANCE" | null;
+type Detail = "COMPLIANCE" | "ALLOWANCE" | null;
+
+const EMPTY_ANALYSIS_WINDOW: AnalysisEntryWindow = Object.freeze({
+  monthEntries: Object.freeze([]),
+  monthShifts: Object.freeze([]),
+  complianceShifts: Object.freeze([]),
+  allowanceShifts: Object.freeze([]),
+});
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   NONE: "Keine Zulage",
@@ -34,56 +63,117 @@ const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   ALTERNATING_HOURLY: "Nichtständige Wechselschicht",
 };
 
-function euro(value: number | null): string {
-  if (value === null) return "–";
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value);
-}
-
-function shiftEntries(entries: ReturnType<typeof useMediShift>["entries"]): ShiftEntry[] {
-  return entries.filter((entry): entry is ShiftEntry => entry.kind === "SHIFT");
-}
-
 export function AnalysisScreen() {
   const palette = usePalette();
-  const { width } = useWindowDimensions();
-  const {
-    ready,
-    profile,
-    entries,
-    tariffDecisions,
-    upsertTariffDecision,
-  } = useMediShift();
+  const isFocused = useIsFocused();
+  const params = useLocalSearchParams<{ month?: string }>();
+  const { ready } = useMediShiftStatus();
+  const { profile } = useMediShiftProfile();
+  const { entries } = useMediShiftEntries();
+  const { tariffDecisions, upsertTariffDecision } = useMediShiftTariff();
+  const { testMonths } = useMediShiftTestData();
   const [month, setMonth] = useState(currentMonth);
+  const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
+  const [year, setYear] = useState(() => Number(currentMonth().slice(0, 4)));
   const [detail, setDetail] = useState<Detail>(null);
   const [saving, setSaving] = useState(false);
 
-  const shifts = useMemo(() => shiftEntries(entries), [entries]);
+  useEffect(() => {
+    if (typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)) {
+      setMonth(params.month);
+      setDetail(null);
+    }
+  }, [params.month]);
+
+  const {
+    monthEntries,
+    monthShifts,
+    complianceShifts,
+    allowanceShifts,
+  } = useMemo(
+    () => isFocused
+      ? selectAnalysisEntryWindow(entries, month)
+      : EMPTY_ANALYSIS_WINDOW,
+    [entries, isFocused, month],
+  );
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const compliance = useMemo(
     () => profile
-      ? calculateMonthlyCompliance(month, shifts, profile.timeZone)
+      ? calculateMonthlyCompliance(month, complianceShifts, profile.timeZone)
       : null,
-    [month, profile, shifts],
+    [complianceShifts, month, profile],
   );
   const pay = useMemo(
     () => profile
-      ? calculateMonthlyPayEstimate(month, shifts, profile, decision)
+      ? calculateMonthlyPayEstimate(
+        month,
+        monthShifts,
+        profile,
+        decision,
+        allowanceShifts,
+      )
       : null,
-    [decision, month, profile, shifts],
+    [allowanceShifts, decision, month, monthShifts, profile],
+  );
+  const summary = useMemo(
+    () => profile ? calculateMonthlySummary(month, monthShifts, profile) : null,
+    [month, monthShifts, profile],
+  );
+  const distribution = useMemo(
+    () => buildShiftTypeDistribution(month, monthEntries),
+    [month, monthEntries],
+  );
+  const annualReport = useMemo(
+    () => isFocused && period === "YEAR" && profile
+      ? buildAnnualReport(year, entries, profile, tariffDecisions)
+      : null,
+    [entries, isFocused, period, profile, tariffDecisions, year],
   );
 
-  if (!ready || profile === null || compliance === null || pay === null) {
+  if (
+    !ready ||
+    profile === null ||
+    compliance === null ||
+    pay === null ||
+    summary === null
+  ) {
     return <LoadingView />;
   }
 
-  function moveMonth(delta: number) {
-    setMonth(
-      Temporal.PlainDate.from(`${month}-01`).add({ months: delta }).toString().slice(0, 7),
+  function changePeriod(nextPeriod: AnalysisPeriod) {
+    setPeriod(nextPeriod);
+    if (nextPeriod === "YEAR") setYear(Number(month.slice(0, 4)));
+    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+  }
+
+  function selectAnnualMonth(nextMonth: string) {
+    startTransition(() => {
+      setMonth(nextMonth);
+      setPeriod("MONTH");
+      setDetail(null);
+    });
+  }
+
+  if (period === "YEAR") {
+    if (annualReport === null) return <LoadingView />;
+    return (
+      <AnnualReportScreen
+        report={annualReport}
+        testMonths={testMonths}
+        onChangePeriod={changePeriod}
+        onMoveYear={(delta) => setYear((current) => current + delta)}
+        onSelectMonth={selectAnnualMonth}
+      />
     );
-    setDetail(null);
+  }
+
+  function moveMonth(delta: number) {
+    startTransition(() => {
+      setMonth(
+        Temporal.PlainDate.from(`${month}-01`).add({ months: delta }).toString().slice(0, 7),
+      );
+      setDetail(null);
+    });
   }
 
   function openDetail(nextDetail: Exclude<Detail, null>) {
@@ -109,20 +199,17 @@ export function AnalysisScreen() {
     }
   }
 
-  const workMinutes = pay.shiftBreakdowns.reduce((sum, item) => sum + item.netMinutes, 0);
-  const extras = pay.timePremiumAmount + pay.overtimeAmount + pay.allowanceAmount;
   const complianceIsClear = compliance.criticalCount === 0 && compliance.warningCount === 0;
   const allowanceTitle = decision
     ? ALLOWANCE_LABELS[decision.allowanceStatus]
-    : "Noch nicht bestätigt";
-  const cardDirection = width >= 430 ? "row" : "column";
-
+    : `${ALLOWANCE_LABELS[pay.assessment.suggestedAllowance]} · automatisch`;
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 14, padding: 16, paddingBottom: 48 }}
+      contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 48 }}
     >
+      <AnalysisPeriodPicker value={period} onChange={changePeriod} />
       <View
         style={{
           minHeight: 48,
@@ -137,85 +224,32 @@ export function AnalysisScreen() {
         </Text>
         <MonthButton direction="forward" onPress={() => moveMonth(1)} />
       </View>
+      {testMonths.includes(month) ? (
+        <View style={{ alignSelf: "center", borderRadius: 999, backgroundColor: palette.primarySoft, paddingHorizontal: 10, paddingVertical: 5 }}>
+          <Text style={{ color: palette.primary, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>TESTDATEN</Text>
+        </View>
+      ) : null}
 
-      {profile.tariff === null ? (
-        <SetupCard />
-      ) : (
-        <>
-          <View
-            style={{
-              gap: 18,
-              borderRadius: 28,
-              borderCurve: "continuous",
-              backgroundColor: palette.dark ? "#19352E" : "#1E6D5D",
-              boxShadow: "0 10px 28px rgba(20, 76, 64, 0.18)",
-              padding: 22,
-            }}
-          >
-            <View style={{ gap: 6 }}>
-              <Text
-                selectable
-                style={{
-                  color: "#B9E4D8",
-                  fontSize: 11,
-                  fontWeight: "800",
-                  letterSpacing: 1.1,
-                }}
-              >
-                BRUTTO GESCHÄTZT
-              </Text>
-              <Text
-                selectable
-                adjustsFontSizeToFit
-                numberOfLines={1}
-                style={{
-                  color: "#FFFFFF",
-                  fontSize: 38,
-                  fontWeight: "900",
-                  fontVariant: ["tabular-nums"],
-                  letterSpacing: -1,
-                }}
-              >
-                {euro(pay.estimatedGrossAmount)}
-              </Text>
-            </View>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <MetricCard compact label="Soll" value={formatMinutes(summary.targetMinutes)} />
+        <MetricCard compact label="Ist" value={formatMinutes(summary.actualMinutes)} />
+        <MetricCard
+          compact
+          accent={summary.balanceMinutes < 0 ? palette.danger : palette.success}
+          label="Saldo"
+          value={formatSignedMinutes(summary.balanceMinutes)}
+        />
+      </View>
 
-            <View style={{ flexDirection: "row", gap: 20 }}>
-              <HeroValue label="Grundentgelt" value={euro(pay.personalBaseAmount)} />
-              <View style={{ width: 1, backgroundColor: "rgba(255,255,255,0.16)" }} />
-              <HeroValue label="Zuschläge" value={euro(extras)} />
-              <View style={{ width: 1, backgroundColor: "rgba(255,255,255,0.16)" }} />
-              <HeroValue label="Arbeitszeit" value={formatMinutes(workMinutes)} />
-            </View>
-
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => openDetail("PAY")}
-              style={({ pressed }) => ({
-                minHeight: 42,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderRadius: 14,
-                backgroundColor: "rgba(255,255,255,0.11)",
-                opacity: pressed ? 0.72 : 1,
-                paddingHorizontal: 14,
-              })}
-            >
-              <Text style={{ color: "#FFFFFF", fontSize: 13, fontWeight: "800" }}>
-                {detail === "PAY" ? "Details schließen" : "Berechnung ansehen"}
-              </Text>
-              <Text style={{ color: "#B9E4D8", fontSize: 20 }}>
-                {detail === "PAY" ? "−" : "›"}
-              </Text>
-            </Pressable>
-          </View>
-
-          {detail === "PAY" ? (
-            <PayDetails pay={pay} />
-          ) : null}
-
-          <View style={{ flexDirection: cardDirection, gap: 10 }}>
+      <View
+        style={{
+          overflow: "hidden",
+          borderRadius: 20,
+          borderCurve: "continuous",
+          backgroundColor: palette.surface,
+          boxShadow: palette.dark ? undefined : "0 4px 16px rgba(28, 48, 42, 0.05)",
+        }}
+      >
             <StatusCard
               accent={complianceIsClear ? palette.primary : compliance.criticalCount > 0 ? palette.danger : "#D48A18"}
               icon={complianceIsClear ? "checkmark.shield.fill" : "exclamationmark.shield.fill"}
@@ -229,152 +263,113 @@ export function AnalysisScreen() {
               active={detail === "COMPLIANCE"}
               onPress={() => openDetail("COMPLIANCE")}
             />
+            <View style={{ height: 1, marginLeft: 60, backgroundColor: palette.separator }} />
             <StatusCard
               accent={decision ? palette.primary : "#D48A18"}
               icon={decision ? "checkmark.seal.fill" : "sparkles"}
               fallback={decision ? "✓" : "·"}
-              label="TVöD-Zulage"
+              label="Schichtzulage"
               title={allowanceTitle}
               active={detail === "ALLOWANCE"}
               onPress={() => openDetail("ALLOWANCE")}
             />
-          </View>
+      </View>
 
-          {detail === "COMPLIANCE" ? (
-            <ComplianceDetails compliance={compliance} />
-          ) : detail === "ALLOWANCE" ? (
-            <AllowanceDetails
-              decision={decision?.allowanceStatus ?? null}
-              suggested={pay.assessment.suggestedAllowance}
-              evidence={pay.assessment.evidence}
-              saving={saving}
-              onConfirm={(status) => void confirmAllowance(status)}
-            />
-          ) : null}
+      {detail === "COMPLIANCE" ? (
+        <ComplianceDetails compliance={compliance} shifts={complianceShifts} />
+      ) : detail === "ALLOWANCE" ? (
+        <AllowanceDetails
+          decision={decision?.allowanceStatus ?? null}
+          suggested={pay.assessment.suggestedAllowance}
+          evidence={pay.assessment.evidence}
+          saving={saving}
+          onConfirm={(status) => void confirmAllowance(status)}
+        />
+      ) : null}
 
-          <Text
-            selectable
-            style={{
-              color: palette.textMuted,
-              fontSize: 10,
-              lineHeight: 15,
-              paddingHorizontal: 6,
-              textAlign: "center",
-            }}
-          >
-            Unverbindliche Schätzung · keine Lohnabrechnung oder Rechtsberatung
-          </Text>
-        </>
-      )}
+      <Text
+        selectable
+        style={{
+          color: palette.textMuted,
+          fontSize: 10,
+          lineHeight: 15,
+          paddingHorizontal: 6,
+          textAlign: "center",
+        }}
+      >
+        Automatische Prüfung · keine Rechtsberatung
+      </Text>
+
+      <View style={{ gap: 10 }}>
+        <SectionHeader title="Dienstverteilung" caption="Termine werden nicht als Arbeitszeit gezählt." />
+        <DistributionChart distribution={distribution} />
+      </View>
     </ScrollView>
   );
 }
 
-function SetupCard() {
+function DistributionChart({ distribution }: { readonly distribution: ReadonlyMap<ShiftType, number> }) {
   const palette = usePalette();
+  const items = [...distribution.entries()].filter(([, count]) => count > 0);
+  const total = items.reduce((sum, [, count]) => sum + count, 0);
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
   return (
-    <Card>
-      <StatusIcon
-        accent={palette.primary}
-        fallback="P"
-        icon="person.crop.circle.badge.plus"
-      />
-      <View style={{ gap: 5 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 20, fontWeight: "900" }}>
-          Gehalt aktivieren
-        </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 13, lineHeight: 19 }}>
-          Hinterlege einmal Gruppe, Stufe und Bereich.
-        </Text>
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push("/more")}
-        style={({ pressed }) => ({
-          minHeight: 48,
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 15,
-          backgroundColor: palette.primary,
-          opacity: pressed ? 0.75 : 1,
-        })}
-      >
-        <Text style={{ color: palette.dark ? "#10221D" : "#FFFFFF", fontWeight: "900" }}>
-          Tarifprofil einrichten
-        </Text>
-      </Pressable>
-    </Card>
-  );
-}
-
-function PayDetails({
-  pay,
-}: {
-  readonly pay: ReturnType<typeof calculateMonthlyPayEstimate>;
-}) {
-  const palette = usePalette();
-  const premiumShifts = pay.shiftBreakdowns.filter((item) => item.totalAmount > 0);
-  return (
-    <Card>
-      <View style={{ gap: 3 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>
-          Zusammensetzung
-        </Text>
-        <Text selectable numberOfLines={1} style={{ color: palette.textMuted, fontSize: 11 }}>
-          {pay.tariffLabel ?? "Tarifstand nicht verfügbar"}
-        </Text>
-      </View>
-      <ValueRow label="Grundentgelt" value={euro(pay.personalBaseAmount)} />
-      <ValueRow label="Zeitzuschläge" value={euro(pay.timePremiumAmount)} />
-      {pay.overtimeAmount > 0 ? (
-        <ValueRow label="Überstunden" value={euro(pay.overtimeAmount)} />
-      ) : null}
-      {pay.allowanceAmount > 0 ? (
-        <ValueRow label="Schichtzulage" value={euro(pay.allowanceAmount)} />
-      ) : null}
-      {premiumShifts.length > 0 ? (
-        <View style={{ gap: 2, paddingTop: 4 }}>
-          {premiumShifts.map((item) => (
-            <Pressable
-              key={item.shiftId}
-              accessibilityRole="button"
-              onPress={() => router.push({ pathname: "/day-editor", params: { date: item.date } })}
-              style={({ pressed }) => ({
-                minHeight: 48,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderTopWidth: 1,
-                borderTopColor: palette.border,
-                opacity: pressed ? 0.65 : 1,
-                paddingVertical: 8,
-              })}
-            >
-              <View style={{ gap: 2 }}>
-                <Text selectable style={{ color: palette.text, fontWeight: "800" }}>
-                  {formatDateTitle(item.date)}
-                </Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 11 }}>
-                  {item.premiumLines.map((line) => line.label).join(" · ") || "Überstunden"}
-                </Text>
-              </View>
-              <Text selectable style={{ color: palette.primary, fontWeight: "900" }}>
-                + {euro(item.totalAmount)}
-              </Text>
-            </Pressable>
-          ))}
+    <SurfaceCard style={{ minHeight: 190, flexDirection: "row", alignItems: "center", gap: 20, padding: 18 }}>
+      <View accessibilityLabel={`${total} Schichten insgesamt`} accessible>
+        <Svg height={112} width={112} viewBox="0 0 112 112">
+          <Circle cx={56} cy={56} fill="none" r={radius} stroke={palette.surfaceMuted} strokeWidth={16} />
+          <G rotation="-90" origin="56,56">
+            {items.map(([type, count]) => {
+              const length = total === 0 ? 0 : (count / total) * circumference;
+              const element = (
+                <Circle
+                  key={type}
+                  cx={56}
+                  cy={56}
+                  fill="none"
+                  r={radius}
+                  stroke={SHIFT_TYPE_COLORS[type]}
+                  strokeDasharray={`${length} ${circumference - length}`}
+                  strokeDashoffset={-offset}
+                  strokeWidth={16}
+                />
+              );
+              offset += length;
+              return element;
+            })}
+          </G>
+        </Svg>
+        <View style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+          <Text style={{ color: palette.text, fontSize: 24, fontWeight: "900", fontVariant: ["tabular-nums"] }}>{total}</Text>
+          <Text style={{ color: palette.textMuted, fontSize: 10 }}>Gesamt</Text>
         </View>
-      ) : null}
-    </Card>
+      </View>
+      <View style={{ flex: 1, gap: 8 }}>
+        {items.length === 0 ? (
+          <Text style={{ color: palette.textMuted, fontSize: 13 }}>Noch keine Schichten in diesem Monat.</Text>
+        ) : items.map(([type, count]) => (
+          <View key={type} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
+            <Text style={{ flex: 1, color: palette.textSecondary, fontSize: 12 }}>{SHIFT_TYPE_LABELS[type]}</Text>
+            <Text style={{ color: palette.text, fontSize: 12, fontWeight: "800", fontVariant: ["tabular-nums"] }}>{count}</Text>
+          </View>
+        ))}
+      </View>
+    </SurfaceCard>
   );
 }
 
 function ComplianceDetails({
   compliance,
+  shifts,
 }: {
   readonly compliance: ReturnType<typeof calculateMonthlyCompliance>;
+  readonly shifts: readonly ShiftEntry[];
 }) {
   const palette = usePalette();
+  const [expandedIssueId, setExpandedIssueId] = useState<string | null>(null);
   if (compliance.issues.length === 0) {
     return (
       <Card>
@@ -387,43 +382,76 @@ function ComplianceDetails({
   return (
     <Card>
       <Text selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>
-        Hinweise
+        Prüfung
       </Text>
-      {compliance.issues.map((item) => (
-        <Pressable
-          key={item.id}
-          accessibilityRole="button"
-          onPress={() => router.push({ pathname: "/day-editor", params: { date: item.date } })}
-          style={({ pressed }) => ({
-            minHeight: 58,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 11,
-            borderTopWidth: 1,
-            borderTopColor: palette.border,
-            opacity: pressed ? 0.65 : 1,
-            paddingVertical: 10,
-          })}
-        >
-          <View
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: item.severity === "critical" ? palette.danger : "#D48A18",
-            }}
-          />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text selectable style={{ color: palette.text, fontWeight: "800" }}>
-              {item.title}
-            </Text>
-            <Text selectable style={{ color: palette.textMuted, fontSize: 11 }}>
-              {formatDateTitle(item.date)} · {item.kind === "LEGAL" ? "ArbZG" : "Planung"}
-            </Text>
+      {compliance.issues.map((item) => {
+        const expanded = expandedIssueId === item.id;
+        const relatedShifts = shifts.filter((shift) => item.relatedShiftIds.includes(shift.id));
+        return (
+          <View key={item.id} style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded }}
+              onPress={() => setExpandedIssueId((current) => current === item.id ? null : item.id)}
+              style={({ pressed }) => ({
+                minHeight: 58,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 11,
+                backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+                opacity: pressed ? 0.72 : 1,
+                paddingVertical: 10,
+              })}
+            >
+              <View
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: item.severity === "critical" ? palette.danger : "#D48A18",
+                }}
+              />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text selectable style={{ color: palette.text, fontWeight: "800" }}>
+                  {item.title}
+                </Text>
+                <Text selectable style={{ color: palette.textMuted, fontSize: 11 }}>
+                  {formatDateTitle(item.date)} · {item.kind === "LEGAL" ? "ArbZG" : "Planung"}
+                </Text>
+              </View>
+              <Text style={{ color: palette.textMuted, fontSize: 18 }}>{expanded ? "⌃" : "⌄"}</Text>
+            </Pressable>
+            {expanded ? (
+              <View
+                style={{
+                  gap: 10,
+                  borderRadius: 14,
+                  backgroundColor: palette.surfaceMuted,
+                  marginBottom: 10,
+                  padding: 12,
+                }}
+              >
+                <Text selectable style={{ color: palette.textSecondary, fontSize: 12, lineHeight: 18 }}>
+                  {item.description}
+                </Text>
+                {relatedShifts.map((shift) => (
+                  <View key={shift.id} style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+                    <Text selectable numberOfLines={1} style={{ minWidth: 0, flex: 1, color: palette.text, fontSize: 12, fontWeight: "800" }}>
+                      {shift.title}
+                    </Text>
+                    <Text selectable style={{ color: palette.textMuted, fontSize: 11, fontVariant: ["tabular-nums"] }}>
+                      {formatDateTitle(shift.date)} · {shift.startTime ?? "ganztägig"}{shift.endTime ? `–${shift.endTime}` : ""}
+                    </Text>
+                  </View>
+                ))}
+                <Text selectable style={{ color: palette.textMuted, fontSize: 9 }}>
+                  Regel: {item.rule}
+                </Text>
+              </View>
+            ) : null}
           </View>
-          <Text style={{ color: palette.textMuted, fontSize: 19 }}>›</Text>
-        </Pressable>
-      ))}
+        );
+      })}
     </Card>
   );
 }
@@ -527,19 +555,14 @@ function StatusCard({
       accessibilityState={{ expanded: active }}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 112,
-        flex: 1,
+        minHeight: 74,
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        borderWidth: active ? 1 : 0,
-        borderColor: accent,
-        borderRadius: 22,
-        borderCurve: "continuous",
-        backgroundColor: palette.surface,
-        boxShadow: palette.dark ? undefined : "0 4px 16px rgba(28, 48, 42, 0.06)",
+        backgroundColor: active ? `${accent}12` : "transparent",
         opacity: pressed ? 0.72 : 1,
-        padding: 16,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
       })}
     >
       <StatusIcon accent={accent} fallback={fallback} icon={icon} />
@@ -568,16 +591,16 @@ function StatusIcon({
   return (
     <View
       style={{
-        width: 42,
-        height: 42,
+        width: 36,
+        height: 36,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 14,
+        borderRadius: 12,
         backgroundColor: `${accent}1F`,
       }}
     >
       {process.env.EXPO_OS === "ios" ? (
-        <SymbolView name={icon} size={21} tintColor={accent} weight="semibold" />
+        <SymbolView name={icon} size={18} tintColor={accent} weight="semibold" />
       ) : (
         <Text style={{ color: accent, fontSize: 18, fontWeight: "900" }}>{fallback}</Text>
       )}
@@ -599,34 +622,6 @@ function Card({ children }: { readonly children: ReactNode }) {
       }}
     >
       {children}
-    </View>
-  );
-}
-
-function HeroValue({ label, value }: { readonly label: string; readonly value: string }) {
-  return (
-    <View style={{ minWidth: 0, flex: 1, gap: 3 }}>
-      <Text selectable style={{ color: "#B9E4D8", fontSize: 10 }}>
-        {label}
-      </Text>
-      <Text
-        selectable
-        adjustsFontSizeToFit
-        numberOfLines={1}
-        style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "800", fontVariant: ["tabular-nums"] }}
-      >
-        {value}
-      </Text>
-    </View>
-  );
-}
-
-function ValueRow({ label, value }: { readonly label: string; readonly value: string }) {
-  const palette = usePalette();
-  return (
-    <View style={{ minHeight: 26, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-      <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>{label}</Text>
-      <Text selectable style={{ color: palette.text, fontWeight: "800", fontVariant: ["tabular-nums"] }}>{value}</Text>
     </View>
   );
 }

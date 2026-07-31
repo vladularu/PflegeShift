@@ -58,7 +58,7 @@ describe("SQLite repository", () => {
   it("runs migrations and seed data idempotently", async () => {
     await migrateDatabase(db);
     expect(await listTemplates(db)).toHaveLength(4);
-    expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({ count: 2 });
+    expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({ count: 3 });
   });
 
   it("finishes an interrupted second migration without losing existing data", async () => {

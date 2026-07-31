@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
-import { useMediShift } from "@/application/medishift-provider";
+import { useMediShiftProfile } from "@/application/medishift-provider";
 import {
   FEDERAL_STATES,
   FEDERAL_STATE_LABELS,
@@ -10,7 +10,8 @@ import {
 } from "@/domain/types";
 import { ValidationError } from "@/domain/validation";
 import { usePalette } from "@/theme/palette";
-import { Field, PrimaryButton } from "@/ui/form-controls";
+import { SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { DropdownField, Field, PrimaryButton } from "@/ui/form-controls";
 
 export function parseWeeklyHours(value: string): number {
   const hours = Number(value.replace(",", "."));
@@ -22,7 +23,7 @@ export function parseWeeklyHours(value: string): number {
 
 export function OnboardingScreen() {
   const palette = usePalette();
-  const { updateProfile } = useMediShift();
+  const { updateProfile } = useMediShiftProfile();
   const [federalState, setFederalState] = useState<FederalState>("NW");
   const [weeklyHours, setWeeklyHours] = useState("38,5");
   const [error, setError] = useState<string | null>(null);
@@ -65,44 +66,33 @@ export function OnboardingScreen() {
       </View>
 
       <View style={{ gap: 10 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 16, fontWeight: "800" }}>
-          Bundesland
-        </Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {FEDERAL_STATES.map((state) => {
-            const selected = state === federalState;
-            return (
-              <Pressable
-                key={state}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                onPress={() => setFederalState(state)}
-                style={{
-                  borderWidth: 1,
-                  borderColor: selected ? palette.primary : palette.border,
-                  borderRadius: 999,
-                  backgroundColor: selected ? palette.primarySoft : palette.surface,
-                  paddingHorizontal: 12,
-                  paddingVertical: 9,
-                }}
-              >
-                <Text style={{ color: selected ? palette.primary : palette.text, fontSize: 12, fontWeight: "700" }}>
-                  {FEDERAL_STATE_LABELS[state]}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <SectionHeader title="Bundesland" caption="Für deine gesetzlichen Feiertage." />
+        <SurfaceCard style={{ padding: 14 }}>
+          <DropdownField
+            label="Bundesland auswählen"
+            onChange={setFederalState}
+            options={FEDERAL_STATES.map((state) => ({
+              value: state,
+              label: FEDERAL_STATE_LABELS[state],
+            }))}
+            value={federalState}
+          />
+        </SurfaceCard>
       </View>
 
-      <Field
-        label="Wochenarbeitszeit"
-        keyboardType="decimal-pad"
-        onChangeText={setWeeklyHours}
-        placeholder="38,5"
-        returnKeyType="done"
-        value={weeklyHours}
-      />
+      <View style={{ gap: 10 }}>
+        <SectionHeader title="Wochenarbeitszeit" caption="Für Sollstunden und Saldo." />
+        <SurfaceCard style={{ padding: 16 }}>
+          <Field
+            label="Stunden pro Woche"
+            keyboardType="decimal-pad"
+            onChangeText={setWeeklyHours}
+            placeholder="38,5"
+            returnKeyType="done"
+            value={weeklyHours}
+          />
+        </SurfaceCard>
+      </View>
 
       {error ? (
         <Text accessibilityRole="alert" selectable style={{ color: palette.danger, fontWeight: "700" }}>
@@ -113,6 +103,9 @@ export function OnboardingScreen() {
       <PrimaryButton disabled={saving} onPress={() => void submit()}>
         {saving ? "Wird gespeichert …" : "MediShift starten"}
       </PrimaryButton>
+      <Text selectable style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16, textAlign: "center" }}>
+        Diese Angaben bleiben lokal auf deinem Gerät und können später unter „Mehr“ geändert werden.
+      </Text>
     </ScrollView>
   );
 }
