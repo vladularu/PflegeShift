@@ -115,6 +115,9 @@ export function RowButton({
   onPress,
   destructive = false,
   disabled = false,
+  onLongPress,
+  delayLongPress,
+  accessibilityHint,
 }: {
   readonly title: string;
   readonly subtitle?: string;
@@ -123,6 +126,9 @@ export function RowButton({
   readonly onPress?: () => void;
   readonly destructive?: boolean;
   readonly disabled?: boolean;
+  readonly onLongPress?: () => void;
+  readonly delayLongPress?: number;
+  readonly accessibilityHint?: string;
 }) {
   const palette = usePalette();
   const content = (
@@ -150,7 +156,7 @@ export function RowButton({
     </>
   );
 
-  if (!onPress) {
+  if (!onPress && !onLongPress) {
     return (
       <View style={{ minHeight: 58, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 10 }}>
         {content}
@@ -160,9 +166,12 @@ export function RowButton({
 
   return (
     <Pressable
+      accessibilityHint={accessibilityHint}
       accessibilityRole="button"
+      delayLongPress={delayLongPress}
       disabled={disabled}
-      onPress={onPress}
+      onLongPress={onLongPress}
+      onPress={onPress ?? (() => undefined)}
       style={({ pressed }) => ({
         minHeight: 54,
         flexDirection: "row",
@@ -239,7 +248,7 @@ export function SegmentedControl({
             accessibilityState={{ selected }}
             onPress={() => onChange(item.value)}
             style={({ pressed }) => ({
-              minHeight: 38,
+              minHeight: 44,
               flex: 1,
               alignItems: "center",
               justifyContent: "center",
@@ -276,11 +285,11 @@ export function HeaderAction({
       onPress={onPress}
       hitSlop={8}
       style={({ pressed }) => ({
-        minWidth: 40,
-        minHeight: 40,
+        minWidth: 44,
+        minHeight: 44,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 20,
+        borderRadius: 22,
         backgroundColor: emphasis ? palette.primary : palette.surfaceMuted,
         opacity: pressed ? 0.68 : 1,
         paddingHorizontal: label.length > 2 ? 12 : 0,

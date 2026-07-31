@@ -52,8 +52,10 @@ describe("shared quick-entry actions", () => {
       throw new Error("Expected stamp actions");
     }
 
-    await saveQuickEntryAction(templateAction, "2026-08-13", upsertShift);
+    const saved = await saveQuickEntryAction(templateAction, "2026-08-13", upsertShift);
     await saveQuickEntryAction(vacationAction, "2026-08-14", upsertShift);
+
+    expect(saved).toEqual(expect.objectContaining({ date: "2026-08-13", type: "EARLY" }));
 
     expect(upsertShift).toHaveBeenNthCalledWith(1, expect.objectContaining({
       date: "2026-08-13",

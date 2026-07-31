@@ -73,6 +73,16 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="info-details"
+                options={{
+                  title: "Information",
+                  presentation: "formSheet",
+                  contentStyle: { backgroundColor: "transparent" },
+                  sheetAllowedDetents: [0.52, 0.78],
+                  sheetGrabberVisible: true,
+                }}
+              />
+              <Stack.Screen
                 name="premium-details"
                 options={{
                   title: "Zeitzuschläge",

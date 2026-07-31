@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   type ListRenderItemInfo,
 } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInUp, ReduceMotion } from "react-native-reanimated";
 
 import type { CalendarEntry, UserProfile } from "@/domain/types";
 import { createMonthGrid, today } from "@/engine/calendar";
@@ -133,7 +133,7 @@ const YearRowView = memo(function YearRowView({
 }: YearRowProps) {
   return (
     <Animated.View
-      entering={FadeInUp.delay(index * 36).duration(180)}
+      entering={FadeInUp.delay(index * 36).duration(180).reduceMotion(ReduceMotion.System)}
       style={{ flexDirection: "row" }}
     >
       {months.map((month) => (

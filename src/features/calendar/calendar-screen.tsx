@@ -18,7 +18,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
-import Animated, { FadeInDown, FadeOut, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, FadeOut, ReduceMotion, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -32,7 +32,7 @@ import {
   type CalendarEntry,
   type ShiftEntry,
 } from "@/domain/types";
-import { addMonths, currentMonth, today } from "@/engine/calendar";
+import { addMonths, currentMonth, formatDateTitle, today } from "@/engine/calendar";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
@@ -72,6 +72,11 @@ interface QuickPopupState {
   readonly anchor: CalendarAnchorRect;
 }
 
+interface UndoNotice {
+  readonly entry: ShiftEntry;
+  readonly message: string;
+}
+
 export function CalendarScreen() {
   const palette = usePalette();
   const isFocused = useIsFocused();
@@ -82,7 +87,7 @@ export function CalendarScreen() {
   const { ready, error } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { templates } = useMediShiftTemplates();
-  const { entries, upsertShift } = useMediShiftEntries();
+  const { entries, removeEntry, upsertShift } = useMediShiftEntries();
   const { testMonths } = useMediShiftTestData();
   const profileReady = profile !== null;
   const timeZone = profile?.timeZone ?? "Europe/Berlin";
@@ -104,7 +109,9 @@ export function CalendarScreen() {
   const [plannerError, setPlannerError] = useState<string | null>(null);
   const [stampTool, setStampTool] = useState<QuickEntryStampAction | null>(null);
   const [quickPopup, setQuickPopup] = useState<QuickPopupState | null>(null);
+  const [undoNotice, setUndoNotice] = useState<UndoNotice | null>(null);
   const savingDates = useRef(new Set<string>());
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSelectedDate = useRef<string | null>(null);
   const settledMonth = useRef(targetMonth);
   const listRef = useRef<FlatList<string>>(null);
@@ -146,6 +153,22 @@ export function CalendarScreen() {
     setQuickPopup(null);
     setPlannerError(null);
   }, [isFocused]);
+
+  useEffect(() => () => {
+    if (undoTimer.current !== null) clearTimeout(undoTimer.current);
+  }, []);
+
+  const showUndoNotice = useCallback((entry: ShiftEntry, label: string) => {
+    if (undoTimer.current !== null) clearTimeout(undoTimer.current);
+    setUndoNotice({
+      entry,
+      message: `${label} am ${formatDateTitle(entry.date)} eingetragen`,
+    });
+    undoTimer.current = setTimeout(() => {
+      setUndoNotice(null);
+      undoTimer.current = null;
+    }, 5000);
+  }, []);
 
   const visibleEntries = useMemo(
     () => entries
@@ -191,7 +214,8 @@ export function CalendarScreen() {
     setPlannerBusy(true);
     setPlannerError(null);
     try {
-      await saveQuickEntryAction(action, date, upsertShift);
+      const saved = await saveQuickEntryAction(action, date, upsertShift);
+      showUndoNotice(saved, action.label);
       if (process.env.EXPO_OS === "ios") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (saveError) {
       setPlannerError(saveError instanceof Error ? saveError.message : "Eintrag konnte nicht gespeichert werden.");
@@ -199,7 +223,21 @@ export function CalendarScreen() {
       savingDates.current.delete(date);
       setPlannerBusy(savingDates.current.size > 0);
     }
-  }, [upsertShift]);
+  }, [showUndoNotice, upsertShift]);
+
+  const undoLastStamp = useCallback(async () => {
+    if (undoNotice === null) return;
+    const entry = undoNotice.entry;
+    if (undoTimer.current !== null) clearTimeout(undoTimer.current);
+    undoTimer.current = null;
+    setUndoNotice(null);
+    try {
+      await removeEntry(entry);
+      if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    } catch (removeError) {
+      setPlannerError(removeError instanceof Error ? removeError.message : "Eintrag konnte nicht entfernt werden.");
+    }
+  }, [removeEntry, undoNotice]);
 
   const stampDate = useCallback(async (date: string) => {
     if (stampTool === null) return;
@@ -411,7 +449,6 @@ export function CalendarScreen() {
         bottomReserve={calendarBottomReserve}
         entriesByDate={entriesByDate}
         month={item}
-        onOpenEntry={openEntry}
         onSelectDate={selectDate}
         pageHeight={pageHeight}
         profile={profile}
@@ -424,7 +461,6 @@ export function CalendarScreen() {
   ), [
     calendarBottomReserve,
     entriesByDate,
-    openEntry,
     pageHeight,
     plannerMode,
     preferences.showHolidays,
@@ -456,7 +492,7 @@ export function CalendarScreen() {
         </View>
       ) : null}
       {preferences.viewMode === "MONTH" ? (
-        <Animated.View entering={FadeInDown.duration(220)} exiting={FadeOut.duration(120)} onLayout={measurePager} style={{ flex: 1 }}>
+        <Animated.View entering={FadeInDown.duration(220).reduceMotion(ReduceMotion.System)} exiting={FadeOut.duration(120).reduceMotion(ReduceMotion.System)} onLayout={measurePager} style={{ flex: 1 }}>
           {pageHeight > 0 ? (
             <FlatList
               ref={listRef}
@@ -520,7 +556,7 @@ export function CalendarScreen() {
           )}
         </Animated.View>
       ) : (
-        <Animated.View entering={ZoomIn.duration(240)} exiting={FadeOut.duration(120)} style={{ flex: 1 }}>
+        <Animated.View entering={ZoomIn.duration(240).reduceMotion(ReduceMotion.System)} exiting={FadeOut.duration(120).reduceMotion(ReduceMotion.System)} style={{ flex: 1 }}>
           <YearOverview
             entries={visibleEntries}
             onMoveYear={moveYear}
@@ -531,13 +567,66 @@ export function CalendarScreen() {
           />
         </Animated.View>
       )}
+      {isFocused && undoNotice ? (
+        <Animated.View
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          entering={FadeInUp.duration(180).reduceMotion(ReduceMotion.System)}
+          exiting={FadeOut.duration(120).reduceMotion(ReduceMotion.System)}
+          style={{
+            position: "absolute",
+            right: 16,
+            bottom: plannerMode ? Math.max(insets.bottom + 86, 106) : floatingActionBottom + 64,
+            left: 16,
+            minHeight: 52,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            borderWidth: 1,
+            borderColor: palette.border,
+            borderRadius: 17,
+            borderCurve: "continuous",
+            backgroundColor: palette.surfaceRaised,
+            boxShadow: `0 8px 24px ${palette.shadow}`,
+            paddingLeft: 15,
+            paddingRight: 6,
+            zIndex: 220,
+            elevation: 26,
+          }}
+        >
+          <Text numberOfLines={2} style={{ flex: 1, color: palette.text, fontSize: 12, fontWeight: "700", lineHeight: 17 }}>
+            {undoNotice.message}
+          </Text>
+          <Pressable
+            accessibilityLabel="Letzten Schnelleintrag rückgängig machen"
+            accessibilityRole="button"
+            onPress={() => void undoLastStamp()}
+            style={({ pressed }) => ({
+              minWidth: 92,
+              minHeight: 44,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 13,
+              backgroundColor: pressed ? palette.primarySoft : "transparent",
+              opacity: pressed ? 0.72 : 1,
+              paddingHorizontal: 10,
+            })}
+          >
+            <Text style={{ color: palette.primary, fontSize: 12, fontWeight: "900" }}>
+              Rückgängig
+            </Text>
+          </Pressable>
+        </Animated.View>
+      ) : null}
       {isFocused && quickPopup ? (
         <QuickEntryPopup
           actions={quickActions}
           anchor={quickPopup.anchor}
           busy={plannerBusy}
           date={quickPopup.date}
+          entries={entriesByDate.get(quickPopup.date) ?? []}
           onClose={closeQuickPopup}
+          onOpenEntry={openEntry}
           onOpenDetails={openDayDetails}
           onSelectAction={selectPopupAction}
         />

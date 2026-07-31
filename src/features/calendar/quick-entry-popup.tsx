@@ -1,16 +1,19 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { memo, useMemo } from "react";
 import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
-import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeOut, ReduceMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CalendarAnchorRect } from "@/features/calendar/calendar-layout";
+import type { CalendarEntry } from "@/domain/types";
 import { calculateCalendarPopupPlacement } from "@/features/calendar/calendar-layout";
 import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { QuickEntryActionTile } from "@/features/calendar/quick-entry-action-tile";
 import { usePalette } from "@/theme/palette";
 
-const POPUP_HEIGHT = 158;
+const BASE_POPUP_HEIGHT = 158;
+const ENTRY_ROW_HEIGHT = 44;
+const OVERFLOW_ROW_HEIGHT = 30;
 
 function compactDate(date: string): string {
   return new Intl.DateTimeFormat("de-DE", {
@@ -26,7 +29,9 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
   anchor,
   busy,
   date,
+  entries,
   onClose,
+  onOpenEntry,
   onOpenDetails,
   onSelectAction,
 }: {
@@ -34,7 +39,9 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
   readonly anchor: CalendarAnchorRect;
   readonly busy: boolean;
   readonly date: string;
+  readonly entries: readonly CalendarEntry[];
   readonly onClose: () => void;
+  readonly onOpenEntry: (entry: CalendarEntry) => void;
   readonly onOpenDetails: (date: string) => void;
   readonly onSelectAction: (action: QuickEntryAction, date: string) => void;
 }) {
@@ -42,17 +49,22 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const popupWidth = Math.min(360, width - 24);
+  const visibleEntries = entries.slice(0, 2);
+  const overflowCount = Math.max(0, entries.length - visibleEntries.length);
+  const popupHeight = BASE_POPUP_HEIGHT
+    + visibleEntries.length * ENTRY_ROW_HEIGHT
+    + (overflowCount > 0 ? OVERFLOW_ROW_HEIGHT : 0);
   const placement = useMemo(
     () => calculateCalendarPopupPlacement({
       anchor,
       viewportWidth: width,
       viewportHeight: height,
       popupWidth,
-      popupHeight: POPUP_HEIGHT,
+      popupHeight,
       topInset: insets.top,
       bottomInset: Math.max(insets.bottom + 56, 72),
     }),
-    [anchor, height, insets.bottom, insets.top, popupWidth, width],
+    [anchor, height, insets.bottom, insets.top, popupHeight, popupWidth, width],
   );
   const arrowLeft = Math.max(
     18,
@@ -88,14 +100,14 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
           }}
         />
         <Animated.View
-          entering={FadeInDown.duration(170)}
-          exiting={FadeOut.duration(100)}
+          entering={FadeInDown.duration(170).reduceMotion(ReduceMotion.System)}
+          exiting={FadeOut.duration(100).reduceMotion(ReduceMotion.System)}
           style={{
             position: "absolute",
             left: placement.left,
             top: placement.top,
             width: popupWidth,
-            height: POPUP_HEIGHT,
+            height: popupHeight,
             borderWidth: 1,
             borderColor: palette.border,
             borderRadius: 22,
@@ -124,7 +136,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
           />
           <View
             style={{
-              minHeight: 34,
+              minHeight: 44,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
@@ -140,17 +152,60 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
               accessibilityRole="button"
               onPress={onClose}
               style={({ pressed }) => ({
-                width: 32,
-                height: 32,
+                width: 44,
+                height: 44,
                 alignItems: "center",
                 justifyContent: "center",
-                borderRadius: 16,
+                borderRadius: 22,
                 opacity: pressed ? 0.58 : 1,
               })}
             >
               <Ionicons color={palette.text} name="close" size={19} />
             </Pressable>
           </View>
+          {visibleEntries.map((entry) => (
+            <Pressable
+              key={`${entry.kind}-${entry.id}`}
+              accessibilityLabel={`${entry.title} bearbeiten`}
+              accessibilityRole="button"
+              onPress={() => onOpenEntry(entry)}
+              style={({ pressed }) => ({
+                minHeight: ENTRY_ROW_HEIGHT,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                borderTopWidth: 1,
+                borderTopColor: palette.separator,
+                backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+                paddingHorizontal: 14,
+              })}
+            >
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: entry.color }} />
+              <Text numberOfLines={1} style={{ flex: 1, color: palette.text, fontSize: 13, fontWeight: "800" }}>
+                {entry.title}
+              </Text>
+              <Ionicons color={palette.textMuted} name="chevron-forward" size={16} />
+            </Pressable>
+          ))}
+          {overflowCount > 0 ? (
+            <Pressable
+              accessibilityLabel={`${overflowCount} weitere Einträge in den Tagesdetails anzeigen`}
+              accessibilityRole="button"
+              onPress={() => onOpenDetails(date)}
+              style={({ pressed }) => ({
+                minHeight: OVERFLOW_ROW_HEIGHT,
+                alignItems: "center",
+                justifyContent: "center",
+                borderTopWidth: 1,
+                borderTopColor: palette.separator,
+                opacity: pressed ? 0.58 : 1,
+              })}
+            >
+              <Text style={{ color: palette.textMuted, fontSize: 11, fontWeight: "800" }}>
+                +{overflowCount} weitere
+              </Text>
+            </Pressable>
+          ) : null}
           <ScrollView
             horizontal
             contentContainerStyle={{ alignItems: "center", gap: 1, paddingHorizontal: 6 }}
@@ -170,7 +225,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
             accessibilityRole="button"
             onPress={() => onOpenDetails(date)}
             style={({ pressed }) => ({
-              height: 34,
+              height: 44,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",

@@ -1,5 +1,7 @@
 import { requireLocalDate } from "@/domain/validation";
 
+export type SettingsInfoSection = "STORAGE" | "CALCULATION" | "ABOUT";
+
 export const TAB_ROUTES = Object.freeze([
   { key: "calendar", route: "/" },
   { key: "analysis", route: "/analysis" },
@@ -34,6 +36,13 @@ export function tariffAssessmentRoute(month: string) {
   return Object.freeze({
     pathname: "/tariff-assessment" as const,
     params: Object.freeze({ month: normalizedMonth }),
+  });
+}
+
+export function settingsInfoRoute(section: SettingsInfoSection) {
+  return Object.freeze({
+    pathname: "/info-details" as const,
+    params: Object.freeze({ section }),
   });
 }
 

@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { memo } from "react";
 import { Pressable, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, ReduceMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
@@ -139,7 +139,7 @@ export const CalendarHeader = memo(function CalendarHeader({
             <Animated.Text
               key={`${viewMode}-${title}`}
               adjustsFontSizeToFit
-              entering={FadeInDown.duration(110)}
+              entering={FadeInDown.duration(110).reduceMotion(ReduceMotion.System)}
               minimumFontScale={0.72}
               numberOfLines={1}
               style={{
@@ -162,7 +162,7 @@ export const CalendarHeader = memo(function CalendarHeader({
             </Text>
             <Animated.Text
               key={`${viewMode}-${title}`}
-              entering={FadeInDown.duration(110)}
+              entering={FadeInDown.duration(110).reduceMotion(ReduceMotion.System)}
               numberOfLines={1}
               style={{
                 color: palette.text,

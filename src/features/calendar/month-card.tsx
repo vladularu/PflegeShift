@@ -34,65 +34,48 @@ interface DayCellProps {
   readonly holidayName?: string;
   readonly isSelected: boolean;
   readonly isToday: boolean;
-  readonly onOpenEntry: (entry: CalendarEntry) => void;
   readonly onSelectDate: (date: string, anchor: CalendarAnchorRect) => void;
   readonly stampMode: boolean;
 }
 
 const EntryMark = memo(function EntryMark({
   entry,
-  onPress,
 }: {
   readonly entry: CalendarEntry;
-  readonly onPress: (entry: CalendarEntry) => void;
 }) {
   if (entry.kind === "APPOINTMENT") {
     return (
-      <Pressable
-        accessibilityLabel={`${entry.title} bearbeiten`}
-        accessibilityRole="button"
-        onPress={(event) => {
-          event.stopPropagation();
-          onPress(entry);
-        }}
-        style={({ pressed }) => ({
-          height: 14,
+      <View
+        style={{
+          height: 17,
           flexDirection: "row",
           alignItems: "center",
           gap: 3,
-          opacity: pressed ? 0.55 : 1,
           paddingHorizontal: 2,
-        })}
+        }}
       >
         <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: entry.color }} />
-        <Text numberOfLines={1} style={{ flex: 1, color: entry.color, fontSize: 9, fontWeight: "800" }}>
+        <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={{ flex: 1, color: entry.color, fontSize: 10, fontWeight: "800" }}>
           {entry.title}
         </Text>
-      </Pressable>
+      </View>
     );
   }
 
   return (
-    <Pressable
-      accessibilityLabel={`${entry.title} bearbeiten`}
-      accessibilityRole="button"
-      onPress={(event) => {
-        event.stopPropagation();
-        onPress(entry);
-      }}
-      style={({ pressed }) => ({
-        height: 15,
+    <View
+      style={{
+        height: 18,
         justifyContent: "center",
         borderRadius: 4,
         backgroundColor: entry.color,
-        opacity: pressed ? 0.65 : 1,
         paddingHorizontal: 4,
-      })}
+      }}
     >
-      <Text numberOfLines={1} style={{ color: "#FFFFFF", fontSize: 9, fontWeight: "900" }}>
+      <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={{ color: "#FFFFFF", fontSize: 10, fontWeight: "900" }}>
         {entry.title}
       </Text>
-    </Pressable>
+    </View>
   );
 });
 
@@ -102,7 +85,6 @@ const DayCell = memo(function DayCell({
   holidayName,
   isSelected,
   isToday,
-  onOpenEntry,
   onSelectDate,
   stampMode,
 }: DayCellProps) {
@@ -126,35 +108,27 @@ const DayCell = memo(function DayCell({
   };
 
   return (
-    <View
+    <Pressable
       ref={cellRef}
-      style={{
-        flex: 1,
-        minWidth: 0,
-        backgroundColor: isSelected && stampMode
-          ? palette.primarySoft
-          : cell.weekend
-            ? `${palette.weekend}B8`
-            : "transparent",
-        opacity: cell.inMonth ? 1 : 0.3,
-        paddingHorizontal: 2,
-        paddingTop: 5,
-      }}
-    >
-      <Pressable
       accessibilityLabel={`${formatDateTitle(cell.date)}, ${entries.length} Einträge${holidayName ? `, ${holidayName}` : ""}${isSelected ? ", ausgewählt" : ""}`}
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
       onPress={handlePress}
       style={({ pressed }) => ({
-        position: "absolute",
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-        backgroundColor: pressed ? palette.primarySoft : "transparent",
+        flex: 1,
+        minWidth: 0,
+        backgroundColor: pressed
+          ? palette.primarySoft
+          : isSelected && stampMode
+            ? palette.primarySoft
+            : cell.weekend
+              ? `${palette.weekend}B8`
+              : "transparent",
+        opacity: cell.inMonth ? 1 : 0.3,
+        paddingHorizontal: 2,
+        paddingTop: 5,
       })}
-      />
+    >
       <View
         pointerEvents="none"
         style={{ height: 32, alignItems: "center", justifyContent: "flex-start" }}
@@ -184,6 +158,7 @@ const DayCell = memo(function DayCell({
         </View>
         {holidayName ? (
           <Text
+            maxFontSizeMultiplier={1.15}
             numberOfLines={1}
             style={{
               position: "absolute",
@@ -191,9 +166,9 @@ const DayCell = memo(function DayCell({
               bottom: 0,
               left: 1,
               color: palette.warning,
-              fontSize: 7,
+              fontSize: 9,
               fontWeight: "900",
-              lineHeight: 8,
+              lineHeight: 10,
               textAlign: "center",
             }}
           >
@@ -206,16 +181,15 @@ const DayCell = memo(function DayCell({
           <EntryMark
             key={`${entry.kind}-${entry.id}`}
             entry={entry}
-            onPress={onOpenEntry}
           />
         ))}
         {preview.overflowCount > 0 ? (
-          <Text style={{ color: palette.textMuted, fontSize: 8, fontWeight: "800", textAlign: "center" }}>
+          <Text maxFontSizeMultiplier={1.2} style={{ color: palette.textMuted, fontSize: 9, fontWeight: "800", textAlign: "center" }}>
             +{preview.overflowCount}
           </Text>
         ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }, (previous, next) => (
   previous.cell === next.cell &&
@@ -223,7 +197,6 @@ const DayCell = memo(function DayCell({
   previous.holidayName === next.holidayName &&
   previous.isSelected === next.isSelected &&
   previous.isToday === next.isToday &&
-  previous.onOpenEntry === next.onOpenEntry &&
   previous.onSelectDate === next.onSelectDate &&
   previous.stampMode === next.stampMode
 ));
@@ -234,7 +207,6 @@ interface MonthCardProps {
   readonly profile: UserProfile;
   readonly pageHeight: number;
   readonly bottomReserve: number;
-  readonly onOpenEntry: (entry: CalendarEntry) => void;
   readonly onSelectDate: (date: string, anchor: CalendarAnchorRect) => void;
   readonly selectedDate: string | null;
   readonly stampMode?: boolean;
@@ -251,7 +223,6 @@ function monthCardPropsEqual(
     previous.profile !== next.profile ||
     previous.pageHeight !== next.pageHeight ||
     previous.bottomReserve !== next.bottomReserve ||
-    previous.onOpenEntry !== next.onOpenEntry ||
     previous.onSelectDate !== next.onSelectDate ||
     previous.stampMode !== next.stampMode ||
     previous.showHolidays !== next.showHolidays ||
@@ -282,7 +253,6 @@ export const MonthCard = memo(function MonthCard({
   profile,
   pageHeight,
   bottomReserve,
-  onOpenEntry,
   onSelectDate,
   selectedDate,
   stampMode = false,
@@ -358,7 +328,6 @@ export const MonthCard = memo(function MonthCard({
                 holidayName={holidays.get(cell.date)?.name}
                 isSelected={selectedDate !== null && cell.date === selectedDate}
                 isToday={cell.date === currentDate}
-                onOpenEntry={onOpenEntry}
                 onSelectDate={onSelectDate}
                 stampMode={stampMode}
               />

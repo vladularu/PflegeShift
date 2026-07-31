@@ -2,18 +2,21 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 
 import {
   useMediShiftProfile,
   useMediShiftStatus,
+  useMediShiftTariff,
 } from "@/application/medishift-provider";
 import { FEDERAL_STATE_LABELS } from "@/domain/types";
+import { currentMonth } from "@/engine/calendar";
 import {
   isDeveloperModeEnabled,
   setDeveloperMode,
 } from "@/infrastructure/database/dev-tools-repository";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
+import { settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { usePalette } from "@/theme/palette";
 import { CardSeparator, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
@@ -23,6 +26,7 @@ export function SettingsScreen() {
   const db = useSQLiteContext();
   const { ready } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
+  const { workPatternSettings } = useMediShiftTariff();
   const calendarPreferences = useCalendarPreferences();
   const [developerMode, setDeveloperModeState] = useState(false);
 
@@ -51,6 +55,16 @@ export function SettingsScreen() {
   const calendarDisplayLabel = visibleCalendarContentCount === 3
     ? "Dienste, Termine und Feiertage"
     : `${visibleCalendarContentCount} von 3 Inhalten sichtbar`;
+  const coverageLabel = workPatternSettings.workplaceCoverage === "AROUND_THE_CLOCK"
+    ? "24/7-Betrieb"
+    : workPatternSettings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
+      ? "Kein 24/7-Betrieb"
+      : "Betriebszeit bestätigen";
+  const assignmentLabel = workPatternSettings.assignment === "PERMANENT"
+    ? "dauerhaft zugeordnet"
+    : workPatternSettings.assignment === "TEMPORARY"
+      ? "vorübergehend zugeordnet"
+      : "Zuordnung bestätigen";
 
   return (
     <ScrollView
@@ -71,6 +85,12 @@ export function SettingsScreen() {
             onPress={() => router.push({ pathname: "/settings-editor", params: { section: "TARIFF" } })}
             subtitle={tariffLabel}
             title="Tarifprofil"
+          />
+          <CardSeparator />
+          <RowButton
+            onPress={() => router.push(tariffAssessmentRoute(currentMonth(profile.timeZone)))}
+            subtitle={`${coverageLabel} · ${assignmentLabel}`}
+            title="Schichtmodell"
           />
           <CardSeparator />
           <RowButton
@@ -95,7 +115,11 @@ export function SettingsScreen() {
       <View style={{ gap: 9 }}>
         <SectionHeader title="Daten & Sicherheit" />
         <SurfaceCard>
-          <RowButton subtitle="SQLite · ausschließlich auf diesem Gerät" title="Lokale Datenspeicherung" />
+          <RowButton
+            onPress={() => router.push(settingsInfoRoute("STORAGE"))}
+            subtitle="SQLite · ausschließlich auf diesem Gerät"
+            title="Lokale Datenspeicherung"
+          />
         </SurfaceCard>
       </View>
 
@@ -111,16 +135,20 @@ export function SettingsScreen() {
       <View style={{ gap: 9 }}>
         <SectionHeader title="App" />
         <SurfaceCard>
-          <Pressable
+          <RowButton
             accessibilityHint="Fünf Sekunden gedrückt halten, um das interne Testlabor zu aktivieren."
             delayLongPress={5000}
             onLongPress={() => void activateDeveloperMode()}
-            style={({ pressed }) => ({ opacity: pressed ? 0.68 : 1 })}
-          >
-            <RowButton subtitle="Version 0.1 · Expo SDK 54" title="Über MediShift" />
-          </Pressable>
+            onPress={() => router.push(settingsInfoRoute("ABOUT"))}
+            subtitle="Version 0.1 · Expo SDK 54"
+            title="Über MediShift"
+          />
           <CardSeparator />
-          <RowButton subtitle="Feiertage, Zuschläge und Arbeitszeitberechnung erfolgen lokal." title="Berechnungshinweise" />
+          <RowButton
+            onPress={() => router.push(settingsInfoRoute("CALCULATION"))}
+            subtitle="Feiertage, Zuschläge und Arbeitszeitberechnung erfolgen lokal."
+            title="Berechnungshinweise"
+          />
         </SurfaceCard>
       </View>
     </ScrollView>

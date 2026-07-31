@@ -6,6 +6,7 @@ import {
   dayEditorRoute,
   premiumDetailsRoute,
   quickAddRoute,
+  settingsInfoRoute,
 } from "@/navigation/routes";
 
 describe("navigation contracts", () => {
@@ -41,6 +42,17 @@ describe("navigation contracts", () => {
       params: { month: "2026-07" },
     });
     expect(() => premiumDetailsRoute("2026-13")).toThrow();
+  });
+
+  it("opens explicit information sections from More", () => {
+    expect(settingsInfoRoute("STORAGE")).toEqual({
+      pathname: "/info-details",
+      params: { section: "STORAGE" },
+    });
+    expect(settingsInfoRoute("CALCULATION")).toEqual({
+      pathname: "/info-details",
+      params: { section: "CALCULATION" },
+    });
   });
 
   it("rejects invalid deep-link dates", () => {

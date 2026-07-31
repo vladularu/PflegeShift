@@ -17,10 +17,11 @@ import { formatMinutes } from "@/engine/working-time";
 import {
   selectAnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
-import { premiumDetailsRoute } from "@/navigation/routes";
+import { premiumDetailsRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { usePalette } from "@/theme/palette";
 import { SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
+import { MonthNavigator } from "@/ui/month-navigator";
 
 function euro(value: number | null): string {
   if (value === null) return "–";
@@ -88,20 +89,11 @@ export function SalaryScreen() {
       style={{ backgroundColor: palette.background }}
       contentContainerStyle={{ gap: 14, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 48 }}
     >
-      <View
-        style={{
-          minHeight: 48,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <MonthButton direction="back" onPress={() => moveMonth(-1)} />
-        <Text selectable style={{ color: palette.text, fontSize: 21, fontWeight: "800" }}>
-          {formatMonthTitle(month)}
-        </Text>
-        <MonthButton direction="forward" onPress={() => moveMonth(1)} />
-      </View>
+      <MonthNavigator
+        label={formatMonthTitle(month)}
+        onNext={() => moveMonth(1)}
+        onPrevious={() => moveMonth(-1)}
+      />
 
       {testMonths.includes(month) ? (
         <View style={{ alignSelf: "center", borderRadius: 999, backgroundColor: palette.primarySoft, paddingHorizontal: 10, paddingVertical: 5 }}>
@@ -124,6 +116,16 @@ export function SalaryScreen() {
         </SurfaceCard>
       ) : (
         <>
+          {monthShifts.length === 0 ? (
+            <SurfaceCard style={{ gap: 4, padding: 14 }}>
+              <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>
+                Noch keine Dienste in diesem Monat
+              </Text>
+              <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
+                Grundentgelt und feste Zulagen sind bereits enthalten. Variable Zeitzuschläge erscheinen nach dem ersten Dienst.
+              </Text>
+            </SurfaceCard>
+          ) : null}
           <View
             style={{
               gap: 16,
@@ -136,7 +138,7 @@ export function SalaryScreen() {
           >
             <View style={{ gap: 6 }}>
               <Text selectable style={{ color: "#B9E4D8", fontSize: 11, fontWeight: "800", letterSpacing: 1.1 }}>
-                BRUTTO GESCHÄTZT
+                TARIFLICHES BRUTTO · SCHÄTZUNG
               </Text>
               <Text
                 selectable
@@ -179,6 +181,7 @@ export function SalaryScreen() {
             {pay.allowanceAmount > 0 ? (
               <ValueRow
                 label={pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage · Muster & Angaben"}
+                onPress={() => router.push(tariffAssessmentRoute(month))}
                 value={euro(pay.allowanceAmount)}
               />
             ) : null}
@@ -294,46 +297,55 @@ function HeroValue({ label, value }: { readonly label: string; readonly value: s
   );
 }
 
-function ValueRow({ label, value }: { readonly label: string; readonly value: string }) {
+function ValueRow({
+  label,
+  value,
+  onPress,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly onPress?: () => void;
+}) {
   const palette = usePalette();
-  return (
-    <View style={{ minHeight: 30, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+  const content = (
+    <>
       <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>
         {label}
       </Text>
-      <Text selectable style={{ color: palette.text, fontWeight: "800", fontVariant: ["tabular-nums"] }}>
-        {value}
-      </Text>
-    </View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Text selectable style={{ color: palette.text, fontWeight: "800", fontVariant: ["tabular-nums"] }}>
+          {value}
+        </Text>
+        {onPress ? <Text style={{ color: palette.textMuted, fontSize: 20 }}>›</Text> : null}
+      </View>
+    </>
   );
-}
 
-function MonthButton({
-  direction,
-  onPress,
-}: {
-  readonly direction: "back" | "forward";
-  readonly onPress: () => void;
-}) {
-  const palette = usePalette();
+  if (!onPress) {
+    return (
+      <View style={{ minHeight: 30, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        {content}
+      </View>
+    );
+  }
+
   return (
     <Pressable
-      accessibilityLabel={direction === "back" ? "Vorheriger Monat" : "Nächster Monat"}
+      accessibilityLabel={`${label} ${value}, Erklärung öffnen`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => ({
-        width: 42,
-        height: 42,
+        minHeight: 44,
+        flexDirection: "row",
         alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 21,
-        backgroundColor: palette.surface,
-        opacity: pressed ? 0.65 : 1,
+        justifyContent: "space-between",
+        gap: 12,
+        borderRadius: 12,
+        backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+        opacity: pressed ? 0.72 : 1,
       })}
     >
-      <Text style={{ color: palette.text, fontSize: 24, fontWeight: "500" }}>
-        {direction === "back" ? "‹" : "›"}
-      </Text>
+      {content}
     </Pressable>
   );
 }

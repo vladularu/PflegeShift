@@ -41,8 +41,9 @@ import {
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
 import { tariffAssessmentRoute } from "@/navigation/routes";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
-import { MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { EmptyState, MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
+import { MonthNavigator } from "@/ui/month-navigator";
 
 type Detail = "COMPLIANCE" | null;
 
@@ -189,20 +190,11 @@ export function AnalysisScreen() {
       contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 48 }}
     >
       <AnalysisPeriodPicker value={period} onChange={changePeriod} />
-      <View
-        style={{
-          minHeight: 48,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <MonthButton direction="back" onPress={() => moveMonth(-1)} />
-        <Text selectable style={{ color: palette.text, fontSize: 21, fontWeight: "800" }}>
-          {formatMonthTitle(month)}
-        </Text>
-        <MonthButton direction="forward" onPress={() => moveMonth(1)} />
-      </View>
+      <MonthNavigator
+        label={formatMonthTitle(month)}
+        onNext={() => moveMonth(1)}
+        onPrevious={() => moveMonth(-1)}
+      />
       {testMonths.includes(month) ? (
         <View style={{ alignSelf: "center", borderRadius: 999, backgroundColor: palette.primarySoft, paddingHorizontal: 10, paddingVertical: 5 }}>
           <Text style={{ color: palette.primary, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>TESTDATEN</Text>
@@ -286,6 +278,16 @@ function DistributionChart({ distribution }: { readonly distribution: ReadonlyMa
   const radius = 42;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
+  if (total === 0) {
+    return (
+      <SurfaceCard>
+        <EmptyState
+          message="Sobald du Dienste einträgst, erscheint hier ihre Verteilung. Termine zählen nicht als Arbeitszeit."
+          title="Noch keine Dienste"
+        />
+      </SurfaceCard>
+    );
+  }
   return (
     <SurfaceCard style={{ minHeight: 190, flexDirection: "row", alignItems: "center", gap: 20, padding: 18 }}>
       <View accessibilityLabel={`${total} Schichten insgesamt`} accessible>
@@ -519,35 +521,5 @@ function Card({ children }: { readonly children: ReactNode }) {
     >
       {children}
     </View>
-  );
-}
-
-function MonthButton({
-  direction,
-  onPress,
-}: {
-  readonly direction: "back" | "forward";
-  readonly onPress: () => void;
-}) {
-  const palette = usePalette();
-  return (
-    <Pressable
-      accessibilityLabel={direction === "back" ? "Vorheriger Monat" : "Nächster Monat"}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => ({
-        width: 42,
-        height: 42,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 21,
-        backgroundColor: palette.surface,
-        opacity: pressed ? 0.65 : 1,
-      })}
-    >
-      <Text style={{ color: palette.text, fontSize: 24, fontWeight: "500" }}>
-        {direction === "back" ? "‹" : "›"}
-      </Text>
-    </Pressable>
   );
 }
