@@ -397,7 +397,6 @@ export function CalendarScreen() {
     () => router.push({ pathname: "/analysis", params: { month: visibleMonth } }),
     [visibleMonth],
   );
-  const openFilters = useCallback(() => router.push("/calendar-view"), []);
   const moveYear = useCallback((amount: number) => {
     const nextMonth = addMonths(visibleMonth, amount * 12);
     setVisibleMonth(nextMonth);
@@ -445,7 +444,6 @@ export function CalendarScreen() {
         actualMinutes={summary.actualMinutes}
         month={visibleMonth}
         onOpenAnalysis={openAnalysis}
-        onOpenFilters={openFilters}
         onOpenYear={openYear}
         targetMinutes={summary.targetMinutes}
         viewMode={preferences.viewMode}

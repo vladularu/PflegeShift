@@ -2,6 +2,7 @@ import type {
   CalendarEntry,
   MonthlyTariffDecision,
   ShiftType,
+  TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
 import { calculateMonthlyCompliance } from "@/engine/compliance";
@@ -54,6 +55,7 @@ export function buildAnnualReport(
   entries: readonly CalendarEntry[],
   profile: UserProfile,
   tariffDecisions: readonly MonthlyTariffDecision[],
+  workPatternSettings?: TvoedWorkPatternSettings,
 ): AnnualReport {
   if (!Number.isInteger(year) || year < 1900 || year > 4099) {
     throw new Error("Ungültiges Berichtsjahr.");
@@ -86,6 +88,10 @@ export function buildAnnualReport(
       month,
       window.complianceShifts,
       profile.timeZone,
+      {
+        federalState: profile.federalState,
+        weeklyMinutes: profile.weeklyMinutes,
+      },
     );
     const decision = tariffDecisions.find((item) => item.month === month) ?? null;
     const pay = calculateMonthlyPayEstimate(
@@ -94,6 +100,7 @@ export function buildAnnualReport(
       profile,
       decision,
       window.allowanceShifts,
+      workPatternSettings,
     );
     const monthDistribution = buildShiftTypeDistribution(month, window.monthEntries);
 

@@ -17,8 +17,10 @@ import type {
   SaveProfileInput,
   SaveShiftInput,
   SaveShiftTemplateInput,
+  SaveTvoedWorkPatternSettingsInput,
   ShiftEntry,
   ShiftTemplate,
+  TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
 import {
@@ -28,11 +30,13 @@ import {
   listMonthlyTariffDecisions,
   listTemplates,
   loadProfile,
+  loadTvoedWorkPatternSettings,
   saveAppointment,
   saveMonthlyTariffDecision,
   saveProfile,
   saveShift,
   saveTemplate,
+  saveTvoedWorkPatternSettings,
 } from "@/infrastructure/database/repository";
 import { listTestBackupMonths } from "@/infrastructure/database/dev-tools-repository";
 
@@ -63,9 +67,13 @@ interface MediShiftEntriesValue {
 
 interface MediShiftTariffValue {
   readonly tariffDecisions: readonly MonthlyTariffDecision[];
+  readonly workPatternSettings: TvoedWorkPatternSettings;
   readonly upsertTariffDecision: (
     input: SaveMonthlyTariffDecisionInput,
   ) => Promise<MonthlyTariffDecision>;
+  readonly updateWorkPatternSettings: (
+    input: SaveTvoedWorkPatternSettingsInput,
+  ) => Promise<TvoedWorkPatternSettings>;
 }
 
 interface MediShiftTestDataValue {
@@ -107,21 +115,28 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
   const [templates, setTemplates] = useState<readonly ShiftTemplate[]>([]);
   const [entries, setEntries] = useState<readonly CalendarEntry[]>([]);
   const [tariffDecisions, setTariffDecisions] = useState<readonly MonthlyTariffDecision[]>([]);
+  const [workPatternSettings, setWorkPatternSettings] = useState<TvoedWorkPatternSettings>({
+    workplaceCoverage: "UNKNOWN",
+    assignment: "UNKNOWN",
+    updatedAt: null,
+  });
   const [testMonths, setTestMonths] = useState<readonly string[]>([]);
   const [testDataLoadRevision, setTestDataLoadRevision] = useState(0);
 
   const reload = useCallback(async () => {
     try {
-      const [nextProfile, nextTemplates, nextEntries, nextDecisions] = await Promise.all([
+      const [nextProfile, nextTemplates, nextEntries, nextDecisions, nextWorkPatternSettings] = await Promise.all([
         loadProfile(db),
         listTemplates(db),
         listCalendarEntries(db),
         listMonthlyTariffDecisions(db),
+        loadTvoedWorkPatternSettings(db),
       ]);
       setProfile(nextProfile);
       setTemplates(nextTemplates);
       setEntries(nextEntries);
       setTariffDecisions(nextDecisions);
+      setWorkPatternSettings(nextWorkPatternSettings);
       setTestDataLoadRevision((current) => current + 1);
       setError(null);
     } catch (loadError) {
@@ -230,6 +245,14 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
     return saved;
   }, [db]);
 
+  const updateWorkPatternSettings = useCallback(async (
+    input: SaveTvoedWorkPatternSettingsInput,
+  ) => {
+    const saved = await saveTvoedWorkPatternSettings(db, input);
+    setWorkPatternSettings(saved);
+    return saved;
+  }, [db]);
+
   const statusValue = useMemo<MediShiftStatusValue>(
     () => ({ ready, error, reload }),
     [error, ready, reload],
@@ -247,8 +270,13 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
     [entries, removeEntry, upsertAppointment, upsertShift],
   );
   const tariffValue = useMemo<MediShiftTariffValue>(
-    () => ({ tariffDecisions, upsertTariffDecision }),
-    [tariffDecisions, upsertTariffDecision],
+    () => ({
+      tariffDecisions,
+      workPatternSettings,
+      upsertTariffDecision,
+      updateWorkPatternSettings,
+    }),
+    [tariffDecisions, updateWorkPatternSettings, upsertTariffDecision, workPatternSettings],
   );
   const testDataValue = useMemo<MediShiftTestDataValue>(
     () => ({ testMonths }),

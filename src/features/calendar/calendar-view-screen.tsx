@@ -2,22 +2,15 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { ScrollView, Switch, View } from "react-native";
 
-import type { CalendarViewMode } from "@/features/calendar/calendar-display";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
 import { usePalette } from "@/theme/palette";
 import {
   CardSeparator,
   RowButton,
   SectionHeader,
-  SegmentedControl,
   SurfaceCard,
 } from "@/ui/design-system";
 import { PrimaryButton } from "@/ui/form-controls";
-
-const VIEW_ITEMS = [
-  { value: "MONTH", label: "Monat" },
-  { value: "YEAR", label: "Jahr" },
-] as const;
 
 function VisibilitySwitch({
   color,
@@ -53,17 +46,13 @@ export function CalendarViewScreen() {
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 14, padding: 16, paddingBottom: 32 }}
+      contentContainerStyle={{ gap: 18, padding: 16, paddingBottom: 32 }}
     >
-      <SectionHeader title="Ansicht" />
-      <SegmentedControl
-        items={VIEW_ITEMS}
-        onChange={(value) => preferences.setViewMode(value as CalendarViewMode)}
-        value={preferences.viewMode}
-      />
-
       <View style={{ gap: 10 }}>
-        <SectionHeader title="Mein Dienstplan" />
+        <SectionHeader
+          caption="Lege fest, welche Inhalte im Monats- und Jahreskalender sichtbar sind."
+          title="Kalenderinhalte"
+        />
         <SurfaceCard>
           <VisibilitySwitch
             color={palette.primary}

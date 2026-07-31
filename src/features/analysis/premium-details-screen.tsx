@@ -28,7 +28,7 @@ export function PremiumDetailsScreen() {
   const { ready } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
-  const { tariffDecisions } = useMediShiftTariff();
+  const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
   const month = typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)
     ? params.month
     : currentMonth(profile?.timeZone);
@@ -43,6 +43,7 @@ export function PremiumDetailsScreen() {
     profile,
     decision,
     allowanceShifts,
+    workPatternSettings,
   );
   const shiftsById = new Map(monthShifts.map((shift) => [shift.id, shift]));
   const premiumShifts = pay.shiftBreakdowns.filter((item) => item.premiumLines.length > 0);

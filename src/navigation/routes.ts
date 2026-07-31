@@ -29,6 +29,14 @@ export function premiumDetailsRoute(month: string) {
   });
 }
 
+export function tariffAssessmentRoute(month: string) {
+  const normalizedMonth = requireLocalDate(`${month}-01`).slice(0, 7);
+  return Object.freeze({
+    pathname: "/tariff-assessment" as const,
+    params: Object.freeze({ month: normalizedMonth }),
+  });
+}
+
 export function dayEditorRoute(
   date: string,
   mode: "SHIFT" | "APPOINTMENT",

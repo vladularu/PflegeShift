@@ -27,18 +27,22 @@ function shift(id: string, date: string): ShiftEntry {
 }
 
 describe("selectAnalysisEntryWindow", () => {
-  it("keeps the selected month small while preserving the compliance lookback", () => {
+  it("keeps the selected month small while preserving the compliance compensation window", () => {
     const result = selectAnalysisEntryWindow([
+      shift("too-old", "2026-04-30"),
+      shift("two-month-lookback", "2026-05-01"),
       shift("outside", "2026-06-22"),
       shift("lookback", "2026-06-23"),
       shift("month", "2026-07-15"),
       shift("after", "2026-08-01"),
+      shift("after-window", "2026-08-29"),
     ], "2026-07");
 
     expect(result.monthEntries.map((entry) => entry.id)).toEqual(["month"]);
     expect(result.monthShifts.map((entry) => entry.id)).toEqual(["month"]);
-    expect(result.complianceShifts.map((entry) => entry.id)).toEqual(["lookback", "month"]);
+    expect(result.complianceShifts.map((entry) => entry.id)).toEqual(["lookback", "month", "after"]);
     expect(result.allowanceShifts.map((entry) => entry.id)).toEqual([
+      "two-month-lookback",
       "outside",
       "lookback",
       "month",

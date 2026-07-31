@@ -269,6 +269,29 @@ export interface TvoedAssessment {
   readonly alternatingShiftWork: "DETECTED" | "REVIEW" | "NOT_DETECTED";
   readonly suggestedAllowance: AllowanceStatus;
   readonly evidence: readonly string[];
+  readonly criteria: readonly TvoedAssessmentCriterion[];
+  readonly requiresConfirmation: boolean;
+}
+
+export type TvoedWorkplaceCoverage = "UNKNOWN" | "AROUND_THE_CLOCK" | "NOT_AROUND_THE_CLOCK";
+export type TvoedAssignment = "UNKNOWN" | "PERMANENT" | "TEMPORARY";
+
+export interface TvoedWorkPatternSettings {
+  readonly workplaceCoverage: TvoedWorkplaceCoverage;
+  readonly assignment: TvoedAssignment;
+  readonly updatedAt: string | null;
+}
+
+export interface SaveTvoedWorkPatternSettingsInput {
+  readonly workplaceCoverage: TvoedWorkplaceCoverage;
+  readonly assignment: TvoedAssignment;
+}
+
+export interface TvoedAssessmentCriterion {
+  readonly key: "SHIFT_CHANGES" | "NIGHT_SHIFTS" | "AROUND_THE_CLOCK" | "ASSIGNMENT";
+  readonly label: string;
+  readonly detail: string;
+  readonly state: "MET" | "OPEN" | "NOT_MET";
 }
 
 export interface MonthlyPayEstimate {

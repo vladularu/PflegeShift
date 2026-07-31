@@ -8,6 +8,7 @@ import type {
   ShiftEntry,
   ShiftPremiumBreakdown,
   TvoedAssessment,
+  TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
@@ -316,7 +317,24 @@ function tariffNightMinutes(shift: ShiftEntry): number {
   return nightOverlap(start, end) - nightOverlap(breakStart, breakEnd);
 }
 
-export function assessTvoedPattern(shifts: readonly ShiftEntry[]): TvoedAssessment {
+export const DEFAULT_TVOED_WORK_PATTERN_SETTINGS: TvoedWorkPatternSettings = Object.freeze({
+  workplaceCoverage: "UNKNOWN",
+  assignment: "UNKNOWN",
+  updatedAt: null,
+});
+
+function hasRecurringNightShifts(shifts: readonly ShiftEntry[]): boolean {
+  const nights = shifts.filter((shift) => tariffNightMinutes(shift) >= 2 * 60);
+  return nights.some((night, index) => {
+    const deadline = Temporal.PlainDate.from(night.date).add({ months: 1 }).toString();
+    return nights.slice(index + 1).filter((candidate) => candidate.date <= deadline).length >= 2;
+  });
+}
+
+export function assessTvoedPattern(
+  shifts: readonly ShiftEntry[],
+  settings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
+): TvoedAssessment {
   const work = shifts
     .filter(isWorkShift)
     .sort((left, right) =>
@@ -334,6 +352,12 @@ export function assessTvoedPattern(shifts: readonly ShiftEntry[]): TvoedAssessme
     0,
   );
   const hasRegularChange = changeCount >= 2;
+  const recurringNightShifts = hasRecurringNightShifts(work);
+  const hasAlternatingPattern =
+    work.length >= 5 &&
+    windows.size >= 3 &&
+    recurringNightShifts &&
+    hasRegularChange;
   const shiftWork =
     work.length === 0
       ? "NOT_DETECTED"
@@ -341,30 +365,37 @@ export function assessTvoedPattern(shifts: readonly ShiftEntry[]): TvoedAssessme
         ? "DETECTED"
         : "REVIEW";
   const alternatingShiftWork =
-    work.length === 0 || nightShiftCount === 0
+    work.length === 0 || nightShiftCount === 0 || settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
       ? "NOT_DETECTED"
-      : work.length >= 4 &&
-          windows.size >= 3 &&
-          nightShiftCount >= 2 &&
-          hasRegularChange
+      : hasAlternatingPattern && settings.workplaceCoverage === "AROUND_THE_CLOCK"
         ? "DETECTED"
-        : windows.size >= 2
+        : hasAlternatingPattern || windows.size >= 2
           ? "REVIEW"
           : "NOT_DETECTED";
+  const detectedPattern = alternatingShiftWork === "DETECTED"
+    ? "ALTERNATING"
+    : shiftWork === "DETECTED"
+      ? "SHIFT"
+      : null;
+  const requiresCoverage = hasAlternatingPattern && settings.workplaceCoverage === "UNKNOWN";
   const suggestedAllowance: AllowanceStatus =
-    alternatingShiftWork === "DETECTED"
+    requiresCoverage
+      ? "NONE"
+      : detectedPattern === "ALTERNATING" && settings.assignment === "PERMANENT"
       ? "ALTERNATING_MONTHLY"
-      : alternatingShiftWork === "REVIEW"
+      : detectedPattern === "ALTERNATING" && settings.assignment === "TEMPORARY"
         ? "ALTERNATING_HOURLY"
-        : shiftWork === "DETECTED"
+        : detectedPattern === "SHIFT" && settings.assignment === "PERMANENT"
           ? "SHIFT_MONTHLY"
-          : shiftWork === "REVIEW"
+          : detectedPattern === "SHIFT" && settings.assignment === "TEMPORARY"
             ? "SHIFT_HOURLY"
             : "NONE";
+  const requiresAssignment = detectedPattern !== null && settings.assignment === "UNKNOWN";
   return {
     shiftWork,
     alternatingShiftWork,
     suggestedAllowance,
+    requiresConfirmation: requiresCoverage || requiresAssignment,
     evidence: [
       `${work.length} Arbeitsdienste`,
       `${windows.size} Dienstlagen${windows.size ? `: ${[...windows].join(", ")}` : ""}`,
@@ -372,6 +403,48 @@ export function assessTvoedPattern(shifts: readonly ShiftEntry[]): TvoedAssessme
       nightShiftCount > 0
         ? `${nightShiftCount} Nachtschichten mit mindestens 2 Stunden Nachtarbeit`
         : "Keine tarifliche Nachtschicht erkannt",
+    ],
+    criteria: [
+      {
+        key: "SHIFT_CHANGES",
+        label: "Regelmäßiger Wechsel",
+        detail: hasRegularChange
+          ? `${changeCount} Wechsel zwischen ${windows.size} Dienstlagen erkannt`
+          : "Für eine belastbare Erkennung fehlen regelmäßige Wechsel",
+        state: hasRegularChange ? "MET" : work.length === 0 ? "NOT_MET" : "OPEN",
+      },
+      {
+        key: "NIGHT_SHIFTS",
+        label: "Wiederkehrende Nachtschichten",
+        detail: recurringNightShifts
+          ? "Mindestens drei tarifliche Nachtschichten innerhalb eines Monats erkannt"
+          : `${nightShiftCount} tarifliche Nachtschichten im Prüfzeitraum erkannt`,
+        state: recurringNightShifts ? "MET" : nightShiftCount === 0 ? "NOT_MET" : "OPEN",
+      },
+      {
+        key: "AROUND_THE_CLOCK",
+        label: "Arbeitsbereich rund um die Uhr",
+        detail: settings.workplaceCoverage === "AROUND_THE_CLOCK"
+          ? "Vom Nutzer bestätigt"
+          : settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
+            ? "Vom Nutzer verneint"
+            : "Kann nicht aus Dienstzeiten abgeleitet werden",
+        state: settings.workplaceCoverage === "AROUND_THE_CLOCK"
+          ? "MET"
+          : settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
+            ? "NOT_MET"
+            : "OPEN",
+      },
+      {
+        key: "ASSIGNMENT",
+        label: "Dauerhafte Zuordnung",
+        detail: settings.assignment === "PERMANENT"
+          ? "Dauerhaft Teil der Stelle"
+          : settings.assignment === "TEMPORARY"
+            ? "Nur gelegentlich oder vertretungsweise"
+            : "Kann nicht aus Kalendereinträgen abgeleitet werden",
+        state: settings.assignment === "UNKNOWN" ? "OPEN" : "MET",
+      },
     ],
   };
 }
@@ -424,12 +497,13 @@ export function calculateMonthlyPayEstimate(
   profile: UserProfile,
   decision: MonthlyTariffDecision | null,
   assessmentShifts: readonly ShiftEntry[] = shifts,
+  workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
 ): MonthlyPayEstimate {
   const monthShifts = shifts.filter(
     (shift) => shift.deletedAt === null && shift.date.startsWith(`${month}-`) && isWorkShift(shift),
   );
   const first = Temporal.PlainDate.from(`${month}-01`);
-  const assessmentStart = first.subtract({ months: 1 }).toString();
+  const assessmentStart = first.subtract({ months: 2 }).toString();
   const assessmentEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
   const relevantAssessmentShifts = monthShifts.length === 0
     ? []
@@ -440,7 +514,7 @@ export function calculateMonthlyPayEstimate(
         shift.date <= assessmentEnd &&
         isWorkShift(shift),
     );
-  const assessment = assessTvoedPattern(relevantAssessmentShifts);
+  const assessment = assessTvoedPattern(relevantAssessmentShifts, workPatternSettings);
   const dateKey = `${month}-01`;
   const version = getTariffVersion(dateKey);
   const tariff = profile.tariff;

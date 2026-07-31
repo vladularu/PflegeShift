@@ -11,9 +11,13 @@ import type {
   SaveProfileInput,
   SaveShiftInput,
   SaveShiftTemplateInput,
+  SaveTvoedWorkPatternSettingsInput,
   ShiftEntry,
   ShiftTemplate,
   TariffSector,
+  TvoedAssignment,
+  TvoedWorkPatternSettings,
+  TvoedWorkplaceCoverage,
   UserProfile,
 } from "@/domain/types";
 import {
@@ -537,4 +541,71 @@ export async function saveMonthlyTariffDecision(
   );
   if (saved === null) throw new Error("Tarifentscheidung konnte nicht gespeichert werden.");
   return mapTariffDecision(saved);
+}
+
+const TVOED_COVERAGE_KEY = "tvoed_workplace_coverage";
+const TVOED_ASSIGNMENT_KEY = "tvoed_assignment";
+
+interface PreferenceRow {
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
+function isWorkplaceCoverage(value: string): value is TvoedWorkplaceCoverage {
+  return ["UNKNOWN", "AROUND_THE_CLOCK", "NOT_AROUND_THE_CLOCK"].includes(value);
+}
+
+function isAssignment(value: string): value is TvoedAssignment {
+  return ["UNKNOWN", "PERMANENT", "TEMPORARY"].includes(value);
+}
+
+export async function loadTvoedWorkPatternSettings(
+  db: SQLiteDatabase,
+): Promise<TvoedWorkPatternSettings> {
+  const rows = await db.getAllAsync<PreferenceRow>(
+    `SELECT key,value,updated_at FROM app_preferences WHERE key IN (?,?)`,
+    TVOED_COVERAGE_KEY,
+    TVOED_ASSIGNMENT_KEY,
+  );
+  const coverageRow = rows.find((row) => row.key === TVOED_COVERAGE_KEY);
+  const assignmentRow = rows.find((row) => row.key === TVOED_ASSIGNMENT_KEY);
+  const workplaceCoverage = coverageRow && isWorkplaceCoverage(coverageRow.value)
+    ? coverageRow.value
+    : "UNKNOWN";
+  const assignment = assignmentRow && isAssignment(assignmentRow.value)
+    ? assignmentRow.value
+    : "UNKNOWN";
+  const updatedAt = [coverageRow?.updated_at, assignmentRow?.updated_at]
+    .filter((value): value is string => typeof value === "string")
+    .sort()
+    .at(-1) ?? null;
+  return Object.freeze({ workplaceCoverage, assignment, updatedAt });
+}
+
+export async function saveTvoedWorkPatternSettings(
+  db: SQLiteDatabase,
+  input: SaveTvoedWorkPatternSettingsInput,
+): Promise<TvoedWorkPatternSettings> {
+  if (!isWorkplaceCoverage(input.workplaceCoverage) || !isAssignment(input.assignment)) {
+    throw new Error("Ungültige Angaben zum Schichtmodell.");
+  }
+  const now = new Date().toISOString();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
+       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
+      TVOED_COVERAGE_KEY,
+      input.workplaceCoverage,
+      now,
+    );
+    await db.runAsync(
+      `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
+       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
+      TVOED_ASSIGNMENT_KEY,
+      input.assignment,
+      now,
+    );
+  });
+  return loadTvoedWorkPatternSettings(db);
 }

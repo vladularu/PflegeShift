@@ -4,9 +4,11 @@ import type {
   ComplianceIssue,
   ComplianceKind,
   ComplianceSeverity,
+  FederalState,
   MonthlyComplianceResult,
   ShiftEntry,
 } from "@/domain/types";
+import { getPublicHolidays } from "@/engine/holidays";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 
 const RELEVANT_TYPES = new Set(["EARLY", "LATE", "NIGHT", "DAY", "TRAINING", "CUSTOM"]);
@@ -17,6 +19,12 @@ interface Interval {
   readonly end: Temporal.ZonedDateTime;
   readonly grossMinutes: number;
   readonly netMinutes: number;
+}
+
+export interface ComplianceOptions {
+  readonly federalState?: FederalState;
+  readonly referenceDate?: string;
+  readonly weeklyMinutes?: number;
 }
 
 function isRelevant(shift: ShiftEntry): boolean {
@@ -89,11 +97,59 @@ function hours(minutes: number): string {
   return `${Math.round((minutes / 60) * 100) / 100} h`;
 }
 
+function durationLabel(minutes: number): string {
+  const rounded = Math.max(0, Math.round(minutes));
+  return `${Math.floor(rounded / 60)}:${String(rounded % 60).padStart(2, "0")} h`;
+}
+
+function dateLabel(date: Temporal.PlainDate): string {
+  return `${String(date.day).padStart(2, "0")}.${String(date.month).padStart(2, "0")}.${date.year}`;
+}
+
 function minutesBetween(
   left: Temporal.ZonedDateTime,
   right: Temporal.ZonedDateTime,
 ): number {
   return Math.round(Number(right.epochMilliseconds - left.epochMilliseconds) / 60_000);
+}
+
+function zonedHour(
+  date: Temporal.PlainDate,
+  hour: number,
+  timeZone: string,
+): Temporal.ZonedDateTime {
+  return Temporal.ZonedDateTime.from({
+    timeZone,
+    year: date.year,
+    month: date.month,
+    day: date.day,
+    hour,
+  }, { disambiguation: hour < 12 ? "later" : "earlier" });
+}
+
+function nightWorkMinutes(item: Interval): number {
+  let total = 0;
+  let date = item.start.toPlainDate().subtract({ days: 1 });
+  const lastDate = item.end.toPlainDate();
+  while (Temporal.PlainDate.compare(date, lastDate) <= 0) {
+    const nightStart = zonedHour(date, 23, item.start.timeZoneId);
+    const nightEnd = zonedHour(date.add({ days: 1 }), 6, item.start.timeZoneId);
+    const overlapStart = Temporal.ZonedDateTime.compare(item.start, nightStart) > 0
+      ? item.start
+      : nightStart;
+    const overlapEnd = Temporal.ZonedDateTime.compare(item.end, nightEnd) < 0
+      ? item.end
+      : nightEnd;
+    if (Temporal.ZonedDateTime.compare(overlapEnd, overlapStart) > 0) {
+      total += minutesBetween(overlapStart, overlapEnd);
+    }
+    date = date.add({ days: 1 });
+  }
+  return total;
+}
+
+function isNightWork(item: Interval): boolean {
+  return nightWorkMinutes(item) > 120;
 }
 
 function checkDuplicates(intervals: readonly Interval[]): ComplianceIssue[] {
@@ -147,23 +203,14 @@ function checkOverlaps(intervals: readonly Interval[]): ComplianceIssue[] {
   return issues;
 }
 
-function connectedWorkGroups(intervals: readonly Interval[]): Interval[][] {
-  const groups: Interval[][] = [];
-  let group: Interval[] = [];
-  let latestEnd: Temporal.ZonedDateTime | null = null;
+function workGroupsByRecordedDate(intervals: readonly Interval[]): Interval[][] {
+  const groups = new Map<string, Interval[]>();
   for (const item of intervals) {
-    if (latestEnd && minutesBetween(latestEnd, item.start) >= 600) {
-      groups.push(group);
-      group = [];
-      latestEnd = null;
-    }
-    group.push(item);
-    if (!latestEnd || Temporal.ZonedDateTime.compare(item.end, latestEnd) > 0) {
-      latestEnd = item.end;
-    }
+    const entries = groups.get(item.shift.date) ?? [];
+    entries.push(item);
+    groups.set(item.shift.date, entries);
   }
-  if (group.length) groups.push(group);
-  return groups;
+  return [...groups.values()];
 }
 
 function interruptionMinutes(items: readonly Interval[]): number {
@@ -200,10 +247,11 @@ function hasContinuousWorkOverSixHours(items: readonly Interval[]): boolean {
 
 function checkWorkingTime(intervals: readonly Interval[]): ComplianceIssue[] {
   const issues: ComplianceIssue[] = [];
-  for (const items of connectedWorkGroups(intervals)) {
+  for (const items of workGroupsByRecordedDate(intervals)) {
     const shifts = items.map((item) => item.shift);
     const date = shifts.at(-1)!.date;
     const net = items.reduce((sum, item) => sum + item.netMinutes, 0);
+    const containsNightWork = items.some(isNightWork);
     const recordedBreak = shifts.reduce((sum, shift) => sum + shift.breakMinutes, 0);
     const interruptions = interruptionMinutes(items);
 
@@ -213,7 +261,7 @@ function checkWorkingTime(intervals: readonly Interval[]): ComplianceIssue[] {
         `${hours(net)} Nettoarbeitszeit überschreiten die 10-Stunden-Grenze.`,
         shifts, date,
       ));
-    } else if (net > 480) {
+    } else if (net > 480 && !containsNightWork) {
       issues.push(issue(
         "warning", "LEGAL", "ARBZG_3_OVER_8H", "Tagesarbeitszeit über 8 Stunden",
         `${hours(net)} Nettoarbeitszeit erfordern einen zulässigen Ausgleichszeitraum.`,
@@ -265,10 +313,103 @@ function checkWorkingTime(intervals: readonly Interval[]): ComplianceIssue[] {
   return issues;
 }
 
+function publicHolidayDatesForMonth(
+  month: string,
+  federalState: FederalState | undefined,
+): ReadonlySet<string> {
+  if (!federalState) return new Set();
+  const year = Number(month.slice(0, 4));
+  return new Set(getPublicHolidays(year, federalState).map((holiday) => holiday.date));
+}
+
+function statutoryWorkdaysInMonth(
+  month: string,
+  holidays: ReadonlySet<string>,
+): number {
+  const first = Temporal.PlainDate.from(`${month}-01`);
+  const end = first.add({ months: 1 });
+  let count = 0;
+  for (let date = first; Temporal.PlainDate.compare(date, end) < 0; date = date.add({ days: 1 })) {
+    if (date.dayOfWeek <= 6 && !holidays.has(date.toString())) count += 1;
+  }
+  return count;
+}
+
+function creditedAbsenceMinutes(
+  month: string,
+  shifts: readonly ShiftEntry[],
+  workedDates: ReadonlySet<string>,
+  holidays: ReadonlySet<string>,
+  weeklyMinutes: number | undefined,
+): number {
+  if (!weeklyMinutes || weeklyMinutes <= 0) return 0;
+  const dailyMinutes = Math.round(weeklyMinutes / 5);
+  const creditedDates = new Set<string>();
+  for (const shift of shifts) {
+    if (
+      shift.deletedAt !== null ||
+      !shift.date.startsWith(`${month}-`) ||
+      (shift.type !== "VACATION" && shift.type !== "SICK") ||
+      workedDates.has(shift.date) ||
+      creditedDates.has(shift.date)
+    ) continue;
+    const date = Temporal.PlainDate.from(shift.date);
+    if (date.dayOfWeek <= 5 && !holidays.has(shift.date)) creditedDates.add(shift.date);
+  }
+  return creditedDates.size * dailyMinutes;
+}
+
+function checkNightWorkingTimeAverage(
+  month: string,
+  intervals: readonly Interval[],
+  shifts: readonly ShiftEntry[],
+  options: ComplianceOptions,
+  referenceDate: Temporal.PlainDate,
+): ComplianceIssue[] {
+  const monthIntervals = intervals.filter((item) => item.shift.date.startsWith(`${month}-`));
+  const extendedNightGroups = workGroupsByRecordedDate(monthIntervals).filter((items) =>
+    items.some(isNightWork) && items.reduce((sum, item) => sum + item.netMinutes, 0) > 480);
+  if (extendedNightGroups.length === 0) return [];
+
+  const holidays = publicHolidayDatesForMonth(month, options.federalState);
+  const workdayCount = statutoryWorkdaysInMonth(month, holidays);
+  if (workdayCount === 0) return [];
+
+  const workedDates = new Set(monthIntervals.map((item) => item.shift.date));
+  const workedMinutes = monthIntervals.reduce((sum, item) => sum + item.netMinutes, 0);
+  const absenceMinutes = creditedAbsenceMinutes(
+    month,
+    shifts,
+    workedDates,
+    holidays,
+    options.weeklyMinutes,
+  );
+  const averageMinutes = (workedMinutes + absenceMinutes) / workdayCount;
+  if (averageMinutes <= 480) return [];
+
+  const monthEnd = Temporal.PlainDate.from(`${month}-01`).add({ months: 1 }).subtract({ days: 1 });
+  const overdue = Temporal.PlainDate.compare(referenceDate, monthEnd) > 0;
+  const related = extendedNightGroups.flatMap((items) => items.map((item) => item.shift));
+  return [issue(
+    overdue ? "critical" : "warning",
+    "LEGAL",
+    "ARBZG_6_NIGHT_AVERAGE",
+    overdue ? "Ausgleich der Nachtarbeitszeit fehlt" : "Ausgleich der Nachtarbeitszeit offen",
+    `Der eingetragene Durchschnitt beträgt ${durationLabel(averageMinutes)} je Werktag bei ${workdayCount} Werktagen. Für Nachtarbeit sind innerhalb eines Kalendermonats oder vier Wochen durchschnittlich höchstens 8:00 h zulässig.`,
+    related,
+  )];
+}
+
 interface WorkdayBoundary {
   readonly date: string;
   readonly earliest: Interval;
   readonly latest: Interval;
+}
+
+interface RestPeriod {
+  readonly current: Interval;
+  readonly next: Interval;
+  readonly minutes: number;
 }
 
 function workdayBoundaries(intervals: readonly Interval[]): WorkdayBoundary[] {
@@ -289,30 +430,76 @@ function workdayBoundaries(intervals: readonly Interval[]): WorkdayBoundary[] {
     }));
 }
 
-function checkRestAndSequence(intervals: readonly Interval[]): ComplianceIssue[] {
-  const issues: ComplianceIssue[] = [];
+function restPeriods(intervals: readonly Interval[]): RestPeriod[] {
   const boundaries = workdayBoundaries(intervals);
-  for (let index = 0; index < boundaries.length - 1; index++) {
-    const current = boundaries[index].latest;
+  return boundaries.slice(0, -1).map((boundary, index) => {
+    const current = boundary.latest;
     const next = boundaries[index + 1].earliest;
-    const rest = minutesBetween(current.end, next.start);
+    return {
+      current,
+      next,
+      minutes: minutesBetween(current.end, next.start),
+    };
+  });
+}
+
+function compensatedShortRestIndexes(periods: readonly RestPeriod[]): ReadonlySet<number> {
+  const compensated = new Set<number>();
+  const usedCompensationPeriods = new Set<number>();
+
+  for (let shortIndex = 0; shortIndex < periods.length; shortIndex += 1) {
+    const shortened = periods[shortIndex];
+    if (shortened.minutes < 600 || shortened.minutes >= 660) continue;
+
+    const deadline = shortened.next.start.add({ days: 28 });
+    for (let candidateIndex = shortIndex + 1; candidateIndex < periods.length; candidateIndex += 1) {
+      const candidate = periods[candidateIndex];
+      if (usedCompensationPeriods.has(candidateIndex) || candidate.minutes < 720) continue;
+
+      const twelveHoursCompleted = candidate.current.end.add({ hours: 12 });
+      if (Temporal.ZonedDateTime.compare(twelveHoursCompleted, deadline) > 0) break;
+
+      compensated.add(shortIndex);
+      usedCompensationPeriods.add(candidateIndex);
+      break;
+    }
+  }
+
+  return compensated;
+}
+
+function checkRestAndSequence(
+  intervals: readonly Interval[],
+  referenceDate: Temporal.PlainDate,
+): ComplianceIssue[] {
+  const issues: ComplianceIssue[] = [];
+  const periods = restPeriods(intervals);
+  const compensated = compensatedShortRestIndexes(periods);
+  for (let index = 0; index < periods.length; index += 1) {
+    const { current, next, minutes: rest } = periods[index];
     if (rest < 600) {
       issues.push(issue(
         "critical", "LEGAL", "ARBZG_5_REST_10H", "Ruhezeit unter 10 Stunden",
-        `Zwischen den Arbeitstagen liegen nur ${hours(rest)} Ruhezeit.`,
+        `Zwischen den Diensten liegen nur ${hours(rest)} Ruhezeit. Damit wird auch die für Krankenhäuser und Pflegeeinrichtungen mögliche Verkürzung auf 10 Stunden unterschritten.`,
         [current.shift, next.shift],
       ));
-    } else if (rest < 660) {
+    } else if (rest < 660 && !compensated.has(index)) {
+      const deadline = next.start.toPlainDate().add({ days: 28 });
+      const overdue = Temporal.PlainDate.compare(referenceDate, deadline) > 0;
       issues.push(issue(
-        "warning", "LEGAL", "ARBZG_5_REST_11H", "Ruhezeit unter 11 Stunden",
-        `Die Ruhezeit beträgt ${hours(rest)}. Eine Verkürzung muss tariflich zulässig und ausgeglichen sein.`,
+        overdue ? "critical" : "warning",
+        "LEGAL",
+        "ARBZG_5_REST_11H",
+        overdue ? "Ausgleich für verkürzte Ruhezeit fehlt" : "Ausgleich für verkürzte Ruhezeit offen",
+        `Die Ruhezeit beträgt ${hours(rest)}. In den eingetragenen Diensten wurde bis ${dateLabel(deadline)} keine noch unbenutzte Ruhezeit von mindestens 12 Stunden als Ausgleich erkannt.`,
         [current.shift, next.shift],
       ));
     } else if (
+      rest >= 660 &&
       current.shift.type === "LATE" &&
       next.shift.type === "EARLY" &&
-      Temporal.PlainDate.from(boundaries[index + 1].date)
-        .since(Temporal.PlainDate.from(boundaries[index].date)).days === 1
+      Temporal.PlainDate.from(next.shift.date)
+        .since(Temporal.PlainDate.from(current.shift.date)).days === 1
     ) {
       issues.push(issue(
         "warning", "PLANNING", "PLANNING_LATE_EARLY", "Ungünstige Folge Spät zu Früh",
@@ -358,10 +545,10 @@ function checkPlanningSeries(intervals: readonly Interval[]): ComplianceIssue[] 
   }
 
   for (const streak of consecutiveDateStreaks(shifts.filter((shift) => shift.type === "NIGHT"))) {
-    if (streak.length >= 4) {
+    if (streak.length >= 5) {
       issues.push(issue(
         "warning", "PLANNING", "PLANNING_NIGHT_SERIES",
-        "Vier oder mehr Nachtdienste in Folge",
+        "Fünf oder mehr Nachtdienste in Folge",
         `${streak.length} aufeinanderfolgende Nachtdienste wurden erkannt.`,
         streak,
       ));
@@ -408,10 +595,14 @@ export function calculateMonthlyCompliance(
   month: string,
   shifts: readonly ShiftEntry[],
   timeZone: string,
+  options: ComplianceOptions = {},
 ): MonthlyComplianceResult {
+  const referenceDate = Temporal.PlainDate.from(
+    options.referenceDate ?? Temporal.Now.plainDateISO(timeZone).toString(),
+  );
   const first = Temporal.PlainDate.from(`${month}-01`);
   const start = first.subtract({ days: 8 }).toString();
-  const end = first.add({ months: 1 }).subtract({ days: 1 }).toString();
+  const end = first.add({ months: 1 }).subtract({ days: 1 }).add({ days: 28 }).toString();
   const intervals = shifts
     .filter((shift) => isRelevant(shift) && shift.date >= start && shift.date <= end)
     .map((shift) => toInterval(shift, timeZone))
@@ -420,7 +611,8 @@ export function calculateMonthlyCompliance(
     ...checkDuplicates(intervals),
     ...checkOverlaps(intervals),
     ...checkWorkingTime(intervals),
-    ...checkRestAndSequence(intervals),
+    ...checkNightWorkingTimeAverage(month, intervals, shifts, options, referenceDate),
+    ...checkRestAndSequence(intervals, referenceDate),
     ...checkPlanningSeries(intervals),
   ].filter((item) => item.date.startsWith(`${month}-`));
   return {

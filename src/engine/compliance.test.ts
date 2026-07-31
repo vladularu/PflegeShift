@@ -66,6 +66,43 @@ describe("ArbZG compliance", () => {
     expect(streak?.severity).toBe("warning");
   });
 
+  it("allows four consecutive night shifts without a series warning", () => {
+    const shifts = Array.from({ length: 4 }, (_, index) =>
+      shift(
+        `night-${index + 1}`,
+        `2026-07-${String(index + 1).padStart(2, "0")}`,
+        "21:00",
+        "07:00",
+        60,
+        "NIGHT",
+      ));
+
+    const result = calculateMonthlyCompliance("2026-07", shifts, "Europe/Berlin");
+
+    expect(result.issues.some((item) => item.rule === "PLANNING_NIGHT_SERIES")).toBe(false);
+  });
+
+  it("warns from five consecutive night shifts", () => {
+    const shifts = Array.from({ length: 5 }, (_, index) =>
+      shift(
+        `night-${index + 1}`,
+        `2026-07-${String(index + 1).padStart(2, "0")}`,
+        "21:00",
+        "07:00",
+        60,
+        "NIGHT",
+      ));
+
+    const result = calculateMonthlyCompliance("2026-07", shifts, "Europe/Berlin");
+    const warning = result.issues.find((item) => item.rule === "PLANNING_NIGHT_SERIES");
+
+    expect(warning).toMatchObject({
+      kind: "PLANNING",
+      severity: "warning",
+      title: "Fünf oder mehr Nachtdienste in Folge",
+    });
+  });
+
   it("ignores vacation, sickness and free entries", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
@@ -142,6 +179,148 @@ describe("ArbZG compliance", () => {
     expect(result.issues.some((item) => item.rule === "ARBZG_3_MAX_10H")).toBe(false);
     expect(result.issues.some((item) => item.rule === "ARBZG_5_REST_10H")).toBe(false);
     expect(result.issues.some((item) => item.rule === "ARBZG_5_REST_11H")).toBe(true);
+  });
+
+  it("reports a short hospital rest period without duplicating it as daily working time", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-10",
+      [
+        shift("late", "2026-10-03", "13:18", "21:30", 30, "LATE"),
+        shift("early", "2026-10-04", "06:00", "14:12", 30, "EARLY"),
+      ],
+      "Europe/Berlin",
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_5_REST_10H")).toBe(true);
+    expect(result.issues.some((item) => item.rule === "ARBZG_3_MAX_10H")).toBe(false);
+  });
+
+  it("does not flag one compensated night shift as an individual over-eight-hour issue", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("night", "2026-07-01", "21:00", "07:30", 60, "NIGHT")],
+      "Europe/Berlin",
+      { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(false);
+    expect(result.issues.some((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE")).toBe(false);
+  });
+
+  it("recognizes night work from its actual hours instead of its label", () => {
+    const daytime = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("named-night", "2026-07-01", "08:00", "17:00", 30, "NIGHT")],
+      "Europe/Berlin",
+      { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
+    );
+    const actualNight = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("actual-night", "2026-07-01", "21:00", "07:30", 60, "DAY")],
+      "Europe/Berlin",
+      { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
+    );
+
+    expect(daytime.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(true);
+    expect(actualNight.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(false);
+  });
+
+  it("reports the monthly night-work average only when it remains above eight hours", () => {
+    const denseNightMonth = Array.from({ length: 31 }, (_, index) =>
+      shift(
+        `night-${index + 1}`,
+        `2026-07-${String(index + 1).padStart(2, "0")}`,
+        "21:00",
+        "07:30",
+        60,
+        "NIGHT",
+      ));
+    const open = calculateMonthlyCompliance(
+      "2026-07",
+      denseNightMonth,
+      "Europe/Berlin",
+      { federalState: "NW", referenceDate: "2026-07-15", weeklyMinutes: 2_310 },
+    ).issues.find((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE");
+    const expired = calculateMonthlyCompliance(
+      "2026-07",
+      denseNightMonth,
+      "Europe/Berlin",
+      { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
+    ).issues.find((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE");
+
+    expect(open).toMatchObject({ severity: "warning", title: "Ausgleich der Nachtarbeitszeit offen" });
+    expect(expired).toMatchObject({ severity: "critical", title: "Ausgleich der Nachtarbeitszeit fehlt" });
+  });
+
+  it("keeps night duties above ten net hours immediately critical", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("long-night", "2026-07-01", "21:00", "08:30", 30, "NIGHT")],
+      "Europe/Berlin",
+      { federalState: "NW", referenceDate: "2026-07-01", weeklyMinutes: 2_310 },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_3_MAX_10H")).toBe(true);
+  });
+
+  it("hides a shortened hospital rest period after an automatic compensation match", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-10",
+      [
+        shift("late", "2026-10-01", "13:00", "22:00", 30, "LATE"),
+        shift("early", "2026-10-02", "08:30", "16:30", 30, "EARLY"),
+        shift("next", "2026-10-04", "08:30", "16:30", 30, "DAY"),
+      ],
+      "Europe/Berlin",
+      { referenceDate: "2026-10-31" },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_5_REST_11H")).toBe(false);
+  });
+
+  it("uses each compensating rest period only once", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-10",
+      [
+        shift("late", "2026-10-01", "13:00", "22:00", 30, "LATE"),
+        shift("early", "2026-10-02", "08:00", "16:00", 30, "EARLY"),
+        shift("next-early", "2026-10-03", "02:00", "10:00", 30, "EARLY"),
+        shift("after-break", "2026-10-05", "08:00", "16:00", 30, "DAY"),
+      ],
+      "Europe/Berlin",
+      { referenceDate: "2026-10-31" },
+    );
+
+    expect(result.issues.filter((item) => item.rule === "ARBZG_5_REST_11H")).toHaveLength(1);
+  });
+
+  it("distinguishes an open compensation window from an expired one", () => {
+    const shifts = [
+      shift("late", "2026-10-01", "13:00", "22:00", 30, "LATE"),
+      shift("early", "2026-10-02", "08:30", "16:30", 30, "EARLY"),
+    ];
+    const open = calculateMonthlyCompliance("2026-10", shifts, "Europe/Berlin", { referenceDate: "2026-10-10" })
+      .issues.find((item) => item.rule === "ARBZG_5_REST_11H");
+    const expired = calculateMonthlyCompliance("2026-10", shifts, "Europe/Berlin", { referenceDate: "2026-11-01" })
+      .issues.find((item) => item.rule === "ARBZG_5_REST_11H");
+
+    expect(open).toMatchObject({ severity: "warning", title: "Ausgleich für verkürzte Ruhezeit offen" });
+    expect(expired).toMatchObject({ severity: "critical", title: "Ausgleich für verkürzte Ruhezeit fehlt" });
+  });
+
+  it("recognizes compensation entered in the following month", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [
+        shift("late", "2026-07-30", "13:00", "22:00", 30, "LATE"),
+        shift("early", "2026-07-31", "08:30", "16:30", 30, "EARLY"),
+        shift("august", "2026-08-02", "08:30", "16:30", 30, "DAY"),
+      ],
+      "Europe/Berlin",
+      { referenceDate: "2026-08-31" },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_5_REST_11H")).toBe(false);
   });
 
   it("marks gross shifts over sixteen hours as planning warnings", () => {

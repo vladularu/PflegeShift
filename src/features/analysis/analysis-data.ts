@@ -15,8 +15,9 @@ export function selectAnalysisEntryWindow(
 ): AnalysisEntryWindow {
   const first = Temporal.PlainDate.from(`${month}-01`);
   const complianceStart = first.subtract({ days: 8 }).toString();
-  const allowanceStart = first.subtract({ months: 1 }).toString();
+  const allowanceStart = first.subtract({ months: 2 }).toString();
   const monthEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
+  const complianceEnd = Temporal.PlainDate.from(monthEnd).add({ days: 28 }).toString();
   const monthPrefix = `${month}-`;
   const monthEntries = entries.filter(
     (entry) => entry.deletedAt === null && entry.date.startsWith(monthPrefix),
@@ -29,7 +30,7 @@ export function selectAnalysisEntryWindow(
       entry.kind === "SHIFT" &&
       entry.deletedAt === null &&
       entry.date >= complianceStart &&
-      entry.date <= monthEnd,
+      entry.date <= complianceEnd,
   );
   const allowanceShifts = entries.filter(
     (entry): entry is ShiftEntry =>

@@ -120,7 +120,10 @@ export function DayEditorScreen() {
         });
         if (profile && shiftIsTimed) {
           const shifts = entries.filter((entry): entry is Extract<CalendarEntry, { kind: "SHIFT" }> => entry.kind === "SHIFT" && entry.id !== saved.id).concat(saved);
-          const critical = calculateMonthlyCompliance(date.slice(0, 7), shifts, profile.timeZone).issues
+          const critical = calculateMonthlyCompliance(date.slice(0, 7), shifts, profile.timeZone, {
+            federalState: profile.federalState,
+            weeklyMinutes: profile.weeklyMinutes,
+          }).issues
             .find((issue) => issue.severity === "critical" && issue.relatedShiftIds.includes(saved.id));
           if (critical) Alert.alert("ArbZG-Hinweis", critical.title);
         }

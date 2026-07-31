@@ -21,6 +21,12 @@ const profile: UserProfile = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
+const permanentRoundTheClock = {
+  workplaceCoverage: "AROUND_THE_CLOCK" as const,
+  assignment: "PERMANENT" as const,
+  updatedAt: "2026-01-01T00:00:00.000Z",
+};
+
 function shift(overrides: Partial<ShiftEntry> = {}): ShiftEntry {
   return {
     kind: "SHIFT",
@@ -114,7 +120,7 @@ describe("TVöD-P pay engine", () => {
       },
     );
     expect(withoutDecision.personalBaseAmount).toBe(2037.79);
-    expect(withoutDecision.allowanceAmount).toBe(5.4);
+    expect(withoutDecision.allowanceAmount).toBe(0);
     expect(withoutDecision.tvoedAllowanceAmount).toBe(12.5);
     expect(withoutDecision.careAllowanceAmount).toBe(70.91);
     expect(withDecision.allowanceAmount).toBe(125);
@@ -137,7 +143,8 @@ describe("TVöD-P pay engine", () => {
       shift({ id: "3", date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
       shift({ id: "4", date: "2026-07-04", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
       shift({ id: "5", date: "2026-07-05", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
-    ]);
+      shift({ id: "6", date: "2026-07-06", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+    ], permanentRoundTheClock);
     expect(result.shiftWork).toBe("DETECTED");
     expect(result.alternatingShiftWork).toBe("DETECTED");
     expect(result.suggestedAllowance).toBe("ALTERNATING_MONTHLY");
@@ -149,7 +156,9 @@ describe("TVöD-P pay engine", () => {
       shift({ id: "2", date: "2026-07-02", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
       shift({ id: "3", date: "2026-07-03", type: "DAY", startTime: "12:00", endTime: "20:00" }),
       shift({ id: "4", date: "2026-07-04", type: "LATE", startTime: "19:00", endTime: "23:00", breakMinutes: 0 }),
-    ]);
+      shift({ id: "5", date: "2026-07-05", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+      shift({ id: "6", date: "2026-07-06", type: "LATE", startTime: "19:00", endTime: "23:00", breakMinutes: 0 }),
+    ], permanentRoundTheClock);
     expect(result.alternatingShiftWork).toBe("DETECTED");
   });
 
@@ -162,7 +171,8 @@ describe("TVöD-P pay engine", () => {
     ]);
 
     expect(result.alternatingShiftWork).toBe("REVIEW");
-    expect(result.suggestedAllowance).toBe("ALTERNATING_HOURLY");
+    expect(result.suggestedAllowance).toBe("NONE");
+    expect(result.requiresConfirmation).toBe(true);
   });
 
   it("uses the previous month to recognize a rotation across a month boundary", () => {
@@ -175,6 +185,7 @@ describe("TVöD-P pay engine", () => {
       shift({ id: "previous-2", date: "2026-06-29", type: "LATE", startTime: "13:18", endTime: "21:30" }),
       ...currentShifts,
       shift({ id: "current-3", date: "2026-07-08", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      shift({ id: "current-4", date: "2026-07-12", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
     ];
 
     const result = calculateMonthlyPayEstimate(
@@ -183,9 +194,26 @@ describe("TVöD-P pay engine", () => {
       profile,
       null,
       assessmentShifts,
+      permanentRoundTheClock,
     );
 
     expect(result.assessment.alternatingShiftWork).toBe("DETECTED");
     expect(result.assessment.suggestedAllowance).toBe("ALTERNATING_MONTHLY");
+  });
+
+  it("does not infer 24/7 coverage or permanent assignment from calendar data", () => {
+    const result = assessTvoedPattern([
+      shift({ id: "1", date: "2026-07-01", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+      shift({ id: "2", date: "2026-07-02", type: "LATE", startTime: "13:18", endTime: "21:30" }),
+      shift({ id: "3", date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      shift({ id: "4", date: "2026-07-08", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+      shift({ id: "5", date: "2026-07-10", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      shift({ id: "6", date: "2026-07-17", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+    ]);
+
+    expect(result.alternatingShiftWork).toBe("REVIEW");
+    expect(result.suggestedAllowance).toBe("NONE");
+    expect(result.requiresConfirmation).toBe(true);
+    expect(result.criteria.find((item) => item.key === "AROUND_THE_CLOCK")?.state).toBe("OPEN");
   });
 });

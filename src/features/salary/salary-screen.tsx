@@ -1,5 +1,4 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -17,19 +16,11 @@ import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { formatMinutes } from "@/engine/working-time";
 import {
   selectAnalysisEntryWindow,
-  type AnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
 import { premiumDetailsRoute } from "@/navigation/routes";
 import { usePalette } from "@/theme/palette";
 import { SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
-
-const EMPTY_ANALYSIS_WINDOW: AnalysisEntryWindow = Object.freeze({
-  monthEntries: Object.freeze([]),
-  monthShifts: Object.freeze([]),
-  complianceShifts: Object.freeze([]),
-  allowanceShifts: Object.freeze([]),
-});
 
 function euro(value: number | null): string {
   if (value === null) return "–";
@@ -41,12 +32,11 @@ function euro(value: number | null): string {
 
 export function SalaryScreen() {
   const palette = usePalette();
-  const isFocused = useIsFocused();
   const params = useLocalSearchParams<{ month?: string }>();
   const { ready } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
-  const { tariffDecisions } = useMediShiftTariff();
+  const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
   const { testMonths } = useMediShiftTestData();
   const [month, setMonth] = useState(currentMonth);
 
@@ -57,10 +47,8 @@ export function SalaryScreen() {
   }, [params.month]);
 
   const { monthShifts, allowanceShifts } = useMemo(
-    () => isFocused
-      ? selectAnalysisEntryWindow(entries, month)
-      : EMPTY_ANALYSIS_WINDOW,
-    [entries, isFocused, month],
+    () => selectAnalysisEntryWindow(entries, month),
+    [entries, month],
   );
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = useMemo(
@@ -71,9 +59,10 @@ export function SalaryScreen() {
         profile,
         decision,
         allowanceShifts,
+        workPatternSettings,
       )
       : null,
-    [allowanceShifts, decision, month, monthShifts, profile],
+    [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
   );
 
   if (!ready || profile === null || pay === null) return <LoadingView />;
@@ -189,7 +178,7 @@ export function SalaryScreen() {
             ) : null}
             {pay.allowanceAmount > 0 ? (
               <ValueRow
-                label={pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage · automatisch"}
+                label={pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage · Muster & Angaben"}
                 value={euro(pay.allowanceAmount)}
               />
             ) : null}

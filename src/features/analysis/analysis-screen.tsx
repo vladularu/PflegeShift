@@ -1,7 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import { startTransition, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -20,7 +19,6 @@ import {
   useMediShiftTestData,
 } from "@/application/medishift-provider";
 import {
-  ALLOWANCE_STATUSES,
   SHIFT_TYPE_LABELS,
   type AllowanceStatus,
   type ShiftEntry,
@@ -33,7 +31,6 @@ import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import {
   selectAnalysisEntryWindow,
-  type AnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
 import { buildAnnualReport } from "@/features/analysis/annual-report";
 import {
@@ -42,18 +39,12 @@ import {
   type AnalysisPeriod,
 } from "@/features/analysis/annual-report-view";
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
+import { tariffAssessmentRoute } from "@/navigation/routes";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
 
-type Detail = "COMPLIANCE" | "ALLOWANCE" | null;
-
-const EMPTY_ANALYSIS_WINDOW: AnalysisEntryWindow = Object.freeze({
-  monthEntries: Object.freeze([]),
-  monthShifts: Object.freeze([]),
-  complianceShifts: Object.freeze([]),
-  allowanceShifts: Object.freeze([]),
-});
+type Detail = "COMPLIANCE" | null;
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   NONE: "Keine Zulage",
@@ -65,18 +56,16 @@ const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
 
 export function AnalysisScreen() {
   const palette = usePalette();
-  const isFocused = useIsFocused();
   const params = useLocalSearchParams<{ month?: string }>();
   const { ready } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
-  const { tariffDecisions, upsertTariffDecision } = useMediShiftTariff();
+  const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
   const { testMonths } = useMediShiftTestData();
   const [month, setMonth] = useState(currentMonth);
   const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
   const [year, setYear] = useState(() => Number(currentMonth().slice(0, 4)));
   const [detail, setDetail] = useState<Detail>(null);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)) {
@@ -91,15 +80,16 @@ export function AnalysisScreen() {
     complianceShifts,
     allowanceShifts,
   } = useMemo(
-    () => isFocused
-      ? selectAnalysisEntryWindow(entries, month)
-      : EMPTY_ANALYSIS_WINDOW,
-    [entries, isFocused, month],
+    () => selectAnalysisEntryWindow(entries, month),
+    [entries, month],
   );
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const compliance = useMemo(
     () => profile
-      ? calculateMonthlyCompliance(month, complianceShifts, profile.timeZone)
+      ? calculateMonthlyCompliance(month, complianceShifts, profile.timeZone, {
+        federalState: profile.federalState,
+        weeklyMinutes: profile.weeklyMinutes,
+      })
       : null,
     [complianceShifts, month, profile],
   );
@@ -111,9 +101,10 @@ export function AnalysisScreen() {
         profile,
         decision,
         allowanceShifts,
+        workPatternSettings,
       )
       : null,
-    [allowanceShifts, decision, month, monthShifts, profile],
+    [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
   );
   const summary = useMemo(
     () => profile ? calculateMonthlySummary(month, monthShifts, profile) : null,
@@ -124,10 +115,10 @@ export function AnalysisScreen() {
     [month, monthEntries],
   );
   const annualReport = useMemo(
-    () => isFocused && period === "YEAR" && profile
-      ? buildAnnualReport(year, entries, profile, tariffDecisions)
+    () => period === "YEAR" && profile
+      ? buildAnnualReport(year, entries, profile, tariffDecisions, workPatternSettings)
       : null,
-    [entries, isFocused, period, profile, tariffDecisions, year],
+    [entries, period, profile, tariffDecisions, workPatternSettings, year],
   );
 
   if (
@@ -183,26 +174,14 @@ export function AnalysisScreen() {
     }
   }
 
-  async function confirmAllowance(status: AllowanceStatus) {
-    try {
-      setSaving(true);
-      await upsertTariffDecision({
-        month,
-        allowanceStatus: status,
-        expectedRevision: decision?.revision,
-      });
-      if (process.env.EXPO_OS === "ios") {
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
-
   const complianceIsClear = compliance.criticalCount === 0 && compliance.warningCount === 0;
   const allowanceTitle = decision
     ? ALLOWANCE_LABELS[decision.allowanceStatus]
-    : `${ALLOWANCE_LABELS[pay.assessment.suggestedAllowance]} · automatisch`;
+    : pay.assessment.suggestedAllowance !== "NONE"
+      ? `${ALLOWANCE_LABELS[pay.assessment.suggestedAllowance]} · erkannt`
+      : pay.assessment.requiresConfirmation
+        ? "Angaben bestätigen"
+        : "Noch nicht eindeutig";
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
@@ -270,21 +249,13 @@ export function AnalysisScreen() {
               fallback={decision ? "✓" : "·"}
               label="Schichtzulage"
               title={allowanceTitle}
-              active={detail === "ALLOWANCE"}
-              onPress={() => openDetail("ALLOWANCE")}
+              active={false}
+              onPress={() => router.push(tariffAssessmentRoute(month))}
             />
       </View>
 
       {detail === "COMPLIANCE" ? (
         <ComplianceDetails compliance={compliance} shifts={complianceShifts} />
-      ) : detail === "ALLOWANCE" ? (
-        <AllowanceDetails
-          decision={decision?.allowanceStatus ?? null}
-          suggested={pay.assessment.suggestedAllowance}
-          evidence={pay.assessment.evidence}
-          saving={saving}
-          onConfirm={(status) => void confirmAllowance(status)}
-        />
       ) : null}
 
       <Text
@@ -452,81 +423,6 @@ function ComplianceDetails({
           </View>
         );
       })}
-    </Card>
-  );
-}
-
-function AllowanceDetails({
-  decision,
-  suggested,
-  evidence,
-  saving,
-  onConfirm,
-}: {
-  readonly decision: AllowanceStatus | null;
-  readonly suggested: AllowanceStatus;
-  readonly evidence: readonly string[];
-  readonly saving: boolean;
-  readonly onConfirm: (status: AllowanceStatus) => void;
-}) {
-  const palette = usePalette();
-  return (
-    <Card>
-      <View style={{ gap: 4 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>
-          Zulage festlegen
-        </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
-          Empfehlung: {ALLOWANCE_LABELS[suggested]}
-        </Text>
-      </View>
-      <View style={{ gap: 7 }}>
-        {ALLOWANCE_STATUSES.map((status) => {
-          const selected = decision === status;
-          return (
-            <Pressable
-              key={status}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              disabled={saving}
-              onPress={() => onConfirm(status)}
-              style={{
-                minHeight: 46,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderWidth: 1,
-                borderColor: selected ? palette.primary : palette.border,
-                borderRadius: 14,
-                borderCurve: "continuous",
-                backgroundColor: selected ? palette.primarySoft : palette.surface,
-                paddingHorizontal: 13,
-              }}
-            >
-              <Text style={{ color: palette.text, fontSize: 13, fontWeight: "800" }}>
-                {ALLOWANCE_LABELS[status]}
-              </Text>
-              <View
-                style={{
-                  width: 20,
-                  height: 20,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 1,
-                  borderColor: selected ? palette.primary : palette.border,
-                  borderRadius: 10,
-                  backgroundColor: selected ? palette.primary : "transparent",
-                }}
-              >
-                {selected ? <Text style={{ color: "#FFFFFF", fontSize: 12 }}>✓</Text> : null}
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-      <Text selectable numberOfLines={2} style={{ color: palette.textMuted, fontSize: 10, lineHeight: 15 }}>
-        {evidence.join(" · ")}
-      </Text>
     </Card>
   );
 }

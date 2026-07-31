@@ -65,10 +65,10 @@ export default function RootLayout() {
               <Stack.Screen
                 name="calendar-view"
                 options={{
-                  title: "Kalenderansicht",
+                  title: "Kalenderdarstellung",
                   presentation: "formSheet",
                   contentStyle: { backgroundColor: "transparent" },
-                  sheetAllowedDetents: [0.58, 0.86],
+                  sheetAllowedDetents: [0.5, 0.7],
                   sheetGrabberVisible: true,
                 }}
               />
@@ -79,6 +79,16 @@ export default function RootLayout() {
                   presentation: "formSheet",
                   contentStyle: { backgroundColor: "transparent" },
                   sheetAllowedDetents: [0.72, 1],
+                  sheetGrabberVisible: true,
+                }}
+              />
+              <Stack.Screen
+                name="tariff-assessment"
+                options={{
+                  title: "Schichtzulage",
+                  presentation: "formSheet",
+                  contentStyle: { backgroundColor: "transparent" },
+                  sheetAllowedDetents: [0.78, 1],
                   sheetGrabberVisible: true,
                 }}
               />

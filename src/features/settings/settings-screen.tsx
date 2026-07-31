@@ -13,6 +13,7 @@ import {
   isDeveloperModeEnabled,
   setDeveloperMode,
 } from "@/infrastructure/database/dev-tools-repository";
+import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
 import { usePalette } from "@/theme/palette";
 import { CardSeparator, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
@@ -22,6 +23,7 @@ export function SettingsScreen() {
   const db = useSQLiteContext();
   const { ready } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
+  const calendarPreferences = useCalendarPreferences();
   const [developerMode, setDeveloperModeState] = useState(false);
 
   useEffect(() => {
@@ -41,6 +43,14 @@ export function SettingsScreen() {
   const tariffLabel = profile.tariff
     ? `${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel} · ${profile.tariff.sector === "BT_K" ? "BT-K" : "BT-B"}`
     : "Nicht eingerichtet";
+  const visibleCalendarContentCount = [
+    calendarPreferences.showShifts,
+    calendarPreferences.showAppointments,
+    calendarPreferences.showHolidays,
+  ].filter(Boolean).length;
+  const calendarDisplayLabel = visibleCalendarContentCount === 3
+    ? "Dienste, Termine und Feiertage"
+    : `${visibleCalendarContentCount} von 3 Inhalten sichtbar`;
 
   return (
     <ScrollView
@@ -67,6 +77,17 @@ export function SettingsScreen() {
             onPress={() => router.push("/templates")}
             subtitle="Schnellauswahl für den Kalender verwalten"
             title="Dienstvorlagen"
+          />
+        </SurfaceCard>
+      </View>
+
+      <View style={{ gap: 9 }}>
+        <SectionHeader title="Darstellung" />
+        <SurfaceCard>
+          <RowButton
+            onPress={() => router.push("/calendar-view")}
+            subtitle={calendarDisplayLabel}
+            title="Kalenderdarstellung"
           />
         </SurfaceCard>
       </View>
