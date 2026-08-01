@@ -2,8 +2,8 @@ import { Temporal } from "@js-temporal/polyfill";
 import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 
 import {
   useMediShiftEntries,
@@ -18,13 +18,20 @@ import { formatMinutes } from "@/engine/working-time";
 import {
   EMPTY_ANALYSIS_ENTRY_WINDOW,
   selectAnalysisEntryWindow,
+  type AnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
-import { premiumDetailsRoute, tariffAssessmentRoute } from "@/navigation/routes";
+import { premiumDetailsRoute, settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
-import { SurfaceCard } from "@/ui/design-system";
-import { LoadingView } from "@/ui/loading-view";
+import { CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
+import {
+  ReportFootnote,
+  ReportPeriodContent,
+  ReportScrollView,
+  ReportTestBadge,
+} from "@/ui/report-layout";
 
 function euro(value: number | null): string {
   if (value === null) return "–";
@@ -39,12 +46,13 @@ export function SalaryScreen() {
   const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: string }>();
-  const { ready } = useMediShiftStatus();
+  const { error, ready, reload } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
   const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
   const { testMonths } = useMediShiftTestData();
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
+  const entryWindowCache = useRef<AnalysisEntryWindow | null>(null);
 
   useEffect(() => {
     if (typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)) {
@@ -58,15 +66,16 @@ export function SalaryScreen() {
     setMonth((current) => current === activeMonth ? current : activeMonth);
   }, [activeMonthCoordinator]));
 
-  const { monthShifts, allowanceShifts } = useMemo(
-    () => isFocused
-      ? selectAnalysisEntryWindow(entries, month)
-      : EMPTY_ANALYSIS_ENTRY_WINDOW,
-    [entries, isFocused, month],
-  );
+  const entryWindow = useMemo(() => {
+    if (!isFocused) return entryWindowCache.current;
+    const nextWindow = selectAnalysisEntryWindow(entries, month);
+    entryWindowCache.current = nextWindow;
+    return nextWindow;
+  }, [entries, isFocused, month]);
+  const { monthShifts, allowanceShifts } = entryWindow ?? EMPTY_ANALYSIS_ENTRY_WINDOW;
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = useMemo(
-    () => isFocused && profile
+    () => profile
       ? calculateMonthlyPayEstimate(
         month,
         monthShifts,
@@ -76,14 +85,11 @@ export function SalaryScreen() {
         workPatternSettings,
       )
       : null,
-    [allowanceShifts, decision, isFocused, month, monthShifts, profile, workPatternSettings],
+    [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
   );
 
-  if (!isFocused) {
-    return <View style={{ flex: 1, backgroundColor: palette.background }} />;
-  }
-
-  if (!ready || profile === null || pay === null) return <LoadingView />;
+  if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
+  if (!ready || profile === null || entryWindow === null || pay === null) return <LoadingView />;
 
   function moveMonth(delta: number) {
     const nextMonth = Temporal.PlainDate.from(`${month}-01`)
@@ -96,31 +102,55 @@ export function SalaryScreen() {
   }
 
   const workMinutes = pay.shiftBreakdowns.reduce((sum, item) => sum + item.netMinutes, 0);
-  const extras =
-    pay.timePremiumAmount +
-    pay.overtimeAmount +
-    pay.allowanceAmount +
-    pay.tvoedAllowanceAmount +
-    pay.careAllowanceAmount;
+  const hasPremiums = pay.shiftBreakdowns.some((item) => item.premiumLines.length > 0);
+  const compositionRows = [
+    { key: "base", label: "Grundentgelt", value: euro(pay.personalBaseAmount) },
+    {
+      key: "premium",
+      label: "Zeitzuschläge",
+      value: euro(pay.timePremiumAmount),
+      onPress: hasPremiums ? () => router.push(premiumDetailsRoute(pay.month)) : undefined,
+    },
+    ...(pay.overtimeAmount > 0
+      ? [{ key: "overtime", label: "Überstunden", value: euro(pay.overtimeAmount) }]
+      : []),
+    ...(pay.allowanceAmount > 0
+      ? [{
+        key: "shift-allowance",
+        label: pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage · Muster & Angaben",
+        value: euro(pay.allowanceAmount),
+        onPress: () => router.push(tariffAssessmentRoute(month)),
+      }]
+      : []),
+    ...(pay.tvoedAllowanceAmount > 0
+      ? [{
+        key: "tvoed",
+        label: "TVöD-Zulage",
+        value: euro(pay.tvoedAllowanceAmount),
+        onPress: () => router.push(settingsInfoRoute("TVOED_ALLOWANCE")),
+      }]
+      : []),
+    ...(pay.careAllowanceAmount > 0
+      ? [{
+        key: "care",
+        label: "Pflegezulage TVöD-P",
+        value: euro(pay.careAllowanceAmount),
+        onPress: () => router.push(settingsInfoRoute("CARE_ALLOWANCE")),
+      }]
+      : []),
+  ];
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 14, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 48 }}
-    >
+    <ReportScrollView>
       <MonthNavigator
         label={formatMonthTitle(month)}
         onNext={() => moveMonth(1)}
         onPrevious={() => moveMonth(-1)}
       />
+      <ReportPeriodContent>
 
       {testMonths.includes(month) ? (
-        <View style={{ alignSelf: "center", borderRadius: 999, backgroundColor: palette.primarySoft, paddingHorizontal: 10, paddingVertical: 5 }}>
-          <Text style={{ color: palette.primary, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>
-            TESTDATEN
-          </Text>
-        </View>
+        <ReportTestBadge />
       ) : null}
 
       {profile.tariff === null ? (
@@ -175,17 +205,13 @@ export function SalaryScreen() {
                 {euro(pay.estimatedGrossAmount)}
               </Text>
             </View>
-            <View style={{ flexDirection: "row", gap: 16 }}>
-              <HeroValue label="Grundentgelt" value={euro(pay.personalBaseAmount)} />
-              <View style={{ width: 1, backgroundColor: "rgba(255,255,255,0.16)" }} />
-              <HeroValue label="Zuschläge" value={euro(extras)} />
-              <View style={{ width: 1, backgroundColor: "rgba(255,255,255,0.16)" }} />
-              <HeroValue label="Arbeitszeit" value={formatMinutes(workMinutes)} />
-            </View>
+            <Text selectable style={{ color: "#B9E4D8", fontSize: 12, lineHeight: 17 }}>
+              {pay.tariffLabel ?? "Tarifstand nicht verfügbar"} · {formatMinutes(workMinutes)} Arbeitszeit
+            </Text>
           </View>
 
-          <SurfaceCard style={{ gap: 12, padding: 18 }}>
-            <View style={{ gap: 3, paddingBottom: 4 }}>
+          <SurfaceCard style={{ paddingHorizontal: 18, paddingVertical: 14 }}>
+            <View style={{ gap: 3, paddingBottom: 12 }}>
               <Text selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>
                 Zusammensetzung
               </Text>
@@ -193,41 +219,21 @@ export function SalaryScreen() {
                 {pay.tariffLabel ?? "Tarifstand nicht verfügbar"}
               </Text>
             </View>
-            <ValueRow label="Grundentgelt" value={euro(pay.personalBaseAmount)} />
-            <PremiumRow pay={pay} />
-            {pay.overtimeAmount > 0 ? (
-              <ValueRow label="Überstunden" value={euro(pay.overtimeAmount)} />
-            ) : null}
-            {pay.allowanceAmount > 0 ? (
-              <ValueRow
-                label={pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage · Muster & Angaben"}
-                onPress={() => router.push(tariffAssessmentRoute(month))}
-                value={euro(pay.allowanceAmount)}
-              />
-            ) : null}
-            {pay.tvoedAllowanceAmount > 0 ? (
-              <ValueRow label="TVöD-Zulage" value={euro(pay.tvoedAllowanceAmount)} />
-            ) : null}
-            {pay.careAllowanceAmount > 0 ? (
-              <ValueRow label="Pflegezulage TVöD-P" value={euro(pay.careAllowanceAmount)} />
-            ) : null}
+            {compositionRows.map((row, index) => (
+              <View key={row.key}>
+                {index > 0 ? <CardSeparator inset={0} /> : null}
+                <ValueRow label={row.label} onPress={row.onPress} value={row.value} />
+              </View>
+            ))}
           </SurfaceCard>
 
-          <Text
-            selectable
-            style={{
-              color: palette.textMuted,
-              fontSize: 10,
-              lineHeight: 15,
-              paddingHorizontal: 6,
-              textAlign: "center",
-            }}
-          >
+          <ReportFootnote>
             Unverbindliche Schätzung · keine Lohnabrechnung oder Rechtsberatung
-          </Text>
+          </ReportFootnote>
         </>
       )}
-    </ScrollView>
+      </ReportPeriodContent>
+    </ReportScrollView>
   );
 }
 
@@ -262,61 +268,6 @@ function SetupCard() {
   );
 }
 
-function PremiumRow({
-  pay,
-}: {
-  readonly pay: ReturnType<typeof calculateMonthlyPayEstimate>;
-}) {
-  const palette = usePalette();
-  const hasPremiums = pay.shiftBreakdowns.some((item) => item.premiumLines.length > 0);
-  return (
-    <Pressable
-      accessibilityLabel={`Zeitzuschläge ${euro(pay.timePremiumAmount)}, Aufschlüsselung öffnen`}
-      accessibilityRole="button"
-      disabled={!hasPremiums}
-      onPress={() => router.push(premiumDetailsRoute(pay.month))}
-      style={({ pressed }) => ({
-        minHeight: 44,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        borderRadius: 12,
-        backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-        opacity: hasPremiums ? 1 : 0.62,
-      })}
-    >
-      <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>
-        Zeitzuschläge
-      </Text>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <Text selectable style={{ color: palette.text, fontWeight: "800", fontVariant: ["tabular-nums"] }}>
-          {euro(pay.timePremiumAmount)}
-        </Text>
-        {hasPremiums ? <Text style={{ color: palette.textMuted, fontSize: 20 }}>›</Text> : null}
-      </View>
-    </Pressable>
-  );
-}
-
-function HeroValue({ label, value }: { readonly label: string; readonly value: string }) {
-  return (
-    <View style={{ minWidth: 0, flex: 1, gap: 3 }}>
-      <Text selectable style={{ color: "#B9E4D8", fontSize: 10 }}>
-        {label}
-      </Text>
-      <Text
-        selectable
-        adjustsFontSizeToFit
-        numberOfLines={1}
-        style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "800", fontVariant: ["tabular-nums"] }}
-      >
-        {value}
-      </Text>
-    </View>
-  );
-}
-
 function ValueRow({
   label,
   value,
@@ -343,7 +294,7 @@ function ValueRow({
 
   if (!onPress) {
     return (
-      <View style={{ minHeight: 30, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <View style={{ minHeight: 46, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         {content}
       </View>
     );

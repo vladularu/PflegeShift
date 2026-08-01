@@ -2,6 +2,10 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, Text, View, type ViewStyle } from "react-native";
 
 import { usePalette } from "@/theme/palette";
+import {
+  accessibleChipBackgroundColor,
+  chipTextColor,
+} from "@/theme/color-contrast";
 
 export function SurfaceCard({
   children,
@@ -204,15 +208,54 @@ export function EmptyState({
 }) {
   const palette = usePalette();
   return (
-    <View style={{ minHeight: 180, alignItems: "center", justifyContent: "center", gap: 8, padding: 24 }}>
+    <View accessibilityLabel={`${title}. ${message}`} accessible style={{ minHeight: 180, alignItems: "center", justifyContent: "center", gap: 8, padding: 24 }}>
       <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: palette.primarySoft }} />
-      <Text selectable style={{ color: palette.text, fontSize: 17, fontWeight: "800", textAlign: "center" }}>
+      <Text accessibilityElementsHidden maxFontSizeMultiplier={1.5} selectable style={{ color: palette.text, fontSize: 17, fontWeight: "800", textAlign: "center" }}>
         {title}
       </Text>
-      <Text selectable style={{ maxWidth: 290, color: palette.textMuted, fontSize: 13, lineHeight: 19, textAlign: "center" }}>
+      <Text accessibilityElementsHidden maxFontSizeMultiplier={1.6} selectable style={{ maxWidth: 290, color: palette.textMuted, fontSize: 13, lineHeight: 19, textAlign: "center" }}>
         {message}
       </Text>
       {action}
+    </View>
+  );
+}
+
+export function InlineNotice({
+  message,
+  tone = "info",
+}: {
+  readonly message: string;
+  readonly tone?: "info" | "error" | "warning";
+}) {
+  const palette = usePalette();
+  const accent = tone === "error"
+    ? palette.danger
+    : tone === "warning"
+      ? palette.warning
+      : palette.primary;
+  return (
+    <View
+      accessibilityLiveRegion="polite"
+      accessibilityRole={tone === "error" ? "alert" : undefined}
+      style={{
+        minHeight: 44,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        borderWidth: 1,
+        borderColor: `${accent}52`,
+        borderRadius: 14,
+        borderCurve: "continuous",
+        backgroundColor: `${accent}14`,
+        paddingHorizontal: 13,
+        paddingVertical: 9,
+      }}
+    >
+      <View accessibilityElementsHidden style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: accent }} />
+      <Text selectable style={{ minWidth: 0, flex: 1, color: accent, fontSize: 12, fontWeight: "700", lineHeight: 17 }}>
+        {message}
+      </Text>
     </View>
   );
 }
@@ -319,10 +362,10 @@ export function ColorBadge({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: size / 2,
-        backgroundColor: color,
+        backgroundColor: accessibleChipBackgroundColor(color),
       }}
     >
-      <Text adjustsFontSizeToFit numberOfLines={1} style={{ maxWidth: size - 10, color: "#FFFFFF", fontSize: size * 0.34, fontWeight: "900" }}>
+      <Text adjustsFontSizeToFit maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ maxWidth: size - 10, color: chipTextColor, fontSize: size * 0.34, fontWeight: "900" }}>
         {label}
       </Text>
     </View>

@@ -95,6 +95,16 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="compliance-details"
+                options={{
+                  title: "Arbeitszeitprüfung",
+                  presentation: "formSheet",
+                  contentStyle: { backgroundColor: "transparent" },
+                  sheetAllowedDetents: [0.72, 1],
+                  sheetGrabberVisible: true,
+                }}
+              />
+              <Stack.Screen
                 name="tariff-assessment"
                 options={{
                   title: "Schichtzulage",
@@ -120,7 +130,7 @@ export default function RootLayout() {
                   title: "Dienstvorlage",
                   presentation: "formSheet",
                   contentStyle: { backgroundColor: "transparent" },
-                  sheetAllowedDetents: [0.88, 1],
+                  sheetAllowedDetents: [0.72, 1],
                   sheetGrabberVisible: true,
                 }}
               />

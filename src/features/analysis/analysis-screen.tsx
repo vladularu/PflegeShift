@@ -3,10 +3,9 @@ import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
-import { startTransition, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Pressable,
-  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -33,6 +32,7 @@ import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import {
   EMPTY_ANALYSIS_ENTRY_WINDOW,
   selectAnalysisEntryWindow,
+  type AnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
 import { buildAnnualReport } from "@/features/analysis/annual-report";
 import {
@@ -41,14 +41,18 @@ import {
   type AnalysisPeriod,
 } from "@/features/analysis/annual-report-view";
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
-import { tariffAssessmentRoute } from "@/navigation/routes";
+import { complianceDetailsRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { EmptyState, MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
-import { LoadingView } from "@/ui/loading-view";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
-
-type Detail = "COMPLIANCE" | null;
+import {
+  ReportFootnote,
+  ReportPeriodContent,
+  ReportScrollView,
+  ReportTestBadge,
+} from "@/ui/report-layout";
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   NONE: "Keine Zulage",
@@ -63,7 +67,7 @@ export function AnalysisScreen() {
   const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: string }>();
-  const { ready } = useMediShiftStatus();
+  const { error, ready, reload } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
   const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
@@ -71,13 +75,12 @@ export function AnalysisScreen() {
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
   const [year, setYear] = useState(() => Number(activeMonthCoordinator.getMonth().slice(0, 4)));
-  const [detail, setDetail] = useState<Detail>(null);
+  const entryWindowCache = useRef<AnalysisEntryWindow | null>(null);
 
   useEffect(() => {
     if (typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)) {
       activeMonthCoordinator.setMonth(params.month);
       setMonth(params.month);
-      setDetail(null);
     }
   }, [activeMonthCoordinator, params.month]);
 
@@ -89,29 +92,30 @@ export function AnalysisScreen() {
       : Number(activeMonth.slice(0, 4)));
   }, [activeMonthCoordinator]));
 
+  const entryWindow = useMemo(() => {
+    if (!isFocused) return entryWindowCache.current;
+    const nextWindow = selectAnalysisEntryWindow(entries, month);
+    entryWindowCache.current = nextWindow;
+    return nextWindow;
+  }, [entries, isFocused, month]);
   const {
     monthEntries,
     monthShifts,
     complianceShifts,
     allowanceShifts,
-  } = useMemo(
-    () => isFocused
-      ? selectAnalysisEntryWindow(entries, month)
-      : EMPTY_ANALYSIS_ENTRY_WINDOW,
-    [entries, isFocused, month],
-  );
+  } = entryWindow ?? EMPTY_ANALYSIS_ENTRY_WINDOW;
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const compliance = useMemo(
-    () => isFocused && profile
+    () => profile
       ? calculateMonthlyCompliance(month, complianceShifts, profile.timeZone, {
         federalState: profile.federalState,
         weeklyMinutes: profile.weeklyMinutes,
       })
       : null,
-    [complianceShifts, isFocused, month, profile],
+    [complianceShifts, month, profile],
   );
   const pay = useMemo(
-    () => isFocused && profile
+    () => profile
       ? calculateMonthlyPayEstimate(
         month,
         monthShifts,
@@ -121,15 +125,15 @@ export function AnalysisScreen() {
         workPatternSettings,
       )
       : null,
-    [allowanceShifts, decision, isFocused, month, monthShifts, profile, workPatternSettings],
+    [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
   );
   const summary = useMemo(
-    () => isFocused && profile ? calculateMonthlySummary(month, monthShifts, profile) : null,
-    [isFocused, month, monthShifts, profile],
+    () => profile ? calculateMonthlySummary(month, monthShifts, profile) : null,
+    [month, monthShifts, profile],
   );
   const distribution = useMemo(
-    () => isFocused ? buildShiftTypeDistribution(month, monthEntries) : new Map(),
-    [isFocused, month, monthEntries],
+    () => buildShiftTypeDistribution(month, monthEntries),
+    [month, monthEntries],
   );
   const annualReport = useMemo(
     () => isFocused && period === "YEAR" && profile
@@ -138,11 +142,12 @@ export function AnalysisScreen() {
     [entries, isFocused, period, profile, tariffDecisions, workPatternSettings, year],
   );
 
-  if (!isFocused) {
-    return <View style={{ flex: 1, backgroundColor: palette.background }} />;
+  if (ready && error) {
+    return <LoadFailureView message={error} onRetry={() => void reload()} />;
   }
 
   if (
+    entryWindow === null ||
     !ready ||
     profile === null ||
     compliance === null ||
@@ -160,11 +165,8 @@ export function AnalysisScreen() {
 
   function selectAnnualMonth(nextMonth: string) {
     activeMonthCoordinator.setMonth(nextMonth);
-    startTransition(() => {
-      setMonth(nextMonth);
-      setPeriod("MONTH");
-      setDetail(null);
-    });
+    setMonth(nextMonth);
+    setPeriod("MONTH");
   }
 
   if (period === "YEAR") {
@@ -186,28 +188,17 @@ export function AnalysisScreen() {
       .toString()
       .slice(0, 7);
     activeMonthCoordinator.setMonth(nextMonth);
-    startTransition(() => {
-      setMonth(nextMonth);
-      setDetail(null);
-    });
+    setMonth(nextMonth);
+    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
   }
 
   function moveYear(delta: number) {
     const nextYear = year + delta;
     const nextMonth = `${nextYear}-${month.slice(5, 7)}`;
     activeMonthCoordinator.setMonth(nextMonth);
-    startTransition(() => {
-      setMonth(nextMonth);
-      setYear(nextYear);
-      setDetail(null);
-    });
-  }
-
-  function openDetail(nextDetail: Exclude<Detail, null>) {
-    setDetail((current) => current === nextDetail ? null : nextDetail);
-    if (process.env.EXPO_OS === "ios") {
-      void Haptics.selectionAsync();
-    }
+    setMonth(nextMonth);
+    setYear(nextYear);
+    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
   }
 
   const complianceIsClear = compliance.criticalCount === 0 && compliance.warningCount === 0;
@@ -219,21 +210,16 @@ export function AnalysisScreen() {
         ? "Angaben bestätigen"
         : "Noch nicht eindeutig";
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 48 }}
-    >
+    <ReportScrollView>
       <AnalysisPeriodPicker value={period} onChange={changePeriod} />
       <MonthNavigator
         label={formatMonthTitle(month)}
         onNext={() => moveMonth(1)}
         onPrevious={() => moveMonth(-1)}
       />
+      <ReportPeriodContent>
       {testMonths.includes(month) ? (
-        <View style={{ alignSelf: "center", borderRadius: 999, backgroundColor: palette.primarySoft, paddingHorizontal: 10, paddingVertical: 5 }}>
-          <Text style={{ color: palette.primary, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>TESTDATEN</Text>
-        </View>
+        <ReportTestBadge />
       ) : null}
 
       <View style={{ flexDirection: "row", gap: 8 }}>
@@ -266,8 +252,7 @@ export function AnalysisScreen() {
                 : compliance.criticalCount > 0
                   ? `${compliance.criticalCount} kritisch`
                   : `${compliance.warningCount} Hinweise`}
-              active={detail === "COMPLIANCE"}
-              onPress={() => openDetail("COMPLIANCE")}
+              onPress={() => router.push(complianceDetailsRoute(month))}
             />
             <View style={{ height: 1, marginLeft: 60, backgroundColor: palette.separator }} />
             <StatusCard
@@ -276,33 +261,20 @@ export function AnalysisScreen() {
               fallback={decision ? "✓" : "·"}
               label="Schichtzulage"
               title={allowanceTitle}
-              active={false}
               onPress={() => router.push(tariffAssessmentRoute(month))}
             />
       </View>
 
-      {detail === "COMPLIANCE" ? (
-        <ComplianceDetails compliance={compliance} shifts={complianceShifts} />
-      ) : null}
-
-      <Text
-        selectable
-        style={{
-          color: palette.textMuted,
-          fontSize: 10,
-          lineHeight: 15,
-          paddingHorizontal: 6,
-          textAlign: "center",
-        }}
-      >
+      <ReportFootnote>
         Automatische Prüfung · keine Rechtsberatung
-      </Text>
+      </ReportFootnote>
 
       <View style={{ gap: 10 }}>
         <SectionHeader title="Dienstverteilung" caption="Termine werden nicht als Arbeitszeit gezählt." />
         <DistributionChart distribution={distribution} />
       </View>
-    </ScrollView>
+      </ReportPeriodContent>
+    </ReportScrollView>
   );
 }
 
@@ -369,7 +341,7 @@ function DistributionChart({ distribution }: { readonly distribution: ReadonlyMa
   );
 }
 
-function ComplianceDetails({
+export function ComplianceDetails({
   compliance,
   shifts,
 }: {
@@ -470,7 +442,6 @@ function StatusCard({
   icon,
   fallback,
   accent,
-  active,
   onPress,
 }: {
   readonly label: string;
@@ -478,21 +449,19 @@ function StatusCard({
   readonly icon: SymbolViewProps["name"];
   readonly fallback: string;
   readonly accent: string;
-  readonly active: boolean;
   readonly onPress: () => void;
 }) {
   const palette = usePalette();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ expanded: active }}
       onPress={onPress}
       style={({ pressed }) => ({
         minHeight: 74,
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        backgroundColor: active ? `${accent}12` : "transparent",
+        backgroundColor: "transparent",
         opacity: pressed ? 0.72 : 1,
         paddingHorizontal: 14,
         paddingVertical: 10,
@@ -507,7 +476,7 @@ function StatusCard({
           {title}
         </Text>
       </View>
-      <Text style={{ color: palette.textMuted, fontSize: 18 }}>{active ? "−" : "›"}</Text>
+      <Text style={{ color: palette.textMuted, fontSize: 18 }}>›</Text>
     </Pressable>
   );
 }

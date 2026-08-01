@@ -1,6 +1,5 @@
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { ScrollView, Text } from "react-native";
+import { useState } from "react";
 
 import {
   useMediShiftProfile,
@@ -15,45 +14,60 @@ import {
   type PayGroup,
   type PayLevel,
   type TariffSector,
+  type UserProfile,
 } from "@/domain/types";
 import { parseWeeklyHours } from "@/features/onboarding/onboarding-screen";
 import { resolveTariffUpdate } from "@/features/settings/profile-update";
-import { usePalette } from "@/theme/palette";
-import { SectionHeader, SurfaceCard } from "@/ui/design-system";
-import { DropdownField, Field, PrimaryButton } from "@/ui/form-controls";
+import { settingsFormValues } from "@/features/settings/settings-form-values";
+import { DropdownField, Field } from "@/ui/form-controls";
+import {
+  FormScreen,
+  FormSection,
+  FormStatus,
+  HeaderSaveAction,
+} from "@/ui/form-layout";
 import { LoadingView } from "@/ui/loading-view";
 
+type SettingsSection = "WORK" | "TARIFF";
+
 export function SettingsEditorScreen() {
-  const palette = usePalette();
   const params = useLocalSearchParams<{ section?: string }>();
-  const section = params.section === "TARIFF" ? "TARIFF" : "WORK";
+  const section: SettingsSection = params.section === "TARIFF" ? "TARIFF" : "WORK";
   const { ready, error: dataError } = useMediShiftStatus();
-  const { profile, updateProfile } = useMediShiftProfile();
-  const [federalState, setFederalState] = useState<FederalState>("NW");
-  const [weeklyHours, setWeeklyHours] = useState("38,5");
-  const [payGroup, setPayGroup] = useState<PayGroup>("P8");
-  const [payLevel, setPayLevel] = useState<PayLevel>(4);
-  const [sector, setSector] = useState<TariffSector>("BT_K");
-  const [fullTimeHours, setFullTimeHours] = useState("38,5");
+  const { profile } = useMediShiftProfile();
+
+  if (!ready || profile === null) return <LoadingView />;
+
+  return (
+    <SettingsEditorForm
+      key={`${section}-${profile.createdAt}`}
+      dataError={dataError}
+      profile={profile}
+      section={section}
+    />
+  );
+}
+
+function SettingsEditorForm({
+  dataError,
+  profile,
+  section,
+}: {
+  readonly dataError: string | null;
+  readonly profile: UserProfile;
+  readonly section: SettingsSection;
+}) {
+  const { updateProfile } = useMediShiftProfile();
+  const initialValues = settingsFormValues(profile);
+  const [federalState, setFederalState] = useState<FederalState>(initialValues.federalState);
+  const [weeklyHours, setWeeklyHours] = useState(initialValues.weeklyHours);
+  const [payGroup, setPayGroup] = useState<PayGroup>(initialValues.payGroup);
+  const [payLevel, setPayLevel] = useState<PayLevel>(initialValues.payLevel);
+  const [sector, setSector] = useState<TariffSector>(initialValues.sector);
+  const [fullTimeHours, setFullTimeHours] = useState(initialValues.fullTimeHours);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!profile) return;
-    setFederalState(profile.federalState);
-    setWeeklyHours(String(profile.weeklyMinutes / 60).replace(".", ","));
-    if (profile.tariff) {
-      setPayGroup(profile.tariff.payGroup);
-      setPayLevel(profile.tariff.payLevel);
-      setSector(profile.tariff.sector);
-      setFullTimeHours(String(profile.tariff.fullTimeWeeklyMinutes / 60).replace(".", ","));
-    } else {
-      setFullTimeHours(profile.federalState === "BW" ? "39" : "38,5");
-    }
-  }, [profile]);
-
-  if (!ready || profile === null) return <LoadingView />;
 
   async function submit() {
     try {
@@ -63,10 +77,10 @@ export function SettingsEditorScreen() {
       await updateProfile({
         federalState,
         weeklyMinutes: parseWeeklyHours(weeklyHours),
-        timeZone: profile?.timeZone ?? "Europe/Berlin",
+        timeZone: profile.timeZone,
         tariff: resolveTariffUpdate(
           section,
-          profile?.tariff ?? null,
+          profile.tariff,
           {
             payGroup,
             payLevel,
@@ -84,80 +98,77 @@ export function SettingsEditorScreen() {
   }
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 18, padding: 16, paddingBottom: 38 }}
-    >
-      <Stack.Screen options={{ title: section === "WORK" ? "Arbeitszeitmodell" : "Tarifprofil" }} />
+    <FormScreen>
+      <Stack.Screen
+        options={{
+          title: section === "WORK" ? "Arbeitszeitmodell" : "Tarifprofil",
+          headerRight: () => (
+            <HeaderSaveAction
+              busy={saving}
+              closes={false}
+              label="Speichern"
+              onPress={() => void submit()}
+            />
+          ),
+        }}
+      />
+
       {section === "WORK" ? (
-        <>
-          <SectionHeader title="Bundesland" caption="Wird für landesspezifische Feiertage verwendet." />
-          <SurfaceCard style={{ padding: 14 }}>
-            <DropdownField
-              label="Bundesland"
-              onChange={setFederalState}
-              options={FEDERAL_STATES.map((state) => ({ value: state, label: FEDERAL_STATE_LABELS[state] }))}
-              value={federalState}
-            />
-          </SurfaceCard>
-          <SurfaceCard style={{ padding: 16 }}>
-            <Field
-              keyboardType="decimal-pad"
-              label="Wochenarbeitszeit in Stunden"
-              onChangeText={setWeeklyHours}
-              value={weeklyHours}
-            />
-          </SurfaceCard>
-        </>
+        <FormSection
+          caption="Bestimmt Feiertage, Sollstunden und deinen Monatssaldo."
+          title="Arbeitszeit"
+        >
+          <DropdownField
+            label="Bundesland"
+            onChange={setFederalState}
+            options={FEDERAL_STATES.map((state) => ({ value: state, label: FEDERAL_STATE_LABELS[state] }))}
+            value={federalState}
+          />
+          <Field
+            keyboardType="decimal-pad"
+            label="Wochenarbeitszeit in Stunden"
+            onChangeText={setWeeklyHours}
+            returnKeyType="done"
+            value={weeklyHours}
+          />
+        </FormSection>
       ) : (
-        <>
-          <SectionHeader title="Arbeitsbereich" />
-          <SurfaceCard style={{ padding: 14 }}>
-            <DropdownField
-              label="Tarifbereich"
-              onChange={setSector}
-              options={[
-                { value: "BT_K", label: "Krankenhaus · BT-K" },
-                { value: "BT_B", label: "Pflege · BT-B" },
-              ]}
-              value={sector}
-            />
-          </SurfaceCard>
-          <SectionHeader title="Entgeltgruppe" />
-          <SurfaceCard style={{ padding: 14 }}>
-            <DropdownField
-              label="Entgeltgruppe"
-              onChange={setPayGroup}
-              options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
-              value={payGroup}
-            />
-          </SurfaceCard>
-          <SectionHeader title="Stufe" />
-          <SurfaceCard style={{ padding: 14 }}>
-            <DropdownField
-              label="Stufe"
-              onChange={setPayLevel}
-              options={PAY_LEVELS.map((level) => ({ value: level, label: `Stufe ${level}` }))}
-              value={payLevel}
-            />
-          </SurfaceCard>
-          <SurfaceCard style={{ padding: 16 }}>
-            <Field
-              keyboardType="decimal-pad"
-              label="Tarifliche Vollzeit pro Woche"
-              onChangeText={setFullTimeHours}
-              value={fullTimeHours}
-            />
-          </SurfaceCard>
-        </>
+        <FormSection
+          caption="Grundlage für die automatische Gehaltsberechnung."
+          title="Tarifdaten"
+        >
+          <DropdownField
+            label="Tarifbereich"
+            onChange={setSector}
+            options={[
+              { value: "BT_K", label: "Krankenhaus · BT-K" },
+              { value: "BT_B", label: "Pflege · BT-B" },
+            ]}
+            value={sector}
+          />
+          <DropdownField
+            label="Entgeltgruppe"
+            onChange={setPayGroup}
+            options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
+            value={payGroup}
+          />
+          <DropdownField
+            label="Stufe"
+            onChange={setPayLevel}
+            options={PAY_LEVELS.map((level) => ({ value: level, label: `Stufe ${level}` }))}
+            value={payLevel}
+          />
+          <Field
+            keyboardType="decimal-pad"
+            label="Tarifliche Vollzeit pro Woche"
+            onChangeText={setFullTimeHours}
+            returnKeyType="done"
+            value={fullTimeHours}
+          />
+        </FormSection>
       )}
-      {message ? <Text style={{ color: palette.success, fontWeight: "700" }}>{message}</Text> : null}
-      {error || dataError ? <Text accessibilityRole="alert" style={{ color: palette.danger, fontWeight: "700" }}>{error ?? dataError}</Text> : null}
-      <PrimaryButton disabled={saving} onPress={() => void submit()}>
-        {saving ? "Wird gespeichert …" : "Speichern"}
-      </PrimaryButton>
-    </ScrollView>
+
+      <FormStatus error={error ?? dataError} message={message} />
+    </FormScreen>
   );
 }

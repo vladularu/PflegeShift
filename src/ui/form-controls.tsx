@@ -3,13 +3,17 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { useState, type PropsWithChildren } from "react";
 import {
+  ActionSheetIOS,
+  Modal,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
   type TextInputProps,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SHIFT_COLORS, usePalette } from "@/theme/palette";
 
@@ -30,25 +34,48 @@ export function DropdownField<T extends string | number>({
   readonly onChange: (value: T) => void;
 }) {
   const palette = usePalette();
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
 
+  function openSelection() {
+    if (process.env.EXPO_OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          cancelButtonIndex: options.length,
+          options: [...options.map((option) => option.label), "Abbrechen"],
+          title: label,
+          userInterfaceStyle: palette.dark ? "dark" : "light",
+        },
+        (index) => {
+          const option = options[index];
+          if (option) onChange(option.value);
+        },
+      );
+      return;
+    }
+    setOpen(true);
+  }
+
   return (
     <View style={{ gap: 7 }}>
-      <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+      <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
         {label}
       </Text>
       <Pressable
+        accessibilityHint="Öffnet eine Auswahlliste"
+        accessibilityLabel={`${label}: ${selected?.label ?? String(value)}`}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        onPress={() => setOpen((current) => !current)}
+        onPress={openSelection}
         style={({ pressed }) => ({
           minHeight: 50,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
           borderWidth: 1,
-          borderColor: open ? palette.primary : palette.border,
+          borderColor: palette.border,
           borderRadius: 13,
           borderCurve: "continuous",
           backgroundColor: palette.surfaceRaised,
@@ -56,56 +83,95 @@ export function DropdownField<T extends string | number>({
           paddingHorizontal: 14,
         })}
       >
-        <Text style={{ flex: 1, color: palette.text, fontSize: 15, fontWeight: "700" }}>
+        <Text maxFontSizeMultiplier={1.4} numberOfLines={1} style={{ flex: 1, color: palette.text, fontSize: 15, fontWeight: "700" }}>
           {selected?.label ?? String(value)}
         </Text>
-        <Text style={{ color: palette.primary, fontSize: 17, fontWeight: "900" }}>
-          {open ? "⌃" : "⌄"}
+        <Text accessibilityElementsHidden style={{ color: palette.primary, fontSize: 21, fontWeight: "700" }}>
+          ›
         </Text>
       </Pressable>
-      {open ? (
-        <ScrollView
-          nestedScrollEnabled
-          style={{
-            maxHeight: 244,
-            borderWidth: 1,
-            borderColor: palette.border,
-            borderRadius: 13,
-            backgroundColor: palette.surfaceRaised,
-          }}
-        >
-          {options.map((option, index) => {
-            const isSelected = option.value === value;
-            return (
-              <Pressable
-                key={String(option.value)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
-                onPress={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-                style={({ pressed }) => ({
-                  minHeight: 48,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderTopWidth: index === 0 ? 0 : 1,
-                  borderTopColor: palette.separator,
-                  backgroundColor: isSelected ? palette.primarySoft : "transparent",
-                  opacity: pressed ? 0.68 : 1,
-                  paddingHorizontal: 14,
-                })}
-              >
-                <Text style={{ color: isSelected ? palette.primary : palette.text, fontSize: 14, fontWeight: isSelected ? "800" : "600" }}>
-                  {option.label}
-                </Text>
-                {isSelected ? <Text style={{ color: palette.primary, fontWeight: "900" }}>✓</Text> : null}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      ) : null}
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
+        transparent
+        visible={open}
+      >
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Pressable
+            accessibilityLabel="Auswahl schließen"
+            accessibilityRole="button"
+            onPress={() => setOpen(false)}
+            style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: palette.overlay }}
+          />
+          <View
+            accessibilityViewIsModal
+            style={{
+              maxHeight: Math.min(height * 0.72, 560),
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderCurve: "continuous",
+              backgroundColor: palette.surfaceRaised,
+              boxShadow: `0 -10px 30px ${palette.shadow}`,
+              paddingBottom: Math.max(insets.bottom, 12),
+            }}
+          >
+            <View style={{ minHeight: 58, justifyContent: "center", borderBottomWidth: 1, borderBottomColor: palette.separator, paddingHorizontal: 18 }}>
+              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.text, fontSize: 17, fontWeight: "900" }}>
+                {label}
+              </Text>
+            </View>
+            <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>
+              {options.map((option, index) => {
+                const isSelected = option.value === value;
+                return (
+                  <Pressable
+                    key={String(option.value)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    onPress={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                    style={({ pressed }) => ({
+                      minHeight: 52,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      borderTopWidth: index === 0 ? 0 : 1,
+                      borderTopColor: palette.separator,
+                      backgroundColor: isSelected ? palette.primarySoft : pressed ? palette.surfaceMuted : "transparent",
+                      paddingHorizontal: 18,
+                    })}
+                  >
+                    <Text maxFontSizeMultiplier={1.4} style={{ flex: 1, color: isSelected ? palette.primary : palette.text, fontSize: 15, fontWeight: isSelected ? "800" : "600" }}>
+                      {option.label}
+                    </Text>
+                    {isSelected ? <Text accessibilityElementsHidden style={{ color: palette.primary, fontSize: 18, fontWeight: "900" }}>✓</Text> : null}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setOpen(false)}
+              style={({ pressed }) => ({
+                minHeight: 52,
+                alignItems: "center",
+                justifyContent: "center",
+                borderTopWidth: 1,
+                borderTopColor: palette.separator,
+                opacity: pressed ? 0.65 : 1,
+              })}
+            >
+              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.primary, fontSize: 15, fontWeight: "800" }}>
+                Abbrechen
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -160,16 +226,12 @@ export function TimePickerField({
           paddingHorizontal: 10,
         })}
       >
-        <Text style={{ color: palette.textSecondary, fontSize: 14, fontWeight: "700" }}>
+        <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textSecondary, fontSize: 14, fontWeight: "700" }}>
           {label}
         </Text>
         <Text
-          style={{
-            color: palette.primary,
-            fontSize: 16,
-            fontWeight: "800",
-            fontVariant: ["tabular-nums"],
-          }}
+          maxFontSizeMultiplier={1.4}
+          style={{ color: palette.primary, fontSize: 16, fontWeight: "800", fontVariant: ["tabular-nums"] }}
         >
           {value}
         </Text>
@@ -178,7 +240,7 @@ export function TimePickerField({
   }
   return (
     <View style={{ minHeight: 52, flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-      <Text style={{ color: palette.textSecondary, fontSize: 14, fontWeight: "700" }}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textSecondary, fontSize: 14, fontWeight: "700" }}>{label}</Text>
       <DateTimePicker
         accessibilityLabel={`${label} wählen`}
         display="compact"
@@ -203,6 +265,8 @@ export function Field({
         {label}
       </Text>
       <TextInput
+        accessibilityLabel={props.accessibilityLabel ?? label}
+        enablesReturnKeyAutomatically
         {...props}
         placeholderTextColor={palette.textMuted}
         style={[
@@ -252,7 +316,7 @@ export function PrimaryButton({
         paddingHorizontal: 18,
       })}
     >
-      <Text style={{ color: palette.dark && !danger ? "#10221D" : "#FFFFFF", fontSize: 16, fontWeight: "800" }}>
+      <Text maxFontSizeMultiplier={1.35} style={{ color: palette.dark && !danger ? "#10221D" : "#FFFFFF", fontSize: 16, fontWeight: "800" }}>
         {children}
       </Text>
     </Pressable>
@@ -285,7 +349,7 @@ export function SegmentedButton({
         opacity: pressed ? 0.75 : 1,
       })}
     >
-      <Text style={{ color: selected ? (palette.dark ? "#10221D" : "#FFFFFF") : palette.text, fontWeight: "800" }}>
+      <Text maxFontSizeMultiplier={1.35} style={{ color: selected ? (palette.dark ? "#10221D" : "#FFFFFF") : palette.text, fontWeight: "800" }}>
         {label}
       </Text>
     </Pressable>
@@ -314,11 +378,11 @@ export function ColorPicker({
             accessibilityState={{ selected: value === color }}
             onPress={() => onChange(color)}
             style={{
-              width: 38,
-              height: 38,
+              width: 44,
+              height: 44,
               borderWidth: value === color ? 3 : 1,
               borderColor: value === color ? palette.text : palette.border,
-              borderRadius: 19,
+              borderRadius: 22,
               backgroundColor: color,
             }}
           />

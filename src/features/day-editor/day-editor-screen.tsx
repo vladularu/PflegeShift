@@ -18,6 +18,12 @@ import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { SegmentedControl, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { ColorPicker, Field, TimePickerField } from "@/ui/form-controls";
+import {
+  DestructiveFormAction,
+  FormScreen,
+  FormStatus,
+  HeaderSaveAction,
+} from "@/ui/form-layout";
 
 type EditorMode = "SHIFT" | "APPOINTMENT";
 const SHIFT_FORM_TYPES: readonly ShiftType[] = ["CUSTOM", "EARLY", "LATE", "NIGHT", "DAY", "TRAINING", "VACATION", "SICK", "FREE"];
@@ -159,34 +165,11 @@ export function DayEditorScreen() {
   }
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 14, padding: 16, paddingBottom: 32 }}
-    >
+    <FormScreen bottomPadding={32}>
       <Stack.Screen
         options={{
           title: editorTitle,
-          headerRight: () => (
-            <Pressable
-              accessibilityLabel={saving ? "Eintrag wird gespeichert" : "Eintrag speichern"}
-              accessibilityRole="button"
-              disabled={saving}
-              hitSlop={8}
-              onPress={() => void save()}
-              style={({ pressed }) => ({
-                minHeight: 40,
-                justifyContent: "center",
-                opacity: saving ? 0.45 : pressed ? 0.6 : 1,
-                paddingHorizontal: 4,
-              })}
-            >
-              <Text style={{ color: palette.primary, fontSize: 15, fontWeight: "800" }}>
-                {saving ? "Sichert …" : "Sichern"}
-              </Text>
-            </Pressable>
-          ),
+          headerRight: () => <HeaderSaveAction busy={saving} onPress={() => void save()} />,
         }}
       />
       <View
@@ -388,25 +371,15 @@ export function DayEditorScreen() {
         </SurfaceCard>
       )}
 
-      {error ? <Text accessibilityRole="alert" style={{ color: palette.danger, fontWeight: "700" }}>{error}</Text> : null}
+      <FormStatus error={error} />
       {existing ? (
-        <Pressable
-          accessibilityRole="button"
+        <DestructiveFormAction
           disabled={saving}
+          label="Eintrag löschen"
           onPress={() => confirmDelete(existing)}
-          style={({ pressed }) => ({
-            minHeight: 46,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: saving ? 0.45 : pressed ? 0.6 : 1,
-          })}
-        >
-          <Text style={{ color: palette.danger, fontSize: 14, fontWeight: "800" }}>
-            Eintrag löschen
-          </Text>
-        </Pressable>
+        />
       ) : null}
-    </ScrollView>
+    </FormScreen>
   );
 }
 

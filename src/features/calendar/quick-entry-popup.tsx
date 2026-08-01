@@ -1,24 +1,28 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { memo, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { memo, useMemo } from "react";
+import { Modal, Pressable, Text, View, useWindowDimensions } from "react-native";
 import Animated, { FadeInDown, FadeInUp, FadeOut, ReduceMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CalendarEntry } from "@/domain/types";
 import {
   calculateCalendarPopupPlacement,
+  calculateQuickPlannerLayout,
   type CalendarAnchorRect,
 } from "@/features/calendar/calendar-layout";
+import { QuickEntryActionStrip } from "@/features/calendar/quick-entry-action-strip";
+import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import {
-  quickEntryServiceActions,
-  type QuickEntryAction,
-} from "@/features/calendar/quick-entry-actions";
+  accessibleChipBackgroundColor,
+  chipTextColor,
+} from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
 
 const HEADER_HEIGHT = 42;
+const HOLIDAY_HEADER_HEIGHT = 58;
 const ENTRY_ROW_HEIGHT = 54;
 const OVERFLOW_ROW_HEIGHT = 30;
-const ACTION_ROW_HEIGHT = 58;
+const ACTION_STRIP_HEIGHT = 68;
 
 function compactDate(date: string): string {
   return new Intl.DateTimeFormat("de-DE", {
@@ -63,25 +67,15 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
   const palette = usePalette();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const [servicePickerOpen, setServicePickerOpen] = useState(false);
   const popupWidth = Math.min(400, width - 24);
   const visibleEntries = entries.slice(0, 2);
   const overflowCount = Math.max(0, entries.length - visibleEntries.length);
-  const editorActions = actions.filter(
-    (action) => action.kind === "CUSTOM_SHIFT" || action.kind === "APPOINTMENT",
-  );
-  const serviceActions = quickEntryServiceActions(actions);
-  const customShiftAction = editorActions.find((action) => action.kind === "CUSTOM_SHIFT");
-  const headerHeight = holidayName || servicePickerOpen ? 58 : HEADER_HEIGHT;
-  const serviceListHeight = serviceActions.length === 0
-    ? 42
-    : Math.min(5, serviceActions.length) * 50;
-  const popupHeight = servicePickerOpen
-    ? headerHeight + serviceListHeight + 50
-    : headerHeight
-      + visibleEntries.length * ENTRY_ROW_HEIGHT
-      + (overflowCount > 0 ? OVERFLOW_ROW_HEIGHT : 0)
-      + ACTION_ROW_HEIGHT;
+  const headerHeight = holidayName ? HOLIDAY_HEADER_HEIGHT : HEADER_HEIGHT;
+  const popupHeight = headerHeight
+    + visibleEntries.length * ENTRY_ROW_HEIGHT
+    + (overflowCount > 0 ? OVERFLOW_ROW_HEIGHT : 0)
+    + ACTION_STRIP_HEIGHT;
+  const tileWidth = Math.min(66, calculateQuickPlannerLayout(popupWidth + 56).tileWidth);
   const placement = useMemo(
     () => calculateCalendarPopupPlacement({
       anchor,
@@ -114,6 +108,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
       <View style={{ flex: 1, zIndex: 10_000, elevation: 24 }}>
         <Pressable
           accessibilityLabel="Schnellauswahl schließen"
+          accessibilityRole="button"
           onPress={onClose}
           style={{
             position: "absolute",
@@ -125,6 +120,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
           }}
         />
         <Animated.View
+          accessibilityLabel={`Schnellauswahl für ${compactDate(date)}`}
           entering={entering}
           exiting={FadeOut.duration(100).reduceMotion(ReduceMotion.System)}
           style={{
@@ -166,167 +162,74 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
               alignItems: "center",
               borderBottomWidth: 1,
               borderBottomColor: palette.separator,
-              paddingLeft: servicePickerOpen ? 6 : 16,
-              paddingRight: 16,
+              paddingHorizontal: 16,
             }}
           >
-            {servicePickerOpen ? (
-              <Pressable
-                accessibilityLabel="Zurück zur Tagesauswahl"
-                accessibilityRole="button"
-                onPress={() => setServicePickerOpen(false)}
-                style={({ pressed }) => ({
-                  width: 42,
-                  height: 42,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 21,
-                  opacity: pressed ? 0.58 : 1,
-                })}
-              >
-                <Ionicons color={palette.text} name="chevron-back" size={20} />
-              </Pressable>
-            ) : null}
             <View style={{ minWidth: 0, flex: 1, gap: 2 }}>
-              <Text selectable numberOfLines={1} style={{ color: palette.text, fontSize: 13, fontWeight: "900" }}>
-                {servicePickerOpen ? "Schnellauswahl" : compactDate(date)}
+              <Text maxFontSizeMultiplier={1.4} numberOfLines={1} selectable style={{ color: palette.text, fontSize: 13, fontWeight: "900" }}>
+                {compactDate(date)}
               </Text>
               {holidayName ? (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: palette.warning }} />
-                  <Text selectable numberOfLines={1} style={{ flex: 1, color: palette.warning, fontSize: 10, fontWeight: "800" }}>
+                  <Text maxFontSizeMultiplier={1.35} numberOfLines={1} selectable style={{ flex: 1, color: palette.warning, fontSize: 10, fontWeight: "800" }}>
                     {holidayName}
                   </Text>
                 </View>
-              ) : servicePickerOpen ? (
-                <Text selectable style={{ color: palette.textMuted, fontSize: 10 }}>
-                  {compactDate(date)}
-                </Text>
               ) : null}
             </View>
           </View>
 
-          {servicePickerOpen ? (
-            <>
-              <ScrollView
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={serviceActions.length > 5}
-                style={{ height: serviceListHeight }}
+          {visibleEntries.map((entry) => {
+            return (
+              <Pressable
+                key={`${entry.kind}-${entry.id}`}
+                accessibilityLabel={`${entry.title} bearbeiten`}
+                accessibilityRole="button"
+                onPress={() => onOpenEntry(entry)}
+                style={({ pressed }) => ({
+                  height: ENTRY_ROW_HEIGHT,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  borderBottomWidth: 1,
+                  borderBottomColor: palette.separator,
+                  backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+                  paddingHorizontal: 14,
+                })}
               >
-                {serviceActions.length === 0 ? (
-                  <View style={{ height: serviceListHeight, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
-                    <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
-                      Keine Schnelleinträge verfügbar
-                    </Text>
-                  </View>
-                ) : serviceActions.map((action) => (
-                  <Pressable
-                    key={action.key}
-                    accessibilityLabel={`${action.label} eintragen`}
-                    accessibilityRole="button"
-                    disabled={busy}
-                    onPress={() => onSelectAction(action, date)}
-                    style={({ pressed }) => ({
-                      height: 50,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 10,
-                      borderBottomWidth: 1,
-                      borderBottomColor: palette.separator,
-                      backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                      opacity: busy ? 0.38 : 1,
-                      paddingHorizontal: 14,
-                    })}
-                  >
-                    <View style={{ width: 30, height: 30, alignItems: "center", justifyContent: "center", borderRadius: 15, backgroundColor: action.color }}>
-                      <Text numberOfLines={1} style={{ maxWidth: 24, color: "#FFFFFF", fontSize: 10, fontWeight: "900" }}>
-                        {action.symbol}
-                      </Text>
-                    </View>
-                    <View style={{ minWidth: 0, flex: 1, gap: 1 }}>
-                      <Text numberOfLines={1} style={{ color: palette.text, fontSize: 13, fontWeight: "900" }}>
-                        {action.label}
-                      </Text>
-                      <Text numberOfLines={1} style={{ color: palette.textMuted, fontSize: 10 }}>
-                        {action.kind === "TEMPLATE"
-                          ? `${action.template.startTime}–${action.template.endTime} · ${action.template.breakMinutes} Min. Pause`
-                          : "Ganztägig · fest vorgegeben"}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </ScrollView>
-              {customShiftAction ? (
-                <Pressable
-                  accessibilityLabel="Eigenen Dienst hinzufügen"
-                  accessibilityRole="button"
-                  disabled={busy}
-                  onPress={() => onSelectAction(customShiftAction, date)}
-                  style={({ pressed }) => ({
-                    height: 50,
-                    flexDirection: "row",
+                <View
+                  style={{
+                    width: 30,
+                    height: 30,
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 7,
-                    backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                    opacity: busy ? 0.38 : 1,
-                  })}
+                    borderRadius: 15,
+                    backgroundColor: accessibleChipBackgroundColor(entry.color),
+                  }}
                 >
-                  <Ionicons color={palette.primary} name="add" size={19} />
-                  <Text style={{ color: palette.primary, fontSize: 12, fontWeight: "900" }}>
-                    Eigener Dienst
+                  {entry.kind === "SHIFT" ? (
+                    <Text maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ maxWidth: 24, color: chipTextColor, fontSize: 10, fontWeight: "900" }}>
+                      {entry.symbol}
+                    </Text>
+                  ) : (
+                    <Ionicons color={chipTextColor} name="calendar-outline" size={15} />
+                  )}
+                </View>
+                <View style={{ minWidth: 0, flex: 1, gap: 1 }}>
+                  <Text maxFontSizeMultiplier={1.4} numberOfLines={1} style={{ color: palette.text, fontSize: 13, fontWeight: "900" }}>
+                    {entry.title}
                   </Text>
-                </Pressable>
-              ) : null}
-            </>
-          ) : visibleEntries.map((entry) => (
-            <Pressable
-              key={`${entry.kind}-${entry.id}`}
-              accessibilityLabel={`${entry.title} bearbeiten`}
-              accessibilityRole="button"
-              onPress={() => onOpenEntry(entry)}
-              style={({ pressed }) => ({
-                height: ENTRY_ROW_HEIGHT,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                borderBottomWidth: 1,
-                borderBottomColor: palette.separator,
-                backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                paddingHorizontal: 14,
-              })}
-            >
-              <View
-                style={{
-                  width: 30,
-                  height: 30,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 15,
-                  backgroundColor: entry.color,
-                }}
-              >
-                {entry.kind === "SHIFT" ? (
-                  <Text numberOfLines={1} style={{ maxWidth: 24, color: "#FFFFFF", fontSize: 10, fontWeight: "900" }}>
-                    {entry.symbol}
+                  <Text maxFontSizeMultiplier={1.4} numberOfLines={1} style={{ color: palette.textMuted, fontSize: 11 }}>
+                    {entrySubtitle(entry)}
                   </Text>
-                ) : (
-                  <Ionicons color="#FFFFFF" name="calendar-outline" size={15} />
-                )}
-              </View>
-              <View style={{ minWidth: 0, flex: 1, gap: 1 }}>
-                <Text numberOfLines={1} style={{ color: palette.text, fontSize: 13, fontWeight: "900" }}>
-                  {entry.title}
-                </Text>
-                <Text numberOfLines={1} style={{ color: palette.textMuted, fontSize: 11 }}>
-                  {entrySubtitle(entry)}
-                </Text>
-              </View>
-              <Ionicons color={palette.textMuted} name="chevron-forward" size={16} />
-            </Pressable>
-          ))}
+                </View>
+                <Ionicons color={palette.textMuted} name="chevron-forward" size={16} />
+              </Pressable>
+            );
+          })}
 
-          {!servicePickerOpen && overflowCount > 0 ? (
+          {overflowCount > 0 ? (
             <Pressable
               accessibilityLabel={`${overflowCount} weitere Einträge in den Tagesdetails anzeigen`}
               accessibilityRole="button"
@@ -340,59 +243,20 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
                 opacity: pressed ? 0.58 : 1,
               })}
             >
-              <Text style={{ color: palette.textMuted, fontSize: 11, fontWeight: "800" }}>
+              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textMuted, fontSize: 11, fontWeight: "800" }}>
                 +{overflowCount} weitere
               </Text>
             </Pressable>
           ) : null}
 
-          {!servicePickerOpen ? (
-          <View style={{ height: ACTION_ROW_HEIGHT, flexDirection: "row", alignItems: "center", padding: 6 }}>
-            {editorActions.map((action, index) => {
-              const appointment = action.kind === "APPOINTMENT";
-              return (
-                <Pressable
-                  key={action.key}
-                  accessibilityLabel={`${action.label} hinzufügen`}
-                  accessibilityRole="button"
-                  disabled={busy}
-                  onPress={() => {
-                    if (action.kind === "CUSTOM_SHIFT") {
-                      setServicePickerOpen(true);
-                      return;
-                    }
-                    onSelectAction(action, date);
-                  }}
-                  style={({ pressed }) => ({
-                    minWidth: 0,
-                    height: 46,
-                    flex: 1,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 7,
-                    borderLeftWidth: index > 0 ? 1 : 0,
-                    borderLeftColor: palette.separator,
-                    borderRadius: 14,
-                    borderCurve: "continuous",
-                    backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                    opacity: busy ? 0.38 : 1,
-                    paddingHorizontal: 8,
-                  })}
-                >
-                  <Ionicons
-                    color={appointment ? "#2F80ED" : palette.primary}
-                    name={appointment ? "calendar-outline" : "add"}
-                    size={19}
-                  />
-                  <Text numberOfLines={1} style={{ color: palette.text, fontSize: 13, fontWeight: "800" }}>
-                    {action.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View style={{ height: ACTION_STRIP_HEIGHT, paddingVertical: 4 }}>
+            <QuickEntryActionStrip
+              actions={actions}
+              busy={busy}
+              onSelectAction={(action) => onSelectAction(action, date)}
+              tileWidth={tileWidth}
+            />
           </View>
-          ) : null}
         </Animated.View>
       </View>
     </Modal>

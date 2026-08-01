@@ -23,6 +23,7 @@ expo-env.d.ts
 .expo-start.*.log
 
 # debug
+*.log
 npm-debug.*
 yarn-debug.*
 yarn-error.*
@@ -30,6 +31,7 @@ yarn-error.*
 # macOS
 .DS_Store
 .idea/
+.vscode/
 *.pem
 
 # local env files

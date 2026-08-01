@@ -37,6 +37,7 @@ import { holidayMapForMonth } from "@/engine/holidays";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
+import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
 import {
   calculateCalendarBottomReserve,
   calendarTodayTarget,
@@ -67,7 +68,8 @@ import {
   useActiveMonthCoordinator,
 } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
-import { LoadingView } from "@/ui/loading-view";
+import { InlineNotice } from "@/ui/design-system";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 
 const MONTHS_BEFORE = 24;
 const MONTHS_AFTER = 36;
@@ -90,7 +92,7 @@ export function CalendarScreen() {
   const preferences = useCalendarPreferences();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: string }>();
-  const { ready, error } = useMediShiftStatus();
+  const { ready, error, reload } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { templates } = useMediShiftTemplates();
   const { entries, removeEntry, upsertShift } = useMediShiftEntries();
@@ -135,8 +137,8 @@ export function CalendarScreen() {
   }, []));
 
   useEffect(() => {
-    if (ready && profile === null) router.replace("/onboarding");
-  }, [profile, ready]);
+    if (ready && error === null && profile === null) router.replace("/onboarding");
+  }, [error, profile, ready]);
 
   useEffect(() => {
     const next = targetMonth === currentMonth(timeZone) ? today(timeZone) : `${targetMonth}-01`;
@@ -180,21 +182,14 @@ export function CalendarScreen() {
     }, 5000);
   }, []);
 
-  const visibleEntries = useMemo(
-    () => entries
-      .filter((entry) => entry.deletedAt === null)
-      .filter((entry) => entry.kind === "SHIFT" ? preferences.showShifts : preferences.showAppointments),
+  const entryIndex = useMemo(
+    () => buildCalendarEntryIndex(entries, {
+      showAppointments: preferences.showAppointments,
+      showShifts: preferences.showShifts,
+    }),
     [entries, preferences.showAppointments, preferences.showShifts],
   );
-  const entriesByDate = useMemo(() => {
-    const map = new Map<string, CalendarEntry[]>();
-    for (const entry of visibleEntries) {
-      const values = map.get(entry.date) ?? [];
-      values.push(entry);
-      map.set(entry.date, values);
-    }
-    return map;
-  }, [visibleEntries]);
+  const { entriesByDate, shiftsByMonth, visibleEntries } = entryIndex;
   const quickActions = useMemo(
     () => buildQuickEntryActions(templates),
     [templates],
@@ -208,18 +203,13 @@ export function CalendarScreen() {
   }, [profile, quickPopup]);
   const summary = useMemo(() => {
     if (!profile) return null;
-    const monthShifts = entries.filter(
-      (entry): entry is ShiftEntry =>
-        entry.kind === "SHIFT" &&
-        entry.deletedAt === null &&
-        entry.date.startsWith(`${visibleMonth}-`),
-    );
+    const monthShifts = shiftsByMonth.get(visibleMonth) ?? [];
     return calculateMonthlySummary(
       visibleMonth,
       monthShifts,
       profile,
     );
-  }, [entries, profile, visibleMonth]);
+  }, [profile, shiftsByMonth, visibleMonth]);
 
   const saveStampAction = useCallback(async (
     action: QuickEntryStampAction,
@@ -486,6 +476,7 @@ export function CalendarScreen() {
   const renderMonth = useCallback(({ item }: ListRenderItemInfo<string>) => (
     profile ? (
       <MonthCard
+        accessibilityVisible={isFocused && item === visibleMonth}
         bottomReserve={calendarBottomReserve}
         entriesByDate={entriesByDate}
         month={item}
@@ -501,6 +492,7 @@ export function CalendarScreen() {
   ), [
     calendarBottomReserve,
     entriesByDate,
+    isFocused,
     pageHeight,
     plannerMode,
     preferences.showHolidays,
@@ -509,8 +501,10 @@ export function CalendarScreen() {
     selectedDate,
     selectionVisible,
     testMonths,
+    visibleMonth,
   ]);
 
+  if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
   if (!ready || profile === null || summary === null) return <LoadingView />;
 
   return (
@@ -524,11 +518,9 @@ export function CalendarScreen() {
         targetMinutes={summary.targetMinutes}
         viewMode={preferences.viewMode}
       />
-      {error || plannerError ? (
-        <View style={{ backgroundColor: palette.danger, paddingHorizontal: 16, paddingVertical: 8 }}>
-          <Text accessibilityRole="alert" style={{ color: "#FFFFFF", fontSize: 12, fontWeight: "800" }}>
-            {plannerError ?? error}
-          </Text>
+      {plannerError ? (
+        <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+          <InlineNotice message={plannerError} tone="error" />
         </View>
       ) : null}
       {preferences.viewMode === "MONTH" ? (

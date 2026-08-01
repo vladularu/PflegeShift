@@ -62,6 +62,7 @@ export const QuickEntryActionTile = memo(function QuickEntryActionTile({
         </View>
       )}
       <Text
+        maxFontSizeMultiplier={1.35}
         numberOfLines={1}
         style={{
           maxWidth: 58,

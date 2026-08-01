@@ -33,3 +33,7 @@ export function calendarDayPressAction(
   if (!plannerMode) return "OPEN_QUICK_ENTRY";
   return hasStampTool ? "STAMP" : "AWAIT_TOOL";
 }
+
+export function shouldUseCompactCalendarLabels(fontScale: number): boolean {
+  return Number.isFinite(fontScale) && fontScale >= 1.3;
+}

@@ -19,12 +19,12 @@ import { useCalendarPreferences } from "@/features/calendar/calendar-preferences
 import { settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { usePalette } from "@/theme/palette";
 import { CardSeparator, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
-import { LoadingView } from "@/ui/loading-view";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 
 export function SettingsScreen() {
   const palette = usePalette();
   const db = useSQLiteContext();
-  const { ready } = useMediShiftStatus();
+  const { error, ready, reload } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { workPatternSettings } = useMediShiftTariff();
   const calendarPreferences = useCalendarPreferences();
@@ -34,6 +34,7 @@ export function SettingsScreen() {
     void isDeveloperModeEnabled(db).then(setDeveloperModeState);
   }, [db]);
 
+  if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
   if (!ready || profile === null) return <LoadingView />;
 
   async function activateDeveloperMode() {
@@ -73,7 +74,7 @@ export function SettingsScreen() {
       contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 42 }}
     >
       <View style={{ gap: 9 }}>
-        <SectionHeader title="Arbeit & Tarif" />
+        <SectionHeader title="Planung" />
         <SurfaceCard>
           <RowButton
             onPress={() => router.push({ pathname: "/settings-editor", params: { section: "WORK" } })}
@@ -81,6 +82,23 @@ export function SettingsScreen() {
             title="Arbeitszeitmodell"
           />
           <CardSeparator />
+          <RowButton
+            onPress={() => router.push("/templates")}
+            subtitle="Schnellauswahl für den Kalender verwalten"
+            title="Dienstvorlagen"
+          />
+          <CardSeparator />
+          <RowButton
+            onPress={() => router.push("/calendar-view")}
+            subtitle={calendarDisplayLabel}
+            title="Kalenderdarstellung"
+          />
+        </SurfaceCard>
+      </View>
+
+      <View style={{ gap: 9 }}>
+        <SectionHeader title="Tarif" />
+        <SurfaceCard>
           <RowButton
             onPress={() => router.push({ pathname: "/settings-editor", params: { section: "TARIFF" } })}
             subtitle={tariffLabel}
@@ -91,34 +109,6 @@ export function SettingsScreen() {
             onPress={() => router.push(tariffAssessmentRoute(currentMonth(profile.timeZone)))}
             subtitle={`${coverageLabel} · ${assignmentLabel}`}
             title="Schichtmodell"
-          />
-          <CardSeparator />
-          <RowButton
-            onPress={() => router.push("/templates")}
-            subtitle="Schnellauswahl für den Kalender verwalten"
-            title="Dienstvorlagen"
-          />
-        </SurfaceCard>
-      </View>
-
-      <View style={{ gap: 9 }}>
-        <SectionHeader title="Darstellung" />
-        <SurfaceCard>
-          <RowButton
-            onPress={() => router.push("/calendar-view")}
-            subtitle={calendarDisplayLabel}
-            title="Kalenderdarstellung"
-          />
-        </SurfaceCard>
-      </View>
-
-      <View style={{ gap: 9 }}>
-        <SectionHeader title="Daten & Sicherheit" />
-        <SurfaceCard>
-          <RowButton
-            onPress={() => router.push(settingsInfoRoute("STORAGE"))}
-            subtitle="SQLite · ausschließlich auf diesem Gerät"
-            title="Lokale Datenspeicherung"
           />
         </SurfaceCard>
       </View>
@@ -133,8 +123,20 @@ export function SettingsScreen() {
       ) : null}
 
       <View style={{ gap: 9 }}>
-        <SectionHeader title="App" />
+        <SectionHeader title="Daten & App" />
         <SurfaceCard>
+          <RowButton
+            onPress={() => router.push(settingsInfoRoute("STORAGE"))}
+            subtitle="SQLite · ausschließlich auf diesem Gerät"
+            title="Lokale Datenspeicherung"
+          />
+          <CardSeparator />
+          <RowButton
+            onPress={() => router.push(settingsInfoRoute("CALCULATION"))}
+            subtitle="Feiertage, Zuschläge und Arbeitszeit"
+            title="Berechnungshinweise"
+          />
+          <CardSeparator />
           <RowButton
             accessibilityHint="Fünf Sekunden gedrückt halten, um das interne Testlabor zu aktivieren."
             delayLongPress={5000}
@@ -142,12 +144,6 @@ export function SettingsScreen() {
             onPress={() => router.push(settingsInfoRoute("ABOUT"))}
             subtitle="Version 0.1 · Expo SDK 54"
             title="Über MediShift"
-          />
-          <CardSeparator />
-          <RowButton
-            onPress={() => router.push(settingsInfoRoute("CALCULATION"))}
-            subtitle="Feiertage, Zuschläge und Arbeitszeitberechnung erfolgen lokal."
-            title="Berechnungshinweise"
           />
         </SurfaceCard>
       </View>

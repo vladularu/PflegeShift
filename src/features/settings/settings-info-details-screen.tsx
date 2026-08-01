@@ -52,6 +52,42 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
       },
     ],
   },
+  TVOED_ALLOWANCE: {
+    title: "TVöD-Zulage",
+    intro: "Die allgemeine TVöD-Zulage wird automatisch aus deinem Tarifprofil und Beschäftigungsumfang abgeleitet.",
+    items: [
+      {
+        title: "Vollzeitbetrag",
+        text: "MediShift berücksichtigt 25 Euro pro Monat bei Vollzeit. Bei Teilzeit wird der Betrag entsprechend der hinterlegten Wochenarbeitszeit anteilig berechnet.",
+      },
+      {
+        title: "Geltungsbereich",
+        text: "Die Zulage wird nur für unterstützte TVöD-P-Tarifprofile und den jeweils gültigen Tarifzeitraum berücksichtigt.",
+      },
+      {
+        title: "Hinweis",
+        text: "Dienstvereinbarungen oder abweichende Arbeitgeberregelungen können die tatsächliche Abrechnung verändern.",
+      },
+    ],
+  },
+  CARE_ALLOWANCE: {
+    title: "Pflegezulage TVöD-P",
+    intro: "Die Pflegezulage wird aus dem gültigen Tarifstand und deinem Beschäftigungsumfang berechnet.",
+    items: [
+      {
+        title: "Automatische Höhe",
+        text: "MediShift verwendet den im gewählten Monat gültigen Vollzeitbetrag und rechnet ihn bei Teilzeit proportional zur Wochenarbeitszeit um.",
+      },
+      {
+        title: "Tarifprofil",
+        text: "Die Berechnung setzt ein unterstütztes TVöD-P-Profil mit Gruppe, Stufe und Bereich voraus.",
+      },
+      {
+        title: "Schätzung",
+        text: "Der angezeigte Wert dient der Orientierung und ersetzt nicht die individuelle Entgeltabrechnung.",
+      },
+    ],
+  },
   ABOUT: {
     title: "Über MediShift",
     intro: "Ein unabhängiger, offline-first Dienstplaner für Schichtarbeit im Gesundheitswesen.",
@@ -73,7 +109,11 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
 };
 
 function isInfoSection(value: string | undefined): value is SettingsInfoSection {
-  return value === "STORAGE" || value === "CALCULATION" || value === "ABOUT";
+  return value === "STORAGE" ||
+    value === "CALCULATION" ||
+    value === "ABOUT" ||
+    value === "TVOED_ALLOWANCE" ||
+    value === "CARE_ALLOWANCE";
 }
 
 export function SettingsInfoDetailsScreen() {

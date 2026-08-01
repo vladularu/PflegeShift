@@ -1,6 +1,11 @@
 import { requireLocalDate } from "@/domain/validation";
 
-export type SettingsInfoSection = "STORAGE" | "CALCULATION" | "ABOUT";
+export type SettingsInfoSection =
+  | "STORAGE"
+  | "CALCULATION"
+  | "ABOUT"
+  | "TVOED_ALLOWANCE"
+  | "CARE_ALLOWANCE";
 
 export const TAB_ROUTES = Object.freeze([
   { key: "calendar", route: "/" },
@@ -27,6 +32,14 @@ export function premiumDetailsRoute(month: string) {
   const normalizedMonth = requireLocalDate(`${month}-01`).slice(0, 7);
   return Object.freeze({
     pathname: "/premium-details" as const,
+    params: Object.freeze({ month: normalizedMonth }),
+  });
+}
+
+export function complianceDetailsRoute(month: string) {
+  const normalizedMonth = requireLocalDate(`${month}-01`).slice(0, 7);
+  return Object.freeze({
+    pathname: "/compliance-details" as const,
     params: Object.freeze({ month: normalizedMonth }),
   });
 }

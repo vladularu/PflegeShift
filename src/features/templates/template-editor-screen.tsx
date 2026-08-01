@@ -1,6 +1,6 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { useMediShiftTemplates } from "@/application/medishift-provider";
 import {
@@ -8,9 +8,15 @@ import {
   type TimedShiftType,
 } from "@/domain/types";
 import { usePalette } from "@/theme/palette";
-import { SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
-import { ColorPicker, Field, PrimaryButton, TimePickerField } from "@/ui/form-controls";
+import { ColorPicker, Field, TimePickerField } from "@/ui/form-controls";
+import {
+  DestructiveFormAction,
+  FormScreen,
+  FormSection,
+  FormStatus,
+  HeaderSaveAction,
+} from "@/ui/form-layout";
 
 const TEMPLATE_TYPES: readonly TimedShiftType[] = [
   "EARLY",
@@ -75,15 +81,15 @@ export function TemplateEditorScreen() {
   }
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 18, padding: 18, paddingBottom: 36 }}
-    >
-      <Stack.Screen options={{ title: existing ? "Vorlage bearbeiten" : "Neue Vorlage" }} />
+    <FormScreen>
+      <Stack.Screen
+        options={{
+          title: existing ? "Vorlage bearbeiten" : "Neue Vorlage",
+          headerRight: () => <HeaderSaveAction busy={saving} onPress={() => void submit()} />,
+        }}
+      />
 
-      <SurfaceCard style={{ gap: 14, padding: 16 }}>
+      <FormSection title="Darstellung">
         <Field label="Titel" maxLength={40} onChangeText={setName} value={name} />
         <Field
           autoCapitalize="characters"
@@ -93,68 +99,59 @@ export function TemplateEditorScreen() {
           value={symbol}
         />
         <ColorPicker onChange={setColor} value={color} />
-      </SurfaceCard>
+      </FormSection>
 
-      <View style={{ gap: 10 }}>
-        <SectionHeader title="Dienstart" />
+      <FormSection title="Dienstart">
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {TEMPLATE_TYPES.map((candidate) => {
-              const selected = candidate === type;
-              return (
-                <Pressable
-                  key={candidate}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => setType(candidate)}
-                  style={{
-                    minHeight: 44,
-                    justifyContent: "center",
-                    borderWidth: 1,
-                    borderColor: selected ? palette.primary : palette.border,
-                    borderRadius: 22,
-                    backgroundColor: selected ? palette.primarySoft : palette.surface,
-                    paddingHorizontal: 14,
-                  }}
-                >
-                  <Text style={{ color: selected ? palette.primary : palette.text, fontWeight: "800" }}>
-                    {SHIFT_TYPE_LABELS[candidate]}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            const selected = candidate === type;
+            return (
+              <Pressable
+                key={candidate}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => setType(candidate)}
+                style={({ pressed }) => ({
+                  minHeight: 44,
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: selected ? palette.primary : palette.border,
+                  borderRadius: 22,
+                  backgroundColor: selected ? palette.primarySoft : palette.surface,
+                  opacity: pressed ? 0.68 : 1,
+                  paddingHorizontal: 14,
+                })}
+              >
+                <Text maxFontSizeMultiplier={1.35} style={{ color: selected ? palette.primary : palette.text, fontWeight: "800" }}>
+                  {SHIFT_TYPE_LABELS[candidate]}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
-      </View>
+      </FormSection>
 
-      <View style={{ gap: 10 }}>
-        <SectionHeader title="Standardwerte" />
-        <SurfaceCard style={{ gap: 14, padding: 16 }}>
-          <View style={{ flexDirection: "row", gap: 12 }}>
-            <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
-            <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
-          </View>
-          <Field
-            keyboardType="number-pad"
-            label="Pause in Minuten"
-            onChangeText={setBreakMinutes}
-            value={breakMinutes}
-          />
-        </SurfaceCard>
-      </View>
+      <FormSection title="Standardwerte">
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
+          <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
+        </View>
+        <Field
+          keyboardType="number-pad"
+          label="Pause in Minuten"
+          onChangeText={setBreakMinutes}
+          value={breakMinutes}
+        />
+      </FormSection>
 
-      {error ? (
-        <Text accessibilityRole="alert" selectable style={{ color: palette.danger, fontWeight: "700" }}>
-          {error}
-        </Text>
-      ) : null}
-
-      <PrimaryButton disabled={saving} onPress={() => void submit()}>
-        {saving ? "Wird gespeichert …" : "Vorlage speichern"}
-      </PrimaryButton>
+      <FormStatus error={error} />
       {existing ? (
-        <PrimaryButton danger disabled={saving} onPress={confirmArchive}>
-          Vorlage archivieren
-        </PrimaryButton>
+        <DestructiveFormAction
+          disabled={saving}
+          label="Vorlage archivieren"
+          onPress={confirmArchive}
+        />
       ) : null}
-    </ScrollView>
+    </FormScreen>
   );
 }

@@ -25,8 +25,9 @@ export function MonthNavigator({
         gap: 12,
       }}
     >
-      <MonthArrow direction="back" onPress={onPrevious} />
+      <MonthArrow contextLabel={label} direction="back" onPress={onPrevious} />
       <Text
+        accessibilityLiveRegion="polite"
         selectable
         adjustsFontSizeToFit
         minimumFontScale={0.78}
@@ -42,16 +43,18 @@ export function MonthNavigator({
       >
         {label}
       </Text>
-      <MonthArrow direction="forward" onPress={onNext} />
+      <MonthArrow contextLabel={label} direction="forward" onPress={onNext} />
     </View>
   );
 }
 
 function MonthArrow({
   direction,
+  contextLabel,
   onPress,
 }: {
   readonly direction: "back" | "forward";
+  readonly contextLabel: string;
   readonly onPress: () => void;
 }) {
   const palette = usePalette();
@@ -59,8 +62,9 @@ function MonthArrow({
 
   return (
     <Pressable
-      accessibilityLabel={previous ? "Vorheriger Monat" : "Nächster Monat"}
+      accessibilityLabel={`${previous ? "Vorheriger" : "Nächster"} Monat, aktuell ${contextLabel}`}
       accessibilityRole="button"
+      hitSlop={6}
       onPress={onPress}
       style={({ pressed }) => ({
         width: 46,

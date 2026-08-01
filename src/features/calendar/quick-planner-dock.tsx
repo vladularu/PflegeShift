@@ -1,12 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { memo } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FullWindowOverlay } from "react-native-screens";
 
 import { calculateQuickPlannerLayout } from "@/features/calendar/calendar-layout";
 import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
-import { QuickEntryActionTile } from "@/features/calendar/quick-entry-action-tile";
+import { QuickEntryActionStrip } from "@/features/calendar/quick-entry-action-strip";
 import { usePalette } from "@/theme/palette";
 
 export const QuickPlannerDock = memo(function QuickPlannerDock({
@@ -52,26 +52,13 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
         elevation: 24,
       }}
     >
-      <ScrollView
-        horizontal
-        contentContainerStyle={{ alignItems: "center", gap: 1, paddingRight: 14 }}
-        decelerationRate="fast"
-        snapToAlignment="start"
-        snapToInterval={tileWidth + 1}
-        style={{ flex: 1 }}
-        showsHorizontalScrollIndicator={false}
-      >
-        {actions.map((action) => (
-          <QuickEntryActionTile
-            key={action.key}
-            action={action}
-            active={activeKey === action.key}
-            disabled={busy}
-            onPress={onSelectAction}
-            width={tileWidth}
-          />
-        ))}
-      </ScrollView>
+      <QuickEntryActionStrip
+        actions={actions}
+        activeKey={activeKey}
+        busy={busy}
+        onSelectAction={onSelectAction}
+        tileWidth={tileWidth}
+      />
       <View
         style={{
           width: 1,

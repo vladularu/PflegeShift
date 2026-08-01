@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   TAB_ROUTES,
+  complianceDetailsRoute,
   dayDetailsRoute,
   dayEditorRoute,
   premiumDetailsRoute,
@@ -44,6 +45,14 @@ describe("navigation contracts", () => {
     expect(() => premiumDetailsRoute("2026-13")).toThrow();
   });
 
+  it("keeps a valid month for the compliance sheet", () => {
+    expect(complianceDetailsRoute("2026-07")).toEqual({
+      pathname: "/compliance-details",
+      params: { month: "2026-07" },
+    });
+    expect(() => complianceDetailsRoute("2026-13")).toThrow();
+  });
+
   it("opens explicit information sections from More", () => {
     expect(settingsInfoRoute("STORAGE")).toEqual({
       pathname: "/info-details",
@@ -52,6 +61,10 @@ describe("navigation contracts", () => {
     expect(settingsInfoRoute("CALCULATION")).toEqual({
       pathname: "/info-details",
       params: { section: "CALCULATION" },
+    });
+    expect(settingsInfoRoute("TVOED_ALLOWANCE")).toEqual({
+      pathname: "/info-details",
+      params: { section: "TVOED_ALLOWANCE" },
     });
   });
 

@@ -9,7 +9,10 @@ import {
 
 import type { CalendarEntry, UserProfile } from "@/domain/types";
 import { createVisibleMonthGrid, formatDateTitle, today } from "@/engine/calendar";
-import { calendarEntryPreview } from "@/features/calendar/calendar-display";
+import {
+  calendarEntryPreview,
+  shouldUseCompactCalendarLabels,
+} from "@/features/calendar/calendar-display";
 import {
   calculateCalendarGridLayout,
   type CalendarAnchorRect,
@@ -21,6 +24,10 @@ import {
 } from "@/features/calendar/calendar-rendering";
 import { holidayShortLabel } from "@/features/calendar/holiday-label";
 import { holidayMapForMonth } from "@/engine/holidays";
+import {
+  accessibleChipBackgroundColor,
+  chipTextColor,
+} from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -36,13 +43,17 @@ interface DayCellProps {
   readonly isToday: boolean;
   readonly onSelectDate: (date: string, anchor: CalendarAnchorRect) => void;
   readonly stampMode: boolean;
+  readonly compactLabels: boolean;
 }
 
 const EntryMark = memo(function EntryMark({
+  compactLabels,
   entry,
 }: {
+  readonly compactLabels: boolean;
   readonly entry: CalendarEntry;
 }) {
+  const palette = usePalette();
   if (entry.kind === "APPOINTMENT") {
     return (
       <View
@@ -55,8 +66,8 @@ const EntryMark = memo(function EntryMark({
         }}
       >
         <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: entry.color }} />
-        <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={{ flex: 1, color: entry.color, fontSize: 10, fontWeight: "800" }}>
-          {entry.title}
+        <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ flex: 1, color: palette.textSecondary, fontSize: 10, fontWeight: "800" }}>
+          {compactLabels ? entry.title.slice(0, 1) : entry.title}
         </Text>
       </View>
     );
@@ -68,12 +79,12 @@ const EntryMark = memo(function EntryMark({
         height: 18,
         justifyContent: "center",
         borderRadius: 4,
-        backgroundColor: entry.color,
+        backgroundColor: accessibleChipBackgroundColor(entry.color),
         paddingHorizontal: 4,
       }}
     >
-      <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={{ color: "#FFFFFF", fontSize: 10, fontWeight: "900" }}>
-        {entry.title}
+      <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ color: chipTextColor, fontSize: 10, fontWeight: "900" }}>
+        {compactLabels ? entry.symbol : entry.title}
       </Text>
     </View>
   );
@@ -87,6 +98,7 @@ const DayCell = memo(function DayCell({
   isToday,
   onSelectDate,
   stampMode,
+  compactLabels,
 }: DayCellProps) {
   const palette = usePalette();
   const cellRef = useRef<View>(null);
@@ -146,6 +158,7 @@ const DayCell = memo(function DayCell({
           }}
         >
           <Text
+            maxFontSizeMultiplier={1.5}
             style={{
               color: isToday ? palette.onPrimary : cell.inMonth ? palette.text : palette.textMuted,
               fontSize: 13,
@@ -158,7 +171,7 @@ const DayCell = memo(function DayCell({
         </View>
         {holidayName ? (
           <Text
-            maxFontSizeMultiplier={1.15}
+            maxFontSizeMultiplier={1.45}
             numberOfLines={1}
             style={{
               position: "absolute",
@@ -168,7 +181,6 @@ const DayCell = memo(function DayCell({
               color: palette.warning,
               fontSize: 9,
               fontWeight: "900",
-              lineHeight: 10,
               textAlign: "center",
             }}
           >
@@ -180,11 +192,12 @@ const DayCell = memo(function DayCell({
         {preview.entries.map((entry) => (
           <EntryMark
             key={`${entry.kind}-${entry.id}`}
+            compactLabels={compactLabels}
             entry={entry}
           />
         ))}
         {preview.overflowCount > 0 ? (
-          <Text maxFontSizeMultiplier={1.2} style={{ color: palette.textMuted, fontSize: 9, fontWeight: "800", textAlign: "center" }}>
+          <Text maxFontSizeMultiplier={1.45} style={{ color: palette.textMuted, fontSize: 9, fontWeight: "800", textAlign: "center" }}>
             +{preview.overflowCount}
           </Text>
         ) : null}
@@ -193,6 +206,7 @@ const DayCell = memo(function DayCell({
   );
 }, (previous, next) => (
   previous.cell === next.cell &&
+  previous.compactLabels === next.compactLabels &&
   calendarEntryListsEqual(previous.entries, next.entries) &&
   previous.holidayName === next.holidayName &&
   previous.isSelected === next.isSelected &&
@@ -212,6 +226,7 @@ interface MonthCardProps {
   readonly stampMode?: boolean;
   readonly showHolidays?: boolean;
   readonly testData?: boolean;
+  readonly accessibilityVisible?: boolean;
 }
 
 function monthCardPropsEqual(
@@ -226,7 +241,8 @@ function monthCardPropsEqual(
     previous.onSelectDate !== next.onSelectDate ||
     previous.stampMode !== next.stampMode ||
     previous.showHolidays !== next.showHolidays ||
-    previous.testData !== next.testData
+    previous.testData !== next.testData ||
+    previous.accessibilityVisible !== next.accessibilityVisible
   ) {
     return false;
   }
@@ -258,9 +274,11 @@ export const MonthCard = memo(function MonthCard({
   stampMode = false,
   showHolidays = true,
   testData = false,
+  accessibilityVisible = true,
 }: MonthCardProps) {
   const palette = usePalette();
-  const { width } = useWindowDimensions();
+  const { fontScale, width } = useWindowDimensions();
+  const compactLabels = shouldUseCompactCalendarLabels(fontScale);
   const grid = useMemo(() => createVisibleMonthGrid(month), [month]);
   const holidays = useMemo(
     () => showHolidays ? holidayMapForMonth(month, profile.federalState) : new Map(),
@@ -281,7 +299,12 @@ export const MonthCard = memo(function MonthCard({
   );
 
   return (
-    <View style={{ height: pageHeight, alignItems: "center", backgroundColor: palette.background }}>
+    <View
+      accessibilityElementsHidden={!accessibilityVisible}
+      aria-hidden={!accessibilityVisible}
+      importantForAccessibility={accessibilityVisible ? "auto" : "no-hide-descendants"}
+      style={{ height: pageHeight, alignItems: "center", backgroundColor: palette.background }}
+    >
       <View
         style={{
           width: contentWidth - 12,
@@ -304,7 +327,7 @@ export const MonthCard = memo(function MonthCard({
         <View style={{ height: 40, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: palette.separator }}>
           {WEEKDAYS.map((weekday, index) => (
             <View key={weekday} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: index >= 5 ? palette.textMuted : palette.textSecondary, fontSize: 12, fontWeight: "800" }}>
+              <Text maxFontSizeMultiplier={1.4} style={{ color: index >= 5 ? palette.textMuted : palette.textSecondary, fontSize: 12, fontWeight: "800" }}>
                 {weekday}
               </Text>
             </View>
@@ -324,6 +347,7 @@ export const MonthCard = memo(function MonthCard({
               <DayCell
                 key={cell.date}
                 cell={cell}
+                compactLabels={compactLabels}
                 entries={entriesByDate.get(cell.date) ?? EMPTY_ENTRIES}
                 holidayName={holidays.get(cell.date)?.name}
                 isSelected={selectedDate !== null && cell.date === selectedDate}
