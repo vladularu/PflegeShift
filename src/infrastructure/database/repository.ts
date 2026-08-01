@@ -328,7 +328,8 @@ export async function listCalendarEntries(
       (left, right) =>
         left.date.localeCompare(right.date) ||
         (left.startTime ?? "").localeCompare(right.startTime ?? "") ||
-        left.title.localeCompare(right.title),
+        left.title.localeCompare(right.title) ||
+        left.id.localeCompare(right.id),
     ),
   );
 }

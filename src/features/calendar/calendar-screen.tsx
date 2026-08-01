@@ -183,8 +183,7 @@ export function CalendarScreen() {
   const visibleEntries = useMemo(
     () => entries
       .filter((entry) => entry.deletedAt === null)
-      .filter((entry) => entry.kind === "SHIFT" ? preferences.showShifts : preferences.showAppointments)
-      .sort((left, right) => left.date.localeCompare(right.date) || (left.startTime ?? "").localeCompare(right.startTime ?? "")),
+      .filter((entry) => entry.kind === "SHIFT" ? preferences.showShifts : preferences.showAppointments),
     [entries, preferences.showAppointments, preferences.showShifts],
   );
   const entriesByDate = useMemo(() => {

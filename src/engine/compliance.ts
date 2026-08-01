@@ -21,6 +21,13 @@ interface Interval {
   readonly netMinutes: number;
 }
 
+interface CachedInterval {
+  readonly signature: string;
+  readonly value: Interval;
+}
+
+const INTERVAL_CACHE = new WeakMap<ShiftEntry, Map<string, CachedInterval>>();
+
 export interface ComplianceOptions {
   readonly federalState?: FederalState;
   readonly referenceDate?: string;
@@ -32,7 +39,24 @@ function isRelevant(shift: ShiftEntry): boolean {
     shift.startTime !== null && shift.endTime !== null;
 }
 
+function intervalSignature(shift: ShiftEntry): string {
+  return [
+    shift.revision,
+    shift.date,
+    shift.type,
+    shift.startTime,
+    shift.endTime,
+    shift.breakMinutes,
+    shift.deletedAt,
+  ].join("|");
+}
+
 function toInterval(shift: ShiftEntry, timeZone: string): Interval {
+  const signature = intervalSignature(shift);
+  const cachedByTimeZone = INTERVAL_CACHE.get(shift);
+  const cached = cachedByTimeZone?.get(timeZone);
+  if (cached?.signature === signature) return cached.value;
+
   const date = Temporal.PlainDate.from(shift.date);
   const startTime = Temporal.PlainTime.from(shift.startTime!);
   const endTime = Temporal.PlainTime.from(shift.endTime!);
@@ -55,7 +79,7 @@ function toInterval(shift: ShiftEntry, timeZone: string): Interval {
     hour: endTime.hour,
     minute: endTime.minute,
   }, { disambiguation: "later" });
-  return {
+  const value = Object.freeze({
     shift,
     start,
     end,
@@ -64,7 +88,11 @@ function toInterval(shift: ShiftEntry, timeZone: string): Interval {
       Math.round(Number(end.epochMilliseconds - start.epochMilliseconds) / 60_000),
     ),
     netMinutes: calculateTimedShiftMinutes(shift, timeZone),
-  };
+  });
+  const nextCache = cachedByTimeZone ?? new Map<string, CachedInterval>();
+  nextCache.set(timeZone, Object.freeze({ signature, value }));
+  if (!cachedByTimeZone) INTERVAL_CACHE.set(shift, nextCache);
+  return value;
 }
 
 function stableId(rule: string, date: string, shiftIds: readonly string[]): string {

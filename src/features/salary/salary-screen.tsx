@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -15,6 +16,7 @@ import { formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { formatMinutes } from "@/engine/working-time";
 import {
+  EMPTY_ANALYSIS_ENTRY_WINDOW,
   selectAnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
 import { premiumDetailsRoute, tariffAssessmentRoute } from "@/navigation/routes";
@@ -34,6 +36,7 @@ function euro(value: number | null): string {
 
 export function SalaryScreen() {
   const palette = usePalette();
+  const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: string }>();
   const { ready } = useMediShiftStatus();
@@ -56,12 +59,14 @@ export function SalaryScreen() {
   }, [activeMonthCoordinator]));
 
   const { monthShifts, allowanceShifts } = useMemo(
-    () => selectAnalysisEntryWindow(entries, month),
-    [entries, month],
+    () => isFocused
+      ? selectAnalysisEntryWindow(entries, month)
+      : EMPTY_ANALYSIS_ENTRY_WINDOW,
+    [entries, isFocused, month],
   );
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = useMemo(
-    () => profile
+    () => isFocused && profile
       ? calculateMonthlyPayEstimate(
         month,
         monthShifts,
@@ -71,8 +76,12 @@ export function SalaryScreen() {
         workPatternSettings,
       )
       : null,
-    [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
+    [allowanceShifts, decision, isFocused, month, monthShifts, profile, workPatternSettings],
   );
+
+  if (!isFocused) {
+    return <View style={{ flex: 1, backgroundColor: palette.background }} />;
+  }
 
   if (!ready || profile === null || pay === null) return <LoadingView />;
 

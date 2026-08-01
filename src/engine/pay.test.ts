@@ -52,6 +52,16 @@ function shift(overrides: Partial<ShiftEntry> = {}): ShiftEntry {
 }
 
 describe("TVöD-P pay engine", () => {
+  it("reuses premium calculations while the shift and profile stay unchanged", () => {
+    const input = shift();
+    const first = calculateShiftPremiumBreakdown(input, profile);
+
+    expect(calculateShiftPremiumBreakdown(input, profile)).toBe(first);
+    expect(
+      calculateShiftPremiumBreakdown({ ...input, revision: 2 }, profile),
+    ).not.toBe(first);
+  });
+
   it("keeps night additive to Sunday and calculates overtime separately", () => {
     const result = calculateShiftPremiumBreakdown(shift(), profile);
     expect(result.premiumLines.map((line) => line.key)).toEqual(["night", "sunday"]);

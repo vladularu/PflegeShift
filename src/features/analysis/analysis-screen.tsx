@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
@@ -30,6 +31,7 @@ import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import {
+  EMPTY_ANALYSIS_ENTRY_WINDOW,
   selectAnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
 import { buildAnnualReport } from "@/features/analysis/annual-report";
@@ -58,6 +60,7 @@ const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
 
 export function AnalysisScreen() {
   const palette = usePalette();
+  const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: string }>();
   const { ready } = useMediShiftStatus();
@@ -92,21 +95,23 @@ export function AnalysisScreen() {
     complianceShifts,
     allowanceShifts,
   } = useMemo(
-    () => selectAnalysisEntryWindow(entries, month),
-    [entries, month],
+    () => isFocused
+      ? selectAnalysisEntryWindow(entries, month)
+      : EMPTY_ANALYSIS_ENTRY_WINDOW,
+    [entries, isFocused, month],
   );
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const compliance = useMemo(
-    () => profile
+    () => isFocused && profile
       ? calculateMonthlyCompliance(month, complianceShifts, profile.timeZone, {
         federalState: profile.federalState,
         weeklyMinutes: profile.weeklyMinutes,
       })
       : null,
-    [complianceShifts, month, profile],
+    [complianceShifts, isFocused, month, profile],
   );
   const pay = useMemo(
-    () => profile
+    () => isFocused && profile
       ? calculateMonthlyPayEstimate(
         month,
         monthShifts,
@@ -116,22 +121,26 @@ export function AnalysisScreen() {
         workPatternSettings,
       )
       : null,
-    [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
+    [allowanceShifts, decision, isFocused, month, monthShifts, profile, workPatternSettings],
   );
   const summary = useMemo(
-    () => profile ? calculateMonthlySummary(month, monthShifts, profile) : null,
-    [month, monthShifts, profile],
+    () => isFocused && profile ? calculateMonthlySummary(month, monthShifts, profile) : null,
+    [isFocused, month, monthShifts, profile],
   );
   const distribution = useMemo(
-    () => buildShiftTypeDistribution(month, monthEntries),
-    [month, monthEntries],
+    () => isFocused ? buildShiftTypeDistribution(month, monthEntries) : new Map(),
+    [isFocused, month, monthEntries],
   );
   const annualReport = useMemo(
-    () => period === "YEAR" && profile
+    () => isFocused && period === "YEAR" && profile
       ? buildAnnualReport(year, entries, profile, tariffDecisions, workPatternSettings)
       : null,
-    [entries, period, profile, tariffDecisions, workPatternSettings, year],
+    [entries, isFocused, period, profile, tariffDecisions, workPatternSettings, year],
   );
+
+  if (!isFocused) {
+    return <View style={{ flex: 1, backgroundColor: palette.background }} />;
+  }
 
   if (
     !ready ||

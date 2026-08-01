@@ -9,6 +9,16 @@ export interface AnalysisEntryWindow {
   readonly allowanceShifts: readonly ShiftEntry[];
 }
 
+const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
+const EMPTY_SHIFTS: readonly ShiftEntry[] = Object.freeze([]);
+
+export const EMPTY_ANALYSIS_ENTRY_WINDOW: AnalysisEntryWindow = Object.freeze({
+  monthEntries: EMPTY_ENTRIES,
+  monthShifts: EMPTY_SHIFTS,
+  complianceShifts: EMPTY_SHIFTS,
+  allowanceShifts: EMPTY_SHIFTS,
+});
+
 export function selectAnalysisEntryWindow(
   entries: readonly CalendarEntry[],
   month: string,

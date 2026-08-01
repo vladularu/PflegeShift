@@ -96,6 +96,29 @@ function replaceById<T extends { readonly id: string }>(
   return next;
 }
 
+function compareCalendarEntries(left: CalendarEntry, right: CalendarEntry): number {
+  return left.date.localeCompare(right.date) ||
+    (left.startTime ?? "").localeCompare(right.startTime ?? "") ||
+    left.title.localeCompare(right.title) ||
+    left.id.localeCompare(right.id);
+}
+
+function upsertSortedCalendarEntry(
+  current: readonly CalendarEntry[],
+  saved: CalendarEntry,
+): readonly CalendarEntry[] {
+  const next = current.filter((entry) => entry.id !== saved.id);
+  let low = 0;
+  let high = next.length;
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    if (compareCalendarEntries(next[middle], saved) <= 0) low = middle + 1;
+    else high = middle;
+  }
+  next.splice(low, 0, saved);
+  return Object.freeze(next);
+}
+
 function useRequiredContext<T>(
   context: React.Context<T | null>,
   name: string,
@@ -208,25 +231,13 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
 
   const upsertShift = useCallback(async (input: SaveShiftInput) => {
     const saved = await saveShift(db, input);
-    setEntries((current) =>
-      [...replaceById(current, saved)].sort(
-        (left, right) =>
-          left.date.localeCompare(right.date) ||
-          (left.startTime ?? "").localeCompare(right.startTime ?? ""),
-      ),
-    );
+    setEntries((current) => upsertSortedCalendarEntry(current, saved));
     return saved;
   }, [db]);
 
   const upsertAppointment = useCallback(async (input: SaveAppointmentInput) => {
     const saved = await saveAppointment(db, input);
-    setEntries((current) =>
-      [...replaceById(current, saved)].sort(
-        (left, right) =>
-          left.date.localeCompare(right.date) ||
-          (left.startTime ?? "").localeCompare(right.startTime ?? ""),
-      ),
-    );
+    setEntries((current) => upsertSortedCalendarEntry(current, saved));
     return saved;
   }, [db]);
 

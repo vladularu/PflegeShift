@@ -203,7 +203,32 @@ function premiumLine(
   };
 }
 
-export function calculateShiftPremiumBreakdown(
+const SHIFT_PREMIUM_CACHE = new WeakMap<ShiftEntry, Map<string, ShiftPremiumBreakdown>>();
+
+function premiumCacheKey(shift: ShiftEntry, profile: UserProfile): string {
+  const tariff = profile.tariff;
+  return [
+    shift.revision,
+    shift.date,
+    shift.type,
+    shift.startTime,
+    shift.endTime,
+    shift.breakMinutes,
+    shift.overtimeMinutes,
+    shift.holidayPremiumMode,
+    shift.deletedAt,
+    profile.updatedAt,
+    profile.federalState,
+    profile.weeklyMinutes,
+    profile.timeZone,
+    tariff?.payGroup,
+    tariff?.payLevel,
+    tariff?.sector,
+    tariff?.fullTimeWeeklyMinutes,
+  ].join("|");
+}
+
+function calculateShiftPremiumBreakdownUncached(
   shift: ShiftEntry,
   profile: UserProfile,
 ): ShiftPremiumBreakdown {
@@ -274,6 +299,24 @@ export function calculateShiftPremiumBreakdown(
     overtimePremiumAmount,
     totalAmount,
   };
+}
+
+export function calculateShiftPremiumBreakdown(
+  shift: ShiftEntry,
+  profile: UserProfile,
+): ShiftPremiumBreakdown {
+  const key = premiumCacheKey(shift, profile);
+  const cachedByInput = SHIFT_PREMIUM_CACHE.get(shift);
+  const cached = cachedByInput?.get(key);
+  if (cached) return cached;
+
+  const result = Object.freeze(
+    calculateShiftPremiumBreakdownUncached(shift, profile),
+  );
+  const nextCache = cachedByInput ?? new Map<string, ShiftPremiumBreakdown>();
+  nextCache.set(key, result);
+  if (!cachedByInput) SHIFT_PREMIUM_CACHE.set(shift, nextCache);
+  return result;
 }
 
 function shiftWindow(shift: ShiftEntry): string {
