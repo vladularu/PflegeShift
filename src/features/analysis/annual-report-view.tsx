@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { SHIFT_TYPE_LABELS, type ShiftType } from "@/domain/types";
 import { formatMonthTitle } from "@/engine/calendar";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
+import { buildAnnualDistributionSections } from "@/features/analysis/annual-distribution";
 import type { AnnualReport } from "@/features/analysis/annual-report";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
@@ -149,6 +150,10 @@ export function AnnualReportScreen({
           <Text selectable style={{ color: "#B9E4D8", fontSize: 12 }}>
             von {formatMinutes(report.targetMinutes)} Soll
           </Text>
+          <Text selectable style={{ color: "#B9E4D8", fontSize: 11, lineHeight: 16 }}>
+            Dienste {formatMinutes(report.workMinutes)}
+            {report.trainingMinutes > 0 ? ` · Fortbildung ${formatMinutes(report.trainingMinutes)}` : ""}
+          </Text>
         </View>
         <View style={{ height: 8, overflow: "hidden", borderRadius: 4, backgroundColor: "rgba(255,255,255,0.16)" }}>
           <View style={{ width: `${progress * 100}%`, height: "100%", borderRadius: 4, backgroundColor: "#8BE0C8" }} />
@@ -168,17 +173,6 @@ export function AnnualReportScreen({
         <MonthlyBars report={report} testMonths={testMonths} onSelectMonth={onSelectMonth} />
       </View>
 
-      <View style={{ gap: 10 }}>
-        <SectionHeader title="Zeit & Abwesenheit" />
-        <SurfaceCard style={{ gap: 14, padding: 18 }}>
-          <ValueRow label="Arbeitsdienste" value={formatMinutes(report.workMinutes)} />
-          <ValueRow label="Fortbildung" value={formatMinutes(report.trainingMinutes)} />
-          <ValueRow label="Urlaub" value={`${report.vacationDays} Tage`} />
-          <ValueRow label="Krankheit" value={`${report.sickDays} Tage`} />
-          <ValueRow label="Frei" value={`${report.freeDays} Tage`} />
-        </SurfaceCard>
-      </View>
-
       <View style={{ flexDirection: "row", gap: 10 }}>
         <MetricCard
           label="ArbZG kritisch"
@@ -193,7 +187,10 @@ export function AnnualReportScreen({
       </View>
 
       <View style={{ gap: 10 }}>
-        <SectionHeader title="Dienstverteilung" />
+        <SectionHeader
+          title="Verteilung"
+          caption="Anteile beziehen sich nur auf Dienste."
+        />
         <DistributionList distribution={report.distribution} />
       </View>
 
@@ -263,26 +260,76 @@ function MonthlyBars({
 
 function DistributionList({ distribution }: { readonly distribution: ReadonlyMap<ShiftType, number> }) {
   const palette = usePalette();
-  const items = [...distribution.entries()]
-    .filter(([, count]) => count > 0)
-    .sort((left, right) => right[1] - left[1]);
-  const total = items.reduce((sum, [, count]) => sum + count, 0);
+  const sections = buildAnnualDistributionSections(distribution);
+  const hasEntries = sections.services.length > 0 || sections.absences.length > 0;
   return (
-    <SurfaceCard style={{ gap: 10, padding: 18 }}>
-      {items.length === 0 ? (
-        <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>Keine Dienste in diesem Jahr.</Text>
-      ) : items.map(([type, count]) => (
-        <View key={type} style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
-          <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
-          <Text selectable style={{ flex: 1, color: palette.textSecondary, fontSize: 13 }}>{SHIFT_TYPE_LABELS[type]}</Text>
-          <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
-            {count}
+    <SurfaceCard style={{ gap: 14, padding: 18 }}>
+      {!hasEntries ? (
+        <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>Keine Einträge in diesem Jahr.</Text>
+      ) : null}
+
+      {sections.services.length > 0 ? (
+        <View style={{ gap: 10 }}>
+          <Text selectable style={{ color: palette.textMuted, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>
+            DIENSTE & FORTBILDUNG
           </Text>
-          <Text selectable style={{ width: 34, color: palette.textMuted, fontSize: 11, textAlign: "right" }}>
-            {total === 0 ? "0%" : `${Math.round((count / total) * 100)}%`}
-          </Text>
+          {sections.services.map(({ type, count, percentage }) => (
+            <View key={type} style={{ minHeight: 24, flexDirection: "row", alignItems: "center", gap: 9 }}>
+              <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
+              <Text selectable style={{ flex: 1, color: palette.textSecondary, fontSize: 13 }}>{SHIFT_TYPE_LABELS[type]}</Text>
+              <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+                {count}
+              </Text>
+              <Text selectable style={{ width: 34, color: palette.textMuted, fontSize: 11, textAlign: "right", fontVariant: ["tabular-nums"] }}>
+                {percentage}%
+              </Text>
+            </View>
+          ))}
         </View>
-      ))}
+      ) : null}
+
+      {sections.services.length > 0 && sections.absences.length > 0 ? (
+        <View style={{ height: 1, backgroundColor: palette.border }} />
+      ) : null}
+
+      {sections.absences.length > 0 ? (
+        <View style={{ gap: 10 }}>
+          <Text selectable style={{ color: palette.textMuted, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>
+            ABWESENHEITEN
+          </Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {sections.absences.map(({ type, count }) => (
+              <View
+                key={type}
+                style={{
+                  minWidth: 104,
+                  minHeight: 52,
+                  flexGrow: 1,
+                  flexBasis: 0,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  borderRadius: 14,
+                  borderCurve: "continuous",
+                  backgroundColor: palette.surfaceRaised,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                }}
+              >
+                <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
+                <View style={{ minWidth: 0, flex: 1, gap: 1 }}>
+                  <Text selectable numberOfLines={1} style={{ color: palette.textSecondary, fontSize: 11 }}>
+                    {SHIFT_TYPE_LABELS[type]}
+                  </Text>
+                  <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+                    {count} {count === 1 ? "Tag" : "Tage"}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      ) : null}
     </SurfaceCard>
   );
 }
@@ -316,16 +363,6 @@ function HeroValue({ label, value }: { readonly label: string; readonly value: s
       <Text selectable adjustsFontSizeToFit numberOfLines={1} style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
         {value}
       </Text>
-    </View>
-  );
-}
-
-function ValueRow({ label, value }: { readonly label: string; readonly value: string }) {
-  const palette = usePalette();
-  return (
-    <View style={{ minHeight: 26, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-      <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>{label}</Text>
-      <Text selectable style={{ color: palette.text, fontWeight: "800", fontVariant: ["tabular-nums"] }}>{value}</Text>
     </View>
   );
 }

@@ -11,11 +11,13 @@ export const QuickEntryActionTile = memo(function QuickEntryActionTile({
   active = false,
   disabled = false,
   onPress,
+  width = 62,
 }: {
   readonly action: QuickEntryAction;
   readonly active?: boolean;
   readonly disabled?: boolean;
   readonly onPress: (action: QuickEntryAction) => void;
+  readonly width?: number;
 }) {
   const palette = usePalette();
   const isStampAction = action.kind === "TEMPLATE" || action.kind === "ABSENCE";
@@ -30,7 +32,7 @@ export const QuickEntryActionTile = memo(function QuickEntryActionTile({
       disabled={disabled}
       onPress={() => onPress(action)}
       style={({ pressed }) => ({
-        width: 62,
+        width,
         minHeight: 58,
         alignItems: "center",
         justifyContent: "center",

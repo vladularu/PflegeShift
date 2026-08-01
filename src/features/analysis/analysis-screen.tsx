@@ -1,8 +1,8 @@
 import { Temporal } from "@js-temporal/polyfill";
 import * as Haptics from "expo-haptics";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
-import { startTransition, useEffect, useMemo, useState, type ReactNode } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Pressable,
   ScrollView,
@@ -24,7 +24,7 @@ import {
   type ShiftEntry,
   type ShiftType,
 } from "@/domain/types";
-import { currentMonth, formatDateTitle, formatMonthTitle } from "@/engine/calendar";
+import { formatDateTitle, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
@@ -40,6 +40,7 @@ import {
 } from "@/features/analysis/annual-report-view";
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
 import { tariffAssessmentRoute } from "@/navigation/routes";
+import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { EmptyState, MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
@@ -57,23 +58,33 @@ const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
 
 export function AnalysisScreen() {
   const palette = usePalette();
+  const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: string }>();
   const { ready } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
   const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
   const { testMonths } = useMediShiftTestData();
-  const [month, setMonth] = useState(currentMonth);
+  const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
-  const [year, setYear] = useState(() => Number(currentMonth().slice(0, 4)));
+  const [year, setYear] = useState(() => Number(activeMonthCoordinator.getMonth().slice(0, 4)));
   const [detail, setDetail] = useState<Detail>(null);
 
   useEffect(() => {
     if (typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)) {
+      activeMonthCoordinator.setMonth(params.month);
       setMonth(params.month);
       setDetail(null);
     }
-  }, [params.month]);
+  }, [activeMonthCoordinator, params.month]);
+
+  useFocusEffect(useCallback(() => {
+    const activeMonth = activeMonthCoordinator.getMonth();
+    setMonth((current) => current === activeMonth ? current : activeMonth);
+    setYear((current) => current === Number(activeMonth.slice(0, 4))
+      ? current
+      : Number(activeMonth.slice(0, 4)));
+  }, [activeMonthCoordinator]));
 
   const {
     monthEntries,
@@ -139,6 +150,7 @@ export function AnalysisScreen() {
   }
 
   function selectAnnualMonth(nextMonth: string) {
+    activeMonthCoordinator.setMonth(nextMonth);
     startTransition(() => {
       setMonth(nextMonth);
       setPeriod("MONTH");
@@ -153,17 +165,31 @@ export function AnalysisScreen() {
         report={annualReport}
         testMonths={testMonths}
         onChangePeriod={changePeriod}
-        onMoveYear={(delta) => setYear((current) => current + delta)}
+        onMoveYear={moveYear}
         onSelectMonth={selectAnnualMonth}
       />
     );
   }
 
   function moveMonth(delta: number) {
+    const nextMonth = Temporal.PlainDate.from(`${month}-01`)
+      .add({ months: delta })
+      .toString()
+      .slice(0, 7);
+    activeMonthCoordinator.setMonth(nextMonth);
     startTransition(() => {
-      setMonth(
-        Temporal.PlainDate.from(`${month}-01`).add({ months: delta }).toString().slice(0, 7),
-      );
+      setMonth(nextMonth);
+      setDetail(null);
+    });
+  }
+
+  function moveYear(delta: number) {
+    const nextYear = year + delta;
+    const nextMonth = `${nextYear}-${month.slice(5, 7)}`;
+    activeMonthCoordinator.setMonth(nextMonth);
+    startTransition(() => {
+      setMonth(nextMonth);
+      setYear(nextYear);
       setDetail(null);
     });
   }

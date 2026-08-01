@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import * as Haptics from "expo-haptics";
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import {
@@ -11,13 +11,14 @@ import {
   useMediShiftTariff,
   useMediShiftTestData,
 } from "@/application/medishift-provider";
-import { currentMonth, formatMonthTitle } from "@/engine/calendar";
+import { formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { formatMinutes } from "@/engine/working-time";
 import {
   selectAnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
 import { premiumDetailsRoute, tariffAssessmentRoute } from "@/navigation/routes";
+import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
@@ -33,19 +34,26 @@ function euro(value: number | null): string {
 
 export function SalaryScreen() {
   const palette = usePalette();
+  const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: string }>();
   const { ready } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
   const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
   const { testMonths } = useMediShiftTestData();
-  const [month, setMonth] = useState(currentMonth);
+  const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
 
   useEffect(() => {
     if (typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)) {
+      activeMonthCoordinator.setMonth(params.month);
       setMonth(params.month);
     }
-  }, [params.month]);
+  }, [activeMonthCoordinator, params.month]);
+
+  useFocusEffect(useCallback(() => {
+    const activeMonth = activeMonthCoordinator.getMonth();
+    setMonth((current) => current === activeMonth ? current : activeMonth);
+  }, [activeMonthCoordinator]));
 
   const { monthShifts, allowanceShifts } = useMemo(
     () => selectAnalysisEntryWindow(entries, month),
@@ -69,9 +77,12 @@ export function SalaryScreen() {
   if (!ready || profile === null || pay === null) return <LoadingView />;
 
   function moveMonth(delta: number) {
-    setMonth(
-      Temporal.PlainDate.from(`${month}-01`).add({ months: delta }).toString().slice(0, 7),
-    );
+    const nextMonth = Temporal.PlainDate.from(`${month}-01`)
+      .add({ months: delta })
+      .toString()
+      .slice(0, 7);
+    activeMonthCoordinator.setMonth(nextMonth);
+    setMonth(nextMonth);
     if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
   }
 

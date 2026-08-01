@@ -40,30 +40,30 @@ export type QuickEntryAction =
     };
 
 const ABSENCE_ACTIONS: readonly QuickEntryStampAction[] = Object.freeze([
-  {
+  Object.freeze({
     kind: "ABSENCE",
     key: "absence:VACATION",
     label: "Urlaub",
     color: SHIFT_TYPE_COLORS.VACATION,
     symbol: "U",
     absenceType: "VACATION",
-  },
-  {
+  }),
+  Object.freeze({
     kind: "ABSENCE",
     key: "absence:SICK",
     label: "Krank",
     color: SHIFT_TYPE_COLORS.SICK,
     symbol: "K",
     absenceType: "SICK",
-  },
-  {
+  }),
+  Object.freeze({
     kind: "ABSENCE",
     key: "absence:FREE",
     label: "Frei",
     color: SHIFT_TYPE_COLORS.FREE,
     symbol: "–",
     absenceType: "FREE",
-  },
+  }),
 ]);
 
 export function buildQuickEntryActions(
@@ -101,6 +101,21 @@ export function isQuickEntryStampAction(
   action: QuickEntryAction,
 ): action is QuickEntryStampAction {
   return action.kind === "TEMPLATE" || action.kind === "ABSENCE";
+}
+
+export function quickEntryTemplateActions(
+  actions: readonly QuickEntryAction[],
+): readonly Extract<QuickEntryAction, { readonly kind: "TEMPLATE" }>[] {
+  return Object.freeze(actions.filter(
+    (action): action is Extract<QuickEntryAction, { readonly kind: "TEMPLATE" }> =>
+      action.kind === "TEMPLATE",
+  ));
+}
+
+export function quickEntryServiceActions(
+  actions: readonly QuickEntryAction[],
+): readonly QuickEntryStampAction[] {
+  return Object.freeze(actions.filter(isQuickEntryStampAction));
 }
 
 export function quickEntryEditorMode(

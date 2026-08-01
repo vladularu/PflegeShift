@@ -4,11 +4,23 @@ import {
   calculateCalendarBottomReserve,
   calculateCalendarGridLayout,
   calculateCalendarPopupPlacement,
+  calculateQuickPlannerLayout,
   calendarTodayTarget,
 } from "@/features/calendar/calendar-layout";
 
 describe("calendar layout", () => {
-  it("places a day popup below its anchor when space is available", () => {
+  it("fits four or five complete actions into the quick planner dock", () => {
+    expect(calculateQuickPlannerLayout(390)).toEqual({
+      tileWidth: 61.4,
+      visibleTileCount: 5,
+    });
+    expect(calculateQuickPlannerLayout(320)).toEqual({
+      tileWidth: 59.5,
+      visibleTileCount: 4,
+    });
+  });
+
+  it("keeps the day popup horizontally centered below its anchor", () => {
     expect(calculateCalendarPopupPlacement({
       anchor: { x: 120, y: 180, width: 48, height: 64 },
       viewportWidth: 390,
@@ -18,14 +30,14 @@ describe("calendar layout", () => {
       topInset: 47,
       bottomInset: 96,
     })).toEqual({
-      left: 12,
+      left: 20,
       top: 252,
       direction: "BELOW",
     });
   });
 
-  it("moves the popup above a last-row day", () => {
-    const placement = calculateCalendarPopupPlacement({
+  it("keeps the popup centered and moves it above a last-row day", () => {
+    expect(calculateCalendarPopupPlacement({
       anchor: { x: 310, y: 690, width: 48, height: 64 },
       viewportWidth: 390,
       viewportHeight: 844,
@@ -33,11 +45,11 @@ describe("calendar layout", () => {
       popupHeight: 156,
       topInset: 47,
       bottomInset: 96,
+    })).toEqual({
+      left: 20,
+      top: 526,
+      direction: "ABOVE",
     });
-
-    expect(placement.direction).toBe("ABOVE");
-    expect(placement.top).toBe(526);
-    expect(placement.left).toBe(28);
   });
 
   it("uses the available page height for five- and six-week grids", () => {

@@ -1,3 +1,9 @@
+export interface CalendarGridLayout {
+  readonly headerHeight: number;
+  readonly rowHeight: number;
+  readonly gridHeight: number;
+}
+
 export interface CalendarAnchorRect {
   readonly x: number;
   readonly y: number;
@@ -11,14 +17,23 @@ export interface CalendarPopupPlacement {
   readonly direction: "BELOW" | "ABOVE";
 }
 
-export interface CalendarGridLayout {
-  readonly headerHeight: number;
-  readonly rowHeight: number;
-  readonly gridHeight: number;
+export interface QuickPlannerLayout {
+  readonly tileWidth: number;
+  readonly visibleTileCount: number;
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+export function calculateQuickPlannerLayout(viewportWidth: number): QuickPlannerLayout {
+  const safeWidth = Number.isFinite(viewportWidth) ? viewportWidth : 320;
+  const visibleTileCount = safeWidth >= 370 ? 5 : 4;
+  const actionViewportWidth = Math.max(220, safeWidth - 79);
+  return Object.freeze({
+    visibleTileCount,
+    tileWidth: (actionViewportWidth - (visibleTileCount - 1)) / visibleTileCount,
+  });
 }
 
 export function calculateCalendarPopupPlacement({
@@ -44,7 +59,7 @@ export function calculateCalendarPopupPlacement({
 }): CalendarPopupPlacement {
   const maximumLeft = Math.max(edgeInset, viewportWidth - popupWidth - edgeInset);
   const left = clamp(
-    anchor.x + anchor.width / 2 - popupWidth / 2,
+    (viewportWidth - popupWidth) / 2,
     edgeInset,
     maximumLeft,
   );

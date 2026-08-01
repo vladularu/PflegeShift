@@ -6,6 +6,7 @@ import { StatusBar } from "react-native";
 import { MediShiftProvider } from "@/application/medishift-provider";
 import { CalendarPreferencesProvider } from "@/features/calendar/calendar-preferences";
 import { migrateDatabase } from "@/infrastructure/database/migrations";
+import { ActiveMonthProvider } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 
 export default function RootLayout() {
@@ -15,8 +16,9 @@ export default function RootLayout() {
   return (
     <SQLiteProvider databaseName="medishift.db" onInit={migrateDatabase}>
       <MediShiftProvider>
-        <CalendarPreferencesProvider>
-          <ThemeProvider value={dark ? DarkTheme : DefaultTheme}>
+        <ActiveMonthProvider>
+          <CalendarPreferencesProvider>
+            <ThemeProvider value={dark ? DarkTheme : DefaultTheme}>
             <Stack
               screenOptions={{
                 headerBackButtonDisplayMode: "minimal",
@@ -132,8 +134,9 @@ export default function RootLayout() {
               />
             </Stack>
             <StatusBar barStyle={dark ? "light-content" : "dark-content"} />
-          </ThemeProvider>
-        </CalendarPreferencesProvider>
+            </ThemeProvider>
+          </CalendarPreferencesProvider>
+        </ActiveMonthProvider>
       </MediShiftProvider>
     </SQLiteProvider>
   );

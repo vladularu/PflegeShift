@@ -1,9 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { memo } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FullWindowOverlay } from "react-native-screens";
 
+import { calculateQuickPlannerLayout } from "@/features/calendar/calendar-layout";
 import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { QuickEntryActionTile } from "@/features/calendar/quick-entry-action-tile";
 import { usePalette } from "@/theme/palette";
@@ -23,9 +24,11 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
 }) {
   const palette = usePalette();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const bottomOffset = Platform.OS === "web"
     ? 8
     : Math.max(insets.bottom - 6, 8);
+  const { tileWidth } = calculateQuickPlannerLayout(width);
 
   const dock = (
     <View
@@ -51,7 +54,10 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
     >
       <ScrollView
         horizontal
-        contentContainerStyle={{ alignItems: "center", gap: 1, paddingHorizontal: 2 }}
+        contentContainerStyle={{ alignItems: "center", gap: 1, paddingRight: 14 }}
+        decelerationRate="fast"
+        snapToAlignment="start"
+        snapToInterval={tileWidth + 1}
         style={{ flex: 1 }}
         showsHorizontalScrollIndicator={false}
       >
@@ -62,6 +68,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
             active={activeKey === action.key}
             disabled={busy}
             onPress={onSelectAction}
+            width={tileWidth}
           />
         ))}
       </ScrollView>

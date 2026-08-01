@@ -4,6 +4,8 @@ import type { ShiftEntry, ShiftTemplate } from "@/domain/types";
 import {
   buildQuickEntryActions,
   isQuickEntryStampAction,
+  quickEntryServiceActions,
+  quickEntryTemplateActions,
   quickEntryEditorTarget,
   saveQuickEntryAction,
 } from "@/features/calendar/quick-entry-actions";
@@ -40,6 +42,27 @@ describe("shared quick-entry actions", () => {
     expect(dockActions.map((action) => action.key)).toEqual(
       popupActions.map((action) => action.key),
     );
+  });
+
+  it("keeps system absences fixed in quick selection but out of service templates", () => {
+    const actions = buildQuickEntryActions([template]);
+    const absenceActions = actions.filter((action) => action.kind === "ABSENCE");
+
+    expect(absenceActions.map((action) => action.label)).toEqual([
+      "Urlaub",
+      "Krank",
+      "Frei",
+    ]);
+    expect(absenceActions.every(Object.isFrozen)).toBe(true);
+    expect(quickEntryTemplateActions(actions).map((action) => action.key)).toEqual([
+      "template:early",
+    ]);
+    expect(quickEntryServiceActions(actions).map((action) => action.key)).toEqual([
+      "template:early",
+      "absence:VACATION",
+      "absence:SICK",
+      "absence:FREE",
+    ]);
   });
 
   it("saves templates and absences immediately through the same helper", async () => {

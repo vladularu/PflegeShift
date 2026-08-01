@@ -33,6 +33,7 @@ import {
   type ShiftEntry,
 } from "@/domain/types";
 import { addMonths, currentMonth, formatDateTitle, today } from "@/engine/calendar";
+import { holidayMapForMonth } from "@/engine/holidays";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
@@ -61,6 +62,10 @@ import { QuickPlannerDock } from "@/features/calendar/quick-planner-dock";
 import { QuickEntryPopup } from "@/features/calendar/quick-entry-popup";
 import { YearOverview } from "@/features/calendar/year-overview";
 import { dayDetailsRoute, dayEditorRoute } from "@/navigation/routes";
+import {
+  calendarTabShouldOpenToday,
+  useActiveMonthCoordinator,
+} from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { LoadingView } from "@/ui/loading-view";
 
@@ -83,6 +88,7 @@ export function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const preferences = useCalendarPreferences();
+  const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: string }>();
   const { ready, error } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
@@ -91,9 +97,12 @@ export function CalendarScreen() {
   const { testMonths } = useMediShiftTestData();
   const profileReady = profile !== null;
   const timeZone = profile?.timeZone ?? "Europe/Berlin";
-  const targetMonth = typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)
+  const routeMonth = typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)
     ? params.month
-    : currentMonth(timeZone);
+    : null;
+  const initialMonth = useRef<string | null>(null);
+  initialMonth.current ??= routeMonth ?? activeMonthCoordinator.getMonth();
+  const targetMonth = routeMonth ?? initialMonth.current;
   const [monthAnchor, setMonthAnchor] = useState(targetMonth);
   const months = useMemo(
     () => [...createMonthWindow(monthAnchor, MONTHS_BEFORE, MONTHS_AFTER)],
@@ -131,13 +140,14 @@ export function CalendarScreen() {
 
   useEffect(() => {
     const next = targetMonth === currentMonth(timeZone) ? today(timeZone) : `${targetMonth}-01`;
+    activeMonthCoordinator.setMonth(targetMonth);
     pendingSelectedDate.current = null;
     setSelectedDate(next);
     setSelectionVisible(false);
     setVisibleMonth(targetMonth);
     settledMonth.current = targetMonth;
     setMonthAnchor(targetMonth);
-  }, [profileReady, targetMonth, timeZone]);
+  }, [activeMonthCoordinator, profileReady, targetMonth, timeZone]);
 
   useEffect(() => {
     if (preferences.viewMode !== "MONTH") {
@@ -190,6 +200,13 @@ export function CalendarScreen() {
     () => buildQuickEntryActions(templates),
     [templates],
   );
+  const quickPopupHolidayName = useMemo(() => {
+    if (profile === null || quickPopup === null) return undefined;
+    return holidayMapForMonth(
+      quickPopup.date.slice(0, 7),
+      profile.federalState,
+    ).get(quickPopup.date)?.name;
+  }, [profile, quickPopup]);
   const summary = useMemo(() => {
     if (!profile) return null;
     const monthShifts = entries.filter(
@@ -271,6 +288,23 @@ export function CalendarScreen() {
     return true;
   }, [months]);
 
+  useFocusEffect(useCallback(() => {
+    const activeMonth = activeMonthCoordinator.getMonth();
+    if (activeMonth === visibleMonth) return;
+
+    setQuickPopup(null);
+    setVisibleMonth(activeMonth);
+    settledMonth.current = activeMonth;
+    setSelectedDate((date) => clampDateToMonth(date, activeMonth));
+    setSelectionVisible(false);
+    const recenter = shouldRecenterMonthWindow(months, activeMonth);
+    if (recenter) {
+      setMonthAnchor(activeMonth);
+    } else if (preferences.viewMode === "MONTH") {
+      requestAnimationFrame(() => scrollToMonth(activeMonth, false));
+    }
+  }, [activeMonthCoordinator, months, preferences.viewMode, scrollToMonth, visibleMonth]));
+
   const goToToday = useCallback(() => {
     const currentDate = today(timeZone);
     const target = calendarTodayTarget(currentDate);
@@ -278,12 +312,13 @@ export function CalendarScreen() {
     setSelectedDate(target.selectedDate);
     setSelectionVisible(true);
     setVisibleMonth(target.visibleMonth);
+    activeMonthCoordinator.setMonth(target.visibleMonth);
     settledMonth.current = target.visibleMonth;
     const recenter = shouldRecenterMonthWindow(months, target.visibleMonth);
     if (recenter) setMonthAnchor(target.visibleMonth);
     preferences.setViewMode(target.viewMode);
     if (!recenter) scrollToMonth(target.visibleMonth);
-  }, [months, preferences, scrollToMonth, timeZone]);
+  }, [activeMonthCoordinator, months, preferences, scrollToMonth, timeZone]);
 
   useEffect(() => {
     let currentNavigation = navigation.getParent();
@@ -300,21 +335,24 @@ export function CalendarScreen() {
     if (!tabNavigation) return;
 
     return tabNavigation.addListener("tabPress", () => {
-      requestAnimationFrame(goToToday);
+      if (calendarTabShouldOpenToday(isFocused)) {
+        requestAnimationFrame(goToToday);
+      }
     });
-  }, [goToToday, navigation]);
+  }, [goToToday, isFocused, navigation]);
 
   const openMonth = useCallback((month: string) => {
     setQuickPopup(null);
     setSelectedDate((date) => clampDateToMonth(date, month));
     setSelectionVisible(false);
     setVisibleMonth(month);
+    activeMonthCoordinator.setMonth(month);
     settledMonth.current = month;
     const recenter = shouldRecenterMonthWindow(months, month);
     if (recenter) setMonthAnchor(month);
     preferences.setViewMode("MONTH");
     if (!recenter) requestAnimationFrame(() => scrollToMonth(month, false));
-  }, [months, preferences, scrollToMonth]);
+  }, [activeMonthCoordinator, months, preferences, scrollToMonth]);
 
   const openYear = useCallback(() => {
     setQuickPopup(null);
@@ -338,9 +376,10 @@ export function CalendarScreen() {
     if (!month || month === visibleMonth) return;
     setQuickPopup(null);
     setVisibleMonth(month);
+    activeMonthCoordinator.setMonth(month);
     setSelectedDate((date) => clampDateToMonth(date, month));
     setSelectionVisible(false);
-  }, [months, pageHeight, visibleMonth]);
+  }, [activeMonthCoordinator, months, pageHeight, visibleMonth]);
 
   const finishPaging = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const month = monthAtPagerOffset(
@@ -353,13 +392,14 @@ export function CalendarScreen() {
     settledMonth.current = month;
     setQuickPopup(null);
     setVisibleMonth(month);
+    activeMonthCoordinator.setMonth(month);
     setSelectedDate((date) => clampDateToMonth(date, month));
     setSelectionVisible(false);
     if (shouldRecenterMonthWindow(months, month)) setMonthAnchor(month);
     if (didChangeMonth && process.env.EXPO_OS === "ios") {
       void Haptics.selectionAsync();
     }
-  }, [months, pageHeight]);
+  }, [activeMonthCoordinator, months, pageHeight]);
 
   const beginPlanning = useCallback(() => {
     setQuickPopup(null);
@@ -438,11 +478,12 @@ export function CalendarScreen() {
   const moveYear = useCallback((amount: number) => {
     const nextMonth = addMonths(visibleMonth, amount * 12);
     setVisibleMonth(nextMonth);
+    activeMonthCoordinator.setMonth(nextMonth);
     settledMonth.current = nextMonth;
     setSelectedDate((date) => clampDateToMonth(date, nextMonth));
     setSelectionVisible(false);
     if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
-  }, [visibleMonth]);
+  }, [activeMonthCoordinator, visibleMonth]);
   const renderMonth = useCallback(({ item }: ListRenderItemInfo<string>) => (
     profile ? (
       <MonthCard
@@ -625,6 +666,7 @@ export function CalendarScreen() {
           busy={plannerBusy}
           date={quickPopup.date}
           entries={entriesByDate.get(quickPopup.date) ?? []}
+          holidayName={quickPopupHolidayName}
           onClose={closeQuickPopup}
           onOpenEntry={openEntry}
           onOpenDetails={openDayDetails}
