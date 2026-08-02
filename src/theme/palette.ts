@@ -1,6 +1,6 @@
 import { useColorScheme } from "react-native";
 
-export { SHIFT_COLORS, SHIFT_TYPE_COLORS } from "@/theme/shift-colors";
+export { SHIFT_COLORS, SHIFT_COLOR_PAIRS, SHIFT_TYPE_COLORS } from "@/theme/shift-colors";
 
 export interface Palette {
   readonly dark: boolean;

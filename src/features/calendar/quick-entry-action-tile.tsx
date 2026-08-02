@@ -20,7 +20,7 @@ export const QuickEntryActionTile = memo(function QuickEntryActionTile({
   readonly width?: number;
 }) {
   const palette = usePalette();
-  const isStampAction = action.kind === "TEMPLATE" || action.kind === "ABSENCE";
+  const isStampAction = action.kind === "TEMPLATE";
   const editorIcon = action.kind === "APPOINTMENT" ? "calendar-outline" : "add";
   const editorColor = action.kind === "APPOINTMENT" ? "#2F80ED" : palette.primary;
 
@@ -67,7 +67,7 @@ export const QuickEntryActionTile = memo(function QuickEntryActionTile({
         style={{
           maxWidth: 58,
           color: active ? palette.primary : palette.text,
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: "800",
         }}
       >

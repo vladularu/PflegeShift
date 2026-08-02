@@ -56,8 +56,8 @@ describe("monthly summary", () => {
     expect(summary.work).toEqual({ minutes: 450, entryCount: 1 });
     expect(summary.training).toEqual({ minutes: 450, entryCount: 1 });
     expect(summary.vacation).toEqual({ minutes: 462, entryCount: 1 });
-    expect(summary.sick).toEqual({ minutes: 462, entryCount: 1 });
+    expect(summary.sick).toEqual({ minutes: 0, entryCount: 1 });
     expect(summary.free).toEqual({ minutes: 0, entryCount: 1 });
-    expect(summary.actualMinutes).toBe(1_824);
+    expect(summary.actualMinutes).toBe(1_362);
   });
 });

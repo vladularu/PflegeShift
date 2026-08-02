@@ -59,7 +59,28 @@ describe("resolveShiftTypePreset", () => {
     });
   });
 
-  it("entfernt bei Abwesenheiten Zeit- und Vorlagenbezug", () => {
+  it("uses an editable absence template when available", () => {
+    const vacation = template({
+      id: "vacation-custom",
+      name: "Erholung",
+      type: "VACATION",
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+      color: "#123456",
+      symbol: "UR",
+    });
+    expect(resolveShiftTypePreset("VACATION", [vacation])).toMatchObject({
+      templateId: "vacation-custom",
+      title: "Erholung",
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+      symbol: "UR",
+    });
+  });
+
+  it("falls back to an unlinked absence without a template", () => {
     expect(resolveShiftTypePreset("VACATION", [])).toMatchObject({
       templateId: null,
       title: "Urlaub",

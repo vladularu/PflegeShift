@@ -9,8 +9,10 @@ import {
   listCalendarEntries,
   listMonthlyTariffDecisions,
   listTemplates,
+  loadCalendarPreferences,
   loadProfile,
   saveAppointment,
+  saveCalendarPreferences,
   saveProfile,
   saveShift,
   saveMonthlyTariffDecision,
@@ -57,8 +59,10 @@ describe("SQLite repository", () => {
 
   it("runs migrations and seed data idempotently", async () => {
     await migrateDatabase(db);
-    expect(await listTemplates(db)).toHaveLength(4);
-    expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({ count: 3 });
+    const templates = await listTemplates(db);
+    expect(templates).toHaveLength(7);
+    expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("–");
+    expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({ count: 5 });
   });
 
   it("finishes an interrupted second migration without losing existing data", async () => {
@@ -138,6 +142,64 @@ describe("SQLite repository", () => {
     ).toMatchObject({ revision: 3 });
   });
 
+  it("projects template presentation changes onto existing entries without changing times", async () => {
+    const early = (await listTemplates(db)).find((template) => template.id === "default-early");
+    if (!early) throw new Error("Default early template missing");
+    await saveShift(db, {
+      date: "2026-07-30",
+      templateId: early.id,
+      title: early.name,
+      type: early.type,
+      startTime: early.startTime,
+      endTime: early.endTime,
+      breakMinutes: early.breakMinutes,
+      color: early.color,
+      symbol: early.symbol,
+    });
+
+    await saveTemplate(db, {
+      ...early,
+      expectedRevision: early.revision,
+      name: "Früh neu",
+      startTime: "07:00",
+      endTime: "15:00",
+      color: "#21A0A0",
+      symbol: "FN",
+    });
+
+    expect((await listCalendarEntries(db))[0]).toMatchObject({
+      title: "Früh neu",
+      color: "#21A0A0",
+      symbol: "FN",
+      startTime: "06:00",
+      endTime: "14:12",
+      breakMinutes: 30,
+    });
+  });
+
+  it("stores editable absence templates and links new absence entries", async () => {
+    const sick = (await listTemplates(db)).find((template) => template.id === "default-sick");
+    if (!sick) throw new Error("Default sickness template missing");
+    expect(sick).toMatchObject({
+      type: "SICK",
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+    });
+    const saved = await saveShift(db, {
+      date: "2026-07-30",
+      templateId: sick.id,
+      title: sick.name,
+      type: sick.type,
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+      color: sick.color,
+      symbol: sick.symbol,
+    });
+    expect(saved.templateId).toBe("default-sick");
+  });
+
   it("stores multiple entry kinds, updates them and soft-deletes them", async () => {
     const shift = await saveShift(db, {
       date: "2026-07-30",
@@ -196,6 +258,32 @@ describe("SQLite repository", () => {
       revision: 2,
     });
     expect(await listMonthlyTariffDecisions(db)).toHaveLength(1);
+  });
+
+  it("persists calendar visibility, labels and time details", async () => {
+    expect(await loadCalendarPreferences(db)).toMatchObject({
+      labelMode: "FULL",
+      showShiftTimes: false,
+      showShiftDuration: false,
+    });
+    await saveCalendarPreferences(db, {
+      viewMode: "YEAR",
+      showShifts: true,
+      showAppointments: false,
+      showHolidays: false,
+      labelMode: "SYMBOL",
+      showShiftTimes: true,
+      showShiftDuration: true,
+    });
+    expect(await loadCalendarPreferences(db)).toEqual({
+      viewMode: "YEAR",
+      showShifts: true,
+      showAppointments: false,
+      showHolidays: false,
+      labelMode: "SYMBOL",
+      showShiftTimes: true,
+      showShiftDuration: true,
+    });
   });
 
   it("rejects stale revisions", async () => {

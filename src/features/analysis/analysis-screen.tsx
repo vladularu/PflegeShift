@@ -9,7 +9,6 @@ import {
   Text,
   View,
 } from "react-native";
-import Svg, { Circle, G } from "react-native-svg";
 
 import {
   useMediShiftEntries,
@@ -44,7 +43,7 @@ import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics
 import { complianceDetailsRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
-import { EmptyState, MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { EmptyState, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
 import {
@@ -211,27 +210,23 @@ export function AnalysisScreen() {
         : "Noch nicht eindeutig";
   return (
     <ReportScrollView>
-      <AnalysisPeriodPicker value={period} onChange={changePeriod} />
       <MonthNavigator
         label={formatMonthTitle(month)}
         onNext={() => moveMonth(1)}
         onPrevious={() => moveMonth(-1)}
       />
+      <AnalysisPeriodPicker value={period} onChange={changePeriod} />
       <ReportPeriodContent>
       {testMonths.includes(month) ? (
         <ReportTestBadge />
       ) : null}
 
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        <MetricCard compact label="Soll" value={formatMinutes(summary.targetMinutes)} />
-        <MetricCard compact label="Ist" value={formatMinutes(summary.actualMinutes)} />
-        <MetricCard
-          compact
-          accent={summary.balanceMinutes < 0 ? palette.danger : palette.success}
-          label="Saldo"
-          value={formatSignedMinutes(summary.balanceMinutes)}
-        />
-      </View>
+      <WorktimeSummary
+        actual={formatMinutes(summary.actualMinutes)}
+        balance={formatSignedMinutes(summary.balanceMinutes)}
+        balanceAccent={summary.balanceMinutes < 0 ? palette.danger : palette.success}
+        target={formatMinutes(summary.targetMinutes)}
+      />
 
       <View
         style={{
@@ -282,9 +277,6 @@ function DistributionChart({ distribution }: { readonly distribution: ReadonlyMa
   const palette = usePalette();
   const items = [...distribution.entries()].filter(([, count]) => count > 0);
   const total = items.reduce((sum, [, count]) => sum + count, 0);
-  const radius = 42;
-  const circumference = 2 * Math.PI * radius;
-  let offset = 0;
   if (total === 0) {
     return (
       <SurfaceCard>
@@ -296,47 +288,99 @@ function DistributionChart({ distribution }: { readonly distribution: ReadonlyMa
     );
   }
   return (
-    <SurfaceCard style={{ minHeight: 190, flexDirection: "row", alignItems: "center", gap: 20, padding: 18 }}>
-      <View accessibilityLabel={`${total} Schichten insgesamt`} accessible>
-        <Svg height={112} width={112} viewBox="0 0 112 112">
-          <Circle cx={56} cy={56} fill="none" r={radius} stroke={palette.surfaceMuted} strokeWidth={16} />
-          <G rotation="-90" origin="56,56">
-            {items.map(([type, count]) => {
-              const length = total === 0 ? 0 : (count / total) * circumference;
-              const element = (
-                <Circle
-                  key={type}
-                  cx={56}
-                  cy={56}
-                  fill="none"
-                  r={radius}
-                  stroke={SHIFT_TYPE_COLORS[type]}
-                  strokeDasharray={`${length} ${circumference - length}`}
-                  strokeDashoffset={-offset}
-                  strokeWidth={16}
-                />
-              );
-              offset += length;
-              return element;
-            })}
-          </G>
-        </Svg>
-        <View style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-          <Text style={{ color: palette.text, fontSize: 24, fontWeight: "900", fontVariant: ["tabular-nums"] }}>{total}</Text>
-          <Text style={{ color: palette.textMuted, fontSize: 10 }}>Gesamt</Text>
-        </View>
+    <SurfaceCard
+      accessibilityLabel={`${total} Dienste insgesamt`}
+      style={{ gap: 14, padding: 18 }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+        <Text selectable style={{ color: palette.text, fontSize: 16, fontWeight: "900" }}>
+          {total} {total === 1 ? "Dienst" : "Dienste"}
+        </Text>
+        <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
+          im Monat
+        </Text>
       </View>
-      <View style={{ flex: 1, gap: 8 }}>
-        {items.length === 0 ? (
-          <Text style={{ color: palette.textMuted, fontSize: 13 }}>Noch keine Schichten in diesem Monat.</Text>
-        ) : items.map(([type, count]) => (
-          <View key={type} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
-            <Text style={{ flex: 1, color: palette.textSecondary, fontSize: 12 }}>{SHIFT_TYPE_LABELS[type]}</Text>
-            <Text style={{ color: palette.text, fontSize: 12, fontWeight: "800", fontVariant: ["tabular-nums"] }}>{count}</Text>
+      <View style={{ gap: 12 }}>
+        {items.map(([type, count]) => (
+          <View key={type} style={{ gap: 6 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
+              <Text selectable style={{ flex: 1, color: palette.textSecondary, fontSize: 13, fontWeight: "600" }}>
+                {SHIFT_TYPE_LABELS[type]}
+              </Text>
+              <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+                {count}
+              </Text>
+            </View>
+            <View style={{ height: 5, overflow: "hidden", borderRadius: 3, backgroundColor: palette.surfaceMuted }}>
+              <View
+                style={{
+                  width: `${(count / total) * 100}%`,
+                  height: "100%",
+                  borderRadius: 3,
+                  backgroundColor: SHIFT_TYPE_COLORS[type],
+                }}
+              />
+            </View>
           </View>
         ))}
       </View>
+    </SurfaceCard>
+  );
+}
+
+function WorktimeSummary({
+  target,
+  actual,
+  balance,
+  balanceAccent,
+}: {
+  readonly target: string;
+  readonly actual: string;
+  readonly balance: string;
+  readonly balanceAccent: string;
+}) {
+  const palette = usePalette();
+  const values = [
+    { label: "Soll", value: target, accent: palette.text },
+    { label: "Ist", value: actual, accent: palette.text },
+    { label: "Saldo", value: balance, accent: balanceAccent },
+  ];
+  return (
+    <SurfaceCard style={{ flexDirection: "row", paddingVertical: 14 }}>
+      {values.map((item, index) => (
+        <View
+          key={item.label}
+          accessibilityLabel={`${item.label}: ${item.value}`}
+          accessible
+          style={{
+            minWidth: 0,
+            flex: 1,
+            gap: 6,
+            borderLeftWidth: index === 0 ? 0 : 1,
+            borderLeftColor: palette.separator,
+            paddingHorizontal: 12,
+          }}
+        >
+          <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+            {item.label}
+          </Text>
+          <Text
+            selectable
+            adjustsFontSizeToFit
+            numberOfLines={1}
+            style={{
+              color: item.accent,
+              fontSize: 18,
+              fontWeight: "900",
+              fontVariant: ["tabular-nums"],
+              letterSpacing: -0.3,
+            }}
+          >
+            {item.value}
+          </Text>
+        </View>
+      ))}
     </SurfaceCard>
   );
 }
@@ -395,7 +439,7 @@ export function ComplianceDetails({
                 <Text selectable style={{ color: palette.text, fontWeight: "800" }}>
                   {item.title}
                 </Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 11 }}>
+                <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
                   {formatDateTitle(item.date)} · {item.kind === "LEGAL" ? "ArbZG" : "Planung"}
                 </Text>
               </View>
@@ -419,12 +463,12 @@ export function ComplianceDetails({
                     <Text selectable numberOfLines={1} style={{ minWidth: 0, flex: 1, color: palette.text, fontSize: 12, fontWeight: "800" }}>
                       {shift.title}
                     </Text>
-                    <Text selectable style={{ color: palette.textMuted, fontSize: 11, fontVariant: ["tabular-nums"] }}>
+                    <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontVariant: ["tabular-nums"] }}>
                       {formatDateTitle(shift.date)} · {shift.startTime ?? "ganztägig"}{shift.endTime ? `–${shift.endTime}` : ""}
                     </Text>
                   </View>
                 ))}
-                <Text selectable style={{ color: palette.textMuted, fontSize: 9 }}>
+                <Text selectable style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16 }}>
                   Regel: {item.rule}
                 </Text>
               </View>
@@ -469,7 +513,7 @@ function StatusCard({
     >
       <StatusIcon accent={accent} fallback={fallback} icon={icon} />
       <View style={{ flex: 1, gap: 4 }}>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 11, fontWeight: "700" }}>
+        <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
           {label}
         </Text>
         <Text selectable numberOfLines={2} style={{ color: palette.text, fontSize: 15, fontWeight: "900" }}>

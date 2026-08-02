@@ -39,6 +39,7 @@ import {
   saveTvoedWorkPatternSettings,
 } from "@/infrastructure/database/repository";
 import { listTestBackupMonths } from "@/infrastructure/database/dev-tools-repository";
+import { compareCalendarEntries } from "@/engine/calendar-entry-order";
 
 interface MediShiftStatusValue {
   readonly ready: boolean;
@@ -94,13 +95,6 @@ function replaceById<T extends { readonly id: string }>(
   const next = values.filter((value) => value.id !== saved.id);
   next.push(saved);
   return next;
-}
-
-function compareCalendarEntries(left: CalendarEntry, right: CalendarEntry): number {
-  return left.date.localeCompare(right.date) ||
-    (left.startTime ?? "").localeCompare(right.startTime ?? "") ||
-    left.title.localeCompare(right.title) ||
-    left.id.localeCompare(right.id);
 }
 
 function upsertSortedCalendarEntry(
@@ -202,6 +196,16 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
         .filter((template) => template.deletedAt === null)
         .sort((left, right) => left.sortOrder - right.sortOrder),
     );
+    setEntries((current) => Object.freeze(current.map((entry) =>
+      entry.kind === "SHIFT" && entry.templateId === saved.id
+        ? Object.freeze({
+            ...entry,
+            title: saved.name,
+            color: saved.color,
+            symbol: saved.symbol,
+          })
+        : entry,
+    )));
     return saved;
   }, [db]);
 

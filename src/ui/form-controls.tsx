@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { SHIFT_COLORS, usePalette } from "@/theme/palette";
+import { SHIFT_COLOR_PAIRS, usePalette } from "@/theme/palette";
 
 export interface DropdownOption<T extends string | number> {
   readonly value: T;
@@ -370,22 +370,26 @@ export function ColorPicker({
         Farbe
       </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-        {SHIFT_COLORS.map((color) => (
+        {SHIFT_COLOR_PAIRS.map(({ main, soft }) => (
           <Pressable
-            key={color}
-            accessibilityLabel={`Farbe ${color}`}
+            key={main}
+            accessibilityLabel={`Farbpaar ${main}`}
             accessibilityRole="button"
-            accessibilityState={{ selected: value === color }}
-            onPress={() => onChange(color)}
+            accessibilityState={{ selected: value === main }}
+            onPress={() => onChange(main)}
             style={{
-              width: 44,
+              width: 58,
               height: 44,
-              borderWidth: value === color ? 3 : 1,
-              borderColor: value === color ? palette.text : palette.border,
-              borderRadius: 22,
-              backgroundColor: color,
+              flexDirection: "row",
+              overflow: "hidden",
+              borderWidth: value === main ? 3 : 1,
+              borderColor: value === main ? palette.text : palette.border,
+              borderRadius: 14,
             }}
-          />
+          >
+            <View style={{ flex: 1, backgroundColor: main }} />
+            <View style={{ flex: 1, backgroundColor: soft }} />
+          </Pressable>
         ))}
       </View>
     </View>

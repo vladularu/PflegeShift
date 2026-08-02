@@ -1,30 +1,17 @@
 import {
-  SHIFT_TYPE_LABELS,
   type SaveShiftInput,
   type ShiftEntry,
   type ShiftTemplate,
 } from "@/domain/types";
-import { SHIFT_TYPE_COLORS } from "@/theme/shift-colors";
 
-export type QuickEntryAbsenceType = "VACATION" | "SICK" | "FREE";
-
-export type QuickEntryStampAction =
-  | {
-      readonly kind: "TEMPLATE";
-      readonly key: string;
-      readonly label: string;
-      readonly color: string;
-      readonly symbol: string;
-      readonly template: ShiftTemplate;
-    }
-  | {
-      readonly kind: "ABSENCE";
-      readonly key: string;
-      readonly label: string;
-      readonly color: string;
-      readonly symbol: string;
-      readonly absenceType: QuickEntryAbsenceType;
-    };
+export interface QuickEntryStampAction {
+  readonly kind: "TEMPLATE";
+  readonly key: string;
+  readonly label: string;
+  readonly color: string;
+  readonly symbol: string;
+  readonly template: ShiftTemplate;
+}
 
 export type QuickEntryAction =
   | QuickEntryStampAction
@@ -38,33 +25,6 @@ export type QuickEntryAction =
       readonly key: "editor:appointment";
       readonly label: "Termin";
     };
-
-const ABSENCE_ACTIONS: readonly QuickEntryStampAction[] = Object.freeze([
-  Object.freeze({
-    kind: "ABSENCE",
-    key: "absence:VACATION",
-    label: "Urlaub",
-    color: SHIFT_TYPE_COLORS.VACATION,
-    symbol: "U",
-    absenceType: "VACATION",
-  }),
-  Object.freeze({
-    kind: "ABSENCE",
-    key: "absence:SICK",
-    label: "Krank",
-    color: SHIFT_TYPE_COLORS.SICK,
-    symbol: "K",
-    absenceType: "SICK",
-  }),
-  Object.freeze({
-    kind: "ABSENCE",
-    key: "absence:FREE",
-    label: "Frei",
-    color: SHIFT_TYPE_COLORS.FREE,
-    symbol: "–",
-    absenceType: "FREE",
-  }),
-]);
 
 export function buildQuickEntryActions(
   templates: readonly ShiftTemplate[],
@@ -83,7 +43,6 @@ export function buildQuickEntryActions(
 
   return Object.freeze([
     ...templateActions,
-    ...ABSENCE_ACTIONS,
     Object.freeze({
       kind: "CUSTOM_SHIFT" as const,
       key: "editor:shift" as const,
@@ -100,7 +59,7 @@ export function buildQuickEntryActions(
 export function isQuickEntryStampAction(
   action: QuickEntryAction,
 ): action is QuickEntryStampAction {
-  return action.kind === "TEMPLATE" || action.kind === "ABSENCE";
+  return action.kind === "TEMPLATE";
 }
 
 export function quickEntryTemplateActions(
@@ -138,28 +97,42 @@ export function quickEntryShiftInput(
   action: QuickEntryStampAction,
   date: string,
 ): SaveShiftInput {
-  if (action.kind === "TEMPLATE") {
-    const template = action.template;
-    return Object.freeze({
-      date,
-      templateId: template.id,
-      title: template.name,
-      type: template.type,
-      startTime: template.startTime,
-      endTime: template.endTime,
-      breakMinutes: template.breakMinutes,
-      color: template.color,
-      symbol: template.symbol,
-    });
-  }
-
+  const template = action.template;
   return Object.freeze({
     date,
-    title: SHIFT_TYPE_LABELS[action.absenceType],
-    type: action.absenceType,
-    color: SHIFT_TYPE_COLORS[action.absenceType],
-    symbol: action.symbol,
+    templateId: template.id,
+    title: template.name,
+    type: template.type,
+    startTime: template.startTime,
+    endTime: template.endTime,
+    breakMinutes: template.breakMinutes,
+    color: template.color,
+    symbol: template.symbol,
   });
+}
+
+function isAbsenceTemplate(template: ShiftTemplate): boolean {
+  return template.type === "VACATION" || template.type === "SICK" || template.type === "FREE";
+}
+
+export function matchingQuickEntries(
+  action: QuickEntryStampAction,
+  date: string,
+  entries: readonly import("@/domain/types").CalendarEntry[],
+): readonly ShiftEntry[] {
+  return Object.freeze(entries.filter((entry): entry is ShiftEntry =>
+    entry.kind === "SHIFT" &&
+    entry.deletedAt === null &&
+    entry.date === date &&
+    (
+      entry.templateId === action.template.id ||
+      (
+        entry.templateId === null &&
+        isAbsenceTemplate(action.template) &&
+        entry.type === action.template.type
+      )
+    ),
+  ));
 }
 
 export async function saveQuickEntryAction(

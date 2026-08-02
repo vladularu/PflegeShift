@@ -87,7 +87,7 @@ export function OnboardingScreen() {
       <PrimaryButton disabled={saving} onPress={() => void submit()}>
         {saving ? "Wird gespeichert …" : "MediShift starten"}
       </PrimaryButton>
-      <Text maxFontSizeMultiplier={1.4} selectable style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16, textAlign: "center" }}>
+      <Text maxFontSizeMultiplier={1.6} selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17, fontWeight: "500", textAlign: "center" }}>
         Diese Angaben bleiben lokal auf deinem Gerät und können später unter „Mehr“ geändert werden.
       </Text>
     </FormScreen>

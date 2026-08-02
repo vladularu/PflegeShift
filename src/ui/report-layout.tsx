@@ -2,6 +2,7 @@ import type { PropsWithChildren } from "react";
 import { ScrollView, Text, View } from "react-native";
 
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 
 export function ReportScrollView({ children }: PropsWithChildren) {
   const palette = usePalette();
@@ -29,7 +30,7 @@ export function ReportTestBadge() {
         paddingVertical: 5,
       }}
     >
-      <Text selectable style={{ color: palette.primary, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline, fontWeight: "900" }}>
         TESTDATEN
       </Text>
     </View>
@@ -40,13 +41,13 @@ export function ReportFootnote({ children }: PropsWithChildren) {
   const palette = usePalette();
   return (
     <Text
+      maxFontSizeMultiplier={TEXT_MAX_SCALE}
       selectable
       style={{
         color: palette.textMuted,
-        fontSize: 10,
-        lineHeight: 15,
         paddingHorizontal: 6,
         textAlign: "center",
+        ...TYPOGRAPHY.footnote,
       }}
     >
       {children}

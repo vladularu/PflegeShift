@@ -2,6 +2,7 @@ import type { SQLiteDatabase } from "expo-sqlite";
 
 import type {
   Appointment,
+  CalendarPreferencesData,
   CalendarEntry,
   MonthlyTariffDecision,
   PayGroup,
@@ -27,6 +28,7 @@ import {
   validateShift,
   validateTemplate,
 } from "@/domain/validation";
+import { sortCalendarEntries } from "@/engine/calendar-entry-order";
 
 interface ProfileRow {
   federal_state: UserProfile["federalState"];
@@ -44,8 +46,8 @@ interface TemplateRow {
   id: string;
   name: string;
   type: ShiftTemplate["type"];
-  start_time: string;
-  end_time: string;
+  start_time: string | null;
+  end_time: string | null;
   break_minutes: number;
   color: string;
   symbol: string;
@@ -310,9 +312,16 @@ export async function listCalendarEntries(
   endDate = "4099-12-31",
 ): Promise<readonly CalendarEntry[]> {
   const shifts = await db.getAllAsync<ShiftRow>(
-    `SELECT id,date,template_id,title,type,start_time,end_time,break_minutes,color,
-      symbol,note,overtime_minutes,holiday_premium_mode,revision,created_at,updated_at,deleted_at
-     FROM shift_entries WHERE deleted_at IS NULL AND date BETWEEN ? AND ?`,
+    `SELECT entries.id,entries.date,entries.template_id,
+      COALESCE(templates.name,entries.title) AS title,entries.type,
+      entries.start_time,entries.end_time,entries.break_minutes,
+      COALESCE(templates.color,entries.color) AS color,
+      COALESCE(templates.symbol,entries.symbol) AS symbol,
+      entries.note,entries.overtime_minutes,entries.holiday_premium_mode,
+      entries.revision,entries.created_at,entries.updated_at,entries.deleted_at
+     FROM shift_entries entries
+     LEFT JOIN shift_templates templates ON templates.id=entries.template_id
+     WHERE entries.deleted_at IS NULL AND entries.date BETWEEN ? AND ?`,
     startDate,
     endDate,
   );
@@ -323,15 +332,10 @@ export async function listCalendarEntries(
     startDate,
     endDate,
   );
-  return Object.freeze(
-    [...shifts.map(mapShift), ...appointments.map(mapAppointment)].sort(
-      (left, right) =>
-        left.date.localeCompare(right.date) ||
-        (left.startTime ?? "").localeCompare(right.startTime ?? "") ||
-        left.title.localeCompare(right.title) ||
-        left.id.localeCompare(right.id),
-    ),
-  );
+  return sortCalendarEntries([
+    ...shifts.map(mapShift),
+    ...appointments.map(mapAppointment),
+  ]);
 }
 
 export async function saveShift(
@@ -551,6 +555,95 @@ interface PreferenceRow {
   key: string;
   value: string;
   updated_at: string;
+}
+
+const CALENDAR_PREFERENCE_KEYS = {
+  viewMode: "calendar_view_mode",
+  showShifts: "calendar_show_shifts",
+  showAppointments: "calendar_show_appointments",
+  showHolidays: "calendar_show_holidays",
+  labelMode: "calendar_label_mode",
+  showShiftTimes: "calendar_show_shift_times",
+  showShiftDuration: "calendar_show_shift_duration",
+} as const;
+
+export const DEFAULT_CALENDAR_PREFERENCES: CalendarPreferencesData = Object.freeze({
+  viewMode: "MONTH",
+  showShifts: true,
+  showAppointments: true,
+  showHolidays: true,
+  labelMode: "FULL",
+  showShiftTimes: false,
+  showShiftDuration: false,
+});
+
+function storedBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
+export async function loadCalendarPreferences(
+  db: SQLiteDatabase,
+): Promise<CalendarPreferencesData> {
+  const keys = Object.values(CALENDAR_PREFERENCE_KEYS);
+  const rows = await db.getAllAsync<PreferenceRow>(
+    `SELECT key,value,updated_at FROM app_preferences
+     WHERE key IN (?,?,?,?,?,?,?)`,
+    ...keys,
+  );
+  const values = new Map(rows.map((row) => [row.key, row.value]));
+  const viewMode = values.get(CALENDAR_PREFERENCE_KEYS.viewMode);
+  const labelMode = values.get(CALENDAR_PREFERENCE_KEYS.labelMode);
+  return Object.freeze({
+    viewMode: viewMode === "YEAR" ? "YEAR" : "MONTH",
+    showShifts: storedBoolean(
+      values.get(CALENDAR_PREFERENCE_KEYS.showShifts),
+      DEFAULT_CALENDAR_PREFERENCES.showShifts,
+    ),
+    showAppointments: storedBoolean(
+      values.get(CALENDAR_PREFERENCE_KEYS.showAppointments),
+      DEFAULT_CALENDAR_PREFERENCES.showAppointments,
+    ),
+    showHolidays: storedBoolean(
+      values.get(CALENDAR_PREFERENCE_KEYS.showHolidays),
+      DEFAULT_CALENDAR_PREFERENCES.showHolidays,
+    ),
+    labelMode: labelMode === "SYMBOL" ? "SYMBOL" : "FULL",
+    showShiftTimes: storedBoolean(
+      values.get(CALENDAR_PREFERENCE_KEYS.showShiftTimes),
+      DEFAULT_CALENDAR_PREFERENCES.showShiftTimes,
+    ),
+    showShiftDuration: storedBoolean(
+      values.get(CALENDAR_PREFERENCE_KEYS.showShiftDuration),
+      DEFAULT_CALENDAR_PREFERENCES.showShiftDuration,
+    ),
+  });
+}
+
+export async function saveCalendarPreferences(
+  db: SQLiteDatabase,
+  preferences: CalendarPreferencesData,
+): Promise<void> {
+  const now = new Date().toISOString();
+  const values: readonly (readonly [string, string])[] = [
+    [CALENDAR_PREFERENCE_KEYS.viewMode, preferences.viewMode],
+    [CALENDAR_PREFERENCE_KEYS.showShifts, String(preferences.showShifts)],
+    [CALENDAR_PREFERENCE_KEYS.showAppointments, String(preferences.showAppointments)],
+    [CALENDAR_PREFERENCE_KEYS.showHolidays, String(preferences.showHolidays)],
+    [CALENDAR_PREFERENCE_KEYS.labelMode, preferences.labelMode],
+    [CALENDAR_PREFERENCE_KEYS.showShiftTimes, String(preferences.showShiftTimes)],
+    [CALENDAR_PREFERENCE_KEYS.showShiftDuration, String(preferences.showShiftDuration)],
+  ];
+  for (const [key, value] of values) {
+    await db.runAsync(
+      `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
+       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
+      key,
+      value,
+      now,
+    );
+  }
 }
 
 function isWorkplaceCoverage(value: string): value is TvoedWorkplaceCoverage {

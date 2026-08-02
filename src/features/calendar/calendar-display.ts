@@ -1,6 +1,5 @@
-import type { CalendarEntry } from "@/domain/types";
-
-export type CalendarViewMode = "MONTH" | "YEAR";
+import type { CalendarEntry, ShiftEntry } from "@/domain/types";
+import { calculateTimedShiftMinutes, formatMinutes } from "@/engine/working-time";
 
 export interface CalendarEntryPreview {
   readonly entries: readonly CalendarEntry[];
@@ -36,4 +35,21 @@ export function calendarDayPressAction(
 
 export function shouldUseCompactCalendarLabels(fontScale: number): boolean {
   return Number.isFinite(fontScale) && fontScale >= 1.3;
+}
+
+export function calendarShiftDetail(
+  entry: ShiftEntry,
+  options: {
+    readonly showShiftTimes: boolean;
+    readonly showShiftDuration: boolean;
+    readonly timeZone: string;
+  },
+): string | null {
+  if (entry.startTime === null || entry.endTime === null) return null;
+  const parts: string[] = [];
+  if (options.showShiftTimes) parts.push(`${entry.startTime}–${entry.endTime}`);
+  if (options.showShiftDuration) {
+    parts.push(`${formatMinutes(calculateTimedShiftMinutes(entry, options.timeZone))} h`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
 }

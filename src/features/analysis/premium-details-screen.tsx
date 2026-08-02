@@ -73,7 +73,7 @@ export function PremiumDetailsScreen() {
         >
           {euro(pay.timePremiumAmount)}
         </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 11 }}>
+        <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
           {lineCount} {lineCount === 1 ? "Zuschlagsposition" : "Zuschlagspositionen"} aus {premiumShifts.length} {premiumShifts.length === 1 ? "Dienst" : "Diensten"}
         </Text>
       </SurfaceCard>
@@ -98,7 +98,7 @@ export function PremiumDetailsScreen() {
                   <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: "900" }}>
                     {formatDateTitle(item.date)}
                   </Text>
-                  <Text selectable style={{ color: palette.textMuted, fontSize: 11 }}>
+                  <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
                     {shift?.title ?? "Dienst"}
                     {shift?.startTime ? ` · ${shift.startTime}${shift.endTime ? `–${shift.endTime}` : ""}` : ""}
                   </Text>
@@ -118,7 +118,7 @@ export function PremiumDetailsScreen() {
                       <Text selectable style={{ color: palette.textSecondary, fontSize: 13, fontWeight: "800" }}>
                         {line.label}
                       </Text>
-                      <Text selectable style={{ color: palette.textMuted, fontSize: 10, lineHeight: 14 }}>
+                      <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
                         {formatMinutes(line.minutes)} × {line.percentage} % × {euro(line.hourlyRate)}/h
                       </Text>
                     </View>

@@ -14,7 +14,6 @@ import {
 } from "@/application/medishift-provider";
 import { formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import { formatMinutes } from "@/engine/working-time";
 import {
   EMPTY_ANALYSIS_ENTRY_WINDOW,
   selectAnalysisEntryWindow,
@@ -101,8 +100,10 @@ export function SalaryScreen() {
     if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
   }
 
-  const workMinutes = pay.shiftBreakdowns.reduce((sum, item) => sum + item.netMinutes, 0);
   const hasPremiums = pay.shiftBreakdowns.some((item) => item.premiumLines.length > 0);
+  const tariffProfileLabel = profile.tariff
+    ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
+    : null;
   const compositionRows = [
     { key: "base", label: "Grundentgelt", value: euro(pay.personalBaseAmount) },
     {
@@ -187,7 +188,7 @@ export function SalaryScreen() {
             }}
           >
             <View style={{ gap: 6 }}>
-              <Text selectable style={{ color: "#B9E4D8", fontSize: 11, fontWeight: "800", letterSpacing: 1.1 }}>
+              <Text selectable style={{ color: "#B9E4D8", fontSize: 12, fontWeight: "800", letterSpacing: 0.8 }}>
                 TARIFLICHES BRUTTO · SCHÄTZUNG
               </Text>
               <Text
@@ -205,9 +206,6 @@ export function SalaryScreen() {
                 {euro(pay.estimatedGrossAmount)}
               </Text>
             </View>
-            <Text selectable style={{ color: "#B9E4D8", fontSize: 12, lineHeight: 17 }}>
-              {pay.tariffLabel ?? "Tarifstand nicht verfügbar"} · {formatMinutes(workMinutes)} Arbeitszeit
-            </Text>
           </View>
 
           <SurfaceCard style={{ paddingHorizontal: 18, paddingVertical: 14 }}>
@@ -215,8 +213,8 @@ export function SalaryScreen() {
               <Text selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>
                 Zusammensetzung
               </Text>
-              <Text selectable numberOfLines={1} style={{ color: palette.textMuted, fontSize: 11 }}>
-                {pay.tariffLabel ?? "Tarifstand nicht verfügbar"}
+              <Text selectable numberOfLines={1} style={{ color: palette.textMuted, fontSize: 12 }}>
+                {tariffProfileLabel}
               </Text>
             </View>
             {compositionRows.map((row, index) => (

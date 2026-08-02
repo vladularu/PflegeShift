@@ -1,4 +1,5 @@
 import type { CalendarEntry, ShiftEntry } from "@/domain/types";
+import { compareCalendarEntries } from "@/engine/calendar-entry-order";
 
 export interface CalendarEntryIndex {
   readonly visibleEntries: readonly CalendarEntry[];
@@ -34,6 +35,14 @@ export function buildCalendarEntryIndex(
     const dayEntries = entriesByDate.get(entry.date) ?? [];
     dayEntries.push(entry);
     entriesByDate.set(entry.date, dayEntries);
+  }
+
+  visibleEntries.sort(compareCalendarEntries);
+  for (const dayEntries of entriesByDate.values()) {
+    dayEntries.sort(compareCalendarEntries);
+  }
+  for (const monthShifts of shiftsByMonth.values()) {
+    monthShifts.sort(compareCalendarEntries);
   }
 
   return Object.freeze({

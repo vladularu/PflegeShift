@@ -7,9 +7,10 @@ import {
   type GestureResponderEvent,
 } from "react-native";
 
-import type { CalendarEntry, UserProfile } from "@/domain/types";
+import type { CalendarEntry, CalendarLabelMode, UserProfile } from "@/domain/types";
 import { createVisibleMonthGrid, formatDateTitle, today } from "@/engine/calendar";
 import {
+  calendarShiftDetail,
   calendarEntryPreview,
   shouldUseCompactCalendarLabels,
 } from "@/features/calendar/calendar-display";
@@ -44,14 +45,23 @@ interface DayCellProps {
   readonly onSelectDate: (date: string, anchor: CalendarAnchorRect) => void;
   readonly stampMode: boolean;
   readonly compactLabels: boolean;
+  readonly showShiftTimes: boolean;
+  readonly showShiftDuration: boolean;
+  readonly timeZone: string;
 }
 
 const EntryMark = memo(function EntryMark({
   compactLabels,
   entry,
+  showShiftTimes,
+  showShiftDuration,
+  timeZone,
 }: {
   readonly compactLabels: boolean;
   readonly entry: CalendarEntry;
+  readonly showShiftTimes: boolean;
+  readonly showShiftDuration: boolean;
+  readonly timeZone: string;
 }) {
   const palette = usePalette();
   if (entry.kind === "APPOINTMENT") {
@@ -73,10 +83,13 @@ const EntryMark = memo(function EntryMark({
     );
   }
 
+  const detail = entry.kind === "SHIFT"
+    ? calendarShiftDetail(entry, { showShiftTimes, showShiftDuration, timeZone })
+    : null;
   return (
     <View
       style={{
-        height: 18,
+        minHeight: detail ? 29 : 18,
         justifyContent: "center",
         borderRadius: 4,
         backgroundColor: accessibleChipBackgroundColor(entry.color),
@@ -86,6 +99,11 @@ const EntryMark = memo(function EntryMark({
       <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ color: chipTextColor, fontSize: 10, fontWeight: "900" }}>
         {compactLabels ? entry.symbol : entry.title}
       </Text>
+      {detail ? (
+        <Text maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ color: chipTextColor, fontSize: 8, fontWeight: "700" }}>
+          {detail}
+        </Text>
+      ) : null}
     </View>
   );
 });
@@ -99,10 +117,17 @@ const DayCell = memo(function DayCell({
   onSelectDate,
   stampMode,
   compactLabels,
+  showShiftTimes,
+  showShiftDuration,
+  timeZone,
 }: DayCellProps) {
   const palette = usePalette();
   const cellRef = useRef<View>(null);
-  const preview = useMemo(() => calendarEntryPreview(entries), [entries]);
+  const detailed = showShiftTimes || showShiftDuration;
+  const preview = useMemo(
+    () => calendarEntryPreview(entries, detailed ? 1 : 2),
+    [detailed, entries],
+  );
   const handlePress = (event: GestureResponderEvent) => {
     const fallbackAnchor = {
       x: event.nativeEvent.pageX - 24,
@@ -194,6 +219,9 @@ const DayCell = memo(function DayCell({
             key={`${entry.kind}-${entry.id}`}
             compactLabels={compactLabels}
             entry={entry}
+            showShiftDuration={showShiftDuration}
+            showShiftTimes={showShiftTimes}
+            timeZone={timeZone}
           />
         ))}
         {preview.overflowCount > 0 ? (
@@ -212,7 +240,10 @@ const DayCell = memo(function DayCell({
   previous.isSelected === next.isSelected &&
   previous.isToday === next.isToday &&
   previous.onSelectDate === next.onSelectDate &&
+  previous.showShiftDuration === next.showShiftDuration &&
+  previous.showShiftTimes === next.showShiftTimes &&
   previous.stampMode === next.stampMode
+  && previous.timeZone === next.timeZone
 ));
 
 interface MonthCardProps {
@@ -227,6 +258,9 @@ interface MonthCardProps {
   readonly showHolidays?: boolean;
   readonly testData?: boolean;
   readonly accessibilityVisible?: boolean;
+  readonly labelMode?: CalendarLabelMode;
+  readonly showShiftTimes?: boolean;
+  readonly showShiftDuration?: boolean;
 }
 
 function monthCardPropsEqual(
@@ -243,6 +277,9 @@ function monthCardPropsEqual(
     previous.showHolidays !== next.showHolidays ||
     previous.testData !== next.testData ||
     previous.accessibilityVisible !== next.accessibilityVisible
+    || previous.labelMode !== next.labelMode
+    || previous.showShiftDuration !== next.showShiftDuration
+    || previous.showShiftTimes !== next.showShiftTimes
   ) {
     return false;
   }
@@ -275,10 +312,13 @@ export const MonthCard = memo(function MonthCard({
   showHolidays = true,
   testData = false,
   accessibilityVisible = true,
+  labelMode = "FULL",
+  showShiftTimes = false,
+  showShiftDuration = false,
 }: MonthCardProps) {
   const palette = usePalette();
   const { fontScale, width } = useWindowDimensions();
-  const compactLabels = shouldUseCompactCalendarLabels(fontScale);
+  const compactLabels = labelMode === "SYMBOL" || shouldUseCompactCalendarLabels(fontScale);
   const grid = useMemo(() => createVisibleMonthGrid(month), [month]);
   const holidays = useMemo(
     () => showHolidays ? holidayMapForMonth(month, profile.federalState) : new Map(),
@@ -320,7 +360,7 @@ export const MonthCard = memo(function MonthCard({
         }}
       >
         {testData ? (
-          <Text style={{ color: palette.primary, fontSize: 10, fontWeight: "900", letterSpacing: 0.8, paddingHorizontal: 12, paddingTop: 8 }}>
+          <Text style={{ color: palette.primary, fontSize: 11, fontWeight: "900", letterSpacing: 0.7, paddingHorizontal: 12, paddingTop: 8 }}>
             TESTDATEN
           </Text>
         ) : null}
@@ -353,7 +393,10 @@ export const MonthCard = memo(function MonthCard({
                 isSelected={selectedDate !== null && cell.date === selectedDate}
                 isToday={cell.date === currentDate}
                 onSelectDate={onSelectDate}
+                showShiftDuration={showShiftDuration}
+                showShiftTimes={showShiftTimes}
                 stampMode={stampMode}
+                timeZone={profile.timeZone}
               />
             ))}
           </View>

@@ -88,7 +88,46 @@ const DEFAULT_TEMPLATES = [
   ["default-late", "Spät", "LATE", "13:18", "21:30", 30, "#2FA36B", "S", 20],
   ["default-night", "Nacht", "NIGHT", "21:00", "07:30", 60, "#EA5B55", "N", 30],
   ["default-day", "Tag", "DAY", "08:00", "16:12", 30, "#2F80ED", "T", 40],
+  ["default-vacation", "Urlaub", "VACATION", null, null, 0, "#25A9A4", "U", 50],
+  ["default-sick", "Krank", "SICK", null, null, 0, "#F09A3E", "K", 60],
+  ["default-free", "Frei", "FREE", null, null, 0, "#8A9490", "–", 70],
 ] as const;
+
+const MIGRATION_4 = `
+BEGIN IMMEDIATE;
+CREATE TABLE shift_templates_v4 (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  type TEXT NOT NULL CHECK (type IN ('EARLY','LATE','NIGHT','DAY','TRAINING','VACATION','SICK','FREE','CUSTOM')),
+  start_time TEXT,
+  end_time TEXT,
+  break_minutes INTEGER NOT NULL CHECK (break_minutes BETWEEN 0 AND 1440),
+  color TEXT NOT NULL CHECK (length(color) = 7),
+  symbol TEXT NOT NULL,
+  sort_order INTEGER NOT NULL,
+  revision INTEGER NOT NULL CHECK (revision >= 1),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT,
+  CHECK (
+    (type IN ('VACATION','SICK','FREE') AND start_time IS NULL AND end_time IS NULL AND break_minutes = 0)
+    OR
+    (type IN ('EARLY','LATE','NIGHT','DAY','TRAINING','CUSTOM') AND length(start_time) = 5 AND length(end_time) = 5 AND start_time <> end_time)
+  )
+);
+INSERT INTO shift_templates_v4(
+  id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
+  revision,created_at,updated_at,deleted_at
+)
+SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
+  revision,created_at,updated_at,deleted_at
+FROM shift_templates;
+DROP TABLE shift_templates;
+ALTER TABLE shift_templates_v4 RENAME TO shift_templates;
+CREATE INDEX idx_shift_templates_order_active
+  ON shift_templates(sort_order) WHERE deleted_at IS NULL;
+COMMIT;
+`;
 
 const MIGRATION_2 = `
 CREATE TABLE IF NOT EXISTS monthly_tariff_decisions (
@@ -193,6 +232,29 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     );
   }
 
+  const migration4 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=4",
+  );
+  if (migration4 === null) {
+    const templateColumns = await db.getAllAsync<{ name: string; notnull: number }>(
+      "PRAGMA table_info(shift_templates)",
+    );
+    const startTimeColumn = templateColumns.find((column) => column.name === "start_time");
+    if (startTimeColumn?.notnull === 1) {
+      await db.execAsync("PRAGMA foreign_keys = OFF;");
+      try {
+        await db.execAsync(MIGRATION_4);
+      } finally {
+        await db.execAsync("PRAGMA foreign_keys = ON;");
+      }
+    }
+    await db.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      4,
+      now,
+    );
+  }
+
   for (const template of DEFAULT_TEMPLATES) {
     await db.runAsync(
       `INSERT OR IGNORE INTO shift_templates(
@@ -201,6 +263,30 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
       ) VALUES (?,?,?,?,?,?,?,?,?,1,?,?,NULL)`,
       ...template,
       now,
+      now,
+    );
+  }
+  await db.runAsync(
+    `UPDATE shift_entries SET template_id=CASE type
+      WHEN 'VACATION' THEN 'default-vacation'
+      WHEN 'SICK' THEN 'default-sick'
+      WHEN 'FREE' THEN 'default-free'
+      ELSE template_id END
+     WHERE template_id IS NULL AND type IN ('VACATION','SICK','FREE')`,
+  );
+
+  const migration5 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=5",
+  );
+  if (migration5 === null) {
+    await db.runAsync(
+      "UPDATE shift_templates SET symbol=? WHERE id='default-free' AND symbol=?",
+      "–",
+      "\u00e2\u20ac\u201c",
+    );
+    await db.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      5,
       now,
     );
   }

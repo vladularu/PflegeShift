@@ -12,6 +12,14 @@ import { CardSeparator, ColorBadge, EmptyState, RowButton, SectionHeader, Surfac
 import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { LoadingView } from "@/ui/loading-view";
 
+function templateSubtitle(template: ShiftTemplate): string {
+  if (template.type === "FREE") return "Keine Arbeitszeit";
+  if (template.startTime === null || template.endTime === null) {
+    return "Ergänzt bis zum Tages-Soll";
+  }
+  return `${template.startTime}–${template.endTime} · ${template.breakMinutes} Min. Pause`;
+}
+
 export function TemplatesManagerScreen() {
   const palette = usePalette();
   const { ready } = useMediShiftStatus();
@@ -23,7 +31,7 @@ export function TemplatesManagerScreen() {
   function confirmDelete(template: ShiftTemplate) {
     confirmDestructiveAction({
       title: "Vorlage löschen?",
-      message: `„${template.name}“ wird aus der Schnellauswahl entfernt. Bestehende Dienste bleiben unverändert.`,
+      message: `„${template.name}“ wird aus der Schnellauswahl entfernt. Bestehende Einträge behalten die zuletzt verknüpfte Darstellung.`,
       onConfirm: () => void removeTemplate(template),
     });
   }
@@ -44,7 +52,7 @@ export function TemplatesManagerScreen() {
             {index > 0 ? <CardSeparator inset={70} /> : null}
             <RowButton
               leading={<ColorBadge color={template.color} label={template.symbol} />}
-              subtitle={`${template.startTime}–${template.endTime} · ${template.breakMinutes} Min. Pause`}
+              subtitle={templateSubtitle(template)}
               title={template.name}
               trailing={(
                 <Pressable

@@ -1,12 +1,13 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { ScrollView, Switch, View } from "react-native";
+import { ScrollView, Switch, Text, View } from "react-native";
 
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
 import { usePalette } from "@/theme/palette";
 import {
   CardSeparator,
   RowButton,
+  SegmentedControl,
   SectionHeader,
   SurfaceCard,
 } from "@/ui/design-system";
@@ -76,6 +77,44 @@ export function CalendarViewScreen() {
             label="Feiertage"
             onChange={preferences.setShowHolidays}
             value={preferences.showHolidays}
+          />
+        </SurfaceCard>
+      </View>
+
+      <View style={{ gap: 10 }}>
+        <SectionHeader
+          caption="Bestimme, wie Dienste innerhalb eines Kalendertags beschriftet werden."
+          title="Dienstanzeige"
+        />
+        <SurfaceCard>
+          <View style={{ gap: 10, padding: 14 }}>
+            <Text style={{ color: palette.textSecondary, fontSize: 13, fontWeight: "700" }}>
+              Bezeichnung
+            </Text>
+            <SegmentedControl
+              items={[
+                { value: "FULL", label: "Voller Name" },
+                { value: "SYMBOL", label: "Nur Kürzel" },
+              ]}
+              onChange={(value) => preferences.setLabelMode(value === "SYMBOL" ? "SYMBOL" : "FULL")}
+              value={preferences.labelMode}
+            />
+          </View>
+          <CardSeparator />
+          <VisibilitySwitch
+            color={palette.primary}
+            icon="time-outline"
+            label="Beginn und Ende"
+            onChange={preferences.setShowShiftTimes}
+            value={preferences.showShiftTimes}
+          />
+          <CardSeparator inset={64} />
+          <VisibilitySwitch
+            color="#2F80ED"
+            icon="hourglass-outline"
+            label="Gesamtzeit"
+            onChange={preferences.setShowShiftDuration}
+            value={preferences.showShiftDuration}
           />
         </SurfaceCard>
       </View>

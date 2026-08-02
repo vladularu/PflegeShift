@@ -15,6 +15,7 @@ export function AppTabs() {
         tabBarActiveTintColor: palette.primary,
         tabBarHideOnKeyboard: true,
         tabBarInactiveTintColor: palette.textMuted,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "700" },
         tabBarStyle: { backgroundColor: palette.tabBar, borderTopColor: palette.border },
       }}
     >

@@ -295,7 +295,7 @@ export function DayEditorScreen() {
                       <Text style={{ color: palette.text, fontSize: 15, fontWeight: "800" }}>
                         Ohne Freizeitausgleich
                       </Text>
-                      <Text style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16 }}>
+                      <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
                         135 % statt 35 % Feiertagszuschlag
                       </Text>
                     </View>
@@ -417,7 +417,7 @@ function AdvancedDisclosure({
         <Text style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>
           Weitere Angaben
         </Text>
-        <Text numberOfLines={1} style={{ color: palette.textMuted, fontSize: 11, fontWeight: "600" }}>
+        <Text numberOfLines={1} style={{ color: palette.textMuted, fontSize: 12, fontWeight: "600" }}>
           {summary}
         </Text>
       </View>

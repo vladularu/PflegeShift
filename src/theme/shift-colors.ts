@@ -1,15 +1,17 @@
 import type { ShiftType } from "@/domain/types";
 
-export const SHIFT_COLORS = [
-  "#7E57C2",
-  "#2FA36B",
-  "#EA5B55",
-  "#2F80ED",
-  "#F2A93B",
-  "#D95F9A",
-  "#21A0A0",
-  "#7A8793",
+export const SHIFT_COLOR_PAIRS = [
+  { main: "#7E57C2", soft: "#E9DDF8" },
+  { main: "#2FA36B", soft: "#D8F0E3" },
+  { main: "#EA5B55", soft: "#FADBD9" },
+  { main: "#2F80ED", soft: "#DCEAFE" },
+  { main: "#F2A93B", soft: "#FCEBCC" },
+  { main: "#D95F9A", soft: "#F7DDEC" },
+  { main: "#21A0A0", soft: "#D6F0F0" },
+  { main: "#7A8793", soft: "#E2E6E9" },
 ] as const;
+
+export const SHIFT_COLORS = SHIFT_COLOR_PAIRS.map((pair) => pair.main);
 
 export const SHIFT_TYPE_COLORS: Readonly<Record<ShiftType, string>> = {
   EARLY: "#62B94C",

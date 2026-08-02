@@ -2,17 +2,24 @@ import { Temporal } from "@js-temporal/polyfill";
 
 import type { ShiftEntry } from "@/domain/types";
 
+export interface TimedShiftBounds {
+  readonly startEpochMinutes: number;
+  readonly endEpochMinutes: number;
+  readonly grossMinutes: number;
+  readonly netMinutes: number;
+}
+
 function timeParts(value: string): { hour: number; minute: number } {
   const [hour, minute] = value.split(":").map(Number);
   return { hour, minute };
 }
 
-export function calculateTimedShiftMinutes(
+export function calculateTimedShiftBounds(
   shift: Pick<ShiftEntry, "date" | "startTime" | "endTime" | "breakMinutes">,
   timeZone: string,
-): number {
+): TimedShiftBounds | null {
   if (shift.startTime === null || shift.endTime === null) {
-    return 0;
+    return null;
   }
 
   const date = Temporal.PlainDate.from(shift.date);
@@ -34,7 +41,19 @@ export function calculateTimedShiftMinutes(
   const grossMinutes = Math.round(
     Number(end.epochMilliseconds - start.epochMilliseconds) / 60_000,
   );
-  return Math.max(0, grossMinutes - shift.breakMinutes);
+  return Object.freeze({
+    startEpochMinutes: Math.round(Number(start.epochMilliseconds) / 60_000),
+    endEpochMinutes: Math.round(Number(end.epochMilliseconds) / 60_000),
+    grossMinutes,
+    netMinutes: Math.max(0, grossMinutes - shift.breakMinutes),
+  });
+}
+
+export function calculateTimedShiftMinutes(
+  shift: Pick<ShiftEntry, "date" | "startTime" | "endTime" | "breakMinutes">,
+  timeZone: string,
+): number {
+  return calculateTimedShiftBounds(shift, timeZone)?.netMinutes ?? 0;
 }
 
 export function formatMinutes(value: number): string {

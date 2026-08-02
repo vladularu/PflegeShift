@@ -1,8 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 
 import type { CalendarEntry, ShiftEntry, ShiftType, UserProfile } from "@/domain/types";
-import { getPublicHolidays } from "@/engine/holidays";
-import { calculateTimedShiftMinutes } from "@/engine/working-time";
+import { calculateDailyWorkCredit } from "@/engine/daily-summary";
 
 type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">;
 
@@ -20,10 +19,6 @@ export interface DailyHoursPoint extends DailySummary {
 export interface MonthProgressValue {
   readonly displayPercent: number;
   readonly fillPercent: number;
-}
-
-function isCreditedAbsence(entry: ShiftEntry): boolean {
-  return entry.type === "VACATION" || entry.type === "SICK";
 }
 
 export function calculateMonthProgress(
@@ -45,28 +40,17 @@ export function calculateDailySummary(
   entries: readonly CalendarEntry[],
   profile: ProfileForTime,
 ): DailySummary {
-  const plainDate = Temporal.PlainDate.from(date);
-  const holiday = getPublicHolidays(plainDate.year, profile.federalState)
-    .some((item) => item.date === date);
-  const targetMinutes = plainDate.dayOfWeek <= 5 && !holiday
-    ? Math.round(profile.weeklyMinutes / 5)
-    : 0;
-  let actualMinutes = 0;
-
-  for (const entry of entries) {
-    if (entry.kind !== "SHIFT" || entry.deletedAt !== null || entry.date !== date) continue;
-    if (isCreditedAbsence(entry)) {
-      actualMinutes += Math.round(profile.weeklyMinutes / 5);
-    } else if (entry.type !== "FREE") {
-      actualMinutes += calculateTimedShiftMinutes(entry, profile.timeZone);
-    }
-  }
+  const result = calculateDailyWorkCredit(
+    date,
+    entries.filter((entry): entry is ShiftEntry => entry.kind === "SHIFT"),
+    profile,
+  );
 
   return Object.freeze({
     date,
-    targetMinutes,
-    actualMinutes,
-    balanceMinutes: actualMinutes - targetMinutes,
+    targetMinutes: result.targetMinutes,
+    actualMinutes: result.actualMinutes,
+    balanceMinutes: result.balanceMinutes,
   });
 }
 

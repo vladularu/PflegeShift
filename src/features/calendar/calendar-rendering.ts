@@ -24,7 +24,10 @@ export function calendarEntryListsEqual(
     return entry === other || (
       entry.id === other.id &&
       entry.kind === other.kind &&
-      entry.revision === other.revision
+      entry.revision === other.revision &&
+      entry.title === other.title &&
+      entry.color === other.color &&
+      (entry.kind === "APPOINTMENT" || other.kind === "APPOINTMENT" || entry.symbol === other.symbol)
     );
   });
 }

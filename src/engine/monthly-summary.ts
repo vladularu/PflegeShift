@@ -7,7 +7,7 @@ import type {
   UserProfile,
 } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
-import { calculateTimedShiftMinutes } from "@/engine/working-time";
+import { calculateDailyWorkCredit } from "@/engine/daily-summary";
 
 function category(): { minutes: number; entryCount: number } {
   return { minutes: 0, entryCount: 0 };
@@ -47,29 +47,31 @@ export function calculateMonthlySummary(
   const vacation = category();
   const sick = category();
   const free = category();
-  const absenceCredit = Math.round(profile.weeklyMinutes / 5);
+  const entriesByDate = new Map<string, ShiftEntry[]>();
 
   for (const entry of entries) {
     if (!entry.date.startsWith(`${month}-`) || entry.deletedAt !== null) {
       continue;
     }
 
-    if (entry.type === "FREE") {
-      free.entryCount += 1;
-      continue;
-    }
+    const dayEntries = entriesByDate.get(entry.date) ?? [];
+    dayEntries.push(entry);
+    entriesByDate.set(entry.date, dayEntries);
+    if (entry.type === "FREE") free.entryCount += 1;
+    else if (entry.type === "VACATION") vacation.entryCount += 1;
+    else if (entry.type === "SICK") sick.entryCount += 1;
+    else if (entry.type === "TRAINING") training.entryCount += 1;
+    else work.entryCount += 1;
+  }
 
-    if (entry.type === "VACATION" || entry.type === "SICK") {
-      const target = entry.type === "VACATION" ? vacation : sick;
-      target.entryCount += 1;
-      target.minutes += absenceCredit;
-      continue;
-    }
-
-    const minutes = calculateTimedShiftMinutes(entry, profile.timeZone);
-    const target = entry.type === "TRAINING" ? training : work;
-    target.entryCount += 1;
-    target.minutes += minutes;
+  let overlapMinutes = 0;
+  for (const [date, dayEntries] of entriesByDate) {
+    const day = calculateDailyWorkCredit(date, dayEntries, profile);
+    work.minutes += day.workMinutes;
+    training.minutes += day.trainingMinutes;
+    vacation.minutes += day.vacationMinutes;
+    sick.minutes += day.sickMinutes;
+    overlapMinutes += day.overlapMinutes;
   }
 
   const actualMinutes = work.minutes + training.minutes + vacation.minutes + sick.minutes;
@@ -80,6 +82,7 @@ export function calculateMonthlySummary(
     targetMinutes,
     actualMinutes,
     balanceMinutes: actualMinutes - targetMinutes,
+    overlapMinutes,
     work: freezeCategory(work),
     training: freezeCategory(training),
     vacation: freezeCategory(vacation),

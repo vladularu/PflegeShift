@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   calendarDayPressAction,
   calendarEntryPreview,
+  calendarShiftDetail,
   shouldUseCompactCalendarLabels,
   yearMonths,
 } from "@/features/calendar/calendar-display";
@@ -41,5 +42,27 @@ describe("calendar label density", () => {
     expect(shouldUseCompactCalendarLabels(1.29)).toBe(false);
     expect(shouldUseCompactCalendarLabels(1.3)).toBe(true);
     expect(shouldUseCompactCalendarLabels(2)).toBe(true);
+  });
+});
+
+describe("calendar shift details", () => {
+  const shift = {
+    date: "2026-08-01",
+    startTime: "06:00",
+    endTime: "14:12",
+    breakMinutes: 30,
+  } as never;
+
+  it("formats start, end and net duration from persistent display choices", () => {
+    expect(calendarShiftDetail(shift, {
+      showShiftTimes: true,
+      showShiftDuration: true,
+      timeZone: "Europe/Berlin",
+    })).toBe("06:00–14:12 · 7:42 h");
+    expect(calendarShiftDetail(shift, {
+      showShiftTimes: false,
+      showShiftDuration: true,
+      timeZone: "Europe/Berlin",
+    })).toBe("7:42 h");
   });
 });

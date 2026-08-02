@@ -94,8 +94,6 @@ export function AnnualReportScreen({
       style={{ backgroundColor: palette.background }}
       contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 48 }}
     >
-      <AnalysisPeriodPicker value="YEAR" onChange={onChangePeriod} />
-
       <View
         style={{
           minHeight: 48,
@@ -112,12 +110,14 @@ export function AnnualReportScreen({
           >
             {report.year}
           </Text>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 11 }}>
+          <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
             {report.activeMonthCount} Monate mit Einträgen
           </Text>
         </View>
         <YearButton direction="forward" onPress={() => onMoveYear(1)} />
       </View>
+
+      <AnalysisPeriodPicker value="YEAR" onChange={onChangePeriod} />
 
       <View
         style={{
@@ -130,7 +130,7 @@ export function AnnualReportScreen({
         }}
       >
         <View style={{ gap: 5 }}>
-          <Text selectable style={{ color: "#B9E4D8", fontSize: 11, fontWeight: "800", letterSpacing: 1 }}>
+          <Text selectable style={{ color: "#B9E4D8", fontSize: 12, fontWeight: "800", letterSpacing: 0.8 }}>
             JAHRESARBEITSZEIT
           </Text>
           <Text
@@ -150,7 +150,7 @@ export function AnnualReportScreen({
           <Text selectable style={{ color: "#B9E4D8", fontSize: 12 }}>
             von {formatMinutes(report.targetMinutes)} Soll
           </Text>
-          <Text selectable style={{ color: "#B9E4D8", fontSize: 11, lineHeight: 16 }}>
+          <Text selectable style={{ color: "#B9E4D8", fontSize: 12, lineHeight: 17 }}>
             Dienste {formatMinutes(report.workMinutes)}
             {report.trainingMinutes > 0 ? ` · Fortbildung ${formatMinutes(report.trainingMinutes)}` : ""}
           </Text>
@@ -196,13 +196,13 @@ export function AnnualReportScreen({
 
       {testMonthCount > 0 ? (
         <View style={{ alignSelf: "center", borderRadius: 999, backgroundColor: palette.primarySoft, paddingHorizontal: 11, paddingVertical: 6 }}>
-          <Text selectable style={{ color: palette.primary, fontSize: 10, fontWeight: "900", letterSpacing: 0.7 }}>
+          <Text selectable style={{ color: palette.primary, fontSize: 11, fontWeight: "900", letterSpacing: 0.7 }}>
             {testMonthCount} TESTMONATE ENTHALTEN
           </Text>
         </View>
       ) : null}
 
-      <Text selectable style={{ color: palette.textMuted, fontSize: 10, lineHeight: 15, textAlign: "center" }}>
+      <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17, textAlign: "center" }}>
         Automatische Jahresauswertung · keine Rechtsberatung
       </Text>
     </ScrollView>
@@ -243,7 +243,7 @@ function MonthlyBars({
               })}
             >
               <View style={{ width: "72%", height, minHeight: 3, borderRadius: 5, backgroundColor: hasIssue ? palette.warning : palette.primary }} />
-              <Text selectable style={{ color: isTest ? palette.primary : palette.textMuted, fontSize: 9, fontWeight: isTest ? "900" : "700" }}>
+              <Text selectable style={{ color: isTest ? palette.primary : palette.textMuted, fontSize: 11, fontWeight: isTest ? "900" : "700" }}>
                 {new Intl.DateTimeFormat("de-DE", { month: "narrow", timeZone: "UTC" }).format(new Date(`${item.month}-01T00:00:00Z`))}
               </Text>
             </Pressable>
@@ -270,7 +270,7 @@ function DistributionList({ distribution }: { readonly distribution: ReadonlyMap
 
       {sections.services.length > 0 ? (
         <View style={{ gap: 10 }}>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>
+          <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "900", letterSpacing: 0.7 }}>
             DIENSTE & FORTBILDUNG
           </Text>
           {sections.services.map(({ type, count, percentage }) => (
@@ -280,7 +280,7 @@ function DistributionList({ distribution }: { readonly distribution: ReadonlyMap
               <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
                 {count}
               </Text>
-              <Text selectable style={{ width: 34, color: palette.textMuted, fontSize: 11, textAlign: "right", fontVariant: ["tabular-nums"] }}>
+              <Text selectable style={{ width: 38, color: palette.textMuted, fontSize: 12, textAlign: "right", fontVariant: ["tabular-nums"] }}>
                 {percentage}%
               </Text>
             </View>
@@ -294,7 +294,7 @@ function DistributionList({ distribution }: { readonly distribution: ReadonlyMap
 
       {sections.absences.length > 0 ? (
         <View style={{ gap: 10 }}>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 }}>
+          <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "900", letterSpacing: 0.7 }}>
             ABWESENHEITEN
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -318,7 +318,7 @@ function DistributionList({ distribution }: { readonly distribution: ReadonlyMap
               >
                 <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
                 <View style={{ minWidth: 0, flex: 1, gap: 1 }}>
-                  <Text selectable numberOfLines={1} style={{ color: palette.textSecondary, fontSize: 11 }}>
+                  <Text selectable numberOfLines={1} style={{ color: palette.textSecondary, fontSize: 12 }}>
                     {SHIFT_TYPE_LABELS[type]}
                   </Text>
                   <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
@@ -359,7 +359,7 @@ function YearButton({ direction, onPress }: { readonly direction: "back" | "forw
 function HeroValue({ label, value }: { readonly label: string; readonly value: string }) {
   return (
     <View style={{ minWidth: 0, flex: 1, gap: 3 }}>
-      <Text selectable style={{ color: "#B9E4D8", fontSize: 10 }}>{label}</Text>
+      <Text selectable style={{ color: "#B9E4D8", fontSize: 12 }}>{label}</Text>
       <Text selectable adjustsFontSizeToFit numberOfLines={1} style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
         {value}
       </Text>
@@ -372,7 +372,7 @@ function LegendDot({ color, label }: { readonly color: string; readonly label: s
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
       <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: color }} />
-      <Text selectable style={{ color: palette.textMuted, fontSize: 10 }}>{label}</Text>
+      <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>{label}</Text>
     </View>
   );
 }

@@ -10,7 +10,6 @@ import {
   type SaveShiftInput,
   type SaveProfileInput,
   type SaveShiftTemplateInput,
-  type TimedShiftType,
 } from "@/domain/types";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -104,19 +103,27 @@ function requireTimedRange(startTime: string, endTime: string): void {
 }
 
 export function validateTemplate(input: SaveShiftTemplateInput): SaveShiftTemplateInput {
-  const startTime = requireLocalTime(input.startTime);
-  const endTime = requireLocalTime(input.endTime);
+  if (!SHIFT_TYPES.includes(input.type)) {
+    throw new ValidationError("Unbekannte Dienstart.");
+  }
+  const base = {
+    ...input,
+    name: requireNonEmpty(input.name, "Name"),
+    color: requireColor(input.color),
+    symbol: requireNonEmpty(input.symbol, "Symbol").slice(0, 4),
+  };
+  if (input.type === "VACATION" || input.type === "SICK" || input.type === "FREE") {
+    return { ...base, startTime: null, endTime: null, breakMinutes: 0 };
+  }
+  const startTime = requireLocalTime(input.startTime ?? "");
+  const endTime = requireLocalTime(input.endTime ?? "");
   requireTimedRange(startTime, endTime);
 
   return {
-    ...input,
-    name: requireNonEmpty(input.name, "Name"),
-    type: input.type as TimedShiftType,
+    ...base,
     startTime,
     endTime,
     breakMinutes: requireBreakMinutes(input.breakMinutes),
-    color: requireColor(input.color),
-    symbol: requireNonEmpty(input.symbol, "Symbol").slice(0, 4),
   };
 }
 

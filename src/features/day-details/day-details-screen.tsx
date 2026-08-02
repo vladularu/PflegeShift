@@ -9,6 +9,7 @@ import {
 } from "@/application/medishift-provider";
 import { SHIFT_TYPE_LABELS, type CalendarEntry } from "@/domain/types";
 import { formatDateTitle, today } from "@/engine/calendar";
+import { compareCalendarEntries } from "@/engine/calendar-entry-order";
 import { getPublicHolidays } from "@/engine/holidays";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { calculateDailySummary } from "@/features/calendar/calendar-metrics";
@@ -43,11 +44,7 @@ export function DayDetailsScreen() {
   const dayEntries = useMemo(
     () => entries
       .filter((entry) => entry.deletedAt === null && entry.date === date)
-      .sort((left, right) => {
-        const leftTime = left.kind === "APPOINTMENT" && left.allDay ? "00:00" : left.startTime ?? "00:00";
-        const rightTime = right.kind === "APPOINTMENT" && right.allDay ? "00:00" : right.startTime ?? "00:00";
-        return leftTime.localeCompare(rightTime);
-      }),
+      .sort(compareCalendarEntries),
     [date, entries],
   );
   const summary = useMemo(

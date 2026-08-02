@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, Text, View, type ViewStyle } from "react-native";
 
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import {
   accessibleChipBackgroundColor,
   chipTextColor,
@@ -47,11 +48,11 @@ export function SectionHeader({
   return (
     <View style={{ minHeight: 26, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
       <View style={{ flex: 1, gap: 2 }}>
-        <Text selectable style={{ color: palette.textSecondary, fontSize: 14, fontWeight: "800" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textSecondary, ...TYPOGRAPHY.sectionTitle }}>
           {title}
         </Text>
         {caption ? (
-          <Text selectable style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16 }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
             {caption}
           </Text>
         ) : null}
@@ -90,7 +91,7 @@ export function MetricCard({
         padding: compact ? 12 : 14,
       }}
     >
-      <Text selectable style={{ color: palette.textMuted, fontSize: 11, fontWeight: "700" }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
         {label}
       </Text>
       <Text
@@ -99,8 +100,8 @@ export function MetricCard({
         numberOfLines={1}
         style={{
           color: accent ?? palette.text,
-          fontSize: compact ? 18 : 22,
-          fontWeight: "900",
+          ...TYPOGRAPHY.value,
+          fontSize: compact ? 19 : 22,
           fontVariant: ["tabular-nums"],
           letterSpacing: -0.4,
         }}
@@ -140,18 +141,18 @@ export function RowButton({
       {leading}
       <View style={{ flex: 1, gap: 2 }}>
         <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
           numberOfLines={1}
           style={{
             color: destructive ? palette.danger : palette.text,
-            fontSize: 15,
-            fontWeight: "700",
+            ...TYPOGRAPHY.bodyStrong,
           }}
         >
           {title}
         </Text>
         {subtitle ? (
-          <Text selectable numberOfLines={2} style={{ color: palette.textMuted, fontSize: 12, lineHeight: 16 }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable numberOfLines={2} style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
             {subtitle}
           </Text>
         ) : null}
@@ -210,10 +211,10 @@ export function EmptyState({
   return (
     <View accessibilityLabel={`${title}. ${message}`} accessible style={{ minHeight: 180, alignItems: "center", justifyContent: "center", gap: 8, padding: 24 }}>
       <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: palette.primarySoft }} />
-      <Text accessibilityElementsHidden maxFontSizeMultiplier={1.5} selectable style={{ color: palette.text, fontSize: 17, fontWeight: "800", textAlign: "center" }}>
+      <Text accessibilityElementsHidden maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, textAlign: "center", ...TYPOGRAPHY.sectionTitle }}>
         {title}
       </Text>
-      <Text accessibilityElementsHidden maxFontSizeMultiplier={1.6} selectable style={{ maxWidth: 290, color: palette.textMuted, fontSize: 13, lineHeight: 19, textAlign: "center" }}>
+      <Text accessibilityElementsHidden maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ maxWidth: 290, color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.body }}>
         {message}
       </Text>
       {action}
@@ -253,7 +254,7 @@ export function InlineNotice({
       }}
     >
       <View accessibilityElementsHidden style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: accent }} />
-      <Text selectable style={{ minWidth: 0, flex: 1, color: accent, fontSize: 12, fontWeight: "700", lineHeight: 17 }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ minWidth: 0, flex: 1, color: accent, ...TYPOGRAPHY.label }}>
         {message}
       </Text>
     </View>
@@ -302,7 +303,7 @@ export function SegmentedControl({
               opacity: pressed ? 0.72 : 1,
             })}
           >
-            <Text style={{ color: selected ? palette.primary : palette.textSecondary, fontSize: 13, fontWeight: "800" }}>
+            <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: selected ? palette.primary : palette.textSecondary, ...TYPOGRAPHY.label, fontWeight: "800" }}>
               {item.label}
             </Text>
           </Pressable>
@@ -338,7 +339,7 @@ export function HeaderAction({
         paddingHorizontal: label.length > 2 ? 12 : 0,
       })}
     >
-      <Text style={{ color: emphasis ? palette.onPrimary : palette.primary, fontSize: label === "+" ? 26 : 13, fontWeight: "800" }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: emphasis ? palette.onPrimary : palette.primary, ...TYPOGRAPHY.label, fontSize: label === "+" ? 26 : TYPOGRAPHY.label.fontSize, fontWeight: "800" }}>
         {label}
       </Text>
     </Pressable>

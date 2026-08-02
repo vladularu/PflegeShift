@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SectionHeader, SurfaceCard } from "@/ui/design-system";
 
 export function FormScreen({
@@ -90,7 +91,7 @@ export function HeaderSaveAction({
       {busy ? (
         <ActivityIndicator accessibilityElementsHidden color={palette.primary} size="small" />
       ) : (
-        <Text maxFontSizeMultiplier={1.35} style={{ color: palette.primary, fontSize: 15, fontWeight: "800" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.primary, ...TYPOGRAPHY.button }}>
           {label}
         </Text>
       )}
@@ -124,7 +125,7 @@ export function FormStatus({
         paddingVertical: 10,
       }}
     >
-      <Text selectable style={{ color: error ? palette.danger : palette.success, fontSize: 13, fontWeight: "700", lineHeight: 18 }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: error ? palette.danger : palette.success, ...TYPOGRAPHY.label }}>
         {content}
       </Text>
     </View>
@@ -158,7 +159,7 @@ export function DestructiveFormAction({
         opacity: disabled ? 0.45 : 1,
       })}
     >
-      <Text maxFontSizeMultiplier={1.35} style={{ color: palette.danger, fontSize: 14, fontWeight: "800" }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.danger, ...TYPOGRAPHY.button }}>
         {label}
       </Text>
     </Pressable>

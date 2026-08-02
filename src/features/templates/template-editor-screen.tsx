@@ -5,7 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import { useMediShiftTemplates } from "@/application/medishift-provider";
 import {
   SHIFT_TYPE_LABELS,
-  type TimedShiftType,
+  type ShiftType,
 } from "@/domain/types";
 import { usePalette } from "@/theme/palette";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
@@ -18,14 +18,21 @@ import {
   HeaderSaveAction,
 } from "@/ui/form-layout";
 
-const TEMPLATE_TYPES: readonly TimedShiftType[] = [
+const TEMPLATE_TYPES: readonly ShiftType[] = [
   "EARLY",
   "LATE",
   "NIGHT",
   "DAY",
   "TRAINING",
+  "VACATION",
+  "SICK",
+  "FREE",
   "CUSTOM",
 ];
+
+function isAbsenceType(type: ShiftType): boolean {
+  return type === "VACATION" || type === "SICK" || type === "FREE";
+}
 
 export function TemplateEditorScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -33,7 +40,7 @@ export function TemplateEditorScreen() {
   const { templates, upsertTemplate, removeTemplate } = useMediShiftTemplates();
   const existing = useMemo(() => templates.find((item) => item.id === id), [id, templates]);
   const [name, setName] = useState(existing?.name ?? "Neuer Dienst");
-  const [type, setType] = useState<TimedShiftType>(existing?.type ?? "CUSTOM");
+  const [type, setType] = useState<ShiftType>(existing?.type ?? "CUSTOM");
   const [startTime, setStartTime] = useState(existing?.startTime ?? "08:00");
   const [endTime, setEndTime] = useState(existing?.endTime ?? "16:00");
   const [breakMinutes, setBreakMinutes] = useState(String(existing?.breakMinutes ?? 30));
@@ -41,6 +48,8 @@ export function TemplateEditorScreen() {
   const [symbol, setSymbol] = useState(existing?.symbol ?? "D");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const absence = isAbsenceType(type);
+  const typeLocked = existing !== undefined && isAbsenceType(existing.type);
 
   async function submit() {
     try {
@@ -52,9 +61,9 @@ export function TemplateEditorScreen() {
           : {}),
         name,
         type,
-        startTime,
-        endTime,
-        breakMinutes: Number(breakMinutes),
+        startTime: absence ? null : startTime,
+        endTime: absence ? null : endTime,
+        breakMinutes: absence ? 0 : Number(breakMinutes),
         color,
         symbol,
         sortOrder:
@@ -110,6 +119,7 @@ export function TemplateEditorScreen() {
                 key={candidate}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
+                disabled={typeLocked && candidate !== type}
                 onPress={() => setType(candidate)}
                 style={({ pressed }) => ({
                   minHeight: 44,
@@ -118,7 +128,7 @@ export function TemplateEditorScreen() {
                   borderColor: selected ? palette.primary : palette.border,
                   borderRadius: 22,
                   backgroundColor: selected ? palette.primarySoft : palette.surface,
-                  opacity: pressed ? 0.68 : 1,
+                  opacity: typeLocked && candidate !== type ? 0.32 : pressed ? 0.68 : 1,
                   paddingHorizontal: 14,
                 })}
               >
@@ -131,18 +141,28 @@ export function TemplateEditorScreen() {
         </View>
       </FormSection>
 
-      <FormSection title="Standardwerte">
-        <View style={{ flexDirection: "row", gap: 12 }}>
-          <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
-          <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
-        </View>
-        <Field
-          keyboardType="number-pad"
-          label="Pause in Minuten"
-          onChangeText={setBreakMinutes}
-          value={breakMinutes}
-        />
-      </FormSection>
+      {absence ? (
+        <FormSection title="Berechnung">
+          <Text style={{ color: palette.textSecondary, fontSize: 14, lineHeight: 20 }}>
+            {type === "FREE"
+              ? "Frei wird mit 0 Stunden geführt."
+              : "Die Abwesenheit ergänzt vorhandene Arbeits- oder Fortbildungszeit höchstens bis zum Tages-Soll."}
+          </Text>
+        </FormSection>
+      ) : (
+        <FormSection title="Standardwerte">
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
+            <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
+          </View>
+          <Field
+            keyboardType="number-pad"
+            label="Pause in Minuten"
+            onChangeText={setBreakMinutes}
+            value={breakMinutes}
+          />
+        </FormSection>
+      )}
 
       <FormStatus error={error} />
       {existing ? (

@@ -1,6 +1,7 @@
 import { ActivityIndicator, Pressable, ScrollView, Text } from "react-native";
 
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 
 export function LoadingView({ label = "MediShift wird vorbereitet …" }: { label?: string }) {
   const palette = usePalette();
@@ -22,7 +23,7 @@ export function LoadingView({ label = "MediShift wird vorbereitet …" }: { labe
         color={palette.primary}
         size="large"
       />
-      <Text accessibilityLiveRegion="polite" selectable style={{ color: palette.textMuted, fontSize: 14 }}>
+      <Text accessibilityLiveRegion="polite" maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
         {label}
       </Text>
     </ScrollView>
@@ -49,10 +50,10 @@ export function LoadFailureView({
         backgroundColor: palette.background,
       }}
     >
-      <Text accessibilityRole="alert" selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900", textAlign: "center" }}>
+      <Text accessibilityRole="alert" maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, textAlign: "center", ...TYPOGRAPHY.screenTitle }}>
         Daten konnten nicht geladen werden
       </Text>
-      <Text selectable style={{ maxWidth: 320, color: palette.textMuted, fontSize: 13, lineHeight: 19, textAlign: "center" }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ maxWidth: 320, color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.body }}>
         {message}
       </Text>
       <Pressable
@@ -70,7 +71,7 @@ export function LoadFailureView({
           paddingHorizontal: 18,
         })}
       >
-        <Text style={{ color: palette.onPrimary, fontSize: 14, fontWeight: "900" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}>
           Erneut versuchen
         </Text>
       </Pressable>

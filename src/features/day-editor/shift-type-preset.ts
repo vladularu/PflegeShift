@@ -51,18 +51,6 @@ export function resolveShiftTypePreset(
   type: ShiftType,
   templates: readonly ShiftTemplate[],
 ): ShiftTypePreset {
-  if (!isTimedShiftType(type)) {
-    return {
-      templateId: null,
-      title: SHIFT_TYPE_LABELS[type],
-      startTime: null,
-      endTime: null,
-      breakMinutes: 0,
-      color: SHIFT_TYPE_COLORS[type],
-      symbol: SHIFT_SYMBOLS[type],
-    };
-  }
-
   const template = templates.find(
     (candidate) => candidate.deletedAt === null && candidate.type === type,
   );
@@ -75,6 +63,18 @@ export function resolveShiftTypePreset(
       breakMinutes: template.breakMinutes,
       color: template.color,
       symbol: template.symbol,
+    };
+  }
+
+  if (!isTimedShiftType(type)) {
+    return {
+      templateId: null,
+      title: SHIFT_TYPE_LABELS[type],
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+      color: SHIFT_TYPE_COLORS[type],
+      symbol: SHIFT_SYMBOLS[type],
     };
   }
 

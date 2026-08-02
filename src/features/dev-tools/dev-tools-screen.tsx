@@ -179,7 +179,7 @@ export function DevToolsScreen() {
 
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 18, backgroundColor: palette.surface, padding: 12 }}>
         <Pressable accessibilityLabel="Vorheriger Monat" onPress={() => moveMonth(-1)} style={{ padding: 12 }}><Text style={{ color: palette.primary, fontSize: 24 }}>‹</Text></Pressable>
-        <View style={{ alignItems: "center", gap: 2 }}><Text style={{ color: palette.textMuted, fontSize: 11, fontWeight: "800" }}>STARTMONAT</Text><Text style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>{formatMonthTitle(startMonth)}</Text></View>
+        <View style={{ alignItems: "center", gap: 2 }}><Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "800" }}>STARTMONAT</Text><Text style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>{formatMonthTitle(startMonth)}</Text></View>
         <Pressable accessibilityLabel="Nächster Monat" onPress={() => moveMonth(1)} style={{ padding: 12 }}><Text style={{ color: palette.primary, fontSize: 24 }}>›</Text></Pressable>
       </View>
 
@@ -239,7 +239,7 @@ export function DevToolsScreen() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   const palette = usePalette();
-  return <View style={{ gap: 2 }}><Text style={{ color: palette.text, fontSize: 22, fontWeight: "900" }}>{value}</Text><Text style={{ color: palette.textMuted, fontSize: 11 }}>{label}</Text></View>;
+  return <View style={{ gap: 2 }}><Text style={{ color: palette.text, fontSize: 22, fontWeight: "900" }}>{value}</Text><Text style={{ color: palette.textMuted, fontSize: 12 }}>{label}</Text></View>;
 }
 
 function SmallButton({ label, onPress }: { label: string; onPress: () => void }) {

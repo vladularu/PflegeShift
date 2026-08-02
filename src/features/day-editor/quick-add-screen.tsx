@@ -7,12 +7,18 @@ import {
   useMediShiftEntries,
   useMediShiftTemplates,
 } from "@/application/medishift-provider";
-import { SHIFT_TYPE_LABELS } from "@/domain/types";
+import type { ShiftTemplate } from "@/domain/types";
 import { formatDateTitle, today } from "@/engine/calendar";
-import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { usePalette } from "@/theme/palette";
 import { CardSeparator, ColorBadge, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
 
-const ABSENCES = ["VACATION", "SICK", "FREE"] as const;
+function templateSubtitle(template: ShiftTemplate): string {
+  if (template.type === "FREE") return "Keine Arbeitszeit";
+  if (template.startTime === null || template.endTime === null) {
+    return "Wird bis zum Tages-Soll angerechnet";
+  }
+  return `${template.startTime}–${template.endTime} · ${template.breakMinutes} Min. Pause`;
+}
 
 export function QuickAddScreen() {
   const palette = usePalette();
@@ -22,26 +28,6 @@ export function QuickAddScreen() {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(params.date ?? "") ? params.date! : today();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  async function saveAbsence(type: (typeof ABSENCES)[number]) {
-    try {
-      setSaving(true);
-      setError(null);
-      await upsertShift({
-        date,
-        title: SHIFT_TYPE_LABELS[type],
-        type,
-        color: SHIFT_TYPE_COLORS[type],
-        symbol: type === "VACATION" ? "U" : type === "SICK" ? "K" : "–",
-      });
-      if (process.env.EXPO_OS === "ios") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.back();
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Eintrag konnte nicht gespeichert werden.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function saveTemplate(id: string) {
     const template = templates.find((item) => item.id === id);
@@ -102,20 +88,8 @@ export function QuickAddScreen() {
               disabled={saving}
               leading={<ColorBadge color={template.color} label={template.symbol} />}
               onPress={() => void saveTemplate(template.id)}
-              subtitle={`${template.startTime}–${template.endTime} · ${template.breakMinutes} Min. Pause`}
+              subtitle={templateSubtitle(template)}
               title={template.name}
-            />
-          </View>
-        ))}
-        {templates.length > 0 ? <CardSeparator inset={70} /> : null}
-        {ABSENCES.map((type, index) => (
-          <View key={type}>
-            {index > 0 ? <CardSeparator inset={70} /> : null}
-            <RowButton
-              disabled={saving}
-              leading={<ColorBadge color={SHIFT_TYPE_COLORS[type]} label={type === "VACATION" ? "U" : type === "SICK" ? "K" : "–"} />}
-              onPress={() => void saveAbsence(type)}
-              title={SHIFT_TYPE_LABELS[type]}
             />
           </View>
         ))}

@@ -102,9 +102,9 @@ export interface UserProfile {
 export interface ShiftTemplate {
   readonly id: string;
   readonly name: string;
-  readonly type: TimedShiftType;
-  readonly startTime: string;
-  readonly endTime: string;
+  readonly type: ShiftType;
+  readonly startTime: string | null;
+  readonly endTime: string | null;
   readonly breakMinutes: number;
   readonly color: string;
   readonly symbol: string;
@@ -154,6 +154,19 @@ export interface Appointment {
 
 export type CalendarEntry = ShiftEntry | Appointment;
 
+export type CalendarViewMode = "MONTH" | "YEAR";
+export type CalendarLabelMode = "FULL" | "SYMBOL";
+
+export interface CalendarPreferencesData {
+  readonly viewMode: CalendarViewMode;
+  readonly showShifts: boolean;
+  readonly showAppointments: boolean;
+  readonly showHolidays: boolean;
+  readonly labelMode: CalendarLabelMode;
+  readonly showShiftTimes: boolean;
+  readonly showShiftDuration: boolean;
+}
+
 export interface MonthlySummaryCategory {
   readonly minutes: number;
   readonly entryCount: number;
@@ -164,6 +177,7 @@ export interface MonthlySummary {
   readonly targetMinutes: number;
   readonly actualMinutes: number;
   readonly balanceMinutes: number;
+  readonly overlapMinutes: number;
   readonly work: MonthlySummaryCategory;
   readonly training: MonthlySummaryCategory;
   readonly vacation: MonthlySummaryCategory;
@@ -175,9 +189,9 @@ export interface SaveShiftTemplateInput {
   readonly id?: string;
   readonly expectedRevision?: number;
   readonly name: string;
-  readonly type: TimedShiftType;
-  readonly startTime: string;
-  readonly endTime: string;
+  readonly type: ShiftType;
+  readonly startTime: string | null;
+  readonly endTime: string | null;
   readonly breakMinutes: number;
   readonly color: string;
   readonly symbol: string;

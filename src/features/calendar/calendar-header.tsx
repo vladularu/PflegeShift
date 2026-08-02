@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
 import { formatMonthTitle } from "@/engine/calendar";
-import type { CalendarViewMode } from "@/features/calendar/calendar-display";
+import type { CalendarViewMode } from "@/domain/types";
 import { calculateMonthProgress } from "@/features/calendar/calendar-metrics";
 import { usePalette } from "@/theme/palette";
 
@@ -157,7 +157,7 @@ export const CalendarHeader = memo(function CalendarHeader({
           </View>
         ) : (
           <View style={{ gap: 3 }}>
-            <Text style={{ color: palette.textMuted, fontSize: 11, fontWeight: "800" }}>
+            <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "800" }}>
               Jahresübersicht
             </Text>
             <Animated.Text

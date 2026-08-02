@@ -167,7 +167,7 @@ export function TariffAssessmentScreen() {
                 <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "800" }}>
                   {criterion.label}
                 </Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16 }}>
+                <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
                   {criterion.detail}
                 </Text>
               </View>
@@ -242,7 +242,7 @@ export function TariffAssessmentScreen() {
           <Text style={{ color: palette.text, fontSize: 13, fontWeight: "800" }}>
             Monatswert manuell festlegen
           </Text>
-          <Text style={{ color: palette.textMuted, fontSize: 11 }}>
+          <Text style={{ color: palette.textMuted, fontSize: 12 }}>
             Nur verwenden, wenn die automatische Einordnung abweicht.
           </Text>
         </View>
@@ -280,7 +280,7 @@ export function TariffAssessmentScreen() {
         </SurfaceCard>
       ) : null}
 
-      <Text selectable style={{ color: palette.textMuted, fontSize: 10, lineHeight: 15, textAlign: "center" }}>
+      <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17, textAlign: "center" }}>
         Automatische Plausibilitätsprüfung · keine Rechts- oder Lohnberatung
       </Text>
     </ScrollView>
@@ -307,7 +307,7 @@ function Question({
         <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>
           {title}
         </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16 }}>
+        <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
           {caption}
         </Text>
       </View>

@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, Text, View } from "react-native";
 
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 
 export function MonthNavigator({
   label,
@@ -28,6 +29,7 @@ export function MonthNavigator({
       <MonthArrow contextLabel={label} direction="back" onPress={onPrevious} />
       <Text
         accessibilityLiveRegion="polite"
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
         adjustsFontSizeToFit
         minimumFontScale={0.78}
@@ -35,10 +37,9 @@ export function MonthNavigator({
         style={{
           flex: 1,
           color: palette.text,
-          fontSize: 21,
-          fontWeight: "800",
           textAlign: "center",
           fontVariant: ["tabular-nums"],
+          ...TYPOGRAPHY.screenTitle,
         }}
       >
         {label}
