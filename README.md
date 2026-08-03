@@ -102,9 +102,29 @@ npm.cmd test
 npm.cmd run export:web
 npm.cmd run export:android
 npm.cmd run export:ios
+npm.cmd run release:check
 ```
 
 Die Tests decken unter anderem Kalender- und Feiertagslogik, Monatswechsel, Schnelleingabe, Abwesenheiten, Nachtarbeit, TVöD-Zulagen, Gehaltsaggregation, ArbZG-Hinweise sowie SQLite-Migrationen und CRUD-Lebenszyklen ab.
+
+## Release-Kandidat
+
+Die lokale Release-Konfiguration trennt zwei sichere Wege:
+
+- `preview`: intern installierbare iOS-Builds und Android-APKs für Gerätetests
+- `production`: Store-Builds mit automatisch erhöhten Buildnummern; Android wird zunächst nur in den internen Test-Track eingereicht
+
+Vor dem ersten signierten Build muss das Projekt einmalig mit dem eigenen Expo-Konto verknüpft werden:
+
+```powershell
+npx.cmd eas-cli@latest init
+npx.cmd eas-cli@latest build --platform ios --profile preview
+npx.cmd eas-cli@latest build --platform android --profile preview
+```
+
+Expo-, Apple- und Google-Zugangsdaten gehören nicht ins Repository. TestFlight-, Play-Console-, Datenschutz- und Store-Metadaten werden außerhalb des Quellcodes gepflegt.
+
+Die vollständige Abnahme steht in der [Release-Checkliste](docs/release-checklist.md).
 
 ## Testlabor
 

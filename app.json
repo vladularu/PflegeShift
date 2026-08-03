@@ -2,6 +2,7 @@
   "expo": {
     "name": "MediShift",
     "slug": "medishift",
+    "description": "Lokaler Dienstplaner mit Arbeitszeit- und TVöD-P-Auswertung.",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,11 +10,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.medishift.app",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E7F5F0",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
