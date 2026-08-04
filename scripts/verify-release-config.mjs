@@ -23,29 +23,89 @@ function expect(condition, message) {
   }
 }
 
-expect(/^\d+\.\d+\.\d+$/.test(expo.version ?? ""), "expo.version muss semantisch versioniert sein.");
-expect(expo.version === packageConfig.version, "app.json und package.json müssen dieselbe Version verwenden.");
-expect(expo.orientation === "portrait", "Die iPhone-first App muss im Hochformat gesperrt bleiben.");
+expect(
+  /^\d+\.\d+\.\d+$/.test(expo.version ?? ""),
+  "expo.version muss semantisch versioniert sein.",
+);
+expect(
+  expo.version === packageConfig.version,
+  "app.json und package.json müssen dieselbe Version verwenden.",
+);
+expect(
+  expo.orientation === "portrait",
+  "Die iPhone-first App muss im Hochformat gesperrt bleiben.",
+);
 expect(expo.userInterfaceStyle === "automatic", "Hell-/Dunkelmodus muss dem System folgen.");
-expect(expo.ios?.supportsTablet === false, "iPad-Support darf erst nach eigener Abnahme aktiviert werden.");
+expect(
+  expo.ios?.supportsTablet === false,
+  "iPad-Support darf erst nach eigener Abnahme aktiviert werden.",
+);
 expect(expo.ios?.bundleIdentifier === "com.medishift.app", "Die iOS Bundle-ID ist nicht korrekt.");
 expect(
   /^\d+(?:\.\d+){0,2}$/.test(expo.ios?.buildNumber ?? ""),
   "ios.buildNumber muss aus einer bis drei numerischen Komponenten bestehen.",
 );
-expect(expo.ios?.config?.usesNonExemptEncryption === false, "Die iOS-Export-Compliance-Angabe fehlt.");
+expect(
+  expo.ios?.config?.usesNonExemptEncryption === false,
+  "Die iOS-Export-Compliance-Angabe fehlt.",
+);
 expect(expo.android?.package === "com.medishift.app", "Der Android-Paketname ist nicht korrekt.");
-expect(Number.isInteger(expo.android?.versionCode) && expo.android.versionCode > 0, "android.versionCode muss positiv sein.");
+expect(
+  Number.isInteger(expo.android?.versionCode) && expo.android.versionCode > 0,
+  "android.versionCode muss positiv sein.",
+);
+expect(expo.android?.allowBackup === false, "Android-App-Datenbackups müssen deaktiviert sein.");
 expect(easConfig.cli?.appVersionSource === "remote", "EAS muss Buildnummern remote verwalten.");
-expect(easConfig.build?.preview?.distribution === "internal", "Preview-Builds müssen intern verteilt werden.");
-expect(easConfig.build?.preview?.autoIncrement === true, "Preview-Builds benötigen eindeutige Buildnummern.");
-expect(easConfig.build?.preview?.android?.buildType === "apk", "Android Preview muss als installierbare APK gebaut werden.");
-expect(easConfig.build?.production?.autoIncrement === true, "Produktions-Builds benötigen eindeutige Buildnummern.");
-expect(easConfig.build?.production?.android?.buildType === "app-bundle", "Android Produktion muss als AAB gebaut werden.");
-expect(easConfig.submit?.production?.android?.track === "internal", "Android darf zunächst nur in Internal Testing eingereicht werden.");
+expect(
+  easConfig.build?.preview?.distribution === "internal",
+  "Preview-Builds müssen intern verteilt werden.",
+);
+expect(
+  easConfig.build?.preview?.env?.APP_VARIANT === "internal",
+  "Preview-Builds benötigen eine isolierte App-Identität.",
+);
+expect(
+  easConfig.build?.preview?.env?.EXPO_PUBLIC_ENABLE_DEV_TOOLS === "1",
+  "Nur Preview-Builds dürfen das Testlabor aktivieren.",
+);
+expect(
+  easConfig.build?.preview?.autoIncrement === true,
+  "Preview-Builds benötigen eindeutige Buildnummern.",
+);
+expect(
+  easConfig.build?.preview?.android?.buildType === "apk",
+  "Android Preview muss als installierbare APK gebaut werden.",
+);
+expect(
+  easConfig.build?.production?.autoIncrement === true,
+  "Produktions-Builds benötigen eindeutige Buildnummern.",
+);
+expect(
+  easConfig.build?.production?.env?.APP_VARIANT === "production",
+  "Produktions-Builds müssen die Produktionsidentität erzwingen.",
+);
+expect(
+  easConfig.build?.production?.env?.EXPO_PUBLIC_ENABLE_DEV_TOOLS === "0",
+  "Produktions-Builds müssen das Testlabor deaktivieren.",
+);
+expect(
+  easConfig.build?.production?.android?.buildType === "app-bundle",
+  "Android Produktion muss als AAB gebaut werden.",
+);
+expect(
+  easConfig.submit?.production?.android?.track === "internal",
+  "Android darf zunächst nur in Internal Testing eingereicht werden.",
+);
 
 const splashScreenPlugin = expo.plugins?.find(
   (plugin) => Array.isArray(plugin) && plugin[0] === "expo-splash-screen",
+);
+const sqlitePlugin = expo.plugins?.find(
+  (plugin) => Array.isArray(plugin) && plugin[0] === "expo-sqlite",
+);
+expect(
+  sqlitePlugin?.[1]?.useSQLCipher === true,
+  "Native Builds müssen expo-sqlite mit SQLCipher erstellen.",
 );
 
 const requiredAssets = [

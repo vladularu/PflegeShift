@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { ShiftEntry } from "@/domain/types";
-import { calculateMonthlyCompliance } from "@/engine/compliance";
+import {
+  calculateMonthlyCompliance,
+  prepareComplianceIntervalsIncrementally,
+} from "@/engine/compliance";
 
 function shift(
   id: string,
@@ -34,6 +37,22 @@ function shift(
 }
 
 describe("ArbZG compliance", () => {
+  it("prepares cold interval conversion in bounded batches without changing results", () => {
+    const shifts = Array.from({ length: 55 }, (_, index) =>
+      shift(`batch-${index}`, `2026-07-${String((index % 28) + 1).padStart(2, "0")}`),
+    );
+    const preparation = prepareComplianceIntervalsIncrementally(shifts, "Europe/Berlin", 20);
+    const checkpoints: number[] = [];
+    while (true) {
+      const step = preparation.next();
+      if (step.done) break;
+      checkpoints.push(step.value);
+    }
+
+    expect(checkpoints).toEqual([20, 40, 55]);
+    expect(calculateMonthlyCompliance("2026-07", shifts, "Europe/Berlin").month).toBe("2026-07");
+  });
+
   it("flags more than ten net hours and insufficient break", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
@@ -75,7 +94,8 @@ describe("ArbZG compliance", () => {
         "07:00",
         60,
         "NIGHT",
-      ));
+      ),
+    );
 
     const result = calculateMonthlyCompliance("2026-07", shifts, "Europe/Berlin");
 
@@ -91,7 +111,8 @@ describe("ArbZG compliance", () => {
         "07:00",
         60,
         "NIGHT",
-      ));
+      ),
+    );
 
     const result = calculateMonthlyCompliance("2026-07", shifts, "Europe/Berlin");
     const warning = result.issues.find((item) => item.rule === "PLANNING_NIGHT_SERIES");
@@ -107,9 +128,27 @@ describe("ArbZG compliance", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
       [
-        { ...shift("vacation", "2026-07-01"), type: "VACATION", startTime: null, endTime: null, breakMinutes: 0 },
-        { ...shift("sick", "2026-07-02"), type: "SICK", startTime: null, endTime: null, breakMinutes: 0 },
-        { ...shift("free", "2026-07-03"), type: "FREE", startTime: null, endTime: null, breakMinutes: 0 },
+        {
+          ...shift("vacation", "2026-07-01"),
+          type: "VACATION",
+          startTime: null,
+          endTime: null,
+          breakMinutes: 0,
+        },
+        {
+          ...shift("sick", "2026-07-02"),
+          type: "SICK",
+          startTime: null,
+          endTime: null,
+          breakMinutes: 0,
+        },
+        {
+          ...shift("free", "2026-07-03"),
+          type: "FREE",
+          startTime: null,
+          endTime: null,
+          breakMinutes: 0,
+        },
       ],
       "Europe/Berlin",
     );
@@ -234,22 +273,27 @@ describe("ArbZG compliance", () => {
         "07:30",
         60,
         "NIGHT",
-      ));
-    const open = calculateMonthlyCompliance(
-      "2026-07",
-      denseNightMonth,
-      "Europe/Berlin",
-      { federalState: "NW", referenceDate: "2026-07-15", weeklyMinutes: 2_310 },
-    ).issues.find((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE");
-    const expired = calculateMonthlyCompliance(
-      "2026-07",
-      denseNightMonth,
-      "Europe/Berlin",
-      { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
-    ).issues.find((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE");
+      ),
+    );
+    const open = calculateMonthlyCompliance("2026-07", denseNightMonth, "Europe/Berlin", {
+      federalState: "NW",
+      referenceDate: "2026-07-15",
+      weeklyMinutes: 2_310,
+    }).issues.find((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE");
+    const expired = calculateMonthlyCompliance("2026-07", denseNightMonth, "Europe/Berlin", {
+      federalState: "NW",
+      referenceDate: "2026-08-01",
+      weeklyMinutes: 2_310,
+    }).issues.find((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE");
 
-    expect(open).toMatchObject({ severity: "warning", title: "Ausgleich der Nachtarbeitszeit offen" });
-    expect(expired).toMatchObject({ severity: "critical", title: "Ausgleich der Nachtarbeitszeit fehlt" });
+    expect(open).toMatchObject({
+      severity: "warning",
+      title: "Ausgleich der Nachtarbeitszeit offen",
+    });
+    expect(expired).toMatchObject({
+      severity: "critical",
+      title: "Ausgleich der Nachtarbeitszeit fehlt",
+    });
   });
 
   it("keeps night duties above ten net hours immediately critical", () => {
@@ -299,13 +343,21 @@ describe("ArbZG compliance", () => {
       shift("late", "2026-10-01", "13:00", "22:00", 30, "LATE"),
       shift("early", "2026-10-02", "08:30", "16:30", 30, "EARLY"),
     ];
-    const open = calculateMonthlyCompliance("2026-10", shifts, "Europe/Berlin", { referenceDate: "2026-10-10" })
-      .issues.find((item) => item.rule === "ARBZG_5_REST_11H");
-    const expired = calculateMonthlyCompliance("2026-10", shifts, "Europe/Berlin", { referenceDate: "2026-11-01" })
-      .issues.find((item) => item.rule === "ARBZG_5_REST_11H");
+    const open = calculateMonthlyCompliance("2026-10", shifts, "Europe/Berlin", {
+      referenceDate: "2026-10-10",
+    }).issues.find((item) => item.rule === "ARBZG_5_REST_11H");
+    const expired = calculateMonthlyCompliance("2026-10", shifts, "Europe/Berlin", {
+      referenceDate: "2026-11-01",
+    }).issues.find((item) => item.rule === "ARBZG_5_REST_11H");
 
-    expect(open).toMatchObject({ severity: "warning", title: "Ausgleich für verkürzte Ruhezeit offen" });
-    expect(expired).toMatchObject({ severity: "critical", title: "Ausgleich für verkürzte Ruhezeit fehlt" });
+    expect(open).toMatchObject({
+      severity: "warning",
+      title: "Ausgleich für verkürzte Ruhezeit offen",
+    });
+    expect(expired).toMatchObject({
+      severity: "critical",
+      title: "Ausgleich für verkürzte Ruhezeit fehlt",
+    });
   });
 
   it("recognizes compensation entered in the following month", () => {

@@ -1,11 +1,11 @@
-import { requireLocalDate } from "@/domain/validation";
+import {
+  parseIdentifierRouteParam,
+  parseLocalDateRouteParam,
+  parseMonthRouteParam,
+} from "@/navigation/route-params";
 
 export type SettingsInfoSection =
-  | "STORAGE"
-  | "CALCULATION"
-  | "ABOUT"
-  | "TVOED_ALLOWANCE"
-  | "CARE_ALLOWANCE";
+  "STORAGE" | "CALCULATION" | "ABOUT" | "TVOED_ALLOWANCE" | "CARE_ALLOWANCE";
 
 export const TAB_ROUTES = Object.freeze([
   { key: "calendar", route: "/" },
@@ -14,22 +14,42 @@ export const TAB_ROUTES = Object.freeze([
   { key: "more", route: "/more" },
 ] as const);
 
+function requireValid<T>(
+  parsed: { readonly status: "invalid" | "missing" | "valid"; readonly value?: T },
+  label: string,
+): T {
+  if (parsed.status !== "valid") throw new Error(`${label} ist ungültig.`);
+  return parsed.value as T;
+}
+
+function requireDate(date: string): string {
+  return requireValid(parseLocalDateRouteParam(date), "Datum");
+}
+
+function requireMonth(month: string): string {
+  return requireValid(parseMonthRouteParam(month), "Monat");
+}
+
+function requireIdentifier(id: string): string {
+  return requireValid(parseIdentifierRouteParam(id), "ID");
+}
+
 export function dayDetailsRoute(date: string) {
   return Object.freeze({
     pathname: "/day-details" as const,
-    params: Object.freeze({ date: requireLocalDate(date) }),
+    params: Object.freeze({ date: requireDate(date) }),
   });
 }
 
 export function quickAddRoute(date: string) {
   return Object.freeze({
     pathname: "/quick-add" as const,
-    params: Object.freeze({ date: requireLocalDate(date) }),
+    params: Object.freeze({ date: requireDate(date) }),
   });
 }
 
 export function premiumDetailsRoute(month: string) {
-  const normalizedMonth = requireLocalDate(`${month}-01`).slice(0, 7);
+  const normalizedMonth = requireMonth(month);
   return Object.freeze({
     pathname: "/premium-details" as const,
     params: Object.freeze({ month: normalizedMonth }),
@@ -37,7 +57,7 @@ export function premiumDetailsRoute(month: string) {
 }
 
 export function complianceDetailsRoute(month: string) {
-  const normalizedMonth = requireLocalDate(`${month}-01`).slice(0, 7);
+  const normalizedMonth = requireMonth(month);
   return Object.freeze({
     pathname: "/compliance-details" as const,
     params: Object.freeze({ month: normalizedMonth }),
@@ -45,7 +65,7 @@ export function complianceDetailsRoute(month: string) {
 }
 
 export function tariffAssessmentRoute(month: string) {
-  const normalizedMonth = requireLocalDate(`${month}-01`).slice(0, 7);
+  const normalizedMonth = requireMonth(month);
   return Object.freeze({
     pathname: "/tariff-assessment" as const,
     params: Object.freeze({ month: normalizedMonth }),
@@ -59,17 +79,41 @@ export function settingsInfoRoute(section: SettingsInfoSection) {
   });
 }
 
-export function dayEditorRoute(
-  date: string,
-  mode: "SHIFT" | "APPOINTMENT",
-  entryId?: string,
-) {
+export function dayEditorRoute(date: string, mode: "SHIFT" | "APPOINTMENT", entryId?: string) {
   return Object.freeze({
     pathname: "/day-editor" as const,
     params: Object.freeze({
-      date: requireLocalDate(date),
+      date: requireDate(date),
       mode,
-      ...(entryId ? { entryId } : {}),
+      ...(entryId ? { entryId: requireIdentifier(entryId) } : {}),
     }),
+  });
+}
+
+export function calendarRoute(month: string) {
+  return Object.freeze({
+    pathname: "/" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function analysisRoute(month: string) {
+  return Object.freeze({
+    pathname: "/analysis" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function templateEditorRoute(id?: string) {
+  return Object.freeze({
+    pathname: "/template-editor" as const,
+    params: Object.freeze(id ? { id: requireIdentifier(id) } : {}),
+  });
+}
+
+export function settingsEditorRoute(section: "WORK" | "TARIFF") {
+  return Object.freeze({
+    pathname: "/settings-editor" as const,
+    params: Object.freeze({ section }),
   });
 }

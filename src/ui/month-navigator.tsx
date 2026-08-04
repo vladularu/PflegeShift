@@ -32,9 +32,6 @@ export function MonthNavigator({
         accessibilityLiveRegion="polite"
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
-        adjustsFontSizeToFit
-        minimumFontScale={0.78}
-        numberOfLines={1}
         style={{
           flex: 1,
           color: palette.text,

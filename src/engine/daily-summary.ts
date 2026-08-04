@@ -32,9 +32,7 @@ function holidayDates(
   const key = `${federalState}-${year}`;
   const cached = HOLIDAY_DATE_CACHE.get(key);
   if (cached) return cached;
-  const dates = new Set(
-    getPublicHolidays(year, federalState).map((holiday) => holiday.date),
-  );
+  const dates = new Set(getPublicHolidays(year, federalState).map((holiday) => holiday.date));
   HOLIDAY_DATE_CACHE.set(key, dates);
   return dates;
 }
@@ -44,10 +42,7 @@ export function calculateDailyTargetMinutes(
   profile: Pick<UserProfile, "federalState" | "weeklyMinutes">,
 ): number {
   const plainDate = Temporal.PlainDate.from(date);
-  if (
-    plainDate.dayOfWeek > 5 ||
-    holidayDates(plainDate.year, profile.federalState).has(date)
-  ) {
+  if (plainDate.dayOfWeek > 5 || holidayDates(plainDate.year, profile.federalState).has(date)) {
     return 0;
   }
   return Math.round(profile.weeklyMinutes / 5);
@@ -72,15 +67,11 @@ function mergeInterval(
   return merged;
 }
 
-function overlappingMinutes(
-  interval: MinuteInterval,
-  coverage: readonly MinuteInterval[],
-): number {
+function overlappingMinutes(interval: MinuteInterval, coverage: readonly MinuteInterval[]): number {
   return coverage.reduce(
-    (sum, covered) => sum + Math.max(
-      0,
-      Math.min(interval.end, covered.end) - Math.max(interval.start, covered.start),
-    ),
+    (sum, covered) =>
+      sum +
+      Math.max(0, Math.min(interval.end, covered.end) - Math.max(interval.start, covered.start)),
     0,
   );
 }
@@ -96,13 +87,18 @@ function creditTimedEntries(
 } {
   const candidates = entries
     .map((entry) => ({ entry, bounds: calculateTimedShiftBounds(entry, timeZone) }))
-    .filter((candidate): candidate is {
-      readonly entry: ShiftEntry;
-      readonly bounds: NonNullable<ReturnType<typeof calculateTimedShiftBounds>>;
-    } => candidate.bounds !== null)
-    .sort((left, right) =>
-      left.bounds.startEpochMinutes - right.bounds.startEpochMinutes ||
-      left.entry.id.localeCompare(right.entry.id),
+    .filter(
+      (
+        candidate,
+      ): candidate is {
+        readonly entry: ShiftEntry;
+        readonly bounds: NonNullable<ReturnType<typeof calculateTimedShiftBounds>>;
+      } => candidate.bounds !== null,
+    )
+    .sort(
+      (left, right) =>
+        left.bounds.startEpochMinutes - right.bounds.startEpochMinutes ||
+        left.entry.id.localeCompare(right.entry.id),
     );
   let coverage = [...initialCoverage];
   let minutes = 0;
@@ -131,32 +127,21 @@ export function calculateDailyWorkCredit(
   entries: readonly ShiftEntry[],
   profile: ProfileForTime,
 ): DailyWorkCredit {
-  const active = entries.filter(
-    (entry) => entry.deletedAt === null && entry.date === date,
-  );
+  const active = entries.filter((entry) => entry.deletedAt === null && entry.date === date);
   const workEntries = active.filter(
     (entry) => !["TRAINING", "VACATION", "SICK", "FREE"].includes(entry.type),
   );
   const trainingEntries = active.filter((entry) => entry.type === "TRAINING");
   const work = creditTimedEntries(workEntries, profile.timeZone);
-  const training = creditTimedEntries(
-    trainingEntries,
-    profile.timeZone,
-    work.coverage,
-  );
+  const training = creditTimedEntries(trainingEntries, profile.timeZone, work.coverage);
   const targetMinutes = calculateDailyTargetMinutes(date, profile);
   const timedMinutes = work.minutes + training.minutes;
-  const absenceMinutes = active.some(
-    (entry) => entry.type === "VACATION" || entry.type === "SICK",
-  )
+  const absenceMinutes = active.some((entry) => entry.type === "VACATION" || entry.type === "SICK")
     ? Math.max(0, targetMinutes - timedMinutes)
     : 0;
-  const sickMinutes = active.some((entry) => entry.type === "SICK")
-    ? absenceMinutes
-    : 0;
-  const vacationMinutes = sickMinutes === 0 && active.some((entry) => entry.type === "VACATION")
-    ? absenceMinutes
-    : 0;
+  const sickMinutes = active.some((entry) => entry.type === "SICK") ? absenceMinutes : 0;
+  const vacationMinutes =
+    sickMinutes === 0 && active.some((entry) => entry.type === "VACATION") ? absenceMinutes : 0;
   const actualMinutes = timedMinutes + absenceMinutes;
 
   return Object.freeze({

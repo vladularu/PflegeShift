@@ -28,13 +28,19 @@ export function buildAnnualDistributionSections(
   const serviceTotal = serviceEntries.reduce((sum, [, count]) => sum + count, 0);
 
   return Object.freeze({
-    services: Object.freeze(serviceEntries.map(([type, count]) => Object.freeze({
-      type,
-      count,
-      percentage: serviceTotal === 0 ? 0 : Math.round((count / serviceTotal) * 100),
-    }))),
-    absences: Object.freeze(populatedEntries
-      .filter(([type]) => ABSENCE_TYPES.has(type))
-      .map(([type, count]) => Object.freeze({ type, count }))),
+    services: Object.freeze(
+      serviceEntries.map(([type, count]) =>
+        Object.freeze({
+          type,
+          count,
+          percentage: serviceTotal === 0 ? 0 : Math.round((count / serviceTotal) * 100),
+        }),
+      ),
+    ),
+    absences: Object.freeze(
+      populatedEntries
+        .filter(([type]) => ABSENCE_TYPES.has(type))
+        .map(([type, count]) => Object.freeze({ type, count })),
+    ),
   });
 }

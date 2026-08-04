@@ -14,16 +14,22 @@ import {
   ALLOWANCE_STATUSES,
   type AllowanceStatus,
   type TvoedAssignment,
+  type TvoedWorkPatternSettings,
   type TvoedWorkplaceCoverage,
+  type UserProfile,
 } from "@/domain/types";
+import { userFacingErrorMessage } from "@/domain/errors";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
+import { TariffQuestion } from "@/features/analysis/tariff-question";
+import { resolveEditorSession } from "@/features/editor-session";
+import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, SurfaceCard } from "@/ui/design-system";
-import { LoadingView } from "@/ui/loading-view";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   NONE: "Keine Zulage",
@@ -34,24 +40,55 @@ const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
 };
 
 export function TariffAssessmentScreen() {
-  const palette = usePalette();
-  const params = useLocalSearchParams<{ month?: string }>();
-  const { ready } = useMediShiftStatus();
+  const params = useLocalSearchParams<{ month?: RouteParam }>();
+  const { error, ready, reload } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
-  const { entries } = useMediShiftEntries();
-  const {
-    tariffDecisions,
-    workPatternSettings,
-    updateWorkPatternSettings,
-    upsertTariffDecision,
-  } = useMediShiftTariff();
-  const month = typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)
-    ? params.month
-    : currentMonth(profile?.timeZone);
-  const [coverage, setCoverage] = useState<TvoedWorkplaceCoverage>(
-    workPatternSettings.workplaceCoverage,
+  const { workPatternSettings } = useMediShiftTariff();
+  const parsedMonth = parseMonthRouteParam(params.month);
+  const month =
+    parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);
+  if (parsedMonth.status !== "valid") {
+    return (
+      <LoadFailureView
+        actionLabel="Schließen"
+        message="Der Link zur Tarifprüfung enthält keinen gültigen Monat."
+        onRetry={() => router.back()}
+        title="Tarifprüfung kann nicht geöffnet werden"
+      />
+    );
+  }
+  if (ready && error) {
+    return <LoadFailureView message={error} onRetry={() => void reload()} />;
+  }
+  const session = resolveEditorSession(ready && profile !== null, month, () => workPatternSettings);
+  if (session === null || profile === null) return <LoadingView />;
+  return (
+    <TariffAssessmentForm
+      key={session.key}
+      initialSettings={session.initialValue}
+      month={month}
+      profile={profile}
+    />
   );
-  const [assignment, setAssignment] = useState<TvoedAssignment>(workPatternSettings.assignment);
+}
+
+function TariffAssessmentForm({
+  initialSettings,
+  month,
+  profile,
+}: {
+  readonly initialSettings: TvoedWorkPatternSettings;
+  readonly month: string;
+  readonly profile: UserProfile;
+}) {
+  const palette = usePalette();
+  const { entries } = useMediShiftEntries();
+  const { tariffDecisions, workPatternSettings, updateWorkPatternSettings, upsertTariffDecision } =
+    useMediShiftTariff();
+  const [coverage, setCoverage] = useState<TvoedWorkplaceCoverage>(
+    initialSettings.workplaceCoverage,
+  );
+  const [assignment, setAssignment] = useState<TvoedAssignment>(initialSettings.assignment);
   const [showOverride, setShowOverride] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,20 +96,17 @@ export function TariffAssessmentScreen() {
   const window = useMemo(() => selectAnalysisEntryWindow(entries, month), [entries, month]);
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = useMemo(
-    () => profile
-      ? calculateMonthlyPayEstimate(
+    () =>
+      calculateMonthlyPayEstimate(
         month,
         window.monthShifts,
         profile,
         decision,
         window.allowanceShifts,
         { workplaceCoverage: coverage, assignment, updatedAt: workPatternSettings.updatedAt },
-      )
-      : null,
+      ),
     [assignment, coverage, decision, month, profile, window, workPatternSettings.updatedAt],
   );
-
-  if (!ready || profile === null || pay === null) return <LoadingView />;
 
   const assessment = pay.assessment;
   const resultTitle = decision
@@ -97,7 +131,7 @@ export function TariffAssessmentScreen() {
       }
       router.back();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Angaben konnten nicht gespeichert werden.");
+      setError(userFacingErrorMessage(saveError, "Angaben konnten nicht gespeichert werden."));
     } finally {
       setSaving(false);
     }
@@ -117,7 +151,7 @@ export function TariffAssessmentScreen() {
       }
       router.back();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Monatswert konnte nicht gespeichert werden.");
+      setError(userFacingErrorMessage(saveError, "Monatswert konnte nicht gespeichert werden."));
     } finally {
       setSaving(false);
     }
@@ -131,13 +165,25 @@ export function TariffAssessmentScreen() {
       contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
     >
       <View style={{ gap: SPACING.xs }}>
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+        >
           {formatMonthTitle(month)}
         </Text>
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}
+        >
           {resultTitle}
         </Text>
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+        >
           Dienstmuster werden aus den letzten drei Monaten erkannt. Angaben zum Arbeitsplatz
           bestätigst du einmal selbst.
         </Text>
@@ -147,7 +193,16 @@ export function TariffAssessmentScreen() {
         {assessment.criteria.map((criterion, index) => (
           <View key={criterion.key}>
             {index > 0 ? <CardSeparator inset={48} /> : null}
-            <View style={{ minHeight: 60, flexDirection: "row", alignItems: "center", gap: 11, paddingHorizontal: 14, paddingVertical: 10 }}>
+            <View
+              style={{
+                minHeight: 60,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 11,
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+              }}
+            >
               <View
                 style={{
                   width: 24,
@@ -155,17 +210,30 @@ export function TariffAssessmentScreen() {
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: 12,
-                  backgroundColor: criterion.state === "MET"
-                    ? palette.primarySoft
-                    : criterion.state === "NOT_MET"
-                      ? `${palette.danger}1A`
-                      : palette.surfaceMuted,
+                  backgroundColor:
+                    criterion.state === "MET"
+                      ? palette.primarySoft
+                      : criterion.state === "NOT_MET"
+                        ? `${palette.danger}1A`
+                        : palette.surfaceMuted,
                 }}
               >
                 <Ionicons
                   accessibilityElementsHidden
-                  color={criterion.state === "MET" ? palette.primary : criterion.state === "NOT_MET" ? palette.danger : palette.textMuted}
-                  name={criterion.state === "MET" ? "checkmark" : criterion.state === "NOT_MET" ? "remove" : "help"}
+                  color={
+                    criterion.state === "MET"
+                      ? palette.primary
+                      : criterion.state === "NOT_MET"
+                        ? palette.danger
+                        : palette.textMuted
+                  }
+                  name={
+                    criterion.state === "MET"
+                      ? "checkmark"
+                      : criterion.state === "NOT_MET"
+                        ? "remove"
+                        : "help"
+                  }
                   size={16}
                 />
               </View>
@@ -182,7 +250,7 @@ export function TariffAssessmentScreen() {
         ))}
       </SurfaceCard>
 
-      <Question
+      <TariffQuestion
         title="Wird dein Arbeitsbereich rund um die Uhr betrieben?"
         caption="Zum Beispiel Station, Intensivbereich oder Notaufnahme mit 24/7-Besetzung."
         options={[
@@ -194,7 +262,7 @@ export function TariffAssessmentScreen() {
         onChange={(value) => setCoverage(value as TvoedWorkplaceCoverage)}
       />
 
-      <Question
+      <TariffQuestion
         title="Gehört das Schichtmodell dauerhaft zu deiner Stelle?"
         caption="Nicht nur einzelne Vertretungen oder gelegentliche Zusatzdienste."
         options={[
@@ -213,25 +281,31 @@ export function TariffAssessmentScreen() {
       ) : null}
 
       <Pressable
+        accessibilityLabel="Angaben speichern"
         accessibilityRole="button"
+        accessibilityState={{ busy: saving, disabled: saving }}
         disabled={saving}
         onPress={() => void saveSettings()}
         style={({ pressed }) => ({
-        minHeight: CONTROL_HEIGHT.regular,
+          minHeight: CONTROL_HEIGHT.regular,
           alignItems: "center",
           justifyContent: "center",
-        borderRadius: RADII.control,
+          borderRadius: RADII.control,
           borderCurve: "continuous",
           backgroundColor: palette.primary,
           opacity: saving ? 0.5 : pressed ? 0.75 : 1,
         })}
       >
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
+        >
           Angaben speichern
         </Text>
       </Pressable>
 
       <Pressable
+        accessibilityLabel="Monatswert manuell festlegen"
         accessibilityRole="button"
         accessibilityState={{ expanded: showOverride }}
         onPress={() => setShowOverride((current) => !current)}
@@ -257,99 +331,54 @@ export function TariffAssessmentScreen() {
 
       {showOverride ? (
         <SurfaceCard>
-          {ALLOWANCE_STATUSES.map((status, index) => (
-            <View key={status}>
-              {index > 0 ? <CardSeparator inset={16} /> : null}
-              <Pressable
-                accessibilityRole="radio"
-                accessibilityState={{ checked: decision?.allowanceStatus === status }}
-                disabled={saving}
-                onPress={() => void confirmOverride(status)}
-                style={({ pressed }) => ({
-                  minHeight: 50,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                  paddingHorizontal: 16,
-                })}
-              >
-                <Text style={{ color: palette.text, fontSize: 13, fontWeight: "700" }}>
-                  {ALLOWANCE_LABELS[status]}
-                </Text>
-                <Text style={{ color: decision?.allowanceStatus === status ? palette.primary : palette.textMuted, fontSize: 17 }}>
-                  {decision?.allowanceStatus === status ? "●" : "○"}
-                </Text>
-              </Pressable>
-            </View>
-          ))}
+          <View accessibilityLabel="Monatswert manuell festlegen" accessibilityRole="radiogroup">
+            {ALLOWANCE_STATUSES.map((status, index) => (
+              <View key={status}>
+                {index > 0 ? <CardSeparator inset={16} /> : null}
+                <Pressable
+                  accessibilityLabel={`Monatswert manuell festlegen: ${ALLOWANCE_LABELS[status]}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{
+                    checked: decision?.allowanceStatus === status,
+                    disabled: saving,
+                  }}
+                  disabled={saving}
+                  onPress={() => void confirmOverride(status)}
+                  style={({ pressed }) => ({
+                    minHeight: 50,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+                    paddingHorizontal: 16,
+                  })}
+                >
+                  <Text style={{ color: palette.text, fontSize: 13, fontWeight: "700" }}>
+                    {ALLOWANCE_LABELS[status]}
+                  </Text>
+                  <Text
+                    accessibilityElementsHidden
+                    style={{
+                      color:
+                        decision?.allowanceStatus === status ? palette.primary : palette.textMuted,
+                      fontSize: 17,
+                    }}
+                  >
+                    {decision?.allowanceStatus === status ? "●" : "○"}
+                  </Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
         </SurfaceCard>
       ) : null}
 
-      <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17, textAlign: "center" }}>
+      <Text
+        selectable
+        style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17, textAlign: "center" }}
+      >
         Automatische Plausibilitätsprüfung · keine Rechts- oder Lohnberatung
       </Text>
     </ScrollView>
-  );
-}
-
-function Question({
-  title,
-  caption,
-  options,
-  value,
-  onChange,
-}: {
-  readonly title: string;
-  readonly caption: string;
-  readonly options: readonly { readonly value: string; readonly label: string }[];
-  readonly value: string;
-  readonly onChange: (value: string) => void;
-}) {
-  const palette = usePalette();
-  return (
-    <View style={{ gap: 9 }}>
-      <View style={{ gap: 3, paddingHorizontal: 2 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>
-          {title}
-        </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
-          {caption}
-        </Text>
-      </View>
-      <View style={{ flexDirection: "row", gap: 7 }}>
-        {options.map((option) => {
-          const selected = option.value === value;
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
-              onPress={() => {
-                onChange(option.value);
-                if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
-              }}
-              style={({ pressed }) => ({
-                minHeight: 44,
-                flex: 1,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: selected ? palette.primary : palette.border,
-                borderRadius: 14,
-                borderCurve: "continuous",
-                backgroundColor: selected ? palette.primarySoft : palette.surface,
-                opacity: pressed ? 0.72 : 1,
-                paddingHorizontal: 8,
-              })}
-            >
-              <Text adjustsFontSizeToFit numberOfLines={1} style={{ color: selected ? palette.primary : palette.textSecondary, fontSize: 12, fontWeight: "800" }}>
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
   );
 }

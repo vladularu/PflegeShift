@@ -1,6 +1,9 @@
 import type { TextStyle } from "react-native";
 
-export const TEXT_MAX_SCALE = 1.6;
+// React Native uses 0 to mean that no maximum font multiplier is applied.
+export const TEXT_MAX_SCALE = 0;
+// Dense calendar glyphs are redundant with complete accessibility labels.
+export const COMPACT_TEXT_MAX_SCALE = 2;
 
 export const TYPOGRAPHY = {
   hero: {

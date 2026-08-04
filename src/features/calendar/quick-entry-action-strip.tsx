@@ -21,7 +21,12 @@ export const QuickEntryActionStrip = memo(function QuickEntryActionStrip({
     <ScrollView
       accessibilityLabel="Schnellauswahl"
       horizontal
-      contentContainerStyle={{ alignItems: "center", gap: 1, paddingHorizontal: 4, paddingRight: 18 }}
+      contentContainerStyle={{
+        alignItems: "center",
+        gap: 1,
+        paddingHorizontal: 4,
+        paddingRight: 18,
+      }}
       decelerationRate="fast"
       directionalLockEnabled
       nestedScrollEnabled

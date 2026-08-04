@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  addMonths,
-  createMonthGrid,
-  createVisibleMonthGrid,
-  monthRange,
-} from "@/engine/calendar";
+import { addMonths, createMonthGrid, createVisibleMonthGrid, monthRange } from "@/engine/calendar";
 
 describe("calendar engine", () => {
   it("builds a Monday-first six-week grid", () => {

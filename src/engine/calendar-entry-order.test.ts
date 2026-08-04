@@ -44,18 +44,14 @@ const appointment: Appointment = {
 
 describe("calendar entry order", () => {
   it("keeps services first, supplemental items next and appointments last", () => {
-    expect(sortCalendarEntries([
-      appointment,
-      shift("training", "TRAINING", "09:00"),
-      shift("late", "LATE", "13:18"),
-      shift("early", "EARLY", "06:00"),
-      shift("sick", "SICK", null),
-    ]).map((entry) => entry.id)).toEqual([
-      "early",
-      "late",
-      "sick",
-      "training",
-      "appointment",
-    ]);
+    expect(
+      sortCalendarEntries([
+        appointment,
+        shift("training", "TRAINING", "09:00"),
+        shift("late", "LATE", "13:18"),
+        shift("early", "EARLY", "06:00"),
+        shift("sick", "SICK", null),
+      ]).map((entry) => entry.id),
+    ).toEqual(["early", "late", "sick", "training", "appointment"]);
   });
 });

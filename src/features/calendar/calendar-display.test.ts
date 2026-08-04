@@ -17,12 +17,7 @@ describe("calendar display helpers", () => {
   });
 
   it("limits calendar entries and reports the remaining count", () => {
-    const entries = [
-      { id: "1" },
-      { id: "2" },
-      { id: "3" },
-      { id: "4" },
-    ];
+    const entries = [{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }];
     const preview = calendarEntryPreview(entries as never, 2);
 
     expect(preview.entries).toHaveLength(2);
@@ -54,15 +49,19 @@ describe("calendar shift details", () => {
   } as never;
 
   it("formats start, end and net duration from persistent display choices", () => {
-    expect(calendarShiftDetail(shift, {
-      showShiftTimes: true,
-      showShiftDuration: true,
-      timeZone: "Europe/Berlin",
-    })).toBe("06:00–14:12 · 7:42 h");
-    expect(calendarShiftDetail(shift, {
-      showShiftTimes: false,
-      showShiftDuration: true,
-      timeZone: "Europe/Berlin",
-    })).toBe("7:42 h");
+    expect(
+      calendarShiftDetail(shift, {
+        showShiftTimes: true,
+        showShiftDuration: true,
+        timeZone: "Europe/Berlin",
+      }),
+    ).toBe("06:00–14:12 · 7:42 h");
+    expect(
+      calendarShiftDetail(shift, {
+        showShiftTimes: false,
+        showShiftDuration: true,
+        timeZone: "Europe/Berlin",
+      }),
+    ).toBe("7:42 h");
   });
 });

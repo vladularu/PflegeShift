@@ -58,11 +58,7 @@ export function calculateCalendarPopupPlacement({
   readonly gap?: number;
 }): CalendarPopupPlacement {
   const maximumLeft = Math.max(edgeInset, viewportWidth - popupWidth - edgeInset);
-  const left = clamp(
-    (viewportWidth - popupWidth) / 2,
-    edgeInset,
-    maximumLeft,
-  );
+  const left = clamp((viewportWidth - popupWidth) / 2, edgeInset, maximumLeft);
   const belowTop = anchor.y + anchor.height + gap;
   const maximumTop = Math.max(
     topInset + edgeInset,
@@ -93,10 +89,7 @@ export function calculateCalendarGridLayout({
 }): CalendarGridLayout {
   const headerHeight = testData ? 64 : 40;
   const usableHeight = Math.max(0, pageHeight - headerHeight - bottomReserve - 8);
-  const rowHeight = Math.max(
-    48,
-    usableHeight / Math.max(1, weekCount),
-  );
+  const rowHeight = Math.max(48, usableHeight / Math.max(1, weekCount));
 
   return Object.freeze({
     headerHeight,
@@ -105,9 +98,7 @@ export function calculateCalendarGridLayout({
   });
 }
 
-export function calculateCalendarBottomReserve(
-  floatingActionBottom: number,
-): number {
+export function calculateCalendarBottomReserve(floatingActionBottom: number): number {
   if (!Number.isFinite(floatingActionBottom)) return 48;
   return Math.max(48, floatingActionBottom - 20);
 }

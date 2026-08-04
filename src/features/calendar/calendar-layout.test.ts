@@ -21,15 +21,17 @@ describe("calendar layout", () => {
   });
 
   it("keeps the day popup horizontally centered below its anchor", () => {
-    expect(calculateCalendarPopupPlacement({
-      anchor: { x: 120, y: 180, width: 48, height: 64 },
-      viewportWidth: 390,
-      viewportHeight: 844,
-      popupWidth: 350,
-      popupHeight: 156,
-      topInset: 47,
-      bottomInset: 96,
-    })).toEqual({
+    expect(
+      calculateCalendarPopupPlacement({
+        anchor: { x: 120, y: 180, width: 48, height: 64 },
+        viewportWidth: 390,
+        viewportHeight: 844,
+        popupWidth: 350,
+        popupHeight: 156,
+        topInset: 47,
+        bottomInset: 96,
+      }),
+    ).toEqual({
       left: 20,
       top: 252,
       direction: "BELOW",
@@ -37,15 +39,17 @@ describe("calendar layout", () => {
   });
 
   it("keeps the popup centered and moves it above a last-row day", () => {
-    expect(calculateCalendarPopupPlacement({
-      anchor: { x: 310, y: 690, width: 48, height: 64 },
-      viewportWidth: 390,
-      viewportHeight: 844,
-      popupWidth: 350,
-      popupHeight: 156,
-      topInset: 47,
-      bottomInset: 96,
-    })).toEqual({
+    expect(
+      calculateCalendarPopupPlacement({
+        anchor: { x: 310, y: 690, width: 48, height: 64 },
+        viewportWidth: 390,
+        viewportHeight: 844,
+        popupWidth: 350,
+        popupHeight: 156,
+        topInset: 47,
+        bottomInset: 96,
+      }),
+    ).toEqual({
       left: 20,
       top: 526,
       direction: "ABOVE",

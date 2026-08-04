@@ -3,12 +3,9 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, Text, View, type ViewStyle } from "react-native";
 
 import { usePalette } from "@/theme/palette";
-import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { COMPACT_TEXT_MAX_SCALE, TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import {
-  accessibleChipBackgroundColor,
-  chipTextColor,
-} from "@/theme/color-contrast";
+import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 
 export function SurfaceCard({
   children,
@@ -48,13 +45,29 @@ export function SectionHeader({
 }) {
   const palette = usePalette();
   return (
-    <View style={{ minHeight: 26, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: SPACING.md }}>
+    <View
+      style={{
+        minHeight: 26,
+        flexDirection: "row",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+        gap: SPACING.md,
+      }}
+    >
       <View style={{ flex: 1, gap: SPACING.xxs }}>
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textSecondary, ...TYPOGRAPHY.sectionTitle }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textSecondary, ...TYPOGRAPHY.sectionTitle }}
+        >
           {title}
         </Text>
         {caption ? (
-          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            selectable
+            style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+          >
             {caption}
           </Text>
         ) : null}
@@ -93,13 +106,15 @@ export function MetricCard({
         padding: compact ? SPACING.md : SPACING.lg,
       }}
     >
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+      >
         {label}
       </Text>
       <Text
         selectable
-        adjustsFontSizeToFit
-        numberOfLines={1}
         style={{
           color: accent ?? palette.text,
           ...TYPOGRAPHY.value,
@@ -145,7 +160,6 @@ export function RowButton({
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
-          numberOfLines={1}
           style={{
             color: destructive ? palette.danger : palette.text,
             ...TYPOGRAPHY.bodyStrong,
@@ -154,18 +168,39 @@ export function RowButton({
           {title}
         </Text>
         {subtitle ? (
-          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable numberOfLines={2} style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            selectable
+            style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+          >
             {subtitle}
           </Text>
         ) : null}
       </View>
-      {trailing ?? (onPress ? <Ionicons accessibilityElementsHidden color={palette.textMuted} name="chevron-forward" size={18} /> : null)}
+      {trailing ??
+        (onPress ? (
+          <Ionicons
+            accessibilityElementsHidden
+            color={palette.textMuted}
+            name="chevron-forward"
+            size={18}
+          />
+        ) : null)}
     </>
   );
 
   if (!onPress && !onLongPress) {
     return (
-      <View style={{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm }}>
+      <View
+        style={{
+          minHeight: 56,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: SPACING.md,
+          paddingHorizontal: SPACING.lg,
+          paddingVertical: SPACING.sm,
+        }}
+      >
         {content}
       </View>
     );
@@ -211,14 +246,44 @@ export function EmptyState({
 }) {
   const palette = usePalette();
   return (
-    <View accessibilityLabel={`${title}. ${message}`} accessible style={{ minHeight: 180, alignItems: "center", justifyContent: "center", gap: SPACING.sm, padding: SPACING.xxl }}>
-      <View accessibilityElementsHidden style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: RADII.control, backgroundColor: palette.primarySoft }}>
+    <View
+      accessibilityLabel={`${title}. ${message}`}
+      accessible
+      style={{
+        minHeight: 180,
+        alignItems: "center",
+        justifyContent: "center",
+        gap: SPACING.sm,
+        padding: SPACING.xxl,
+      }}
+    >
+      <View
+        accessibilityElementsHidden
+        style={{
+          width: 44,
+          height: 44,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: RADII.control,
+          backgroundColor: palette.primarySoft,
+        }}
+      >
         <Ionicons color={palette.primary} name="calendar-clear-outline" size={21} />
       </View>
-      <Text accessibilityElementsHidden maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, textAlign: "center", ...TYPOGRAPHY.sectionTitle }}>
+      <Text
+        accessibilityElementsHidden
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.text, textAlign: "center", ...TYPOGRAPHY.sectionTitle }}
+      >
         {title}
       </Text>
-      <Text accessibilityElementsHidden maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ maxWidth: 290, color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.body }}>
+      <Text
+        accessibilityElementsHidden
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ maxWidth: 290, color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.body }}
+      >
         {message}
       </Text>
       {action}
@@ -234,13 +299,11 @@ export function InlineNotice({
   readonly tone?: "info" | "error" | "warning";
 }) {
   const palette = usePalette();
-  const accent = tone === "error"
-    ? palette.danger
-    : tone === "warning"
-      ? palette.warning
-      : palette.info;
+  const accent =
+    tone === "error" ? palette.danger : tone === "warning" ? palette.warning : palette.info;
   return (
     <View
+      accessible
       accessibilityLiveRegion="polite"
       accessibilityRole={tone === "error" ? "alert" : undefined}
       style={{
@@ -260,10 +323,20 @@ export function InlineNotice({
       <Ionicons
         accessibilityElementsHidden
         color={accent}
-        name={tone === "error" ? "alert-circle-outline" : tone === "warning" ? "warning-outline" : "information-circle-outline"}
+        name={
+          tone === "error"
+            ? "alert-circle-outline"
+            : tone === "warning"
+              ? "warning-outline"
+              : "information-circle-outline"
+        }
         size={18}
       />
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ minWidth: 0, flex: 1, color: accent, ...TYPOGRAPHY.label }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ minWidth: 0, flex: 1, color: accent, ...TYPOGRAPHY.label }}
+      >
         {message}
       </Text>
     </View>
@@ -313,7 +386,13 @@ export function SegmentedControl({
               opacity: pressed ? 0.72 : 1,
             })}
           >
-            <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: selected ? palette.primary : palette.textSecondary, ...TYPOGRAPHY.label }}>
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              style={{
+                color: selected ? palette.primary : palette.textSecondary,
+                ...TYPOGRAPHY.label,
+              }}
+            >
               {item.label}
             </Text>
           </Pressable>
@@ -350,9 +429,17 @@ export function HeaderAction({
       })}
     >
       {label === "+" ? (
-        <Ionicons accessibilityElementsHidden color={emphasis ? palette.onPrimary : palette.primary} name="add" size={22} />
+        <Ionicons
+          accessibilityElementsHidden
+          color={emphasis ? palette.onPrimary : palette.primary}
+          name="add"
+          size={22}
+        />
       ) : (
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: emphasis ? palette.onPrimary : palette.primary, ...TYPOGRAPHY.label }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: emphasis ? palette.onPrimary : palette.primary, ...TYPOGRAPHY.label }}
+        >
           {label}
         </Text>
       )}
@@ -380,7 +467,17 @@ export function ColorBadge({
         backgroundColor: accessibleChipBackgroundColor(color),
       }}
     >
-      <Text adjustsFontSizeToFit maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ maxWidth: size - 10, color: chipTextColor, fontSize: size * 0.34, fontWeight: "800" }}>
+      <Text
+        adjustsFontSizeToFit
+        maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+        numberOfLines={1}
+        style={{
+          maxWidth: size - 10,
+          color: chipTextColor,
+          fontSize: size * 0.34,
+          fontWeight: "800",
+        }}
+      >
         {label}
       </Text>
     </View>

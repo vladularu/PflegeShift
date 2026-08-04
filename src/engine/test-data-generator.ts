@@ -19,10 +19,42 @@ export interface GeneratedTestPlan {
 }
 
 const SHIFTS = {
-  early: { title: "Früh", type: "EARLY", startTime: "06:00", endTime: "14:12", breakMinutes: 30, color: "#7E57C2", symbol: "F" },
-  late: { title: "Spät", type: "LATE", startTime: "13:18", endTime: "21:30", breakMinutes: 30, color: "#2FA36B", symbol: "S" },
-  night: { title: "Nacht", type: "NIGHT", startTime: "21:00", endTime: "07:30", breakMinutes: 60, color: "#EA5B55", symbol: "N" },
-  day: { title: "Tag", type: "DAY", startTime: "08:00", endTime: "16:12", breakMinutes: 30, color: "#2F80ED", symbol: "T" },
+  early: {
+    title: "Früh",
+    type: "EARLY",
+    startTime: "06:00",
+    endTime: "14:12",
+    breakMinutes: 30,
+    color: "#7E57C2",
+    symbol: "F",
+  },
+  late: {
+    title: "Spät",
+    type: "LATE",
+    startTime: "13:18",
+    endTime: "21:30",
+    breakMinutes: 30,
+    color: "#2FA36B",
+    symbol: "S",
+  },
+  night: {
+    title: "Nacht",
+    type: "NIGHT",
+    startTime: "21:00",
+    endTime: "07:30",
+    breakMinutes: 60,
+    color: "#EA5B55",
+    symbol: "N",
+  },
+  day: {
+    title: "Tag",
+    type: "DAY",
+    startTime: "08:00",
+    endTime: "16:12",
+    breakMinutes: 30,
+    color: "#2F80ED",
+    symbol: "T",
+  },
 } as const;
 
 function datesInMonth(month: string): Temporal.PlainDate[] {
@@ -32,11 +64,21 @@ function datesInMonth(month: string): Temporal.PlainDate[] {
   );
 }
 
-function shift(date: string, preset: keyof typeof SHIFTS, extra: Partial<SaveShiftInput> = {}): SaveShiftInput {
+function shift(
+  date: string,
+  preset: keyof typeof SHIFTS,
+  extra: Partial<SaveShiftInput> = {},
+): SaveShiftInput {
   return validateShift({ date, ...SHIFTS[preset], ...extra });
 }
 
-function absence(date: string, type: "VACATION" | "SICK" | "FREE", title: string, color: string, symbol: string): SaveShiftInput {
+function absence(
+  date: string,
+  type: "VACATION" | "SICK" | "FREE",
+  title: string,
+  color: string,
+  symbol: string,
+): SaveShiftInput {
   return validateShift({ date, title, type, color, symbol, breakMinutes: 0 });
 }
 
@@ -52,12 +94,23 @@ function appointment(date: string, index: number, allDay = false): SaveAppointme
   });
 }
 
-function normalMonth(month: string, shifts: SaveShiftInput[], appointments: SaveAppointmentInput[]) {
+function normalMonth(
+  month: string,
+  shifts: SaveShiftInput[],
+  appointments: SaveAppointmentInput[],
+) {
   const days = datesInMonth(month);
   const rotation = ["early", "early", "late", "late", "FREE", "night", "FREE"] as const;
   days.forEach((date, index) => {
     if (index === 10) {
-      shifts.push(shift(date.toString(), "day", { title: "Fortbildung", type: "TRAINING", color: "#8B5CF6", symbol: "FB" }));
+      shifts.push(
+        shift(date.toString(), "day", {
+          title: "Fortbildung",
+          type: "TRAINING",
+          color: "#8B5CF6",
+          symbol: "FB",
+        }),
+      );
     } else if (index === 18 || index === 19) {
       shifts.push(absence(date.toString(), "VACATION", "Urlaub", "#0EA5E9", "U"));
     } else {
@@ -86,7 +139,13 @@ function premiumMonth(
   days.forEach((date, index) => {
     const key = date.toString();
     if (holidays.has(key)) {
-      shifts.push(shift(key, "day", { overtimeMinutes: 60, holidayPremiumMode: "WITHOUT_TIME_OFF", note: "Feiertagszuschlag testen" }));
+      shifts.push(
+        shift(key, "day", {
+          overtimeMinutes: 60,
+          holidayPremiumMode: "WITHOUT_TIME_OFF",
+          note: "Feiertagszuschlag testen",
+        }),
+      );
       premiumCalendarDay = true;
     } else if (date.month === 12 && (date.day === 24 || date.day === 31)) {
       shifts.push(shift(key, "day", { overtimeMinutes: 30, note: "Vorfestzuschlag testen" }));
@@ -100,7 +159,8 @@ function premiumMonth(
     }
     if (index % 8 === 2) appointments.push(appointment(key, index));
   });
-  if (!premiumCalendarDay) warnings.push(`${month}: Kein Feiertag oder Vorfest im gewählten Monat.`);
+  if (!premiumCalendarDay)
+    warnings.push(`${month}: Kein Feiertag oder Vorfest im gewählten Monat.`);
 }
 
 function complianceMonth(month: string, shifts: SaveShiftInput[]) {
@@ -109,7 +169,12 @@ function complianceMonth(month: string, shifts: SaveShiftInput[]) {
     const date = dates[Math.min(day - 1, dates.length - 1)];
     shifts.push(shift(date, preset, extra));
   };
-  add(1, "day", { title: "Über 10 Stunden", startTime: "06:00", endTime: "18:30", breakMinutes: 30 });
+  add(1, "day", {
+    title: "Über 10 Stunden",
+    startTime: "06:00",
+    endTime: "18:30",
+    breakMinutes: 30,
+  });
   add(3, "day", { title: "Pause zu kurz", startTime: "07:00", endTime: "16:30", breakMinutes: 15 });
   add(5, "late", { title: "Überschneidung A", endTime: "22:00" });
   add(5, "night", { title: "Überschneidung B", startTime: "21:00" });
@@ -119,14 +184,20 @@ function complianceMonth(month: string, shifts: SaveShiftInput[]) {
   for (let day = 21; day <= 25; day++) add(day, "night", { title: `Nachtserie ${day - 20}` });
 }
 
-function stressMonth(month: string, shifts: SaveShiftInput[], appointments: SaveAppointmentInput[]) {
+function stressMonth(
+  month: string,
+  shifts: SaveShiftInput[],
+  appointments: SaveAppointmentInput[],
+) {
   datesInMonth(month).forEach((date, index) => {
     const key = date.toString();
     shifts.push(shift(key, "early", { title: `Früh ${index + 1}` }));
     shifts.push(shift(key, "late", { title: `Spät ${index + 1}` }));
-    shifts.push(index % 4 === 0
-      ? absence(key, "VACATION", "Urlaub", "#0EA5E9", "U")
-      : shift(key, "night", { title: `Nacht ${index + 1}` }));
+    shifts.push(
+      index % 4 === 0
+        ? absence(key, "VACATION", "Urlaub", "#0EA5E9", "U")
+        : shift(key, "night", { title: `Nacht ${index + 1}` }),
+    );
     appointments.push(appointment(key, index));
     appointments.push(appointment(key, index + 100, true));
   });

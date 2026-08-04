@@ -130,4 +130,6 @@ save("splash-icon.png", 512, [0, 0, 0, 0], (canvas, scale) => drawMark(canvas, s
 save("favicon.png", 48, [231, 245, 240, 255], (canvas, scale) => drawMark(canvas, scale));
 save("android-icon-background.png", 432, [231, 245, 240, 255], () => {});
 save("android-icon-foreground.png", 432, [0, 0, 0, 0], (canvas, scale) => drawMark(canvas, scale));
-save("android-icon-monochrome.png", 432, [0, 0, 0, 0], (canvas, scale) => drawMark(canvas, scale, true));
+save("android-icon-monochrome.png", 432, [0, 0, 0, 0], (canvas, scale) =>
+  drawMark(canvas, scale, true),
+);

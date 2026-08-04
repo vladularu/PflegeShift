@@ -13,6 +13,10 @@ export const SHIFT_COLOR_PAIRS = [
 
 export const SHIFT_COLORS = SHIFT_COLOR_PAIRS.map((pair) => pair.main);
 
+export const APPOINTMENT_COLOR = "#2F80ED";
+export const HOLIDAY_COLOR = "#8B5BD1";
+export const DEFAULT_TEMPLATE_COLOR = SHIFT_COLOR_PAIRS[6].main;
+
 export const SHIFT_TYPE_COLORS: Readonly<Record<ShiftType, string>> = {
   EARLY: "#62B94C",
   LATE: "#F05C59",

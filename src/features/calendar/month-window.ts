@@ -6,16 +6,11 @@ export function createMonthWindow(
   after: number,
 ): readonly string[] {
   return Object.freeze(
-    Array.from({ length: before + after + 1 }, (_, index) =>
-      addMonths(anchor, index - before),
-    ),
+    Array.from({ length: before + after + 1 }, (_, index) => addMonths(anchor, index - before)),
   );
 }
 
-export function appendMonths(
-  months: readonly string[],
-  amount: number,
-): readonly string[] {
+export function appendMonths(months: readonly string[], amount: number): readonly string[] {
   const last = months.at(-1);
   if (!last) return months;
   return Object.freeze([
@@ -24,16 +19,11 @@ export function appendMonths(
   ]);
 }
 
-export function prependMonths(
-  months: readonly string[],
-  amount: number,
-): readonly string[] {
+export function prependMonths(months: readonly string[], amount: number): readonly string[] {
   const first = months[0];
   if (!first) return months;
   return Object.freeze([
-    ...Array.from({ length: amount }, (_, index) =>
-      addMonths(first, index - amount),
-    ),
+    ...Array.from({ length: amount }, (_, index) => addMonths(first, index - amount)),
     ...months,
   ]);
 }
@@ -60,9 +50,6 @@ export function monthAtPagerOffset(
   ) {
     return null;
   }
-  const index = Math.max(
-    0,
-    Math.min(months.length - 1, Math.round(offset / pageHeight)),
-  );
+  const index = Math.max(0, Math.min(months.length - 1, Math.round(offset / pageHeight)));
   return months[index] ?? null;
 }

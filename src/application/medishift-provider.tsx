@@ -23,6 +23,7 @@ import type {
   TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
+import { DATA_LOAD_FAILURE_MESSAGE } from "@/domain/errors";
 import {
   deleteCalendarEntry,
   deleteTemplate,
@@ -36,10 +37,13 @@ import {
   saveProfile,
   saveShift,
   saveTemplate,
+  swapTemplateSortOrder,
   saveTvoedWorkPatternSettings,
 } from "@/infrastructure/database/repository";
-import { listTestBackupMonths } from "@/infrastructure/database/dev-tools-repository";
+import { listTestBackupMonths } from "@/infrastructure/database/test-backup-status-repository";
+import { DEV_TOOLS_AVAILABLE, shouldLoadDevToolState } from "@/infrastructure/dev-tools-policy";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
+import { recordDiagnostic } from "@/infrastructure/diagnostics";
 
 interface MediShiftStatusValue {
   readonly ready: boolean;
@@ -113,10 +117,7 @@ function upsertSortedCalendarEntry(
   return Object.freeze(next);
 }
 
-function useRequiredContext<T>(
-  context: React.Context<T | null>,
-  name: string,
-): T {
+function useRequiredContext<T>(context: React.Context<T | null>, name: string): T {
   const value = React.use(context);
   if (value === null) {
     throw new Error(`${name} muss innerhalb des MediShiftProvider verwendet werden.`);
@@ -142,13 +143,14 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
 
   const reload = useCallback(async () => {
     try {
-      const [nextProfile, nextTemplates, nextEntries, nextDecisions, nextWorkPatternSettings] = await Promise.all([
-        loadProfile(db),
-        listTemplates(db),
-        listCalendarEntries(db),
-        listMonthlyTariffDecisions(db),
-        loadTvoedWorkPatternSettings(db),
-      ]);
+      const [nextProfile, nextTemplates, nextEntries, nextDecisions, nextWorkPatternSettings] =
+        await Promise.all([
+          loadProfile(db),
+          listTemplates(db),
+          listCalendarEntries(db),
+          listMonthlyTariffDecisions(db),
+          loadTvoedWorkPatternSettings(db),
+        ]);
       setProfile(nextProfile);
       setTemplates(nextTemplates);
       setEntries(nextEntries);
@@ -157,7 +159,8 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
       setTestDataLoadRevision((current) => current + 1);
       setError(null);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Lokale Daten konnten nicht geladen werden.");
+      recordDiagnostic("provider", "PROVIDER_RELOAD_FAILED", loadError);
+      setError(DATA_LOAD_FAILURE_MESSAGE);
     } finally {
       setReady(true);
     }
@@ -168,13 +171,14 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
   }, [reload]);
 
   useEffect(() => {
-    if (!ready || testDataLoadRevision === 0) return;
+    if (!shouldLoadDevToolState(DEV_TOOLS_AVAILABLE, ready, testDataLoadRevision)) return;
     let active = true;
     void listTestBackupMonths(db)
       .then((months) => {
         if (active) setTestMonths(months);
       })
-      .catch(() => {
+      .catch((loadError) => {
+        recordDiagnostic("dev-tools", "DEV_BACKUP_STATUS_FAILED", loadError);
         // Testdaten sind eine nachgelagerte Entwickleranzeige und blockieren
         // weder den Kalenderstart noch vorhandene Nutzerdaten.
       });
@@ -183,90 +187,114 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
     };
   }, [db, ready, testDataLoadRevision]);
 
-  const updateProfile = useCallback(async (input: SaveProfileInput) => {
-    const saved = await saveProfile(db, input);
-    setProfile(saved);
-    return saved;
-  }, [db]);
+  const updateProfile = useCallback(
+    async (input: SaveProfileInput) => {
+      const saved = await saveProfile(db, input);
+      setProfile(saved);
+      return saved;
+    },
+    [db],
+  );
 
-  const upsertTemplate = useCallback(async (input: SaveShiftTemplateInput) => {
-    const saved = await saveTemplate(db, input);
-    setTemplates((current) =>
-      replaceById(current, saved)
-        .filter((template) => template.deletedAt === null)
-        .sort((left, right) => left.sortOrder - right.sortOrder),
-    );
-    setEntries((current) => Object.freeze(current.map((entry) =>
-      entry.kind === "SHIFT" && entry.templateId === saved.id
-        ? Object.freeze({
-            ...entry,
-            title: saved.name,
-            color: saved.color,
-            symbol: saved.symbol,
-          })
-        : entry,
-    )));
-    return saved;
-  }, [db]);
+  const upsertTemplate = useCallback(
+    async (input: SaveShiftTemplateInput) => {
+      const saved = await saveTemplate(db, input);
+      setTemplates((current) =>
+        replaceById(current, saved)
+          .filter((template) => template.deletedAt === null)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
+      );
+      setEntries((current) =>
+        Object.freeze(
+          current.map((entry) =>
+            entry.kind === "SHIFT" && entry.templateId === saved.id
+              ? Object.freeze({
+                  ...entry,
+                  title: saved.name,
+                  color: saved.color,
+                  symbol: saved.symbol,
+                })
+              : entry,
+          ),
+        ),
+      );
+      return saved;
+    },
+    [db],
+  );
 
-  const removeTemplate = useCallback(async (template: ShiftTemplate) => {
-    await deleteTemplate(db, template.id, template.revision);
-    setTemplates((current) => current.filter((item) => item.id !== template.id));
-  }, [db]);
+  const removeTemplate = useCallback(
+    async (template: ShiftTemplate) => {
+      await deleteTemplate(db, template.id, template.revision);
+      setTemplates((current) => current.filter((item) => item.id !== template.id));
+    },
+    [db],
+  );
 
-  const moveTemplate = useCallback(async (template: ShiftTemplate, direction: -1 | 1) => {
-    const currentIndex = templates.findIndex((item) => item.id === template.id);
-    const targetIndex = currentIndex + direction;
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= templates.length) return;
+  const moveTemplate = useCallback(
+    async (template: ShiftTemplate, direction: -1 | 1) => {
+      const currentIndex = templates.findIndex((item) => item.id === template.id);
+      const targetIndex = currentIndex + direction;
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= templates.length) return;
 
-    const target = templates[targetIndex];
-    await saveTemplate(db, {
-      ...template,
-      expectedRevision: template.revision,
-      sortOrder: target.sortOrder,
-    });
-    await saveTemplate(db, {
-      ...target,
-      expectedRevision: target.revision,
-      sortOrder: template.sortOrder,
-    });
-    setTemplates(await listTemplates(db));
-  }, [db, templates]);
+      const target = templates[targetIndex];
+      const swapped = await swapTemplateSortOrder(db, template, target);
+      setTemplates((current) =>
+        current
+          .map((item) => swapped.find((saved) => saved.id === item.id) ?? item)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
+      );
+    },
+    [db, templates],
+  );
 
-  const upsertShift = useCallback(async (input: SaveShiftInput) => {
-    const saved = await saveShift(db, input);
-    setEntries((current) => upsertSortedCalendarEntry(current, saved));
-    return saved;
-  }, [db]);
+  const upsertShift = useCallback(
+    async (input: SaveShiftInput) => {
+      const saved = await saveShift(db, input);
+      setEntries((current) => upsertSortedCalendarEntry(current, saved));
+      return saved;
+    },
+    [db],
+  );
 
-  const upsertAppointment = useCallback(async (input: SaveAppointmentInput) => {
-    const saved = await saveAppointment(db, input);
-    setEntries((current) => upsertSortedCalendarEntry(current, saved));
-    return saved;
-  }, [db]);
+  const upsertAppointment = useCallback(
+    async (input: SaveAppointmentInput) => {
+      const saved = await saveAppointment(db, input);
+      setEntries((current) => upsertSortedCalendarEntry(current, saved));
+      return saved;
+    },
+    [db],
+  );
 
-  const removeEntry = useCallback(async (entry: CalendarEntry) => {
-    await deleteCalendarEntry(db, entry);
-    setEntries((current) => current.filter((item) => item.id !== entry.id));
-  }, [db]);
+  const removeEntry = useCallback(
+    async (entry: CalendarEntry) => {
+      await deleteCalendarEntry(db, entry);
+      setEntries((current) => current.filter((item) => item.id !== entry.id));
+    },
+    [db],
+  );
 
-  const upsertTariffDecision = useCallback(async (input: SaveMonthlyTariffDecisionInput) => {
-    const saved = await saveMonthlyTariffDecision(db, input);
-    setTariffDecisions((current) =>
-      [...current.filter((item) => item.month !== saved.month), saved].sort(
-        (left, right) => left.month.localeCompare(right.month),
-      ),
-    );
-    return saved;
-  }, [db]);
+  const upsertTariffDecision = useCallback(
+    async (input: SaveMonthlyTariffDecisionInput) => {
+      const saved = await saveMonthlyTariffDecision(db, input);
+      setTariffDecisions((current) =>
+        [...current.filter((item) => item.month !== saved.month), saved].sort((left, right) =>
+          left.month.localeCompare(right.month),
+        ),
+      );
+      return saved;
+    },
+    [db],
+  );
 
-  const updateWorkPatternSettings = useCallback(async (
-    input: SaveTvoedWorkPatternSettingsInput,
-  ) => {
-    const saved = await saveTvoedWorkPatternSettings(db, input);
-    setWorkPatternSettings(saved);
-    return saved;
-  }, [db]);
+  const updateWorkPatternSettings = useCallback(
+    async (input: SaveTvoedWorkPatternSettingsInput) => {
+      const saved = await saveTvoedWorkPatternSettings(db, input);
+      setWorkPatternSettings(saved);
+      return saved;
+    },
+    [db],
+  );
 
   const statusValue = useMemo<MediShiftStatusValue>(
     () => ({ ready, error, reload }),
@@ -293,10 +321,7 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
     }),
     [tariffDecisions, updateWorkPatternSettings, upsertTariffDecision, workPatternSettings],
   );
-  const testDataValue = useMemo<MediShiftTestDataValue>(
-    () => ({ testMonths }),
-    [testMonths],
-  );
+  const testDataValue = useMemo<MediShiftTestDataValue>(() => ({ testMonths }), [testMonths]);
 
   return (
     <MediShiftStatusContext value={statusValue}>
@@ -304,9 +329,7 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
         <MediShiftTemplatesContext value={templatesValue}>
           <MediShiftEntriesContext value={entriesValue}>
             <MediShiftTariffContext value={tariffValue}>
-              <MediShiftTestDataContext value={testDataValue}>
-                {children}
-              </MediShiftTestDataContext>
+              <MediShiftTestDataContext value={testDataValue}>{children}</MediShiftTestDataContext>
             </MediShiftTariffContext>
           </MediShiftEntriesContext>
         </MediShiftTemplatesContext>

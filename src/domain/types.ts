@@ -55,7 +55,16 @@ export type TimedShiftType = Exclude<ShiftType, "VACATION" | "SICK" | "FREE">;
 export type AbsenceShiftType = "VACATION" | "SICK";
 
 export const PAY_GROUPS = [
-  "P7", "P8", "P9", "P10", "P11", "P12", "P13", "P14", "P15", "P16",
+  "P7",
+  "P8",
+  "P9",
+  "P10",
+  "P11",
+  "P12",
+  "P13",
+  "P14",
+  "P15",
+  "P16",
 ] as const;
 export type PayGroup = (typeof PAY_GROUPS)[number];
 export const PAY_LEVELS = [2, 3, 4, 5, 6] as const;

@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 
 import {
@@ -11,11 +11,12 @@ import { currentMonth, formatDateTitle, formatMonthTitle } from "@/engine/calend
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { formatMinutes } from "@/engine/working-time";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
+import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SPACING } from "@/theme/tokens";
 import { SectionHeader, SurfaceCard } from "@/ui/design-system";
-import { LoadingView } from "@/ui/loading-view";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 
 function euro(value: number): string {
   return new Intl.NumberFormat("de-DE", {
@@ -26,15 +27,28 @@ function euro(value: number): string {
 
 export function PremiumDetailsScreen() {
   const palette = usePalette();
-  const params = useLocalSearchParams<{ month?: string }>();
-  const { ready } = useMediShiftStatus();
+  const params = useLocalSearchParams<{ month?: RouteParam }>();
+  const { error, ready, reload } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
   const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
-  const month = typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)
-    ? params.month
-    : currentMonth(profile?.timeZone);
+  const parsedMonth = parseMonthRouteParam(params.month);
+  const month =
+    parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);
 
+  if (parsedMonth.status !== "valid") {
+    return (
+      <LoadFailureView
+        actionLabel="Schließen"
+        message="Der Link zu den Zuschlagsdetails enthält keinen gültigen Monat."
+        onRetry={() => router.back()}
+        title="Zuschlagsdetails können nicht geöffnet werden"
+      />
+    );
+  }
+  if (ready && error) {
+    return <LoadFailureView message={error} onRetry={() => void reload()} />;
+  }
   if (!ready || profile === null) return <LoadingView />;
 
   const { allowanceShifts, monthShifts } = selectAnalysisEntryWindow(entries, month);
@@ -58,13 +72,15 @@ export function PremiumDetailsScreen() {
       contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
     >
       <SurfaceCard style={{ gap: SPACING.xs, padding: SPACING.lg }}>
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+        >
           {formatMonthTitle(month)}
         </Text>
         <Text
           selectable
-          adjustsFontSizeToFit
-          numberOfLines={1}
           style={{
             color: palette.text,
             ...TYPOGRAPHY.hero,
@@ -74,8 +90,13 @@ export function PremiumDetailsScreen() {
         >
           {euro(pay.timePremiumAmount)}
         </Text>
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
-          {lineCount} {lineCount === 1 ? "Zuschlagsposition" : "Zuschlagspositionen"} aus {premiumShifts.length} {premiumShifts.length === 1 ? "Dienst" : "Diensten"}
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+        >
+          {lineCount} {lineCount === 1 ? "Zuschlagsposition" : "Zuschlagspositionen"} aus{" "}
+          {premiumShifts.length} {premiumShifts.length === 1 ? "Dienst" : "Diensten"}
         </Text>
       </SurfaceCard>
 
@@ -96,12 +117,22 @@ export function PremiumDetailsScreen() {
             return (
               <SurfaceCard key={item.shiftId} style={{ gap: 12, padding: 16 }}>
                 <View style={{ gap: 3 }}>
-                  <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    selectable
+                    style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                  >
                     {formatDateTitle(item.date)}
                   </Text>
-                  <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    selectable
+                    style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                  >
                     {shift?.title ?? "Dienst"}
-                    {shift?.startTime ? ` · ${shift.startTime}${shift.endTime ? `–${shift.endTime}` : ""}` : ""}
+                    {shift?.startTime
+                      ? ` · ${shift.startTime}${shift.endTime ? `–${shift.endTime}` : ""}`
+                      : ""}
                   </Text>
                 </View>
                 <View style={{ height: 1, backgroundColor: palette.separator }} />
@@ -116,11 +147,20 @@ export function PremiumDetailsScreen() {
                     }}
                   >
                     <View style={{ minWidth: 0, flex: 1, gap: 3 }}>
-                      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textSecondary, ...TYPOGRAPHY.label }}>
+                      <Text
+                        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                        selectable
+                        style={{ color: palette.textSecondary, ...TYPOGRAPHY.label }}
+                      >
                         {line.label}
                       </Text>
-                      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
-                        {formatMinutes(line.minutes)} × {line.percentage} % × {euro(line.hourlyRate)}/h
+                      <Text
+                        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                        selectable
+                        style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                      >
+                        {formatMinutes(line.minutes)} × {line.percentage} % ×{" "}
+                        {euro(line.hourlyRate)}/h
                       </Text>
                     </View>
                     <Text

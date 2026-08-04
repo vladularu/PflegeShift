@@ -48,24 +48,34 @@ function appointment(id: string, date: string): Appointment {
 
 describe("buildCalendarEntryIndex", () => {
   it("indexes visible entries and monthly shifts in one pass", () => {
-    const index = buildCalendarEntryIndex([
-      shift("july", "2026-07-31"),
-      shift("august", "2026-08-01"),
-      appointment("appointment", "2026-08-01"),
-      shift("deleted", "2026-08-02", "2026-08-03T00:00:00.000Z"),
-    ], { showAppointments: true, showShifts: true });
+    const index = buildCalendarEntryIndex(
+      [
+        shift("july", "2026-07-31"),
+        shift("august", "2026-08-01"),
+        appointment("appointment", "2026-08-01"),
+        shift("deleted", "2026-08-02", "2026-08-03T00:00:00.000Z"),
+      ],
+      { showAppointments: true, showShifts: true },
+    );
 
-    expect(index.visibleEntries.map((entry) => entry.id)).toEqual(["july", "august", "appointment"]);
-    expect(index.entriesByDate.get("2026-08-01")?.map((entry) => entry.id)).toEqual(["august", "appointment"]);
+    expect(index.visibleEntries.map((entry) => entry.id)).toEqual([
+      "july",
+      "august",
+      "appointment",
+    ]);
+    expect(index.entriesByDate.get("2026-08-01")?.map((entry) => entry.id)).toEqual([
+      "august",
+      "appointment",
+    ]);
     expect(index.shiftsByMonth.get("2026-07")?.map((entry) => entry.id)).toEqual(["july"]);
     expect(index.shiftsByMonth.get("2026-08")?.map((entry) => entry.id)).toEqual(["august"]);
   });
 
   it("keeps salary and progress shifts indexed when shifts are visually hidden", () => {
-    const index = buildCalendarEntryIndex([
-      shift("shift", "2026-08-01"),
-      appointment("appointment", "2026-08-01"),
-    ], { showAppointments: true, showShifts: false });
+    const index = buildCalendarEntryIndex(
+      [shift("shift", "2026-08-01"), appointment("appointment", "2026-08-01")],
+      { showAppointments: true, showShifts: false },
+    );
 
     expect(index.visibleEntries.map((entry) => entry.id)).toEqual(["appointment"]);
     expect(index.shiftsByMonth.get("2026-08")?.map((entry) => entry.id)).toEqual(["shift"]);

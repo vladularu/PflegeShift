@@ -1,0 +1,20 @@
+appId: com.medishift.app.internal
+---
+- runFlow: onboarding.yml
+- tapOn: "Schnelleintrag öffnen"
+- tapOn: "Dienst auswählen"
+- assertVisible: "Bezeichnung"
+- tapOn: "Bezeichnung"
+- eraseText
+- inputText: "SQLCipher Persistenz"
+- hideKeyboard
+- tapOn: "Sichern und schließen"
+- extendedWaitUntil:
+    visible: "SQLCipher Persistenz"
+    timeout: 10000
+- stopApp
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: "SQLCipher Persistenz"
+    timeout: 15000

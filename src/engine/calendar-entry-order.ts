@@ -6,20 +6,17 @@ function entryPriority(entry: CalendarEntry): number {
   return 0;
 }
 
-export function compareCalendarEntries(
-  left: CalendarEntry,
-  right: CalendarEntry,
-): number {
-  return left.date.localeCompare(right.date) ||
+export function compareCalendarEntries(left: CalendarEntry, right: CalendarEntry): number {
+  return (
+    left.date.localeCompare(right.date) ||
     entryPriority(left) - entryPriority(right) ||
     (left.startTime ?? "").localeCompare(right.startTime ?? "") ||
     left.createdAt.localeCompare(right.createdAt) ||
     left.title.localeCompare(right.title) ||
-    left.id.localeCompare(right.id);
+    left.id.localeCompare(right.id)
+  );
 }
 
-export function sortCalendarEntries(
-  entries: readonly CalendarEntry[],
-): readonly CalendarEntry[] {
+export function sortCalendarEntries(entries: readonly CalendarEntry[]): readonly CalendarEntry[] {
   return Object.freeze([...entries].sort(compareCalendarEntries));
 }

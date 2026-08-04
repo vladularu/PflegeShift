@@ -4,9 +4,27 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "e2e-test": {
+      "distribution": "internal",
+      "withoutCredentials": true,
+      "env": {
+        "APP_VARIANT": "internal",
+        "EXPO_PUBLIC_ENABLE_DEV_TOOLS": "0"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
     "preview": {
       "distribution": "internal",
       "autoIncrement": true,
+      "env": {
+        "APP_VARIANT": "internal",
+        "EXPO_PUBLIC_ENABLE_DEV_TOOLS": "1"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -16,6 +34,10 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_ENABLE_DEV_TOOLS": "0"
+      },
       "android": {
         "buildType": "app-bundle"
       },

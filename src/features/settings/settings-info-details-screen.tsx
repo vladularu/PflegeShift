@@ -1,10 +1,12 @@
-import Constants from "expo-constants";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 
 import type { SettingsInfoSection } from "@/navigation/routes";
+import { APP_RUNTIME_LABEL } from "@/infrastructure/app-version";
+import { parseEnumRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { SurfaceCard } from "@/ui/design-system";
+import { LoadFailureView } from "@/ui/loading-view";
 
 interface InfoContent {
   readonly title: string;
@@ -18,7 +20,8 @@ interface InfoContent {
 const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   STORAGE: {
     title: "Lokale Datenspeicherung",
-    intro: "MediShift arbeitet offline und speichert deine Angaben ausschließlich auf diesem Gerät.",
+    intro:
+      "MediShift arbeitet offline und speichert deine Angaben ausschließlich auf diesem Gerät.",
     items: [
       {
         title: "Kein Konto erforderlich",
@@ -36,7 +39,8 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   },
   CALCULATION: {
     title: "Berechnungshinweise",
-    intro: "Alle Auswertungen werden lokal aus deinem Arbeitszeitmodell, deinen Diensten und deinem Tarifprofil abgeleitet.",
+    intro:
+      "Alle Auswertungen werden lokal aus deinem Arbeitszeitmodell, deinen Diensten und deinem Tarifprofil abgeleitet.",
     items: [
       {
         title: "Arbeitszeit",
@@ -54,7 +58,8 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   },
   TVOED_ALLOWANCE: {
     title: "TVöD-Zulage",
-    intro: "Die allgemeine TVöD-Zulage wird automatisch aus deinem Tarifprofil und Beschäftigungsumfang abgeleitet.",
+    intro:
+      "Die allgemeine TVöD-Zulage wird automatisch aus deinem Tarifprofil und Beschäftigungsumfang abgeleitet.",
     items: [
       {
         title: "Vollzeitbetrag",
@@ -72,7 +77,8 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   },
   CARE_ALLOWANCE: {
     title: "Pflegezulage TVöD-P",
-    intro: "Die Pflegezulage wird aus dem gültigen Tarifstand und deinem Beschäftigungsumfang berechnet.",
+    intro:
+      "Die Pflegezulage wird aus dem gültigen Tarifstand und deinem Beschäftigungsumfang berechnet.",
     items: [
       {
         title: "Automatische Höhe",
@@ -94,7 +100,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     items: [
       {
         title: "Version",
-        text: `${Constants.expoConfig?.version ?? "0.1.0"} · Expo SDK 54`,
+        text: APP_RUNTIME_LABEL,
       },
       {
         title: "Produktprinzip",
@@ -108,18 +114,27 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   },
 };
 
-function isInfoSection(value: string | undefined): value is SettingsInfoSection {
-  return value === "STORAGE" ||
-    value === "CALCULATION" ||
-    value === "ABOUT" ||
-    value === "TVOED_ALLOWANCE" ||
-    value === "CARE_ALLOWANCE";
-}
-
 export function SettingsInfoDetailsScreen() {
   const palette = usePalette();
-  const params = useLocalSearchParams<{ section?: string }>();
-  const section = isInfoSection(params.section) ? params.section : "ABOUT";
+  const params = useLocalSearchParams<{ section?: RouteParam }>();
+  const parsedSection = parseEnumRouteParam(params.section, [
+    "STORAGE",
+    "CALCULATION",
+    "ABOUT",
+    "TVOED_ALLOWANCE",
+    "CARE_ALLOWANCE",
+  ] as const);
+  if (parsedSection.status !== "valid") {
+    return (
+      <LoadFailureView
+        actionLabel="Schließen"
+        message="Der Link zur Information enthält einen unbekannten Bereich."
+        onRetry={() => router.back()}
+        title="Information kann nicht geöffnet werden"
+      />
+    );
+  }
+  const section: SettingsInfoSection = parsedSection.value;
   const content = INFO_CONTENT[section];
 
   return (

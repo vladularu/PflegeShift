@@ -1,10 +1,4 @@
-import type {
-  FederalState,
-  PayGroup,
-  PayLevel,
-  TariffSector,
-  UserProfile,
-} from "@/domain/types";
+import type { FederalState, PayGroup, PayLevel, TariffSector, UserProfile } from "@/domain/types";
 
 export interface SettingsFormValues {
   readonly federalState: FederalState;
@@ -28,6 +22,8 @@ export function settingsFormValues(profile: UserProfile): SettingsFormValues {
     sector: profile.tariff?.sector ?? "BT_K",
     fullTimeHours: profile.tariff
       ? formatHours(profile.tariff.fullTimeWeeklyMinutes)
-      : profile.federalState === "BW" ? "39" : "38,5",
+      : profile.federalState === "BW"
+        ? "39"
+        : "38,5",
   });
 }

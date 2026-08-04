@@ -163,6 +163,15 @@ CREATE INDEX IF NOT EXISTS idx_dev_test_backups_run
   ON dev_test_backups(run_id);
 `;
 
+const MIGRATION_6 = `
+CREATE INDEX IF NOT EXISTS idx_shift_entries_deleted_at
+  ON shift_entries(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_appointments_deleted_at
+  ON appointments(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_shift_templates_deleted_at
+  ON shift_templates(deleted_at) WHERE deleted_at IS NOT NULL;
+`;
+
 async function addColumnIfMissing(
   db: SQLiteDatabase,
   table: string,
@@ -176,7 +185,9 @@ async function addColumnIfMissing(
 }
 
 export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
-  await db.execAsync("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
+  await db.execAsync(
+    "PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA secure_delete = ON;",
+  );
   await db.execAsync(MIGRATION_1);
   const now = new Date().toISOString();
   await db.runAsync(
@@ -192,18 +203,8 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     await addColumnIfMissing(db, "user_profile", "pay_group", "TEXT");
     await addColumnIfMissing(db, "user_profile", "pay_level", "INTEGER");
     await addColumnIfMissing(db, "user_profile", "tariff_sector", "TEXT");
-    await addColumnIfMissing(
-      db,
-      "user_profile",
-      "full_time_weekly_minutes",
-      "INTEGER",
-    );
-    await addColumnIfMissing(
-      db,
-      "shift_entries",
-      "overtime_minutes",
-      "INTEGER NOT NULL DEFAULT 0",
-    );
+    await addColumnIfMissing(db, "user_profile", "full_time_weekly_minutes", "INTEGER");
+    await addColumnIfMissing(db, "shift_entries", "overtime_minutes", "INTEGER NOT NULL DEFAULT 0");
     await addColumnIfMissing(
       db,
       "shift_entries",
@@ -211,11 +212,7 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
       "TEXT NOT NULL DEFAULT 'WITH_TIME_OFF'",
     );
     await db.execAsync(MIGRATION_2);
-    await db.runAsync(
-      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
-      2,
-      now,
-    );
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 2, now);
   }
 
   const migration3 = await db.getFirstAsync<{ version: number }>(
@@ -225,11 +222,7 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     await addColumnIfMissing(db, "shift_entries", "test_run_id", "TEXT");
     await addColumnIfMissing(db, "appointments", "test_run_id", "TEXT");
     await db.execAsync(MIGRATION_3);
-    await db.runAsync(
-      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
-      3,
-      now,
-    );
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 3, now);
   }
 
   const migration4 = await db.getFirstAsync<{ version: number }>(
@@ -248,11 +241,7 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
         await db.execAsync("PRAGMA foreign_keys = ON;");
       }
     }
-    await db.runAsync(
-      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
-      4,
-      now,
-    );
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 4, now);
   }
 
   for (const template of DEFAULT_TEMPLATES) {
@@ -284,10 +273,14 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
       "–",
       "\u00e2\u20ac\u201c",
     );
-    await db.runAsync(
-      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
-      5,
-      now,
-    );
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 5, now);
+  }
+
+  const migration6 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=6",
+  );
+  if (migration6 === null) {
+    await db.execAsync(MIGRATION_6);
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 6, now);
   }
 }

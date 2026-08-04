@@ -15,7 +15,20 @@ import { createMonthGrid, today } from "@/engine/calendar";
 import { yearMonths } from "@/features/calendar/calendar-display";
 import { usePalette } from "@/theme/palette";
 
-const MONTH_LABELS = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mär",
+  "Apr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Dez",
+];
 const WEEKDAY_LABELS = ["M", "D", "M", "D", "F", "S", "S"];
 
 interface MiniMonthProps {
@@ -55,7 +68,14 @@ const MiniMonth = memo(function MiniMonth({
         padding: 8,
       })}
     >
-      <Text style={{ color: selected ? palette.primary : palette.text, fontSize: 17, fontWeight: "700", marginBottom: 6 }}>
+      <Text
+        style={{
+          color: selected ? palette.primary : palette.text,
+          fontSize: 17,
+          fontWeight: "700",
+          marginBottom: 6,
+        }}
+      >
         {MONTH_LABELS[monthIndex]}
       </Text>
       <View style={{ flexDirection: "row", marginBottom: 3 }}>
@@ -93,13 +113,23 @@ const MiniMonth = memo(function MiniMonth({
                   backgroundColor: isToday ? palette.primary : "transparent",
                 }}
               >
-                <Text style={{ color: isToday ? palette.onPrimary : palette.text, fontSize: 8, fontWeight: "700", fontVariant: ["tabular-nums"] }}>
+                <Text
+                  style={{
+                    color: isToday ? palette.onPrimary : palette.text,
+                    fontSize: 8,
+                    fontWeight: "700",
+                    fontVariant: ["tabular-nums"],
+                  }}
+                >
                   {cell.day}
                 </Text>
               </View>
               <View style={{ height: 4, flexDirection: "row", gap: 1 }}>
                 {dayEntries.slice(0, 2).map((entry) => (
-                  <View key={`${entry.kind}-${entry.id}`} style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: entry.color }} />
+                  <View
+                    key={`${entry.kind}-${entry.id}`}
+                    style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: entry.color }}
+                  />
                 ))}
               </View>
             </View>
@@ -133,7 +163,9 @@ const YearRowView = memo(function YearRowView({
 }: YearRowProps) {
   return (
     <Animated.View
-      entering={FadeInUp.delay(index * 36).duration(180).reduceMotion(ReduceMotion.System)}
+      entering={FadeInUp.delay(index * 36)
+        .duration(180)
+        .reduceMotion(ReduceMotion.System)}
       style={{ flexDirection: "row" }}
     >
       {months.map((month) => (
@@ -188,19 +220,22 @@ export function YearOverview({
   }, [year]);
   const currentDate = today(profile.timeZone);
   const contentWidth = Math.min(width - 20, 720);
-  const renderRow = useCallback(({ item }: ListRenderItemInfo<YearRow>) => (
-    <View style={{ width: contentWidth }}>
-      <YearRowView
-        currentDate={currentDate}
-        entriesByDate={entriesByDate}
-        index={item.index}
-        key={item.key}
-        months={item.months}
-        onSelectMonth={onSelectMonth}
-        selectedMonth={selectedMonth}
-      />
-    </View>
-  ), [contentWidth, currentDate, entriesByDate, onSelectMonth, selectedMonth]);
+  const renderRow = useCallback(
+    ({ item }: ListRenderItemInfo<YearRow>) => (
+      <View style={{ width: contentWidth }}>
+        <YearRowView
+          currentDate={currentDate}
+          entriesByDate={entriesByDate}
+          index={item.index}
+          key={item.key}
+          months={item.months}
+          onSelectMonth={onSelectMonth}
+          selectedMonth={selectedMonth}
+        />
+      </View>
+    ),
+    [contentWidth, currentDate, entriesByDate, onSelectMonth, selectedMonth],
+  );
 
   return (
     <FlatList
@@ -209,8 +244,10 @@ export function YearOverview({
       data={rows}
       initialNumToRender={2}
       keyExtractor={(item) => item.key}
-      ListHeaderComponent={(
-        <View style={{ width: contentWidth, flexDirection: "row", justifyContent: "space-between" }}>
+      ListHeaderComponent={
+        <View
+          style={{ width: contentWidth, flexDirection: "row", justifyContent: "space-between" }}
+        >
           <Pressable
             accessibilityLabel="Vorheriges Jahr"
             accessibilityRole="button"
@@ -244,7 +281,7 @@ export function YearOverview({
             <Ionicons color={palette.primary} name="chevron-forward" size={20} />
           </Pressable>
         </View>
-      )}
+      }
       maxToRenderPerBatch={2}
       removeClippedSubviews={process.env.EXPO_OS !== "web"}
       renderItem={renderRow}

@@ -1,8 +1,4 @@
-import {
-  type SaveShiftInput,
-  type ShiftEntry,
-  type ShiftTemplate,
-} from "@/domain/types";
+import { type SaveShiftInput, type ShiftEntry, type ShiftTemplate } from "@/domain/types";
 
 export interface QuickEntryStampAction {
   readonly kind: "TEMPLATE";
@@ -32,14 +28,16 @@ export function buildQuickEntryActions(
   const templateActions = [...templates]
     .filter((template) => template.deletedAt === null)
     .sort((left, right) => left.sortOrder - right.sortOrder)
-    .map<QuickEntryStampAction>((template) => Object.freeze({
-      kind: "TEMPLATE",
-      key: `template:${template.id}`,
-      label: template.name,
-      color: template.color,
-      symbol: template.symbol,
-      template,
-    }));
+    .map<QuickEntryStampAction>((template) =>
+      Object.freeze({
+        kind: "TEMPLATE",
+        key: `template:${template.id}`,
+        label: template.name,
+        color: template.color,
+        symbol: template.symbol,
+        template,
+      }),
+    );
 
   return Object.freeze([
     ...templateActions,
@@ -56,19 +54,19 @@ export function buildQuickEntryActions(
   ]);
 }
 
-export function isQuickEntryStampAction(
-  action: QuickEntryAction,
-): action is QuickEntryStampAction {
+export function isQuickEntryStampAction(action: QuickEntryAction): action is QuickEntryStampAction {
   return action.kind === "TEMPLATE";
 }
 
 export function quickEntryTemplateActions(
   actions: readonly QuickEntryAction[],
 ): readonly Extract<QuickEntryAction, { readonly kind: "TEMPLATE" }>[] {
-  return Object.freeze(actions.filter(
-    (action): action is Extract<QuickEntryAction, { readonly kind: "TEMPLATE" }> =>
-      action.kind === "TEMPLATE",
-  ));
+  return Object.freeze(
+    actions.filter(
+      (action): action is Extract<QuickEntryAction, { readonly kind: "TEMPLATE" }> =>
+        action.kind === "TEMPLATE",
+    ),
+  );
 }
 
 export function quickEntryServiceActions(
@@ -77,9 +75,7 @@ export function quickEntryServiceActions(
   return Object.freeze(actions.filter(isQuickEntryStampAction));
 }
 
-export function quickEntryEditorMode(
-  action: QuickEntryAction,
-): "SHIFT" | "APPOINTMENT" | null {
+export function quickEntryEditorMode(action: QuickEntryAction): "SHIFT" | "APPOINTMENT" | null {
   if (action.kind === "CUSTOM_SHIFT") return "SHIFT";
   if (action.kind === "APPOINTMENT") return "APPOINTMENT";
   return null;
@@ -93,10 +89,7 @@ export function quickEntryEditorTarget(
   return mode === null ? null : Object.freeze({ date, mode });
 }
 
-export function quickEntryShiftInput(
-  action: QuickEntryStampAction,
-  date: string,
-): SaveShiftInput {
+export function quickEntryShiftInput(action: QuickEntryStampAction, date: string): SaveShiftInput {
   const template = action.template;
   return Object.freeze({
     date,
@@ -120,19 +113,18 @@ export function matchingQuickEntries(
   date: string,
   entries: readonly import("@/domain/types").CalendarEntry[],
 ): readonly ShiftEntry[] {
-  return Object.freeze(entries.filter((entry): entry is ShiftEntry =>
-    entry.kind === "SHIFT" &&
-    entry.deletedAt === null &&
-    entry.date === date &&
-    (
-      entry.templateId === action.template.id ||
-      (
-        entry.templateId === null &&
-        isAbsenceTemplate(action.template) &&
-        entry.type === action.template.type
-      )
+  return Object.freeze(
+    entries.filter(
+      (entry): entry is ShiftEntry =>
+        entry.kind === "SHIFT" &&
+        entry.deletedAt === null &&
+        entry.date === date &&
+        (entry.templateId === action.template.id ||
+          (entry.templateId === null &&
+            isAbsenceTemplate(action.template) &&
+            entry.type === action.template.type)),
     ),
-  ));
+  );
 }
 
 export async function saveQuickEntryAction(

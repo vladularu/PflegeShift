@@ -55,7 +55,7 @@ MediShift basiert auf Expo SDK 54, React Native und SQLite. Die Nutzung benötig
 
 ## Lokale Datenhaltung
 
-MediShift speichert Profileinstellungen, Dienstvorlagen, Einträge und Monatsentscheidungen in einer lokalen SQLite-Datenbank. Änderungen verwenden Revisionen und Soft-Delete, damit Datensätze konsistent aktualisiert werden können.
+MediShift speichert Profileinstellungen, Dienstvorlagen, Einträge und Monatsentscheidungen in einer lokal mit SQLCipher verschlüsselten SQLite-Datenbank. Der Schlüssel liegt im nativen SecureStore. Änderungen verwenden Revisionen und Soft-Delete, damit Datensätze konsistent aktualisiert werden können.
 
 Nicht enthalten sind:
 
@@ -70,35 +70,36 @@ Nicht enthalten sind:
 Voraussetzungen:
 
 - Node.js und npm
-- Expo Go auf einem kompatiblen iOS- oder Android-Gerät
+- Android Studio für einen lokalen Android-Native-Build oder Xcode für einen lokalen iOS-Native-Build
+- alternativ ein eingerichtetes Expo-/EAS-Konto für interne Geräte-Builds
 
 ```powershell
 npm.cmd install
-npm.cmd start
-```
-
-Anschließend den QR-Code mit Expo Go öffnen.
-
-Plattformspezifisch starten:
-
-```powershell
-npm.cmd run ios
-npm.cmd run android
 npm.cmd run web
 ```
 
-Wenn Entwicklungsrechner und Mobilgerät nicht im selben Netzwerk sind:
+Expo Go wird nicht unterstützt, weil es nicht mit der projektspezifischen SQLCipher-Konfiguration gebaut ist. Native Entwicklung und Abnahme müssen in einem eigenen nativen Build erfolgen.
+
+Lokalen Native-Build starten:
 
 ```powershell
-npx.cmd expo start --tunnel
+npx.cmd expo run:android
+# auf macOS:
+npx.cmd expo run:ios
 ```
+
+Auf Windows wird der iOS-Build über EAS erzeugt. Vor dem ersten EAS-Build ist die einmalige Einrichtung aus dem Abschnitt „Release-Kandidat“ erforderlich.
+
+Die generierten Verzeichnisse `android/` und `ios/` sind lokale Buildartefakte und werden nicht committed.
 
 ## Qualitätssicherung
 
 ```powershell
 npm.cmd run lint -- --max-warnings 0
 npm.cmd run typecheck
-npm.cmd test
+npm.cmd run test:all
+npm.cmd run test:coverage
+npm.cmd run audit:production
 npm.cmd run export:web
 npm.cmd run export:android
 npm.cmd run export:ios
@@ -128,7 +129,7 @@ Die vollständige Abnahme steht in der [Release-Checkliste](docs/release-checkli
 
 ## Testlabor
 
-Das interne Testlabor erzeugt reproduzierbare Testmonate und ist standardmäßig verborgen:
+Das interne Testlabor erzeugt reproduzierbare Testmonate und ist ausschließlich in Entwicklungs- und internen Preview-Builds verfügbar:
 
 1. Tab **Mehr** öffnen.
 2. Die obere grüne MediShift-Karte fünf Sekunden gedrückt halten.
@@ -144,7 +145,7 @@ src/application/             Provider und reaktiver App-Zustand
 src/domain/                  Typen und Eingabevalidierung
 src/engine/                  Kalender-, Arbeitszeit-, TVöD- und Gehaltslogik
 src/features/                Kalender, Auswertung, Gehalt, Editoren und Einstellungen
-src/infrastructure/database/ SQLite-Migrationen und Repositories
+src/infrastructure/database/ SQLCipher-Start, SQLite-Migrationen und getrennte Repositories
 src/navigation/              Tabs und typisierte Routenziele
 src/theme/                   semantische Farben und Schichtdarstellung
 src/ui/                      wiederverwendbare Design- und Formkomponenten
@@ -157,5 +158,6 @@ scripts/                     reproduzierbare Markenassets
 - Expo Router mit nativen Tabs auf iOS und Android
 - React Native New Architecture und React Compiler
 - SQLite als lokale Datenquelle
-- Vitest für Fach- und Repositorytests
+- SQLCipher und SecureStore für lokale Verschlüsselung
+- Vitest mit Coverage-Schwellen sowie Jest/RNTL für Komponententests
 - statischer Web-Export

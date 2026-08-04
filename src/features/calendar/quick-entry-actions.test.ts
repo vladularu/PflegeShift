@@ -83,16 +83,22 @@ describe("shared quick-entry actions", () => {
 
     expect(saved).toEqual(expect.objectContaining({ date: "2026-08-13", type: "EARLY" }));
 
-    expect(upsertShift).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      date: "2026-08-13",
-      templateId: "early",
-      type: "EARLY",
-    }));
-    expect(upsertShift).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      date: "2026-08-14",
-      templateId: "sick",
-      type: "SICK",
-    }));
+    expect(upsertShift).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        date: "2026-08-13",
+        templateId: "early",
+        type: "EARLY",
+      }),
+    );
+    expect(upsertShift).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        date: "2026-08-14",
+        templateId: "sick",
+        type: "SICK",
+      }),
+    );
   });
 
   it("finds every identical stamp on the same day for toggle deletion", () => {
@@ -118,12 +124,14 @@ describe("shared quick-entry actions", () => {
       updatedAt: "2026-01-01T00:00:00Z",
       deletedAt: null,
     });
-    expect(matchingQuickEntries(action, "2026-08-14", [
-      existing("first", "2026-08-14", "early"),
-      existing("duplicate", "2026-08-14", "early"),
-      existing("other-day", "2026-08-15", "early"),
-      existing("custom", "2026-08-14", null),
-    ]).map((entry) => entry.id)).toEqual(["first", "duplicate"]);
+    expect(
+      matchingQuickEntries(action, "2026-08-14", [
+        existing("first", "2026-08-14", "early"),
+        existing("duplicate", "2026-08-14", "early"),
+        existing("other-day", "2026-08-15", "early"),
+        existing("custom", "2026-08-14", null),
+      ]).map((entry) => entry.id),
+    ).toEqual(["first", "duplicate"]);
   });
 
   it("recognizes legacy unlinked absences for toggle deletion", () => {

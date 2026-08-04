@@ -1,46 +1,139 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import {
   useMediShiftEntries,
   useMediShiftProfile,
+  useMediShiftStatus,
   useMediShiftTemplates,
 } from "@/application/medishift-provider";
 import { SHIFT_TYPE_LABELS, type CalendarEntry, type ShiftType } from "@/domain/types";
+import { userFacingErrorMessage } from "@/domain/errors";
+import { ValidationError } from "@/domain/validation";
 import { formatDateTitle, today } from "@/engine/calendar";
 import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import { shiftOverlapsHoliday } from "@/features/day-editor/holiday-premium";
+import { SHIFT_TYPE_SCROLL_BEHAVIOR } from "@/features/day-editor/day-editor-layout";
 import { resolveShiftTypePreset } from "@/features/day-editor/shift-type-preset";
-import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import {
+  resolveEditorSession,
+  resolveEditorTarget,
+  useStableEditorSession,
+} from "@/features/editor-session";
+import {
+  parseEnumRouteParam,
+  parseIdentifierRouteParam,
+  parseLocalDateRouteParam,
+  type RouteParam,
+} from "@/navigation/route-params";
+import { APPOINTMENT_COLOR, SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { SegmentedControl, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
-import { ColorPicker, Field, TimePickerField } from "@/ui/form-controls";
+import { ColorPicker, Field, ResponsiveFieldRow, TimePickerField } from "@/ui/form-controls";
+import { DestructiveFormAction, FormScreen, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { LabeledSwitch } from "@/ui/labeled-switch";
 import {
-  DestructiveFormAction,
-  FormScreen,
-  FormStatus,
-  HeaderSaveAction,
-} from "@/ui/form-layout";
+  focusInvalidField,
+  integerRangeFieldError,
+  requiredFieldError,
+} from "@/ui/form-validation";
 
 type EditorMode = "SHIFT" | "APPOINTMENT";
-const SHIFT_FORM_TYPES: readonly ShiftType[] = ["CUSTOM", "EARLY", "LATE", "NIGHT", "DAY", "TRAINING", "VACATION", "SICK", "FREE"];
+const SHIFT_FORM_TYPES: readonly ShiftType[] = [
+  "CUSTOM",
+  "EARLY",
+  "LATE",
+  "NIGHT",
+  "DAY",
+  "TRAINING",
+  "VACATION",
+  "SICK",
+  "FREE",
+];
 
 export function DayEditorScreen() {
-  const params = useLocalSearchParams<{ date?: string; mode?: string; entryId?: string }>();
+  const params = useLocalSearchParams<{
+    date?: RouteParam;
+    mode?: RouteParam;
+    entryId?: RouteParam;
+  }>();
+  const { error, ready, reload } = useMediShiftStatus();
+  const { entries } = useMediShiftEntries();
+  const parsedDate = parseLocalDateRouteParam(params.date);
+  const parsedMode = parseEnumRouteParam(params.mode, ["SHIFT", "APPOINTMENT"] as const);
+  const parsedEntryId = parseIdentifierRouteParam(params.entryId);
+  const routeInvalid =
+    parsedDate.status !== "valid" ||
+    parsedMode.status !== "valid" ||
+    parsedEntryId.status === "invalid";
+  const date = parsedDate.status === "valid" ? parsedDate.value : today();
+  const entryId = parsedEntryId.status === "valid" ? parsedEntryId.value : undefined;
+  const existing = useMemo(
+    () => entries.find((entry) => entry.id === entryId && entry.deletedAt === null) ?? null,
+    [entries, entryId],
+  );
+  const requestedMode: EditorMode = parsedMode.status === "valid" ? parsedMode.value : "SHIFT";
+  if (routeInvalid) {
+    return (
+      <LoadFailureView
+        actionLabel="Schließen"
+        message="Der Link zum Eintrag enthält ungültige Parameter."
+        onRetry={() => router.back()}
+        title="Eintrag kann nicht geöffnet werden"
+      />
+    );
+  }
+  if (ready && error) {
+    return <LoadFailureView message={error} onRetry={() => void reload()} />;
+  }
+  const target = resolveEditorTarget(entryId, existing);
+  if (ready && target.kind === "MISSING") {
+    return (
+      <LoadFailureView
+        actionLabel="Schließen"
+        message="Der angeforderte Kalendereintrag existiert nicht mehr."
+        onRetry={() => router.back()}
+        title="Eintrag nicht verfügbar"
+      />
+    );
+  }
+  const session = resolveEditorSession(ready, `${date}:${entryId ?? "new"}:${requestedMode}`, () =>
+    target.kind === "EDIT" ? target.value : null,
+  );
+  if (session === null) return <LoadingView />;
+  return (
+    <DayEditorForm
+      key={session.key}
+      date={date}
+      existing={session.initialValue}
+      requestedMode={requestedMode}
+      sessionKey={session.key}
+    />
+  );
+}
+
+function DayEditorForm({
+  date,
+  existing: loadedExisting,
+  requestedMode,
+  sessionKey,
+}: {
+  readonly date: string;
+  readonly existing: CalendarEntry | null;
+  readonly requestedMode: EditorMode;
+  readonly sessionKey: string;
+}) {
   const palette = usePalette();
   const { profile } = useMediShiftProfile();
   const { templates } = useMediShiftTemplates();
   const { entries, upsertShift, upsertAppointment, removeEntry } = useMediShiftEntries();
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(params.date ?? "") ? params.date! : today();
-  const existing = useMemo(
-    () => entries.find((entry) => entry.id === params.entryId && entry.deletedAt === null) ?? null,
-    [entries, params.entryId],
-  );
-  const initialMode: EditorMode = existing?.kind ?? (params.mode === "APPOINTMENT" ? "APPOINTMENT" : "SHIFT");
+  const { initialValue: existing } = useStableEditorSession(sessionKey, () => loadedExisting);
+  const initialMode: EditorMode = existing?.kind ?? requestedMode;
   const [mode, setMode] = useState<EditorMode>(initialMode);
   const initialShift = existing?.kind === "SHIFT" ? existing : null;
   const initialAppointment = existing?.kind === "APPOINTMENT" ? existing : null;
@@ -53,33 +146,57 @@ export function DayEditorScreen() {
   const [shiftColor, setShiftColor] = useState(initialShift?.color ?? SHIFT_TYPE_COLORS.CUSTOM);
   const [shiftSymbol, setShiftSymbol] = useState(initialShift?.symbol ?? "D");
   const [shiftNote, setShiftNote] = useState(initialShift?.note ?? "");
-  const [overtimeMinutes, setOvertimeMinutes] = useState(String(initialShift?.overtimeMinutes ?? 0));
-  const [holidayPremiumMode, setHolidayPremiumMode] = useState<"WITH_TIME_OFF" | "WITHOUT_TIME_OFF">(
-    initialShift?.holidayPremiumMode ?? "WITH_TIME_OFF",
+  const [overtimeMinutes, setOvertimeMinutes] = useState(
+    String(initialShift?.overtimeMinutes ?? 0),
   );
+  const [holidayPremiumMode, setHolidayPremiumMode] = useState<
+    "WITH_TIME_OFF" | "WITHOUT_TIME_OFF"
+  >(initialShift?.holidayPremiumMode ?? "WITH_TIME_OFF");
   const [appointmentTitle, setAppointmentTitle] = useState(initialAppointment?.title ?? "");
   const [allDay, setAllDay] = useState(initialAppointment?.allDay ?? true);
-  const [appointmentStart, setAppointmentStart] = useState(initialAppointment?.startTime ?? "10:00");
+  const [appointmentStart, setAppointmentStart] = useState(
+    initialAppointment?.startTime ?? "10:00",
+  );
   const [appointmentEnd, setAppointmentEnd] = useState(initialAppointment?.endTime ?? "11:00");
-  const [appointmentColor, setAppointmentColor] = useState(initialAppointment?.color ?? "#2F80ED");
+  const [appointmentColor, setAppointmentColor] = useState(
+    initialAppointment?.color ?? APPOINTMENT_COLOR,
+  );
   const [appointmentNote, setAppointmentNote] = useState(initialAppointment?.note ?? "");
+  const [shiftTitleError, setShiftTitleError] = useState<string | null>(null);
+  const [breakError, setBreakError] = useState<string | null>(null);
+  const [overtimeError, setOvertimeError] = useState<string | null>(null);
+  const [appointmentTitleError, setAppointmentTitleError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const shiftTitleRef = useRef<TextInput>(null);
+  const breakRef = useRef<TextInput>(null);
+  const overtimeRef = useRef<TextInput>(null);
+  const appointmentTitleRef = useRef<TextInput>(null);
   const shiftIsTimed = !["VACATION", "SICK", "FREE"].includes(shiftType);
-  const hasHolidayOverlap = profile && shiftIsTimed
-    ? shiftOverlapsHoliday(date, startTime, endTime, profile.federalState)
-    : false;
+  const hasHolidayOverlap =
+    profile && shiftIsTimed
+      ? shiftOverlapsHoliday(date, startTime, endTime, profile.federalState)
+      : false;
   const editorTitle = existing
-    ? existing.kind === "SHIFT" ? "Dienst bearbeiten" : "Termin bearbeiten"
-    : mode === "SHIFT" ? "Neuer Dienst" : "Neuer Termin";
-  const detailSummary = mode === "SHIFT"
-    ? [
-        shiftNote.trim() ? "Notiz" : null,
-        shiftIsTimed && Number(overtimeMinutes) > 0 ? `${overtimeMinutes} Min. Überstunden` : null,
-        `Kürzel ${shiftSymbol || "–"}`,
-      ].filter(Boolean).join(" · ")
-    : [appointmentNote.trim() ? "Notiz" : null, "Farbe"].filter(Boolean).join(" · ");
+    ? existing.kind === "SHIFT"
+      ? "Dienst bearbeiten"
+      : "Termin bearbeiten"
+    : mode === "SHIFT"
+      ? "Neuer Dienst"
+      : "Neuer Termin";
+  const detailSummary =
+    mode === "SHIFT"
+      ? [
+          shiftNote.trim() ? "Notiz" : null,
+          shiftIsTimed && Number(overtimeMinutes) > 0
+            ? `${overtimeMinutes} Min. Überstunden`
+            : null,
+          `Kürzel ${shiftSymbol || "–"}`,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : [appointmentNote.trim() ? "Notiz" : null, "Farbe"].filter(Boolean).join(" · ");
 
   function chooseType(type: ShiftType) {
     const preset = resolveShiftTypePreset(type, templates);
@@ -95,6 +212,54 @@ export function DayEditorScreen() {
   }
 
   async function save() {
+    const nextShiftTitleError =
+      mode === "SHIFT" ? requiredFieldError(shiftTitle, "Bezeichnung") : null;
+    const nextBreakError =
+      mode === "SHIFT" && shiftIsTimed
+        ? integerRangeFieldError(breakMinutes, "Pause", 0, 1_440)
+        : null;
+    let nextOvertimeError =
+      mode === "SHIFT" && shiftIsTimed
+        ? integerRangeFieldError(overtimeMinutes, "Überstunden", 0, 1_440)
+        : null;
+    const nextAppointmentTitleError =
+      mode === "APPOINTMENT" ? requiredFieldError(appointmentTitle, "Titel") : null;
+    if (
+      nextOvertimeError === null &&
+      mode === "SHIFT" &&
+      shiftIsTimed &&
+      profile &&
+      nextBreakError === null
+    ) {
+      const netMinutes = calculateTimedShiftMinutes(
+        { date, startTime, endTime, breakMinutes: Number(breakMinutes) },
+        profile.timeZone,
+      );
+      if (Number(overtimeMinutes) > netMinutes) {
+        nextOvertimeError = "Überstunden dürfen die Nettoarbeitszeit nicht überschreiten.";
+      }
+    }
+    setShiftTitleError(nextShiftTitleError);
+    setBreakError(nextBreakError);
+    setOvertimeError(nextOvertimeError);
+    setAppointmentTitleError(nextAppointmentTitleError);
+    const firstError =
+      nextShiftTitleError ?? nextBreakError ?? nextOvertimeError ?? nextAppointmentTitleError;
+    if (firstError) {
+      setError(firstError);
+      if (nextOvertimeError) setDetailsExpanded(true);
+      focusInvalidField(
+        nextShiftTitleError
+          ? shiftTitleRef
+          : nextBreakError
+            ? breakRef
+            : nextOvertimeError
+              ? overtimeRef
+              : appointmentTitleRef,
+        firstError,
+      );
+      return;
+    }
     try {
       setSaving(true);
       setError(null);
@@ -107,7 +272,9 @@ export function DayEditorScreen() {
             profile.timeZone,
           );
           if (overtime > netMinutes) {
-            throw new Error("Überstunden dürfen die Nettoarbeitszeit nicht überschreiten.");
+            throw new ValidationError(
+              "Überstunden dürfen die Nettoarbeitszeit nicht überschreiten.",
+            );
           }
         }
         const saved = await upsertShift({
@@ -126,17 +293,25 @@ export function DayEditorScreen() {
           holidayPremiumMode,
         });
         if (profile && shiftIsTimed) {
-          const shifts = entries.filter((entry): entry is Extract<CalendarEntry, { kind: "SHIFT" }> => entry.kind === "SHIFT" && entry.id !== saved.id).concat(saved);
+          const shifts = entries
+            .filter(
+              (entry): entry is Extract<CalendarEntry, { kind: "SHIFT" }> =>
+                entry.kind === "SHIFT" && entry.id !== saved.id,
+            )
+            .concat(saved);
           const critical = calculateMonthlyCompliance(date.slice(0, 7), shifts, profile.timeZone, {
             federalState: profile.federalState,
             weeklyMinutes: profile.weeklyMinutes,
-          }).issues
-            .find((issue) => issue.severity === "critical" && issue.relatedShiftIds.includes(saved.id));
+          }).issues.find(
+            (issue) => issue.severity === "critical" && issue.relatedShiftIds.includes(saved.id),
+          );
           if (critical) Alert.alert("ArbZG-Hinweis", critical.title);
         }
       } else {
         await upsertAppointment({
-          ...(initialAppointment ? { id: initialAppointment.id, expectedRevision: initialAppointment.revision } : {}),
+          ...(initialAppointment
+            ? { id: initialAppointment.id, expectedRevision: initialAppointment.revision }
+            : {}),
           date,
           title: appointmentTitle,
           allDay,
@@ -146,10 +321,11 @@ export function DayEditorScreen() {
           note: appointmentNote,
         });
       }
-      if (process.env.EXPO_OS === "ios") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (process.env.EXPO_OS === "ios")
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Eintrag konnte nicht gespeichert werden.");
+      setError(userFacingErrorMessage(saveError, "Eintrag konnte nicht gespeichert werden."));
     } finally {
       setSaving(false);
     }
@@ -158,10 +334,13 @@ export function DayEditorScreen() {
   function confirmDelete(entry: CalendarEntry) {
     confirmDestructiveAction({
       title: "Eintrag löschen?",
-      message: `„${entry.title}“ wird dauerhaft entfernt.`,
-      onConfirm: () => void removeEntry(entry)
-        .then(() => router.back())
-        .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Löschen fehlgeschlagen.")),
+      message: `„${entry.title}“ wird aus dem Kalender entfernt.`,
+      onConfirm: () =>
+        void removeEntry(entry)
+          .then(() => router.back())
+          .catch((reason: unknown) =>
+            setError(userFacingErrorMessage(reason, "Löschen fehlgeschlagen.")),
+          ),
     });
   }
 
@@ -194,15 +373,19 @@ export function DayEditorScreen() {
             backgroundColor: palette.primarySoft,
           }}
         >
-          <Text style={{ color: palette.primary, fontSize: 13, fontWeight: "700", fontVariant: ["tabular-nums"] }}>
+          <Text
+            style={{
+              color: palette.primary,
+              fontSize: 13,
+              fontWeight: "700",
+              fontVariant: ["tabular-nums"],
+            }}
+          >
             {date.slice(-2)}
           </Text>
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            selectable
-            style={{ color: palette.text, fontSize: 15, fontWeight: "800" }}
-          >
+          <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: "800" }}>
             {formatDateTitle(date)}
           </Text>
           <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "600" }}>
@@ -212,7 +395,10 @@ export function DayEditorScreen() {
       </View>
       {!existing ? (
         <SegmentedControl
-          items={[{ value: "SHIFT", label: "Dienst" }, { value: "APPOINTMENT", label: "Termin" }]}
+          items={[
+            { value: "SHIFT", label: "Dienst" },
+            { value: "APPOINTMENT", label: "Termin" },
+          ]}
           onChange={(value) => setMode(value as EditorMode)}
           value={mode}
         />
@@ -222,16 +408,18 @@ export function DayEditorScreen() {
         <>
           <SectionHeader title="Dienstart" />
           <ScrollView
+            {...SHIFT_TYPE_SCROLL_BEHAVIOR}
+            accessibilityLabel="Dienstart auswählen"
+            accessibilityRole="radiogroup"
             horizontal
             contentContainerStyle={{ gap: 8, paddingRight: 16 }}
-            showsHorizontalScrollIndicator={false}
           >
             {SHIFT_FORM_TYPES.map((type) => {
               const selected = type === shiftType;
               return (
                 <Pressable
                   key={type}
-                  accessibilityRole="button"
+                  accessibilityRole="radio"
                   accessibilityState={{ selected }}
                   onPress={() => chooseType(type)}
                   style={({ pressed }) => ({
@@ -255,7 +443,13 @@ export function DayEditorScreen() {
                       backgroundColor: SHIFT_TYPE_COLORS[type],
                     }}
                   />
-                  <Text style={{ color: selected ? palette.primary : palette.text, fontSize: 13, fontWeight: "800" }}>
+                  <Text
+                    style={{
+                      color: selected ? palette.primary : palette.text,
+                      fontSize: 13,
+                      fontWeight: "800",
+                    }}
+                  >
                     {SHIFT_TYPE_LABELS[type]}
                   </Text>
                 </Pressable>
@@ -263,13 +457,21 @@ export function DayEditorScreen() {
             })}
           </ScrollView>
           <SurfaceCard style={{ gap: 12, padding: 14 }}>
-            <Field label="Bezeichnung" maxLength={60} onChangeText={setShiftTitle} value={shiftTitle} />
+            <Field
+              error={shiftTitleError}
+              inputRef={shiftTitleRef}
+              label="Bezeichnung"
+              maxLength={60}
+              onChangeText={(value) => {
+                setShiftTitle(value);
+                if (shiftTitleError) setShiftTitleError(null);
+              }}
+              value={shiftTitle}
+            />
             {shiftIsTimed ? (
               <>
-                <View
+                <ResponsiveFieldRow
                   style={{
-                    flexDirection: "row",
-                    gap: 12,
                     borderTopWidth: 1,
                     borderTopColor: palette.separator,
                     paddingTop: 4,
@@ -277,8 +479,18 @@ export function DayEditorScreen() {
                 >
                   <TimePickerField label="Beginn" onChange={setStartTime} value={startTime} />
                   <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
-                </View>
-                <Field keyboardType="number-pad" label="Pause (Min.)" onChangeText={setBreakMinutes} value={breakMinutes} />
+                </ResponsiveFieldRow>
+                <Field
+                  error={breakError}
+                  inputRef={breakRef}
+                  keyboardType="number-pad"
+                  label="Pause (Min.)"
+                  onChangeText={(value) => {
+                    setBreakMinutes(value);
+                    if (breakError) setBreakError(null);
+                  }}
+                  value={breakMinutes}
+                />
                 {hasHolidayOverlap ? (
                   <View
                     style={{
@@ -300,8 +512,8 @@ export function DayEditorScreen() {
                         135 % statt 35 % Feiertagszuschlag
                       </Text>
                     </View>
-                    <Switch
-                      accessibilityLabel="Feiertagsdienst ohne Freizeitausgleich"
+                    <LabeledSwitch
+                      label="Feiertagsdienst ohne Freizeitausgleich"
                       onValueChange={(enabled) =>
                         setHolidayPremiumMode(enabled ? "WITHOUT_TIME_OFF" : "WITH_TIME_OFF")
                       }
@@ -321,14 +533,29 @@ export function DayEditorScreen() {
               <View style={{ gap: 14 }}>
                 {shiftIsTimed ? (
                   <Field
+                    error={overtimeError}
+                    inputRef={overtimeRef}
                     keyboardType="number-pad"
                     label="Überstunden (Min.)"
-                    onChangeText={setOvertimeMinutes}
+                    onChangeText={(value) => {
+                      setOvertimeMinutes(value);
+                      if (overtimeError) setOvertimeError(null);
+                    }}
                     value={overtimeMinutes}
                   />
                 ) : null}
-                <Field label="Notiz (optional)" multiline onChangeText={setShiftNote} value={shiftNote} />
-                <Field label="Kürzel" maxLength={4} onChangeText={setShiftSymbol} value={shiftSymbol} />
+                <Field
+                  label="Notiz (optional)"
+                  multiline
+                  onChangeText={setShiftNote}
+                  value={shiftNote}
+                />
+                <Field
+                  label="Kürzel"
+                  maxLength={4}
+                  onChangeText={setShiftSymbol}
+                  value={shiftSymbol}
+                />
                 <ColorPicker onChange={setShiftColor} value={shiftColor} />
               </View>
             ) : null}
@@ -336,7 +563,17 @@ export function DayEditorScreen() {
         </>
       ) : (
         <SurfaceCard style={{ gap: 12, padding: 14 }}>
-          <Field label="Titel" maxLength={60} onChangeText={setAppointmentTitle} value={appointmentTitle} />
+          <Field
+            error={appointmentTitleError}
+            inputRef={appointmentTitleRef}
+            label="Titel"
+            maxLength={60}
+            onChangeText={(value) => {
+              setAppointmentTitle(value);
+              if (appointmentTitleError) setAppointmentTitleError(null);
+            }}
+            value={appointmentTitle}
+          />
           <View
             style={{
               minHeight: 50,
@@ -349,13 +586,17 @@ export function DayEditorScreen() {
             }}
           >
             <Text style={{ color: palette.text, fontSize: 15, fontWeight: "700" }}>Ganztägig</Text>
-            <Switch onValueChange={setAllDay} value={allDay} />
+            <LabeledSwitch label="Termin ganztägig" onValueChange={setAllDay} value={allDay} />
           </View>
           {!allDay ? (
-            <View style={{ flexDirection: "row", gap: 14 }}>
-              <TimePickerField label="Beginn" onChange={setAppointmentStart} value={appointmentStart} />
+            <ResponsiveFieldRow>
+              <TimePickerField
+                label="Beginn"
+                onChange={setAppointmentStart}
+                value={appointmentStart}
+              />
               <TimePickerField label="Ende" onChange={setAppointmentEnd} value={appointmentEnd} />
-            </View>
+            </ResponsiveFieldRow>
           ) : null}
           <AdvancedDisclosure
             color={appointmentColor}
@@ -365,7 +606,12 @@ export function DayEditorScreen() {
           />
           {detailsExpanded ? (
             <View style={{ gap: 14 }}>
-              <Field label="Notiz (optional)" multiline onChangeText={setAppointmentNote} value={appointmentNote} />
+              <Field
+                label="Notiz (optional)"
+                multiline
+                onChangeText={setAppointmentNote}
+                value={appointmentNote}
+              />
               <ColorPicker onChange={setAppointmentColor} value={appointmentColor} />
             </View>
           ) : null}
@@ -418,11 +664,14 @@ function AdvancedDisclosure({
         <Text style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>
           Weitere Angaben
         </Text>
-        <Text numberOfLines={1} style={{ color: palette.textMuted, fontSize: 12, fontWeight: "600" }}>
-          {summary}
-        </Text>
+        <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "600" }}>{summary}</Text>
       </View>
-      <Ionicons accessibilityElementsHidden color={palette.primary} name={expanded ? "remove" : "add"} size={19} />
+      <Ionicons
+        accessibilityElementsHidden
+        color={palette.primary}
+        name={expanded ? "remove" : "add"}
+        size={19}
+      />
     </Pressable>
   );
 }

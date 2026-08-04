@@ -1,0 +1,13 @@
+appId: com.medishift.app.internal
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Dein Dienstplan beginnt hier."
+- tapOn: "Stunden pro Woche"
+- eraseText
+- inputText: "40"
+- hideKeyboard
+- tapOn: "MediShift starten"
+- extendedWaitUntil:
+    visible: "Schnelleintrag öffnen"
+    timeout: 15000

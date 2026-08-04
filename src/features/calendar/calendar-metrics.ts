@@ -25,9 +25,8 @@ export function calculateMonthProgress(
   actualMinutes: number,
   targetMinutes: number,
 ): MonthProgressValue {
-  const displayPercent = targetMinutes <= 0
-    ? 0
-    : Math.max(0, Math.round((actualMinutes / targetMinutes) * 100));
+  const displayPercent =
+    targetMinutes <= 0 ? 0 : Math.max(0, Math.round((actualMinutes / targetMinutes) * 100));
 
   return Object.freeze({
     displayPercent,
@@ -74,11 +73,8 @@ export function buildShiftTypeDistribution(
 ): ReadonlyMap<ShiftType, number> {
   const counts = new Map<ShiftType, number>();
   for (const entry of entries) {
-    if (
-      entry.kind !== "SHIFT"
-      || entry.deletedAt !== null
-      || !entry.date.startsWith(`${month}-`)
-    ) continue;
+    if (entry.kind !== "SHIFT" || entry.deletedAt !== null || !entry.date.startsWith(`${month}-`))
+      continue;
     counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1);
   }
   return counts;

@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ShiftEntry, UserProfile } from "@/domain/types";
-import {
-  calculateMonthlySummary,
-  calculateMonthlyTargetMinutes,
-} from "@/engine/monthly-summary";
+import { calculateMonthlySummary, calculateMonthlyTargetMinutes } from "@/engine/monthly-summary";
 
 const profile = {
   federalState: "NW",
@@ -12,7 +9,9 @@ const profile = {
   timeZone: "Europe/Berlin",
 } satisfies Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">;
 
-function entry(overrides: Partial<ShiftEntry> & Pick<ShiftEntry, "id" | "date" | "type">): ShiftEntry {
+function entry(
+  overrides: Partial<ShiftEntry> & Pick<ShiftEntry, "id" | "date" | "type">,
+): ShiftEntry {
   const absence = ["VACATION", "SICK", "FREE"].includes(overrides.type);
   return {
     kind: "SHIFT",
@@ -48,7 +47,12 @@ describe("monthly summary", () => {
         entry({ id: "vacation", date: "2026-07-03", type: "VACATION" }),
         entry({ id: "sick", date: "2026-07-04", type: "SICK" }),
         entry({ id: "free", date: "2026-07-05", type: "FREE" }),
-        entry({ id: "deleted", date: "2026-07-06", type: "DAY", deletedAt: "2026-07-07T00:00:00.000Z" }),
+        entry({
+          id: "deleted",
+          date: "2026-07-06",
+          type: "DAY",
+          deletedAt: "2026-07-07T00:00:00.000Z",
+        }),
       ],
       profile,
     );

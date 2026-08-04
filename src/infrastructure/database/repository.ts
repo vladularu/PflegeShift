@@ -2,33 +2,40 @@ import type { SQLiteDatabase } from "expo-sqlite";
 
 import type {
   Appointment,
-  CalendarPreferencesData,
   CalendarEntry,
-  MonthlyTariffDecision,
   PayGroup,
   PayLevel,
-  SaveMonthlyTariffDecisionInput,
   SaveAppointmentInput,
   SaveProfileInput,
   SaveShiftInput,
   SaveShiftTemplateInput,
-  SaveTvoedWorkPatternSettingsInput,
   ShiftEntry,
   ShiftTemplate,
   TariffSector,
-  TvoedAssignment,
-  TvoedWorkPatternSettings,
-  TvoedWorkplaceCoverage,
   UserProfile,
 } from "@/domain/types";
 import {
   createId,
+  ValidationError,
   validateAppointment,
   validateProfile,
   validateShift,
   validateTemplate,
 } from "@/domain/validation";
+import { ConcurrencyError } from "@/domain/errors";
 import { sortCalendarEntries } from "@/engine/calendar-entry-order";
+
+export {
+  DEFAULT_CALENDAR_PREFERENCES,
+  loadCalendarPreferences,
+  loadTvoedWorkPatternSettings,
+  saveCalendarPreferences,
+  saveTvoedWorkPatternSettings,
+} from "@/infrastructure/database/preferences-repository";
+export {
+  listMonthlyTariffDecisions,
+  saveMonthlyTariffDecision,
+} from "@/infrastructure/database/tariff-decisions-repository";
 
 interface ProfileRow {
   federal_state: UserProfile["federalState"];
@@ -106,18 +113,27 @@ function mapProfile(row: ProfileRow): UserProfile {
           fullTimeWeeklyMinutes: row.full_time_weekly_minutes,
         }
       : null;
-  return Object.freeze({
+  const validated = validateProfile({
     federalState: row.federal_state,
     weeklyMinutes: row.weekly_minutes,
     timeZone: row.time_zone,
     tariff,
+  });
+  return Object.freeze({
+    federalState: validated.federalState,
+    weeklyMinutes: validated.weeklyMinutes,
+    timeZone: validated.timeZone,
+    tariff: validated.tariff ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
 }
 
 function mapTemplate(row: TemplateRow): ShiftTemplate {
-  return Object.freeze({
+  if (!Number.isInteger(row.sort_order) || !Number.isInteger(row.revision)) {
+    throw new ValidationError("Gespeicherte Vorlagendaten sind ungültig.");
+  }
+  const validated = validateTemplate({
     id: row.id,
     name: row.name,
     type: row.type,
@@ -127,6 +143,17 @@ function mapTemplate(row: TemplateRow): ShiftTemplate {
     color: row.color,
     symbol: row.symbol,
     sortOrder: row.sort_order,
+  });
+  return Object.freeze({
+    id: row.id,
+    name: validated.name,
+    type: validated.type,
+    startTime: validated.startTime ?? null,
+    endTime: validated.endTime ?? null,
+    breakMinutes: validated.breakMinutes,
+    color: validated.color,
+    symbol: validated.symbol,
+    sortOrder: validated.sortOrder,
     revision: row.revision,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -135,8 +162,10 @@ function mapTemplate(row: TemplateRow): ShiftTemplate {
 }
 
 function mapShift(row: ShiftRow): ShiftEntry {
-  return Object.freeze({
-    kind: "SHIFT",
+  if (!Number.isInteger(row.revision)) {
+    throw new ValidationError("Gespeicherte Dienstdaten sind ungültig.");
+  }
+  const validated = validateShift({
     id: row.id,
     date: row.date,
     templateId: row.template_id,
@@ -150,6 +179,22 @@ function mapShift(row: ShiftRow): ShiftEntry {
     note: row.note,
     overtimeMinutes: row.overtime_minutes,
     holidayPremiumMode: row.holiday_premium_mode,
+  });
+  return Object.freeze({
+    kind: "SHIFT",
+    id: row.id,
+    date: validated.date,
+    templateId: validated.templateId ?? null,
+    title: validated.title,
+    type: validated.type,
+    startTime: validated.startTime ?? null,
+    endTime: validated.endTime ?? null,
+    breakMinutes: validated.breakMinutes ?? 0,
+    color: validated.color,
+    symbol: validated.symbol,
+    note: validated.note ?? null,
+    overtimeMinutes: validated.overtimeMinutes ?? 0,
+    holidayPremiumMode: validated.holidayPremiumMode ?? "WITH_TIME_OFF",
     revision: row.revision,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -158,8 +203,10 @@ function mapShift(row: ShiftRow): ShiftEntry {
 }
 
 function mapAppointment(row: AppointmentRow): Appointment {
-  return Object.freeze({
-    kind: "APPOINTMENT",
+  if ((row.all_day !== 0 && row.all_day !== 1) || !Number.isInteger(row.revision)) {
+    throw new ValidationError("Gespeicherte Termindaten sind ungültig.");
+  }
+  const validated = validateAppointment({
     id: row.id,
     date: row.date,
     title: row.title,
@@ -168,6 +215,17 @@ function mapAppointment(row: AppointmentRow): Appointment {
     endTime: row.end_time,
     color: row.color,
     note: row.note,
+  });
+  return Object.freeze({
+    kind: "APPOINTMENT",
+    id: row.id,
+    date: validated.date,
+    title: validated.title,
+    allDay: validated.allDay,
+    startTime: validated.startTime ?? null,
+    endTime: validated.endTime ?? null,
+    color: validated.color,
+    note: validated.note ?? null,
     revision: row.revision,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -177,7 +235,7 @@ function mapAppointment(row: AppointmentRow): Appointment {
 
 async function requireChanged(changes: number): Promise<void> {
   if (changes !== 1) {
-    throw new Error("Der Eintrag wurde zwischenzeitlich geändert. Bitte neu laden.");
+    throw new ConcurrencyError();
   }
 }
 
@@ -306,6 +364,54 @@ export async function deleteTemplate(
   await requireChanged(result.changes);
 }
 
+export async function swapTemplateSortOrder(
+  db: SQLiteDatabase,
+  first: ShiftTemplate,
+  second: ShiftTemplate,
+): Promise<readonly [ShiftTemplate, ShiftTemplate]> {
+  let swapped: readonly [ShiftTemplate, ShiftTemplate] | null = null;
+
+  await db.withExclusiveTransactionAsync(async (transaction) => {
+    const now = new Date().toISOString();
+    const firstResult = await transaction.runAsync(
+      `UPDATE shift_templates SET sort_order=?,revision=revision+1,updated_at=?
+       WHERE id=? AND revision=? AND deleted_at IS NULL`,
+      second.sortOrder,
+      now,
+      first.id,
+      first.revision,
+    );
+    await requireChanged(firstResult.changes);
+
+    const secondResult = await transaction.runAsync(
+      `UPDATE shift_templates SET sort_order=?,revision=revision+1,updated_at=?
+       WHERE id=? AND revision=? AND deleted_at IS NULL`,
+      first.sortOrder,
+      now,
+      second.id,
+      second.revision,
+    );
+    await requireChanged(secondResult.changes);
+
+    const rows = await transaction.getAllAsync<TemplateRow>(
+      `SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
+        revision,created_at,updated_at,deleted_at
+       FROM shift_templates WHERE id IN (?,?)`,
+      first.id,
+      second.id,
+    );
+    if (rows.length !== 2) throw new ConcurrencyError();
+    const mapped = rows.map(mapTemplate);
+    const savedFirst = mapped.find((template) => template.id === first.id);
+    const savedSecond = mapped.find((template) => template.id === second.id);
+    if (!savedFirst || !savedSecond) throw new ConcurrencyError();
+    swapped = Object.freeze([savedFirst, savedSecond]);
+  });
+
+  if (swapped === null) throw new ConcurrencyError();
+  return swapped;
+}
+
 export async function listCalendarEntries(
   db: SQLiteDatabase,
   startDate = "1900-01-01",
@@ -332,16 +438,10 @@ export async function listCalendarEntries(
     startDate,
     endDate,
   );
-  return sortCalendarEntries([
-    ...shifts.map(mapShift),
-    ...appointments.map(mapAppointment),
-  ]);
+  return sortCalendarEntries([...shifts.map(mapShift), ...appointments.map(mapAppointment)]);
 }
 
-export async function saveShift(
-  db: SQLiteDatabase,
-  rawInput: SaveShiftInput,
-): Promise<ShiftEntry> {
+export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): Promise<ShiftEntry> {
   const input = validateShift(rawInput);
   const id = input.id ?? createId("shift");
   const now = new Date().toISOString();
@@ -473,233 +573,4 @@ export async function deleteCalendarEntry(
     entry.revision,
   );
   await requireChanged(result.changes);
-}
-
-interface TariffDecisionRow {
-  month: string;
-  allowance_status: MonthlyTariffDecision["allowanceStatus"];
-  revision: number;
-  confirmed_at: string;
-  updated_at: string;
-}
-
-function mapTariffDecision(row: TariffDecisionRow): MonthlyTariffDecision {
-  return Object.freeze({
-    month: row.month,
-    allowanceStatus: row.allowance_status,
-    revision: row.revision,
-    confirmedAt: row.confirmed_at,
-    updatedAt: row.updated_at,
-  });
-}
-
-export async function listMonthlyTariffDecisions(
-  db: SQLiteDatabase,
-): Promise<readonly MonthlyTariffDecision[]> {
-  const rows = await db.getAllAsync<TariffDecisionRow>(
-    `SELECT month,allowance_status,revision,confirmed_at,updated_at
-     FROM monthly_tariff_decisions ORDER BY month`,
-  );
-  return Object.freeze(rows.map(mapTariffDecision));
-}
-
-export async function saveMonthlyTariffDecision(
-  db: SQLiteDatabase,
-  input: SaveMonthlyTariffDecisionInput,
-): Promise<MonthlyTariffDecision> {
-  if (!/^\d{4}-\d{2}$/.test(input.month)) {
-    throw new Error("Ungültiger Auswertungsmonat.");
-  }
-  const now = new Date().toISOString();
-  const existing = await db.getFirstAsync<TariffDecisionRow>(
-    `SELECT month,allowance_status,revision,confirmed_at,updated_at
-     FROM monthly_tariff_decisions WHERE month=?`,
-    input.month,
-  );
-  if (existing === null) {
-    await db.runAsync(
-      `INSERT INTO monthly_tariff_decisions(
-        month,allowance_status,revision,confirmed_at,updated_at
-      ) VALUES(?,?,1,?,?)`,
-      input.month,
-      input.allowanceStatus,
-      now,
-      now,
-    );
-  } else {
-    const result = await db.runAsync(
-      `UPDATE monthly_tariff_decisions SET allowance_status=?,
-       revision=revision+1,confirmed_at=?,updated_at=?
-       WHERE month=? AND revision=?`,
-      input.allowanceStatus,
-      now,
-      now,
-      input.month,
-      input.expectedRevision ?? existing.revision,
-    );
-    await requireChanged(result.changes);
-  }
-  const saved = await db.getFirstAsync<TariffDecisionRow>(
-    `SELECT month,allowance_status,revision,confirmed_at,updated_at
-     FROM monthly_tariff_decisions WHERE month=?`,
-    input.month,
-  );
-  if (saved === null) throw new Error("Tarifentscheidung konnte nicht gespeichert werden.");
-  return mapTariffDecision(saved);
-}
-
-const TVOED_COVERAGE_KEY = "tvoed_workplace_coverage";
-const TVOED_ASSIGNMENT_KEY = "tvoed_assignment";
-
-interface PreferenceRow {
-  key: string;
-  value: string;
-  updated_at: string;
-}
-
-const CALENDAR_PREFERENCE_KEYS = {
-  viewMode: "calendar_view_mode",
-  showShifts: "calendar_show_shifts",
-  showAppointments: "calendar_show_appointments",
-  showHolidays: "calendar_show_holidays",
-  labelMode: "calendar_label_mode",
-  showShiftTimes: "calendar_show_shift_times",
-  showShiftDuration: "calendar_show_shift_duration",
-} as const;
-
-export const DEFAULT_CALENDAR_PREFERENCES: CalendarPreferencesData = Object.freeze({
-  viewMode: "MONTH",
-  showShifts: true,
-  showAppointments: true,
-  showHolidays: true,
-  labelMode: "FULL",
-  showShiftTimes: false,
-  showShiftDuration: false,
-});
-
-function storedBoolean(value: string | undefined, fallback: boolean): boolean {
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return fallback;
-}
-
-export async function loadCalendarPreferences(
-  db: SQLiteDatabase,
-): Promise<CalendarPreferencesData> {
-  const keys = Object.values(CALENDAR_PREFERENCE_KEYS);
-  const rows = await db.getAllAsync<PreferenceRow>(
-    `SELECT key,value,updated_at FROM app_preferences
-     WHERE key IN (?,?,?,?,?,?,?)`,
-    ...keys,
-  );
-  const values = new Map(rows.map((row) => [row.key, row.value]));
-  const viewMode = values.get(CALENDAR_PREFERENCE_KEYS.viewMode);
-  const labelMode = values.get(CALENDAR_PREFERENCE_KEYS.labelMode);
-  return Object.freeze({
-    viewMode: viewMode === "YEAR" ? "YEAR" : "MONTH",
-    showShifts: storedBoolean(
-      values.get(CALENDAR_PREFERENCE_KEYS.showShifts),
-      DEFAULT_CALENDAR_PREFERENCES.showShifts,
-    ),
-    showAppointments: storedBoolean(
-      values.get(CALENDAR_PREFERENCE_KEYS.showAppointments),
-      DEFAULT_CALENDAR_PREFERENCES.showAppointments,
-    ),
-    showHolidays: storedBoolean(
-      values.get(CALENDAR_PREFERENCE_KEYS.showHolidays),
-      DEFAULT_CALENDAR_PREFERENCES.showHolidays,
-    ),
-    labelMode: labelMode === "SYMBOL" ? "SYMBOL" : "FULL",
-    showShiftTimes: storedBoolean(
-      values.get(CALENDAR_PREFERENCE_KEYS.showShiftTimes),
-      DEFAULT_CALENDAR_PREFERENCES.showShiftTimes,
-    ),
-    showShiftDuration: storedBoolean(
-      values.get(CALENDAR_PREFERENCE_KEYS.showShiftDuration),
-      DEFAULT_CALENDAR_PREFERENCES.showShiftDuration,
-    ),
-  });
-}
-
-export async function saveCalendarPreferences(
-  db: SQLiteDatabase,
-  preferences: CalendarPreferencesData,
-): Promise<void> {
-  const now = new Date().toISOString();
-  const values: readonly (readonly [string, string])[] = [
-    [CALENDAR_PREFERENCE_KEYS.viewMode, preferences.viewMode],
-    [CALENDAR_PREFERENCE_KEYS.showShifts, String(preferences.showShifts)],
-    [CALENDAR_PREFERENCE_KEYS.showAppointments, String(preferences.showAppointments)],
-    [CALENDAR_PREFERENCE_KEYS.showHolidays, String(preferences.showHolidays)],
-    [CALENDAR_PREFERENCE_KEYS.labelMode, preferences.labelMode],
-    [CALENDAR_PREFERENCE_KEYS.showShiftTimes, String(preferences.showShiftTimes)],
-    [CALENDAR_PREFERENCE_KEYS.showShiftDuration, String(preferences.showShiftDuration)],
-  ];
-  for (const [key, value] of values) {
-    await db.runAsync(
-      `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
-       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
-      key,
-      value,
-      now,
-    );
-  }
-}
-
-function isWorkplaceCoverage(value: string): value is TvoedWorkplaceCoverage {
-  return ["UNKNOWN", "AROUND_THE_CLOCK", "NOT_AROUND_THE_CLOCK"].includes(value);
-}
-
-function isAssignment(value: string): value is TvoedAssignment {
-  return ["UNKNOWN", "PERMANENT", "TEMPORARY"].includes(value);
-}
-
-export async function loadTvoedWorkPatternSettings(
-  db: SQLiteDatabase,
-): Promise<TvoedWorkPatternSettings> {
-  const rows = await db.getAllAsync<PreferenceRow>(
-    `SELECT key,value,updated_at FROM app_preferences WHERE key IN (?,?)`,
-    TVOED_COVERAGE_KEY,
-    TVOED_ASSIGNMENT_KEY,
-  );
-  const coverageRow = rows.find((row) => row.key === TVOED_COVERAGE_KEY);
-  const assignmentRow = rows.find((row) => row.key === TVOED_ASSIGNMENT_KEY);
-  const workplaceCoverage = coverageRow && isWorkplaceCoverage(coverageRow.value)
-    ? coverageRow.value
-    : "UNKNOWN";
-  const assignment = assignmentRow && isAssignment(assignmentRow.value)
-    ? assignmentRow.value
-    : "UNKNOWN";
-  const updatedAt = [coverageRow?.updated_at, assignmentRow?.updated_at]
-    .filter((value): value is string => typeof value === "string")
-    .sort()
-    .at(-1) ?? null;
-  return Object.freeze({ workplaceCoverage, assignment, updatedAt });
-}
-
-export async function saveTvoedWorkPatternSettings(
-  db: SQLiteDatabase,
-  input: SaveTvoedWorkPatternSettingsInput,
-): Promise<TvoedWorkPatternSettings> {
-  if (!isWorkplaceCoverage(input.workplaceCoverage) || !isAssignment(input.assignment)) {
-    throw new Error("Ungültige Angaben zum Schichtmodell.");
-  }
-  const now = new Date().toISOString();
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
-       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
-      TVOED_COVERAGE_KEY,
-      input.workplaceCoverage,
-      now,
-    );
-    await db.runAsync(
-      `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
-       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
-      TVOED_ASSIGNMENT_KEY,
-      input.assignment,
-      now,
-    );
-  });
-  return loadTvoedWorkPatternSettings(db);
 }

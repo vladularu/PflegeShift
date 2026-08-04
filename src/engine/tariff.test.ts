@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  PAY_GROUPS,
-  PAY_LEVELS,
-  type TariffProfile,
-} from "@/domain/types";
+import { PAY_GROUPS, PAY_LEVELS, type TariffProfile } from "@/domain/types";
 import {
   getIndividualHourlyRate,
   getMonthlyTableAmount,
@@ -50,7 +46,9 @@ describe("TVöD-P tariff tables", () => {
         const currentMonthly = getMonthlyTableAmount(candidate, "2026-05-01");
         const currentHourly = getIndividualHourlyRate(candidate, "2026-05-01");
         expect(previousMonthly, `${payGroup}/${payLevel} previous monthly`).toBeGreaterThan(0);
-        expect(currentMonthly, `${payGroup}/${payLevel} current monthly`).toBeGreaterThan(previousMonthly!);
+        expect(currentMonthly, `${payGroup}/${payLevel} current monthly`).toBeGreaterThan(
+          previousMonthly!,
+        );
         expect(currentHourly, `${payGroup}/${payLevel} current hourly`).toBeGreaterThan(0);
       }
     }

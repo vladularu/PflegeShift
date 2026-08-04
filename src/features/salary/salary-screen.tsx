@@ -4,7 +4,7 @@ import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import {
   useMediShiftEntries,
@@ -21,6 +21,7 @@ import {
   type AnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
 import { premiumDetailsRoute, settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
+import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
@@ -47,7 +48,7 @@ export function SalaryScreen() {
   const palette = usePalette();
   const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
-  const params = useLocalSearchParams<{ month?: string }>();
+  const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { error, ready, reload } = useMediShiftStatus();
   const { profile } = useMediShiftProfile();
   const { entries } = useMediShiftEntries();
@@ -55,18 +56,22 @@ export function SalaryScreen() {
   const { testMonths } = useMediShiftTestData();
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const entryWindowCache = useRef<AnalysisEntryWindow | null>(null);
+  const parsedMonth = parseMonthRouteParam(params.month);
+  const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
 
   useEffect(() => {
-    if (typeof params.month === "string" && /^\d{4}-\d{2}$/.test(params.month)) {
-      activeMonthCoordinator.setMonth(params.month);
-      setMonth(params.month);
+    if (routeMonth !== null) {
+      activeMonthCoordinator.setMonth(routeMonth);
+      setMonth(routeMonth);
     }
-  }, [activeMonthCoordinator, params.month]);
+  }, [activeMonthCoordinator, routeMonth]);
 
-  useFocusEffect(useCallback(() => {
-    const activeMonth = activeMonthCoordinator.getMonth();
-    setMonth((current) => current === activeMonth ? current : activeMonth);
-  }, [activeMonthCoordinator]));
+  useFocusEffect(
+    useCallback(() => {
+      const activeMonth = activeMonthCoordinator.getMonth();
+      setMonth((current) => (current === activeMonth ? current : activeMonth));
+    }, [activeMonthCoordinator]),
+  );
 
   const entryWindow = useMemo(() => {
     if (!isFocused) return entryWindowCache.current;
@@ -77,16 +82,17 @@ export function SalaryScreen() {
   const { monthShifts, allowanceShifts } = entryWindow ?? EMPTY_ANALYSIS_ENTRY_WINDOW;
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = useMemo(
-    () => profile
-      ? calculateMonthlyPayEstimate(
-        month,
-        monthShifts,
-        profile,
-        decision,
-        allowanceShifts,
-        workPatternSettings,
-      )
-      : null,
+    () =>
+      profile
+        ? calculateMonthlyPayEstimate(
+            month,
+            monthShifts,
+            profile,
+            decision,
+            allowanceShifts,
+            workPatternSettings,
+          )
+        : null,
     [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
   );
 
@@ -119,28 +125,34 @@ export function SalaryScreen() {
       ? [{ key: "overtime", label: "Überstunden", value: euro(pay.overtimeAmount) }]
       : []),
     ...(pay.allowanceAmount > 0
-      ? [{
-        key: "shift-allowance",
-        label: pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage · Muster & Angaben",
-        value: euro(pay.allowanceAmount),
-        onPress: () => router.push(tariffAssessmentRoute(month)),
-      }]
+      ? [
+          {
+            key: "shift-allowance",
+            label: pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage · Muster & Angaben",
+            value: euro(pay.allowanceAmount),
+            onPress: () => router.push(tariffAssessmentRoute(month)),
+          },
+        ]
       : []),
     ...(pay.tvoedAllowanceAmount > 0
-      ? [{
-        key: "tvoed",
-        label: "TVöD-Zulage",
-        value: euro(pay.tvoedAllowanceAmount),
-        onPress: () => router.push(settingsInfoRoute("TVOED_ALLOWANCE")),
-      }]
+      ? [
+          {
+            key: "tvoed",
+            label: "TVöD-Zulage",
+            value: euro(pay.tvoedAllowanceAmount),
+            onPress: () => router.push(settingsInfoRoute("TVOED_ALLOWANCE")),
+          },
+        ]
       : []),
     ...(pay.careAllowanceAmount > 0
-      ? [{
-        key: "care",
-        label: "Pflegezulage TVöD-P",
-        value: euro(pay.careAllowanceAmount),
-        onPress: () => router.push(settingsInfoRoute("CARE_ALLOWANCE")),
-      }]
+      ? [
+          {
+            key: "care",
+            label: "Pflegezulage TVöD-P",
+            value: euro(pay.careAllowanceAmount),
+            onPress: () => router.push(settingsInfoRoute("CARE_ALLOWANCE")),
+          },
+        ]
       : []),
   ];
 
@@ -152,87 +164,116 @@ export function SalaryScreen() {
         onPrevious={() => moveMonth(-1)}
       />
       <ReportPeriodContent>
+        {testMonths.includes(month) ? <ReportTestBadge /> : null}
 
-      {testMonths.includes(month) ? (
-        <ReportTestBadge />
-      ) : null}
-
-      {profile.tariff === null ? (
-        <SetupCard />
-      ) : !pay.available ? (
-        <SurfaceCard style={{ gap: SPACING.xs, padding: SPACING.lg }}>
-          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}>
-            Für diesen Monat nicht verfügbar
-          </Text>
-          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
-            Für den gewählten Zeitraum liegt kein unterstützter Tarifstand vor.
-          </Text>
-        </SurfaceCard>
-      ) : (
-        <>
-          {monthShifts.length === 0 ? (
-            <SurfaceCard style={{ gap: SPACING.xxs, padding: SPACING.md }}>
-              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
-                Noch keine Dienste in diesem Monat
-              </Text>
-              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
-                Grundentgelt und feste Zulagen sind bereits enthalten. Variable Zeitzuschläge erscheinen nach dem ersten Dienst.
-              </Text>
-            </SurfaceCard>
-          ) : null}
-          <SurfaceCard
-            style={{
-              gap: SPACING.md,
-              borderColor: `${palette.primary}2E`,
-              backgroundColor: palette.primarySoft,
-              padding: SPACING.xl,
-            }}
-          >
-            <View style={{ gap: SPACING.sm }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
-                <Ionicons accessibilityElementsHidden color={palette.primary} name="wallet-outline" size={18} />
-                <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline }}>
-                  TARIFLICHES BRUTTO · SCHÄTZUNG
+        {profile.tariff === null ? (
+          <SetupCard />
+        ) : !pay.available ? (
+          <SurfaceCard style={{ gap: SPACING.xs, padding: SPACING.lg }}>
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              selectable
+              style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
+            >
+              Für diesen Monat nicht verfügbar
+            </Text>
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              selectable
+              style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
+            >
+              Für den gewählten Zeitraum liegt kein unterstützter Tarifstand vor.
+            </Text>
+          </SurfaceCard>
+        ) : (
+          <>
+            {monthShifts.length === 0 ? (
+              <SurfaceCard style={{ gap: SPACING.xxs, padding: SPACING.md }}>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                >
+                  Noch keine Dienste in diesem Monat
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                >
+                  Grundentgelt und feste Zulagen sind bereits enthalten. Variable Zeitzuschläge
+                  erscheinen nach dem ersten Dienst.
+                </Text>
+              </SurfaceCard>
+            ) : null}
+            <SurfaceCard
+              style={{
+                gap: SPACING.md,
+                borderColor: `${palette.primary}2E`,
+                backgroundColor: palette.primarySoft,
+                padding: SPACING.xl,
+              }}
+            >
+              <View style={{ gap: SPACING.sm }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
+                  <Ionicons
+                    accessibilityElementsHidden
+                    color={palette.primary}
+                    name="wallet-outline"
+                    size={18}
+                  />
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    selectable
+                    style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
+                  >
+                    TARIFLICHES BRUTTO · SCHÄTZUNG
+                  </Text>
+                </View>
+                <Text
+                  selectable
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  style={{
+                    color: palette.text,
+                    ...TYPOGRAPHY.hero,
+                    fontVariant: ["tabular-nums"],
+                  }}
+                >
+                  {euro(pay.estimatedGrossAmount)}
                 </Text>
               </View>
-              <Text
-                selectable
-                adjustsFontSizeToFit
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                numberOfLines={1}
-                style={{
-                  color: palette.text,
-                  ...TYPOGRAPHY.hero,
-                  fontVariant: ["tabular-nums"],
-                }}
-              >
-                {euro(pay.estimatedGrossAmount)}
-              </Text>
-            </View>
-          </SurfaceCard>
+            </SurfaceCard>
 
-          <SurfaceCard style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md }}>
-            <View style={{ gap: SPACING.xxs, paddingBottom: SPACING.md }}>
-              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}>
-                Zusammensetzung
-              </Text>
-              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable numberOfLines={1} style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
-                {tariffProfileLabel}
-              </Text>
-            </View>
-            {compositionRows.map((row, index) => (
-              <View key={row.key}>
-                {index > 0 ? <CardSeparator inset={0} /> : null}
-                <ValueRow label={row.label} onPress={row.onPress} value={row.value} />
+            <SurfaceCard style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md }}>
+              <View style={{ gap: SPACING.xxs, paddingBottom: SPACING.md }}>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
+                >
+                  Zusammensetzung
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                >
+                  {tariffProfileLabel}
+                </Text>
               </View>
-            ))}
-          </SurfaceCard>
+              {compositionRows.map((row, index) => (
+                <View key={row.key}>
+                  {index > 0 ? <CardSeparator inset={0} /> : null}
+                  <ValueRow label={row.label} onPress={row.onPress} value={row.value} />
+                </View>
+              ))}
+            </SurfaceCard>
 
-          <ReportFootnote>
-            Unverbindliche Schätzung · keine Lohnabrechnung oder Rechtsberatung
-          </ReportFootnote>
-        </>
-      )}
+            <ReportFootnote>
+              Unverbindliche Schätzung · keine Lohnabrechnung oder Rechtsberatung
+            </ReportFootnote>
+          </>
+        )}
       </ReportPeriodContent>
     </ReportScrollView>
   );
@@ -242,10 +283,18 @@ function SetupCard() {
   const palette = usePalette();
   return (
     <SurfaceCard style={{ gap: SPACING.md, padding: SPACING.lg }}>
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}
+      >
         Gehalt aktivieren
       </Text>
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
+      >
         Hinterlege einmal Gruppe, Stufe und Bereich. Die Berechnung erfolgt danach automatisch.
       </Text>
       <Pressable
@@ -261,7 +310,10 @@ function SetupCard() {
           opacity: pressed ? 0.75 : 1,
         })}
       >
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
+        >
           Tarifprofil einrichten
         </Text>
       </Pressable>
@@ -279,23 +331,49 @@ function ValueRow({
   readonly onPress?: () => void;
 }) {
   const palette = usePalette();
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale >= 1.6;
   const content = (
     <>
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+      >
         {label}
       </Text>
       <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}
+        >
           {value}
         </Text>
-        {onPress ? <Ionicons accessibilityElementsHidden color={palette.textMuted} name="chevron-forward" size={17} /> : null}
+        {onPress ? (
+          <Ionicons
+            accessibilityElementsHidden
+            color={palette.textMuted}
+            name="chevron-forward"
+            size={17}
+          />
+        ) : null}
       </View>
     </>
   );
 
   if (!onPress) {
     return (
-      <View style={{ minHeight: CONTROL_HEIGHT.regular, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: SPACING.md }}>
+      <View
+        style={{
+          minHeight: CONTROL_HEIGHT.regular,
+          flexDirection: stacked ? "column" : "row",
+          alignItems: stacked ? "flex-start" : "center",
+          justifyContent: "space-between",
+          gap: SPACING.md,
+          paddingVertical: stacked ? SPACING.sm : 0,
+        }}
+      >
         {content}
       </View>
     );
@@ -308,13 +386,14 @@ function ValueRow({
       onPress={onPress}
       style={({ pressed }) => ({
         minHeight: CONTROL_HEIGHT.regular,
-        flexDirection: "row",
-        alignItems: "center",
+        flexDirection: stacked ? "column" : "row",
+        alignItems: stacked ? "flex-start" : "center",
         justifyContent: "space-between",
         gap: SPACING.md,
         borderRadius: RADII.control,
         backgroundColor: pressed ? palette.surfaceMuted : "transparent",
         opacity: pressed ? 0.72 : 1,
+        paddingVertical: stacked ? SPACING.sm : 0,
       })}
     >
       {content}

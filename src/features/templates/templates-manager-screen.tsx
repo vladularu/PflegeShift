@@ -1,19 +1,26 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 
-import {
-  useMediShiftStatus,
-  useMediShiftTemplates,
-} from "@/application/medishift-provider";
+import { useMediShiftStatus, useMediShiftTemplates } from "@/application/medishift-provider";
 import type { ShiftTemplate } from "@/domain/types";
+import { userFacingErrorMessage } from "@/domain/errors";
 import { usePalette } from "@/theme/palette";
+import { templateEditorRoute } from "@/navigation/routes";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import { CardSeparator, ColorBadge, EmptyState, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
+import {
+  CardSeparator,
+  ColorBadge,
+  EmptyState,
+  RowButton,
+  SectionHeader,
+  SurfaceCard,
+} from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
-import { LoadingView } from "@/ui/loading-view";
+import { FormStatus } from "@/ui/form-layout";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 
 function templateSubtitle(template: ShiftTemplate): string {
   if (template.type === "FREE") return "Keine Arbeitszeit";
@@ -25,17 +32,44 @@ function templateSubtitle(template: ShiftTemplate): string {
 
 export function TemplatesManagerScreen() {
   const palette = usePalette();
-  const { ready } = useMediShiftStatus();
+  const { fontScale } = useWindowDimensions();
+  const stackActions = fontScale >= 1.6;
+  const { error: loadError, ready, reload } = useMediShiftStatus();
   const { templates, removeTemplate, moveTemplate } = useMediShiftTemplates();
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [busyTemplateId, setBusyTemplateId] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
 
+  if (ready && loadError) {
+    return <LoadFailureView message={loadError} onRetry={() => void reload()} />;
+  }
   if (!ready) return <LoadingView />;
+
+  async function runTemplateAction(
+    template: ShiftTemplate,
+    fallback: string,
+    action: () => Promise<void>,
+  ) {
+    try {
+      setBusyTemplateId(template.id);
+      setOperationError(null);
+      await action();
+      setActiveTemplateId(null);
+    } catch (error) {
+      setOperationError(userFacingErrorMessage(error, fallback));
+    } finally {
+      setBusyTemplateId(null);
+    }
+  }
 
   function confirmDelete(template: ShiftTemplate) {
     confirmDestructiveAction({
       title: "Vorlage löschen?",
       message: `„${template.name}“ wird aus der Schnellauswahl entfernt. Bestehende Einträge behalten die zuletzt verknüpfte Darstellung.`,
-      onConfirm: () => void removeTemplate(template),
+      onConfirm: () =>
+        void runTemplateAction(template, "Vorlage konnte nicht gelöscht werden.", () =>
+          removeTemplate(template),
+        ),
     });
   }
 
@@ -47,37 +81,100 @@ export function TemplatesManagerScreen() {
     >
       <Stack.Screen options={{ title: "Dienstvorlagen" }} />
       <SectionHeader title="Dienstvorlagen" caption="Reihenfolge und Inhalte der Schnellauswahl" />
+      <FormStatus error={operationError} />
       <SurfaceCard>
         {templates.length === 0 ? (
-          <EmptyState title="Keine Vorlagen" message="Lege häufige Dienste einmal an und stemple sie danach direkt in den Kalender." />
-        ) : templates.map((template, index) => (
-          <View key={template.id}>
-            {index > 0 ? <CardSeparator inset={70} /> : null}
-            <RowButton
-              leading={<ColorBadge color={template.color} label={template.symbol} />}
-              subtitle={templateSubtitle(template)}
-              title={template.name}
-              trailing={(
-                <Pressable
-                  accessibilityLabel={`${template.name} verwalten`}
-                  accessibilityRole="button"
-                  onPress={() => setActiveTemplateId((current) => current === template.id ? null : template.id)}
-                  style={({ pressed }) => ({ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.55 : 1 })}
+          <EmptyState
+            title="Keine Vorlagen"
+            message="Lege häufige Dienste einmal an und stemple sie danach direkt in den Kalender."
+          />
+        ) : (
+          templates.map((template, index) => (
+            <View key={template.id}>
+              {index > 0 ? <CardSeparator inset={70} /> : null}
+              <RowButton
+                leading={<ColorBadge color={template.color} label={template.symbol} />}
+                subtitle={templateSubtitle(template)}
+                title={template.name}
+                trailing={
+                  <Pressable
+                    accessibilityLabel={`${template.name} verwalten`}
+                    accessibilityRole="button"
+                    disabled={busyTemplateId !== null}
+                    onPress={() =>
+                      setActiveTemplateId((current) =>
+                        current === template.id ? null : template.id,
+                      )
+                    }
+                    style={({ pressed }) => ({
+                      minWidth: 44,
+                      minHeight: 44,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: pressed ? 0.55 : 1,
+                    })}
+                  >
+                    <Ionicons
+                      accessibilityElementsHidden
+                      color={palette.textSecondary}
+                      name="ellipsis-horizontal"
+                      size={20}
+                    />
+                  </Pressable>
+                }
+              />
+              {activeTemplateId === template.id ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: stackActions ? "wrap" : "nowrap",
+                    gap: SPACING.xs,
+                    borderTopWidth: 1,
+                    borderTopColor: palette.separator,
+                    backgroundColor: palette.surfaceMuted,
+                    padding: SPACING.sm,
+                  }}
                 >
-                  <Ionicons accessibilityElementsHidden color={palette.textSecondary} name="ellipsis-horizontal" size={20} />
-                </Pressable>
-              )}
-            />
-            {activeTemplateId === template.id ? (
-              <View style={{ flexDirection: "row", gap: SPACING.xs, borderTopWidth: 1, borderTopColor: palette.separator, backgroundColor: palette.surfaceMuted, padding: SPACING.sm }}>
-                <ManagerButton disabled={index === 0} icon="arrow-up" label="Nach oben" onPress={() => void moveTemplate(template, -1)} />
-                <ManagerButton disabled={index === templates.length - 1} icon="arrow-down" label="Nach unten" onPress={() => void moveTemplate(template, 1)} />
-                <ManagerButton label="Bearbeiten" onPress={() => router.push({ pathname: "/template-editor", params: { id: template.id } })} />
-                <ManagerButton danger label="Löschen" onPress={() => confirmDelete(template)} />
-              </View>
-            ) : null}
-          </View>
-        ))}
+                  <ManagerButton
+                    disabled={busyTemplateId !== null || index === 0}
+                    icon="arrow-up"
+                    label="Nach oben"
+                    onPress={() =>
+                      void runTemplateAction(
+                        template,
+                        "Vorlage konnte nicht verschoben werden.",
+                        () => moveTemplate(template, -1),
+                      )
+                    }
+                  />
+                  <ManagerButton
+                    disabled={busyTemplateId !== null || index === templates.length - 1}
+                    icon="arrow-down"
+                    label="Nach unten"
+                    onPress={() =>
+                      void runTemplateAction(
+                        template,
+                        "Vorlage konnte nicht verschoben werden.",
+                        () => moveTemplate(template, 1),
+                      )
+                    }
+                  />
+                  <ManagerButton
+                    disabled={busyTemplateId !== null}
+                    label="Bearbeiten"
+                    onPress={() => router.push(templateEditorRoute(template.id))}
+                  />
+                  <ManagerButton
+                    danger
+                    disabled={busyTemplateId !== null}
+                    label="Löschen"
+                    onPress={() => confirmDelete(template)}
+                  />
+                </View>
+              ) : null}
+            </View>
+          ))
+        )}
       </SurfaceCard>
       <Pressable
         accessibilityLabel="Neue Dienstvorlage erstellen"
@@ -97,7 +194,10 @@ export function TemplatesManagerScreen() {
         })}
       >
         <Ionicons accessibilityElementsHidden color={palette.onPrimary} name="add" size={20} />
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
+        >
           Vorlage hinzufügen
         </Text>
       </Pressable>
@@ -119,6 +219,8 @@ function ManagerButton({
   readonly onPress: () => void;
 }) {
   const palette = usePalette();
+  const { fontScale } = useWindowDimensions();
+  const wrapped = fontScale >= 1.6;
   return (
     <Pressable
       accessibilityRole="button"
@@ -126,7 +228,9 @@ function ManagerButton({
       onPress={onPress}
       style={({ pressed }) => ({
         minHeight: 44,
-        flex: 1,
+        flex: wrapped ? undefined : 1,
+        flexBasis: wrapped ? "47%" : undefined,
+        flexGrow: 1,
         alignItems: "center",
         justifyContent: "center",
         borderRadius: RADII.control,
@@ -138,7 +242,15 @@ function ManagerButton({
       {icon ? (
         <Ionicons accessibilityLabel={label} color={palette.primary} name={icon} size={17} />
       ) : (
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} numberOfLines={1} style={{ color: danger ? palette.danger : palette.primary, ...TYPOGRAPHY.caption, fontWeight: "600" }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{
+            color: danger ? palette.danger : palette.primary,
+            ...TYPOGRAPHY.caption,
+            fontWeight: "600",
+            textAlign: "center",
+          }}
+        >
           {label}
         </Text>
       )}

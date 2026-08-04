@@ -11,7 +11,12 @@ export function ReportScrollView({ children }: PropsWithChildren) {
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={{ backgroundColor: palette.groupedBackground }}
-      contentContainerStyle={{ gap: SPACING.lg, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: 48 }}
+      contentContainerStyle={{
+        gap: SPACING.lg,
+        paddingHorizontal: SPACING.lg,
+        paddingTop: SPACING.md,
+        paddingBottom: 48,
+      }}
     >
       {children}
     </ScrollView>
@@ -31,7 +36,11 @@ export function ReportTestBadge() {
         paddingVertical: 5,
       }}
     >
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
+      >
         TESTDATEN
       </Text>
     </View>
@@ -57,9 +66,5 @@ export function ReportFootnote({ children }: PropsWithChildren) {
 }
 
 export function ReportPeriodContent({ children }: PropsWithChildren) {
-  return (
-    <View style={{ gap: SPACING.lg }}>
-      {children}
-    </View>
-  );
+  return <View style={{ gap: SPACING.lg }}>{children}</View>;
 }

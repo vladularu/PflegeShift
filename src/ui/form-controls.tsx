@@ -1,28 +1,47 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import DateTimePicker, {
-  DateTimePickerAndroid,
-} from "@react-native-community/datetimepicker";
-import { useState, type PropsWithChildren } from "react";
+import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { Children, useId, useRef, useState, type PropsWithChildren, type Ref } from "react";
 import {
   ActionSheetIOS,
+  findNodeHandle,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
   useWindowDimensions,
+  type StyleProp,
   type TextInputProps,
+  type ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SHIFT_COLOR_PAIRS, usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
+import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
 
 export interface DropdownOption<T extends string | number> {
   readonly value: T;
   readonly label: string;
+}
+
+export function ResponsiveFieldRow({
+  children,
+  style,
+}: PropsWithChildren<{ readonly style?: StyleProp<ViewStyle> }>) {
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale >= 1.6;
+
+  return (
+    <View style={[{ flexDirection: stacked ? "column" : "row", gap: SPACING.md }, style]}>
+      {Children.map(children, (child) => (
+        <View style={{ flex: stacked ? undefined : 1 }}>{child}</View>
+      ))}
+    </View>
+  );
 }
 
 export function DropdownField<T extends string | number>({
@@ -40,10 +59,17 @@ export function DropdownField<T extends string | number>({
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<View>(null);
+  const dialogHeadingRef = useRef<View>(null);
   const selected = options.find((option) => option.value === value);
 
+  function closeSelection() {
+    setOpen(false);
+    scheduleAccessibilityFocus(findNodeHandle(triggerRef.current));
+  }
+
   function openSelection() {
-    if (process.env.EXPO_OS === "ios") {
+    if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           cancelButtonIndex: options.length,
@@ -63,10 +89,15 @@ export function DropdownField<T extends string | number>({
 
   return (
     <View style={{ gap: SPACING.xs }}>
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+      >
         {label}
       </Text>
       <Pressable
+        ref={triggerRef}
         accessibilityHint="Öffnet eine Auswahlliste"
         accessibilityLabel={`${label}: ${selected?.label ?? String(value)}`}
         accessibilityRole="button"
@@ -86,14 +117,23 @@ export function DropdownField<T extends string | number>({
           paddingHorizontal: SPACING.md,
         })}
       >
-        <Text maxFontSizeMultiplier={1.4} numberOfLines={1} style={{ flex: 1, color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ flex: 1, color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+        >
           {selected?.label ?? String(value)}
         </Text>
-        <Ionicons accessibilityElementsHidden color={palette.textMuted} name="chevron-down" size={18} />
+        <Ionicons
+          accessibilityElementsHidden
+          color={palette.textMuted}
+          name="chevron-down"
+          size={18}
+        />
       </Pressable>
       <Modal
         animationType="fade"
-        onRequestClose={() => setOpen(false)}
+        onRequestClose={closeSelection}
+        onShow={() => scheduleAccessibilityFocus(findNodeHandle(dialogHeadingRef.current))}
         presentationStyle="overFullScreen"
         statusBarTranslucent
         transparent
@@ -101,13 +141,23 @@ export function DropdownField<T extends string | number>({
       >
         <View style={{ flex: 1, justifyContent: "flex-end" }}>
           <Pressable
-            accessibilityLabel="Auswahl schließen"
-            accessibilityRole="button"
-            onPress={() => setOpen(false)}
-            style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: palette.overlay }}
+            accessible={false}
+            accessibilityElementsHidden
+            aria-hidden
+            importantForAccessibility="no-hide-descendants"
+            onPress={closeSelection}
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: palette.overlay,
+            }}
           />
           <View
             accessibilityViewIsModal
+            testID="dropdown-modal-content"
             style={{
               maxHeight: Math.min(height * 0.72, 560),
               borderTopLeftRadius: 22,
@@ -118,8 +168,23 @@ export function DropdownField<T extends string | number>({
               paddingBottom: Math.max(insets.bottom, SPACING.md),
             }}
           >
-            <View style={{ minHeight: 58, justifyContent: "center", borderBottomWidth: 1, borderBottomColor: palette.separator, paddingHorizontal: SPACING.lg }}>
-              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}>
+            <View
+              ref={dialogHeadingRef}
+              accessible
+              accessibilityLabel={`${label}, Auswahldialog`}
+              accessibilityRole="header"
+              style={{
+                minHeight: 58,
+                justifyContent: "center",
+                borderBottomWidth: 1,
+                borderBottomColor: palette.separator,
+                paddingHorizontal: SPACING.lg,
+              }}
+            >
+              <Text
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
+              >
                 {label}
               </Text>
             </View>
@@ -133,7 +198,7 @@ export function DropdownField<T extends string | number>({
                     accessibilityState={{ selected: isSelected }}
                     onPress={() => {
                       onChange(option.value);
-                      setOpen(false);
+                      closeSelection();
                     }}
                     style={({ pressed }) => ({
                       minHeight: CONTROL_HEIGHT.large,
@@ -142,21 +207,40 @@ export function DropdownField<T extends string | number>({
                       justifyContent: "space-between",
                       borderTopWidth: index === 0 ? 0 : 1,
                       borderTopColor: palette.separator,
-                      backgroundColor: isSelected ? palette.primarySoft : pressed ? palette.surfaceMuted : "transparent",
+                      backgroundColor: isSelected
+                        ? palette.primarySoft
+                        : pressed
+                          ? palette.surfaceMuted
+                          : "transparent",
                       paddingHorizontal: SPACING.lg,
                     })}
                   >
-                    <Text maxFontSizeMultiplier={1.4} style={{ flex: 1, color: isSelected ? palette.primary : palette.text, ...(isSelected ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body) }}>
+                    <Text
+                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                      style={{
+                        flex: 1,
+                        color: isSelected ? palette.primary : palette.text,
+                        ...(isSelected ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body),
+                      }}
+                    >
                       {option.label}
                     </Text>
-                    {isSelected ? <Ionicons accessibilityElementsHidden color={palette.primary} name="checkmark" size={20} /> : null}
+                    {isSelected ? (
+                      <Ionicons
+                        accessibilityElementsHidden
+                        color={palette.primary}
+                        name="checkmark"
+                        size={20}
+                      />
+                    ) : null}
                   </Pressable>
                 );
               })}
             </ScrollView>
             <Pressable
+              accessibilityLabel="Auswahl abbrechen"
               accessibilityRole="button"
-              onPress={() => setOpen(false)}
+              onPress={closeSelection}
               style={({ pressed }) => ({
                 minHeight: CONTROL_HEIGHT.large,
                 alignItems: "center",
@@ -166,7 +250,10 @@ export function DropdownField<T extends string | number>({
                 opacity: pressed ? 0.65 : 1,
               })}
             >
-              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.primary, ...TYPOGRAPHY.button }}>
+              <Text
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                style={{ color: palette.primary, ...TYPOGRAPHY.button }}
+              >
                 Abbrechen
               </Text>
             </Pressable>
@@ -197,7 +284,15 @@ export function TimePickerField({
 }) {
   const palette = usePalette();
   if (process.env.EXPO_OS === "web") {
-    return <Field autoCapitalize="none" label={label} maxLength={5} onChangeText={onChange} value={value} />;
+    return (
+      <Field
+        autoCapitalize="none"
+        label={label}
+        maxLength={5}
+        onChangeText={onChange}
+        value={value}
+      />
+    );
   }
   if (process.env.EXPO_OS === "android") {
     return (
@@ -217,7 +312,6 @@ export function TimePickerField({
         }}
         style={({ pressed }) => ({
           minHeight: CONTROL_HEIGHT.large,
-          flex: 1,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
@@ -227,12 +321,19 @@ export function TimePickerField({
           paddingHorizontal: SPACING.sm,
         })}
       >
-        <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textSecondary, ...TYPOGRAPHY.bodyStrong }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.textSecondary, ...TYPOGRAPHY.bodyStrong }}
+        >
           {label}
         </Text>
         <Text
-          maxFontSizeMultiplier={1.4}
-          style={{ color: palette.primary, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{
+            color: palette.primary,
+            ...TYPOGRAPHY.bodyStrong,
+            fontVariant: ["tabular-nums"],
+          }}
         >
           {value}
         </Text>
@@ -240,8 +341,21 @@ export function TimePickerField({
     );
   }
   return (
-    <View style={{ minHeight: CONTROL_HEIGHT.large, flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: SPACING.sm }}>
-      <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textSecondary, ...TYPOGRAPHY.bodyStrong }}>{label}</Text>
+    <View
+      style={{
+        minHeight: CONTROL_HEIGHT.large,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: SPACING.sm,
+      }}
+    >
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        style={{ color: palette.textSecondary, ...TYPOGRAPHY.bodyStrong }}
+      >
+        {label}
+      </Text>
       <DateTimePicker
         accessibilityLabel={`${label} wählen`}
         display="compact"
@@ -256,25 +370,42 @@ export function TimePickerField({
 }
 
 export function Field({
+  error,
+  inputRef,
   label,
   ...props
-}: TextInputProps & { readonly label: string }) {
+}: TextInputProps & {
+  readonly error?: string | null;
+  readonly inputRef?: Ref<TextInput>;
+  readonly label: string;
+}) {
   const palette = usePalette();
+  const errorId = `${useId()}-error`;
+  const { accessibilityHint, accessibilityLabel, accessibilityLiveRegion, style, ...inputProps } =
+    props;
   return (
     <View style={{ gap: SPACING.xs }}>
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+      >
         {label}
       </Text>
       <TextInput
-        accessibilityLabel={props.accessibilityLabel ?? label}
+        ref={inputRef}
+        accessibilityHint={error ? `Fehler: ${error}` : accessibilityHint}
+        accessibilityLabel={accessibilityLabel ?? `${label}${error ? ", ungültig" : ""}`}
+        accessibilityLiveRegion={error ? "polite" : accessibilityLiveRegion}
+        aria-invalid={Boolean(error)}
         enablesReturnKeyAutomatically
-        {...props}
+        {...inputProps}
         placeholderTextColor={palette.textMuted}
         style={[
           {
-            minHeight: props.multiline ? 96 : CONTROL_HEIGHT.regular,
+            minHeight: inputProps.multiline ? 96 : CONTROL_HEIGHT.regular,
             borderWidth: 1,
-            borderColor: palette.border,
+            borderColor: error ? palette.danger : palette.border,
             borderRadius: RADII.control,
             borderCurve: "continuous",
             backgroundColor: palette.surfaceRaised,
@@ -283,9 +414,19 @@ export function Field({
             paddingVertical: 10,
             ...TYPOGRAPHY.body,
           },
-          props.style,
+          style,
         ]}
       />
+      {error ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          nativeID={errorId}
+          selectable
+          style={{ color: palette.danger, ...TYPOGRAPHY.footnote }}
+        >
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -304,6 +445,7 @@ export function PrimaryButton({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
@@ -317,7 +459,10 @@ export function PrimaryButton({
         paddingHorizontal: SPACING.lg,
       })}
     >
-      <Text maxFontSizeMultiplier={1.35} style={{ color: danger ? "#FFFFFF" : palette.onPrimary, ...TYPOGRAPHY.button }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        style={{ color: danger ? palette.onDanger : palette.onPrimary, ...TYPOGRAPHY.button }}
+      >
         {children}
       </Text>
     </Pressable>
@@ -352,7 +497,10 @@ export function SegmentedButton({
         opacity: pressed ? 0.75 : 1,
       })}
     >
-      <Text maxFontSizeMultiplier={1.35} style={{ color: selected ? palette.primary : palette.textSecondary, ...TYPOGRAPHY.label }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        style={{ color: selected ? palette.primary : palette.textSecondary, ...TYPOGRAPHY.label }}
+      >
         {label}
       </Text>
     </Pressable>
@@ -369,7 +517,11 @@ export function ColorPicker({
   const palette = usePalette();
   return (
     <View style={{ gap: SPACING.sm }}>
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+      >
         Farbe
       </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm }}>

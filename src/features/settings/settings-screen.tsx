@@ -16,8 +16,10 @@ import {
   isDeveloperModeEnabled,
   setDeveloperMode,
 } from "@/infrastructure/database/dev-tools-repository";
+import { DEV_TOOLS_AVAILABLE } from "@/infrastructure/dev-tools-policy";
+import { APP_RUNTIME_LABEL } from "@/infrastructure/app-version";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
-import { settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
+import { settingsEditorRoute, settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { usePalette } from "@/theme/palette";
 import { RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
@@ -33,7 +35,19 @@ export function SettingsScreen() {
   const [developerMode, setDeveloperModeState] = useState(false);
 
   useEffect(() => {
-    void isDeveloperModeEnabled(db).then(setDeveloperModeState);
+    if (!DEV_TOOLS_AVAILABLE) return;
+    let active = true;
+    void isDeveloperModeEnabled(db).then(
+      (enabled) => {
+        if (active) setDeveloperModeState(enabled);
+      },
+      () => {
+        if (active) setDeveloperModeState(false);
+      },
+    );
+    return () => {
+      active = false;
+    };
   }, [db]);
 
   if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
@@ -41,10 +55,15 @@ export function SettingsScreen() {
 
   async function activateDeveloperMode() {
     if (developerMode) return;
-    await setDeveloperMode(db, true);
-    setDeveloperModeState(true);
-    if (process.env.EXPO_OS === "ios") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert("Testlabor aktiviert", "Das interne Testlabor ist jetzt unter Mehr verfügbar.");
+    try {
+      await setDeveloperMode(db, true);
+      setDeveloperModeState(true);
+      if (process.env.EXPO_OS === "ios")
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Testlabor aktiviert", "Das interne Testlabor ist jetzt unter Mehr verfügbar.");
+    } catch {
+      Alert.alert("Aktivierung fehlgeschlagen", "Das Testlabor konnte nicht aktiviert werden.");
+    }
   }
 
   const tariffLabel = profile.tariff
@@ -55,19 +74,22 @@ export function SettingsScreen() {
     calendarPreferences.showAppointments,
     calendarPreferences.showHolidays,
   ].filter(Boolean).length;
-  const calendarDisplayLabel = visibleCalendarContentCount === 3
-    ? "Dienste, Termine und Feiertage"
-    : `${visibleCalendarContentCount} von 3 Inhalten sichtbar`;
-  const coverageLabel = workPatternSettings.workplaceCoverage === "AROUND_THE_CLOCK"
-    ? "24/7-Betrieb"
-    : workPatternSettings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
-      ? "Kein 24/7-Betrieb"
-      : "Betriebszeit bestätigen";
-  const assignmentLabel = workPatternSettings.assignment === "PERMANENT"
-    ? "dauerhaft zugeordnet"
-    : workPatternSettings.assignment === "TEMPORARY"
-      ? "vorübergehend zugeordnet"
-      : "Zuordnung bestätigen";
+  const calendarDisplayLabel =
+    visibleCalendarContentCount === 3
+      ? "Dienste, Termine und Feiertage"
+      : `${visibleCalendarContentCount} von 3 Inhalten sichtbar`;
+  const coverageLabel =
+    workPatternSettings.workplaceCoverage === "AROUND_THE_CLOCK"
+      ? "24/7-Betrieb"
+      : workPatternSettings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
+        ? "Kein 24/7-Betrieb"
+        : "Betriebszeit bestätigen";
+  const assignmentLabel =
+    workPatternSettings.assignment === "PERMANENT"
+      ? "dauerhaft zugeordnet"
+      : workPatternSettings.assignment === "TEMPORARY"
+        ? "vorübergehend zugeordnet"
+        : "Zuordnung bestätigen";
 
   return (
     <ScrollView
@@ -80,7 +102,7 @@ export function SettingsScreen() {
         <SurfaceCard>
           <RowButton
             leading={<SettingsIcon name="time-outline" />}
-            onPress={() => router.push({ pathname: "/settings-editor", params: { section: "WORK" } })}
+            onPress={() => router.push(settingsEditorRoute("WORK"))}
             subtitle={`${FEDERAL_STATE_LABELS[profile.federalState]} · ${(profile.weeklyMinutes / 60).toLocaleString("de-DE")} Std./Woche`}
             title="Arbeitszeitmodell"
           />
@@ -106,7 +128,7 @@ export function SettingsScreen() {
         <SurfaceCard>
           <RowButton
             leading={<SettingsIcon name="document-text-outline" />}
-            onPress={() => router.push({ pathname: "/settings-editor", params: { section: "TARIFF" } })}
+            onPress={() => router.push(settingsEditorRoute("TARIFF"))}
             subtitle={tariffLabel}
             title="Tarifprofil"
           />
@@ -120,11 +142,16 @@ export function SettingsScreen() {
         </SurfaceCard>
       </View>
 
-      {developerMode ? (
+      {DEV_TOOLS_AVAILABLE && developerMode ? (
         <View style={{ gap: SPACING.sm }}>
           <SectionHeader title="Intern" />
           <SurfaceCard>
-            <RowButton leading={<SettingsIcon name="flask-outline" />} onPress={() => router.push("/dev-tools" as never)} subtitle="Testdaten sicher erzeugen und zurücksetzen" title="Testlabor" />
+            <RowButton
+              leading={<SettingsIcon name="flask-outline" />}
+              onPress={() => router.push("/dev-tools")}
+              subtitle="Testdaten sicher erzeugen und zurücksetzen"
+              title="Testlabor"
+            />
           </SurfaceCard>
         </View>
       ) : null}
@@ -147,12 +174,16 @@ export function SettingsScreen() {
           />
           <CardSeparator />
           <RowButton
-            accessibilityHint="Fünf Sekunden gedrückt halten, um das interne Testlabor zu aktivieren."
-            delayLongPress={5000}
+            accessibilityHint={
+              DEV_TOOLS_AVAILABLE
+                ? "Fünf Sekunden gedrückt halten, um das interne Testlabor zu aktivieren."
+                : undefined
+            }
+            delayLongPress={DEV_TOOLS_AVAILABLE ? 5000 : undefined}
             leading={<SettingsIcon name="information-circle-outline" />}
-            onLongPress={() => void activateDeveloperMode()}
+            onLongPress={DEV_TOOLS_AVAILABLE ? () => void activateDeveloperMode() : undefined}
             onPress={() => router.push(settingsInfoRoute("ABOUT"))}
-            subtitle="Version 0.1 · Expo SDK 54"
+            subtitle={APP_RUNTIME_LABEL}
             title="Über MediShift"
           />
         </SurfaceCard>

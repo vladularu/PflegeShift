@@ -8,7 +8,12 @@ import type {
   UserProfile,
 } from "@/domain/types";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
-import { buildAnnualReport } from "@/features/analysis/annual-report";
+import {
+  buildAnnualReport,
+  buildAnnualReportSteps,
+  createAnnualReportComputationCache,
+  type AnnualReportComputationCache,
+} from "@/features/analysis/annual-report";
 
 const profile: UserProfile = {
   federalState: "NW",
@@ -72,6 +77,20 @@ function appointment(id: string, date: string): Appointment {
   };
 }
 
+function drainAnnualReport(
+  entries: readonly CalendarEntry[],
+  cache: AnnualReportComputationCache,
+  referenceDate = "2026-08-04",
+): { readonly report: ReturnType<typeof buildAnnualReport>; readonly yields: number } {
+  const steps = buildAnnualReportSteps(2026, entries, profile, [], undefined, cache, referenceDate);
+  let yields = 0;
+  while (true) {
+    const step = steps.next();
+    if (step.done) return { report: step.value, yields };
+    yields += 1;
+  }
+}
+
 describe("buildAnnualReport", () => {
   it("aggregates all twelve monthly reports without counting appointments as work", () => {
     const entries: CalendarEntry[] = [
@@ -133,5 +152,45 @@ describe("buildAnnualReport", () => {
 
   it("rejects invalid report years", () => {
     expect(() => buildAnnualReport(1899, [], profile, [])).toThrow("Ungültiges Berichtsjahr.");
+  });
+
+  it("reuses completed months and invalidates only affected windows", () => {
+    const cache = createAnnualReportComputationCache();
+    const january = shift("january", "2026-01-10");
+    const july = shift("july", "2026-07-10");
+    const first = drainAnnualReport([january, july], cache);
+    const unchanged = drainAnnualReport([january, july], cache);
+    const appointmentChange = drainAnnualReport(
+      [january, appointment("appointment", "2026-04-12"), july],
+      cache,
+    );
+    const shiftChange = drainAnnualReport(
+      [
+        { ...january, endTime: "17:12", revision: 2 },
+        appointment("appointment", "2026-04-12"),
+        july,
+      ],
+      cache,
+    );
+
+    expect(unchanged.report).toEqual(first.report);
+    expect(unchanged.yields).toBe(12);
+    expect(appointmentChange.yields).toBe(unchanged.yields);
+    expect(appointmentChange.report.entryCount).toBe(first.report.entryCount + 1);
+    expect(shiftChange.yields).toBeGreaterThan(appointmentChange.yields);
+  });
+
+  it("invalidates cached compliance when the local reference day changes", () => {
+    const cache = createAnnualReportComputationCache();
+    const shifts = [
+      shift("late", "2026-01-01", "LATE", { startTime: "14:00", endTime: "23:00" }),
+      shift("early", "2026-01-02", "EARLY", { startTime: "09:00", endTime: "17:00" }),
+    ];
+    const open = drainAnnualReport(shifts, cache, "2026-01-10");
+    const expired = drainAnnualReport(shifts, cache, "2026-03-10");
+
+    expect(open.report.warningCount).toBeGreaterThan(0);
+    expect(expired.report.criticalCount).toBeGreaterThan(open.report.criticalCount);
+    expect(expired.yields).toBeGreaterThan(12);
   });
 });

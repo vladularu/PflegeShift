@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import type { SQLiteDatabase } from "expo-sqlite";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { migrateDatabase } from "@/infrastructure/database/migrations";
 import {
@@ -11,12 +11,15 @@ import {
   listTemplates,
   loadCalendarPreferences,
   loadProfile,
+  loadTvoedWorkPatternSettings,
   saveAppointment,
   saveCalendarPreferences,
   saveProfile,
   saveShift,
   saveMonthlyTariffDecision,
   saveTemplate,
+  saveTvoedWorkPatternSettings,
+  swapTemplateSortOrder,
 } from "@/infrastructure/database/repository";
 
 class TestDatabase {
@@ -41,6 +44,19 @@ class TestDatabase {
   async getAllAsync<T>(source: string, ...params: unknown[]): Promise<T[]> {
     return this.database.prepare(source).all(...params) as T[];
   }
+
+  async withExclusiveTransactionAsync(
+    task: (database: SQLiteDatabase) => Promise<void>,
+  ): Promise<void> {
+    this.database.exec("BEGIN EXCLUSIVE");
+    try {
+      await task(this as unknown as SQLiteDatabase);
+      this.database.exec("COMMIT");
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
 }
 
 describe("SQLite repository", () => {
@@ -62,7 +78,27 @@ describe("SQLite repository", () => {
     const templates = await listTemplates(db);
     expect(templates).toHaveLength(7);
     expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("–");
-    expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({ count: 5 });
+    expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({
+      count: 6,
+    });
+    expect(testDb.database.pragma("secure_delete", { simple: true })).toBe(1);
+  });
+
+  it("rejects malformed persisted values before they reach engine rendering", async () => {
+    testDb.database
+      .prepare("UPDATE shift_templates SET start_time='99:00' WHERE id='default-early'")
+      .run();
+
+    await expect(listTemplates(db)).rejects.toThrow("Uhrzeiten");
+
+    testDb.database
+      .prepare(
+        `INSERT INTO user_profile(
+        id,federal_state,weekly_minutes,time_zone,created_at,updated_at
+       ) VALUES ('singleton','NW',2310,'SQL/Not-A-Time-Zone','now','now')`,
+      )
+      .run();
+    await expect(loadProfile(db)).rejects.toThrow("Zeitzone");
   });
 
   it("finishes an interrupted second migration without losing existing data", async () => {
@@ -138,8 +174,48 @@ describe("SQLite repository", () => {
     await deleteTemplate(db, updated.id, updated.revision);
     expect((await listTemplates(db)).some((template) => template.id === updated.id)).toBe(false);
     expect(
-      testDb.database.prepare("SELECT revision,deleted_at FROM shift_templates WHERE id=?").get(updated.id),
+      testDb.database
+        .prepare("SELECT revision,deleted_at FROM shift_templates WHERE id=?")
+        .get(updated.id),
     ).toMatchObject({ revision: 3 });
+  });
+
+  it("swaps template sort order atomically", async () => {
+    const [first, second] = await listTemplates(db);
+    const swapped = await swapTemplateSortOrder(db, first, second);
+
+    expect(swapped.find((template) => template.id === first.id)).toMatchObject({
+      sortOrder: second.sortOrder,
+      revision: first.revision + 1,
+    });
+    expect(swapped.find((template) => template.id === second.id)).toMatchObject({
+      sortOrder: first.sortOrder,
+      revision: second.revision + 1,
+    });
+  });
+
+  it("rolls back both template order writes when the second update fails", async () => {
+    const [first, second] = await listTemplates(db);
+    testDb.database.exec(
+      `CREATE TRIGGER fail_second_template_move
+       BEFORE UPDATE OF sort_order ON shift_templates
+       WHEN OLD.id = '${second.id}'
+       BEGIN SELECT RAISE(ABORT, 'injected second update failure'); END`,
+    );
+
+    await expect(swapTemplateSortOrder(db, first, second)).rejects.toThrow(
+      "injected second update failure",
+    );
+
+    const unchanged = await listTemplates(db);
+    expect(unchanged.find((template) => template.id === first.id)).toMatchObject({
+      sortOrder: first.sortOrder,
+      revision: first.revision,
+    });
+    expect(unchanged.find((template) => template.id === second.id)).toMatchObject({
+      sortOrder: second.sortOrder,
+      revision: second.revision,
+    });
   });
 
   it("projects template presentation changes onto existing entries without changing times", async () => {
@@ -238,7 +314,9 @@ describe("SQLite repository", () => {
     await deleteCalendarEntry(db, appointment);
     expect(await listCalendarEntries(db)).toHaveLength(0);
     expect(
-      testDb.database.prepare("SELECT revision,deleted_at FROM shift_entries WHERE id=?").get(shift.id),
+      testDb.database
+        .prepare("SELECT revision,deleted_at FROM shift_entries WHERE id=?")
+        .get(shift.id),
     ).toMatchObject({ revision: 3 });
   });
 
@@ -258,6 +336,26 @@ describe("SQLite repository", () => {
       revision: 2,
     });
     expect(await listMonthlyTariffDecisions(db)).toHaveLength(1);
+  });
+
+  it("rejects invalid tariff decisions from writes and persisted rows", async () => {
+    await expect(
+      saveMonthlyTariffDecision(db, {
+        month: "2026-99",
+        allowanceStatus: "SHIFT_MONTHLY",
+      }),
+    ).rejects.toThrow("Auswertungsmonat");
+
+    await saveMonthlyTariffDecision(db, {
+      month: "2026-08",
+      allowanceStatus: "SHIFT_MONTHLY",
+    });
+    testDb.database
+      .prepare(
+        "UPDATE monthly_tariff_decisions SET confirmed_at='not-an-instant' WHERE month='2026-08'",
+      )
+      .run();
+    await expect(listMonthlyTariffDecisions(db)).rejects.toThrow("Zeitstempel");
   });
 
   it("persists calendar visibility, labels and time details", async () => {
@@ -284,6 +382,47 @@ describe("SQLite repository", () => {
       showShiftTimes: true,
       showShiftDuration: true,
     });
+  });
+
+  it("rolls back every calendar preference when one write fails", async () => {
+    const before = await loadCalendarPreferences(db);
+    const originalRunAsync = testDb.runAsync.bind(testDb);
+    let preferenceWrites = 0;
+    const runSpy = vi.spyOn(testDb, "runAsync").mockImplementation(async (source, ...params) => {
+      if (source.includes("INSERT INTO app_preferences")) {
+        preferenceWrites += 1;
+        if (preferenceWrites === 4) throw new Error("injected preference failure");
+      }
+      return originalRunAsync(source, ...params);
+    });
+
+    await expect(
+      saveCalendarPreferences(db, {
+        viewMode: "YEAR",
+        showShifts: false,
+        showAppointments: false,
+        showHolidays: false,
+        labelMode: "SYMBOL",
+        showShiftTimes: true,
+        showShiftDuration: true,
+      }),
+    ).rejects.toThrow("injected preference failure");
+    runSpy.mockRestore();
+
+    expect(await loadCalendarPreferences(db)).toEqual(before);
+  });
+
+  it("persists work-pattern settings in one exclusive transaction", async () => {
+    const saved = await saveTvoedWorkPatternSettings(db, {
+      workplaceCoverage: "AROUND_THE_CLOCK",
+      assignment: "PERMANENT",
+    });
+
+    expect(saved).toMatchObject({
+      workplaceCoverage: "AROUND_THE_CLOCK",
+      assignment: "PERMANENT",
+    });
+    expect(await loadTvoedWorkPatternSettings(db)).toEqual(saved);
   });
 
   it("rejects stale revisions", async () => {

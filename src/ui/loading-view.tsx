@@ -18,12 +18,18 @@ export function LoadingView({ label = "MediShift wird vorbereitet …" }: { labe
       }}
     >
       <ActivityIndicator
+        accessible
         accessibilityLabel={label}
         accessibilityRole="progressbar"
         color={palette.primary}
         size="large"
       />
-      <Text accessibilityLiveRegion="polite" maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+      <Text
+        accessibilityLiveRegion="polite"
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
+      >
         {label}
       </Text>
     </ScrollView>
@@ -31,11 +37,15 @@ export function LoadingView({ label = "MediShift wird vorbereitet …" }: { labe
 }
 
 export function LoadFailureView({
+  actionLabel = "Erneut versuchen",
   message,
   onRetry,
+  title = "Daten konnten nicht geladen werden",
 }: {
+  readonly actionLabel?: string;
   readonly message: string;
   readonly onRetry: () => void;
+  readonly title?: string;
 }) {
   const palette = usePalette();
   return (
@@ -50,10 +60,19 @@ export function LoadFailureView({
         backgroundColor: palette.background,
       }}
     >
-      <Text accessibilityRole="alert" maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, textAlign: "center", ...TYPOGRAPHY.screenTitle }}>
-        Daten konnten nicht geladen werden
+      <Text
+        accessibilityRole="alert"
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: palette.text, textAlign: "center", ...TYPOGRAPHY.screenTitle }}
+      >
+        {title}
       </Text>
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ maxWidth: 320, color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.body }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ maxWidth: 320, color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.body }}
+      >
         {message}
       </Text>
       <Pressable
@@ -71,8 +90,11 @@ export function LoadFailureView({
           paddingHorizontal: 18,
         })}
       >
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}>
-          Erneut versuchen
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
+        >
+          {actionLabel}
         </Text>
       </Pressable>
     </ScrollView>

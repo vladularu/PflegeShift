@@ -1,10 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import {
-  Icon,
-  Label,
-  NativeTabs,
-  VectorIcon,
-} from "expo-router/unstable-native-tabs";
+import { Icon, Label, NativeTabs, VectorIcon } from "expo-router/unstable-native-tabs";
 
 import { usePalette } from "@/theme/palette";
 
@@ -35,15 +30,24 @@ export function AppTabs() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(analysis)">
         <Label>Auswertung</Label>
-        <Icon sf="chart.bar.xaxis" androidSrc={<VectorIcon family={Ionicons} name="stats-chart-outline" />} />
+        <Icon
+          sf="chart.bar.xaxis"
+          androidSrc={<VectorIcon family={Ionicons} name="stats-chart-outline" />}
+        />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(salary)">
         <Label>Gehalt</Label>
-        <Icon sf="eurosign.circle" androidSrc={<VectorIcon family={Ionicons} name="wallet-outline" />} />
+        <Icon
+          sf="eurosign.circle"
+          androidSrc={<VectorIcon family={Ionicons} name="wallet-outline" />}
+        />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(more)">
         <Label>Mehr</Label>
-        <Icon sf="ellipsis.circle" androidSrc={<VectorIcon family={Ionicons} name="ellipsis-horizontal-circle-outline" />} />
+        <Icon
+          sf="ellipsis.circle"
+          androidSrc={<VectorIcon family={Ionicons} name="ellipsis-horizontal-circle-outline" />}
+        />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

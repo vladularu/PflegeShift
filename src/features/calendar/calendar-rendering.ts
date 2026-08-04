@@ -6,9 +6,7 @@ const visibleDatesCache = new Map<string, readonly string[]>();
 function visibleDatesForMonth(month: string): readonly string[] {
   const cached = visibleDatesCache.get(month);
   if (cached) return cached;
-  const dates = Object.freeze(
-    createVisibleMonthGrid(month).map((cell) => cell.date),
-  );
+  const dates = Object.freeze(createVisibleMonthGrid(month).map((cell) => cell.date));
   visibleDatesCache.set(month, dates);
   return dates;
 }
@@ -21,13 +19,16 @@ export function calendarEntryListsEqual(
   if (left.length !== right.length) return false;
   return left.every((entry, index) => {
     const other = right[index];
-    return entry === other || (
-      entry.id === other.id &&
-      entry.kind === other.kind &&
-      entry.revision === other.revision &&
-      entry.title === other.title &&
-      entry.color === other.color &&
-      (entry.kind === "APPOINTMENT" || other.kind === "APPOINTMENT" || entry.symbol === other.symbol)
+    return (
+      entry === other ||
+      (entry.id === other.id &&
+        entry.kind === other.kind &&
+        entry.revision === other.revision &&
+        entry.title === other.title &&
+        entry.color === other.color &&
+        (entry.kind === "APPOINTMENT" ||
+          other.kind === "APPOINTMENT" ||
+          entry.symbol === other.symbol))
     );
   });
 }
@@ -44,10 +45,7 @@ export function calendarSelectionTouchesMonth(
   if (!firstDate || !lastDate) return false;
   const touchesVisibleGrid = (date: string | null) =>
     date !== null && date >= firstDate && date <= lastDate;
-  return (
-    touchesVisibleGrid(previousDate) ||
-    touchesVisibleGrid(nextDate)
-  );
+  return touchesVisibleGrid(previousDate) || touchesVisibleGrid(nextDate);
 }
 
 export function calendarMonthEntriesEqual(
@@ -57,9 +55,6 @@ export function calendarMonthEntriesEqual(
 ): boolean {
   if (left === right) return true;
   return visibleDatesForMonth(month).every((date) =>
-    calendarEntryListsEqual(
-      left.get(date) ?? [],
-      right.get(date) ?? [],
-    ),
+    calendarEntryListsEqual(left.get(date) ?? [], right.get(date) ?? []),
   );
 }

@@ -25,9 +25,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   const palette = usePalette();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const bottomOffset = Platform.OS === "web"
-    ? 8
-    : Math.max(insets.bottom - 6, 8);
+  const bottomOffset = Platform.OS === "web" ? 8 : Math.max(insets.bottom - 6, 8);
   const { tileWidth } = calculateQuickPlannerLayout(width);
 
   const dock = (
@@ -90,9 +88,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   if (Platform.OS === "ios") {
     return (
       <FullWindowOverlay unstable_accessibilityContainerViewIsModal={false}>
-        <View style={[StyleSheet.absoluteFill, { pointerEvents: "box-none" }]}>
-          {dock}
-        </View>
+        <View style={[StyleSheet.absoluteFill, { pointerEvents: "box-none" }]}>{dock}</View>
       </FullWindowOverlay>
     );
   }

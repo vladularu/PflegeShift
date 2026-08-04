@@ -1,0 +1,13 @@
+appId: com.medishift.app.internal
+---
+- runFlow: onboarding.yml
+- tapOn: "Auswertung"
+- assertVisible: "Arbeitszeit"
+- tapOn: "Gehalt"
+- assertVisible: "Tarifprofil einrichten"
+- tapOn: "Mehr"
+- assertVisible: "Arbeitszeitmodell"
+- tapOn: "Arbeitszeitmodell"
+- assertVisible: "Wochenarbeitszeit in Stunden"
+- back
+- assertVisible: "Daten & App"

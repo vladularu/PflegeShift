@@ -1,15 +1,20 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
 
-import { useMediShiftTemplates } from "@/application/medishift-provider";
+import { useMediShiftStatus, useMediShiftTemplates } from "@/application/medishift-provider";
+import { SHIFT_TYPE_LABELS, type ShiftTemplate, type ShiftType } from "@/domain/types";
+import { userFacingErrorMessage } from "@/domain/errors";
 import {
-  SHIFT_TYPE_LABELS,
-  type ShiftType,
-} from "@/domain/types";
-import { usePalette } from "@/theme/palette";
+  resolveEditorSession,
+  resolveEditorTarget,
+  useStableEditorSession,
+} from "@/features/editor-session";
+import { parseIdentifierRouteParam, type RouteParam } from "@/navigation/route-params";
+import { DEFAULT_TEMPLATE_COLOR, usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
-import { ColorPicker, Field, TimePickerField } from "@/ui/form-controls";
+import { ColorPicker, Field, ResponsiveFieldRow, TimePickerField } from "@/ui/form-controls";
 import {
   DestructiveFormAction,
   FormScreen,
@@ -17,6 +22,12 @@ import {
   FormStatus,
   HeaderSaveAction,
 } from "@/ui/form-layout";
+import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import {
+  focusInvalidField,
+  integerRangeFieldError,
+  requiredFieldError,
+} from "@/ui/form-validation";
 
 const TEMPLATE_TYPES: readonly ShiftType[] = [
   "EARLY",
@@ -35,30 +46,98 @@ function isAbsenceType(type: ShiftType): boolean {
 }
 
 export function TemplateEditorScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: RouteParam }>();
+  const { error, ready, reload } = useMediShiftStatus();
+  const { templates } = useMediShiftTemplates();
+  const parsedId = parseIdentifierRouteParam(params.id);
+  const id = parsedId.status === "valid" ? parsedId.value : undefined;
+  const existing = useMemo(() => templates.find((item) => item.id === id), [id, templates]);
+  if (parsedId.status === "invalid") {
+    return (
+      <LoadFailureView
+        actionLabel="Schließen"
+        message="Der Link zur Dienstvorlage enthält eine ungültige ID."
+        onRetry={() => router.back()}
+        title="Vorlage kann nicht geöffnet werden"
+      />
+    );
+  }
+  if (ready && error) {
+    return <LoadFailureView message={error} onRetry={() => void reload()} />;
+  }
+  const target = resolveEditorTarget(id, existing);
+  if (ready && target.kind === "MISSING") {
+    return (
+      <LoadFailureView
+        actionLabel="Schließen"
+        message="Die angeforderte Dienstvorlage existiert nicht mehr."
+        onRetry={() => router.back()}
+        title="Vorlage nicht verfügbar"
+      />
+    );
+  }
+  const session = resolveEditorSession(ready, id ?? "new", () =>
+    target.kind === "EDIT" ? target.value : null,
+  );
+  if (session === null) return <LoadingView />;
+  return (
+    <TemplateEditorForm
+      key={session.key}
+      existing={session.initialValue}
+      sessionKey={session.key}
+    />
+  );
+}
+
+function TemplateEditorForm({
+  existing: loadedExisting,
+  sessionKey,
+}: {
+  readonly existing: ShiftTemplate | null;
+  readonly sessionKey: string;
+}) {
   const palette = usePalette();
   const { templates, upsertTemplate, removeTemplate } = useMediShiftTemplates();
-  const existing = useMemo(() => templates.find((item) => item.id === id), [id, templates]);
+  const { initialValue: existing } = useStableEditorSession(sessionKey, () => loadedExisting);
   const [name, setName] = useState(existing?.name ?? "Neuer Dienst");
   const [type, setType] = useState<ShiftType>(existing?.type ?? "CUSTOM");
   const [startTime, setStartTime] = useState(existing?.startTime ?? "08:00");
   const [endTime, setEndTime] = useState(existing?.endTime ?? "16:00");
   const [breakMinutes, setBreakMinutes] = useState(String(existing?.breakMinutes ?? 30));
-  const [color, setColor] = useState(existing?.color ?? "#21A0A0");
+  const [color, setColor] = useState(existing?.color ?? DEFAULT_TEMPLATE_COLOR);
   const [symbol, setSymbol] = useState(existing?.symbol ?? "D");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [symbolError, setSymbolError] = useState<string | null>(null);
+  const [breakError, setBreakError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const nameRef = useRef<TextInput>(null);
+  const symbolRef = useRef<TextInput>(null);
+  const breakRef = useRef<TextInput>(null);
   const absence = isAbsenceType(type);
-  const typeLocked = existing !== undefined && isAbsenceType(existing.type);
+  const typeLocked = existing !== null && isAbsenceType(existing.type);
 
   async function submit() {
+    const nextNameError = requiredFieldError(name, "Titel");
+    const nextSymbolError = requiredFieldError(symbol, "Symbol");
+    const nextBreakError = absence ? null : integerRangeFieldError(breakMinutes, "Pause", 0, 1_440);
+    setNameError(nextNameError);
+    setSymbolError(nextSymbolError);
+    setBreakError(nextBreakError);
+    const firstError = nextNameError ?? nextSymbolError ?? nextBreakError;
+    if (firstError) {
+      setError(firstError);
+      focusInvalidField(
+        nextNameError ? nameRef : nextSymbolError ? symbolRef : breakRef,
+        firstError,
+      );
+      return;
+    }
     try {
       setSaving(true);
       setError(null);
       await upsertTemplate({
-        ...(existing
-          ? { id: existing.id, expectedRevision: existing.revision }
-          : {}),
+        ...(existing ? { id: existing.id, expectedRevision: existing.revision } : {}),
         name,
         type,
         startTime: absence ? null : startTime,
@@ -72,7 +151,7 @@ export function TemplateEditorScreen() {
       });
       router.back();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Vorlage konnte nicht gespeichert werden.");
+      setError(userFacingErrorMessage(submitError, "Vorlage konnte nicht gespeichert werden."));
     } finally {
       setSaving(false);
     }
@@ -83,9 +162,12 @@ export function TemplateEditorScreen() {
     confirmDestructiveAction({
       title: "Vorlage archivieren?",
       message: `„${existing.name}“ wird aus der Schnellwahl entfernt. Bereits eingetragene Dienste bleiben bestehen.`,
-      onConfirm: () => void removeTemplate(existing)
-        .then(() => router.back())
-        .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Archivieren fehlgeschlagen.")),
+      onConfirm: () =>
+        void removeTemplate(existing)
+          .then(() => router.back())
+          .catch((reason: unknown) =>
+            setError(userFacingErrorMessage(reason, "Archivieren fehlgeschlagen.")),
+          ),
     });
   }
 
@@ -99,12 +181,27 @@ export function TemplateEditorScreen() {
       />
 
       <FormSection title="Darstellung">
-        <Field label="Titel" maxLength={40} onChangeText={setName} value={name} />
+        <Field
+          error={nameError}
+          inputRef={nameRef}
+          label="Titel"
+          maxLength={40}
+          onChangeText={(value) => {
+            setName(value);
+            if (nameError) setNameError(null);
+          }}
+          value={name}
+        />
         <Field
           autoCapitalize="characters"
+          error={symbolError}
+          inputRef={symbolRef}
           label="Symbol / Kürzel"
           maxLength={4}
-          onChangeText={setSymbol}
+          onChangeText={(value) => {
+            setSymbol(value);
+            if (symbolError) setSymbolError(null);
+          }}
           value={symbol}
         />
         <ColorPicker onChange={setColor} value={color} />
@@ -132,7 +229,10 @@ export function TemplateEditorScreen() {
                   paddingHorizontal: 14,
                 })}
               >
-                <Text maxFontSizeMultiplier={1.35} style={{ color: selected ? palette.primary : palette.text, fontWeight: "800" }}>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  style={{ color: selected ? palette.primary : palette.text, fontWeight: "800" }}
+                >
                   {SHIFT_TYPE_LABELS[candidate]}
                 </Text>
               </Pressable>
@@ -151,14 +251,19 @@ export function TemplateEditorScreen() {
         </FormSection>
       ) : (
         <FormSection title="Standardwerte">
-          <View style={{ flexDirection: "row", gap: 12 }}>
+          <ResponsiveFieldRow>
             <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
             <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
-          </View>
+          </ResponsiveFieldRow>
           <Field
+            error={breakError}
+            inputRef={breakRef}
             keyboardType="number-pad"
             label="Pause in Minuten"
-            onChangeText={setBreakMinutes}
+            onChangeText={(value) => {
+              setBreakMinutes(value);
+              if (breakError) setBreakError(null);
+            }}
             value={breakMinutes}
           />
         </FormSection>

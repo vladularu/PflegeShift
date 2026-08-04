@@ -9,7 +9,7 @@ import { formatMonthTitle } from "@/engine/calendar";
 import type { CalendarViewMode } from "@/domain/types";
 import { calculateMonthProgress } from "@/features/calendar/calendar-metrics";
 import { usePalette } from "@/theme/palette";
-import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { COMPACT_TEXT_MAX_SCALE, TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 
 const MonthProgress = memo(function MonthProgress({
@@ -45,7 +45,14 @@ const MonthProgress = memo(function MonthProgress({
       })}
     >
       <Svg height={64} width={64} viewBox="0 0 64 64">
-        <Circle cx={32} cy={32} fill="none" r={radius} stroke={palette.surfaceMuted} strokeWidth={5} />
+        <Circle
+          cx={32}
+          cy={32}
+          fill="none"
+          r={radius}
+          stroke={palette.surfaceMuted}
+          strokeWidth={5}
+        />
         <Circle
           cx={32}
           cy={32}
@@ -61,6 +68,7 @@ const MonthProgress = memo(function MonthProgress({
       </Svg>
       <Text
         adjustsFontSizeToFit
+        maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
         numberOfLines={1}
         style={{
           position: "absolute",
@@ -130,17 +138,23 @@ export const CalendarHeader = memo(function CalendarHeader({
                 opacity: pressed ? 0.58 : 1,
               })}
             >
-              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.primary, ...TYPOGRAPHY.label, fontWeight: "700", fontVariant: ["tabular-nums"] }}>
+              <Text
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                style={{
+                  color: palette.primary,
+                  ...TYPOGRAPHY.label,
+                  fontWeight: "700",
+                  fontVariant: ["tabular-nums"],
+                }}
+              >
                 {year}
               </Text>
               <Ionicons color={palette.primary} name="chevron-up" size={14} />
             </Pressable>
             <Animated.Text
               key={`${viewMode}-${title}`}
-              adjustsFontSizeToFit
               entering={FadeInDown.duration(110).reduceMotion(ReduceMotion.System)}
-              minimumFontScale={0.72}
-              numberOfLines={1}
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
               style={{
                 minWidth: 0,
                 flexShrink: 1,
@@ -155,13 +169,16 @@ export const CalendarHeader = memo(function CalendarHeader({
           </View>
         ) : (
           <View style={{ gap: SPACING.xxs }}>
-            <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}>
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}
+            >
               Jahresübersicht
             </Text>
             <Animated.Text
               key={`${viewMode}-${title}`}
               entering={FadeInDown.duration(110).reduceMotion(ReduceMotion.System)}
-              numberOfLines={1}
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
               style={{
                 color: palette.text,
                 ...TYPOGRAPHY.hero,

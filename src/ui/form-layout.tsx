@@ -29,7 +29,12 @@ export function FormScreen({
     <ScrollView
       automaticallyAdjustKeyboardInsets
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={{ gap: SPACING.xl, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: bottomPadding }}
+      contentContainerStyle={{
+        gap: SPACING.xl,
+        paddingHorizontal: SPACING.lg,
+        paddingTop: SPACING.md,
+        paddingBottom: bottomPadding,
+      }}
       keyboardDismissMode={keyboardDismissMode}
       keyboardShouldPersistTaps="handled"
       style={{ backgroundColor: palette.background }}
@@ -53,9 +58,7 @@ export function FormSection({
   return (
     <View style={{ gap: SPACING.sm }}>
       {title ? <SectionHeader action={action} caption={caption} title={title} /> : null}
-      <SurfaceCard style={{ gap: SPACING.md, padding: SPACING.lg }}>
-        {children}
-      </SurfaceCard>
+      <SurfaceCard style={{ gap: SPACING.md, padding: SPACING.lg }}>{children}</SurfaceCard>
     </View>
   );
 }
@@ -74,7 +77,9 @@ export function HeaderSaveAction({
   const palette = usePalette();
   return (
     <Pressable
-      accessibilityLabel={busy ? "Änderungen werden gespeichert" : closes ? `${label} und schließen` : label}
+      accessibilityLabel={
+        busy ? "Änderungen werden gespeichert" : closes ? `${label} und schließen` : label
+      }
       accessibilityRole="button"
       accessibilityState={{ busy, disabled: busy }}
       disabled={busy}
@@ -92,7 +97,10 @@ export function HeaderSaveAction({
       {busy ? (
         <ActivityIndicator accessibilityElementsHidden color={palette.primary} size="small" />
       ) : (
-        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.primary, ...TYPOGRAPHY.button }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.primary, ...TYPOGRAPHY.button }}
+        >
           {label}
         </Text>
       )}
@@ -112,6 +120,7 @@ export function FormStatus({
   if (!content) return null;
   return (
     <View
+      accessible
       accessibilityLiveRegion="polite"
       accessibilityRole={error ? "alert" : undefined}
       style={{
@@ -126,7 +135,11 @@ export function FormStatus({
         paddingVertical: 10,
       }}
     >
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: error ? palette.danger : palette.success, ...TYPOGRAPHY.label }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{ color: error ? palette.danger : palette.success, ...TYPOGRAPHY.label }}
+      >
         {content}
       </Text>
     </View>
@@ -160,7 +173,10 @@ export function DestructiveFormAction({
         opacity: disabled ? 0.45 : 1,
       })}
     >
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.danger, ...TYPOGRAPHY.button }}>
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        style={{ color: palette.danger, ...TYPOGRAPHY.button }}
+      >
         {label}
       </Text>
     </Pressable>

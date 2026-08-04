@@ -25,9 +25,8 @@ export function calculateTimedShiftBounds(
   const date = Temporal.PlainDate.from(shift.date);
   const startTime = Temporal.PlainTime.from(shift.startTime);
   const endTime = Temporal.PlainTime.from(shift.endTime);
-  const endDate = Temporal.PlainTime.compare(endTime, startTime) <= 0
-    ? date.add({ days: 1 })
-    : date;
+  const endDate =
+    Temporal.PlainTime.compare(endTime, startTime) <= 0 ? date.add({ days: 1 }) : date;
   const startParts = timeParts(shift.startTime);
   const endParts = timeParts(shift.endTime);
   const start = Temporal.ZonedDateTime.from(
@@ -38,9 +37,7 @@ export function calculateTimedShiftBounds(
     { timeZone, year: endDate.year, month: endDate.month, day: endDate.day, ...endParts },
     { disambiguation: "later" },
   );
-  const grossMinutes = Math.round(
-    Number(end.epochMilliseconds - start.epochMilliseconds) / 60_000,
-  );
+  const grossMinutes = Math.round(Number(end.epochMilliseconds - start.epochMilliseconds) / 60_000);
   return Object.freeze({
     startEpochMinutes: Math.round(Number(start.epochMilliseconds) / 60_000),
     endEpochMinutes: Math.round(Number(end.epochMilliseconds) / 60_000),

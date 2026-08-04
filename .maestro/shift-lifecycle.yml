@@ -1,0 +1,20 @@
+appId: com.medishift.app.internal
+---
+- runFlow: onboarding.yml
+- tapOn: "Schnelleintrag öffnen"
+- tapOn: "Dienst auswählen"
+- assertVisible: "Bezeichnung"
+- tapOn: "Bezeichnung"
+- eraseText
+- inputText: "E2E Dienst"
+- hideKeyboard
+- tapOn: "Sichern und schließen"
+- extendedWaitUntil:
+    visible: "E2E Dienst"
+    timeout: 10000
+- tapOn: "E2E Dienst"
+- tapOn: "E2E Dienst bearbeiten"
+- assertVisible: "Eintrag löschen"
+- tapOn: "Eintrag löschen"
+- tapOn: "Löschen"
+- assertNotVisible: "E2E Dienst"

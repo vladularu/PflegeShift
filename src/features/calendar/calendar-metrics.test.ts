@@ -58,9 +58,19 @@ describe("calendar metrics", () => {
     const entries: CalendarEntry[] = [
       shift({ date: "2026-07-01", type: "DAY" }),
       {
-        kind: "APPOINTMENT", id: "a", date: "2026-07-01", title: "Arzt",
-        allDay: false, startTime: "10:00", endTime: "11:00", color: "#000",
-        note: null, revision: 1, createdAt: "", updatedAt: "", deletedAt: null,
+        kind: "APPOINTMENT",
+        id: "a",
+        date: "2026-07-01",
+        title: "Arzt",
+        allDay: false,
+        startTime: "10:00",
+        endTime: "11:00",
+        color: "#000",
+        note: null,
+        revision: 1,
+        createdAt: "",
+        updatedAt: "",
+        deletedAt: null,
       },
     ];
     expect(calculateDailySummary("2026-07-01", entries, profile)).toMatchObject({
@@ -71,16 +81,28 @@ describe("calendar metrics", () => {
   });
 
   it("credits absence on workdays and handles overnight shifts", () => {
-    expect(calculateDailySummary(
-      "2026-07-02",
-      [shift({ date: "2026-07-02", type: "VACATION", startTime: null, endTime: null })],
-      profile,
-    ).actualMinutes).toBe(480);
-    expect(calculateDailySummary(
-      "2026-07-03",
-      [shift({ date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:30", breakMinutes: 30 })],
-      profile,
-    ).actualMinutes).toBe(600);
+    expect(
+      calculateDailySummary(
+        "2026-07-02",
+        [shift({ date: "2026-07-02", type: "VACATION", startTime: null, endTime: null })],
+        profile,
+      ).actualMinutes,
+    ).toBe(480);
+    expect(
+      calculateDailySummary(
+        "2026-07-03",
+        [
+          shift({
+            date: "2026-07-03",
+            type: "NIGHT",
+            startTime: "21:00",
+            endTime: "07:30",
+            breakMinutes: 30,
+          }),
+        ],
+        profile,
+      ).actualMinutes,
+    ).toBe(600);
   });
 
   it("sets no target on a public holiday", () => {
@@ -98,7 +120,12 @@ describe("calendar metrics", () => {
       shift({ date: "2026-07-03", type: "LATE" }),
     ];
     expect(buildMonthlyHoursSeries("2026-07", entries, profile)).toHaveLength(31);
-    expect(buildMonthlyHoursSeries("2026-07", entries, profile).reduce((sum, day) => sum + day.actualMinutes, 0)).toBe(1_440);
+    expect(
+      buildMonthlyHoursSeries("2026-07", entries, profile).reduce(
+        (sum, day) => sum + day.actualMinutes,
+        0,
+      ),
+    ).toBe(1_440);
     expect(buildShiftTypeDistribution("2026-07", entries).get("EARLY")).toBe(2);
   });
 
@@ -106,7 +133,13 @@ describe("calendar metrics", () => {
     const entries = [
       shift({ date: "2026-07-01", type: "EARLY" }),
       shift({ date: "2026-07-02", type: "VACATION", startTime: null, endTime: null }),
-      shift({ date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:30", breakMinutes: 30 }),
+      shift({
+        date: "2026-07-03",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:30",
+        breakMinutes: 30,
+      }),
     ];
     const bars = buildMonthlyHoursSeries("2026-07", entries, profile);
     const monthly = calculateMonthlySummary("2026-07", entries, profile);

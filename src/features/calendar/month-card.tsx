@@ -1,6 +1,7 @@
 import { memo, useMemo, useRef } from "react";
 import {
   Pressable,
+  findNodeHandle,
   Text,
   View,
   useWindowDimensions,
@@ -24,12 +25,11 @@ import {
   calendarSelectionTouchesMonth,
 } from "@/features/calendar/calendar-rendering";
 import { holidayShortLabel } from "@/features/calendar/holiday-label";
+import { stampDayAccessibilityHint } from "@/features/calendar/stamp-accessibility";
 import { holidayMapForMonth } from "@/engine/holidays";
-import {
-  accessibleChipBackgroundColor,
-  chipTextColor,
-} from "@/theme/color-contrast";
+import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
+import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -43,8 +43,13 @@ interface DayCellProps {
   readonly holidayName?: string;
   readonly isSelected: boolean;
   readonly isToday: boolean;
-  readonly onSelectDate: (date: string, anchor: CalendarAnchorRect) => void;
+  readonly onSelectDate: (
+    date: string,
+    anchor: CalendarAnchorRect,
+    accessibilityTarget?: number | null,
+  ) => void;
   readonly stampMode: boolean;
+  readonly stampToolLabel: string | null;
   readonly compactLabels: boolean;
   readonly showShiftTimes: boolean;
   readonly showShiftDuration: boolean;
@@ -77,16 +82,21 @@ const EntryMark = memo(function EntryMark({
         }}
       >
         <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: entry.color }} />
-        <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ flex: 1, color: palette.textSecondary, fontSize: 10, fontWeight: "600" }}>
+        <Text
+          maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+          numberOfLines={1}
+          style={{ flex: 1, color: palette.textSecondary, fontSize: 10, fontWeight: "600" }}
+        >
           {compactLabels ? entry.title.slice(0, 1) : entry.title}
         </Text>
       </View>
     );
   }
 
-  const detail = entry.kind === "SHIFT"
-    ? calendarShiftDetail(entry, { showShiftTimes, showShiftDuration, timeZone })
-    : null;
+  const detail =
+    entry.kind === "SHIFT"
+      ? calendarShiftDetail(entry, { showShiftTimes, showShiftDuration, timeZone })
+      : null;
   return (
     <View
       style={{
@@ -97,11 +107,19 @@ const EntryMark = memo(function EntryMark({
         paddingHorizontal: 4,
       }}
     >
-      <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ color: chipTextColor, fontSize: 10, fontWeight: "700" }}>
+      <Text
+        maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+        numberOfLines={1}
+        style={{ color: chipTextColor, fontSize: 10, fontWeight: "700" }}
+      >
         {compactLabels ? entry.symbol : entry.title}
       </Text>
       {detail ? (
-        <Text maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ color: chipTextColor, fontSize: 8, fontWeight: "600" }}>
+        <Text
+          maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+          numberOfLines={1}
+          style={{ color: chipTextColor, fontSize: 8, fontWeight: "600" }}
+        >
           {detail}
         </Text>
       ) : null}
@@ -109,142 +127,169 @@ const EntryMark = memo(function EntryMark({
   );
 });
 
-const DayCell = memo(function DayCell({
-  cell,
-  entries,
-  holidayName,
-  isSelected,
-  isToday,
-  onSelectDate,
-  stampMode,
-  compactLabels,
-  showShiftTimes,
-  showShiftDuration,
-  timeZone,
-}: DayCellProps) {
-  const palette = usePalette();
-  const cellRef = useRef<View>(null);
-  const detailed = showShiftTimes || showShiftDuration;
-  const preview = useMemo(
-    () => calendarEntryPreview(entries, detailed ? 1 : 2),
-    [detailed, entries],
-  );
-  const handlePress = (event: GestureResponderEvent) => {
-    const fallbackAnchor = {
-      x: event.nativeEvent.pageX - 24,
-      y: event.nativeEvent.pageY - 24,
-      width: 48,
-      height: 48,
+const DayCell = memo(
+  function DayCell({
+    cell,
+    entries,
+    holidayName,
+    isSelected,
+    isToday,
+    onSelectDate,
+    stampMode,
+    stampToolLabel,
+    compactLabels,
+    showShiftTimes,
+    showShiftDuration,
+    timeZone,
+  }: DayCellProps) {
+    const palette = usePalette();
+    const cellRef = useRef<View>(null);
+    const detailed = showShiftTimes || showShiftDuration;
+    const preview = useMemo(
+      () => calendarEntryPreview(entries, detailed ? 1 : 2),
+      [detailed, entries],
+    );
+    const handlePress = (event: GestureResponderEvent) => {
+      const fallbackAnchor = {
+        x: event.nativeEvent.pageX - 24,
+        y: event.nativeEvent.pageY - 24,
+        width: 48,
+        height: 48,
+      };
+      if (cellRef.current === null) {
+        onSelectDate(cell.date, fallbackAnchor);
+        return;
+      }
+      cellRef.current.measureInWindow((x, y, width, height) => {
+        onSelectDate(cell.date, { x, y, width, height }, findNodeHandle(cellRef.current));
+      });
     };
-    if (cellRef.current === null) {
-      onSelectDate(cell.date, fallbackAnchor);
-      return;
-    }
-    cellRef.current.measureInWindow((x, y, width, height) => {
-      onSelectDate(cell.date, { x, y, width, height });
-    });
-  };
 
-  return (
-    <Pressable
-      ref={cellRef}
-      accessibilityLabel={`${formatDateTitle(cell.date)}, ${entries.length} Einträge${holidayName ? `, ${holidayName}` : ""}${isSelected ? ", ausgewählt" : ""}`}
-      accessibilityRole="button"
-      accessibilityState={{ selected: isSelected }}
-      onPress={handlePress}
-      style={({ pressed }) => ({
-        flex: 1,
-        minWidth: 0,
-        backgroundColor: pressed
-          ? palette.primarySoft
-          : isSelected && stampMode
+    return (
+      <Pressable
+        ref={cellRef}
+        accessibilityLabel={`${formatDateTitle(cell.date)}, ${entries.length} Einträge${holidayName ? `, ${holidayName}` : ""}${isSelected ? ", ausgewählt" : ""}`}
+        accessibilityHint={
+          stampMode
+            ? stampDayAccessibilityHint(stampToolLabel)
+            : "Öffnet die Schnellauswahl für diesen Tag."
+        }
+        accessibilityRole="button"
+        accessibilityState={{ selected: isSelected }}
+        onPress={handlePress}
+        style={({ pressed }) => ({
+          flex: 1,
+          minWidth: 0,
+          backgroundColor: pressed
             ? palette.primarySoft
-            : cell.weekend
-              ? `${palette.weekend}B8`
-              : "transparent",
-        opacity: cell.inMonth ? 1 : 0.3,
-        paddingHorizontal: 2,
-        paddingTop: 5,
-      })}
-    >
-      <View
-        style={{ height: 32, alignItems: "center", justifyContent: "flex-start", pointerEvents: "none" }}
+            : isSelected && stampMode
+              ? palette.primarySoft
+              : !cell.inMonth
+                ? palette.outsideMonth
+                : cell.weekend
+                  ? `${palette.weekend}B8`
+                  : "transparent",
+          paddingHorizontal: 2,
+          paddingTop: 5,
+        })}
       >
         <View
           style={{
-            width: 24,
-            height: 24,
+            height: 32,
             alignItems: "center",
-            justifyContent: "center",
-            borderWidth: isSelected && !isToday ? 2 : 0,
-            borderColor: palette.primary,
-            borderRadius: 12,
-            backgroundColor: isToday ? palette.primary : "transparent",
+            justifyContent: "flex-start",
+            pointerEvents: "none",
           }}
         >
-          <Text
-            maxFontSizeMultiplier={1.5}
+          <View
             style={{
-              color: isToday ? palette.onPrimary : cell.inMonth ? palette.text : palette.textMuted,
-              fontSize: 13,
-              fontWeight: isToday || isSelected ? "700" : "600",
-              fontVariant: ["tabular-nums"],
-            }}
-        >
-            {cell.day}
-          </Text>
-        </View>
-        {holidayName ? (
-          <Text
-            maxFontSizeMultiplier={1.45}
-            numberOfLines={1}
-            style={{
-              position: "absolute",
-              right: 1,
-              bottom: 0,
-              left: 1,
-              color: palette.warning,
-              fontSize: 9,
-              fontWeight: "700",
-              textAlign: "center",
+              width: 24,
+              height: 24,
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: isSelected && !isToday ? 2 : 0,
+              borderColor: palette.primary,
+              borderRadius: 12,
+              backgroundColor: isToday ? palette.primary : "transparent",
             }}
           >
-            {holidayShortLabel(holidayName)}
-          </Text>
-        ) : null}
-      </View>
-      <View style={{ gap: 1, pointerEvents: "box-none" }}>
-        {preview.entries.map((entry) => (
-          <EntryMark
-            key={`${entry.kind}-${entry.id}`}
-            compactLabels={compactLabels}
-            entry={entry}
-            showShiftDuration={showShiftDuration}
-            showShiftTimes={showShiftTimes}
-            timeZone={timeZone}
-          />
-        ))}
-        {preview.overflowCount > 0 ? (
-          <Text maxFontSizeMultiplier={1.45} style={{ color: palette.textMuted, fontSize: 9, fontWeight: "600", textAlign: "center" }}>
-            +{preview.overflowCount}
-          </Text>
-        ) : null}
-      </View>
-    </Pressable>
-  );
-}, (previous, next) => (
-  previous.cell === next.cell &&
-  previous.compactLabels === next.compactLabels &&
-  calendarEntryListsEqual(previous.entries, next.entries) &&
-  previous.holidayName === next.holidayName &&
-  previous.isSelected === next.isSelected &&
-  previous.isToday === next.isToday &&
-  previous.onSelectDate === next.onSelectDate &&
-  previous.showShiftDuration === next.showShiftDuration &&
-  previous.showShiftTimes === next.showShiftTimes &&
-  previous.stampMode === next.stampMode
-  && previous.timeZone === next.timeZone
-));
+            <Text
+              maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+              style={{
+                color: isToday
+                  ? palette.onPrimary
+                  : cell.inMonth
+                    ? palette.text
+                    : palette.textMuted,
+                fontSize: 13,
+                fontWeight: isToday || isSelected ? "700" : "600",
+                fontVariant: ["tabular-nums"],
+              }}
+            >
+              {cell.day}
+            </Text>
+          </View>
+          {holidayName ? (
+            <Text
+              maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+              numberOfLines={1}
+              style={{
+                position: "absolute",
+                right: 1,
+                bottom: 0,
+                left: 1,
+                color: palette.warning,
+                fontSize: 9,
+                fontWeight: "700",
+                textAlign: "center",
+              }}
+            >
+              {holidayShortLabel(holidayName)}
+            </Text>
+          ) : null}
+        </View>
+        <View style={{ gap: 1, pointerEvents: "box-none" }}>
+          {preview.entries.map((entry) => (
+            <EntryMark
+              key={`${entry.kind}-${entry.id}`}
+              compactLabels={compactLabels}
+              entry={entry}
+              showShiftDuration={showShiftDuration}
+              showShiftTimes={showShiftTimes}
+              timeZone={timeZone}
+            />
+          ))}
+          {preview.overflowCount > 0 ? (
+            <Text
+              maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+              style={{
+                color: palette.textMuted,
+                fontSize: 9,
+                fontWeight: "600",
+                textAlign: "center",
+              }}
+            >
+              +{preview.overflowCount}
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
+    );
+  },
+  (previous, next) =>
+    previous.cell === next.cell &&
+    previous.compactLabels === next.compactLabels &&
+    calendarEntryListsEqual(previous.entries, next.entries) &&
+    previous.holidayName === next.holidayName &&
+    previous.isSelected === next.isSelected &&
+    previous.isToday === next.isToday &&
+    previous.onSelectDate === next.onSelectDate &&
+    previous.showShiftDuration === next.showShiftDuration &&
+    previous.showShiftTimes === next.showShiftTimes &&
+    previous.stampMode === next.stampMode &&
+    previous.stampToolLabel === next.stampToolLabel &&
+    previous.timeZone === next.timeZone,
+);
 
 interface MonthCardProps {
   readonly month: string;
@@ -252,9 +297,14 @@ interface MonthCardProps {
   readonly profile: UserProfile;
   readonly pageHeight: number;
   readonly bottomReserve: number;
-  readonly onSelectDate: (date: string, anchor: CalendarAnchorRect) => void;
+  readonly onSelectDate: (
+    date: string,
+    anchor: CalendarAnchorRect,
+    accessibilityTarget?: number | null,
+  ) => void;
   readonly selectedDate: string | null;
   readonly stampMode?: boolean;
+  readonly stampToolLabel?: string | null;
   readonly showHolidays?: boolean;
   readonly testData?: boolean;
   readonly accessibilityVisible?: boolean;
@@ -263,10 +313,7 @@ interface MonthCardProps {
   readonly showShiftDuration?: boolean;
 }
 
-function monthCardPropsEqual(
-  previous: MonthCardProps,
-  next: MonthCardProps,
-): boolean {
+function monthCardPropsEqual(previous: MonthCardProps, next: MonthCardProps): boolean {
   if (
     previous.month !== next.month ||
     previous.profile !== next.profile ||
@@ -274,30 +321,23 @@ function monthCardPropsEqual(
     previous.bottomReserve !== next.bottomReserve ||
     previous.onSelectDate !== next.onSelectDate ||
     previous.stampMode !== next.stampMode ||
+    previous.stampToolLabel !== next.stampToolLabel ||
     previous.showHolidays !== next.showHolidays ||
     previous.testData !== next.testData ||
-    previous.accessibilityVisible !== next.accessibilityVisible
-    || previous.labelMode !== next.labelMode
-    || previous.showShiftDuration !== next.showShiftDuration
-    || previous.showShiftTimes !== next.showShiftTimes
+    previous.accessibilityVisible !== next.accessibilityVisible ||
+    previous.labelMode !== next.labelMode ||
+    previous.showShiftDuration !== next.showShiftDuration ||
+    previous.showShiftTimes !== next.showShiftTimes
   ) {
     return false;
   }
   if (
     previous.selectedDate !== next.selectedDate &&
-    calendarSelectionTouchesMonth(
-      next.month,
-      previous.selectedDate,
-      next.selectedDate,
-    )
+    calendarSelectionTouchesMonth(next.month, previous.selectedDate, next.selectedDate)
   ) {
     return false;
   }
-  return calendarMonthEntriesEqual(
-    next.month,
-    previous.entriesByDate,
-    next.entriesByDate,
-  );
+  return calendarMonthEntriesEqual(next.month, previous.entriesByDate, next.entriesByDate);
 }
 
 export const MonthCard = memo(function MonthCard({
@@ -309,6 +349,7 @@ export const MonthCard = memo(function MonthCard({
   onSelectDate,
   selectedDate,
   stampMode = false,
+  stampToolLabel = null,
   showHolidays = true,
   testData = false,
   accessibilityVisible = true,
@@ -321,7 +362,7 @@ export const MonthCard = memo(function MonthCard({
   const compactLabels = labelMode === "SYMBOL" || shouldUseCompactCalendarLabels(fontScale);
   const grid = useMemo(() => createVisibleMonthGrid(month), [month]);
   const holidays = useMemo(
-    () => showHolidays ? holidayMapForMonth(month, profile.federalState) : new Map(),
+    () => (showHolidays ? holidayMapForMonth(month, profile.federalState) : new Map()),
     [month, profile.federalState, showHolidays],
   );
   const currentDate = today(profile.timeZone);
@@ -333,9 +374,8 @@ export const MonthCard = memo(function MonthCard({
     bottomReserve,
     testData,
   });
-  const weeks = Array.from(
-    { length: weekCount },
-    (_, index) => grid.slice(index * 7, index * 7 + 7),
+  const weeks = Array.from({ length: weekCount }, (_, index) =>
+    grid.slice(index * 7, index * 7 + 7),
   );
 
   return (
@@ -360,14 +400,38 @@ export const MonthCard = memo(function MonthCard({
         }}
       >
         {testData ? (
-          <Text style={{ color: palette.primary, fontSize: 11, fontWeight: "700", letterSpacing: 0.7, paddingHorizontal: SPACING.md, paddingTop: SPACING.sm }}>
+          <Text
+            style={{
+              color: palette.primary,
+              fontSize: 11,
+              fontWeight: "700",
+              letterSpacing: 0.7,
+              paddingHorizontal: SPACING.md,
+              paddingTop: SPACING.sm,
+            }}
+          >
             TESTDATEN
           </Text>
         ) : null}
-        <View style={{ height: 40, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: palette.separator }}>
+        <View
+          style={{
+            height: 40,
+            flexDirection: "row",
+            alignItems: "center",
+            borderBottomWidth: 1,
+            borderBottomColor: palette.separator,
+          }}
+        >
           {WEEKDAYS.map((weekday, index) => (
             <View key={weekday} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <Text maxFontSizeMultiplier={1.4} style={{ color: index >= 5 ? palette.textMuted : palette.textSecondary, fontSize: 12, fontWeight: "600" }}>
+              <Text
+                maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+                style={{
+                  color: index >= 5 ? palette.textMuted : palette.textSecondary,
+                  fontSize: 12,
+                  fontWeight: "600",
+                }}
+              >
                 {weekday}
               </Text>
             </View>
@@ -396,6 +460,7 @@ export const MonthCard = memo(function MonthCard({
                 showShiftDuration={showShiftDuration}
                 showShiftTimes={showShiftTimes}
                 stampMode={stampMode}
+                stampToolLabel={stampToolLabel}
                 timeZone={profile.timeZone}
               />
             ))}

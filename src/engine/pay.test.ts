@@ -57,9 +57,7 @@ describe("TVöD-P pay engine", () => {
     const first = calculateShiftPremiumBreakdown(input, profile);
 
     expect(calculateShiftPremiumBreakdown(input, profile)).toBe(first);
-    expect(
-      calculateShiftPremiumBreakdown({ ...input, revision: 2 }, profile),
-    ).not.toBe(first);
+    expect(calculateShiftPremiumBreakdown({ ...input, revision: 2 }, profile)).not.toBe(first);
   });
 
   it("keeps night additive to Sunday and calculates overtime separately", () => {
@@ -71,7 +69,13 @@ describe("TVöD-P pay engine", () => {
 
   it("uses the selected holiday compensation percentage", () => {
     const withTimeOff = calculateShiftPremiumBreakdown(
-      shift({ date: "2026-12-25", startTime: "08:00", endTime: "16:00", breakMinutes: 0, overtimeMinutes: 0 }),
+      shift({
+        date: "2026-12-25",
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      }),
       profile,
     );
     const withoutTimeOff = calculateShiftPremiumBreakdown(
@@ -86,7 +90,9 @@ describe("TVöD-P pay engine", () => {
       profile,
     );
     expect(withTimeOff.premiumLines.find((line) => line.key === "holiday")?.percentage).toBe(35);
-    expect(withoutTimeOff.premiumLines.find((line) => line.key === "holiday")?.percentage).toBe(135);
+    expect(withoutTimeOff.premiumLines.find((line) => line.key === "holiday")?.percentage).toBe(
+      135,
+    );
   });
 
   it("keeps actual premium minutes across daylight-saving transitions", () => {
@@ -117,58 +123,81 @@ describe("TVöD-P pay engine", () => {
 
   it("prorates salary and applies detected or manually confirmed allowances", () => {
     const withoutDecision = calculateMonthlyPayEstimate("2026-07", [shift()], profile, null);
-    const withDecision = calculateMonthlyPayEstimate(
-      "2026-07",
-      [shift()],
-      profile,
-      {
-        month: "2026-07",
-        allowanceStatus: "ALTERNATING_MONTHLY",
-        revision: 1,
-        confirmedAt: "2026-07-01T00:00:00.000Z",
-        updatedAt: "2026-07-01T00:00:00.000Z",
-      },
-    );
+    const withDecision = calculateMonthlyPayEstimate("2026-07", [shift()], profile, {
+      month: "2026-07",
+      allowanceStatus: "ALTERNATING_MONTHLY",
+      revision: 1,
+      confirmedAt: "2026-07-01T00:00:00.000Z",
+      updatedAt: "2026-07-01T00:00:00.000Z",
+    });
     expect(withoutDecision.personalBaseAmount).toBe(2037.79);
     expect(withoutDecision.allowanceAmount).toBe(0);
     expect(withoutDecision.tvoedAllowanceAmount).toBe(12.5);
     expect(withoutDecision.careAllowanceAmount).toBe(70.91);
     expect(withDecision.allowanceAmount).toBe(125);
     expect(withDecision.estimatedGrossAmount).toBe(
-      Math.round((
-        withDecision.personalBaseAmount! +
-        withDecision.timePremiumAmount +
-        withDecision.overtimeAmount +
-        withDecision.allowanceAmount +
-        withDecision.tvoedAllowanceAmount +
-        withDecision.careAllowanceAmount
-      ) * 100) / 100,
+      Math.round(
+        (withDecision.personalBaseAmount! +
+          withDecision.timePremiumAmount +
+          withDecision.overtimeAmount +
+          withDecision.allowanceAmount +
+          withDecision.tvoedAllowanceAmount +
+          withDecision.careAllowanceAmount) *
+          100,
+      ) / 100,
     );
   });
 
   it("detects shift and alternating-shift patterns", () => {
-    const result = assessTvoedPattern([
-      shift({ id: "1", date: "2026-07-01", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
-      shift({ id: "2", date: "2026-07-02", type: "LATE", startTime: "13:18", endTime: "21:30" }),
-      shift({ id: "3", date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
-      shift({ id: "4", date: "2026-07-04", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
-      shift({ id: "5", date: "2026-07-05", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
-      shift({ id: "6", date: "2026-07-06", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
-    ], permanentRoundTheClock);
+    const result = assessTvoedPattern(
+      [
+        shift({ id: "1", date: "2026-07-01", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+        shift({ id: "2", date: "2026-07-02", type: "LATE", startTime: "13:18", endTime: "21:30" }),
+        shift({ id: "3", date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+        shift({ id: "4", date: "2026-07-04", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+        shift({ id: "5", date: "2026-07-05", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+        shift({ id: "6", date: "2026-07-06", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      ],
+      permanentRoundTheClock,
+    );
     expect(result.shiftWork).toBe("DETECTED");
     expect(result.alternatingShiftWork).toBe("DETECTED");
     expect(result.suggestedAllowance).toBe("ALTERNATING_MONTHLY");
   });
 
   it("recognizes tariff night work even when the shift starts before 21:00", () => {
-    const result = assessTvoedPattern([
-      shift({ id: "1", date: "2026-07-01", type: "LATE", startTime: "19:00", endTime: "23:00", breakMinutes: 0 }),
-      shift({ id: "2", date: "2026-07-02", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
-      shift({ id: "3", date: "2026-07-03", type: "DAY", startTime: "12:00", endTime: "20:00" }),
-      shift({ id: "4", date: "2026-07-04", type: "LATE", startTime: "19:00", endTime: "23:00", breakMinutes: 0 }),
-      shift({ id: "5", date: "2026-07-05", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
-      shift({ id: "6", date: "2026-07-06", type: "LATE", startTime: "19:00", endTime: "23:00", breakMinutes: 0 }),
-    ], permanentRoundTheClock);
+    const result = assessTvoedPattern(
+      [
+        shift({
+          id: "1",
+          date: "2026-07-01",
+          type: "LATE",
+          startTime: "19:00",
+          endTime: "23:00",
+          breakMinutes: 0,
+        }),
+        shift({ id: "2", date: "2026-07-02", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+        shift({ id: "3", date: "2026-07-03", type: "DAY", startTime: "12:00", endTime: "20:00" }),
+        shift({
+          id: "4",
+          date: "2026-07-04",
+          type: "LATE",
+          startTime: "19:00",
+          endTime: "23:00",
+          breakMinutes: 0,
+        }),
+        shift({ id: "5", date: "2026-07-05", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+        shift({
+          id: "6",
+          date: "2026-07-06",
+          type: "LATE",
+          startTime: "19:00",
+          endTime: "23:00",
+          breakMinutes: 0,
+        }),
+      ],
+      permanentRoundTheClock,
+    );
     expect(result.alternatingShiftWork).toBe("DETECTED");
   });
 
@@ -187,15 +216,51 @@ describe("TVöD-P pay engine", () => {
 
   it("uses the previous month to recognize a rotation across a month boundary", () => {
     const currentShifts = [
-      shift({ id: "current-1", date: "2026-07-01", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
-      shift({ id: "current-2", date: "2026-07-03", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+      shift({
+        id: "current-1",
+        date: "2026-07-01",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+      }),
+      shift({
+        id: "current-2",
+        date: "2026-07-03",
+        type: "EARLY",
+        startTime: "06:00",
+        endTime: "14:00",
+      }),
     ];
     const assessmentShifts = [
-      shift({ id: "previous-1", date: "2026-06-27", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
-      shift({ id: "previous-2", date: "2026-06-29", type: "LATE", startTime: "13:18", endTime: "21:30" }),
+      shift({
+        id: "previous-1",
+        date: "2026-06-27",
+        type: "EARLY",
+        startTime: "06:00",
+        endTime: "14:00",
+      }),
+      shift({
+        id: "previous-2",
+        date: "2026-06-29",
+        type: "LATE",
+        startTime: "13:18",
+        endTime: "21:30",
+      }),
       ...currentShifts,
-      shift({ id: "current-3", date: "2026-07-08", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
-      shift({ id: "current-4", date: "2026-07-12", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      shift({
+        id: "current-3",
+        date: "2026-07-08",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+      }),
+      shift({
+        id: "current-4",
+        date: "2026-07-12",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+      }),
     ];
 
     const result = calculateMonthlyPayEstimate(

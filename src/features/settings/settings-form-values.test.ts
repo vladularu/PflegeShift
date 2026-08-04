@@ -14,17 +14,19 @@ const baseProfile: UserProfile = {
 
 describe("settings form values", () => {
   it("uses persisted profile values on the first render", () => {
-    expect(settingsFormValues({
-      ...baseProfile,
-      federalState: "BY",
-      weeklyMinutes: 2400,
-      tariff: {
-        payGroup: "P11",
-        payLevel: 5,
-        sector: "BT_B",
-        fullTimeWeeklyMinutes: 2340,
-      },
-    })).toEqual({
+    expect(
+      settingsFormValues({
+        ...baseProfile,
+        federalState: "BY",
+        weeklyMinutes: 2400,
+        tariff: {
+          payGroup: "P11",
+          payLevel: 5,
+          sector: "BT_B",
+          fullTimeWeeklyMinutes: 2340,
+        },
+      }),
+    ).toEqual({
       federalState: "BY",
       weeklyHours: "40",
       payGroup: "P11",

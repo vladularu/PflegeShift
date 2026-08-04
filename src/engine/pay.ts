@@ -73,9 +73,7 @@ function holidayDates(
   const key = `${federalState}-${year}`;
   const cached = HOLIDAY_DATE_CACHE.get(key);
   if (cached) return cached;
-  const dates = new Set(
-    getPublicHolidays(year, federalState).map((holiday) => holiday.date),
-  );
+  const dates = new Set(getPublicHolidays(year, federalState).map((holiday) => holiday.date));
   HOLIDAY_DATE_CACHE.set(key, dates);
   return dates;
 }
@@ -101,18 +99,11 @@ function countPremiumMinute(
 
   if (day.holiday) {
     buckets.holiday++;
-  } else if (
-    day.preholiday &&
-    minuteOfDay >= 6 * 60
-  ) {
+  } else if (day.preholiday && minuteOfDay >= 6 * 60) {
     buckets.preholiday++;
   } else if (day.sunday) {
     buckets.sunday++;
-  } else if (
-    day.saturday &&
-    minuteOfDay >= 13 * 60 &&
-    minuteOfDay < 21 * 60
-  ) {
+  } else if (day.saturday && minuteOfDay >= 13 * 60 && minuteOfDay < 21 * 60) {
     buckets.saturday++;
   }
 }
@@ -135,8 +126,7 @@ function countPremiumMinutes(
 
   const start = zonedStart(shift, profile.timeZone);
   const lastMinute = start.add({ minutes: gross - 1 });
-  const crossesOffsetTransition =
-    start.offsetNanoseconds !== lastMinute.offsetNanoseconds;
+  const crossesOffsetTransition = start.offsetNanoseconds !== lastMinute.offsetNanoseconds;
 
   if (crossesOffsetTransition) {
     const dayContexts = new Map<string, PremiumDayContext>();
@@ -150,11 +140,7 @@ function countPremiumMinutes(
         day = premiumDayContext(date, profile.federalState);
         dayContexts.set(dateKey, day);
       }
-      countPremiumMinute(
-        buckets,
-        day,
-        cursor.hour * 60 + cursor.minute,
-      );
+      countPremiumMinute(buckets, day, cursor.hour * 60 + cursor.minute);
     }
     return buckets;
   }
@@ -171,16 +157,10 @@ function countPremiumMinutes(
     const dayOffset = Math.floor(localMinute / (24 * 60));
     if (dayOffset !== cachedDayOffset) {
       cachedDayOffset = dayOffset;
-      cachedDate = dayOffset === 0
-        ? startDate
-        : startDate.add({ days: dayOffset });
+      cachedDate = dayOffset === 0 ? startDate : startDate.add({ days: dayOffset });
       cachedDay = premiumDayContext(cachedDate, profile.federalState);
     }
-    countPremiumMinute(
-      buckets,
-      cachedDay,
-      localMinute % (24 * 60),
-    );
+    countPremiumMinute(buckets, cachedDay, localMinute % (24 * 60));
   }
   return buckets;
 }
@@ -237,9 +217,7 @@ function calculateShiftPremiumBreakdownUncached(
     return {
       shiftId: shift.id,
       date: shift.date,
-      netMinutes: isWorkShift(shift)
-        ? calculateTimedShiftMinutes(shift, profile.timeZone)
-        : 0,
+      netMinutes: isWorkShift(shift) ? calculateTimedShiftMinutes(shift, profile.timeZone) : 0,
       premiumLines: [],
       overtimeBaseAmount: 0,
       overtimePremiumAmount: 0,
@@ -252,16 +230,9 @@ function calculateShiftPremiumBreakdownUncached(
   const gross = grossMinutes(shift, profile.timeZone);
   const breakStart = Math.floor((gross - Math.min(gross, shift.breakMinutes)) / 2);
   const breakEnd = breakStart + Math.min(gross, shift.breakMinutes);
-  const buckets = countPremiumMinutes(
-    shift,
-    profile,
-    gross,
-    breakStart,
-    breakEnd,
-  );
+  const buckets = countPremiumMinutes(shift, profile, gross, breakStart, breakEnd);
 
-  const holidayPercentage =
-    shift.holidayPremiumMode === "WITHOUT_TIME_OFF" ? 135 : 35;
+  const holidayPercentage = shift.holidayPremiumMode === "WITHOUT_TIME_OFF" ? 135 : 35;
   const lines = [
     premiumLine("night", "Nacht", buckets.night, 20, premiumRate),
     premiumLine("sunday", "Sonntag", buckets.sunday, 25, premiumRate),
@@ -286,9 +257,7 @@ function calculateShiftPremiumBreakdownUncached(
     (overtimeMinutes / 60) * premiumRate * (overtimePercentage / 100),
   );
   const totalAmount = roundMoney(
-    lines.reduce((sum, line) => sum + line.amount, 0) +
-      overtimeBaseAmount +
-      overtimePremiumAmount,
+    lines.reduce((sum, line) => sum + line.amount, 0) + overtimeBaseAmount + overtimePremiumAmount,
   );
   return {
     shiftId: shift.id,
@@ -310,9 +279,7 @@ export function calculateShiftPremiumBreakdown(
   const cached = cachedByInput?.get(key);
   if (cached) return cached;
 
-  const result = Object.freeze(
-    calculateShiftPremiumBreakdownUncached(shift, profile),
-  );
+  const result = Object.freeze(calculateShiftPremiumBreakdownUncached(shift, profile));
   const nextCache = cachedByInput ?? new Map<string, ShiftPremiumBreakdown>();
   nextCache.set(key, result);
   if (!cachedByInput) SHIFT_PREMIUM_CACHE.set(shift, nextCache);
@@ -328,12 +295,7 @@ function shiftWindow(shift: ShiftEntry): string {
   return "Spät";
 }
 
-function intervalOverlap(
-  start: number,
-  end: number,
-  rangeStart: number,
-  rangeEnd: number,
-): number {
+function intervalOverlap(start: number, end: number, rangeStart: number, rangeEnd: number): number {
   return Math.max(0, Math.min(end, rangeEnd) - Math.max(start, rangeStart));
 }
 
@@ -380,15 +342,13 @@ export function assessTvoedPattern(
 ): TvoedAssessment {
   const work = shifts
     .filter(isWorkShift)
-    .sort((left, right) =>
-      left.date.localeCompare(right.date) ||
-      left.startTime!.localeCompare(right.startTime!),
+    .sort(
+      (left, right) =>
+        left.date.localeCompare(right.date) || left.startTime!.localeCompare(right.startTime!),
     );
   const orderedWindows = work.map(shiftWindow);
   const windows = new Set(orderedWindows);
-  const nightShiftCount = work.filter(
-    (shift) => tariffNightMinutes(shift) >= 2 * 60,
-  ).length;
+  const nightShiftCount = work.filter((shift) => tariffNightMinutes(shift) >= 2 * 60).length;
   const changeCount = orderedWindows.reduce(
     (count, window, index) =>
       index > 0 && orderedWindows[index - 1] !== window ? count + 1 : count,
@@ -397,10 +357,7 @@ export function assessTvoedPattern(
   const hasRegularChange = changeCount >= 2;
   const recurringNightShifts = hasRecurringNightShifts(work);
   const hasAlternatingPattern =
-    work.length >= 5 &&
-    windows.size >= 3 &&
-    recurringNightShifts &&
-    hasRegularChange;
+    work.length >= 5 && windows.size >= 3 && recurringNightShifts && hasRegularChange;
   const shiftWork =
     work.length === 0
       ? "NOT_DETECTED"
@@ -408,23 +365,21 @@ export function assessTvoedPattern(
         ? "DETECTED"
         : "REVIEW";
   const alternatingShiftWork =
-    work.length === 0 || nightShiftCount === 0 || settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
+    work.length === 0 ||
+    nightShiftCount === 0 ||
+    settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
       ? "NOT_DETECTED"
       : hasAlternatingPattern && settings.workplaceCoverage === "AROUND_THE_CLOCK"
         ? "DETECTED"
         : hasAlternatingPattern || windows.size >= 2
           ? "REVIEW"
           : "NOT_DETECTED";
-  const detectedPattern = alternatingShiftWork === "DETECTED"
-    ? "ALTERNATING"
-    : shiftWork === "DETECTED"
-      ? "SHIFT"
-      : null;
+  const detectedPattern =
+    alternatingShiftWork === "DETECTED" ? "ALTERNATING" : shiftWork === "DETECTED" ? "SHIFT" : null;
   const requiresCoverage = hasAlternatingPattern && settings.workplaceCoverage === "UNKNOWN";
-  const suggestedAllowance: AllowanceStatus =
-    requiresCoverage
-      ? "NONE"
-      : detectedPattern === "ALTERNATING" && settings.assignment === "PERMANENT"
+  const suggestedAllowance: AllowanceStatus = requiresCoverage
+    ? "NONE"
+    : detectedPattern === "ALTERNATING" && settings.assignment === "PERMANENT"
       ? "ALTERNATING_MONTHLY"
       : detectedPattern === "ALTERNATING" && settings.assignment === "TEMPORARY"
         ? "ALTERNATING_HOURLY"
@@ -467,25 +422,28 @@ export function assessTvoedPattern(
       {
         key: "AROUND_THE_CLOCK",
         label: "Arbeitsbereich rund um die Uhr",
-        detail: settings.workplaceCoverage === "AROUND_THE_CLOCK"
-          ? "Vom Nutzer bestätigt"
-          : settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
-            ? "Vom Nutzer verneint"
-            : "Kann nicht aus Dienstzeiten abgeleitet werden",
-        state: settings.workplaceCoverage === "AROUND_THE_CLOCK"
-          ? "MET"
-          : settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
-            ? "NOT_MET"
-            : "OPEN",
+        detail:
+          settings.workplaceCoverage === "AROUND_THE_CLOCK"
+            ? "Vom Nutzer bestätigt"
+            : settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
+              ? "Vom Nutzer verneint"
+              : "Kann nicht aus Dienstzeiten abgeleitet werden",
+        state:
+          settings.workplaceCoverage === "AROUND_THE_CLOCK"
+            ? "MET"
+            : settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
+              ? "NOT_MET"
+              : "OPEN",
       },
       {
         key: "ASSIGNMENT",
         label: "Dauerhafte Zuordnung",
-        detail: settings.assignment === "PERMANENT"
-          ? "Dauerhaft Teil der Stelle"
-          : settings.assignment === "TEMPORARY"
-            ? "Nur gelegentlich oder vertretungsweise"
-            : "Kann nicht aus Kalendereinträgen abgeleitet werden",
+        detail:
+          settings.assignment === "PERMANENT"
+            ? "Dauerhaft Teil der Stelle"
+            : settings.assignment === "TEMPORARY"
+              ? "Nur gelegentlich oder vertretungsweise"
+              : "Kann nicht aus Kalendereinträgen abgeleitet werden",
         state: settings.assignment === "UNKNOWN" ? "OPEN" : "MET",
       },
     ],
@@ -504,34 +462,28 @@ function allowanceAmount(
   const isBw = profile.federalState === "BW";
   const hourly =
     status === "ALTERNATING_HOURLY"
-      ? profile.tariff.sector === "BT_K" && !isBw ? 1.49 : 1.47
-      : profile.tariff.sector === "BT_K" && !isBw ? 0.60 : 0.59;
+      ? profile.tariff.sector === "BT_K" && !isBw
+        ? 1.49
+        : 1.47
+      : profile.tariff.sector === "BT_K" && !isBw
+        ? 0.6
+        : 0.59;
   return roundMoney((workMinutes / 60) * hourly);
 }
 
 function careAllowanceAmount(date: string, profile: UserProfile): number {
   if (profile.tariff === null) return 0;
-  const fullTimeAmount = date >= "2026-05-01"
-    ? 141.82
-    : date >= "2025-04-01"
-      ? 137.96
-      : 133.80;
+  const fullTimeAmount = date >= "2026-05-01" ? 141.82 : date >= "2025-04-01" ? 137.96 : 133.8;
   return roundMoney(
-    fullTimeAmount *
-      (profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes),
+    fullTimeAmount * (profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes),
   );
 }
 
 function tvoedAllowanceAmount(date: string, profile: UserProfile): number {
   if (profile.tariff === null) return 0;
-  const validFrom = profile.tariff.sector === "BT_K"
-    ? "2008-07-01"
-    : "2021-03-01";
+  const validFrom = profile.tariff.sector === "BT_K" ? "2008-07-01" : "2021-03-01";
   if (date < validFrom) return 0;
-  return roundMoney(
-    25 *
-      (profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes),
-  );
+  return roundMoney(25 * (profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes));
 }
 
 export function calculateMonthlyPayEstimate(
@@ -548,15 +500,16 @@ export function calculateMonthlyPayEstimate(
   const first = Temporal.PlainDate.from(`${month}-01`);
   const assessmentStart = first.subtract({ months: 2 }).toString();
   const assessmentEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
-  const relevantAssessmentShifts = monthShifts.length === 0
-    ? []
-    : assessmentShifts.filter(
-      (shift) =>
-        shift.deletedAt === null &&
-        shift.date >= assessmentStart &&
-        shift.date <= assessmentEnd &&
-        isWorkShift(shift),
-    );
+  const relevantAssessmentShifts =
+    monthShifts.length === 0
+      ? []
+      : assessmentShifts.filter(
+          (shift) =>
+            shift.deletedAt === null &&
+            shift.date >= assessmentStart &&
+            shift.date <= assessmentEnd &&
+            isWorkShift(shift),
+        );
   const assessment = assessTvoedPattern(relevantAssessmentShifts, workPatternSettings);
   const dateKey = `${month}-01`;
   const version = getTariffVersion(dateKey);
@@ -600,13 +553,8 @@ export function calculateMonthlyPayEstimate(
   );
   const workMinutes = shiftBreakdowns.reduce((sum, item) => sum + item.netMinutes, 0);
   const confirmedAllowance = decision?.allowanceStatus ?? null;
-  const effectiveAllowance =
-    confirmedAllowance ?? assessment.suggestedAllowance;
-  const monthlyAllowanceAmount = allowanceAmount(
-    effectiveAllowance,
-    workMinutes,
-    profile,
-  );
+  const effectiveAllowance = confirmedAllowance ?? assessment.suggestedAllowance;
+  const monthlyAllowanceAmount = allowanceAmount(effectiveAllowance, workMinutes, profile);
   const monthlyTvoedAllowanceAmount = tvoedAllowanceAmount(dateKey, profile);
   const monthlyCareAllowanceAmount = careAllowanceAmount(dateKey, profile);
   return {

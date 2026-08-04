@@ -7,11 +7,7 @@ import {
   calendarSelectionTouchesMonth,
 } from "@/features/calendar/calendar-rendering";
 
-function shift(
-  id: string,
-  date: string,
-  revision = 1,
-): ShiftEntry {
+function shift(id: string, date: string, revision = 1): ShiftEntry {
   return {
     id,
     kind: "SHIFT",
@@ -36,17 +32,15 @@ function shift(
 
 describe("calendar rendering comparisons", () => {
   it("treats unchanged entry revisions as render-equivalent", () => {
-    expect(calendarEntryListsEqual(
-      [shift("a", "2026-07-15")],
-      [shift("a", "2026-07-15")],
-    )).toBe(true);
+    expect(calendarEntryListsEqual([shift("a", "2026-07-15")], [shift("a", "2026-07-15")])).toBe(
+      true,
+    );
   });
 
   it("detects a changed entry revision", () => {
-    expect(calendarEntryListsEqual(
-      [shift("a", "2026-07-15", 1)],
-      [shift("a", "2026-07-15", 2)],
-    )).toBe(false);
+    expect(
+      calendarEntryListsEqual([shift("a", "2026-07-15", 1)], [shift("a", "2026-07-15", 2)]),
+    ).toBe(false);
   });
 
   it("invalidates only months whose visible grid contains the changed date", () => {
