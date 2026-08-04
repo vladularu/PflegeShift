@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { SHIFT_TYPE_LABELS, type ShiftType } from "@/domain/types";
@@ -6,7 +7,9 @@ import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { buildAnnualDistributionSections } from "@/features/analysis/annual-distribution";
 import type { AnnualReport } from "@/features/analysis/annual-report";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
-import { MetricCard, SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
+import { MetricCard, SectionHeader, SegmentedControl, SurfaceCard } from "@/ui/design-system";
 
 export type AnalysisPeriod = "MONTH" | "YEAR";
 
@@ -17,55 +20,12 @@ export function AnalysisPeriodPicker({
   readonly value: AnalysisPeriod;
   readonly onChange: (value: AnalysisPeriod) => void;
 }) {
-  const palette = usePalette();
   return (
-    <View
-      accessibilityRole="tablist"
-      style={{
-        width: "100%",
-        minHeight: 48,
-        flexDirection: "row",
-        borderRadius: 18,
-        borderCurve: "continuous",
-        backgroundColor: palette.surface,
-        boxShadow: palette.dark ? undefined : "0 3px 14px rgba(28, 48, 42, 0.05)",
-        padding: 4,
-      }}
-    >
-      {(["MONTH", "YEAR"] as const).map((item) => {
-        const selected = value === item;
-        return (
-          <Pressable
-            key={item}
-            accessibilityRole="tab"
-            accessibilityState={{ selected }}
-            onPress={() => onChange(item)}
-            style={({ pressed }) => ({
-              minWidth: 0,
-              minHeight: 40,
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 14,
-              backgroundColor: selected ? palette.primarySoft : "transparent",
-              opacity: pressed ? 0.7 : 1,
-              paddingHorizontal: 12,
-            })}
-          >
-            <Text
-              selectable
-              style={{
-                color: selected ? palette.primary : palette.textMuted,
-                fontSize: 13,
-                fontWeight: "800",
-              }}
-            >
-              {item === "MONTH" ? "Monat" : "Jahr"}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <SegmentedControl
+      items={[{ value: "MONTH", label: "Monat" }, { value: "YEAR", label: "Jahr" }]}
+      onChange={(nextValue) => onChange(nextValue as AnalysisPeriod)}
+      value={value}
+    />
   );
 }
 
@@ -91,8 +51,8 @@ export function AnnualReportScreen({
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 48 }}
+      style={{ backgroundColor: palette.groupedBackground }}
+      contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 48 }}
     >
       <View
         style={{
@@ -103,14 +63,14 @@ export function AnnualReportScreen({
         }}
       >
         <YearButton direction="back" onPress={() => onMoveYear(-1)} />
-        <View style={{ alignItems: "center", gap: 2 }}>
+        <View style={{ alignItems: "center", gap: SPACING.xxs }}>
           <Text
             selectable
-            style={{ color: palette.text, fontSize: 24, fontWeight: "900", fontVariant: ["tabular-nums"] }}
+            style={{ color: palette.text, ...TYPOGRAPHY.screenTitle, fontVariant: ["tabular-nums"] }}
           >
             {report.year}
           </Text>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
             {report.activeMonthCount} Monate mit Einträgen
           </Text>
         </View>
@@ -119,18 +79,16 @@ export function AnnualReportScreen({
 
       <AnalysisPeriodPicker value="YEAR" onChange={onChangePeriod} />
 
-      <View
+      <SurfaceCard
         style={{
-          gap: 18,
-          borderRadius: 28,
-          borderCurve: "continuous",
-          backgroundColor: palette.dark ? "#19352E" : "#1E6D5D",
-          boxShadow: "0 10px 28px rgba(20, 76, 64, 0.18)",
-          padding: 22,
+          gap: SPACING.lg,
+          borderColor: `${palette.primary}2E`,
+          backgroundColor: palette.primarySoft,
+          padding: SPACING.xl,
         }}
       >
-        <View style={{ gap: 5 }}>
-          <Text selectable style={{ color: "#B9E4D8", fontSize: 12, fontWeight: "800", letterSpacing: 0.8 }}>
+        <View style={{ gap: SPACING.xs }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline }}>
             JAHRESARBEITSZEIT
           </Text>
           <Text
@@ -138,34 +96,32 @@ export function AnnualReportScreen({
             adjustsFontSizeToFit
             numberOfLines={1}
             style={{
-              color: "#FFFFFF",
-              fontSize: 38,
-              fontWeight: "900",
+              color: palette.text,
+              ...TYPOGRAPHY.hero,
               fontVariant: ["tabular-nums"],
-              letterSpacing: -1,
             }}
           >
             {formatMinutes(report.actualMinutes)}
           </Text>
-          <Text selectable style={{ color: "#B9E4D8", fontSize: 12 }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
             von {formatMinutes(report.targetMinutes)} Soll
           </Text>
-          <Text selectable style={{ color: "#B9E4D8", fontSize: 12, lineHeight: 17 }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
             Dienste {formatMinutes(report.workMinutes)}
             {report.trainingMinutes > 0 ? ` · Fortbildung ${formatMinutes(report.trainingMinutes)}` : ""}
           </Text>
         </View>
-        <View style={{ height: 8, overflow: "hidden", borderRadius: 4, backgroundColor: "rgba(255,255,255,0.16)" }}>
-          <View style={{ width: `${progress * 100}%`, height: "100%", borderRadius: 4, backgroundColor: "#8BE0C8" }} />
+        <View style={{ height: 6, overflow: "hidden", borderRadius: 3, backgroundColor: palette.surface }}>
+          <View style={{ width: `${progress * 100}%`, height: "100%", borderRadius: 3, backgroundColor: palette.primary }} />
         </View>
         <View style={{ flexDirection: "row", gap: 18 }}>
           <HeroValue label="Saldo" value={formatSignedMinutes(report.balanceMinutes)} />
           <HeroValue label="Einträge" value={String(report.entryCount)} />
           <HeroValue label="Abdeckung" value={`${Math.round(progress * 100)} %`} />
         </View>
-      </View>
+      </SurfaceCard>
 
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: SPACING.sm }}>
         <SectionHeader
           title="Jahresverlauf"
           caption="Monat antippen, um Details zu öffnen."
@@ -173,7 +129,7 @@ export function AnnualReportScreen({
         <MonthlyBars report={report} testMonths={testMonths} onSelectMonth={onSelectMonth} />
       </View>
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flexDirection: "row", gap: SPACING.sm }}>
         <MetricCard
           label="ArbZG kritisch"
           value={String(report.criticalCount)}
@@ -186,7 +142,7 @@ export function AnnualReportScreen({
         />
       </View>
 
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: SPACING.sm }}>
         <SectionHeader
           title="Verteilung"
           caption="Anteile beziehen sich nur auf Dienste."
@@ -195,14 +151,14 @@ export function AnnualReportScreen({
       </View>
 
       {testMonthCount > 0 ? (
-        <View style={{ alignSelf: "center", borderRadius: 999, backgroundColor: palette.primarySoft, paddingHorizontal: 11, paddingVertical: 6 }}>
-          <Text selectable style={{ color: palette.primary, fontSize: 11, fontWeight: "900", letterSpacing: 0.7 }}>
+        <View style={{ alignSelf: "center", borderRadius: RADII.pill, backgroundColor: palette.primarySoft, paddingHorizontal: 11, paddingVertical: SPACING.xs }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline }}>
             {testMonthCount} TESTMONATE ENTHALTEN
           </Text>
         </View>
       ) : null}
 
-      <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17, textAlign: "center" }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.footnote }}>
         Automatische Jahresauswertung · keine Rechtsberatung
       </Text>
     </ScrollView>
@@ -243,7 +199,7 @@ function MonthlyBars({
               })}
             >
               <View style={{ width: "72%", height, minHeight: 3, borderRadius: 5, backgroundColor: hasIssue ? palette.warning : palette.primary }} />
-              <Text selectable style={{ color: isTest ? palette.primary : palette.textMuted, fontSize: 11, fontWeight: isTest ? "900" : "700" }}>
+              <Text selectable style={{ color: isTest ? palette.primary : palette.textMuted, fontSize: 11, fontWeight: isTest ? "700" : "500" }}>
                 {new Intl.DateTimeFormat("de-DE", { month: "narrow", timeZone: "UTC" }).format(new Date(`${item.month}-01T00:00:00Z`))}
               </Text>
             </Pressable>
@@ -270,14 +226,14 @@ function DistributionList({ distribution }: { readonly distribution: ReadonlyMap
 
       {sections.services.length > 0 ? (
         <View style={{ gap: 10 }}>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "900", letterSpacing: 0.7 }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}>
             DIENSTE & FORTBILDUNG
           </Text>
           {sections.services.map(({ type, count, percentage }) => (
             <View key={type} style={{ minHeight: 24, flexDirection: "row", alignItems: "center", gap: 9 }}>
               <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
               <Text selectable style={{ flex: 1, color: palette.textSecondary, fontSize: 13 }}>{SHIFT_TYPE_LABELS[type]}</Text>
-              <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.label, fontWeight: "700", fontVariant: ["tabular-nums"] }}>
                 {count}
               </Text>
               <Text selectable style={{ width: 38, color: palette.textMuted, fontSize: 12, textAlign: "right", fontVariant: ["tabular-nums"] }}>
@@ -294,7 +250,7 @@ function DistributionList({ distribution }: { readonly distribution: ReadonlyMap
 
       {sections.absences.length > 0 ? (
         <View style={{ gap: 10 }}>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "900", letterSpacing: 0.7 }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}>
             ABWESENHEITEN
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -309,7 +265,7 @@ function DistributionList({ distribution }: { readonly distribution: ReadonlyMap
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 8,
-                  borderRadius: 14,
+                  borderRadius: RADII.control,
                   borderCurve: "continuous",
                   backgroundColor: palette.surfaceRaised,
                   paddingHorizontal: 12,
@@ -321,7 +277,7 @@ function DistributionList({ distribution }: { readonly distribution: ReadonlyMap
                   <Text selectable numberOfLines={1} style={{ color: palette.textSecondary, fontSize: 12 }}>
                     {SHIFT_TYPE_LABELS[type]}
                   </Text>
-                  <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+                  <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.label, fontWeight: "700", fontVariant: ["tabular-nums"] }}>
                     {count} {count === 1 ? "Tag" : "Tage"}
                   </Text>
                 </View>
@@ -342,25 +298,26 @@ function YearButton({ direction, onPress }: { readonly direction: "back" | "forw
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => ({
-        width: 42,
-        height: 42,
+        width: CONTROL_HEIGHT.compact,
+        height: CONTROL_HEIGHT.compact,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 21,
-        backgroundColor: palette.surface,
+        borderRadius: RADII.control,
+        backgroundColor: pressed ? palette.primarySoft : "transparent",
         opacity: pressed ? 0.65 : 1,
       })}
     >
-      <Text style={{ color: palette.text, fontSize: 24 }}>{direction === "back" ? "‹" : "›"}</Text>
+      <Ionicons accessibilityElementsHidden color={palette.textSecondary} name={direction === "back" ? "chevron-back" : "chevron-forward"} size={20} />
     </Pressable>
   );
 }
 
 function HeroValue({ label, value }: { readonly label: string; readonly value: string }) {
+  const palette = usePalette();
   return (
-    <View style={{ minWidth: 0, flex: 1, gap: 3 }}>
-      <Text selectable style={{ color: "#B9E4D8", fontSize: 12 }}>{label}</Text>
-      <Text selectable adjustsFontSizeToFit numberOfLines={1} style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+    <View style={{ minWidth: 0, flex: 1, gap: SPACING.xxs }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>{label}</Text>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable adjustsFontSizeToFit numberOfLines={1} style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}>
         {value}
       </Text>
     </View>

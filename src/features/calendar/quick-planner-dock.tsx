@@ -90,7 +90,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   if (Platform.OS === "ios") {
     return (
       <FullWindowOverlay unstable_accessibilityContainerViewIsModal={false}>
-        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+        <View style={[StyleSheet.absoluteFill, { pointerEvents: "box-none" }]}>
           {dock}
         </View>
       </FullWindowOverlay>

@@ -10,6 +10,8 @@ import {
 } from "@/domain/types";
 import { ValidationError } from "@/domain/validation";
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { SPACING } from "@/theme/tokens";
 import { DropdownField, Field, PrimaryButton } from "@/ui/form-controls";
 import { FormScreen, FormSection, FormStatus } from "@/ui/form-layout";
 
@@ -48,14 +50,14 @@ export function OnboardingScreen() {
 
   return (
     <FormScreen bottomPadding={40}>
-      <View style={{ gap: 8, paddingTop: 8 }}>
-        <Text selectable style={{ color: palette.primary, fontSize: 12, fontWeight: "900", letterSpacing: 1.2 }}>
+      <View style={{ gap: SPACING.sm, paddingTop: SPACING.sm }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline }}>
           LOKAL · PRIVAT · OFFLINE
         </Text>
-        <Text maxFontSizeMultiplier={1.35} selectable style={{ color: palette.text, fontSize: 30, fontWeight: "900", letterSpacing: -1 }}>
+        <Text maxFontSizeMultiplier={1.35} selectable style={{ color: palette.text, ...TYPOGRAPHY.hero }}>
           Dein Dienstplan beginnt hier.
         </Text>
-        <Text maxFontSizeMultiplier={1.45} selectable style={{ color: palette.textMuted, fontSize: 15, lineHeight: 22 }}>
+        <Text maxFontSizeMultiplier={1.45} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
           Diese zwei Angaben reichen für Feiertage sowie Soll- und Iststunden. Du kannst sie später jederzeit ändern.
         </Text>
       </View>
@@ -87,7 +89,7 @@ export function OnboardingScreen() {
       <PrimaryButton disabled={saving} onPress={() => void submit()}>
         {saving ? "Wird gespeichert …" : "MediShift starten"}
       </PrimaryButton>
-      <Text maxFontSizeMultiplier={1.6} selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17, fontWeight: "500", textAlign: "center" }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.footnote }}>
         Diese Angaben bleiben lokal auf deinem Gerät und können später unter „Mehr“ geändert werden.
       </Text>
     </FormScreen>

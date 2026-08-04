@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 
 import { usePalette } from "@/theme/palette";
+import { TYPOGRAPHY } from "@/theme/typography";
 
 export function AppTabs() {
   const palette = usePalette();
@@ -15,7 +16,7 @@ export function AppTabs() {
         tabBarActiveTintColor: palette.primary,
         tabBarHideOnKeyboard: true,
         tabBarInactiveTintColor: palette.textMuted,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "700" },
+        tabBarLabelStyle: { ...TYPOGRAPHY.caption, fontSize: 11, fontWeight: "600" },
         tabBarStyle: { backgroundColor: palette.tabBar, borderTopColor: palette.border },
       }}
     >

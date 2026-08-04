@@ -1,8 +1,10 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, Text, View, type ViewStyle } from "react-native";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import {
   accessibleChipBackgroundColor,
   chipTextColor,
@@ -22,9 +24,9 @@ export function SurfaceCard({
       accessibilityLabel={accessibilityLabel}
       style={{
         overflow: "hidden",
-        borderWidth: palette.dark ? 0 : 1,
+        borderWidth: 1,
         borderColor: palette.separator,
-        borderRadius: 18,
+        borderRadius: RADII.card,
         borderCurve: "continuous",
         backgroundColor: palette.surface,
         ...style,
@@ -46,8 +48,8 @@ export function SectionHeader({
 }) {
   const palette = usePalette();
   return (
-    <View style={{ minHeight: 26, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
-      <View style={{ flex: 1, gap: 2 }}>
+    <View style={{ minHeight: 26, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: SPACING.md }}>
+      <View style={{ flex: 1, gap: SPACING.xxs }}>
         <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textSecondary, ...TYPOGRAPHY.sectionTitle }}>
           {title}
         </Text>
@@ -79,16 +81,16 @@ export function MetricCard({
       accessibilityLabel={`${label}: ${value}`}
       accessible
       style={{
-        minHeight: compact ? 74 : 88,
+        minHeight: compact ? 72 : 82,
         flex: 1,
         justifyContent: "space-between",
-        gap: 8,
-        borderWidth: palette.dark ? 0 : 1,
+        gap: SPACING.sm,
+        borderWidth: 1,
         borderColor: palette.separator,
-        borderRadius: 16,
+        borderRadius: RADII.card,
         borderCurve: "continuous",
         backgroundColor: palette.surface,
-        padding: compact ? 12 : 14,
+        padding: compact ? SPACING.md : SPACING.lg,
       }}
     >
       <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
@@ -101,7 +103,7 @@ export function MetricCard({
         style={{
           color: accent ?? palette.text,
           ...TYPOGRAPHY.value,
-          fontSize: compact ? 19 : 22,
+          fontSize: compact ? 18 : TYPOGRAPHY.value.fontSize,
           fontVariant: ["tabular-nums"],
           letterSpacing: -0.4,
         }}
@@ -139,7 +141,7 @@ export function RowButton({
   const content = (
     <>
       {leading}
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, gap: SPACING.xxs }}>
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
@@ -157,13 +159,13 @@ export function RowButton({
           </Text>
         ) : null}
       </View>
-      {trailing ?? (onPress ? <Text style={{ color: palette.textMuted, fontSize: 22 }}>›</Text> : null)}
+      {trailing ?? (onPress ? <Ionicons accessibilityElementsHidden color={palette.textMuted} name="chevron-forward" size={18} /> : null)}
     </>
   );
 
   if (!onPress && !onLongPress) {
     return (
-      <View style={{ minHeight: 58, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 10 }}>
+      <View style={{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm }}>
         {content}
       </View>
     );
@@ -178,14 +180,14 @@ export function RowButton({
       onLongPress={onLongPress}
       onPress={onPress ?? (() => undefined)}
       style={({ pressed }) => ({
-        minHeight: 54,
+        minHeight: 56,
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
+        gap: SPACING.md,
         backgroundColor: pressed ? palette.surfaceMuted : "transparent",
         opacity: disabled ? 0.45 : 1,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
       })}
     >
       {content}
@@ -193,7 +195,7 @@ export function RowButton({
   );
 }
 
-export function CardSeparator({ inset = 16 }: { readonly inset?: number }) {
+export function CardSeparator({ inset = SPACING.lg }: { readonly inset?: number }) {
   const palette = usePalette();
   return <View style={{ height: 1, backgroundColor: palette.separator, marginLeft: inset }} />;
 }
@@ -209,8 +211,10 @@ export function EmptyState({
 }) {
   const palette = usePalette();
   return (
-    <View accessibilityLabel={`${title}. ${message}`} accessible style={{ minHeight: 180, alignItems: "center", justifyContent: "center", gap: 8, padding: 24 }}>
-      <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: palette.primarySoft }} />
+    <View accessibilityLabel={`${title}. ${message}`} accessible style={{ minHeight: 180, alignItems: "center", justifyContent: "center", gap: SPACING.sm, padding: SPACING.xxl }}>
+      <View accessibilityElementsHidden style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: RADII.control, backgroundColor: palette.primarySoft }}>
+        <Ionicons color={palette.primary} name="calendar-clear-outline" size={21} />
+      </View>
       <Text accessibilityElementsHidden maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, textAlign: "center", ...TYPOGRAPHY.sectionTitle }}>
         {title}
       </Text>
@@ -234,7 +238,7 @@ export function InlineNotice({
     ? palette.danger
     : tone === "warning"
       ? palette.warning
-      : palette.primary;
+      : palette.info;
   return (
     <View
       accessibilityLiveRegion="polite"
@@ -243,17 +247,22 @@ export function InlineNotice({
         minHeight: 44,
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
+        gap: SPACING.sm,
         borderWidth: 1,
         borderColor: `${accent}52`,
-        borderRadius: 14,
+        borderRadius: RADII.control,
         borderCurve: "continuous",
         backgroundColor: `${accent}14`,
-        paddingHorizontal: 13,
-        paddingVertical: 9,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: 10,
       }}
     >
-      <View accessibilityElementsHidden style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: accent }} />
+      <Ionicons
+        accessibilityElementsHidden
+        color={accent}
+        name={tone === "error" ? "alert-circle-outline" : tone === "warning" ? "warning-outline" : "information-circle-outline"}
+        size={18}
+      />
       <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ minWidth: 0, flex: 1, color: accent, ...TYPOGRAPHY.label }}>
         {message}
       </Text>
@@ -276,11 +285,11 @@ export function SegmentedControl({
       accessibilityRole="tablist"
       style={{
         flexDirection: "row",
-        gap: 4,
-        borderRadius: 13,
+        gap: SPACING.xxs,
+        borderRadius: RADII.control,
         borderCurve: "continuous",
         backgroundColor: palette.surfaceMuted,
-        padding: 4,
+        padding: SPACING.xxs,
       }}
     >
       {items.map((item) => {
@@ -292,18 +301,19 @@ export function SegmentedControl({
             accessibilityState={{ selected }}
             onPress={() => onChange(item.value)}
             style={({ pressed }) => ({
-              minHeight: 44,
+              minHeight: CONTROL_HEIGHT.compact,
               flex: 1,
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: 10,
+              borderWidth: selected ? 1 : 0,
+              borderColor: palette.border,
+              borderRadius: RADII.small,
               borderCurve: "continuous",
               backgroundColor: selected ? palette.surfaceRaised : "transparent",
-              boxShadow: selected && !palette.dark ? `0 2px 8px ${palette.shadow}` : undefined,
               opacity: pressed ? 0.72 : 1,
             })}
           >
-            <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: selected ? palette.primary : palette.textSecondary, ...TYPOGRAPHY.label, fontWeight: "800" }}>
+            <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: selected ? palette.primary : palette.textSecondary, ...TYPOGRAPHY.label }}>
               {item.label}
             </Text>
           </Pressable>
@@ -333,15 +343,19 @@ export function HeaderAction({
         minHeight: 44,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 22,
+        borderRadius: label === "+" ? RADII.pill : RADII.control,
         backgroundColor: emphasis ? palette.primary : palette.surfaceMuted,
         opacity: pressed ? 0.68 : 1,
         paddingHorizontal: label.length > 2 ? 12 : 0,
       })}
     >
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: emphasis ? palette.onPrimary : palette.primary, ...TYPOGRAPHY.label, fontSize: label === "+" ? 26 : TYPOGRAPHY.label.fontSize, fontWeight: "800" }}>
-        {label}
-      </Text>
+      {label === "+" ? (
+        <Ionicons accessibilityElementsHidden color={emphasis ? palette.onPrimary : palette.primary} name="add" size={22} />
+      ) : (
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: emphasis ? palette.onPrimary : palette.primary, ...TYPOGRAPHY.label }}>
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -366,7 +380,7 @@ export function ColorBadge({
         backgroundColor: accessibleChipBackgroundColor(color),
       }}
     >
-      <Text adjustsFontSizeToFit maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ maxWidth: size - 10, color: chipTextColor, fontSize: size * 0.34, fontWeight: "900" }}>
+      <Text adjustsFontSizeToFit maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ maxWidth: size - 10, color: chipTextColor, fontSize: size * 0.34, fontWeight: "800" }}>
         {label}
       </Text>
     </View>

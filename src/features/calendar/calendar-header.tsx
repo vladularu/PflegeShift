@@ -9,6 +9,8 @@ import { formatMonthTitle } from "@/engine/calendar";
 import type { CalendarViewMode } from "@/domain/types";
 import { calculateMonthProgress } from "@/features/calendar/calendar-metrics";
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 
 const MonthProgress = memo(function MonthProgress({
   actualMinutes,
@@ -21,7 +23,7 @@ const MonthProgress = memo(function MonthProgress({
 }) {
   const palette = usePalette();
   const progress = calculateMonthProgress(actualMinutes, targetMinutes);
-  const radius = 28;
+  const radius = 24;
   const circumference = 2 * Math.PI * radius;
   const accent = progress.displayPercent >= 100 ? palette.success : palette.primary;
 
@@ -31,31 +33,30 @@ const MonthProgress = memo(function MonthProgress({
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => ({
-        width: 72,
-        height: 72,
+        width: 64,
+        height: 64,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 36,
+        borderRadius: RADII.pill,
         borderWidth: 1,
         borderColor: palette.border,
-        backgroundColor: palette.primarySoft,
-        boxShadow: `0 5px 18px ${palette.shadow}`,
+        backgroundColor: palette.surface,
         opacity: pressed ? 0.58 : 1,
       })}
     >
-      <Svg height={72} width={72} viewBox="0 0 72 72">
-        <Circle cx={36} cy={36} fill="none" r={radius} stroke={palette.surfaceRaised} strokeWidth={6} />
+      <Svg height={64} width={64} viewBox="0 0 64 64">
+        <Circle cx={32} cy={32} fill="none" r={radius} stroke={palette.surfaceMuted} strokeWidth={5} />
         <Circle
-          cx={36}
-          cy={36}
+          cx={32}
+          cy={32}
           fill="none"
           r={radius}
           stroke={accent}
           strokeDasharray={`${circumference}`}
           strokeDashoffset={circumference * (1 - progress.fillPercent / 100)}
           strokeLinecap="round"
-          strokeWidth={6}
-          transform="rotate(-90 36 36)"
+          strokeWidth={5}
+          transform="rotate(-90 32 32)"
         />
       </Svg>
       <Text
@@ -63,10 +64,10 @@ const MonthProgress = memo(function MonthProgress({
         numberOfLines={1}
         style={{
           position: "absolute",
-          maxWidth: 52,
+          maxWidth: 46,
           color: accent,
-          fontSize: 14,
-          fontWeight: "900",
+          fontSize: 13,
+          fontWeight: "700",
           fontVariant: ["tabular-nums"],
         }}
       >
@@ -100,38 +101,36 @@ export const CalendarHeader = memo(function CalendarHeader({
   return (
     <View
       style={{
-        minHeight: (process.env.EXPO_OS === "web" ? 12 : insets.top) + 116,
+        minHeight: (process.env.EXPO_OS === "web" ? 12 : insets.top) + 108,
         flexDirection: "row",
         alignItems: "center",
-        gap: 16,
+        gap: SPACING.lg,
         backgroundColor: palette.background,
-        paddingTop: (process.env.EXPO_OS === "web" ? 12 : insets.top) + 18,
-        paddingHorizontal: 20,
-        paddingBottom: 18,
+        paddingTop: (process.env.EXPO_OS === "web" ? 12 : insets.top) + SPACING.lg,
+        paddingHorizontal: SPACING.xl,
+        paddingBottom: SPACING.lg,
       }}
     >
       <View style={{ flex: 1, minWidth: 0, justifyContent: "center" }}>
         {viewMode === "MONTH" ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
             <Pressable
               accessibilityLabel={`${year}, Jahresansicht öffnen`}
               accessibilityRole="button"
               onPress={onOpenYear}
               style={({ pressed }) => ({
-                minHeight: 44,
+                minHeight: CONTROL_HEIGHT.compact,
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 4,
-                borderRadius: 22,
-                borderWidth: 1,
-                borderColor: palette.primary,
+                gap: SPACING.xxs,
+                borderRadius: RADII.pill,
                 backgroundColor: palette.primarySoft,
-                paddingHorizontal: 12,
+                paddingHorizontal: SPACING.md,
                 opacity: pressed ? 0.58 : 1,
               })}
             >
-              <Text style={{ color: palette.primary, fontSize: 14, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.primary, ...TYPOGRAPHY.label, fontWeight: "700", fontVariant: ["tabular-nums"] }}>
                 {year}
               </Text>
               <Ionicons color={palette.primary} name="chevron-up" size={14} />
@@ -146,18 +145,17 @@ export const CalendarHeader = memo(function CalendarHeader({
                 minWidth: 0,
                 flexShrink: 1,
                 color: palette.text,
-                fontSize: 32,
-                fontWeight: "900",
-                lineHeight: 38,
-                letterSpacing: -0.7,
+                ...TYPOGRAPHY.hero,
+                fontSize: 30,
+                lineHeight: 36,
               }}
             >
               {title}
             </Animated.Text>
           </View>
         ) : (
-          <View style={{ gap: 3 }}>
-            <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "800" }}>
+          <View style={{ gap: SPACING.xxs }}>
+            <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}>
               Jahresübersicht
             </Text>
             <Animated.Text
@@ -166,10 +164,9 @@ export const CalendarHeader = memo(function CalendarHeader({
               numberOfLines={1}
               style={{
                 color: palette.text,
-                fontSize: 32,
-                fontWeight: "900",
-                lineHeight: 38,
-                letterSpacing: -0.7,
+                ...TYPOGRAPHY.hero,
+                fontSize: 30,
+                lineHeight: 36,
                 fontVariant: ["tabular-nums"],
               }}
             >

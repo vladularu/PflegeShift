@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 
 export function MonthNavigator({
   label,
@@ -19,11 +20,11 @@ export function MonthNavigator({
     <View
       accessibilityRole="toolbar"
       style={{
-        minHeight: 52,
+        minHeight: CONTROL_HEIGHT.large,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 12,
+        gap: SPACING.md,
       }}
     >
       <MonthArrow contextLabel={label} direction="back" onPress={onPrevious} />
@@ -68,21 +69,19 @@ function MonthArrow({
       hitSlop={6}
       onPress={onPress}
       style={({ pressed }) => ({
-        width: 46,
-        height: 46,
+        width: CONTROL_HEIGHT.compact,
+        height: CONTROL_HEIGHT.compact,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 23,
-        borderWidth: 1,
-        borderColor: palette.border,
-        backgroundColor: pressed ? palette.surfaceMuted : palette.surface,
+        borderRadius: RADII.control,
+        backgroundColor: pressed ? palette.primarySoft : "transparent",
         opacity: pressed ? 0.72 : 1,
       })}
     >
       <Ionicons
-        color={palette.text}
+        color={palette.textSecondary}
         name={previous ? "chevron-back" : "chevron-forward"}
-        size={21}
+        size={20}
       />
     </Pressable>
   );

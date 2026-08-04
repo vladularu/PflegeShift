@@ -55,7 +55,7 @@ const MiniMonth = memo(function MiniMonth({
         padding: 8,
       })}
     >
-      <Text style={{ color: selected ? palette.primary : palette.text, fontSize: 17, fontWeight: "900", marginBottom: 6 }}>
+      <Text style={{ color: selected ? palette.primary : palette.text, fontSize: 17, fontWeight: "700", marginBottom: 6 }}>
         {MONTH_LABELS[monthIndex]}
       </Text>
       <View style={{ flexDirection: "row", marginBottom: 3 }}>
@@ -66,7 +66,7 @@ const MiniMonth = memo(function MiniMonth({
               flex: 1,
               color: index >= 5 ? palette.textMuted : palette.textSecondary,
               fontSize: 7,
-              fontWeight: "800",
+              fontWeight: "600",
               textAlign: "center",
             }}
           >

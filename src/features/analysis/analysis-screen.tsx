@@ -1,9 +1,10 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
 import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import {
   Pressable,
   Text,
@@ -43,6 +44,8 @@ import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics
 import { complianceDetailsRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { RADII, SPACING } from "@/theme/tokens";
 import { EmptyState, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
@@ -228,19 +231,11 @@ export function AnalysisScreen() {
         target={formatMinutes(summary.targetMinutes)}
       />
 
-      <View
-        style={{
-          overflow: "hidden",
-          borderRadius: 20,
-          borderCurve: "continuous",
-          backgroundColor: palette.surface,
-          boxShadow: palette.dark ? undefined : "0 4px 16px rgba(28, 48, 42, 0.05)",
-        }}
-      >
+      <SurfaceCard>
             <StatusCard
-              accent={complianceIsClear ? palette.primary : compliance.criticalCount > 0 ? palette.danger : "#D48A18"}
+              accent={complianceIsClear ? palette.success : compliance.criticalCount > 0 ? palette.danger : palette.warning}
               icon={complianceIsClear ? "checkmark.shield.fill" : "exclamationmark.shield.fill"}
-              fallback={complianceIsClear ? "✓" : "!"}
+              fallbackIcon={complianceIsClear ? "checkmark-circle-outline" : "alert-circle-outline"}
               label="Arbeitszeit"
               title={complianceIsClear
                 ? "Alles im grünen Bereich"
@@ -251,20 +246,20 @@ export function AnalysisScreen() {
             />
             <View style={{ height: 1, marginLeft: 60, backgroundColor: palette.separator }} />
             <StatusCard
-              accent={decision ? palette.primary : "#D48A18"}
+              accent={decision ? palette.success : palette.warning}
               icon={decision ? "checkmark.seal.fill" : "sparkles"}
-              fallback={decision ? "✓" : "·"}
+              fallbackIcon={decision ? "ribbon-outline" : "sparkles-outline"}
               label="Schichtzulage"
               title={allowanceTitle}
               onPress={() => router.push(tariffAssessmentRoute(month))}
             />
-      </View>
+      </SurfaceCard>
 
       <ReportFootnote>
         Automatische Prüfung · keine Rechtsberatung
       </ReportFootnote>
 
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: SPACING.sm }}>
         <SectionHeader title="Dienstverteilung" caption="Termine werden nicht als Arbeitszeit gezählt." />
         <DistributionChart distribution={distribution} />
       </View>
@@ -290,25 +285,25 @@ function DistributionChart({ distribution }: { readonly distribution: ReadonlyMa
   return (
     <SurfaceCard
       accessibilityLabel={`${total} Dienste insgesamt`}
-      style={{ gap: 14, padding: 18 }}
+      style={{ gap: SPACING.lg, padding: SPACING.lg }}
     >
-      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 16, fontWeight: "900" }}>
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: SPACING.md }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}>
           {total} {total === 1 ? "Dienst" : "Dienste"}
         </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
           im Monat
         </Text>
       </View>
-      <View style={{ gap: 12 }}>
+      <View style={{ gap: SPACING.md }}>
         {items.map(([type, count]) => (
-          <View key={type} style={{ gap: 6 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View key={type} style={{ gap: SPACING.xs }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: SHIFT_TYPE_COLORS[type] }} />
-              <Text selectable style={{ flex: 1, color: palette.textSecondary, fontSize: 13, fontWeight: "600" }}>
+              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ flex: 1, color: palette.textSecondary, ...TYPOGRAPHY.label }}>
                 {SHIFT_TYPE_LABELS[type]}
               </Text>
-              <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.label, fontWeight: "700", fontVariant: ["tabular-nums"] }}>
                 {count}
               </Text>
             </View>
@@ -347,7 +342,7 @@ function WorktimeSummary({
     { label: "Saldo", value: balance, accent: balanceAccent },
   ];
   return (
-    <SurfaceCard style={{ flexDirection: "row", paddingVertical: 14 }}>
+    <SurfaceCard style={{ flexDirection: "row", paddingVertical: SPACING.md }}>
       {values.map((item, index) => (
         <View
           key={item.label}
@@ -356,13 +351,13 @@ function WorktimeSummary({
           style={{
             minWidth: 0,
             flex: 1,
-            gap: 6,
+            gap: SPACING.xs,
             borderLeftWidth: index === 0 ? 0 : 1,
             borderLeftColor: palette.separator,
-            paddingHorizontal: 12,
+            paddingHorizontal: SPACING.md,
           }}
         >
-          <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
             {item.label}
           </Text>
           <Text
@@ -372,7 +367,7 @@ function WorktimeSummary({
             style={{
               color: item.accent,
               fontSize: 18,
-              fontWeight: "900",
+              fontWeight: "700",
               fontVariant: ["tabular-nums"],
               letterSpacing: -0.3,
             }}
@@ -397,7 +392,7 @@ export function ComplianceDetails({
   if (compliance.issues.length === 0) {
     return (
       <Card>
-        <Text selectable style={{ color: palette.primary, fontSize: 17, fontWeight: "900" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.sectionTitle }}>
           Keine Auffälligkeiten
         </Text>
       </Card>
@@ -405,7 +400,7 @@ export function ComplianceDetails({
   }
   return (
     <Card>
-      <Text selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}>
         Prüfung
       </Text>
       {compliance.issues.map((item) => {
@@ -432,43 +427,43 @@ export function ComplianceDetails({
                   width: 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: item.severity === "critical" ? palette.danger : "#D48A18",
+                  backgroundColor: item.severity === "critical" ? palette.danger : palette.warning,
                 }}
               />
               <View style={{ flex: 1, gap: 2 }}>
-                <Text selectable style={{ color: palette.text, fontWeight: "800" }}>
+                <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
                   {item.title}
                 </Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
+                <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
                   {formatDateTitle(item.date)} · {item.kind === "LEGAL" ? "ArbZG" : "Planung"}
                 </Text>
               </View>
-              <Text style={{ color: palette.textMuted, fontSize: 18 }}>{expanded ? "⌃" : "⌄"}</Text>
+              <Ionicons accessibilityElementsHidden color={palette.textMuted} name={expanded ? "chevron-up" : "chevron-down"} size={18} />
             </Pressable>
             {expanded ? (
               <View
                 style={{
                   gap: 10,
-                  borderRadius: 14,
+                  borderRadius: RADII.control,
                   backgroundColor: palette.surfaceMuted,
                   marginBottom: 10,
-                  padding: 12,
+                  padding: SPACING.md,
                 }}
               >
-                <Text selectable style={{ color: palette.textSecondary, fontSize: 12, lineHeight: 18 }}>
+                <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textSecondary, ...TYPOGRAPHY.caption }}>
                   {item.description}
                 </Text>
                 {relatedShifts.map((shift) => (
                   <View key={shift.id} style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
-                    <Text selectable numberOfLines={1} style={{ minWidth: 0, flex: 1, color: palette.text, fontSize: 12, fontWeight: "800" }}>
+                    <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable numberOfLines={1} style={{ minWidth: 0, flex: 1, color: palette.text, ...TYPOGRAPHY.caption, fontWeight: "600" }}>
                       {shift.title}
                     </Text>
-                    <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontVariant: ["tabular-nums"] }}>
+                    <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption, fontVariant: ["tabular-nums"] }}>
                       {formatDateTitle(shift.date)} · {shift.startTime ?? "ganztägig"}{shift.endTime ? `–${shift.endTime}` : ""}
                     </Text>
                   </View>
                 ))}
-                <Text selectable style={{ color: palette.textMuted, fontSize: 11, lineHeight: 16 }}>
+                <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.footnote }}>
                   Regel: {item.rule}
                 </Text>
               </View>
@@ -484,14 +479,14 @@ function StatusCard({
   label,
   title,
   icon,
-  fallback,
+  fallbackIcon,
   accent,
   onPress,
 }: {
   readonly label: string;
   readonly title: string;
   readonly icon: SymbolViewProps["name"];
-  readonly fallback: string;
+  readonly fallbackIcon: ComponentProps<typeof Ionicons>["name"];
   readonly accent: string;
   readonly onPress: () => void;
 }) {
@@ -501,37 +496,37 @@ function StatusCard({
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 74,
+        minHeight: 72,
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
+        gap: SPACING.md,
         backgroundColor: "transparent",
         opacity: pressed ? 0.72 : 1,
-        paddingHorizontal: 14,
+        paddingHorizontal: SPACING.lg,
         paddingVertical: 10,
       })}
     >
-      <StatusIcon accent={accent} fallback={fallback} icon={icon} />
-      <View style={{ flex: 1, gap: 4 }}>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+      <StatusIcon accent={accent} fallbackIcon={fallbackIcon} icon={icon} />
+      <View style={{ flex: 1, gap: SPACING.xxs }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
           {label}
         </Text>
-        <Text selectable numberOfLines={2} style={{ color: palette.text, fontSize: 15, fontWeight: "900" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable numberOfLines={2} style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
           {title}
         </Text>
       </View>
-      <Text style={{ color: palette.textMuted, fontSize: 18 }}>›</Text>
+      <Ionicons accessibilityElementsHidden color={palette.textMuted} name="chevron-forward" size={18} />
     </Pressable>
   );
 }
 
 function StatusIcon({
   icon,
-  fallback,
+  fallbackIcon,
   accent,
 }: {
   readonly icon: SymbolViewProps["name"];
-  readonly fallback: string;
+  readonly fallbackIcon: ComponentProps<typeof Ionicons>["name"];
   readonly accent: string;
 }) {
   return (
@@ -541,33 +536,23 @@ function StatusIcon({
         height: 36,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 12,
+        borderRadius: RADII.control,
         backgroundColor: `${accent}1F`,
       }}
     >
       {process.env.EXPO_OS === "ios" ? (
         <SymbolView name={icon} size={18} tintColor={accent} weight="semibold" />
       ) : (
-        <Text style={{ color: accent, fontSize: 18, fontWeight: "900" }}>{fallback}</Text>
+        <Ionicons accessibilityElementsHidden color={accent} name={fallbackIcon} size={19} />
       )}
     </View>
   );
 }
 
 function Card({ children }: { readonly children: ReactNode }) {
-  const palette = usePalette();
   return (
-    <View
-      style={{
-        gap: 14,
-        borderRadius: 22,
-        borderCurve: "continuous",
-        backgroundColor: palette.surface,
-        boxShadow: palette.dark ? undefined : "0 4px 18px rgba(28, 48, 42, 0.06)",
-        padding: 18,
-      }}
-    >
+    <SurfaceCard style={{ gap: SPACING.lg, padding: SPACING.lg }}>
       {children}
-    </View>
+    </SurfaceCard>
   );
 }

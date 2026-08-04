@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
 import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
@@ -22,6 +23,8 @@ import {
 import { premiumDetailsRoute, settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
@@ -157,63 +160,63 @@ export function SalaryScreen() {
       {profile.tariff === null ? (
         <SetupCard />
       ) : !pay.available ? (
-        <SurfaceCard style={{ gap: 6, padding: 18 }}>
-          <Text selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>
+        <SurfaceCard style={{ gap: SPACING.xs, padding: SPACING.lg }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}>
             Für diesen Monat nicht verfügbar
           </Text>
-          <Text selectable style={{ color: palette.textMuted, fontSize: 13, lineHeight: 19 }}>
+          <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
             Für den gewählten Zeitraum liegt kein unterstützter Tarifstand vor.
           </Text>
         </SurfaceCard>
       ) : (
         <>
           {monthShifts.length === 0 ? (
-            <SurfaceCard style={{ gap: 4, padding: 14 }}>
-              <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>
+            <SurfaceCard style={{ gap: SPACING.xxs, padding: SPACING.md }}>
+              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
                 Noch keine Dienste in diesem Monat
               </Text>
-              <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
+              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
                 Grundentgelt und feste Zulagen sind bereits enthalten. Variable Zeitzuschläge erscheinen nach dem ersten Dienst.
               </Text>
             </SurfaceCard>
           ) : null}
-          <View
+          <SurfaceCard
             style={{
-              gap: 16,
-              borderRadius: 22,
-              borderCurve: "continuous",
-              backgroundColor: palette.dark ? "#19352E" : "#1E6D5D",
-              boxShadow: "0 10px 28px rgba(20, 76, 64, 0.18)",
-              padding: 18,
+              gap: SPACING.md,
+              borderColor: `${palette.primary}2E`,
+              backgroundColor: palette.primarySoft,
+              padding: SPACING.xl,
             }}
           >
-            <View style={{ gap: 6 }}>
-              <Text selectable style={{ color: "#B9E4D8", fontSize: 12, fontWeight: "800", letterSpacing: 0.8 }}>
-                TARIFLICHES BRUTTO · SCHÄTZUNG
-              </Text>
+            <View style={{ gap: SPACING.sm }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
+                <Ionicons accessibilityElementsHidden color={palette.primary} name="wallet-outline" size={18} />
+                <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline }}>
+                  TARIFLICHES BRUTTO · SCHÄTZUNG
+                </Text>
+              </View>
               <Text
                 selectable
                 adjustsFontSizeToFit
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
                 numberOfLines={1}
                 style={{
-                  color: "#FFFFFF",
-                  fontSize: 34,
-                  fontWeight: "900",
+                  color: palette.text,
+                  ...TYPOGRAPHY.hero,
                   fontVariant: ["tabular-nums"],
-                  letterSpacing: -1,
                 }}
               >
                 {euro(pay.estimatedGrossAmount)}
               </Text>
             </View>
-          </View>
+          </SurfaceCard>
 
-          <SurfaceCard style={{ paddingHorizontal: 18, paddingVertical: 14 }}>
-            <View style={{ gap: 3, paddingBottom: 12 }}>
-              <Text selectable style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>
+          <SurfaceCard style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md }}>
+            <View style={{ gap: SPACING.xxs, paddingBottom: SPACING.md }}>
+              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}>
                 Zusammensetzung
               </Text>
-              <Text selectable numberOfLines={1} style={{ color: palette.textMuted, fontSize: 12 }}>
+              <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable numberOfLines={1} style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
                 {tariffProfileLabel}
               </Text>
             </View>
@@ -238,27 +241,27 @@ export function SalaryScreen() {
 function SetupCard() {
   const palette = usePalette();
   return (
-    <SurfaceCard style={{ gap: 12, padding: 18 }}>
-      <Text selectable style={{ color: palette.text, fontSize: 20, fontWeight: "900" }}>
+    <SurfaceCard style={{ gap: SPACING.md, padding: SPACING.lg }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}>
         Gehalt aktivieren
       </Text>
-      <Text selectable style={{ color: palette.textMuted, fontSize: 13, lineHeight: 19 }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
         Hinterlege einmal Gruppe, Stufe und Bereich. Die Berechnung erfolgt danach automatisch.
       </Text>
       <Pressable
         accessibilityRole="button"
         onPress={() => router.push("/more")}
         style={({ pressed }) => ({
-          minHeight: 48,
+          minHeight: CONTROL_HEIGHT.regular,
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: 15,
+          borderRadius: RADII.control,
           borderCurve: "continuous",
           backgroundColor: palette.primary,
           opacity: pressed ? 0.75 : 1,
         })}
       >
-        <Text style={{ color: palette.onPrimary, fontWeight: "900" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}>
           Tarifprofil einrichten
         </Text>
       </Pressable>
@@ -278,21 +281,21 @@ function ValueRow({
   const palette = usePalette();
   const content = (
     <>
-      <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
         {label}
       </Text>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <Text selectable style={{ color: palette.text, fontWeight: "800", fontVariant: ["tabular-nums"] }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}>
           {value}
         </Text>
-        {onPress ? <Text style={{ color: palette.textMuted, fontSize: 20 }}>›</Text> : null}
+        {onPress ? <Ionicons accessibilityElementsHidden color={palette.textMuted} name="chevron-forward" size={17} /> : null}
       </View>
     </>
   );
 
   if (!onPress) {
     return (
-      <View style={{ minHeight: 46, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <View style={{ minHeight: CONTROL_HEIGHT.regular, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: SPACING.md }}>
         {content}
       </View>
     );
@@ -304,12 +307,12 @@ function ValueRow({
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 44,
+        minHeight: CONTROL_HEIGHT.regular,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 12,
-        borderRadius: 12,
+        gap: SPACING.md,
+        borderRadius: RADII.control,
         backgroundColor: pressed ? palette.surfaceMuted : "transparent",
         opacity: pressed ? 0.72 : 1,
       })}

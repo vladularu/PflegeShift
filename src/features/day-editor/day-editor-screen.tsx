@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
@@ -193,7 +194,7 @@ export function DayEditorScreen() {
             backgroundColor: palette.primarySoft,
           }}
         >
-          <Text style={{ color: palette.primary, fontSize: 13, fontWeight: "900", fontVariant: ["tabular-nums"] }}>
+          <Text style={{ color: palette.primary, fontSize: 13, fontWeight: "700", fontVariant: ["tabular-nums"] }}>
             {date.slice(-2)}
           </Text>
         </View>
@@ -421,9 +422,7 @@ function AdvancedDisclosure({
           {summary}
         </Text>
       </View>
-      <Text style={{ color: palette.primary, fontSize: 18, fontWeight: "900" }}>
-        {expanded ? "−" : "+"}
-      </Text>
+      <Ionicons accessibilityElementsHidden color={palette.primary} name={expanded ? "remove" : "add"} size={19} />
     </Pressable>
   );
 }

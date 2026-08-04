@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
@@ -19,6 +20,8 @@ import { currentMonth, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, SurfaceCard } from "@/ui/design-system";
 import { LoadingView } from "@/ui/loading-view";
 
@@ -124,17 +127,17 @@ export function TariffAssessmentScreen() {
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 14, padding: 16, paddingBottom: 36 }}
+      style={{ backgroundColor: palette.groupedBackground }}
+      contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
     >
-      <View style={{ gap: 5 }}>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+      <View style={{ gap: SPACING.xs }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
           {formatMonthTitle(month)}
         </Text>
-        <Text selectable style={{ color: palette.text, fontSize: 25, fontWeight: "900" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}>
           {resultTitle}
         </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 18 }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
           Dienstmuster werden aus den letzten drei Monaten erkannt. Angaben zum Arbeitsplatz
           bestätigst du einmal selbst.
         </Text>
@@ -159,9 +162,12 @@ export function TariffAssessmentScreen() {
                       : palette.surfaceMuted,
                 }}
               >
-                <Text style={{ color: criterion.state === "MET" ? palette.primary : criterion.state === "NOT_MET" ? palette.danger : palette.textMuted, fontWeight: "900" }}>
-                  {criterion.state === "MET" ? "✓" : criterion.state === "NOT_MET" ? "–" : "?"}
-                </Text>
+                <Ionicons
+                  accessibilityElementsHidden
+                  color={criterion.state === "MET" ? palette.primary : criterion.state === "NOT_MET" ? palette.danger : palette.textMuted}
+                  name={criterion.state === "MET" ? "checkmark" : criterion.state === "NOT_MET" ? "remove" : "help"}
+                  size={16}
+                />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "800" }}>
@@ -211,16 +217,16 @@ export function TariffAssessmentScreen() {
         disabled={saving}
         onPress={() => void saveSettings()}
         style={({ pressed }) => ({
-          minHeight: 50,
+        minHeight: CONTROL_HEIGHT.regular,
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: 16,
+        borderRadius: RADII.control,
           borderCurve: "continuous",
           backgroundColor: palette.primary,
           opacity: saving ? 0.5 : pressed ? 0.75 : 1,
         })}
       >
-        <Text style={{ color: palette.onPrimary, fontSize: 15, fontWeight: "900" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}>
           Angaben speichern
         </Text>
       </Pressable>

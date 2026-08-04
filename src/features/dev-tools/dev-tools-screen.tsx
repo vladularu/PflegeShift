@@ -77,7 +77,7 @@ export function DevToolsScreen() {
   if (!allowed) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: palette.background, padding: 28 }}>
-        <Text style={{ color: palette.text, fontSize: 22, fontWeight: "900" }}>Testlabor gesperrt</Text>
+        <Text style={{ color: palette.text, fontSize: 22, fontWeight: "700" }}>Testlabor gesperrt</Text>
         <Text style={{ color: palette.textMuted, textAlign: "center" }}>Aktiviere es unter Mehr durch langes Drücken auf „MediShift 0.1“.</Text>
         <PrimaryButton onPress={() => router.back()}>Schließen</PrimaryButton>
       </View>
@@ -86,7 +86,7 @@ export function DevToolsScreen() {
   if (profile === null) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: palette.background, padding: 28 }}>
-        <Text style={{ color: palette.text, fontSize: 22, fontWeight: "900" }}>Profil erforderlich</Text>
+        <Text style={{ color: palette.text, fontSize: 22, fontWeight: "700" }}>Profil erforderlich</Text>
         <Text style={{ color: palette.textMuted, textAlign: "center" }}>Schließe das Testlabor und richte MediShift zuerst ein.</Text>
         <PrimaryButton onPress={() => router.replace("/onboarding")}>Einrichtung öffnen</PrimaryButton>
       </View>
@@ -173,13 +173,13 @@ export function DevToolsScreen() {
   return (
     <ScrollView style={{ backgroundColor: palette.background }} contentContainerStyle={{ gap: 18, padding: 16, paddingBottom: 48 }}>
       <View style={{ gap: 5 }}>
-        <Text style={{ color: palette.text, fontSize: 28, fontWeight: "900" }}>Testlabor</Text>
+        <Text style={{ color: palette.text, fontSize: 28, fontWeight: "700" }}>Testlabor</Text>
         <Text style={{ color: palette.textMuted, lineHeight: 20 }}>Komplette Monate in wenigen Sekunden prüfen.</Text>
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 18, backgroundColor: palette.surface, padding: 12 }}>
         <Pressable accessibilityLabel="Vorheriger Monat" onPress={() => moveMonth(-1)} style={{ padding: 12 }}><Text style={{ color: palette.primary, fontSize: 24 }}>‹</Text></Pressable>
-        <View style={{ alignItems: "center", gap: 2 }}><Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "800" }}>STARTMONAT</Text><Text style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>{formatMonthTitle(startMonth)}</Text></View>
+        <View style={{ alignItems: "center", gap: 2 }}><Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>STARTMONAT</Text><Text style={{ color: palette.text, fontSize: 18, fontWeight: "700" }}>{formatMonthTitle(startMonth)}</Text></View>
         <Pressable accessibilityLabel="Nächster Monat" onPress={() => moveMonth(1)} style={{ padding: 12 }}><Text style={{ color: palette.primary, fontSize: 24 }}>›</Text></Pressable>
       </View>
 
@@ -192,7 +192,7 @@ export function DevToolsScreen() {
           const selected = scenario === item.key;
           return (
             <Pressable key={item.key} onPress={() => setScenario(item.key)} style={{ gap: 4, borderWidth: 1, borderColor: selected ? palette.primary : palette.border, borderRadius: 17, backgroundColor: selected ? palette.primarySoft : palette.surface, padding: 15 }}>
-              <Text style={{ color: selected ? palette.primary : palette.text, fontSize: 16, fontWeight: "900" }}>{item.title}</Text>
+              <Text style={{ color: selected ? palette.primary : palette.text, fontSize: 16, fontWeight: "700" }}>{item.title}</Text>
               <Text style={{ color: palette.textMuted, fontSize: 13 }}>{item.detail}</Text>
             </Pressable>
           );
@@ -201,7 +201,7 @@ export function DevToolsScreen() {
 
       {preview ? (
         <View style={{ gap: 12, borderRadius: 20, backgroundColor: palette.surface, padding: 17 }}>
-          <Text style={{ color: palette.text, fontSize: 17, fontWeight: "900" }}>Vorschau</Text>
+          <Text style={{ color: palette.text, fontSize: 17, fontWeight: "700" }}>Vorschau</Text>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Metric label="Monate" value={String(preview.months.length)} />
             <Metric label="Vorhanden" value={String(preview.existingEntryCount)} />
@@ -214,10 +214,10 @@ export function DevToolsScreen() {
       {message ? <Text accessibilityRole="alert" style={{ color: palette.primary, fontWeight: "800", textAlign: "center" }}>{message}</Text> : null}
       <PrimaryButton disabled={busy || preview === null} onPress={confirmGenerate}>{busy ? "Bitte warten …" : "Testdaten erzeugen"}</PrimaryButton>
 
-      {backupGroups.length > 0 ? <Text style={{ color: palette.text, fontSize: 18, fontWeight: "900" }}>Aktive Testläufe</Text> : null}
+      {backupGroups.length > 0 ? <Text style={{ color: palette.text, fontSize: 18, fontWeight: "700" }}>Aktive Testläufe</Text> : null}
       {backupGroups.map(([runId, items]) => (
         <View key={runId} style={{ gap: 12, borderRadius: 18, backgroundColor: palette.surface, padding: 15 }}>
-          <Text style={{ color: palette.text, fontWeight: "900" }}>{items.map((item) => formatMonthTitle(item.month)).join(" · ")}</Text>
+          <Text style={{ color: palette.text, fontWeight: "700" }}>{items.map((item) => formatMonthTitle(item.month)).join(" · ")}</Text>
           <Text style={{ color: palette.textMuted, fontSize: 12 }}>{items.reduce((sum, item) => sum + item.currentEntryCount, 0)} aktuelle Einträge</Text>
           <View style={{ flexDirection: "row", gap: 8 }}>
             <SmallButton label="Original laden" onPress={() => confirmBackupAction(items, "restore")} />
@@ -239,10 +239,10 @@ export function DevToolsScreen() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   const palette = usePalette();
-  return <View style={{ gap: 2 }}><Text style={{ color: palette.text, fontSize: 22, fontWeight: "900" }}>{value}</Text><Text style={{ color: palette.textMuted, fontSize: 12 }}>{label}</Text></View>;
+  return <View style={{ gap: 2 }}><Text style={{ color: palette.text, fontSize: 22, fontWeight: "700" }}>{value}</Text><Text style={{ color: palette.textMuted, fontSize: 12 }}>{label}</Text></View>;
 }
 
 function SmallButton({ label, onPress }: { label: string; onPress: () => void }) {
   const palette = usePalette();
-  return <Pressable onPress={onPress} style={{ minHeight: 42, flex: 1, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: palette.border, borderRadius: 12 }}><Text style={{ color: palette.primary, fontSize: 12, fontWeight: "900" }}>{label}</Text></Pressable>;
+  return <Pressable onPress={onPress} style={{ minHeight: 42, flex: 1, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: palette.border, borderRadius: 12 }}><Text style={{ color: palette.primary, fontSize: 12, fontWeight: "600" }}>{label}</Text></Pressable>;
 }

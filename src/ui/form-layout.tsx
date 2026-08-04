@@ -10,6 +10,7 @@ import {
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { SectionHeader, SurfaceCard } from "@/ui/design-system";
 
 export function FormScreen({
@@ -28,7 +29,7 @@ export function FormScreen({
     <ScrollView
       automaticallyAdjustKeyboardInsets
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={{ gap: 16, paddingHorizontal: 16, paddingTop: 12, paddingBottom: bottomPadding }}
+      contentContainerStyle={{ gap: SPACING.xl, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: bottomPadding }}
       keyboardDismissMode={keyboardDismissMode}
       keyboardShouldPersistTaps="handled"
       style={{ backgroundColor: palette.background }}
@@ -50,9 +51,9 @@ export function FormSection({
   readonly action?: ReactNode;
 }>) {
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: SPACING.sm }}>
       {title ? <SectionHeader action={action} caption={caption} title={title} /> : null}
-      <SurfaceCard style={{ gap: 12, padding: 14 }}>
+      <SurfaceCard style={{ gap: SPACING.md, padding: SPACING.lg }}>
         {children}
       </SurfaceCard>
     </View>
@@ -114,14 +115,14 @@ export function FormStatus({
       accessibilityLiveRegion="polite"
       accessibilityRole={error ? "alert" : undefined}
       style={{
-        minHeight: 46,
+        minHeight: CONTROL_HEIGHT.regular,
         justifyContent: "center",
         borderWidth: 1,
         borderColor: error ? palette.danger : palette.success,
-        borderRadius: 14,
+        borderRadius: RADII.control,
         borderCurve: "continuous",
         backgroundColor: error ? `${palette.danger}14` : `${palette.success}14`,
-        paddingHorizontal: 14,
+        paddingHorizontal: SPACING.md,
         paddingVertical: 10,
       }}
     >
@@ -148,12 +149,12 @@ export function DestructiveFormAction({
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 50,
+        minHeight: CONTROL_HEIGHT.regular,
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 1,
         borderColor: `${palette.danger}70`,
-        borderRadius: 14,
+        borderRadius: RADII.control,
         borderCurve: "continuous",
         backgroundColor: pressed ? `${palette.danger}16` : "transparent",
         opacity: disabled ? 0.45 : 1,

@@ -166,13 +166,13 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
             }}
           >
             <View style={{ minWidth: 0, flex: 1, gap: 2 }}>
-              <Text maxFontSizeMultiplier={1.4} numberOfLines={1} selectable style={{ color: palette.text, fontSize: 13, fontWeight: "900" }}>
+              <Text maxFontSizeMultiplier={1.4} numberOfLines={1} selectable style={{ color: palette.text, fontSize: 13, fontWeight: "700" }}>
                 {compactDate(date)}
               </Text>
               {holidayName ? (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: palette.warning }} />
-                  <Text maxFontSizeMultiplier={1.45} numberOfLines={1} selectable style={{ flex: 1, color: palette.warning, fontSize: 11, fontWeight: "800" }}>
+                  <Text maxFontSizeMultiplier={1.45} numberOfLines={1} selectable style={{ flex: 1, color: palette.warning, fontSize: 11, fontWeight: "600" }}>
                     {holidayName}
                   </Text>
                 </View>
@@ -209,7 +209,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
                   }}
                 >
                   {entry.kind === "SHIFT" ? (
-                    <Text maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ maxWidth: 24, color: chipTextColor, fontSize: 10, fontWeight: "900" }}>
+                    <Text maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ maxWidth: 24, color: chipTextColor, fontSize: 10, fontWeight: "700" }}>
                       {entry.symbol}
                     </Text>
                   ) : (
@@ -217,7 +217,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
                   )}
                 </View>
                 <View style={{ minWidth: 0, flex: 1, gap: 1 }}>
-                  <Text maxFontSizeMultiplier={1.4} numberOfLines={1} style={{ color: palette.text, fontSize: 13, fontWeight: "900" }}>
+                  <Text maxFontSizeMultiplier={1.4} numberOfLines={1} style={{ color: palette.text, fontSize: 13, fontWeight: "600" }}>
                     {entry.title}
                   </Text>
                   <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ color: palette.textMuted, fontSize: 12 }}>

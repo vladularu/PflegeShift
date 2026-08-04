@@ -30,6 +30,7 @@ import {
   chipTextColor,
 } from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
+import { RADII, SPACING } from "@/theme/tokens";
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
@@ -76,7 +77,7 @@ const EntryMark = memo(function EntryMark({
         }}
       >
         <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: entry.color }} />
-        <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ flex: 1, color: palette.textSecondary, fontSize: 10, fontWeight: "800" }}>
+        <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ flex: 1, color: palette.textSecondary, fontSize: 10, fontWeight: "600" }}>
           {compactLabels ? entry.title.slice(0, 1) : entry.title}
         </Text>
       </View>
@@ -91,16 +92,16 @@ const EntryMark = memo(function EntryMark({
       style={{
         minHeight: detail ? 29 : 18,
         justifyContent: "center",
-        borderRadius: 4,
+        borderRadius: SPACING.xxs,
         backgroundColor: accessibleChipBackgroundColor(entry.color),
         paddingHorizontal: 4,
       }}
     >
-      <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ color: chipTextColor, fontSize: 10, fontWeight: "900" }}>
+      <Text maxFontSizeMultiplier={1.5} numberOfLines={1} style={{ color: chipTextColor, fontSize: 10, fontWeight: "700" }}>
         {compactLabels ? entry.symbol : entry.title}
       </Text>
       {detail ? (
-        <Text maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ color: chipTextColor, fontSize: 8, fontWeight: "700" }}>
+        <Text maxFontSizeMultiplier={1.35} numberOfLines={1} style={{ color: chipTextColor, fontSize: 8, fontWeight: "600" }}>
           {detail}
         </Text>
       ) : null}
@@ -167,8 +168,7 @@ const DayCell = memo(function DayCell({
       })}
     >
       <View
-        pointerEvents="none"
-        style={{ height: 32, alignItems: "center", justifyContent: "flex-start" }}
+        style={{ height: 32, alignItems: "center", justifyContent: "flex-start", pointerEvents: "none" }}
       >
         <View
           style={{
@@ -187,7 +187,7 @@ const DayCell = memo(function DayCell({
             style={{
               color: isToday ? palette.onPrimary : cell.inMonth ? palette.text : palette.textMuted,
               fontSize: 13,
-              fontWeight: isToday || isSelected ? "900" : "700",
+              fontWeight: isToday || isSelected ? "700" : "600",
               fontVariant: ["tabular-nums"],
             }}
         >
@@ -205,7 +205,7 @@ const DayCell = memo(function DayCell({
               left: 1,
               color: palette.warning,
               fontSize: 9,
-              fontWeight: "900",
+              fontWeight: "700",
               textAlign: "center",
             }}
           >
@@ -213,7 +213,7 @@ const DayCell = memo(function DayCell({
           </Text>
         ) : null}
       </View>
-      <View pointerEvents="box-none" style={{ gap: 1 }}>
+      <View style={{ gap: 1, pointerEvents: "box-none" }}>
         {preview.entries.map((entry) => (
           <EntryMark
             key={`${entry.kind}-${entry.id}`}
@@ -225,7 +225,7 @@ const DayCell = memo(function DayCell({
           />
         ))}
         {preview.overflowCount > 0 ? (
-          <Text maxFontSizeMultiplier={1.45} style={{ color: palette.textMuted, fontSize: 9, fontWeight: "800", textAlign: "center" }}>
+          <Text maxFontSizeMultiplier={1.45} style={{ color: palette.textMuted, fontSize: 9, fontWeight: "600", textAlign: "center" }}>
             +{preview.overflowCount}
           </Text>
         ) : null}
@@ -351,23 +351,23 @@ export const MonthCard = memo(function MonthCard({
           overflow: "hidden",
           borderWidth: 1,
           borderColor: palette.separator,
-          borderRadius: 22,
+          borderRadius: RADII.large,
           borderCurve: "continuous",
           backgroundColor: palette.surface,
-          boxShadow: `0 3px 16px ${palette.shadow}`,
+          boxShadow: palette.dark ? undefined : `0 1px 2px ${palette.shadow}`,
           marginHorizontal: 6,
           marginTop: 2,
         }}
       >
         {testData ? (
-          <Text style={{ color: palette.primary, fontSize: 11, fontWeight: "900", letterSpacing: 0.7, paddingHorizontal: 12, paddingTop: 8 }}>
+          <Text style={{ color: palette.primary, fontSize: 11, fontWeight: "700", letterSpacing: 0.7, paddingHorizontal: SPACING.md, paddingTop: SPACING.sm }}>
             TESTDATEN
           </Text>
         ) : null}
         <View style={{ height: 40, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: palette.separator }}>
           {WEEKDAYS.map((weekday, index) => (
             <View key={weekday} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <Text maxFontSizeMultiplier={1.4} style={{ color: index >= 5 ? palette.textMuted : palette.textSecondary, fontSize: 12, fontWeight: "800" }}>
+              <Text maxFontSizeMultiplier={1.4} style={{ color: index >= 5 ? palette.textMuted : palette.textSecondary, fontSize: 12, fontWeight: "600" }}>
                 {weekday}
               </Text>
             </View>

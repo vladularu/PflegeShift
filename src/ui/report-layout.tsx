@@ -3,14 +3,15 @@ import { ScrollView, Text, View } from "react-native";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { RADII, SPACING } from "@/theme/tokens";
 
 export function ReportScrollView({ children }: PropsWithChildren) {
   const palette = usePalette();
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 14, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 48 }}
+      style={{ backgroundColor: palette.groupedBackground }}
+      contentContainerStyle={{ gap: SPACING.lg, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: 48 }}
     >
       {children}
     </ScrollView>
@@ -24,13 +25,13 @@ export function ReportTestBadge() {
       accessibilityLabel="Testdaten"
       style={{
         alignSelf: "center",
-        borderRadius: 999,
+        borderRadius: RADII.pill,
         backgroundColor: palette.primarySoft,
-        paddingHorizontal: 10,
+        paddingHorizontal: SPACING.sm,
         paddingVertical: 5,
       }}
     >
-      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline, fontWeight: "900" }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.primary, ...TYPOGRAPHY.overline }}>
         TESTDATEN
       </Text>
     </View>
@@ -45,7 +46,7 @@ export function ReportFootnote({ children }: PropsWithChildren) {
       selectable
       style={{
         color: palette.textMuted,
-        paddingHorizontal: 6,
+        paddingHorizontal: SPACING.xs,
         textAlign: "center",
         ...TYPOGRAPHY.footnote,
       }}
@@ -57,7 +58,7 @@ export function ReportFootnote({ children }: PropsWithChildren) {
 
 export function ReportPeriodContent({ children }: PropsWithChildren) {
   return (
-    <View style={{ gap: 14 }}>
+    <View style={{ gap: SPACING.lg }}>
       {children}
     </View>
   );

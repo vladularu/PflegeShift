@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from "@react-native-community/datetimepicker";
@@ -16,6 +17,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SHIFT_COLOR_PAIRS, usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 
 export interface DropdownOption<T extends string | number> {
   readonly value: T;
@@ -59,8 +62,8 @@ export function DropdownField<T extends string | number>({
   }
 
   return (
-    <View style={{ gap: 7 }}>
-      <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+    <View style={{ gap: SPACING.xs }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
         {label}
       </Text>
       <Pressable
@@ -70,25 +73,23 @@ export function DropdownField<T extends string | number>({
         accessibilityState={{ expanded: open }}
         onPress={openSelection}
         style={({ pressed }) => ({
-          minHeight: 50,
+          minHeight: CONTROL_HEIGHT.regular,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
           borderWidth: 1,
           borderColor: palette.border,
-          borderRadius: 13,
+          borderRadius: RADII.control,
           borderCurve: "continuous",
           backgroundColor: palette.surfaceRaised,
           opacity: pressed ? 0.72 : 1,
-          paddingHorizontal: 14,
+          paddingHorizontal: SPACING.md,
         })}
       >
-        <Text maxFontSizeMultiplier={1.4} numberOfLines={1} style={{ flex: 1, color: palette.text, fontSize: 15, fontWeight: "700" }}>
+        <Text maxFontSizeMultiplier={1.4} numberOfLines={1} style={{ flex: 1, color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
           {selected?.label ?? String(value)}
         </Text>
-        <Text accessibilityElementsHidden style={{ color: palette.primary, fontSize: 21, fontWeight: "700" }}>
-          ›
-        </Text>
+        <Ionicons accessibilityElementsHidden color={palette.textMuted} name="chevron-down" size={18} />
       </Pressable>
       <Modal
         animationType="fade"
@@ -109,16 +110,16 @@ export function DropdownField<T extends string | number>({
             accessibilityViewIsModal
             style={{
               maxHeight: Math.min(height * 0.72, 560),
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: 22,
+              borderTopRightRadius: 22,
               borderCurve: "continuous",
               backgroundColor: palette.surfaceRaised,
-              boxShadow: `0 -10px 30px ${palette.shadow}`,
-              paddingBottom: Math.max(insets.bottom, 12),
+              boxShadow: `0 -12px 32px ${palette.shadow}`,
+              paddingBottom: Math.max(insets.bottom, SPACING.md),
             }}
           >
-            <View style={{ minHeight: 58, justifyContent: "center", borderBottomWidth: 1, borderBottomColor: palette.separator, paddingHorizontal: 18 }}>
-              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.text, fontSize: 17, fontWeight: "900" }}>
+            <View style={{ minHeight: 58, justifyContent: "center", borderBottomWidth: 1, borderBottomColor: palette.separator, paddingHorizontal: SPACING.lg }}>
+              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}>
                 {label}
               </Text>
             </View>
@@ -135,20 +136,20 @@ export function DropdownField<T extends string | number>({
                       setOpen(false);
                     }}
                     style={({ pressed }) => ({
-                      minHeight: 52,
+                      minHeight: CONTROL_HEIGHT.large,
                       flexDirection: "row",
                       alignItems: "center",
                       justifyContent: "space-between",
                       borderTopWidth: index === 0 ? 0 : 1,
                       borderTopColor: palette.separator,
                       backgroundColor: isSelected ? palette.primarySoft : pressed ? palette.surfaceMuted : "transparent",
-                      paddingHorizontal: 18,
+                      paddingHorizontal: SPACING.lg,
                     })}
                   >
-                    <Text maxFontSizeMultiplier={1.4} style={{ flex: 1, color: isSelected ? palette.primary : palette.text, fontSize: 15, fontWeight: isSelected ? "800" : "600" }}>
+                    <Text maxFontSizeMultiplier={1.4} style={{ flex: 1, color: isSelected ? palette.primary : palette.text, ...(isSelected ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body) }}>
                       {option.label}
                     </Text>
-                    {isSelected ? <Text accessibilityElementsHidden style={{ color: palette.primary, fontSize: 18, fontWeight: "900" }}>✓</Text> : null}
+                    {isSelected ? <Ionicons accessibilityElementsHidden color={palette.primary} name="checkmark" size={20} /> : null}
                   </Pressable>
                 );
               })}
@@ -157,7 +158,7 @@ export function DropdownField<T extends string | number>({
               accessibilityRole="button"
               onPress={() => setOpen(false)}
               style={({ pressed }) => ({
-                minHeight: 52,
+                minHeight: CONTROL_HEIGHT.large,
                 alignItems: "center",
                 justifyContent: "center",
                 borderTopWidth: 1,
@@ -165,7 +166,7 @@ export function DropdownField<T extends string | number>({
                 opacity: pressed ? 0.65 : 1,
               })}
             >
-              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.primary, fontSize: 15, fontWeight: "800" }}>
+              <Text maxFontSizeMultiplier={1.4} style={{ color: palette.primary, ...TYPOGRAPHY.button }}>
                 Abbrechen
               </Text>
             </Pressable>
@@ -215,23 +216,23 @@ export function TimePickerField({
           });
         }}
         style={({ pressed }) => ({
-          minHeight: 52,
+          minHeight: CONTROL_HEIGHT.large,
           flex: 1,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 8,
-          borderRadius: 12,
+          gap: SPACING.sm,
+          borderRadius: RADII.control,
           backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-          paddingHorizontal: 10,
+          paddingHorizontal: SPACING.sm,
         })}
       >
-        <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textSecondary, fontSize: 14, fontWeight: "700" }}>
+        <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textSecondary, ...TYPOGRAPHY.bodyStrong }}>
           {label}
         </Text>
         <Text
           maxFontSizeMultiplier={1.4}
-          style={{ color: palette.primary, fontSize: 16, fontWeight: "800", fontVariant: ["tabular-nums"] }}
+          style={{ color: palette.primary, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}
         >
           {value}
         </Text>
@@ -239,8 +240,8 @@ export function TimePickerField({
     );
   }
   return (
-    <View style={{ minHeight: 52, flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-      <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textSecondary, fontSize: 14, fontWeight: "700" }}>{label}</Text>
+    <View style={{ minHeight: CONTROL_HEIGHT.large, flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: SPACING.sm }}>
+      <Text maxFontSizeMultiplier={1.4} style={{ color: palette.textSecondary, ...TYPOGRAPHY.bodyStrong }}>{label}</Text>
       <DateTimePicker
         accessibilityLabel={`${label} wählen`}
         display="compact"
@@ -260,8 +261,8 @@ export function Field({
 }: TextInputProps & { readonly label: string }) {
   const palette = usePalette();
   return (
-    <View style={{ gap: 7 }}>
-      <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+    <View style={{ gap: SPACING.xs }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
         {label}
       </Text>
       <TextInput
@@ -271,16 +272,16 @@ export function Field({
         placeholderTextColor={palette.textMuted}
         style={[
           {
-            minHeight: props.multiline ? 96 : 50,
+            minHeight: props.multiline ? 96 : CONTROL_HEIGHT.regular,
             borderWidth: 1,
             borderColor: palette.border,
-            borderRadius: 13,
+            borderRadius: RADII.control,
             borderCurve: "continuous",
             backgroundColor: palette.surfaceRaised,
             color: palette.text,
-            paddingHorizontal: 14,
-            paddingVertical: 11,
-            fontSize: 16,
+            paddingHorizontal: SPACING.md,
+            paddingVertical: 10,
+            ...TYPOGRAPHY.body,
           },
           props.style,
         ]}
@@ -306,17 +307,17 @@ export function PrimaryButton({
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 52,
+        minHeight: CONTROL_HEIGHT.large,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 14,
+        borderRadius: RADII.control,
         borderCurve: "continuous",
         backgroundColor: danger ? palette.danger : palette.primary,
         opacity: disabled ? 0.45 : pressed ? 0.78 : 1,
-        paddingHorizontal: 18,
+        paddingHorizontal: SPACING.lg,
       })}
     >
-      <Text maxFontSizeMultiplier={1.35} style={{ color: palette.dark && !danger ? "#10221D" : "#FFFFFF", fontSize: 16, fontWeight: "800" }}>
+      <Text maxFontSizeMultiplier={1.35} style={{ color: danger ? "#FFFFFF" : palette.onPrimary, ...TYPOGRAPHY.button }}>
         {children}
       </Text>
     </Pressable>
@@ -339,17 +340,19 @@ export function SegmentedButton({
       accessibilityState={{ selected }}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 44,
+        minHeight: CONTROL_HEIGHT.compact,
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 12,
+        borderWidth: selected ? 1 : 0,
+        borderColor: palette.primary,
+        borderRadius: RADII.control,
         borderCurve: "continuous",
-        backgroundColor: selected ? palette.primary : "transparent",
+        backgroundColor: selected ? palette.primarySoft : "transparent",
         opacity: pressed ? 0.75 : 1,
       })}
     >
-      <Text maxFontSizeMultiplier={1.35} style={{ color: selected ? (palette.dark ? "#10221D" : "#FFFFFF") : palette.text, fontWeight: "800" }}>
+      <Text maxFontSizeMultiplier={1.35} style={{ color: selected ? palette.primary : palette.textSecondary, ...TYPOGRAPHY.label }}>
         {label}
       </Text>
     </Pressable>
@@ -365,11 +368,11 @@ export function ColorPicker({
 }) {
   const palette = usePalette();
   return (
-    <View style={{ gap: 8 }}>
-      <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+    <View style={{ gap: SPACING.sm }}>
+      <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
         Farbe
       </Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm }}>
         {SHIFT_COLOR_PAIRS.map(({ main, soft }) => (
           <Pressable
             key={main}
@@ -382,9 +385,9 @@ export function ColorPicker({
               height: 44,
               flexDirection: "row",
               overflow: "hidden",
-              borderWidth: value === main ? 3 : 1,
-              borderColor: value === main ? palette.text : palette.border,
-              borderRadius: 14,
+              borderWidth: value === main ? 2 : 1,
+              borderColor: value === main ? palette.primary : palette.border,
+              borderRadius: RADII.control,
             }}
           >
             <View style={{ flex: 1, backgroundColor: main }} />

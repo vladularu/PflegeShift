@@ -12,6 +12,8 @@ import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
 import { ComplianceDetails } from "@/features/analysis/analysis-screen";
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { SPACING } from "@/theme/tokens";
 import { LoadingView } from "@/ui/loading-view";
 
 export function ComplianceDetailsScreen() {
@@ -39,19 +41,19 @@ export function ComplianceDetailsScreen() {
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 14, padding: 16, paddingBottom: 36 }}
+      style={{ backgroundColor: palette.groupedBackground }}
+      contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
     >
-      <View style={{ gap: 4 }}>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12, fontWeight: "700" }}>
+      <View style={{ gap: SPACING.xxs }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}>
           {formatMonthTitle(month)}
         </Text>
-        <Text selectable style={{ color: palette.text, fontSize: 24, fontWeight: "900" }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}>
           {compliance.criticalCount === 0 && compliance.warningCount === 0
             ? "Alles im grünen Bereich"
             : `${compliance.criticalCount} kritisch · ${compliance.warningCount} Hinweise`}
         </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 18 }}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} selectable style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}>
           Automatische Prüfung deiner Dienste. Die Hinweise ersetzen keine Rechtsberatung.
         </Text>
       </View>

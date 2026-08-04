@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -8,6 +9,8 @@ import {
 } from "@/application/medishift-provider";
 import type { ShiftTemplate } from "@/domain/types";
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, ColorBadge, EmptyState, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { LoadingView } from "@/ui/loading-view";
@@ -39,8 +42,8 @@ export function TemplatesManagerScreen() {
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{ gap: 14, padding: 16, paddingBottom: 36 }}
+      style={{ backgroundColor: palette.groupedBackground }}
+      contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
     >
       <Stack.Screen options={{ title: "Dienstvorlagen" }} />
       <SectionHeader title="Dienstvorlagen" caption="Reihenfolge und Inhalte der Schnellauswahl" />
@@ -61,14 +64,14 @@ export function TemplatesManagerScreen() {
                   onPress={() => setActiveTemplateId((current) => current === template.id ? null : template.id)}
                   style={({ pressed }) => ({ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.55 : 1 })}
                 >
-                  <Text style={{ color: palette.textSecondary, fontSize: 20, fontWeight: "900" }}>•••</Text>
+                  <Ionicons accessibilityElementsHidden color={palette.textSecondary} name="ellipsis-horizontal" size={20} />
                 </Pressable>
               )}
             />
             {activeTemplateId === template.id ? (
-              <View style={{ flexDirection: "row", gap: 7, borderTopWidth: 1, borderTopColor: palette.separator, backgroundColor: palette.surfaceMuted, padding: 8 }}>
-                <ManagerButton disabled={index === 0} label="↑" onPress={() => void moveTemplate(template, -1)} />
-                <ManagerButton disabled={index === templates.length - 1} label="↓" onPress={() => void moveTemplate(template, 1)} />
+              <View style={{ flexDirection: "row", gap: SPACING.xs, borderTopWidth: 1, borderTopColor: palette.separator, backgroundColor: palette.surfaceMuted, padding: SPACING.sm }}>
+                <ManagerButton disabled={index === 0} icon="arrow-up" label="Nach oben" onPress={() => void moveTemplate(template, -1)} />
+                <ManagerButton disabled={index === templates.length - 1} icon="arrow-down" label="Nach unten" onPress={() => void moveTemplate(template, 1)} />
                 <ManagerButton label="Bearbeiten" onPress={() => router.push({ pathname: "/template-editor", params: { id: template.id } })} />
                 <ManagerButton danger label="Löschen" onPress={() => confirmDelete(template)} />
               </View>
@@ -81,22 +84,20 @@ export function TemplatesManagerScreen() {
         accessibilityRole="button"
         onPress={() => router.push("/template-editor")}
         style={({ pressed }) => ({
-          minHeight: 54,
+          minHeight: CONTROL_HEIGHT.large,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          gap: 9,
-          borderRadius: 18,
+          gap: SPACING.sm,
+          borderRadius: RADII.control,
           borderCurve: "continuous",
           backgroundColor: palette.primary,
           opacity: pressed ? 0.68 : 1,
-          paddingHorizontal: 18,
+          paddingHorizontal: SPACING.lg,
         })}
       >
-        <Text style={{ color: palette.onPrimary, fontSize: 25, fontWeight: "700", lineHeight: 27 }}>
-          +
-        </Text>
-        <Text style={{ color: palette.onPrimary, fontSize: 15, fontWeight: "900" }}>
+        <Ionicons accessibilityElementsHidden color={palette.onPrimary} name="add" size={20} />
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}>
           Vorlage hinzufügen
         </Text>
       </Pressable>
@@ -106,11 +107,13 @@ export function TemplatesManagerScreen() {
 
 function ManagerButton({
   label,
+  icon,
   disabled = false,
   danger = false,
   onPress,
 }: {
   readonly label: string;
+  readonly icon?: "arrow-up" | "arrow-down";
   readonly disabled?: boolean;
   readonly danger?: boolean;
   readonly onPress: () => void;
@@ -126,15 +129,19 @@ function ManagerButton({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 12,
+        borderRadius: RADII.control,
         backgroundColor: palette.surfaceRaised,
         opacity: disabled ? 0.3 : pressed ? 0.6 : 1,
         paddingHorizontal: 8,
       })}
     >
-      <Text numberOfLines={1} style={{ color: danger ? palette.danger : palette.primary, fontSize: 12, fontWeight: "900" }}>
-        {label}
-      </Text>
+      {icon ? (
+        <Ionicons accessibilityLabel={label} color={palette.primary} name={icon} size={17} />
+      ) : (
+        <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} numberOfLines={1} style={{ color: danger ? palette.danger : palette.primary, ...TYPOGRAPHY.caption, fontWeight: "600" }}>
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 }

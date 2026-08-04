@@ -17,13 +17,13 @@ export function AppTabs() {
       labelStyle={{
         default: {
           color: palette.textMuted,
-          fontSize: 12,
-          fontWeight: 700,
+          fontSize: 11,
+          fontWeight: 600,
         },
         selected: {
           color: palette.primary,
-          fontSize: 12,
-          fontWeight: 700,
+          fontSize: 11,
+          fontWeight: 600,
         },
       }}
       minimizeBehavior="never"
