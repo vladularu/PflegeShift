@@ -16,7 +16,8 @@
       },
       "ios": {
         "simulator": true
-      }
+      },
+      "channel": "e2e-test"
     },
     "preview": {
       "distribution": "internal",
@@ -30,7 +31,8 @@
       },
       "ios": {
         "simulator": false
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
@@ -43,7 +45,8 @@
       },
       "ios": {
         "simulator": false
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {

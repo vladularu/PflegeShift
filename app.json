@@ -67,6 +67,12 @@
         "projectId": "010fe78f-de53-42b8-9635-a73ea099b5fc"
       }
     },
-    "owner": "vladularu"
+    "owner": "vladularu",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/010fe78f-de53-42b8-9635-a73ea099b5fc"
+    }
   }
 }
