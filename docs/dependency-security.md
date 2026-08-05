@@ -1,6 +1,6 @@
 # Abhängigkeitssicherheit unter Expo SDK 54
 
-MediShift bleibt bis zu einer eigenen Migrations- und Geräteabnahme auf Expo SDK 54. Sicherheitskorrekturen dürfen diesen SDK-Rahmen nicht stillschweigend überspringen.
+PflegeShift bleibt bis zu einer eigenen Migrations- und Geräteabnahme auf Expo SDK 54. Sicherheitskorrekturen dürfen diesen SDK-Rahmen nicht stillschweigend überspringen.
 
 ## Automatisches Gate
 

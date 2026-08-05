@@ -4,10 +4,10 @@ import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
 import {
-  useMediShiftEntries,
-  useMediShiftStatus,
-  useMediShiftTemplates,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftStatus,
+  usePflegeShiftTemplates,
+} from "@/application/pflegeshift-provider";
 import type { ShiftTemplate } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { formatDateTitle, today } from "@/engine/calendar";
@@ -34,9 +34,9 @@ function templateSubtitle(template: ShiftTemplate): string {
 export function QuickAddScreen() {
   const palette = usePalette();
   const params = useLocalSearchParams<{ date?: RouteParam }>();
-  const { templates } = useMediShiftTemplates();
-  const { upsertShift } = useMediShiftEntries();
-  const { error: loadError, ready, reload } = useMediShiftStatus();
+  const { templates } = usePflegeShiftTemplates();
+  const { upsertShift } = usePflegeShiftEntries();
+  const { error: loadError, ready, reload } = usePflegeShiftStatus();
   const parsedDate = parseLocalDateRouteParam(params.date);
   const date = parsedDate.status === "valid" ? parsedDate.value : today();
   const [error, setError] = useState<string | null>(null);

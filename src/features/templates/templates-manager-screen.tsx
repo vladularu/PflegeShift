@@ -3,7 +3,7 @@ import { router, Stack } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 
-import { useMediShiftStatus, useMediShiftTemplates } from "@/application/medishift-provider";
+import { usePflegeShiftStatus, usePflegeShiftTemplates } from "@/application/pflegeshift-provider";
 import type { ShiftTemplate } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { usePalette } from "@/theme/palette";
@@ -34,8 +34,8 @@ export function TemplatesManagerScreen() {
   const palette = usePalette();
   const { fontScale } = useWindowDimensions();
   const stackActions = fontScale >= 1.6;
-  const { error: loadError, ready, reload } = useMediShiftStatus();
-  const { templates, removeTemplate, moveTemplate } = useMediShiftTemplates();
+  const { error: loadError, ready, reload } = usePflegeShiftStatus();
+  const { templates, removeTemplate, moveTemplate } = usePflegeShiftTemplates();
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [busyTemplateId, setBusyTemplateId] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);

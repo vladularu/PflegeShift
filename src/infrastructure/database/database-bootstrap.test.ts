@@ -88,11 +88,11 @@ describe("database encryption bootstrap state machine", () => {
   });
 
   it("removes plaintext sidecars before the main database file", () => {
-    expect(databaseArtifactNames("medishift.db")).toEqual([
-      "medishift.db-wal",
-      "medishift.db-shm",
-      "medishift.db-journal",
-      "medishift.db",
+    expect(databaseArtifactNames("pflegeshift.db")).toEqual([
+      "pflegeshift.db-wal",
+      "pflegeshift.db-shm",
+      "pflegeshift.db-journal",
+      "pflegeshift.db",
     ]);
   });
 });

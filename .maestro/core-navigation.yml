@@ -1,4 +1,4 @@
-appId: com.medishift.app.internal
+appId: com.pflegeshift.app.internal
 ---
 - runFlow: onboarding.yml
 - tapOn: "Auswertung"

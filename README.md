@@ -1,10 +1,10 @@
-# MediShift
+# PflegeShift
 
-MediShift ist ein lokaler, iPhone-first Dienstplaner für Schichtarbeit. Die App verbindet Kalender, Arbeitszeitauswertung und eine unverbindliche TVöD-P-Gehaltsberechnung in einer ruhigen, systemadaptiven Oberfläche.
+PflegeShift ist ein lokaler, iPhone-first Dienstplaner für Schichtarbeit. Die App verbindet Kalender, Arbeitszeitauswertung und eine unverbindliche TVöD-P-Gehaltsberechnung in einer ruhigen, systemadaptiven Oberfläche.
 
-MediShift basiert auf Expo SDK 54, React Native und SQLite. Die Nutzung benötigt weder Konto noch Backend; alle persönlichen Planungsdaten bleiben lokal auf dem Gerät.
+PflegeShift basiert auf Expo SDK 54, React Native und SQLite. Die Nutzung benötigt weder Konto noch Backend; alle persönlichen Planungsdaten bleiben lokal auf dem Gerät.
 
-> **Beta:** Die aktuelle Vorabversion ist [`v0.1.0-beta.1`](https://github.com/vladularu/MediShift/releases/tag/v0.1.0-beta.1).
+> **Beta:** Die aktuelle Vorabversion ist [`v0.1.0-beta.1`](https://github.com/vladularu/PflegeShift/releases/tag/v0.1.0-beta.1).
 
 ## Hauptbereiche
 
@@ -55,7 +55,7 @@ MediShift basiert auf Expo SDK 54, React Native und SQLite. Die Nutzung benötig
 
 ## Lokale Datenhaltung
 
-MediShift speichert Profileinstellungen, Dienstvorlagen, Einträge und Monatsentscheidungen in einer lokal mit SQLCipher verschlüsselten SQLite-Datenbank. Der Schlüssel liegt im nativen SecureStore. Änderungen verwenden Revisionen und Soft-Delete, damit Datensätze konsistent aktualisiert werden können.
+PflegeShift speichert Profileinstellungen, Dienstvorlagen, Einträge und Monatsentscheidungen in einer lokal mit SQLCipher verschlüsselten SQLite-Datenbank. Der Schlüssel liegt im nativen SecureStore. Änderungen verwenden Revisionen und Soft-Delete, damit Datensätze konsistent aktualisiert werden können.
 
 Nicht enthalten sind:
 
@@ -132,7 +132,7 @@ Die vollständige Abnahme steht in der [Release-Checkliste](docs/release-checkli
 Das interne Testlabor erzeugt reproduzierbare Testmonate und ist ausschließlich in Entwicklungs- und internen Preview-Builds verfügbar:
 
 1. Tab **Mehr** öffnen.
-2. Die obere grüne MediShift-Karte fünf Sekunden gedrückt halten.
+2. Die obere grüne PflegeShift-Karte fünf Sekunden gedrückt halten.
 3. Unter **Intern** das **Testlabor** öffnen.
 
 Verfügbar sind unter anderem normale Rotation, zuschlagsreiche Monate, Compliance-Fälle und UI-Stresstests. Testläufe sichern vorhandene Monatsdaten und können anschließend wiederhergestellt oder übernommen werden.

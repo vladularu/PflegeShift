@@ -1,6 +1,6 @@
 # Teststrategie
 
-MediShift trennt schnelle Fachtests, React-Komponententests, native End-to-End-Flows und manuelle Geräteabnahme. Kein einzelnes Gate ersetzt eine andere Ebene.
+PflegeShift trennt schnelle Fachtests, React-Komponententests, native End-to-End-Flows und manuelle Geräteabnahme. Kein einzelnes Gate ersetzt eine andere Ebene.
 
 | Ebene                      | Befehl/Gate                         | Zweck                                                                    |
 | -------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |

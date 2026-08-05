@@ -21,7 +21,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   STORAGE: {
     title: "Lokale Datenspeicherung",
     intro:
-      "MediShift arbeitet offline und speichert deine Angaben ausschließlich auf diesem Gerät.",
+      "PflegeShift arbeitet offline und speichert deine Angaben ausschließlich auf diesem Gerät.",
     items: [
       {
         title: "Kein Konto erforderlich",
@@ -33,7 +33,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
       },
       {
         title: "Datenschutz",
-        text: "Die App überträgt diese Daten nicht an einen MediShift-Server.",
+        text: "Die App überträgt diese Daten nicht an einen PflegeShift-Server.",
       },
     ],
   },
@@ -63,7 +63,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     items: [
       {
         title: "Vollzeitbetrag",
-        text: "MediShift berücksichtigt 25 Euro pro Monat bei Vollzeit. Bei Teilzeit wird der Betrag entsprechend der hinterlegten Wochenarbeitszeit anteilig berechnet.",
+        text: "PflegeShift berücksichtigt 25 Euro pro Monat bei Vollzeit. Bei Teilzeit wird der Betrag entsprechend der hinterlegten Wochenarbeitszeit anteilig berechnet.",
       },
       {
         title: "Geltungsbereich",
@@ -82,7 +82,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     items: [
       {
         title: "Automatische Höhe",
-        text: "MediShift verwendet den im gewählten Monat gültigen Vollzeitbetrag und rechnet ihn bei Teilzeit proportional zur Wochenarbeitszeit um.",
+        text: "PflegeShift verwendet den im gewählten Monat gültigen Vollzeitbetrag und rechnet ihn bei Teilzeit proportional zur Wochenarbeitszeit um.",
       },
       {
         title: "Tarifprofil",
@@ -95,7 +95,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     ],
   },
   ABOUT: {
-    title: "Über MediShift",
+    title: "Über PflegeShift",
     intro: "Ein unabhängiger, offline-first Dienstplaner für Schichtarbeit im Gesundheitswesen.",
     items: [
       {
@@ -108,7 +108,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
       },
       {
         title: "Hinweis",
-        text: "MediShift ist eigenständig und nicht mit SuperShift oder einem Tarifpartner verbunden.",
+        text: "PflegeShift ist eigenständig und nicht mit SuperShift oder einem Tarifpartner verbunden.",
       },
     ],
   },

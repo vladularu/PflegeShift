@@ -5,11 +5,11 @@ import { useMemo, useRef, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import {
-  useMediShiftEntries,
-  useMediShiftProfile,
-  useMediShiftStatus,
-  useMediShiftTemplates,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+  usePflegeShiftTemplates,
+} from "@/application/pflegeshift-provider";
 import { SHIFT_TYPE_LABELS, type CalendarEntry, type ShiftType } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { ValidationError } from "@/domain/validation";
@@ -62,8 +62,8 @@ export function DayEditorScreen() {
     mode?: RouteParam;
     entryId?: RouteParam;
   }>();
-  const { error, ready, reload } = useMediShiftStatus();
-  const { entries } = useMediShiftEntries();
+  const { error, ready, reload } = usePflegeShiftStatus();
+  const { entries } = usePflegeShiftEntries();
   const parsedDate = parseLocalDateRouteParam(params.date);
   const parsedMode = parseEnumRouteParam(params.mode, ["SHIFT", "APPOINTMENT"] as const);
   const parsedEntryId = parseIdentifierRouteParam(params.entryId);
@@ -129,9 +129,9 @@ function DayEditorForm({
   readonly sessionKey: string;
 }) {
   const palette = usePalette();
-  const { profile } = useMediShiftProfile();
-  const { templates } = useMediShiftTemplates();
-  const { entries, upsertShift, upsertAppointment, removeEntry } = useMediShiftEntries();
+  const { profile } = usePflegeShiftProfile();
+  const { templates } = usePflegeShiftTemplates();
+  const { entries, upsertShift, upsertAppointment, removeEntry } = usePflegeShiftEntries();
   const { initialValue: existing } = useStableEditorSession(sessionKey, () => loadedExisting);
   const initialMode: EditorMode = existing?.kind ?? requestedMode;
   const [mode, setMode] = useState<EditorMode>(initialMode);

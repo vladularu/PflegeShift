@@ -3,10 +3,10 @@ import { useMemo } from "react";
 import { ScrollView, Text, View } from "react-native";
 
 import {
-  useMediShiftEntries,
-  useMediShiftProfile,
-  useMediShiftStatus,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+} from "@/application/pflegeshift-provider";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
 import { ComplianceDetails } from "@/features/analysis/analysis-screen";
@@ -20,9 +20,9 @@ import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 export function ComplianceDetailsScreen() {
   const palette = usePalette();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { error, ready, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
-  const { entries } = useMediShiftEntries();
+  const { error, ready, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
+  const { entries } = usePflegeShiftEntries();
   const parsedMonth = parseMonthRouteParam(params.month);
   const month =
     parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);

@@ -24,7 +24,9 @@ describe("AppErrorBoundary", () => {
     );
 
     expect(screen.queryByText(/sensitive database path/i)).toBeNull();
-    expect(screen.getByRole("alert")).toHaveTextContent("MediShift konnte nicht angezeigt werden");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "PflegeShift konnte nicht angezeigt werden",
+    );
     expect(listDiagnosticEvents()).toEqual([
       expect.objectContaining({ code: "APP_RENDER_FAILED", errorClass: "Error" }),
     ]);

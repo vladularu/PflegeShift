@@ -15,9 +15,9 @@ jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
 }));
 
-jest.mock("@/application/medishift-provider", () => ({
-  useMediShiftStatus: () => ({ error: null, ready: true, reload: jest.fn() }),
-  useMediShiftProfile: () => ({
+jest.mock("@/application/pflegeshift-provider", () => ({
+  usePflegeShiftStatus: () => ({ error: null, ready: true, reload: jest.fn() }),
+  usePflegeShiftProfile: () => ({
     profile: {
       federalState: "NW",
       weeklyMinutes: 2_400,
@@ -27,7 +27,7 @@ jest.mock("@/application/medishift-provider", () => ({
       updatedAt: "2026-01-01T00:00:00.000Z",
     },
   }),
-  useMediShiftTariff: () => ({
+  usePflegeShiftTariff: () => ({
     workPatternSettings: {
       workplaceCoverage: "UNKNOWN",
       assignment: "UNKNOWN",
@@ -68,6 +68,6 @@ describe("SettingsScreen production gates", () => {
     expect(screen.queryByText("Testlabor")).toBeNull();
     expect(isDeveloperModeEnabled).not.toHaveBeenCalled();
     expect(setDeveloperMode).not.toHaveBeenCalled();
-    expect(screen.getByText("Über MediShift")).toBeTruthy();
+    expect(screen.getByText("Über PflegeShift")).toBeTruthy();
   });
 });

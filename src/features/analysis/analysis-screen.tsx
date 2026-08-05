@@ -16,12 +16,12 @@ import {
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import {
-  useMediShiftEntries,
-  useMediShiftProfile,
-  useMediShiftStatus,
-  useMediShiftTariff,
-  useMediShiftTestData,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+  usePflegeShiftTariff,
+  usePflegeShiftTestData,
+} from "@/application/pflegeshift-provider";
 import {
   SHIFT_TYPE_LABELS,
   type AllowanceStatus,
@@ -76,11 +76,11 @@ export function AnalysisScreen() {
   const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { error, ready, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
-  const { entries } = useMediShiftEntries();
-  const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
-  const { testMonths } = useMediShiftTestData();
+  const { error, ready, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
+  const { entries } = usePflegeShiftEntries();
+  const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
+  const { testMonths } = usePflegeShiftTestData();
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
   const [year, setYear] = useState(() => Number(activeMonthCoordinator.getMonth().slice(0, 4)));

@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useRef, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 
-import { useMediShiftProfile } from "@/application/medishift-provider";
+import { usePflegeShiftProfile } from "@/application/pflegeshift-provider";
 import { FEDERAL_STATES, FEDERAL_STATE_LABELS, type FederalState } from "@/domain/types";
 import { ValidationError } from "@/domain/validation";
 import { userFacingErrorMessage } from "@/domain/errors";
@@ -23,7 +23,7 @@ export function parseWeeklyHours(value: string): number {
 
 export function OnboardingScreen() {
   const palette = usePalette();
-  const { updateProfile } = useMediShiftProfile();
+  const { updateProfile } = usePflegeShiftProfile();
   const [federalState, setFederalState] = useState<FederalState>("NW");
   const [weeklyHours, setWeeklyHours] = useState("38,5");
   const [weeklyHoursError, setWeeklyHoursError] = useState<string | null>(null);
@@ -112,7 +112,7 @@ export function OnboardingScreen() {
 
       <FormStatus error={error} />
       <PrimaryButton disabled={saving} onPress={() => void submit()}>
-        {saving ? "Wird gespeichert …" : "MediShift starten"}
+        {saving ? "Wird gespeichert …" : "PflegeShift starten"}
       </PrimaryButton>
       <Text
         maxFontSizeMultiplier={TEXT_MAX_SCALE}

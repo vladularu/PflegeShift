@@ -34,7 +34,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
         <LoadFailureView
           message={APP_RENDER_FAILURE_MESSAGE}
           onRetry={this.retry}
-          title={this.props.title ?? "MediShift konnte nicht angezeigt werden"}
+          title={this.props.title ?? "PflegeShift konnte nicht angezeigt werden"}
         />
       );
     }

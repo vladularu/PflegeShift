@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { TextInput } from "react-native";
 
-import { useMediShiftProfile, useMediShiftStatus } from "@/application/medishift-provider";
+import { usePflegeShiftProfile, usePflegeShiftStatus } from "@/application/pflegeshift-provider";
 import {
   FEDERAL_STATES,
   FEDERAL_STATE_LABELS,
@@ -30,8 +30,8 @@ export function SettingsEditorScreen() {
   const params = useLocalSearchParams<{ section?: RouteParam }>();
   const parsedSection = parseEnumRouteParam(params.section, ["WORK", "TARIFF"] as const);
   const section: SettingsSection = parsedSection.status === "valid" ? parsedSection.value : "WORK";
-  const { ready, error: dataError, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
+  const { ready, error: dataError, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
 
   if (parsedSection.status !== "valid") {
     return (
@@ -64,7 +64,7 @@ function SettingsEditorForm({
   readonly profile: UserProfile;
   readonly section: SettingsSection;
 }) {
-  const { updateProfile } = useMediShiftProfile();
+  const { updateProfile } = usePflegeShiftProfile();
   const initialValues = settingsFormValues(profile);
   const [federalState, setFederalState] = useState<FederalState>(initialValues.federalState);
   const [weeklyHours, setWeeklyHours] = useState(initialValues.weeklyHours);

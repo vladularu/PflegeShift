@@ -5,7 +5,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
-import { useMediShiftProfile, useMediShiftStatus } from "@/application/medishift-provider";
+import { usePflegeShiftProfile, usePflegeShiftStatus } from "@/application/pflegeshift-provider";
 import type { TestBackupSummary, TestRange, TestRunPreview, TestScenario } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
@@ -52,8 +52,8 @@ export function DevToolsScreen() {
 function DevToolsContent() {
   const db = useSQLiteContext();
   const palette = usePalette();
-  const { error: loadError, ready, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
+  const { error: loadError, ready, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [startMonth, setStartMonth] = useState(currentMonth);
   const [range, setRange] = useState<TestRange>(1);
@@ -140,7 +140,7 @@ function DevToolsContent() {
           Testlabor gesperrt
         </Text>
         <Text style={{ color: palette.textMuted, textAlign: "center" }}>
-          Aktiviere es unter Mehr durch langes Drücken auf „MediShift 0.1“.
+          Aktiviere es unter Mehr durch langes Drücken auf „PflegeShift 0.1“.
         </Text>
         <PrimaryButton onPress={() => router.back()}>Schließen</PrimaryButton>
       </View>
@@ -162,7 +162,7 @@ function DevToolsContent() {
           Profil erforderlich
         </Text>
         <Text style={{ color: palette.textMuted, textAlign: "center" }}>
-          Schließe das Testlabor und richte MediShift zuerst ein.
+          Schließe das Testlabor und richte PflegeShift zuerst ein.
         </Text>
         <PrimaryButton onPress={() => router.replace("/onboarding")}>
           Einrichtung öffnen

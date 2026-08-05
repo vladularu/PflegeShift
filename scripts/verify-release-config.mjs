@@ -23,6 +23,10 @@ function expect(condition, message) {
   }
 }
 
+expect(expo.name === "PflegeShift", "Der App-Name muss PflegeShift lauten.");
+expect(expo.slug === "pflegeshift", "Der Expo-Slug muss pflegeshift lauten.");
+expect(expo.scheme === "pflegeshift", "Das Produktions-URL-Schema muss pflegeshift lauten.");
+expect(packageConfig.name === "pflegeshift", "Der npm-Paketname muss pflegeshift lauten.");
 expect(
   /^\d+\.\d+\.\d+$/.test(expo.version ?? ""),
   "expo.version muss semantisch versioniert sein.",
@@ -40,7 +44,10 @@ expect(
   expo.ios?.supportsTablet === false,
   "iPad-Support darf erst nach eigener Abnahme aktiviert werden.",
 );
-expect(expo.ios?.bundleIdentifier === "com.medishift.app", "Die iOS Bundle-ID ist nicht korrekt.");
+expect(
+  expo.ios?.bundleIdentifier === "com.pflegeshift.app",
+  "Die iOS Bundle-ID ist nicht korrekt.",
+);
 expect(
   /^\d+(?:\.\d+){0,2}$/.test(expo.ios?.buildNumber ?? ""),
   "ios.buildNumber muss aus einer bis drei numerischen Komponenten bestehen.",
@@ -49,7 +56,7 @@ expect(
   expo.ios?.config?.usesNonExemptEncryption === false,
   "Die iOS-Export-Compliance-Angabe fehlt.",
 );
-expect(expo.android?.package === "com.medishift.app", "Der Android-Paketname ist nicht korrekt.");
+expect(expo.android?.package === "com.pflegeshift.app", "Der Android-Paketname ist nicht korrekt.");
 expect(
   Number.isInteger(expo.android?.versionCode) && expo.android.versionCode > 0,
   "android.versionCode muss positiv sein.",

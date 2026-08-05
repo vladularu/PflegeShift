@@ -1,4 +1,4 @@
-# MediShift Release-Checkliste
+# PflegeShift Release-Checkliste
 
 Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds und realen Gerätetests. Ein JavaScript-Export allein ist noch keine Store-Abnahme.
 
@@ -43,7 +43,7 @@ Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds 
 - [ ] Neustart mit bestehenden Daten ohne Verlust oder sichtbaren Zwischenzustand
 - [ ] `.maestro/sqlcipher-persistence.yml` auf dem internen iOS- und Android-Build bestanden
 - [ ] Update-Test von der letzten unverschlüsselten Beta: vorhandene Dienste bleiben sichtbar, zweiter Neustart funktioniert
-- [ ] Nach erfolgreichem Update ist keine alte `medishift.db.plaintext*`-Datei mehr im App-Sandbox-Verzeichnis vorhanden
+- [ ] Nach erfolgreichem Update ist keine alte `pflegeshift.db.plaintext*`-Datei mehr im App-Sandbox-Verzeichnis vorhanden
 - [ ] Falscher/verlorener Schlüssel führt kontrolliert in den Fehlerzustand und überschreibt keine vorhandene Datenbank
 - [ ] Stresstest mit mindestens zwölf Monaten realistischer Dienstplandaten
 

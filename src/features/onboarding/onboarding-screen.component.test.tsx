@@ -9,8 +9,8 @@ const mockUpdateProfile =
   jest.fn<
     (input: { federalState: string; weeklyMinutes: number; timeZone: string }) => Promise<void>
   >();
-jest.mock("@/application/medishift-provider", () => ({
-  useMediShiftProfile: () => ({ updateProfile: mockUpdateProfile }),
+jest.mock("@/application/pflegeshift-provider", () => ({
+  usePflegeShiftProfile: () => ({ updateProfile: mockUpdateProfile }),
 }));
 
 jest.mock("expo-router", () => ({
@@ -38,7 +38,7 @@ describe("OnboardingScreen", () => {
     const screen = await render(onboarding());
 
     await fireEvent.changeText(screen.getByLabelText("Stunden pro Woche"), "40");
-    await fireEvent.press(screen.getByRole("button", { name: "MediShift starten" }));
+    await fireEvent.press(screen.getByRole("button", { name: "PflegeShift starten" }));
 
     await waitFor(() => {
       expect(mockUpdateProfile).toHaveBeenCalledWith({
@@ -54,7 +54,7 @@ describe("OnboardingScreen", () => {
     const screen = await render(onboarding());
 
     await fireEvent.changeText(screen.getByLabelText("Stunden pro Woche"), "ungültig");
-    await fireEvent.press(screen.getByRole("button", { name: "MediShift starten" }));
+    await fireEvent.press(screen.getByRole("button", { name: "PflegeShift starten" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Bitte gültige Wochenstunden angeben.",

@@ -5,11 +5,11 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import {
-  useMediShiftEntries,
-  useMediShiftProfile,
-  useMediShiftStatus,
-  useMediShiftTariff,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+  usePflegeShiftTariff,
+} from "@/application/pflegeshift-provider";
 import {
   ALLOWANCE_STATUSES,
   type AllowanceStatus,
@@ -41,9 +41,9 @@ const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
 
 export function TariffAssessmentScreen() {
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { error, ready, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
-  const { workPatternSettings } = useMediShiftTariff();
+  const { error, ready, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
+  const { workPatternSettings } = usePflegeShiftTariff();
   const parsedMonth = parseMonthRouteParam(params.month);
   const month =
     parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);
@@ -82,9 +82,9 @@ function TariffAssessmentForm({
   readonly profile: UserProfile;
 }) {
   const palette = usePalette();
-  const { entries } = useMediShiftEntries();
+  const { entries } = usePflegeShiftEntries();
   const { tariffDecisions, workPatternSettings, updateWorkPatternSettings, upsertTariffDecision } =
-    useMediShiftTariff();
+    usePflegeShiftTariff();
   const [coverage, setCoverage] = useState<TvoedWorkplaceCoverage>(
     initialSettings.workplaceCoverage,
   );

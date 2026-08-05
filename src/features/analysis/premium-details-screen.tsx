@@ -2,11 +2,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 
 import {
-  useMediShiftEntries,
-  useMediShiftProfile,
-  useMediShiftStatus,
-  useMediShiftTariff,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+  usePflegeShiftTariff,
+} from "@/application/pflegeshift-provider";
 import { currentMonth, formatDateTitle, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { formatMinutes } from "@/engine/working-time";
@@ -28,10 +28,10 @@ function euro(value: number): string {
 export function PremiumDetailsScreen() {
   const palette = usePalette();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { error, ready, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
-  const { entries } = useMediShiftEntries();
-  const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
+  const { error, ready, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
+  const { entries } = usePflegeShiftEntries();
+  const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
   const parsedMonth = parseMonthRouteParam(params.month);
   const month =
     parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);

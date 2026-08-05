@@ -36,12 +36,12 @@ import {
 import { purgeExpiredTombstones } from "@/infrastructure/database/tombstone-retention";
 import { recordDiagnostic } from "@/infrastructure/diagnostics";
 
-export const SECURE_DATABASE_NAME = "medishift-secure-v1.db";
+export const SECURE_DATABASE_NAME = "pflegeshift-secure-v1.db";
 
-const LEGACY_DATABASE_NAME = "medishift.db";
-const TEMPORARY_DATABASE_NAME = "medishift-secure-v1.tmp.db";
-const DATABASE_KEY_NAME = "medishift.sqlcipher.key.v1";
-const DATABASE_KEY_SERVICE = "com.medishift.database.v1";
+const LEGACY_DATABASE_NAME = "pflegeshift.db";
+const TEMPORARY_DATABASE_NAME = "pflegeshift-secure-v1.tmp.db";
+const DATABASE_KEY_NAME = "pflegeshift.sqlcipher.key.v1";
+const DATABASE_KEY_SERVICE = "com.pflegeshift.database.v1";
 const MIGRATION_FREE_SPACE_RESERVE = 5 * 1024 * 1024;
 
 const keyOptions: SecureStore.SecureStoreOptions = {
@@ -199,7 +199,7 @@ async function prepareSecureDatabaseInternal(): Promise<void> {
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
     throw new DatabaseSecurityError(
       "expo-go-unsupported",
-      "Die verschlüsselte MediShift-Datenbank benötigt einen Development- oder Production-Build und funktioniert nicht in Expo Go.",
+      "Die verschlüsselte PflegeShift-Datenbank benötigt einen Development- oder Production-Build und funktioniert nicht in Expo Go.",
     );
   }
 
@@ -217,7 +217,7 @@ async function prepareSecureDatabaseInternal(): Promise<void> {
   if (action === "block-missing-key") {
     throw new DatabaseSecurityError(
       "missing-key",
-      "Der Schlüssel der verschlüsselten MediShift-Datenbank fehlt. Die Datenbank wurde nicht verändert.",
+      "Der Schlüssel der verschlüsselten PflegeShift-Datenbank fehlt. Die Datenbank wurde nicht verändert.",
     );
   }
 
@@ -278,14 +278,14 @@ async function prepareSecureDatabaseSafely(): Promise<void> {
 }
 
 type DatabaseBootstrapRuntime = typeof globalThis & {
-  __medishiftPrepareSecureDatabaseV1?: () => Promise<void>;
+  __pflegeshiftPrepareSecureDatabaseV1?: () => Promise<void>;
 };
 
 const bootstrapRuntime = globalThis as DatabaseBootstrapRuntime;
 const prepareSingleFlight =
-  bootstrapRuntime.__medishiftPrepareSecureDatabaseV1 ??
+  bootstrapRuntime.__pflegeshiftPrepareSecureDatabaseV1 ??
   createSingleFlight(prepareSecureDatabaseSafely);
-bootstrapRuntime.__medishiftPrepareSecureDatabaseV1 = prepareSingleFlight;
+bootstrapRuntime.__pflegeshiftPrepareSecureDatabaseV1 = prepareSingleFlight;
 
 export function prepareSecureDatabase(): Promise<void> {
   return prepareSingleFlight();
@@ -297,7 +297,7 @@ export async function initializeSecureDatabase(database: SQLiteDatabase): Promis
     if (key === null) {
       throw new DatabaseSecurityError(
         "missing-key",
-        "Der Schlüssel der verschlüsselten MediShift-Datenbank fehlt.",
+        "Der Schlüssel der verschlüsselten PflegeShift-Datenbank fehlt.",
       );
     }
     await applyAndVerifySqlCipher(database, key);

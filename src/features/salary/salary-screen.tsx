@@ -7,12 +7,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import {
-  useMediShiftEntries,
-  useMediShiftProfile,
-  useMediShiftStatus,
-  useMediShiftTariff,
-  useMediShiftTestData,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+  usePflegeShiftTariff,
+  usePflegeShiftTestData,
+} from "@/application/pflegeshift-provider";
 import { formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import {
@@ -49,11 +49,11 @@ export function SalaryScreen() {
   const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { error, ready, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
-  const { entries } = useMediShiftEntries();
-  const { tariffDecisions, workPatternSettings } = useMediShiftTariff();
-  const { testMonths } = useMediShiftTestData();
+  const { error, ready, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
+  const { entries } = usePflegeShiftEntries();
+  const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
+  const { testMonths } = usePflegeShiftTestData();
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const entryWindowCache = useRef<AnalysisEntryWindow | null>(null);
   const parsedMonth = parseMonthRouteParam(params.month);

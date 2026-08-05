@@ -18,12 +18,12 @@ import Animated, { FadeInDown, FadeOut, ReduceMotion, ZoomIn } from "react-nativ
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
-  useMediShiftEntries,
-  useMediShiftProfile,
-  useMediShiftStatus,
-  useMediShiftTemplates,
-  useMediShiftTestData,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+  usePflegeShiftTemplates,
+  usePflegeShiftTestData,
+} from "@/application/pflegeshift-provider";
 import { type CalendarEntry } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { addMonths, currentMonth, today } from "@/engine/calendar";
@@ -86,11 +86,11 @@ export function CalendarScreen() {
   const preferences = useCalendarPreferences();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { ready, error, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
-  const { templates } = useMediShiftTemplates();
-  const { entries, removeEntry, upsertShift } = useMediShiftEntries();
-  const { testMonths } = useMediShiftTestData();
+  const { ready, error, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
+  const { templates } = usePflegeShiftTemplates();
+  const { entries, removeEntry, upsertShift } = usePflegeShiftEntries();
+  const { testMonths } = usePflegeShiftTestData();
   const profileReady = profile !== null;
   const timeZone = profile?.timeZone ?? "Europe/Berlin";
   const parsedMonth = parseMonthRouteParam(params.month);

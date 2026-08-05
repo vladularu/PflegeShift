@@ -34,7 +34,7 @@ export function recordDiagnostic(
   diagnosticEvents.push(event);
   if (diagnosticEvents.length > MAX_DIAGNOSTIC_EVENTS) diagnosticEvents.shift();
   if (process.env.NODE_ENV === "development") {
-    console.error(`[MediShift:${event.code}] ${event.errorClass}`);
+    console.error(`[PflegeShift:${event.code}] ${event.errorClass}`);
   }
   return event;
 }

@@ -6,10 +6,10 @@ import { useEffect, useState, type ComponentProps } from "react";
 import { Alert, ScrollView, View } from "react-native";
 
 import {
-  useMediShiftProfile,
-  useMediShiftStatus,
-  useMediShiftTariff,
-} from "@/application/medishift-provider";
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+  usePflegeShiftTariff,
+} from "@/application/pflegeshift-provider";
 import { FEDERAL_STATE_LABELS } from "@/domain/types";
 import { currentMonth } from "@/engine/calendar";
 import {
@@ -28,9 +28,9 @@ import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 export function SettingsScreen() {
   const palette = usePalette();
   const db = useSQLiteContext();
-  const { error, ready, reload } = useMediShiftStatus();
-  const { profile } = useMediShiftProfile();
-  const { workPatternSettings } = useMediShiftTariff();
+  const { error, ready, reload } = usePflegeShiftStatus();
+  const { profile } = usePflegeShiftProfile();
+  const { workPatternSettings } = usePflegeShiftTariff();
   const calendarPreferences = useCalendarPreferences();
   const [developerMode, setDeveloperModeState] = useState(false);
 
@@ -184,7 +184,7 @@ export function SettingsScreen() {
             onLongPress={DEV_TOOLS_AVAILABLE ? () => void activateDeveloperMode() : undefined}
             onPress={() => router.push(settingsInfoRoute("ABOUT"))}
             subtitle={APP_RUNTIME_LABEL}
-            title="Über MediShift"
+            title="Über PflegeShift"
           />
         </SurfaceCard>
       </View>

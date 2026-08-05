@@ -1,6 +1,6 @@
 # Lokale Datenaufbewahrung
 
-MediShift speichert Nutzerdaten ausschließlich lokal. Normale Löschaktionen für
+PflegeShift speichert Nutzerdaten ausschließlich lokal. Normale Löschaktionen für
 Dienste, Termine und Dienstvorlagen erzeugen zunächst einen Tombstone mit
 Revision und Löschzeitpunkt. Damit bleiben konkurrierende Änderungen erkennbar
 und eine spätere Synchronisation kann Löschungen eindeutig übertragen.

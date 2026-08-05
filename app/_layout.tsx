@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
 
-import { MediShiftProvider } from "@/application/medishift-provider";
+import { PflegeShiftProvider } from "@/application/pflegeshift-provider";
 import { CalendarPreferencesProvider } from "@/features/calendar/calendar-preferences";
 import { SecureDatabaseProvider } from "@/infrastructure/database/secure-database-provider";
 import { DEV_TOOLS_AVAILABLE } from "@/infrastructure/dev-tools-policy";
@@ -17,7 +17,7 @@ export default function RootLayout() {
   return (
     <SecureDatabaseProvider>
       <AppErrorBoundary>
-        <MediShiftProvider>
+        <PflegeShiftProvider>
           <ActiveMonthProvider>
             <CalendarPreferencesProvider>
               <AppErrorBoundary title="Ansicht konnte nicht angezeigt werden">
@@ -35,7 +35,7 @@ export default function RootLayout() {
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     <Stack.Screen
                       name="onboarding"
-                      options={{ title: "MediShift einrichten", presentation: "fullScreenModal" }}
+                      options={{ title: "PflegeShift einrichten", presentation: "fullScreenModal" }}
                     />
                     <Stack.Screen
                       name="day-editor"
@@ -150,7 +150,7 @@ export default function RootLayout() {
               </AppErrorBoundary>
             </CalendarPreferencesProvider>
           </ActiveMonthProvider>
-        </MediShiftProvider>
+        </PflegeShiftProvider>
       </AppErrorBoundary>
     </SecureDatabaseProvider>
   );

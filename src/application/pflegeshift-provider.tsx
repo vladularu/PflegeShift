@@ -45,32 +45,32 @@ import { DEV_TOOLS_AVAILABLE, shouldLoadDevToolState } from "@/infrastructure/de
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
 import { recordDiagnostic } from "@/infrastructure/diagnostics";
 
-interface MediShiftStatusValue {
+interface PflegeShiftStatusValue {
   readonly ready: boolean;
   readonly error: string | null;
   readonly reload: () => Promise<void>;
 }
 
-interface MediShiftProfileValue {
+interface PflegeShiftProfileValue {
   readonly profile: UserProfile | null;
   readonly updateProfile: (input: SaveProfileInput) => Promise<UserProfile>;
 }
 
-interface MediShiftTemplatesValue {
+interface PflegeShiftTemplatesValue {
   readonly templates: readonly ShiftTemplate[];
   readonly upsertTemplate: (input: SaveShiftTemplateInput) => Promise<ShiftTemplate>;
   readonly removeTemplate: (template: ShiftTemplate) => Promise<void>;
   readonly moveTemplate: (template: ShiftTemplate, direction: -1 | 1) => Promise<void>;
 }
 
-interface MediShiftEntriesValue {
+interface PflegeShiftEntriesValue {
   readonly entries: readonly CalendarEntry[];
   readonly upsertShift: (input: SaveShiftInput) => Promise<ShiftEntry>;
   readonly upsertAppointment: (input: SaveAppointmentInput) => Promise<Appointment>;
   readonly removeEntry: (entry: CalendarEntry) => Promise<void>;
 }
 
-interface MediShiftTariffValue {
+interface PflegeShiftTariffValue {
   readonly tariffDecisions: readonly MonthlyTariffDecision[];
   readonly workPatternSettings: TvoedWorkPatternSettings;
   readonly upsertTariffDecision: (
@@ -81,16 +81,16 @@ interface MediShiftTariffValue {
   ) => Promise<TvoedWorkPatternSettings>;
 }
 
-interface MediShiftTestDataValue {
+interface PflegeShiftTestDataValue {
   readonly testMonths: readonly string[];
 }
 
-const MediShiftStatusContext = createContext<MediShiftStatusValue | null>(null);
-const MediShiftProfileContext = createContext<MediShiftProfileValue | null>(null);
-const MediShiftTemplatesContext = createContext<MediShiftTemplatesValue | null>(null);
-const MediShiftEntriesContext = createContext<MediShiftEntriesValue | null>(null);
-const MediShiftTariffContext = createContext<MediShiftTariffValue | null>(null);
-const MediShiftTestDataContext = createContext<MediShiftTestDataValue | null>(null);
+const PflegeShiftStatusContext = createContext<PflegeShiftStatusValue | null>(null);
+const PflegeShiftProfileContext = createContext<PflegeShiftProfileValue | null>(null);
+const PflegeShiftTemplatesContext = createContext<PflegeShiftTemplatesValue | null>(null);
+const PflegeShiftEntriesContext = createContext<PflegeShiftEntriesValue | null>(null);
+const PflegeShiftTariffContext = createContext<PflegeShiftTariffValue | null>(null);
+const PflegeShiftTestDataContext = createContext<PflegeShiftTestDataValue | null>(null);
 
 function replaceById<T extends { readonly id: string }>(
   values: readonly T[],
@@ -120,12 +120,12 @@ function upsertSortedCalendarEntry(
 function useRequiredContext<T>(context: React.Context<T | null>, name: string): T {
   const value = React.use(context);
   if (value === null) {
-    throw new Error(`${name} muss innerhalb des MediShiftProvider verwendet werden.`);
+    throw new Error(`${name} muss innerhalb des PflegeShiftProvider verwendet werden.`);
   }
   return value;
 }
 
-export function MediShiftProvider({ children }: PropsWithChildren) {
+export function PflegeShiftProvider({ children }: PropsWithChildren) {
   const db = useSQLiteContext();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -296,23 +296,23 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
     [db],
   );
 
-  const statusValue = useMemo<MediShiftStatusValue>(
+  const statusValue = useMemo<PflegeShiftStatusValue>(
     () => ({ ready, error, reload }),
     [error, ready, reload],
   );
-  const profileValue = useMemo<MediShiftProfileValue>(
+  const profileValue = useMemo<PflegeShiftProfileValue>(
     () => ({ profile, updateProfile }),
     [profile, updateProfile],
   );
-  const templatesValue = useMemo<MediShiftTemplatesValue>(
+  const templatesValue = useMemo<PflegeShiftTemplatesValue>(
     () => ({ templates, upsertTemplate, removeTemplate, moveTemplate }),
     [moveTemplate, removeTemplate, templates, upsertTemplate],
   );
-  const entriesValue = useMemo<MediShiftEntriesValue>(
+  const entriesValue = useMemo<PflegeShiftEntriesValue>(
     () => ({ entries, upsertShift, upsertAppointment, removeEntry }),
     [entries, removeEntry, upsertAppointment, upsertShift],
   );
-  const tariffValue = useMemo<MediShiftTariffValue>(
+  const tariffValue = useMemo<PflegeShiftTariffValue>(
     () => ({
       tariffDecisions,
       workPatternSettings,
@@ -321,43 +321,45 @@ export function MediShiftProvider({ children }: PropsWithChildren) {
     }),
     [tariffDecisions, updateWorkPatternSettings, upsertTariffDecision, workPatternSettings],
   );
-  const testDataValue = useMemo<MediShiftTestDataValue>(() => ({ testMonths }), [testMonths]);
+  const testDataValue = useMemo<PflegeShiftTestDataValue>(() => ({ testMonths }), [testMonths]);
 
   return (
-    <MediShiftStatusContext value={statusValue}>
-      <MediShiftProfileContext value={profileValue}>
-        <MediShiftTemplatesContext value={templatesValue}>
-          <MediShiftEntriesContext value={entriesValue}>
-            <MediShiftTariffContext value={tariffValue}>
-              <MediShiftTestDataContext value={testDataValue}>{children}</MediShiftTestDataContext>
-            </MediShiftTariffContext>
-          </MediShiftEntriesContext>
-        </MediShiftTemplatesContext>
-      </MediShiftProfileContext>
-    </MediShiftStatusContext>
+    <PflegeShiftStatusContext value={statusValue}>
+      <PflegeShiftProfileContext value={profileValue}>
+        <PflegeShiftTemplatesContext value={templatesValue}>
+          <PflegeShiftEntriesContext value={entriesValue}>
+            <PflegeShiftTariffContext value={tariffValue}>
+              <PflegeShiftTestDataContext value={testDataValue}>
+                {children}
+              </PflegeShiftTestDataContext>
+            </PflegeShiftTariffContext>
+          </PflegeShiftEntriesContext>
+        </PflegeShiftTemplatesContext>
+      </PflegeShiftProfileContext>
+    </PflegeShiftStatusContext>
   );
 }
 
-export function useMediShiftStatus(): MediShiftStatusValue {
-  return useRequiredContext(MediShiftStatusContext, "useMediShiftStatus");
+export function usePflegeShiftStatus(): PflegeShiftStatusValue {
+  return useRequiredContext(PflegeShiftStatusContext, "usePflegeShiftStatus");
 }
 
-export function useMediShiftProfile(): MediShiftProfileValue {
-  return useRequiredContext(MediShiftProfileContext, "useMediShiftProfile");
+export function usePflegeShiftProfile(): PflegeShiftProfileValue {
+  return useRequiredContext(PflegeShiftProfileContext, "usePflegeShiftProfile");
 }
 
-export function useMediShiftTemplates(): MediShiftTemplatesValue {
-  return useRequiredContext(MediShiftTemplatesContext, "useMediShiftTemplates");
+export function usePflegeShiftTemplates(): PflegeShiftTemplatesValue {
+  return useRequiredContext(PflegeShiftTemplatesContext, "usePflegeShiftTemplates");
 }
 
-export function useMediShiftEntries(): MediShiftEntriesValue {
-  return useRequiredContext(MediShiftEntriesContext, "useMediShiftEntries");
+export function usePflegeShiftEntries(): PflegeShiftEntriesValue {
+  return useRequiredContext(PflegeShiftEntriesContext, "usePflegeShiftEntries");
 }
 
-export function useMediShiftTariff(): MediShiftTariffValue {
-  return useRequiredContext(MediShiftTariffContext, "useMediShiftTariff");
+export function usePflegeShiftTariff(): PflegeShiftTariffValue {
+  return useRequiredContext(PflegeShiftTariffContext, "usePflegeShiftTariff");
 }
 
-export function useMediShiftTestData(): MediShiftTestDataValue {
-  return useRequiredContext(MediShiftTestDataContext, "useMediShiftTestData");
+export function usePflegeShiftTestData(): PflegeShiftTestDataValue {
+  return useRequiredContext(PflegeShiftTestDataContext, "usePflegeShiftTestData");
 }

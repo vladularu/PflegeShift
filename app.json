@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "MediShift",
-    "slug": "medishift",
+    "name": "PflegeShift",
+    "slug": "pflegeshift",
     "description": "Lokaler Dienstplaner mit Arbeitszeit- und TVöD-P-Auswertung.",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "medishift",
+    "scheme": "pflegeshift",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.medishift.app",
+      "bundleIdentifier": "com.pflegeshift.app",
       "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
@@ -28,7 +28,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.medishift.app"
+      "package": "com.pflegeshift.app"
     },
     "web": {
       "output": "static",

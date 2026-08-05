@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text } from "react-native";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 
-export function LoadingView({ label = "MediShift wird vorbereitet …" }: { label?: string }) {
+export function LoadingView({ label = "PflegeShift wird vorbereitet …" }: { label?: string }) {
   const palette = usePalette();
   return (
     <ScrollView

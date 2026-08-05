@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
-import { useMediShiftStatus, useMediShiftTemplates } from "@/application/medishift-provider";
+import { usePflegeShiftStatus, usePflegeShiftTemplates } from "@/application/pflegeshift-provider";
 import { SHIFT_TYPE_LABELS, type ShiftTemplate, type ShiftType } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import {
@@ -47,8 +47,8 @@ function isAbsenceType(type: ShiftType): boolean {
 
 export function TemplateEditorScreen() {
   const params = useLocalSearchParams<{ id?: RouteParam }>();
-  const { error, ready, reload } = useMediShiftStatus();
-  const { templates } = useMediShiftTemplates();
+  const { error, ready, reload } = usePflegeShiftStatus();
+  const { templates } = usePflegeShiftTemplates();
   const parsedId = parseIdentifierRouteParam(params.id);
   const id = parsedId.status === "valid" ? parsedId.value : undefined;
   const existing = useMemo(() => templates.find((item) => item.id === id), [id, templates]);
@@ -97,7 +97,7 @@ function TemplateEditorForm({
   readonly sessionKey: string;
 }) {
   const palette = usePalette();
-  const { templates, upsertTemplate, removeTemplate } = useMediShiftTemplates();
+  const { templates, upsertTemplate, removeTemplate } = usePflegeShiftTemplates();
   const { initialValue: existing } = useStableEditorSession(sessionKey, () => loadedExisting);
   const [name, setName] = useState(existing?.name ?? "Neuer Dienst");
   const [type, setType] = useState<ShiftType>(existing?.type ?? "CUSTOM");

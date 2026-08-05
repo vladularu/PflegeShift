@@ -4,10 +4,10 @@ import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
-  useMediShiftEntries,
-  useMediShiftProfile,
-  useMediShiftStatus,
-} from "@/application/medishift-provider";
+  usePflegeShiftEntries,
+  usePflegeShiftProfile,
+  usePflegeShiftStatus,
+} from "@/application/pflegeshift-provider";
 import { SHIFT_TYPE_LABELS, type CalendarEntry } from "@/domain/types";
 import { formatDateTitle, today } from "@/engine/calendar";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
@@ -41,9 +41,9 @@ export function DayDetailsScreen() {
   const palette = usePalette();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ date?: RouteParam }>();
-  const { entries } = useMediShiftEntries();
-  const { profile } = useMediShiftProfile();
-  const { error, ready, reload } = useMediShiftStatus();
+  const { entries } = usePflegeShiftEntries();
+  const { profile } = usePflegeShiftProfile();
+  const { error, ready, reload } = usePflegeShiftStatus();
   const parsedDate = parseLocalDateRouteParam(params.date);
   const date = parsedDate.status === "valid" ? parsedDate.value : today();
   const dayEntries = useMemo(

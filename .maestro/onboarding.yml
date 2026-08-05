@@ -1,4 +1,4 @@
-appId: com.medishift.app.internal
+appId: com.pflegeshift.app.internal
 ---
 - launchApp:
     clearState: true
@@ -7,7 +7,7 @@ appId: com.medishift.app.internal
 - eraseText
 - inputText: "40"
 - hideKeyboard
-- tapOn: "MediShift starten"
+- tapOn: "PflegeShift starten"
 - extendedWaitUntil:
     visible: "Schnelleintrag öffnen"
     timeout: 15000
