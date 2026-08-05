@@ -7,6 +7,7 @@ import type {
   TvoedWorkPatternSettings,
   TvoedWorkplaceCoverage,
 } from "@/domain/types";
+import { withImmediateTransaction } from "@/infrastructure/database/transaction";
 
 const TVOED_COVERAGE_KEY = "tvoed_workplace_coverage";
 const TVOED_ASSIGNMENT_KEY = "tvoed_assignment";
@@ -95,7 +96,7 @@ export async function saveCalendarPreferences(
     [CALENDAR_PREFERENCE_KEYS.showShiftTimes, String(preferences.showShiftTimes)],
     [CALENDAR_PREFERENCE_KEYS.showShiftDuration, String(preferences.showShiftDuration)],
   ];
-  await db.withExclusiveTransactionAsync(async (transaction) => {
+  await withImmediateTransaction(db, async (transaction) => {
     for (const [key, value] of values) {
       await transaction.runAsync(
         `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
@@ -146,7 +147,7 @@ export async function saveTvoedWorkPatternSettings(
     throw new Error("Ungültige Angaben zum Schichtmodell.");
   }
   const now = new Date().toISOString();
-  await db.withExclusiveTransactionAsync(async (transaction) => {
+  await withImmediateTransaction(db, async (transaction) => {
     await transaction.runAsync(
       `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
        ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,

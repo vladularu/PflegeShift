@@ -24,6 +24,7 @@ import {
 } from "@/domain/validation";
 import { ConcurrencyError } from "@/domain/errors";
 import { sortCalendarEntries } from "@/engine/calendar-entry-order";
+import { withImmediateTransaction } from "@/infrastructure/database/transaction";
 
 export {
   DEFAULT_CALENDAR_PREFERENCES,
@@ -371,7 +372,7 @@ export async function swapTemplateSortOrder(
 ): Promise<readonly [ShiftTemplate, ShiftTemplate]> {
   let swapped: readonly [ShiftTemplate, ShiftTemplate] | null = null;
 
-  await db.withExclusiveTransactionAsync(async (transaction) => {
+  await withImmediateTransaction(db, async (transaction) => {
     const now = new Date().toISOString();
     const firstResult = await transaction.runAsync(
       `UPDATE shift_templates SET sort_order=?,revision=revision+1,updated_at=?

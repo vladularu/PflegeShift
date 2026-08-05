@@ -16,6 +16,7 @@ import {
   type RawDecisionRow,
   type RawShiftRow,
 } from "@/infrastructure/database/dev-backup-payload";
+import { withImmediateTransaction } from "@/infrastructure/database/transaction";
 import { assertDevToolsAvailable, isDevToolsBuild } from "@/infrastructure/dev-tools-policy";
 interface BackupRow {
   month: string;
@@ -35,8 +36,7 @@ function assertMonth(month: string): void {
 }
 
 async function transaction(db: SQLiteDatabase, task: (tx: SQLiteDatabase) => Promise<void>) {
-  if (process.env.EXPO_OS === "web") await db.withTransactionAsync(() => task(db));
-  else await db.withExclusiveTransactionAsync(task);
+  await withImmediateTransaction(db, task);
 }
 
 export async function isDeveloperModeEnabled(db: SQLiteDatabase): Promise<boolean> {

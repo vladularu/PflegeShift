@@ -44,19 +44,6 @@ class TestDatabase {
   async getAllAsync<T>(source: string, ...params: unknown[]): Promise<T[]> {
     return this.database.prepare(source).all(...params) as T[];
   }
-
-  async withExclusiveTransactionAsync(
-    task: (database: SQLiteDatabase) => Promise<void>,
-  ): Promise<void> {
-    this.database.exec("BEGIN EXCLUSIVE");
-    try {
-      await task(this as unknown as SQLiteDatabase);
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
-  }
 }
 
 describe("SQLite repository", () => {
@@ -412,7 +399,7 @@ describe("SQLite repository", () => {
     expect(await loadCalendarPreferences(db)).toEqual(before);
   });
 
-  it("persists work-pattern settings in one exclusive transaction", async () => {
+  it("persists work-pattern settings on the existing database connection", async () => {
     const saved = await saveTvoedWorkPatternSettings(db, {
       workplaceCoverage: "AROUND_THE_CLOCK",
       assignment: "PERMANENT",

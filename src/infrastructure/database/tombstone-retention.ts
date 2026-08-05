@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
 import { parseDevBackupPayload } from "@/infrastructure/database/dev-backup-payload";
+import { withImmediateTransaction } from "@/infrastructure/database/transaction";
 
 export const TOMBSTONE_RETENTION_DAYS = 90;
 
@@ -16,27 +17,6 @@ function retentionCutoff(now: Date): string {
     throw new Error("Der Zeitpunkt für die Tombstone-Bereinigung ist ungültig.");
   }
   return new Date(timestamp - TOMBSTONE_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
-}
-
-async function withImmediateTransaction(
-  db: SQLiteDatabase,
-  task: (transaction: SQLiteDatabase) => Promise<void>,
-): Promise<void> {
-  // Expo's withExclusiveTransactionAsync opens a separate native connection.
-  // SQLCipher keys are connection-local, so that connection cannot read this
-  // encrypted database. Keep the transaction on the already-keyed connection.
-  await db.execAsync("BEGIN IMMEDIATE;");
-  try {
-    await task(db);
-    await db.execAsync("COMMIT;");
-  } catch (error) {
-    try {
-      await db.execAsync("ROLLBACK;");
-    } catch {
-      // Preserve the operation error that caused the rollback.
-    }
-    throw error;
-  }
 }
 
 export async function purgeExpiredTombstones(
