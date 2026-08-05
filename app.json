@@ -60,6 +60,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "010fe78f-de53-42b8-9635-a73ea099b5fc"
+      }
+    },
+    "owner": "vladularu"
   }
 }
