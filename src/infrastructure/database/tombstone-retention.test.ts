@@ -14,6 +14,7 @@ import {
 
 class TestDatabase {
   readonly database = new Database(":memory:");
+  exclusiveTransactionCalls = 0;
 
   async execAsync(source: string) {
     this.database.exec(source);
@@ -33,6 +34,7 @@ class TestDatabase {
   }
 
   async withExclusiveTransactionAsync(task: (database: SQLiteDatabase) => Promise<void>) {
+    this.exclusiveTransactionCalls += 1;
     this.database.exec("BEGIN IMMEDIATE");
     try {
       await task(this as unknown as SQLiteDatabase);
@@ -58,6 +60,18 @@ describe("tombstone retention", () => {
 
   it("keeps tombstones for the documented retention window", () => {
     expect(TOMBSTONE_RETENTION_DAYS).toBe(90);
+  });
+
+  it("reuses the already-keyed connection for its transaction", async () => {
+    const exclusiveTransactionCalls = adapter.exclusiveTransactionCalls;
+    await expect(purgeExpiredTombstones(db, new Date("2026-08-04T00:00:00.000Z"))).resolves.toEqual(
+      {
+        appointments: 0,
+        shifts: 0,
+        templates: 0,
+      },
+    );
+    expect(adapter.exclusiveTransactionCalls).toBe(exclusiveTransactionCalls);
   });
 
   it("purges only expired tombstones and preserves referenced templates", async () => {

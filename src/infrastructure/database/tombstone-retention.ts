@@ -18,6 +18,27 @@ function retentionCutoff(now: Date): string {
   return new Date(timestamp - TOMBSTONE_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
 }
 
+async function withImmediateTransaction(
+  db: SQLiteDatabase,
+  task: (transaction: SQLiteDatabase) => Promise<void>,
+): Promise<void> {
+  // Expo's withExclusiveTransactionAsync opens a separate native connection.
+  // SQLCipher keys are connection-local, so that connection cannot read this
+  // encrypted database. Keep the transaction on the already-keyed connection.
+  await db.execAsync("BEGIN IMMEDIATE;");
+  try {
+    await task(db);
+    await db.execAsync("COMMIT;");
+  } catch (error) {
+    try {
+      await db.execAsync("ROLLBACK;");
+    } catch {
+      // Preserve the operation error that caused the rollback.
+    }
+    throw error;
+  }
+}
+
 export async function purgeExpiredTombstones(
   db: SQLiteDatabase,
   now = new Date(),
@@ -29,7 +50,7 @@ export async function purgeExpiredTombstones(
     templates: 0,
   };
 
-  await db.withExclusiveTransactionAsync(async (transaction) => {
+  await withImmediateTransaction(db, async (transaction) => {
     // Dependent entries are removed before templates so foreign keys remain valid.
     const shifts = await transaction.runAsync(
       `DELETE FROM shift_entries
