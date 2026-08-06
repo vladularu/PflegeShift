@@ -31,7 +31,15 @@ export function InsightsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
-      <View style={{ paddingHorizontal: SPACING.lg, paddingTop: SPACING.md }}>
+      <View
+        style={{
+          zIndex: 1,
+          paddingHorizontal: SPACING.lg,
+          paddingTop: SPACING.md,
+          paddingBottom: SPACING.sm,
+          backgroundColor: palette.groupedBackground,
+        }}
+      >
         <SegmentedControl items={INSIGHT_SECTIONS} value={section} onChange={changeSection} />
       </View>
       <View style={{ flex: 1 }}>{section === "TIME" ? <AnalysisScreen /> : <SalaryScreen />}</View>

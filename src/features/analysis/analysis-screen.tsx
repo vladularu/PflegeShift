@@ -56,12 +56,7 @@ import { RADII, SPACING } from "@/theme/tokens";
 import { EmptyState, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
-import {
-  ReportFootnote,
-  ReportPeriodContent,
-  ReportScrollView,
-  ReportTestBadge,
-} from "@/ui/report-layout";
+import { ReportPeriodContent, ReportScrollView, ReportTestBadge } from "@/ui/report-layout";
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   NONE: "Keine Zulage",
@@ -288,8 +283,6 @@ export function AnalysisScreen() {
             onPress={() => router.push(tariffAssessmentRoute(month))}
           />
         </SurfaceCard>
-
-        <ReportFootnote>Automatische Prüfung · Details antippen</ReportFootnote>
 
         <View style={{ gap: SPACING.sm }}>
           <SectionHeader title="Dienstverteilung" />
