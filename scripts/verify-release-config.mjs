@@ -62,6 +62,10 @@ expect(
   "android.versionCode muss positiv sein.",
 );
 expect(expo.android?.allowBackup === false, "Android-App-Datenbackups müssen deaktiviert sein.");
+expect(
+  expo.runtimeVersion?.policy === "fingerprint",
+  "EAS Updates müssen native Laufzeitänderungen per Fingerprint isolieren.",
+);
 expect(easConfig.cli?.appVersionSource === "remote", "EAS muss Buildnummern remote verwalten.");
 expect(
   easConfig.build?.preview?.distribution === "internal",

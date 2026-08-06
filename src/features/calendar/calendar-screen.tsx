@@ -1,8 +1,15 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useIsFocused, useNavigation, type ParamListBase } from "@react-navigation/native";
-import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import * as Haptics from "expo-haptics";
-import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
+import {
+  router,
+  Stack,
+  useFocusEffect,
+  useIsFocused,
+  useLocalSearchParams,
+  useNavigation,
+} from "expo-router";
+import type { BottomTabNavigationProp } from "expo-router/js-tabs";
+import type { ParamListBase } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AccessibilityInfo,
@@ -96,9 +103,8 @@ export function CalendarScreen() {
   const timeZone = profile?.timeZone ?? "Europe/Berlin";
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
-  const initialMonth = useRef<string | null>(null);
-  initialMonth.current ??= routeMonth ?? activeMonthCoordinator.getMonth();
-  const targetMonth = routeMonth ?? initialMonth.current;
+  const [initialMonth] = useState(() => routeMonth ?? activeMonthCoordinator.getMonth());
+  const targetMonth = routeMonth ?? initialMonth;
   const [monthAnchor, setMonthAnchor] = useState(targetMonth);
   const months = useMemo(
     () => [...createMonthWindow(monthAnchor, MONTHS_BEFORE, MONTHS_AFTER)],

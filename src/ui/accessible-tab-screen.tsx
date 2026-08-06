@@ -1,4 +1,4 @@
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused } from "expo-router";
 import type { PropsWithChildren } from "react";
 import { View } from "react-native";
 

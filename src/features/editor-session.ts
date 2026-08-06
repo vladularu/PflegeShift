@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useState } from "react";
 
 export interface EditorSession<T> {
   readonly initialValue: T;
@@ -24,9 +24,12 @@ export function resolveEditorSession<T>(
 }
 
 export function useStableEditorSession<T>(key: string, initialValue: () => T): EditorSession<T> {
-  const session = useRef<EditorSession<T> | null>(null);
-  session.current = reconcileEditorSession(session.current, key, initialValue);
-  return session.current;
+  const [session, setSession] = useState(() => reconcileEditorSession(null, key, initialValue));
+  if (session.key === key) return session;
+
+  const nextSession = reconcileEditorSession(session, key, initialValue);
+  setSession(nextSession);
+  return nextSession;
 }
 
 export type EditorTarget<T> =

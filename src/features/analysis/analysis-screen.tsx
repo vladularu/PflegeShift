@@ -1,14 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
-import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useIsFocused, useLocalSearchParams } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -33,11 +31,7 @@ import { formatDateTitle, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
-import {
-  EMPTY_ANALYSIS_ENTRY_WINDOW,
-  selectAnalysisEntryWindow,
-  type AnalysisEntryWindow,
-} from "@/features/analysis/analysis-data";
+import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
 import {
   AnalysisPeriodPicker,
   AnnualReportScreen,
@@ -79,7 +73,6 @@ export function AnalysisScreen() {
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
   const [year, setYear] = useState(() => Number(activeMonthCoordinator.getMonth().slice(0, 4)));
-  const entryWindowCache = useRef<AnalysisEntryWindow | null>(null);
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
 
@@ -100,14 +93,8 @@ export function AnalysisScreen() {
     }, [activeMonthCoordinator]),
   );
 
-  const entryWindow = useMemo(() => {
-    if (!isFocused) return entryWindowCache.current;
-    const nextWindow = selectAnalysisEntryWindow(entries, month);
-    entryWindowCache.current = nextWindow;
-    return nextWindow;
-  }, [entries, isFocused, month]);
-  const { monthEntries, monthShifts, complianceShifts, allowanceShifts } =
-    entryWindow ?? EMPTY_ANALYSIS_ENTRY_WINDOW;
+  const entryWindow = useMemo(() => selectAnalysisEntryWindow(entries, month), [entries, month]);
+  const { monthEntries, monthShifts, complianceShifts, allowanceShifts } = entryWindow;
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const monthlyCompliance = useDeferredMonthlyCompliance({
     enabled: isFocused,
@@ -161,14 +148,7 @@ export function AnalysisScreen() {
     );
   }
 
-  if (
-    entryWindow === null ||
-    !ready ||
-    profile === null ||
-    compliance === null ||
-    pay === null ||
-    summary === null
-  ) {
+  if (!ready || profile === null || compliance === null || pay === null || summary === null) {
     return <LoadingView />;
   }
 

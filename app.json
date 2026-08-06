@@ -8,7 +8,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "pflegeshift",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.pflegeshift.app",
@@ -26,7 +25,6 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.pflegeshift.app"
     },
@@ -36,6 +34,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-font",
       [
         "expo-splash-screen",
         {
@@ -69,7 +68,7 @@
     },
     "owner": "vladularu",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "updates": {
       "url": "https://u.expo.dev/010fe78f-de53-42b8-9635-a73ea099b5fc"

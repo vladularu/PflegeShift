@@ -1,9 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
-import { useIsFocused } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import {
@@ -15,11 +14,7 @@ import {
 } from "@/application/pflegeshift-provider";
 import { formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import {
-  EMPTY_ANALYSIS_ENTRY_WINDOW,
-  selectAnalysisEntryWindow,
-  type AnalysisEntryWindow,
-} from "@/features/analysis/analysis-data";
+import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
 import { premiumDetailsRoute, settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
@@ -46,7 +41,6 @@ function euro(value: number | null): string {
 
 export function SalaryScreen() {
   const palette = usePalette();
-  const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { error, ready, reload } = usePflegeShiftStatus();
@@ -55,7 +49,6 @@ export function SalaryScreen() {
   const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
   const { testMonths } = usePflegeShiftTestData();
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
-  const entryWindowCache = useRef<AnalysisEntryWindow | null>(null);
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
 
@@ -73,13 +66,8 @@ export function SalaryScreen() {
     }, [activeMonthCoordinator]),
   );
 
-  const entryWindow = useMemo(() => {
-    if (!isFocused) return entryWindowCache.current;
-    const nextWindow = selectAnalysisEntryWindow(entries, month);
-    entryWindowCache.current = nextWindow;
-    return nextWindow;
-  }, [entries, isFocused, month]);
-  const { monthShifts, allowanceShifts } = entryWindow ?? EMPTY_ANALYSIS_ENTRY_WINDOW;
+  const entryWindow = useMemo(() => selectAnalysisEntryWindow(entries, month), [entries, month]);
+  const { monthShifts, allowanceShifts } = entryWindow;
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = useMemo(
     () =>
@@ -97,7 +85,7 @@ export function SalaryScreen() {
   );
 
   if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
-  if (!ready || profile === null || entryWindow === null || pay === null) return <LoadingView />;
+  if (!ready || profile === null || pay === null) return <LoadingView />;
 
   function moveMonth(delta: number) {
     const nextMonth = Temporal.PlainDate.from(`${month}-01`)

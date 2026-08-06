@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Icon, Label, NativeTabs, VectorIcon } from "expo-router/unstable-native-tabs";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 import { usePalette } from "@/theme/palette";
 
@@ -25,28 +25,36 @@ export function AppTabs() {
       tintColor={palette.primary}
     >
       <NativeTabs.Trigger name="(calendar)">
-        <Label>Kalender</Label>
-        <Icon sf="calendar" androidSrc={<VectorIcon family={Ionicons} name="calendar-outline" />} />
+        <NativeTabs.Trigger.Label>Kalender</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf="calendar"
+          src={<NativeTabs.Trigger.VectorIcon family={Ionicons} name="calendar-outline" />}
+        />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(analysis)">
-        <Label>Auswertung</Label>
-        <Icon
+        <NativeTabs.Trigger.Label>Auswertung</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
           sf="chart.bar.xaxis"
-          androidSrc={<VectorIcon family={Ionicons} name="stats-chart-outline" />}
+          src={<NativeTabs.Trigger.VectorIcon family={Ionicons} name="stats-chart-outline" />}
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(templates)">
-        <Label>Vorlagen</Label>
-        <Icon
+        <NativeTabs.Trigger.Label>Vorlagen</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
           sf="square.stack.3d.up"
-          androidSrc={<VectorIcon family={Ionicons} name="layers-outline" />}
+          src={<NativeTabs.Trigger.VectorIcon family={Ionicons} name="layers-outline" />}
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(more)">
-        <Label>Mehr</Label>
-        <Icon
+        <NativeTabs.Trigger.Label>Mehr</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
           sf="ellipsis.circle"
-          androidSrc={<VectorIcon family={Ionicons} name="ellipsis-horizontal-circle-outline" />}
+          src={
+            <NativeTabs.Trigger.VectorIcon
+              family={Ionicons}
+              name="ellipsis-horizontal-circle-outline"
+            />
+          }
         />
       </NativeTabs.Trigger>
     </NativeTabs>

@@ -1,4 +1,4 @@
-import React, { createContext, useRef, type PropsWithChildren } from "react";
+import React, { createContext, useState, type PropsWithChildren } from "react";
 
 import { currentMonth } from "@/engine/calendar";
 import { parseMonthRouteParam } from "@/navigation/route-params";
@@ -33,10 +33,9 @@ export function createActiveMonthCoordinator(
 const ActiveMonthContext = createContext<ActiveMonthCoordinator | null>(null);
 
 export function ActiveMonthProvider({ children }: PropsWithChildren) {
-  const coordinator = useRef<ActiveMonthCoordinator | null>(null);
-  coordinator.current ??= createActiveMonthCoordinator();
+  const [coordinator] = useState(createActiveMonthCoordinator);
 
-  return <ActiveMonthContext value={coordinator.current}>{children}</ActiveMonthContext>;
+  return <ActiveMonthContext value={coordinator}>{children}</ActiveMonthContext>;
 }
 
 export function useActiveMonthCoordinator(): ActiveMonthCoordinator {
