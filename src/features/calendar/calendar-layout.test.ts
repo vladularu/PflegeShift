@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  calculateCalendarBottomReserve,
+  calculateCalendarBottomLayout,
   calculateCalendarGridLayout,
   calculateCalendarPopupPlacement,
   calculateQuickPlannerLayout,
@@ -73,10 +73,19 @@ describe("calendar layout", () => {
     expect(sixWeeks.gridHeight + 16).toBe(560);
   });
 
-  it("keeps the final calendar row clear of the floating navigation area", () => {
-    expect(calculateCalendarBottomReserve(92)).toBe(72);
-    expect(calculateCalendarBottomReserve(78)).toBe(58);
-    expect(calculateCalendarBottomReserve(18)).toBe(48);
+  it("reserves exactly the native tab inset and keeps the planner action above it", () => {
+    expect(calculateCalendarBottomLayout(72)).toEqual({
+      floatingActionBottom: 82,
+      bottomReserve: 72,
+    });
+    expect(calculateCalendarBottomLayout(0)).toEqual({
+      floatingActionBottom: 18,
+      bottomReserve: 0,
+    });
+    expect(calculateCalendarBottomLayout(Number.NaN)).toEqual({
+      floatingActionBottom: 18,
+      bottomReserve: 0,
+    });
   });
 
   it("maps a calendar tab reselect to today and month view", () => {

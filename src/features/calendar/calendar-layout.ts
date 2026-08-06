@@ -22,6 +22,11 @@ export interface QuickPlannerLayout {
   readonly visibleTileCapacity: number;
 }
 
+export interface CalendarBottomLayout {
+  readonly floatingActionBottom: number;
+  readonly bottomReserve: number;
+}
+
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
@@ -98,9 +103,12 @@ export function calculateCalendarGridLayout({
   });
 }
 
-export function calculateCalendarBottomReserve(floatingActionBottom: number): number {
-  if (!Number.isFinite(floatingActionBottom)) return 48;
-  return Math.max(48, floatingActionBottom - 20);
+export function calculateCalendarBottomLayout(bottomInset: number): CalendarBottomLayout {
+  const safeBottomInset = Number.isFinite(bottomInset) ? Math.max(0, bottomInset) : 0;
+  return Object.freeze({
+    floatingActionBottom: Math.max(18, safeBottomInset + 10),
+    bottomReserve: safeBottomInset,
+  });
 }
 
 export function calendarTodayTarget(currentDate: string) {

@@ -40,7 +40,7 @@ import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
 import {
-  calculateCalendarBottomReserve,
+  calculateCalendarBottomLayout,
   calendarTodayTarget,
   type CalendarAnchorRect,
 } from "@/features/calendar/calendar-layout";
@@ -452,9 +452,8 @@ export function CalendarScreen() {
   );
 
   const activeKey = stampTool?.key ?? null;
-  const floatingActionBottom =
-    process.env.EXPO_OS === "web" ? 18 : Math.max(insets.bottom + 58, 78);
-  const calendarBottomReserve = calculateCalendarBottomReserve(floatingActionBottom);
+  const { floatingActionBottom, bottomReserve: calendarBottomReserve } =
+    calculateCalendarBottomLayout(insets.bottom);
   const visibleMonthIndex = months.indexOf(visibleMonth);
   const moveYear = useCallback(
     (amount: number) => {
