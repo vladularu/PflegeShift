@@ -25,13 +25,12 @@ export const QuickEntryActionStrip = memo(function QuickEntryActionStrip({
         alignItems: "center",
         gap: 1,
         paddingHorizontal: 4,
-        paddingRight: 18,
+        paddingRight: 4,
       }}
       decelerationRate="fast"
       directionalLockEnabled
       nestedScrollEnabled
-      persistentScrollbar
-      showsHorizontalScrollIndicator
+      showsHorizontalScrollIndicator={false}
       snapToAlignment="start"
       snapToInterval={tileWidth + 1}
       style={{ flex: 1 }}

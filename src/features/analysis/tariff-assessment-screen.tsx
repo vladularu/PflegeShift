@@ -238,7 +238,7 @@ function TariffAssessmentForm({
                 />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "800" }}>
+                <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "600" }}>
                   {criterion.label}
                 </Text>
                 <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
@@ -319,7 +319,7 @@ function TariffAssessmentForm({
         })}
       >
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ color: palette.text, fontSize: 13, fontWeight: "800" }}>
+          <Text style={{ color: palette.text, fontSize: 13, fontWeight: "600" }}>
             Monatswert manuell festlegen
           </Text>
           <Text style={{ color: palette.textMuted, fontSize: 12 }}>

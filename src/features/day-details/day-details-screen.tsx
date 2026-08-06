@@ -95,7 +95,7 @@ export function DayDetailsScreen() {
       <Stack.Screen options={{ title: formatDateTitle(date) }} />
       {holiday ? (
         <SurfaceCard style={{ padding: 14, backgroundColor: palette.primarySoft }}>
-          <Text style={{ color: palette.primary, fontSize: 13, fontWeight: "800" }}>
+          <Text style={{ color: palette.primary, fontSize: 13, fontWeight: "600" }}>
             {holiday.name}
           </Text>
         </SurfaceCard>

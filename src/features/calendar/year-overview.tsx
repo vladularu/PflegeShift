@@ -85,8 +85,8 @@ const MiniMonth = memo(function MiniMonth({
             style={{
               flex: 1,
               color: index >= 5 ? palette.textMuted : palette.textSecondary,
-              fontSize: 7,
-              fontWeight: "600",
+              fontSize: 9,
+              fontWeight: "500",
               textAlign: "center",
             }}
           >
@@ -116,8 +116,8 @@ const MiniMonth = memo(function MiniMonth({
                 <Text
                   style={{
                     color: isToday ? palette.onPrimary : palette.text,
-                    fontSize: 8,
-                    fontWeight: "700",
+                    fontSize: 9,
+                    fontWeight: "600",
                     fontVariant: ["tabular-nums"],
                   }}
                 >

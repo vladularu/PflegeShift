@@ -159,7 +159,7 @@ export function SettingsInfoDetailsScreen() {
               paddingVertical: 14,
             }}
           >
-            <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: "800" }}>
+            <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: "600" }}>
               {item.title}
             </Text>
             <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 18 }}>

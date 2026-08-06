@@ -475,7 +475,7 @@ export function ColorBadge({
           maxWidth: size - 10,
           color: chipTextColor,
           fontSize: size * 0.34,
-          fontWeight: "800",
+          fontWeight: "700",
         }}
       >
         {label}

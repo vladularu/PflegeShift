@@ -35,11 +35,11 @@ export function AppTabs() {
           androidSrc={<VectorIcon family={Ionicons} name="stats-chart-outline" />}
         />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="(salary)">
-        <Label>Gehalt</Label>
+      <NativeTabs.Trigger name="(templates)">
+        <Label>Vorlagen</Label>
         <Icon
-          sf="eurosign.circle"
-          androidSrc={<VectorIcon family={Ionicons} name="wallet-outline" />}
+          sf="square.stack.3d.up"
+          androidSrc={<VectorIcon family={Ionicons} name="layers-outline" />}
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(more)">

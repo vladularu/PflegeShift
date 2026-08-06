@@ -268,10 +268,10 @@ export function AnalysisScreen() {
             }
             icon={complianceIsClear ? "checkmark.shield.fill" : "exclamationmark.shield.fill"}
             fallbackIcon={complianceIsClear ? "checkmark-circle-outline" : "alert-circle-outline"}
-            label="Arbeitszeit"
+            label="Arbeitszeitregeln"
             title={
               complianceIsClear
-                ? "Alles im grünen Bereich"
+                ? "Keine Auffälligkeiten"
                 : compliance.criticalCount > 0
                   ? `${compliance.criticalCount} kritisch`
                   : `${compliance.warningCount} Hinweise`
@@ -289,13 +289,10 @@ export function AnalysisScreen() {
           />
         </SurfaceCard>
 
-        <ReportFootnote>Automatische Prüfung · keine Rechtsberatung</ReportFootnote>
+        <ReportFootnote>Automatische Prüfung · Details antippen</ReportFootnote>
 
         <View style={{ gap: SPACING.sm }}>
-          <SectionHeader
-            title="Dienstverteilung"
-            caption="Termine werden nicht als Arbeitszeit gezählt."
-          />
+          <SectionHeader title="Dienstverteilung" />
           <DistributionChart distribution={distribution} />
         </View>
       </ReportPeriodContent>
@@ -315,7 +312,7 @@ function DistributionChart({
     return (
       <SurfaceCard>
         <EmptyState
-          message="Sobald du Dienste einträgst, erscheint hier ihre Verteilung. Termine zählen nicht als Arbeitszeit."
+          message="Trage Dienste ein, um ihre Verteilung zu sehen."
           title="Noch keine Dienste"
         />
       </SurfaceCard>

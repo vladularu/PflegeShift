@@ -1,10 +1,10 @@
-import { AnalysisScreen } from "@/features/analysis/analysis-screen";
+import { InsightsScreen } from "@/features/analysis/insights-screen";
 import { AccessibleTabScreen } from "@/ui/accessible-tab-screen";
 
 export default function AnalysisRoute() {
   return (
     <AccessibleTabScreen>
-      <AnalysisScreen />
+      <InsightsScreen />
     </AccessibleTabScreen>
   );
 }

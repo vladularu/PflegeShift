@@ -227,7 +227,7 @@ export function SalaryScreen() {
                     selectable
                     style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
                   >
-                    TARIFLICHES BRUTTO · SCHÄTZUNG
+                    BRUTTO-SCHÄTZUNG
                   </Text>
                 </View>
                 <Text
@@ -269,9 +269,7 @@ export function SalaryScreen() {
               ))}
             </SurfaceCard>
 
-            <ReportFootnote>
-              Unverbindliche Schätzung · keine Lohnabrechnung oder Rechtsberatung
-            </ReportFootnote>
+            <ReportFootnote>Unverbindliche Schätzung · keine Lohnabrechnung</ReportFootnote>
           </>
         )}
       </ReportPeriodContent>
@@ -295,7 +293,7 @@ function SetupCard() {
         selectable
         style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
       >
-        Hinterlege einmal Gruppe, Stufe und Bereich. Die Berechnung erfolgt danach automatisch.
+        Hinterlege Gruppe, Stufe und Bereich für deine Schätzung.
       </Text>
       <Pressable
         accessibilityRole="button"

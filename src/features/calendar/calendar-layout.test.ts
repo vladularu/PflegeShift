@@ -11,11 +11,11 @@ import {
 describe("calendar layout", () => {
   it("fits four or five complete actions into the quick planner dock", () => {
     expect(calculateQuickPlannerLayout(390)).toEqual({
-      tileWidth: 61.4,
+      tileWidth: 58,
       visibleTileCount: 5,
     });
     expect(calculateQuickPlannerLayout(320)).toEqual({
-      tileWidth: 59.5,
+      tileWidth: 55.25,
       visibleTileCount: 4,
     });
   });

@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 
 import {
   usePflegeShiftEntries,
@@ -17,7 +17,7 @@ import { formatDateTitle, today } from "@/engine/calendar";
 import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import { shiftOverlapsHoliday } from "@/features/day-editor/holiday-premium";
-import { SHIFT_TYPE_SCROLL_BEHAVIOR } from "@/features/day-editor/day-editor-layout";
+import { SHIFT_TYPE_GRID_STYLE } from "@/features/day-editor/day-editor-layout";
 import { resolveShiftTypePreset } from "@/features/day-editor/shift-type-preset";
 import {
   resolveEditorSession,
@@ -377,7 +377,7 @@ function DayEditorForm({
             style={{
               color: palette.primary,
               fontSize: 13,
-              fontWeight: "700",
+              fontWeight: "600",
               fontVariant: ["tabular-nums"],
             }}
           >
@@ -385,7 +385,7 @@ function DayEditorForm({
           </Text>
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: "800" }}>
+          <Text selectable style={{ color: palette.text, fontSize: 15, fontWeight: "600" }}>
             {formatDateTitle(date)}
           </Text>
           <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "600" }}>
@@ -407,12 +407,10 @@ function DayEditorForm({
       {mode === "SHIFT" ? (
         <>
           <SectionHeader title="Dienstart" />
-          <ScrollView
-            {...SHIFT_TYPE_SCROLL_BEHAVIOR}
+          <View
             accessibilityLabel="Dienstart auswählen"
             accessibilityRole="radiogroup"
-            horizontal
-            contentContainerStyle={{ gap: 8, paddingRight: 16 }}
+            style={SHIFT_TYPE_GRID_STYLE}
           >
             {SHIFT_FORM_TYPES.map((type) => {
               const selected = type === shiftType;
@@ -447,7 +445,7 @@ function DayEditorForm({
                     style={{
                       color: selected ? palette.primary : palette.text,
                       fontSize: 13,
-                      fontWeight: "800",
+                      fontWeight: "600",
                     }}
                   >
                     {SHIFT_TYPE_LABELS[type]}
@@ -455,7 +453,7 @@ function DayEditorForm({
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
           <SurfaceCard style={{ gap: 12, padding: 14 }}>
             <Field
               error={shiftTitleError}
@@ -505,7 +503,7 @@ function DayEditorForm({
                     }}
                   >
                     <View style={{ flex: 1, gap: 3 }}>
-                      <Text style={{ color: palette.text, fontSize: 15, fontWeight: "800" }}>
+                      <Text style={{ color: palette.text, fontSize: 15, fontWeight: "600" }}>
                         Ohne Freizeitausgleich
                       </Text>
                       <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
@@ -585,7 +583,7 @@ function DayEditorForm({
               paddingTop: 4,
             }}
           >
-            <Text style={{ color: palette.text, fontSize: 15, fontWeight: "700" }}>Ganztägig</Text>
+            <Text style={{ color: palette.text, fontSize: 15, fontWeight: "600" }}>Ganztägig</Text>
             <LabeledSwitch label="Termin ganztägig" onValueChange={setAllDay} value={allDay} />
           </View>
           {!allDay ? (
@@ -661,7 +659,7 @@ function AdvancedDisclosure({
     >
       <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color }} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>
+        <Text style={{ color: palette.text, fontSize: 14, fontWeight: "600" }}>
           Weitere Angaben
         </Text>
         <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: "600" }}>{summary}</Text>

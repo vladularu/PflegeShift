@@ -137,7 +137,7 @@ export default function RootLayout() {
                         sheetGrabberVisible: true,
                       }}
                     />
-                    <Stack.Screen name="templates" options={{ title: "Dienstvorlagen" }} />
+                    <Stack.Screen name="salary" options={{ headerShown: false }} />
                     {DEV_TOOLS_AVAILABLE ? (
                       <Stack.Screen
                         name="dev-tools"

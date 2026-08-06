@@ -160,13 +160,13 @@ function TemplateEditorForm({
   function confirmArchive() {
     if (!existing) return;
     confirmDestructiveAction({
-      title: "Vorlage archivieren?",
-      message: `„${existing.name}“ wird aus der Schnellwahl entfernt. Bereits eingetragene Dienste bleiben bestehen.`,
+      title: "Vorlage löschen?",
+      message: `„${existing.name}“ wird aus der Schnellauswahl entfernt. Eingetragene Dienste bleiben bestehen.`,
       onConfirm: () =>
         void removeTemplate(existing)
           .then(() => router.back())
           .catch((reason: unknown) =>
-            setError(userFacingErrorMessage(reason, "Archivieren fehlgeschlagen.")),
+            setError(userFacingErrorMessage(reason, "Löschen fehlgeschlagen.")),
           ),
     });
   }
@@ -196,7 +196,7 @@ function TemplateEditorForm({
           autoCapitalize="characters"
           error={symbolError}
           inputRef={symbolRef}
-          label="Symbol / Kürzel"
+          label="Kürzel"
           maxLength={4}
           onChangeText={(value) => {
             setSymbol(value);
@@ -231,7 +231,7 @@ function TemplateEditorForm({
               >
                 <Text
                   maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  style={{ color: selected ? palette.primary : palette.text, fontWeight: "800" }}
+                  style={{ color: selected ? palette.primary : palette.text, fontWeight: "600" }}
                 >
                   {SHIFT_TYPE_LABELS[candidate]}
                 </Text>
@@ -242,15 +242,15 @@ function TemplateEditorForm({
       </FormSection>
 
       {absence ? (
-        <FormSection title="Berechnung">
+        <FormSection title="Arbeitszeit">
           <Text style={{ color: palette.textSecondary, fontSize: 14, lineHeight: 20 }}>
             {type === "FREE"
               ? "Frei wird mit 0 Stunden geführt."
-              : "Die Abwesenheit ergänzt vorhandene Arbeits- oder Fortbildungszeit höchstens bis zum Tages-Soll."}
+              : "Die Abwesenheit ergänzt Arbeitszeit bis zum Tages-Soll."}
           </Text>
         </FormSection>
       ) : (
-        <FormSection title="Standardwerte">
+        <FormSection title="Zeiten">
           <ResponsiveFieldRow>
             <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
             <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
@@ -259,7 +259,7 @@ function TemplateEditorForm({
             error={breakError}
             inputRef={breakRef}
             keyboardType="number-pad"
-            label="Pause in Minuten"
+            label="Pause (Min.)"
             onChangeText={(value) => {
               setBreakMinutes(value);
               if (breakError) setBreakError(null);
@@ -271,11 +271,7 @@ function TemplateEditorForm({
 
       <FormStatus error={error} />
       {existing ? (
-        <DestructiveFormAction
-          disabled={saving}
-          label="Vorlage archivieren"
-          onPress={confirmArchive}
-        />
+        <DestructiveFormAction disabled={saving} label="Vorlage löschen" onPress={confirmArchive} />
       ) : null}
     </FormScreen>
   );

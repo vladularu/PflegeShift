@@ -98,7 +98,7 @@ export function SettingsScreen() {
       contentContainerStyle={{ gap: SPACING.xl, padding: SPACING.lg, paddingBottom: 42 }}
     >
       <View style={{ gap: SPACING.sm }}>
-        <SectionHeader title="Planung" />
+        <SectionHeader title="Profil & Berechnung" />
         <SurfaceCard>
           <RowButton
             leading={<SettingsIcon name="time-outline" />}
@@ -107,25 +107,6 @@ export function SettingsScreen() {
             title="Arbeitszeitmodell"
           />
           <CardSeparator />
-          <RowButton
-            leading={<SettingsIcon name="layers-outline" />}
-            onPress={() => router.push("/templates")}
-            subtitle="Schnellauswahl für den Kalender verwalten"
-            title="Dienstvorlagen"
-          />
-          <CardSeparator />
-          <RowButton
-            leading={<SettingsIcon name="calendar-outline" />}
-            onPress={() => router.push("/calendar-view")}
-            subtitle={calendarDisplayLabel}
-            title="Kalenderdarstellung"
-          />
-        </SurfaceCard>
-      </View>
-
-      <View style={{ gap: SPACING.sm }}>
-        <SectionHeader title="Tarif" />
-        <SurfaceCard>
           <RowButton
             leading={<SettingsIcon name="document-text-outline" />}
             onPress={() => router.push(settingsEditorRoute("TARIFF"))}
@@ -138,6 +119,18 @@ export function SettingsScreen() {
             onPress={() => router.push(tariffAssessmentRoute(currentMonth(profile.timeZone)))}
             subtitle={`${coverageLabel} · ${assignmentLabel}`}
             title="Schichtmodell"
+          />
+        </SurfaceCard>
+      </View>
+
+      <View style={{ gap: SPACING.sm }}>
+        <SectionHeader title="Kalender" />
+        <SurfaceCard>
+          <RowButton
+            leading={<SettingsIcon name="calendar-outline" />}
+            onPress={() => router.push("/calendar-view")}
+            subtitle={calendarDisplayLabel}
+            title="Kalenderdarstellung"
           />
         </SurfaceCard>
       </View>

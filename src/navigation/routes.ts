@@ -10,7 +10,7 @@ export type SettingsInfoSection =
 export const TAB_ROUTES = Object.freeze([
   { key: "calendar", route: "/" },
   { key: "analysis", route: "/analysis" },
-  { key: "salary", route: "/salary" },
+  { key: "templates", route: "/templates" },
   { key: "more", route: "/more" },
 ] as const);
 

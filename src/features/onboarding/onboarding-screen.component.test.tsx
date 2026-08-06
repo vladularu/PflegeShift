@@ -38,7 +38,7 @@ describe("OnboardingScreen", () => {
     const screen = await render(onboarding());
 
     await fireEvent.changeText(screen.getByLabelText("Stunden pro Woche"), "40");
-    await fireEvent.press(screen.getByRole("button", { name: "PflegeShift starten" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Weiter zum Kalender" }));
 
     await waitFor(() => {
       expect(mockUpdateProfile).toHaveBeenCalledWith({
@@ -54,7 +54,7 @@ describe("OnboardingScreen", () => {
     const screen = await render(onboarding());
 
     await fireEvent.changeText(screen.getByLabelText("Stunden pro Woche"), "ungültig");
-    await fireEvent.press(screen.getByRole("button", { name: "PflegeShift starten" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Weiter zum Kalender" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Bitte gültige Wochenstunden angeben.",

@@ -61,28 +61,13 @@ export function OnboardingScreen() {
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
-          style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
-        >
-          LOKAL · PRIVAT · OFFLINE
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.text, ...TYPOGRAPHY.hero }}
-        >
-          Dein Dienstplan beginnt hier.
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
           style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
         >
-          Diese zwei Angaben reichen für Feiertage sowie Soll- und Iststunden. Du kannst sie später
-          jederzeit ändern.
+          Zwei Angaben, dann geht’s los. Du kannst sie später ändern.
         </Text>
       </View>
 
-      <FormSection caption="Für deine gesetzlichen Feiertage." title="Bundesland">
+      <FormSection title="Bundesland">
         <DropdownField
           label="Bundesland auswählen"
           onChange={setFederalState}
@@ -94,7 +79,7 @@ export function OnboardingScreen() {
         />
       </FormSection>
 
-      <FormSection caption="Für Sollstunden und Saldo." title="Wochenarbeitszeit">
+      <FormSection title="Wochenarbeitszeit">
         <Field
           keyboardType="decimal-pad"
           error={weeklyHoursError}
@@ -112,14 +97,14 @@ export function OnboardingScreen() {
 
       <FormStatus error={error} />
       <PrimaryButton disabled={saving} onPress={() => void submit()}>
-        {saving ? "Wird gespeichert …" : "PflegeShift starten"}
+        {saving ? "Wird gespeichert …" : "Weiter zum Kalender"}
       </PrimaryButton>
       <Text
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
         style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.footnote }}
       >
-        Diese Angaben bleiben lokal auf deinem Gerät und können später unter „Mehr“ geändert werden.
+        Deine Angaben bleiben auf diesem Gerät.
       </Text>
     </FormScreen>
   );

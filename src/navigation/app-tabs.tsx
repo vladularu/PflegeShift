@@ -39,11 +39,11 @@ export function AppTabs() {
         }}
       />
       <Tabs.Screen
-        name="(salary)"
+        name="(templates)"
         options={{
-          title: "Gehalt",
+          title: "Vorlagen",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons accessible={false} color={color} name="wallet-outline" size={size} />
+            <Ionicons accessible={false} color={color} name="layers-outline" size={size} />
           ),
         }}
       />

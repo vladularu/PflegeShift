@@ -24,7 +24,7 @@ export function TariffQuestion({
   return (
     <View style={{ gap: 9 }}>
       <View style={{ gap: 3, paddingHorizontal: 2 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "800" }}>
+        <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "600" }}>
           {title}
         </Text>
         <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
@@ -67,7 +67,7 @@ export function TariffQuestion({
                 style={{
                   color: selected ? palette.primary : palette.textSecondary,
                   fontSize: 12,
-                  fontWeight: "800",
+                  fontWeight: "600",
                   textAlign: "center",
                 }}
               >

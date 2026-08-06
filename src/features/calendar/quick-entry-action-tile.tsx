@@ -70,7 +70,7 @@ export const QuickEntryActionTile = memo(function QuickEntryActionTile({
           maxWidth: width - 6,
           color: active ? palette.primary : palette.text,
           fontSize: 11,
-          fontWeight: "800",
+          fontWeight: "600",
           textAlign: "center",
         }}
       >

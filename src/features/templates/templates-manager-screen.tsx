@@ -10,14 +10,7 @@ import { usePalette } from "@/theme/palette";
 import { templateEditorRoute } from "@/navigation/routes";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import {
-  CardSeparator,
-  ColorBadge,
-  EmptyState,
-  RowButton,
-  SectionHeader,
-  SurfaceCard,
-} from "@/ui/design-system";
+import { CardSeparator, ColorBadge, EmptyState, RowButton, SurfaceCard } from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { FormStatus } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
@@ -79,8 +72,7 @@ export function TemplatesManagerScreen() {
       style={{ backgroundColor: palette.groupedBackground }}
       contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
     >
-      <Stack.Screen options={{ title: "Dienstvorlagen" }} />
-      <SectionHeader title="Dienstvorlagen" caption="Reihenfolge und Inhalte der Schnellauswahl" />
+      <Stack.Screen options={{ title: "Vorlagen" }} />
       <FormStatus error={operationError} />
       <SurfaceCard>
         {templates.length === 0 ? (
@@ -94,6 +86,7 @@ export function TemplatesManagerScreen() {
               {index > 0 ? <CardSeparator inset={70} /> : null}
               <RowButton
                 leading={<ColorBadge color={template.color} label={template.symbol} />}
+                onPress={() => router.push(templateEditorRoute(template.id))}
                 subtitle={templateSubtitle(template)}
                 title={template.name}
                 trailing={
@@ -101,11 +94,12 @@ export function TemplatesManagerScreen() {
                     accessibilityLabel={`${template.name} verwalten`}
                     accessibilityRole="button"
                     disabled={busyTemplateId !== null}
-                    onPress={() =>
+                    onPress={(event) => {
+                      event.stopPropagation();
                       setActiveTemplateId((current) =>
                         current === template.id ? null : template.id,
-                      )
-                    }
+                      );
+                    }}
                     style={({ pressed }) => ({
                       minWidth: 44,
                       minHeight: 44,
@@ -158,11 +152,6 @@ export function TemplatesManagerScreen() {
                         () => moveTemplate(template, 1),
                       )
                     }
-                  />
-                  <ManagerButton
-                    disabled={busyTemplateId !== null}
-                    label="Bearbeiten"
-                    onPress={() => router.push(templateEditorRoute(template.id))}
                   />
                   <ManagerButton
                     danger
@@ -223,6 +212,7 @@ function ManagerButton({
   const wrapped = fontScale >= 1.6;
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="button"
       disabled={disabled}
       onPress={onPress}
@@ -240,7 +230,7 @@ function ManagerButton({
       })}
     >
       {icon ? (
-        <Ionicons accessibilityLabel={label} color={palette.primary} name={icon} size={17} />
+        <Ionicons accessibilityElementsHidden color={palette.primary} name={icon} size={17} />
       ) : (
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}

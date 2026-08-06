@@ -7,26 +7,26 @@ export const COMPACT_TEXT_MAX_SCALE = 2;
 
 export const TYPOGRAPHY = {
   hero: {
-    fontSize: 32,
-    lineHeight: 38,
-    fontWeight: "800",
-    letterSpacing: -0.6,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: "700",
+    letterSpacing: -0.4,
   },
   screenTitle: {
     fontSize: 22,
     lineHeight: 28,
-    fontWeight: "700",
-    letterSpacing: -0.3,
+    fontWeight: "600",
+    letterSpacing: -0.2,
   },
   sectionTitle: {
     fontSize: 16,
     lineHeight: 22,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   value: {
     fontSize: 20,
     lineHeight: 26,
-    fontWeight: "800",
+    fontWeight: "700",
     letterSpacing: -0.2,
   },
   body: {
@@ -42,7 +42,7 @@ export const TYPOGRAPHY = {
   button: {
     fontSize: 15,
     lineHeight: 20,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   label: {
     fontSize: 13,
@@ -62,7 +62,7 @@ export const TYPOGRAPHY = {
   overline: {
     fontSize: 11,
     lineHeight: 15,
-    fontWeight: "700",
-    letterSpacing: 0.7,
+    fontWeight: "600",
+    letterSpacing: 0.4,
   },
 } as const satisfies Readonly<Record<string, TextStyle>>;

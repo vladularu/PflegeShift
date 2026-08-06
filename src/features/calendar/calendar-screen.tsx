@@ -8,6 +8,7 @@ import {
   AccessibilityInfo,
   FlatList,
   Pressable,
+  Text,
   View,
   type LayoutChangeEvent,
   type ListRenderItemInfo,
@@ -28,7 +29,6 @@ import { type CalendarEntry } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { addMonths, currentMonth, today } from "@/engine/calendar";
 import { holidayMapForMonth } from "@/engine/holidays";
-import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
@@ -65,6 +65,7 @@ import { dayDetailsRoute, dayEditorRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { calendarTabShouldOpenToday, useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { InlineNotice } from "@/ui/design-system";
 import { PrimaryButton } from "@/ui/form-controls";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
@@ -168,7 +169,7 @@ export function CalendarScreen() {
       }),
     [entries, preferences.showAppointments, preferences.showShifts],
   );
-  const { entriesByDate, shiftsByMonth, visibleEntries } = entryIndex;
+  const { entriesByDate, visibleEntries } = entryIndex;
   const quickActions = useMemo(() => buildQuickEntryActions(templates), [templates]);
   const quickPopupHolidayName = useMemo(() => {
     if (profile === null || quickPopup === null) return undefined;
@@ -176,11 +177,6 @@ export function CalendarScreen() {
       quickPopup.date,
     )?.name;
   }, [profile, quickPopup]);
-  const summary = useMemo(() => {
-    if (!profile) return null;
-    const monthShifts = shiftsByMonth.get(visibleMonth) ?? [];
-    return calculateMonthlySummary(visibleMonth, monthShifts, profile);
-  }, [profile, shiftsByMonth, visibleMonth]);
 
   const saveStampAction = useCallback(
     async (action: QuickEntryStampAction, date: string) => {
@@ -384,7 +380,7 @@ export function CalendarScreen() {
     setPlannerMode(true);
     setStampTool(null);
     AccessibilityInfo.announceForAccessibility(
-      "Schnelleintrag geöffnet. Wähle unten eine Vorlage aus.",
+      "Planungsmodus geöffnet. Wähle unten eine Vorlage aus.",
     );
     if (process.env.EXPO_OS === "ios") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, []);
@@ -393,7 +389,7 @@ export function CalendarScreen() {
     setPlannerMode(false);
     setStampTool(null);
     setPlannerError(null);
-    AccessibilityInfo.announceForAccessibility("Schnelleintrag geschlossen.");
+    AccessibilityInfo.announceForAccessibility("Planungsmodus beendet.");
   }, []);
 
   const closeQuickPopup = useCallback(() => {
@@ -454,10 +450,6 @@ export function CalendarScreen() {
     process.env.EXPO_OS === "web" ? 18 : Math.max(insets.bottom + 58, 78);
   const calendarBottomReserve = calculateCalendarBottomReserve(floatingActionBottom);
   const visibleMonthIndex = months.indexOf(visibleMonth);
-  const openAnalysis = useCallback(
-    () => router.push({ pathname: "/analysis", params: { month: visibleMonth } }),
-    [visibleMonth],
-  );
   const moveYear = useCallback(
     (amount: number) => {
       const nextMonth = addMonths(visibleMonth, amount * 12);
@@ -512,19 +504,12 @@ export function CalendarScreen() {
   );
 
   if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
-  if (!ready || profile === null || summary === null) return <LoadingView />;
+  if (!ready || profile === null) return <LoadingView />;
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.background }}>
       <Stack.Screen options={{ headerShown: false }} />
-      <CalendarHeader
-        actualMinutes={summary.actualMinutes}
-        month={visibleMonth}
-        onOpenAnalysis={openAnalysis}
-        onOpenYear={openYear}
-        targetMinutes={summary.targetMinutes}
-        viewMode={preferences.viewMode}
-      />
+      <CalendarHeader month={visibleMonth} onOpenYear={openYear} viewMode={preferences.viewMode} />
       {plannerError ? (
         <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
           <InlineNotice message={plannerError} tone="error" />
@@ -581,24 +566,33 @@ export function CalendarScreen() {
           {!isFocused ? null : !plannerMode ? (
             <>
               <Pressable
-                accessibilityLabel="Schnelleintrag öffnen"
+                accessibilityLabel="Dienstplan bearbeiten"
                 accessibilityRole="button"
                 onPress={beginPlanning}
                 style={({ pressed }) => ({
                   position: "absolute",
                   right: 18,
                   bottom: floatingActionBottom,
-                  width: 54,
+                  minWidth: 104,
                   height: 54,
+                  flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "center",
+                  gap: 7,
+                  paddingHorizontal: 16,
                   borderRadius: 27,
                   backgroundColor: palette.primary,
                   boxShadow: `0 6px 18px ${palette.shadow}`,
                   opacity: pressed ? 0.65 : 1,
                 })}
               >
-                <Ionicons color={palette.onPrimary} name="pencil" size={22} />
+                <Ionicons color={palette.onPrimary} name="pencil" size={20} />
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
+                >
+                  Planen
+                </Text>
               </Pressable>
             </>
           ) : (

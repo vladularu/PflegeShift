@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { SHIFT_TYPE_SCROLL_BEHAVIOR } from "@/features/day-editor/day-editor-layout";
+import { SHIFT_TYPE_GRID_STYLE } from "@/features/day-editor/day-editor-layout";
 
 describe("day editor layout", () => {
-  it("keeps horizontally hidden shift types discoverable", () => {
-    expect(SHIFT_TYPE_SCROLL_BEHAVIOR).toEqual({
-      persistentScrollbar: true,
-      showsHorizontalScrollIndicator: true,
+  it("shows every shift type without a hidden horizontal submenu", () => {
+    expect(SHIFT_TYPE_GRID_STYLE).toEqual({
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
     });
   });
 });

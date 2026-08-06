@@ -332,7 +332,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
               >
                 <Text
                   maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  style={{ color: palette.textMuted, fontSize: 12, fontWeight: "800" }}
+                  style={{ color: palette.textMuted, fontSize: 12, fontWeight: "600" }}
                 >
                   +{overflowCount} weitere
                 </Text>

@@ -118,7 +118,7 @@ const EntryMark = memo(function EntryMark({
         <Text
           maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
           numberOfLines={1}
-          style={{ color: chipTextColor, fontSize: 8, fontWeight: "600" }}
+          style={{ color: chipTextColor, fontSize: 9, fontWeight: "500" }}
         >
           {detail}
         </Text>

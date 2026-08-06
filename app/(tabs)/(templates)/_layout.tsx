@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 
 import { usePalette } from "@/theme/palette";
 
-export default function SalaryStack() {
+export default function TemplatesStack() {
   const palette = usePalette();
   return (
     <Stack
@@ -15,7 +15,7 @@ export default function SalaryStack() {
         headerTitleStyle: { color: palette.text },
       }}
     >
-      <Stack.Screen name="salary" options={{ title: "Gehalt" }} />
+      <Stack.Screen name="templates" options={{ title: "Vorlagen" }} />
     </Stack>
   );
 }

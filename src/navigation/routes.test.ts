@@ -22,7 +22,7 @@ import {
 
 describe("navigation contracts", () => {
   it("exposes the four stable tab destinations", () => {
-    expect(TAB_ROUTES.map((tab) => tab.route)).toEqual(["/", "/analysis", "/salary", "/more"]);
+    expect(TAB_ROUTES.map((tab) => tab.route)).toEqual(["/", "/analysis", "/templates", "/more"]);
   });
 
   it("keeps the selected date through day details and quick add", () => {

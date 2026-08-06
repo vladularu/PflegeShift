@@ -397,7 +397,7 @@ function DevToolsContent() {
       {message ? (
         <Text
           accessibilityRole="alert"
-          style={{ color: palette.primary, fontWeight: "800", textAlign: "center" }}
+          style={{ color: palette.primary, fontWeight: "600", textAlign: "center" }}
         >
           {message}
         </Text>
@@ -485,7 +485,7 @@ function DevToolsContent() {
         onPress={deactivate}
         style={{ alignItems: "center", padding: 14 }}
       >
-        <Text style={{ color: palette.danger, fontWeight: "800" }}>Testlabor deaktivieren</Text>
+        <Text style={{ color: palette.danger, fontWeight: "600" }}>Testlabor deaktivieren</Text>
       </Pressable>
     </ScrollView>
   );
