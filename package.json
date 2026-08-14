@@ -14,9 +14,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:components": "jest --runInBand",
-    "test:all": "npm run test && npm run test:components",
+    "test:all": "npm run test && npm run test:components && npm run test:audit-policy",
+    "test:audit-policy": "node --test scripts/audit-production.test.mjs",
     "test:coverage": "vitest run --coverage --exclude src/features/analysis/monthly-compliance-performance.test.ts",
-    "audit:production": "npm audit --omit=dev --audit-level=high",
+    "audit:production": "node scripts/audit-production.mjs",
     "release:check": "node scripts/verify-release-config.mjs",
     "assets": "node scripts/generate-brand-assets.mjs",
     "export:web": "expo export --platform web --output-dir dist/web",
@@ -72,6 +73,9 @@
     "brace-expansion@<=1.1.17": "1.1.18",
     "brace-expansion@2.0.0 - 2.1.3": "2.1.4",
     "brace-expansion@4.0.0 - 5.0.8": "5.0.9",
+    "js-yaml@3.0.0 - 3.15.0": "3.15.1",
+    "js-yaml@4.0.0 - 4.3.0": "4.3.1",
+    "nanoid@<3.3.18": "3.3.18",
     "postcss@<=8.5.22": "8.5.25"
   },
   "private": true
