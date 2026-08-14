@@ -1,7 +1,7 @@
-import * as Haptics from "expo-haptics";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import { usePalette } from "@/theme/palette";
+import { selectionFeedback } from "@/ui/haptics";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 
 export function TariffQuestion({
@@ -46,7 +46,7 @@ export function TariffQuestion({
               accessibilityState={{ checked: selected }}
               onPress={() => {
                 onChange(option.value);
-                if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+                selectionFeedback();
               }}
               style={({ pressed }) => ({
                 minHeight: 44,

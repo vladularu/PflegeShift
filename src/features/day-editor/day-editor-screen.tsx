@@ -1,8 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
 
 import {
   usePflegeShiftEntries,
@@ -17,8 +17,12 @@ import { formatDateTitle, today } from "@/engine/calendar";
 import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import { shiftOverlapsHoliday } from "@/features/day-editor/holiday-premium";
-import { SHIFT_TYPE_GRID_STYLE } from "@/features/day-editor/day-editor-layout";
+import {
+  DAY_EDITOR_SHIFT_TYPES,
+  SHIFT_TYPE_GRID_STYLE,
+} from "@/features/day-editor/day-editor-layout";
 import { resolveShiftTypePreset } from "@/features/day-editor/shift-type-preset";
+import { useEntryDeletion } from "@/features/day-editor/use-entry-deletion";
 import {
   resolveEditorSession,
   resolveEditorTarget,
@@ -31,12 +35,13 @@ import {
   type RouteParam,
 } from "@/navigation/route-params";
 import { APPOINTMENT_COLOR, SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { MOTION } from "@/theme/motion";
 import { SegmentedControl, SectionHeader, SurfaceCard } from "@/ui/design-system";
-import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { ColorPicker, Field, ResponsiveFieldRow, TimePickerField } from "@/ui/form-controls";
 import { DestructiveFormAction, FormScreen, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { LabeledSwitch } from "@/ui/labeled-switch";
+import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
 import {
   focusInvalidField,
   integerRangeFieldError,
@@ -44,17 +49,6 @@ import {
 } from "@/ui/form-validation";
 
 type EditorMode = "SHIFT" | "APPOINTMENT";
-const SHIFT_FORM_TYPES: readonly ShiftType[] = [
-  "CUSTOM",
-  "EARLY",
-  "LATE",
-  "NIGHT",
-  "DAY",
-  "TRAINING",
-  "VACATION",
-  "SICK",
-  "FREE",
-];
 
 export function DayEditorScreen() {
   const params = useLocalSearchParams<{
@@ -131,7 +125,7 @@ function DayEditorForm({
   const palette = usePalette();
   const { profile } = usePflegeShiftProfile();
   const { templates } = usePflegeShiftTemplates();
-  const { entries, upsertShift, upsertAppointment, removeEntry } = usePflegeShiftEntries();
+  const { entries, upsertShift, upsertAppointment } = usePflegeShiftEntries();
   const { initialValue: existing } = useStableEditorSession(sessionKey, () => loadedExisting);
   const initialMode: EditorMode = existing?.kind ?? requestedMode;
   const [mode, setMode] = useState<EditorMode>(initialMode);
@@ -168,6 +162,10 @@ function DayEditorForm({
   const [appointmentTitleError, setAppointmentTitleError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const confirmDelete = useEntryDeletion({
+    onDeleted: () => router.back(),
+    onError: setError,
+  });
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const shiftTitleRef = useRef<TextInput>(null);
   const breakRef = useRef<TextInput>(null);
@@ -208,7 +206,7 @@ function DayEditorForm({
     setBreakMinutes(String(preset.breakMinutes));
     setShiftColor(preset.color);
     setShiftSymbol(preset.symbol);
-    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    selectionFeedback();
   }
 
   async function save() {
@@ -321,27 +319,14 @@ function DayEditorForm({
           note: appointmentNote,
         });
       }
-      if (process.env.EXPO_OS === "ios")
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      successFeedback();
       router.back();
     } catch (saveError) {
+      warningFeedback();
       setError(userFacingErrorMessage(saveError, "Eintrag konnte nicht gespeichert werden."));
     } finally {
       setSaving(false);
     }
-  }
-
-  function confirmDelete(entry: CalendarEntry) {
-    confirmDestructiveAction({
-      title: "Eintrag löschen?",
-      message: `„${entry.title}“ wird aus dem Kalender entfernt.`,
-      onConfirm: () =>
-        void removeEntry(entry)
-          .then(() => router.back())
-          .catch((reason: unknown) =>
-            setError(userFacingErrorMessage(reason, "Löschen fehlgeschlagen.")),
-          ),
-    });
   }
 
   return (
@@ -412,7 +397,7 @@ function DayEditorForm({
             accessibilityRole="radiogroup"
             style={SHIFT_TYPE_GRID_STYLE}
           >
-            {SHIFT_FORM_TYPES.map((type) => {
+            {DAY_EDITOR_SHIFT_TYPES.map((type) => {
               const selected = type === shiftType;
               return (
                 <Pressable
@@ -528,7 +513,15 @@ function DayEditorForm({
               summary={detailSummary}
             />
             {detailsExpanded ? (
-              <View style={{ gap: 14 }}>
+              <Animated.View
+                entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(
+                  MOTION.reduceMotion,
+                )}
+                exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(
+                  MOTION.reduceMotion,
+                )}
+                style={{ gap: 14 }}
+              >
                 {shiftIsTimed ? (
                   <Field
                     error={overtimeError}
@@ -555,7 +548,7 @@ function DayEditorForm({
                   value={shiftSymbol}
                 />
                 <ColorPicker onChange={setShiftColor} value={shiftColor} />
-              </View>
+              </Animated.View>
             ) : null}
           </SurfaceCard>
         </>
@@ -603,7 +596,11 @@ function DayEditorForm({
             summary={detailSummary}
           />
           {detailsExpanded ? (
-            <View style={{ gap: 14 }}>
+            <Animated.View
+              entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+              exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(MOTION.reduceMotion)}
+              style={{ gap: 14 }}
+            >
               <Field
                 label="Notiz (optional)"
                 multiline
@@ -611,7 +608,7 @@ function DayEditorForm({
                 value={appointmentNote}
               />
               <ColorPicker onChange={setAppointmentColor} value={appointmentColor} />
-            </View>
+            </Animated.View>
           ) : null}
         </SurfaceCard>
       )}

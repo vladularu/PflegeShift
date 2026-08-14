@@ -1,5 +1,4 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -30,6 +29,7 @@ import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { successFeedback } from "@/ui/haptics";
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   NONE: "Keine Zulage",
@@ -126,9 +126,7 @@ function TariffAssessmentForm({
       setSaving(true);
       setError(null);
       await updateWorkPatternSettings({ workplaceCoverage: coverage, assignment });
-      if (process.env.EXPO_OS === "ios") {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      successFeedback();
       router.back();
     } catch (saveError) {
       setError(userFacingErrorMessage(saveError, "Angaben konnten nicht gespeichert werden."));
@@ -146,9 +144,7 @@ function TariffAssessmentForm({
         allowanceStatus: status,
         expectedRevision: decision?.revision,
       });
-      if (process.env.EXPO_OS === "ios") {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      successFeedback();
       router.back();
     } catch (saveError) {
       setError(userFacingErrorMessage(saveError, "Monatswert konnte nicht gespeichert werden."));

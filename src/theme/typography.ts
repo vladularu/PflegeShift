@@ -7,10 +7,10 @@ export const COMPACT_TEXT_MAX_SCALE = 2;
 
 export const TYPOGRAPHY = {
   hero: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 34,
+    lineHeight: 41,
     fontWeight: "700",
-    letterSpacing: -0.4,
+    letterSpacing: -0.8,
   },
   screenTitle: {
     fontSize: 22,

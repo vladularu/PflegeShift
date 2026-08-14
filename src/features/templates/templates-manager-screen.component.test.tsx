@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { router } from "expo-router";
 
 import { TemplatesManagerScreen } from "@/features/templates/templates-manager-screen";
+import { FeedbackProvider } from "@/ui/feedback";
 
 const mockMoveTemplate = jest.fn<() => Promise<void>>();
 const mockRemoveTemplate = jest.fn<() => Promise<void>>();
@@ -10,6 +11,7 @@ const mockRemoveTemplate = jest.fn<() => Promise<void>>();
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
   Stack: { Screen: () => null },
+  useFocusEffect: (effect: () => void) => effect(),
 }));
 
 jest.mock("@/application/pflegeshift-provider", () => ({
@@ -43,7 +45,11 @@ describe("TemplatesManagerScreen", () => {
   });
 
   it("opens a template directly when its row is pressed", async () => {
-    const screen = await render(<TemplatesManagerScreen />);
+    const screen = await render(
+      <FeedbackProvider>
+        <TemplatesManagerScreen />
+      </FeedbackProvider>,
+    );
 
     await fireEvent.press(screen.getByText("Früh"));
 
@@ -54,7 +60,11 @@ describe("TemplatesManagerScreen", () => {
   });
 
   it("opens management actions without also opening the editor", async () => {
-    const screen = await render(<TemplatesManagerScreen />);
+    const screen = await render(
+      <FeedbackProvider>
+        <TemplatesManagerScreen />
+      </FeedbackProvider>,
+    );
 
     await fireEvent.press(screen.getByRole("button", { name: "Früh verwalten" }));
 

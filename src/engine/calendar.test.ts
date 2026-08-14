@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { addMonths, createMonthGrid, createVisibleMonthGrid, monthRange } from "@/engine/calendar";
+import {
+  addMonths,
+  createMonthGrid,
+  createVisibleMonthGrid,
+  isoWeekNumber,
+  monthRange,
+} from "@/engine/calendar";
 
 describe("calendar engine", () => {
   it("builds a Monday-first six-week grid", () => {
@@ -35,5 +41,11 @@ describe("calendar engine", () => {
       "2026-07-26",
       "2026-08-02",
     ]);
+  });
+
+  it("returns ISO week numbers across year boundaries", () => {
+    expect(isoWeekNumber("2026-08-03")).toBe(32);
+    expect(isoWeekNumber("2027-01-01")).toBe(53);
+    expect(isoWeekNumber("2027-01-04")).toBe(1);
   });
 });

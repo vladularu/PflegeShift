@@ -1,19 +1,22 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { memo, useCallback, useMemo } from "react";
 import {
   FlatList,
+  Platform,
   Pressable,
   Text,
   View,
   useWindowDimensions,
   type ListRenderItemInfo,
 } from "react-native";
-import Animated, { FadeInUp, ReduceMotion } from "react-native-reanimated";
+import Animated, { FadeInUp } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CalendarEntry, UserProfile } from "@/domain/types";
 import { createMonthGrid, today } from "@/engine/calendar";
 import { yearMonths } from "@/features/calendar/calendar-display";
 import { usePalette } from "@/theme/palette";
+import { MOTION } from "@/theme/motion";
+import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
 
 const MONTH_LABELS = [
   "Jan",
@@ -59,21 +62,18 @@ const MiniMonth = memo(function MiniMonth({
       style={({ pressed }) => ({
         width: "100%",
         minWidth: 0,
-        borderWidth: selected ? 1 : 0,
-        borderColor: palette.primary,
-        borderRadius: 16,
-        borderCurve: "continuous",
-        backgroundColor: selected ? palette.primarySoft : "transparent",
         opacity: pressed ? 0.58 : 1,
-        padding: 8,
+        paddingHorizontal: 7,
+        paddingVertical: 6,
       })}
     >
       <Text
+        maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
         style={{
-          color: selected ? palette.primary : palette.text,
-          fontSize: 17,
+          color: palette.text,
+          fontSize: 18,
           fontWeight: "700",
-          marginBottom: 6,
+          marginBottom: 4,
         }}
       >
         {MONTH_LABELS[monthIndex]}
@@ -82,6 +82,7 @@ const MiniMonth = memo(function MiniMonth({
         {WEEKDAY_LABELS.map((label, index) => (
           <Text
             key={`${label}-${index}`}
+            maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
             style={{
               flex: 1,
               color: index >= 5 ? palette.textMuted : palette.textSecondary,
@@ -97,12 +98,12 @@ const MiniMonth = memo(function MiniMonth({
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {grid.map((cell) => {
           if (!cell.inMonth) {
-            return <View key={cell.date} style={{ width: "14.285714%", height: 23 }} />;
+            return <View key={cell.date} style={{ width: "14.285714%", height: 21 }} />;
           }
           const dayEntries = entriesByDate.get(cell.date) ?? [];
           const isToday = cell.date === currentDate;
           return (
-            <View key={cell.date} style={{ width: "14.285714%", height: 23, alignItems: "center" }}>
+            <View key={cell.date} style={{ width: "14.285714%", height: 21, alignItems: "center" }}>
               <View
                 style={{
                   width: 17,
@@ -114,6 +115,7 @@ const MiniMonth = memo(function MiniMonth({
                 }}
               >
                 <Text
+                  maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
                   style={{
                     color: isToday ? palette.onPrimary : palette.text,
                     fontSize: 9,
@@ -164,8 +166,8 @@ const YearRowView = memo(function YearRowView({
   return (
     <Animated.View
       entering={FadeInUp.delay(index * 36)
-        .duration(180)
-        .reduceMotion(ReduceMotion.System)}
+        .duration(MOTION.duration.normal)
+        .reduceMotion(MOTION.reduceMotion)}
       style={{ flexDirection: "row" }}
     >
       {months.map((month) => (
@@ -189,16 +191,15 @@ export function YearOverview({
   profile,
   selectedMonth,
   onSelectMonth,
-  onMoveYear,
 }: {
   readonly year: number;
   readonly entries: readonly CalendarEntry[];
   readonly profile: UserProfile;
   readonly selectedMonth: string;
   readonly onSelectMonth: (month: string) => void;
-  readonly onMoveYear: (amount: number) => void;
 }) {
   const palette = usePalette();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const entriesByDate = useMemo(() => {
     const map = new Map<string, CalendarEntry[]>();
@@ -219,7 +220,7 @@ export function YearOverview({
     }));
   }, [year]);
   const currentDate = today(profile.timeZone);
-  const contentWidth = Math.min(width - 20, 720);
+  const contentWidth = Math.min(width - 12, 720);
   const renderRow = useCallback(
     ({ item }: ListRenderItemInfo<YearRow>) => (
       <View style={{ width: contentWidth }}>
@@ -238,56 +239,38 @@ export function YearOverview({
   );
 
   return (
-    <FlatList
-      contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={{ alignItems: "center", gap: 8, paddingBottom: 24 }}
-      data={rows}
-      initialNumToRender={2}
-      keyExtractor={(item) => item.key}
-      ListHeaderComponent={
-        <View
-          style={{ width: contentWidth, flexDirection: "row", justifyContent: "space-between" }}
-        >
-          <Pressable
-            accessibilityLabel="Vorheriges Jahr"
-            accessibilityRole="button"
-            onPress={() => onMoveYear(-1)}
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 22,
-              backgroundColor: palette.surfaceMuted,
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <Ionicons color={palette.primary} name="chevron-back" size={20} />
-          </Pressable>
-          <Pressable
-            accessibilityLabel="Nächstes Jahr"
-            accessibilityRole="button"
-            onPress={() => onMoveYear(1)}
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 22,
-              backgroundColor: palette.surfaceMuted,
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <Ionicons color={palette.primary} name="chevron-forward" size={20} />
-          </Pressable>
-        </View>
-      }
-      maxToRenderPerBatch={2}
-      removeClippedSubviews={process.env.EXPO_OS !== "web"}
-      renderItem={renderRow}
-      showsVerticalScrollIndicator={false}
-      style={{ flex: 1, backgroundColor: palette.background }}
-      windowSize={3}
-    />
+    <View
+      style={{
+        flex: 1,
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: palette.separator,
+        borderRadius: 22,
+        borderCurve: "continuous",
+        backgroundColor: palette.surface,
+        marginHorizontal: 6,
+        marginBottom: 6,
+      }}
+    >
+      <FlatList
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={{
+          alignItems: "center",
+          gap: 2,
+          paddingTop: 8,
+          paddingBottom:
+            Platform.OS === "ios" ? insets.bottom + 57 : Math.max(8, insets.bottom + 8),
+        }}
+        data={rows}
+        initialNumToRender={2}
+        keyExtractor={(item) => item.key}
+        maxToRenderPerBatch={2}
+        removeClippedSubviews={process.env.EXPO_OS !== "web"}
+        renderItem={renderRow}
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+        windowSize={3}
+      />
+    </View>
   );
 }

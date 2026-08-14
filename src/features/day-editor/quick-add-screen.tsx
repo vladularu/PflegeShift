@@ -1,4 +1,3 @@
-import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
@@ -22,6 +21,7 @@ import {
   SurfaceCard,
 } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { successFeedback, warningFeedback } from "@/ui/haptics";
 
 function templateSubtitle(template: ShiftTemplate): string {
   if (template.type === "FREE") return "Keine Arbeitszeit";
@@ -74,10 +74,10 @@ export function QuickAddScreen() {
         color: template.color,
         symbol: template.symbol,
       });
-      if (process.env.EXPO_OS === "ios")
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      successFeedback();
       router.back();
     } catch (saveError) {
+      warningFeedback();
       setError(userFacingErrorMessage(saveError, "Vorlage konnte nicht gespeichert werden."));
     } finally {
       setSaving(false);

@@ -1,5 +1,4 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState, type ComponentProps } from "react";
@@ -24,9 +23,13 @@ import { usePalette } from "@/theme/palette";
 import { RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { successFeedback } from "@/ui/haptics";
+import { TabRootHeader } from "@/ui/tab-root-header";
+import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
 export function SettingsScreen() {
   const palette = usePalette();
+  useThemeStatusBar();
   const db = useSQLiteContext();
   const { error, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
@@ -58,8 +61,7 @@ export function SettingsScreen() {
     try {
       await setDeveloperMode(db, true);
       setDeveloperModeState(true);
-      if (process.env.EXPO_OS === "ios")
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      successFeedback();
       Alert.alert("Testlabor aktiviert", "Das interne Testlabor ist jetzt unter Mehr verfügbar.");
     } catch {
       Alert.alert("Aktivierung fehlgeschlagen", "Das Testlabor konnte nicht aktiviert werden.");
@@ -92,96 +94,99 @@ export function SettingsScreen() {
         : "Zuordnung bestätigen";
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.groupedBackground }}
-      contentContainerStyle={{ gap: SPACING.xl, padding: SPACING.lg, paddingBottom: 42 }}
-    >
-      <View style={{ gap: SPACING.sm }}>
-        <SectionHeader title="Profil & Berechnung" />
-        <SurfaceCard>
-          <RowButton
-            leading={<SettingsIcon name="time-outline" />}
-            onPress={() => router.push(settingsEditorRoute("WORK"))}
-            subtitle={`${FEDERAL_STATE_LABELS[profile.federalState]} · ${(profile.weeklyMinutes / 60).toLocaleString("de-DE")} Std./Woche`}
-            title="Arbeitszeitmodell"
-          />
-          <CardSeparator />
-          <RowButton
-            leading={<SettingsIcon name="document-text-outline" />}
-            onPress={() => router.push(settingsEditorRoute("TARIFF"))}
-            subtitle={tariffLabel}
-            title="Tarifprofil"
-          />
-          <CardSeparator />
-          <RowButton
-            leading={<SettingsIcon name="repeat-outline" />}
-            onPress={() => router.push(tariffAssessmentRoute(currentMonth(profile.timeZone)))}
-            subtitle={`${coverageLabel} · ${assignmentLabel}`}
-            title="Schichtmodell"
-          />
-        </SurfaceCard>
-      </View>
-
-      <View style={{ gap: SPACING.sm }}>
-        <SectionHeader title="Kalender" />
-        <SurfaceCard>
-          <RowButton
-            leading={<SettingsIcon name="calendar-outline" />}
-            onPress={() => router.push("/calendar-view")}
-            subtitle={calendarDisplayLabel}
-            title="Kalenderdarstellung"
-          />
-        </SurfaceCard>
-      </View>
-
-      {DEV_TOOLS_AVAILABLE && developerMode ? (
+    <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
+      <TabRootHeader title="Mehr" />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        style={{ flex: 1, backgroundColor: palette.groupedBackground }}
+        contentContainerStyle={{ gap: SPACING.xl, padding: SPACING.lg, paddingBottom: 42 }}
+      >
         <View style={{ gap: SPACING.sm }}>
-          <SectionHeader title="Intern" />
+          <SectionHeader title="Profil & Berechnung" />
           <SurfaceCard>
             <RowButton
-              leading={<SettingsIcon name="flask-outline" />}
-              onPress={() => router.push("/dev-tools")}
-              subtitle="Testdaten sicher erzeugen und zurücksetzen"
-              title="Testlabor"
+              leading={<SettingsIcon name="time-outline" />}
+              onPress={() => router.push(settingsEditorRoute("WORK"))}
+              subtitle={`${FEDERAL_STATE_LABELS[profile.federalState]} · ${(profile.weeklyMinutes / 60).toLocaleString("de-DE")} Std./Woche`}
+              title="Arbeitszeitmodell"
+            />
+            <CardSeparator />
+            <RowButton
+              leading={<SettingsIcon name="document-text-outline" />}
+              onPress={() => router.push(settingsEditorRoute("TARIFF"))}
+              subtitle={tariffLabel}
+              title="Tarifprofil"
+            />
+            <CardSeparator />
+            <RowButton
+              leading={<SettingsIcon name="repeat-outline" />}
+              onPress={() => router.push(tariffAssessmentRoute(currentMonth(profile.timeZone)))}
+              subtitle={`${coverageLabel} · ${assignmentLabel}`}
+              title="Schichtmodell"
             />
           </SurfaceCard>
         </View>
-      ) : null}
 
-      <View style={{ gap: SPACING.sm }}>
-        <SectionHeader title="Daten & App" />
-        <SurfaceCard>
-          <RowButton
-            leading={<SettingsIcon name="phone-portrait-outline" />}
-            onPress={() => router.push(settingsInfoRoute("STORAGE"))}
-            subtitle="SQLite · ausschließlich auf diesem Gerät"
-            title="Lokale Datenspeicherung"
-          />
-          <CardSeparator />
-          <RowButton
-            leading={<SettingsIcon name="calculator-outline" />}
-            onPress={() => router.push(settingsInfoRoute("CALCULATION"))}
-            subtitle="Feiertage, Zuschläge und Arbeitszeit"
-            title="Berechnungshinweise"
-          />
-          <CardSeparator />
-          <RowButton
-            accessibilityHint={
-              DEV_TOOLS_AVAILABLE
-                ? "Fünf Sekunden gedrückt halten, um das interne Testlabor zu aktivieren."
-                : undefined
-            }
-            delayLongPress={DEV_TOOLS_AVAILABLE ? 5000 : undefined}
-            leading={<SettingsIcon name="information-circle-outline" />}
-            onLongPress={DEV_TOOLS_AVAILABLE ? () => void activateDeveloperMode() : undefined}
-            onPress={() => router.push(settingsInfoRoute("ABOUT"))}
-            subtitle={APP_RUNTIME_LABEL}
-            title="Über PflegeShift"
-          />
-        </SurfaceCard>
-      </View>
-    </ScrollView>
+        <View style={{ gap: SPACING.sm }}>
+          <SectionHeader title="Kalender" />
+          <SurfaceCard>
+            <RowButton
+              leading={<SettingsIcon name="calendar-outline" />}
+              onPress={() => router.push("/calendar-view")}
+              subtitle={calendarDisplayLabel}
+              title="Kalenderdarstellung"
+            />
+          </SurfaceCard>
+        </View>
+
+        {DEV_TOOLS_AVAILABLE && developerMode ? (
+          <View style={{ gap: SPACING.sm }}>
+            <SectionHeader title="Intern" />
+            <SurfaceCard>
+              <RowButton
+                leading={<SettingsIcon name="flask-outline" />}
+                onPress={() => router.push("/dev-tools")}
+                subtitle="Testdaten sicher erzeugen und zurücksetzen"
+                title="Testlabor"
+              />
+            </SurfaceCard>
+          </View>
+        ) : null}
+
+        <View style={{ gap: SPACING.sm }}>
+          <SectionHeader title="Daten & App" />
+          <SurfaceCard>
+            <RowButton
+              leading={<SettingsIcon name="phone-portrait-outline" />}
+              onPress={() => router.push(settingsInfoRoute("STORAGE"))}
+              subtitle="SQLite · ausschließlich auf diesem Gerät"
+              title="Lokale Datenspeicherung"
+            />
+            <CardSeparator />
+            <RowButton
+              leading={<SettingsIcon name="calculator-outline" />}
+              onPress={() => router.push(settingsInfoRoute("CALCULATION"))}
+              subtitle="Feiertage, Zuschläge und Arbeitszeit"
+              title="Berechnungshinweise"
+            />
+            <CardSeparator />
+            <RowButton
+              accessibilityHint={
+                DEV_TOOLS_AVAILABLE
+                  ? "Fünf Sekunden gedrückt halten, um das interne Testlabor zu aktivieren."
+                  : undefined
+              }
+              delayLongPress={DEV_TOOLS_AVAILABLE ? 5000 : undefined}
+              leading={<SettingsIcon name="information-circle-outline" />}
+              onLongPress={DEV_TOOLS_AVAILABLE ? () => void activateDeveloperMode() : undefined}
+              onPress={() => router.push(settingsInfoRoute("ABOUT"))}
+              subtitle={APP_RUNTIME_LABEL}
+              title="Über PflegeShift"
+            />
+          </SurfaceCard>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 

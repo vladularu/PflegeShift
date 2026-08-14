@@ -14,9 +14,9 @@ describe("calendar layout", () => {
     const compactLayout = calculateQuickPlannerLayout(320);
 
     expect(regularLayout.visibleTileCapacity).toBe(5.25);
-    expect(regularLayout.tileWidth).toBeCloseTo(55.19, 2);
+    expect(regularLayout.tileWidth).toBeCloseTo(68.52, 2);
     expect(compactLayout.visibleTileCapacity).toBe(4.25);
-    expect(compactLayout.tileWidth).toBeCloseTo(51.94, 2);
+    expect(compactLayout.tileWidth).toBeCloseTo(68.41, 2);
   });
 
   it("keeps the day popup horizontally centered below its anchor", () => {
@@ -67,10 +67,25 @@ describe("calendar layout", () => {
       bottomReserve: 8,
     });
 
-    expect(fiveWeeks.rowHeight).toBeCloseTo(100.8, 1);
-    expect(sixWeeks.rowHeight).toBe(84);
+    expect(fiveWeeks.rowHeight).toBeCloseTo(103.2, 1);
+    expect(fiveWeeks.lastRowHeight).toBeCloseTo(103.2, 1);
+    expect(sixWeeks.rowHeight).toBeCloseTo(86, 2);
+    expect(sixWeeks.lastRowHeight).toBeCloseTo(86, 2);
     expect(fiveWeeks.gridHeight + 16).toBe(560);
     expect(sixWeeks.gridHeight + 16).toBe(560);
+  });
+
+  it("keeps SuperShift-like week density and lets the final row absorb extra height", () => {
+    const layout = calculateCalendarGridLayout({
+      pageHeight: 795,
+      weekCount: 6,
+      bottomReserve: 55,
+    });
+
+    expect(layout.headerHeight).toBe(28);
+    expect(layout.rowHeight).toBe(114);
+    expect(layout.lastRowHeight).toBe(134);
+    expect(layout.gridHeight + 63).toBe(795);
   });
 
   it("reserves exactly the native tab inset and keeps the planner action above it", () => {

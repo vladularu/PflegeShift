@@ -1,6 +1,9 @@
+import { CALENDAR_METRICS } from "@/theme/tokens";
+
 export interface CalendarGridLayout {
   readonly headerHeight: number;
   readonly rowHeight: number;
+  readonly lastRowHeight: number;
   readonly gridHeight: number;
 }
 
@@ -34,7 +37,7 @@ function clamp(value: number, minimum: number, maximum: number): number {
 export function calculateQuickPlannerLayout(viewportWidth: number): QuickPlannerLayout {
   const safeWidth = Number.isFinite(viewportWidth) ? viewportWidth : 320;
   const visibleTileCapacity = safeWidth >= 370 ? 5.25 : 4.25;
-  const actionViewportWidth = Math.max(220, safeWidth - 96);
+  const actionViewportWidth = Math.max(220, safeWidth - 26);
   return Object.freeze({
     visibleTileCapacity,
     tileWidth: (actionViewportWidth - (visibleTileCapacity - 1)) / visibleTileCapacity,
@@ -92,14 +95,23 @@ export function calculateCalendarGridLayout({
   readonly bottomReserve: number;
   readonly testData?: boolean;
 }): CalendarGridLayout {
-  const headerHeight = testData ? 64 : 40;
+  const headerHeight = testData
+    ? CALENDAR_METRICS.weekdayHeight + 28
+    : CALENDAR_METRICS.weekdayHeight;
   const usableHeight = Math.max(0, pageHeight - headerHeight - bottomReserve - 8);
-  const rowHeight = Math.max(48, usableHeight / Math.max(1, weekCount));
+  const safeWeekCount = Math.max(1, weekCount);
+  const equalRowHeight = Math.max(48, usableHeight / safeWeekCount);
+  const rowHeight = Math.min(CALENDAR_METRICS.weekRowHeight, equalRowHeight);
+  const lastRowHeight = Math.max(
+    rowHeight,
+    usableHeight - rowHeight * Math.max(0, safeWeekCount - 1),
+  );
 
   return Object.freeze({
     headerHeight,
     rowHeight,
-    gridHeight: headerHeight + rowHeight * weekCount,
+    lastRowHeight,
+    gridHeight: headerHeight + rowHeight * Math.max(0, safeWeekCount - 1) + lastRowHeight,
   });
 }
 

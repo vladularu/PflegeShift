@@ -19,6 +19,10 @@ export function addMonths(month: string, amount: number): string {
   return Temporal.PlainYearMonth.from(month).add({ months: amount }).toString();
 }
 
+export function isoWeekNumber(date: string): number {
+  return Temporal.PlainDate.from(date).weekOfYear ?? 1;
+}
+
 export function monthRange(month: string): { start: string; end: string } {
   const value = Temporal.PlainYearMonth.from(month);
   return {

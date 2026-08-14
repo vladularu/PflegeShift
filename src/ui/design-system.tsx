@@ -1,11 +1,20 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { PropsWithChildren, ReactNode } from "react";
-import { Pressable, Text, View, type ViewStyle } from "react-native";
+import {
+  Pressable,
+  Text,
+  View,
+  type PressableStateCallbackType,
+  type ViewStyle,
+} from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { usePalette } from "@/theme/palette";
+import { MOTION } from "@/theme/motion";
 import { COMPACT_TEXT_MAX_SCALE, TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
+import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
 
 export function SurfaceCard({
   children,
@@ -153,6 +162,7 @@ export function RowButton({
   readonly accessibilityHint?: string;
 }) {
   const palette = usePalette();
+  const pressMotion = usePressMotion();
   const content = (
     <>
       {leading}
@@ -207,26 +217,30 @@ export function RowButton({
   }
 
   return (
-    <Pressable
-      accessibilityHint={accessibilityHint}
-      accessibilityRole="button"
-      delayLongPress={delayLongPress}
-      disabled={disabled}
-      onLongPress={onLongPress}
-      onPress={onPress ?? (() => undefined)}
-      style={({ pressed }) => ({
-        minHeight: 56,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: SPACING.md,
-        backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-        opacity: disabled ? 0.45 : 1,
-        paddingHorizontal: SPACING.lg,
-        paddingVertical: SPACING.sm,
-      })}
-    >
-      {content}
-    </Pressable>
+    <Animated.View style={[{ minHeight: 56 }, pressMotion.animatedStyle]}>
+      <Pressable
+        accessibilityHint={accessibilityHint}
+        accessibilityRole="button"
+        delayLongPress={delayLongPress}
+        disabled={disabled}
+        onPressIn={pressMotion.onPressIn}
+        onPressOut={pressMotion.onPressOut}
+        onLongPress={onLongPress}
+        onPress={onPress ?? (() => undefined)}
+        style={({ pressed }) => ({
+          minHeight: 56,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: SPACING.md,
+          backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+          opacity: disabled ? 0.45 : 1,
+          paddingHorizontal: SPACING.lg,
+          paddingVertical: SPACING.sm,
+        })}
+      >
+        {content}
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -382,15 +396,30 @@ export function SegmentedControl({
               borderColor: palette.border,
               borderRadius: RADII.small,
               borderCurve: "continuous",
-              backgroundColor: selected ? palette.surfaceRaised : "transparent",
+              backgroundColor: "transparent",
               opacity: pressed ? 0.72 : 1,
             })}
           >
+            {selected ? (
+              <Animated.View
+                entering={FadeIn.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
+                  borderRadius: RADII.small,
+                  backgroundColor: palette.surfaceRaised,
+                }}
+              />
+            ) : null}
             <Text
               maxFontSizeMultiplier={TEXT_MAX_SCALE}
               style={{
                 color: selected ? palette.primary : palette.textSecondary,
                 ...TYPOGRAPHY.label,
+                zIndex: 1,
               }}
             >
               {item.label}
@@ -412,21 +441,27 @@ export function HeaderAction({
   readonly emphasis?: boolean;
 }) {
   const palette = usePalette();
+  const pressMotion = usePressMotion();
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       onPress={onPress}
       hitSlop={8}
-      style={({ pressed }) => ({
-        minWidth: 44,
-        minHeight: 44,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: label === "+" ? RADII.pill : RADII.control,
-        backgroundColor: emphasis ? palette.primary : palette.surfaceMuted,
-        opacity: pressed ? 0.68 : 1,
-        paddingHorizontal: label.length > 2 ? 12 : 0,
-      })}
+      onPressIn={pressMotion.onPressIn}
+      onPressOut={pressMotion.onPressOut}
+      style={({ pressed }: PressableStateCallbackType) => [
+        {
+          minWidth: 44,
+          minHeight: 44,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: label === "+" ? RADII.pill : RADII.control,
+          backgroundColor: emphasis ? palette.primary : palette.surfaceMuted,
+          opacity: pressed ? 0.72 : 1,
+          paddingHorizontal: label.length > 2 ? 12 : 0,
+        },
+        pressMotion.animatedStyle,
+      ]}
     >
       {label === "+" ? (
         <Ionicons
@@ -443,7 +478,7 @@ export function HeaderAction({
           {label}
         </Text>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 

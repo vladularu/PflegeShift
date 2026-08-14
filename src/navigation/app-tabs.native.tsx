@@ -39,10 +39,10 @@ export function AppTabs() {
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(templates)">
-        <NativeTabs.Trigger.Label>Vorlagen</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Schichten</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf="square.stack.3d.up"
-          src={<NativeTabs.Trigger.VectorIcon family={Ionicons} name="layers-outline" />}
+          sf="rectangle.stack"
+          src={<NativeTabs.Trigger.VectorIcon family={Ionicons} name="documents-outline" />}
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(more)">

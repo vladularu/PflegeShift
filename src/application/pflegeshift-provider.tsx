@@ -37,6 +37,8 @@ import {
   saveProfile,
   saveShift,
   saveTemplate,
+  restoreCalendarEntry,
+  restoreTemplate,
   swapTemplateSortOrder,
   saveTvoedWorkPatternSettings,
 } from "@/infrastructure/database/repository";
@@ -60,6 +62,7 @@ interface PflegeShiftTemplatesValue {
   readonly templates: readonly ShiftTemplate[];
   readonly upsertTemplate: (input: SaveShiftTemplateInput) => Promise<ShiftTemplate>;
   readonly removeTemplate: (template: ShiftTemplate) => Promise<void>;
+  readonly restoreTemplate: (template: ShiftTemplate) => Promise<ShiftTemplate>;
   readonly moveTemplate: (template: ShiftTemplate, direction: -1 | 1) => Promise<void>;
 }
 
@@ -68,6 +71,7 @@ interface PflegeShiftEntriesValue {
   readonly upsertShift: (input: SaveShiftInput) => Promise<ShiftEntry>;
   readonly upsertAppointment: (input: SaveAppointmentInput) => Promise<Appointment>;
   readonly removeEntry: (entry: CalendarEntry) => Promise<void>;
+  readonly restoreEntry: (entry: CalendarEntry) => Promise<CalendarEntry>;
 }
 
 interface PflegeShiftTariffValue {
@@ -231,6 +235,17 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
     [db],
   );
 
+  const restoreRemovedTemplate = useCallback(
+    async (template: ShiftTemplate) => {
+      const restored = await restoreTemplate(db, template);
+      setTemplates((current) =>
+        [...replaceById(current, restored)].sort((left, right) => left.sortOrder - right.sortOrder),
+      );
+      return restored;
+    },
+    [db],
+  );
+
   const moveTemplate = useCallback(
     async (template: ShiftTemplate, direction: -1 | 1) => {
       const currentIndex = templates.findIndex((item) => item.id === template.id);
@@ -274,6 +289,15 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
     [db],
   );
 
+  const restoreEntry = useCallback(
+    async (entry: CalendarEntry) => {
+      const restored = await restoreCalendarEntry(db, entry);
+      setEntries((current) => upsertSortedCalendarEntry(current, restored));
+      return restored;
+    },
+    [db],
+  );
+
   const upsertTariffDecision = useCallback(
     async (input: SaveMonthlyTariffDecisionInput) => {
       const saved = await saveMonthlyTariffDecision(db, input);
@@ -305,12 +329,18 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
     [profile, updateProfile],
   );
   const templatesValue = useMemo<PflegeShiftTemplatesValue>(
-    () => ({ templates, upsertTemplate, removeTemplate, moveTemplate }),
-    [moveTemplate, removeTemplate, templates, upsertTemplate],
+    () => ({
+      templates,
+      upsertTemplate,
+      removeTemplate,
+      restoreTemplate: restoreRemovedTemplate,
+      moveTemplate,
+    }),
+    [moveTemplate, removeTemplate, restoreRemovedTemplate, templates, upsertTemplate],
   );
   const entriesValue = useMemo<PflegeShiftEntriesValue>(
-    () => ({ entries, upsertShift, upsertAppointment, removeEntry }),
-    [entries, removeEntry, upsertAppointment, upsertShift],
+    () => ({ entries, upsertShift, upsertAppointment, removeEntry, restoreEntry }),
+    [entries, removeEntry, restoreEntry, upsertAppointment, upsertShift],
   );
   const tariffValue = useMemo<PflegeShiftTariffValue>(
     () => ({

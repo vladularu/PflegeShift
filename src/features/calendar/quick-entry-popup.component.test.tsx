@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -6,6 +6,7 @@ import { QuickEntryPopup } from "@/features/calendar/quick-entry-popup";
 
 describe("QuickEntryPopup", () => {
   it("acts as a modal accessibility region with an explicit close action", async () => {
+    jest.useFakeTimers();
     const onClose = jest.fn();
     const screen = await render(
       <SafeAreaProvider
@@ -34,6 +35,8 @@ describe("QuickEntryPopup", () => {
     expect(screen.getByTestId("quick-entry-popup")).toHaveProp("accessibilityViewIsModal", true);
 
     await fireEvent.press(screen.getByRole("button", { name: "Schnellauswahl schließen" }));
+    act(() => jest.advanceTimersByTime(200));
     expect(onClose).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 });

@@ -1,4 +1,5 @@
 const LIGHT_TEXT = "#FFFFFF";
+const DARK_TEXT = "#171719";
 export const MINIMUM_TEXT_CONTRAST = 4.5;
 export const MINIMUM_UI_CONTRAST = 3;
 
@@ -37,6 +38,35 @@ export function colorContrastRatio(
   const background = relativeLuminance(backgroundColor);
   if (foreground === null || background === null) return null;
   return luminanceContrastRatio(foreground, background);
+}
+
+function mixHexColors(color: string, target: string, targetWeight: number): string {
+  const sourceHex = expandHex(color);
+  const targetHex = expandHex(target);
+  if (sourceHex === null || targetHex === null) return color;
+  const weight = Math.min(1, Math.max(0, targetWeight));
+  const channels = [0, 2, 4].map((offset) => {
+    const source = Number.parseInt(sourceHex.slice(offset, offset + 2), 16);
+    const destination = Number.parseInt(targetHex.slice(offset, offset + 2), 16);
+    return source * (1 - weight) + destination * weight;
+  });
+  return formatHex(channels[0], channels[1], channels[2]);
+}
+
+export function readableTextColor(backgroundColor: string): string {
+  const lightContrast = colorContrastRatio(LIGHT_TEXT, backgroundColor) ?? 0;
+  const darkContrast = colorContrastRatio(DARK_TEXT, backgroundColor) ?? 0;
+  return lightContrast >= darkContrast ? LIGHT_TEXT : DARK_TEXT;
+}
+
+export function calendarChipPalette(backgroundColor: string, dark: boolean) {
+  const detail = mixHexColors(backgroundColor, dark ? "#000000" : "#FFFFFF", dark ? 0.42 : 0.72);
+  return Object.freeze({
+    main: backgroundColor,
+    detail,
+    onMain: readableTextColor(backgroundColor),
+    onDetail: readableTextColor(detail),
+  });
 }
 
 function formatHex(red: number, green: number, blue: number): string {

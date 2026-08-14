@@ -37,6 +37,10 @@ export {
   listMonthlyTariffDecisions,
   saveMonthlyTariffDecision,
 } from "@/infrastructure/database/tariff-decisions-repository";
+export {
+  restoreCalendarEntry,
+  restoreTemplate,
+} from "@/infrastructure/database/repository-restore";
 
 interface ProfileRow {
   federal_state: UserProfile["federalState"];

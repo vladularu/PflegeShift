@@ -13,6 +13,7 @@ export default function CalendarStack() {
         headerStyle: { backgroundColor: palette.background },
         headerTintColor: palette.text,
         headerTitleStyle: { color: palette.text },
+        statusBarStyle: palette.dark ? "light" : "dark",
       }}
     >
       <Stack.Screen name="index" options={{ title: "Kalender" }} />

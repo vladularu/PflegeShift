@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   accessibleChipBackgroundColor,
+  calendarChipPalette,
   chipTextColor,
   colorContrastRatio,
   MINIMUM_TEXT_CONTRAST,
@@ -18,6 +19,18 @@ describe("accessible service chips", () => {
     expect(accessibleChipBackgroundColor("#7E57C2")).toBe("#7E57C2");
     expect(accessibleChipBackgroundColor("#F2A93B")).not.toBe("#F2A93B");
     expect(accessibleChipBackgroundColor("transparent")).toBe("transparent");
+  });
+
+  it.each([false, true])("builds readable two-line calendar chips in dark=%s", (dark) => {
+    for (const color of ["#62B94C", "#F05C59", "#31A7C3", "#D95F9A"]) {
+      const chip = calendarChipPalette(color, dark);
+      expect(colorContrastRatio(chip.onMain, chip.main)).toBeGreaterThanOrEqual(
+        MINIMUM_TEXT_CONTRAST,
+      );
+      expect(colorContrastRatio(chip.onDetail, chip.detail)).toBeGreaterThanOrEqual(
+        MINIMUM_TEXT_CONTRAST,
+      );
+    }
   });
 });
 

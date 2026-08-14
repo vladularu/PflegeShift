@@ -47,7 +47,7 @@ export function calendarShiftDetail(
 ): string | null {
   if (entry.startTime === null || entry.endTime === null) return null;
   const parts: string[] = [];
-  if (options.showShiftTimes) parts.push(`${entry.startTime}–${entry.endTime}`);
+  if (options.showShiftTimes) parts.push(entry.startTime);
   if (options.showShiftDuration) {
     parts.push(`${formatMinutes(calculateTimedShiftMinutes(entry, options.timeZone))} h`);
   }

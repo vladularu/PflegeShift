@@ -48,14 +48,14 @@ describe("calendar shift details", () => {
     breakMinutes: 30,
   } as never;
 
-  it("formats start, end and net duration from persistent display choices", () => {
+  it("formats start time and net duration from persistent display choices", () => {
     expect(
       calendarShiftDetail(shift, {
         showShiftTimes: true,
         showShiftDuration: true,
         timeZone: "Europe/Berlin",
       }),
-    ).toBe("06:00–14:12 · 7:42 h");
+    ).toBe("06:00 · 7:42 h");
     expect(
       calendarShiftDetail(shift, {
         showShiftTimes: false,

@@ -1,5 +1,4 @@
 import { Temporal } from "@js-temporal/polyfill";
-import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -22,6 +21,7 @@ import { DEV_TOOLS_AVAILABLE } from "@/infrastructure/dev-tools-policy";
 import { listDiagnosticEvents, recordDiagnostic } from "@/infrastructure/diagnostics";
 import { analysisRoute, calendarRoute } from "@/navigation/routes";
 import { usePalette } from "@/theme/palette";
+import { successFeedback } from "@/ui/haptics";
 import { PrimaryButton, SegmentedButton } from "@/ui/form-controls";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 
@@ -197,8 +197,7 @@ function DevToolsContent() {
       await reload();
       await refresh();
       setMessage(`${result.shiftCount + result.appointmentCount} Testeinträge erzeugt.`);
-      if (process.env.EXPO_OS === "ios")
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      successFeedback();
     } catch (error) {
       recordDiagnostic("dev-tools", "DEV_TEST_RUN_FAILED", error);
       Alert.alert(

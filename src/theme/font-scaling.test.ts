@@ -6,8 +6,10 @@ import { describe, expect, it } from "vitest";
 import { COMPACT_TEXT_MAX_SCALE, TEXT_MAX_SCALE } from "@/theme/typography";
 
 const COMPACT_SCALE_ALLOWLIST = new Set([
+  "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
   "features/calendar/quick-entry-popup.tsx",
+  "features/calendar/year-overview.tsx",
   "ui/design-system.tsx",
 ]);
 

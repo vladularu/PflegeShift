@@ -12,6 +12,8 @@ import {
   loadCalendarPreferences,
   loadProfile,
   loadTvoedWorkPatternSettings,
+  restoreCalendarEntry,
+  restoreTemplate,
   saveAppointment,
   saveCalendarPreferences,
   saveProfile,
@@ -165,6 +167,10 @@ describe("SQLite repository", () => {
         .prepare("SELECT revision,deleted_at FROM shift_templates WHERE id=?")
         .get(updated.id),
     ).toMatchObject({ revision: 3 });
+
+    const restored = await restoreTemplate(db, updated);
+    expect(restored).toMatchObject({ id: updated.id, revision: 4, deletedAt: null });
+    expect((await listTemplates(db)).some((template) => template.id === updated.id)).toBe(true);
   });
 
   it("swaps template sort order atomically", async () => {
@@ -305,6 +311,10 @@ describe("SQLite repository", () => {
         .prepare("SELECT revision,deleted_at FROM shift_entries WHERE id=?")
         .get(shift.id),
     ).toMatchObject({ revision: 3 });
+
+    const restored = await restoreCalendarEntry(db, updated);
+    expect(restored).toMatchObject({ id: updated.id, revision: 4, deletedAt: null });
+    expect(await listCalendarEntries(db)).toHaveLength(1);
   });
 
   it("persists and revises monthly tariff decisions", async () => {

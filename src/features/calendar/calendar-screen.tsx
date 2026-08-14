@@ -1,5 +1,3 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
-import * as Haptics from "expo-haptics";
 import {
   router,
   Stack,
@@ -14,16 +12,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   FlatList,
-  Pressable,
-  Text,
   View,
   type LayoutChangeEvent,
   type ListRenderItemInfo,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
-import Animated, { FadeInDown, FadeOut, ReduceMotion, ZoomIn } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+} from "react-native-reanimated";
 
 import {
   usePflegeShiftEntries,
@@ -33,17 +34,12 @@ import {
   usePflegeShiftTestData,
 } from "@/application/pflegeshift-provider";
 import { type CalendarEntry } from "@/domain/types";
-import { userFacingErrorMessage } from "@/domain/errors";
 import { addMonths, currentMonth, today } from "@/engine/calendar";
 import { holidayMapForMonth } from "@/engine/holidays";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
-import {
-  calculateCalendarBottomLayout,
-  calendarTodayTarget,
-  type CalendarAnchorRect,
-} from "@/features/calendar/calendar-layout";
+import { calendarTodayTarget, type CalendarAnchorRect } from "@/features/calendar/calendar-layout";
 import { clampDateToMonth } from "@/features/calendar/calendar-metrics";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
 import { MonthCard } from "@/features/calendar/month-card";
@@ -55,27 +51,26 @@ import {
 import {
   buildQuickEntryActions,
   isQuickEntryStampAction,
-  matchingQuickEntries,
   quickEntryEditorTarget,
-  saveQuickEntryAction,
+  quickEntryServiceActions,
   type QuickEntryAction,
   type QuickEntryStampAction,
 } from "@/features/calendar/quick-entry-actions";
 import { QuickPlannerDock } from "@/features/calendar/quick-planner-dock";
 import { QuickEntryPopup } from "@/features/calendar/quick-entry-popup";
-import {
-  announceStampResult,
-  stampToolSelectedAnnouncement,
-} from "@/features/calendar/stamp-accessibility";
+import { stampToolSelectedAnnouncement } from "@/features/calendar/stamp-accessibility";
 import { YearOverview } from "@/features/calendar/year-overview";
+import { useQuickStampAction } from "@/features/calendar/use-quick-stamp-action";
 import { dayDetailsRoute, dayEditorRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { calendarTabShouldOpenToday, useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
-import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { MOTION } from "@/theme/motion";
 import { InlineNotice } from "@/ui/design-system";
 import { PrimaryButton } from "@/ui/form-controls";
+import { planningModeFeedback, selectionFeedback } from "@/ui/haptics";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
 const MONTHS_BEFORE = 24;
 const MONTHS_AFTER = 36;
@@ -88,8 +83,8 @@ interface QuickPopupState {
 
 export function CalendarScreen() {
   const palette = usePalette();
+  useThemeStatusBar();
   const isFocused = useIsFocused();
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const preferences = useCalendarPreferences();
   const activeMonthCoordinator = useActiveMonthCoordinator();
@@ -115,16 +110,24 @@ export function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectionVisible, setSelectionVisible] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(targetMonth);
+  const [headerDirection, setHeaderDirection] = useState<"NEXT" | "PREVIOUS">("NEXT");
   const [pageHeight, setPageHeight] = useState(0);
   const [plannerMode, setPlannerMode] = useState(false);
+  const plannerTransition = useSharedValue(0);
+  const reduceMotion = useReducedMotion();
   const [plannerBusy, setPlannerBusy] = useState(false);
   const [plannerError, setPlannerError] = useState<string | null>(null);
   const [stampTool, setStampTool] = useState<QuickEntryStampAction | null>(null);
   const [quickPopup, setQuickPopup] = useState<QuickPopupState | null>(null);
-  const savingDates = useRef(new Set<string>());
   const pendingSelectedDate = useRef<string | null>(null);
   const settledMonth = useRef(targetMonth);
   const listRef = useRef<FlatList<string>>(null);
+  const calendarHopStyle = useAnimatedStyle(
+    () => ({
+      transform: [{ translateY: reduceMotion ? 0 : -8 * plannerTransition.value }],
+    }),
+    [reduceMotion],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -177,6 +180,7 @@ export function CalendarScreen() {
   );
   const { entriesByDate, visibleEntries } = entryIndex;
   const quickActions = useMemo(() => buildQuickEntryActions(templates), [templates]);
+  const quickPlannerActions = useMemo(() => quickEntryServiceActions(quickActions), [quickActions]);
   const quickPopupHolidayName = useMemo(() => {
     if (profile === null || quickPopup === null) return undefined;
     return holidayMapForMonth(quickPopup.date.slice(0, 7), profile.federalState).get(
@@ -184,38 +188,13 @@ export function CalendarScreen() {
     )?.name;
   }, [profile, quickPopup]);
 
-  const saveStampAction = useCallback(
-    async (action: QuickEntryStampAction, date: string) => {
-      if (savingDates.current.has(date)) return;
-      savingDates.current.add(date);
-      setPlannerBusy(true);
-      setPlannerError(null);
-      try {
-        const matches = matchingQuickEntries(action, date, entries);
-        if (matches.length > 0) {
-          for (const entry of matches) await removeEntry(entry);
-          announceStampResult(
-            AccessibilityInfo.announceForAccessibility,
-            action.label,
-            date,
-            matches.length,
-          );
-          if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
-        } else {
-          await saveQuickEntryAction(action, date, upsertShift);
-          announceStampResult(AccessibilityInfo.announceForAccessibility, action.label, date, 0);
-          if (process.env.EXPO_OS === "ios")
-            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-      } catch (saveError) {
-        setPlannerError(userFacingErrorMessage(saveError, "Eintrag konnte nicht geändert werden."));
-      } finally {
-        savingDates.current.delete(date);
-        setPlannerBusy(savingDates.current.size > 0);
-      }
-    },
-    [entries, removeEntry, upsertShift],
-  );
+  const saveStampAction = useQuickStampAction({
+    entries,
+    removeEntry,
+    upsertShift,
+    onBusyChange: setPlannerBusy,
+    onError: (message) => setPlannerError(message || null),
+  });
 
   const stampDate = useCallback(
     async (date: string) => {
@@ -240,13 +219,13 @@ export function CalendarScreen() {
         AccessibilityInfo.announceForAccessibility(
           "Wähle unten zuerst eine Vorlage für den Schnelleintrag aus.",
         );
-        if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+        selectionFeedback();
         return;
       }
       setSelectedDate(date);
       setSelectionVisible(true);
       setQuickPopup({ date, anchor, accessibilityTarget });
-      if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+      selectionFeedback();
     },
     [plannerMode, stampDate, stampTool],
   );
@@ -321,6 +300,7 @@ export function CalendarScreen() {
       setQuickPopup(null);
       setSelectedDate((date) => clampDateToMonth(date, month));
       setSelectionVisible(false);
+      setHeaderDirection(month >= visibleMonth ? "NEXT" : "PREVIOUS");
       setVisibleMonth(month);
       activeMonthCoordinator.setMonth(month);
       settledMonth.current = month;
@@ -329,7 +309,7 @@ export function CalendarScreen() {
       preferences.setViewMode("MONTH");
       if (!recenter) requestAnimationFrame(() => scrollToMonth(month, false));
     },
-    [activeMonthCoordinator, months, preferences, scrollToMonth],
+    [activeMonthCoordinator, months, preferences, scrollToMonth, visibleMonth],
   );
 
   const openYear = useCallback(() => {
@@ -337,8 +317,16 @@ export function CalendarScreen() {
     setPlannerMode(false);
     setStampTool(null);
     preferences.setViewMode("YEAR");
-    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    selectionFeedback();
   }, [preferences]);
+
+  const openCalendarDisplay = useCallback(() => {
+    setQuickPopup(null);
+    setPlannerMode(false);
+    setStampTool(null);
+    router.push("/calendar-view");
+    selectionFeedback();
+  }, []);
 
   const measurePager = useCallback(
     (event: LayoutChangeEvent) => {
@@ -352,6 +340,7 @@ export function CalendarScreen() {
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const month = monthAtPagerOffset(months, pageHeight, event.nativeEvent.contentOffset.y);
       if (!month || month === visibleMonth) return;
+      setHeaderDirection(month > visibleMonth ? "NEXT" : "PREVIOUS");
       setQuickPopup(null);
       setVisibleMonth(month);
       activeMonthCoordinator.setMonth(month);
@@ -373,9 +362,7 @@ export function CalendarScreen() {
       setSelectedDate((date) => clampDateToMonth(date, month));
       setSelectionVisible(false);
       if (shouldRecenterMonthWindow(months, month)) setMonthAnchor(month);
-      if (didChangeMonth && process.env.EXPO_OS === "ios") {
-        void Haptics.selectionAsync();
-      }
+      if (didChangeMonth) selectionFeedback();
     },
     [activeMonthCoordinator, months, pageHeight],
   );
@@ -388,7 +375,7 @@ export function CalendarScreen() {
     AccessibilityInfo.announceForAccessibility(
       "Planungsmodus geöffnet. Wähle unten eine Vorlage aus.",
     );
-    if (process.env.EXPO_OS === "ios") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    planningModeFeedback();
   }, []);
 
   const closePlanning = useCallback(() => {
@@ -431,7 +418,7 @@ export function CalendarScreen() {
       if (isQuickEntryStampAction(action)) {
         setStampTool(action);
         AccessibilityInfo.announceForAccessibility(stampToolSelectedAnnouncement(action.label));
-        if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+        selectionFeedback();
         return;
       }
       openQuickEditor(action, selectedDate);
@@ -452,18 +439,18 @@ export function CalendarScreen() {
   );
 
   const activeKey = stampTool?.key ?? null;
-  const { floatingActionBottom, bottomReserve: calendarBottomReserve } =
-    calculateCalendarBottomLayout(insets.bottom);
+  const calendarBottomReserve = process.env.EXPO_OS === "ios" ? 55 : 0;
   const visibleMonthIndex = months.indexOf(visibleMonth);
   const moveYear = useCallback(
     (amount: number) => {
       const nextMonth = addMonths(visibleMonth, amount * 12);
+      setHeaderDirection(amount >= 0 ? "NEXT" : "PREVIOUS");
       setVisibleMonth(nextMonth);
       activeMonthCoordinator.setMonth(nextMonth);
       settledMonth.current = nextMonth;
       setSelectedDate((date) => clampDateToMonth(date, nextMonth));
       setSelectionVisible(false);
-      if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+      selectionFeedback();
     },
     [activeMonthCoordinator, visibleMonth],
   );
@@ -484,6 +471,7 @@ export function CalendarScreen() {
           showHolidays={preferences.showHolidays}
           showShiftTimes={preferences.showShiftTimes}
           stampMode={plannerMode}
+          stampTransitionProgress={plannerTransition}
           stampToolLabel={stampTool?.label ?? null}
           testData={testMonths.includes(item)}
         />
@@ -499,6 +487,7 @@ export function CalendarScreen() {
       preferences.showShiftDuration,
       preferences.showShiftTimes,
       profile,
+      plannerTransition,
       selectDate,
       selectedDate,
       selectionVisible,
@@ -513,8 +502,19 @@ export function CalendarScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.background }}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <CalendarHeader month={visibleMonth} onOpenYear={openYear} viewMode={preferences.viewMode} />
+      <Stack.Screen
+        options={{ headerShown: false, statusBarStyle: palette.dark ? "light" : "dark" }}
+      />
+      <CalendarHeader
+        direction={headerDirection}
+        month={visibleMonth}
+        onMoveYear={moveYear}
+        onOpenDisplay={openCalendarDisplay}
+        onOpenYear={openYear}
+        plannerActive={plannerMode}
+        plannerTransition={plannerTransition}
+        viewMode={preferences.viewMode}
+      />
       {plannerError ? (
         <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
           <InlineNotice message={plannerError} tone="error" />
@@ -530,95 +530,67 @@ export function CalendarScreen() {
       ) : null}
       {preferences.viewMode === "MONTH" ? (
         <Animated.View
-          entering={FadeInDown.duration(220).reduceMotion(ReduceMotion.System)}
-          exiting={FadeOut.duration(120).reduceMotion(ReduceMotion.System)}
+          entering={FadeIn.duration(MOTION.duration.normal).reduceMotion(MOTION.reduceMotion)}
+          exiting={FadeOut.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
           onLayout={measurePager}
           style={{ flex: 1 }}
         >
-          {pageHeight > 0 ? (
-            <FlatList
-              ref={listRef}
-              contentInsetAdjustmentBehavior="never"
-              data={months}
-              decelerationRate="fast"
-              disableIntervalMomentum
-              getItemLayout={(_, index) => ({
-                index,
-                length: pageHeight,
-                offset: pageHeight * index,
-              })}
-              initialScrollIndex={visibleMonthIndex >= 0 ? visibleMonthIndex : MONTHS_BEFORE}
-              initialNumToRender={1}
-              key={`month-pager-${pageHeight}-${monthAnchor}`}
-              keyExtractor={(month) => month}
-              maxToRenderPerBatch={2}
-              onMomentumScrollEnd={finishPaging}
-              onScroll={trackPaging}
-              onScrollToIndexFailed={({ index }) => {
-                setTimeout(() => listRef.current?.scrollToIndex({ index, animated: false }), 60);
-              }}
-              pagingEnabled
-              removeClippedSubviews={process.env.EXPO_OS !== "web"}
-              renderItem={renderMonth}
-              showsVerticalScrollIndicator={false}
-              snapToAlignment="start"
-              snapToInterval={pageHeight}
-              scrollEventThrottle={16}
-              updateCellsBatchingPeriod={24}
-              windowSize={3}
-            />
-          ) : null}
-          {!isFocused ? null : !plannerMode ? (
-            <>
-              <Pressable
-                accessibilityLabel="Dienstplan bearbeiten"
-                accessibilityRole="button"
-                onPress={beginPlanning}
-                style={({ pressed }) => ({
-                  position: "absolute",
-                  right: 18,
-                  bottom: floatingActionBottom,
-                  minWidth: 104,
-                  height: 54,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 7,
-                  paddingHorizontal: 16,
-                  borderRadius: 27,
-                  backgroundColor: palette.primary,
-                  boxShadow: `0 6px 18px ${palette.shadow}`,
-                  opacity: pressed ? 0.65 : 1,
+          <Animated.View style={[{ flex: 1 }, calendarHopStyle]}>
+            {pageHeight > 0 ? (
+              <FlatList
+                ref={listRef}
+                contentInsetAdjustmentBehavior="never"
+                data={months}
+                decelerationRate="fast"
+                disableIntervalMomentum
+                getItemLayout={(_, index) => ({
+                  index,
+                  length: pageHeight,
+                  offset: pageHeight * index,
                 })}
-              >
-                <Ionicons color={palette.onPrimary} name="pencil" size={20} />
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
-                >
-                  Planen
-                </Text>
-              </Pressable>
-            </>
-          ) : (
+                initialScrollIndex={visibleMonthIndex >= 0 ? visibleMonthIndex : MONTHS_BEFORE}
+                initialNumToRender={1}
+                key={`month-pager-${pageHeight}-${monthAnchor}`}
+                keyExtractor={(month) => month}
+                maxToRenderPerBatch={2}
+                onMomentumScrollEnd={finishPaging}
+                onScroll={trackPaging}
+                onScrollToIndexFailed={({ index }) => {
+                  setTimeout(() => listRef.current?.scrollToIndex({ index, animated: false }), 60);
+                }}
+                pagingEnabled
+                removeClippedSubviews={process.env.EXPO_OS !== "web"}
+                renderItem={renderMonth}
+                showsVerticalScrollIndicator={false}
+                snapToAlignment="start"
+                snapToInterval={pageHeight}
+                scrollEventThrottle={16}
+                updateCellsBatchingPeriod={24}
+                windowSize={3}
+              />
+            ) : null}
+          </Animated.View>
+          {!isFocused ? null : (
             <QuickPlannerDock
-              actions={quickActions}
+              actions={quickPlannerActions}
               activeKey={activeKey}
               busy={plannerBusy}
+              onOpen={beginPlanning}
               onClose={closePlanning}
               onSelectAction={selectPlannerAction}
+              open={plannerMode}
+              transitionProgress={plannerTransition}
             />
           )}
         </Animated.View>
       ) : (
         <Animated.View
-          entering={ZoomIn.duration(240).reduceMotion(ReduceMotion.System)}
-          exiting={FadeOut.duration(120).reduceMotion(ReduceMotion.System)}
+          entering={FadeIn.duration(MOTION.duration.deliberate).reduceMotion(MOTION.reduceMotion)}
+          exiting={FadeOut.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
           style={{ flex: 1 }}
         >
           <YearOverview
             entries={visibleEntries}
-            onMoveYear={moveYear}
             onSelectMonth={openMonth}
             profile={profile}
             selectedMonth={visibleMonth}

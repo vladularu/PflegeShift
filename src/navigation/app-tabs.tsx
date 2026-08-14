@@ -41,9 +41,9 @@ export function AppTabs() {
       <Tabs.Screen
         name="(templates)"
         options={{
-          title: "Vorlagen",
+          title: "Schichten",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons accessible={false} color={color} name="layers-outline" size={size} />
+            <Ionicons accessible={false} color={color} name="documents-outline" size={size} />
           ),
         }}
       />

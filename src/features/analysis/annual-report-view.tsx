@@ -1,5 +1,20 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { useEffect } from "react";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+  type PressableStateCallbackType,
+} from "react-native";
+import Animated, {
+  FadeInUp,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { SHIFT_TYPE_LABELS, type ShiftType } from "@/domain/types";
 import { formatMonthTitle } from "@/engine/calendar";
@@ -7,9 +22,11 @@ import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { buildAnnualDistributionSections } from "@/features/analysis/annual-distribution";
 import type { AnnualReport } from "@/features/analysis/annual-report";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { MetricCard, SectionHeader, SegmentedControl, SurfaceCard } from "@/ui/design-system";
+import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
 
 export type AnalysisPeriod = "MONTH" | "YEAR";
 
@@ -145,14 +162,7 @@ export function AnnualReportScreen({
             backgroundColor: palette.surface,
           }}
         >
-          <View
-            style={{
-              width: `${progress * 100}%`,
-              height: "100%",
-              borderRadius: 3,
-              backgroundColor: palette.primary,
-            }}
-          />
+          <AnimatedProgressFill color={palette.primary} progress={progress} />
         </View>
         <View style={{ flexDirection: stacked ? "column" : "row", gap: 18 }}>
           <HeroValue label="Saldo" value={formatSignedMinutes(report.balanceMinutes)} />
@@ -232,7 +242,7 @@ function MonthlyBars({
   return (
     <SurfaceCard style={{ gap: 12, padding: 16 }}>
       <View style={{ height: 112, flexDirection: "row", alignItems: "flex-end", gap: 4 }}>
-        {report.months.map((item) => {
+        {report.months.map((item, index) => {
           const height = Math.max(3, (item.actualMinutes / maximum) * 82);
           const hasIssue = item.criticalCount > 0 || item.warningCount > 0;
           const isTest = testMonths.includes(item.month);
@@ -251,7 +261,10 @@ function MonthlyBars({
                 opacity: pressed ? 0.58 : 1,
               })}
             >
-              <View
+              <Animated.View
+                entering={FadeInUp.delay(index * 24)
+                  .duration(MOTION.duration.normal)
+                  .reduceMotion(MOTION.reduceMotion)}
                 style={{
                   width: "72%",
                   height,
@@ -309,9 +322,12 @@ function DistributionList({
           >
             DIENSTE & FORTBILDUNG
           </Text>
-          {sections.services.map(({ type, count, percentage }) => (
-            <View
+          {sections.services.map(({ type, count, percentage }, index) => (
+            <Animated.View
               key={type}
+              entering={FadeInUp.delay(index * 28)
+                .duration(MOTION.duration.normal)
+                .reduceMotion(MOTION.reduceMotion)}
               style={{ minHeight: 24, flexDirection: "row", alignItems: "center", gap: 9 }}
             >
               <View
@@ -349,7 +365,7 @@ function DistributionList({
               >
                 {percentage}%
               </Text>
-            </View>
+            </Animated.View>
           ))}
         </View>
       ) : null}
@@ -432,20 +448,26 @@ function YearButton({
   readonly onPress: () => void;
 }) {
   const palette = usePalette();
+  const pressMotion = usePressMotion();
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityLabel={direction === "back" ? "Vorheriges Jahr" : "Nächstes Jahr"}
       accessibilityRole="button"
+      onPressIn={pressMotion.onPressIn}
+      onPressOut={pressMotion.onPressOut}
       onPress={onPress}
-      style={({ pressed }) => ({
-        width: CONTROL_HEIGHT.compact,
-        height: CONTROL_HEIGHT.compact,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: RADII.control,
-        backgroundColor: pressed ? palette.primarySoft : "transparent",
-        opacity: pressed ? 0.65 : 1,
-      })}
+      style={({ pressed }: PressableStateCallbackType) => [
+        {
+          width: CONTROL_HEIGHT.compact,
+          height: CONTROL_HEIGHT.compact,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: RADII.control,
+          backgroundColor: pressed ? palette.primarySoft : "transparent",
+          opacity: pressed ? 0.72 : 1,
+        },
+        pressMotion.animatedStyle,
+      ]}
     >
       <Ionicons
         accessibilityElementsHidden
@@ -453,7 +475,46 @@ function YearButton({
         name={direction === "back" ? "chevron-back" : "chevron-forward"}
         size={20}
       />
-    </Pressable>
+    </AnimatedPressable>
+  );
+}
+
+function AnimatedProgressFill({
+  color,
+  progress,
+}: {
+  readonly color: string;
+  readonly progress: number;
+}) {
+  const reduceMotion = useReducedMotion();
+  const scale = useSharedValue(reduceMotion ? progress : 0);
+
+  useEffect(() => {
+    scale.value = reduceMotion
+      ? progress
+      : withTiming(progress, {
+          duration: MOTION.duration.deliberate,
+          easing: MOTION.easing.emphasized,
+        });
+  }, [progress, reduceMotion, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: "100%",
+          height: "100%",
+          borderRadius: 3,
+          backgroundColor: color,
+          transformOrigin: "left",
+        },
+        animatedStyle,
+      ]}
+    />
   );
 }
 

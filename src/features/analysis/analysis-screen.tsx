@@ -1,6 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
-import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useIsFocused, useLocalSearchParams } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import {
@@ -12,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
 
 import {
   usePflegeShiftEntries,
@@ -45,11 +45,13 @@ import { complianceDetailsRoute, tariffAssessmentRoute } from "@/navigation/rout
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
 import { EmptyState, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
+import { selectionFeedback } from "@/ui/haptics";
 import { ReportPeriodContent, ReportScrollView, ReportTestBadge } from "@/ui/report-layout";
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
@@ -155,7 +157,7 @@ export function AnalysisScreen() {
   function changePeriod(nextPeriod: AnalysisPeriod) {
     setPeriod(nextPeriod);
     if (nextPeriod === "YEAR") setYear(Number(month.slice(0, 4)));
-    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    selectionFeedback();
   }
 
   function selectAnnualMonth(nextMonth: string) {
@@ -194,7 +196,7 @@ export function AnalysisScreen() {
       .slice(0, 7);
     activeMonthCoordinator.setMonth(nextMonth);
     setMonth(nextMonth);
-    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    selectionFeedback();
   }
 
   function moveYear(delta: number) {
@@ -203,7 +205,7 @@ export function AnalysisScreen() {
     activeMonthCoordinator.setMonth(nextMonth);
     setMonth(nextMonth);
     setYear(nextYear);
-    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    selectionFeedback();
   }
 
   const complianceIsClear = compliance.criticalCount === 0 && compliance.warningCount === 0;
@@ -222,53 +224,58 @@ export function AnalysisScreen() {
         onPrevious={() => moveMonth(-1)}
       />
       <AnalysisPeriodPicker value={period} onChange={changePeriod} />
-      <ReportPeriodContent>
-        {testMonths.includes(month) ? <ReportTestBadge /> : null}
+      <Animated.View
+        key={`month-analysis-${month}`}
+        entering={FadeIn.duration(MOTION.duration.normal).reduceMotion(MOTION.reduceMotion)}
+      >
+        <ReportPeriodContent>
+          {testMonths.includes(month) ? <ReportTestBadge /> : null}
 
-        <WorktimeSummary
-          actual={formatMinutes(summary.actualMinutes)}
-          balance={formatSignedMinutes(summary.balanceMinutes)}
-          balanceAccent={summary.balanceMinutes < 0 ? palette.danger : palette.success}
-          target={formatMinutes(summary.targetMinutes)}
-        />
-
-        <SurfaceCard>
-          <StatusCard
-            accent={
-              complianceIsClear
-                ? palette.success
-                : compliance.criticalCount > 0
-                  ? palette.danger
-                  : palette.warning
-            }
-            icon={complianceIsClear ? "checkmark.shield.fill" : "exclamationmark.shield.fill"}
-            fallbackIcon={complianceIsClear ? "checkmark-circle-outline" : "alert-circle-outline"}
-            label="Arbeitszeitregeln"
-            title={
-              complianceIsClear
-                ? "Keine Auffälligkeiten"
-                : compliance.criticalCount > 0
-                  ? `${compliance.criticalCount} kritisch`
-                  : `${compliance.warningCount} Hinweise`
-            }
-            onPress={() => router.push(complianceDetailsRoute(month))}
+          <WorktimeSummary
+            actual={formatMinutes(summary.actualMinutes)}
+            balance={formatSignedMinutes(summary.balanceMinutes)}
+            balanceAccent={summary.balanceMinutes < 0 ? palette.danger : palette.success}
+            target={formatMinutes(summary.targetMinutes)}
           />
-          <View style={{ height: 1, marginLeft: 60, backgroundColor: palette.separator }} />
-          <StatusCard
-            accent={decision ? palette.success : palette.warning}
-            icon={decision ? "checkmark.seal.fill" : "sparkles"}
-            fallbackIcon={decision ? "ribbon-outline" : "sparkles-outline"}
-            label="Schichtzulage"
-            title={allowanceTitle}
-            onPress={() => router.push(tariffAssessmentRoute(month))}
-          />
-        </SurfaceCard>
 
-        <View style={{ gap: SPACING.sm }}>
-          <SectionHeader title="Dienstverteilung" />
-          <DistributionChart distribution={distribution} />
-        </View>
-      </ReportPeriodContent>
+          <SurfaceCard>
+            <StatusCard
+              accent={
+                complianceIsClear
+                  ? palette.success
+                  : compliance.criticalCount > 0
+                    ? palette.danger
+                    : palette.warning
+              }
+              icon={complianceIsClear ? "checkmark.shield.fill" : "exclamationmark.shield.fill"}
+              fallbackIcon={complianceIsClear ? "checkmark-circle-outline" : "alert-circle-outline"}
+              label="Arbeitszeitregeln"
+              title={
+                complianceIsClear
+                  ? "Keine Auffälligkeiten"
+                  : compliance.criticalCount > 0
+                    ? `${compliance.criticalCount} kritisch`
+                    : `${compliance.warningCount} Hinweise`
+              }
+              onPress={() => router.push(complianceDetailsRoute(month))}
+            />
+            <View style={{ height: 1, marginLeft: 60, backgroundColor: palette.separator }} />
+            <StatusCard
+              accent={decision ? palette.success : palette.warning}
+              icon={decision ? "checkmark.seal.fill" : "sparkles"}
+              fallbackIcon={decision ? "ribbon-outline" : "sparkles-outline"}
+              label="Schichtzulage"
+              title={allowanceTitle}
+              onPress={() => router.push(tariffAssessmentRoute(month))}
+            />
+          </SurfaceCard>
+
+          <View style={{ gap: SPACING.sm }}>
+            <SectionHeader title="Dienstverteilung" />
+            <DistributionChart distribution={distribution} />
+          </View>
+        </ReportPeriodContent>
+      </Animated.View>
     </ReportScrollView>
   );
 }
@@ -473,7 +480,13 @@ export function ComplianceDetails({
         const expanded = expandedIssueId === item.id;
         const relatedShifts = shifts.filter((shift) => item.relatedShiftIds.includes(shift.id));
         return (
-          <View key={item.id} style={{ borderTopWidth: 1, borderTopColor: palette.border }}>
+          <Animated.View
+            key={item.id}
+            layout={LinearTransition.duration(MOTION.duration.normal).reduceMotion(
+              MOTION.reduceMotion,
+            )}
+            style={{ borderTopWidth: 1, borderTopColor: palette.border }}
+          >
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ expanded }}
@@ -522,7 +535,13 @@ export function ComplianceDetails({
               />
             </Pressable>
             {expanded ? (
-              <View
+              <Animated.View
+                entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(
+                  MOTION.reduceMotion,
+                )}
+                exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(
+                  MOTION.reduceMotion,
+                )}
                 style={{
                   gap: 10,
                   borderRadius: RADII.control,
@@ -582,9 +601,9 @@ export function ComplianceDetails({
                 >
                   Regel: {item.rule}
                 </Text>
-              </View>
+              </Animated.View>
             ) : null}
-          </View>
+          </Animated.View>
         );
       })}
     </Card>

@@ -14,6 +14,7 @@ import { parseIdentifierRouteParam, type RouteParam } from "@/navigation/route-p
 import { DEFAULT_TEMPLATE_COLOR, usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
+import { useFeedback } from "@/ui/feedback";
 import { ColorPicker, Field, ResponsiveFieldRow, TimePickerField } from "@/ui/form-controls";
 import {
   DestructiveFormAction,
@@ -23,6 +24,7 @@ import {
   HeaderSaveAction,
 } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
 import {
   focusInvalidField,
   integerRangeFieldError,
@@ -97,7 +99,8 @@ function TemplateEditorForm({
   readonly sessionKey: string;
 }) {
   const palette = usePalette();
-  const { templates, upsertTemplate, removeTemplate } = usePflegeShiftTemplates();
+  const { showFeedback } = useFeedback();
+  const { templates, upsertTemplate, removeTemplate, restoreTemplate } = usePflegeShiftTemplates();
   const { initialValue: existing } = useStableEditorSession(sessionKey, () => loadedExisting);
   const [name, setName] = useState(existing?.name ?? "Neuer Dienst");
   const [type, setType] = useState<ShiftType>(existing?.type ?? "CUSTOM");
@@ -149,8 +152,14 @@ function TemplateEditorForm({
           existing?.sortOrder ??
           Math.max(0, ...templates.map((template) => template.sortOrder)) + 10,
       });
+      successFeedback();
+      showFeedback({
+        message: existing ? "Vorlage aktualisiert." : "Vorlage gespeichert.",
+        duration: 1800,
+      });
       router.back();
     } catch (submitError) {
+      warningFeedback();
       setError(userFacingErrorMessage(submitError, "Vorlage konnte nicht gespeichert werden."));
     } finally {
       setSaving(false);
@@ -164,7 +173,29 @@ function TemplateEditorForm({
       message: `„${existing.name}“ wird aus der Schnellauswahl entfernt. Eingetragene Dienste bleiben bestehen.`,
       onConfirm: () =>
         void removeTemplate(existing)
-          .then(() => router.back())
+          .then(() => {
+            selectionFeedback();
+            router.back();
+            showFeedback({
+              message: "Vorlage gelöscht.",
+              actionLabel: "Rückgängig",
+              onAction: async () => {
+                try {
+                  await restoreTemplate(existing);
+                  successFeedback();
+                  showFeedback({ message: "Vorlage wiederhergestellt.", duration: 2200 });
+                } catch (restoreError) {
+                  warningFeedback();
+                  showFeedback({
+                    message: userFacingErrorMessage(
+                      restoreError,
+                      "Vorlage konnte nicht wiederhergestellt werden.",
+                    ),
+                  });
+                }
+              },
+            });
+          })
           .catch((reason: unknown) =>
             setError(userFacingErrorMessage(reason, "Löschen fehlgeschlagen.")),
           ),
@@ -175,7 +206,7 @@ function TemplateEditorForm({
     <FormScreen>
       <Stack.Screen
         options={{
-          title: existing ? "Vorlage bearbeiten" : "Neue Vorlage",
+          title: "Schicht",
           headerRight: () => <HeaderSaveAction busy={saving} onPress={() => void submit()} />,
         }}
       />

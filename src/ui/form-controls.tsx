@@ -13,6 +13,7 @@ import {
   View,
   useWindowDimensions,
   type StyleProp,
+  type PressableStateCallbackType,
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
@@ -22,6 +23,9 @@ import { SHIFT_COLOR_PAIRS, usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
+import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
+
+export { SegmentedButton } from "@/ui/segmented-button";
 
 export interface DropdownOption<T extends string | number> {
   readonly value: T;
@@ -442,22 +446,28 @@ export function PrimaryButton({
   readonly danger?: boolean;
 }>) {
   const palette = usePalette();
+  const pressMotion = usePressMotion();
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
+      onPressIn={pressMotion.onPressIn}
+      onPressOut={pressMotion.onPressOut}
       onPress={onPress}
-      style={({ pressed }) => ({
-        minHeight: CONTROL_HEIGHT.large,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: RADII.control,
-        borderCurve: "continuous",
-        backgroundColor: danger ? palette.danger : palette.primary,
-        opacity: disabled ? 0.45 : pressed ? 0.78 : 1,
-        paddingHorizontal: SPACING.lg,
-      })}
+      style={({ pressed }: PressableStateCallbackType) => [
+        {
+          minHeight: CONTROL_HEIGHT.large,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: RADII.control,
+          borderCurve: "continuous",
+          backgroundColor: danger ? palette.danger : palette.primary,
+          opacity: disabled ? 0.45 : pressed ? 0.82 : 1,
+          paddingHorizontal: SPACING.lg,
+        },
+        pressMotion.animatedStyle,
+      ]}
     >
       <Text
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
@@ -465,45 +475,7 @@ export function PrimaryButton({
       >
         {children}
       </Text>
-    </Pressable>
-  );
-}
-
-export function SegmentedButton({
-  label,
-  selected,
-  onPress,
-}: {
-  readonly label: string;
-  readonly selected: boolean;
-  readonly onPress: () => void;
-}) {
-  const palette = usePalette();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        minHeight: CONTROL_HEIGHT.compact,
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        borderWidth: selected ? 1 : 0,
-        borderColor: palette.primary,
-        borderRadius: RADII.control,
-        borderCurve: "continuous",
-        backgroundColor: selected ? palette.primarySoft : "transparent",
-        opacity: pressed ? 0.75 : 1,
-      })}
-    >
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        style={{ color: selected ? palette.primary : palette.textSecondary, ...TYPOGRAPHY.label }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 

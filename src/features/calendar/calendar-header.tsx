@@ -1,112 +1,180 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { memo } from "react";
-import { Pressable, Text, View } from "react-native";
-import Animated, { FadeInDown, ReduceMotion } from "react-native-reanimated";
+import { Pressable, StyleSheet, View } from "react-native";
+import Animated, {
+  Extrapolation,
+  FadeInDown,
+  FadeInUp,
+  interpolate,
+  useAnimatedStyle,
+  type SharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CalendarViewMode } from "@/domain/types";
 import { formatMonthTitle } from "@/engine/calendar";
 import { usePalette } from "@/theme/palette";
+import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
+import { RADII, SPACING } from "@/theme/tokens";
+
+function HeaderIconButton({
+  label,
+  name,
+  onPress,
+}: {
+  readonly label: string;
+  readonly name: "calendar-number-outline" | "options-outline" | "chevron-back" | "chevron-forward";
+  readonly onPress: () => void;
+}) {
+  const palette = usePalette();
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      hitSlop={2}
+      onPress={onPress}
+      style={({ pressed }) => [styles.action, pressed && { backgroundColor: palette.surfaceMuted }]}
+    >
+      <Ionicons accessible={false} color={palette.text} name={name} size={22} />
+    </Pressable>
+  );
+}
 
 export const CalendarHeader = memo(function CalendarHeader({
   month,
   viewMode,
   onOpenYear,
+  onOpenDisplay,
+  onMoveYear,
+  plannerActive,
+  plannerTransition,
+  direction = "NEXT",
 }: {
   readonly month: string;
   readonly viewMode: CalendarViewMode;
   readonly onOpenYear: () => void;
+  readonly onOpenDisplay: () => void;
+  readonly onMoveYear: (amount: number) => void;
+  readonly plannerActive: boolean;
+  readonly plannerTransition: SharedValue<number>;
+  readonly direction?: "NEXT" | "PREVIOUS";
 }) {
   const palette = usePalette();
   const insets = useSafeAreaInsets();
   const year = month.slice(0, 4);
   const monthName = formatMonthTitle(month).replace(/\s+\d{4}$/, "");
   const title = viewMode === "YEAR" ? year : monthName;
+  const titleEntering = (direction === "NEXT" ? FadeInUp : FadeInDown)
+    .duration(MOTION.duration.fast)
+    .reduceMotion(MOTION.reduceMotion);
+  const actionGroupMotionStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(plannerTransition.value, [0, 0.5], [1, 0], Extrapolation.CLAMP),
+  }));
 
   return (
     <View
-      style={{
-        minHeight: (process.env.EXPO_OS === "web" ? 12 : insets.top) + 76,
-        justifyContent: "flex-end",
-        backgroundColor: palette.background,
-        paddingTop: (process.env.EXPO_OS === "web" ? 12 : insets.top) + SPACING.sm,
-        paddingHorizontal: SPACING.lg,
-        paddingBottom: SPACING.sm,
-      }}
+      style={[
+        styles.container,
+        {
+          minHeight: (process.env.EXPO_OS === "web" ? 12 : insets.top) + 79,
+          backgroundColor: palette.background,
+          paddingTop: (process.env.EXPO_OS === "web" ? 12 : insets.top) + SPACING.sm,
+        },
+      ]}
     >
-      {viewMode === "MONTH" ? (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
-          <Pressable
-            accessibilityLabel={`${year}, Jahresansicht öffnen`}
-            accessibilityRole="button"
-            onPress={onOpenYear}
-            style={({ pressed }) => ({
-              minWidth: 64,
-              minHeight: CONTROL_HEIGHT.compact,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: SPACING.xxs,
-              borderRadius: RADII.pill,
-              backgroundColor: pressed ? palette.surfaceMuted : palette.primarySoft,
-              paddingHorizontal: SPACING.md,
-            })}
-          >
-            <Text
-              maxFontSizeMultiplier={TEXT_MAX_SCALE}
-              style={{
-                color: palette.primary,
-                ...TYPOGRAPHY.label,
-                fontWeight: "600",
-                fontVariant: ["tabular-nums"],
-              }}
-            >
-              {year}
-            </Text>
-            <Ionicons color={palette.primary} name="chevron-up" size={14} />
-          </Pressable>
-          <Animated.Text
-            key={`${viewMode}-${title}`}
-            entering={FadeInDown.duration(110).reduceMotion(ReduceMotion.System)}
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            style={{
-              minWidth: 0,
-              flexShrink: 1,
-              color: palette.text,
-              ...TYPOGRAPHY.screenTitle,
-              fontSize: 22,
-              lineHeight: 28,
-            }}
-          >
-            {title}
-          </Animated.Text>
-        </View>
-      ) : (
-        <View style={{ gap: SPACING.xxs }}>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}
-          >
-            Jahresübersicht
-          </Text>
-          <Animated.Text
-            key={`${viewMode}-${title}`}
-            entering={FadeInDown.duration(110).reduceMotion(ReduceMotion.System)}
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            style={{
-              color: palette.text,
-              ...TYPOGRAPHY.screenTitle,
-              fontSize: 22,
-              lineHeight: 28,
-              fontVariant: ["tabular-nums"],
-            }}
-          >
-            {title}
-          </Animated.Text>
-        </View>
-      )}
+      <Animated.Text
+        key={`${viewMode}-${title}`}
+        accessibilityRole="header"
+        entering={titleEntering}
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        style={[styles.title, TYPOGRAPHY.hero, { color: palette.text }]}
+      >
+        {title}
+      </Animated.Text>
+
+      <Animated.View
+        accessibilityElementsHidden={plannerActive}
+        accessibilityRole="toolbar"
+        importantForAccessibility={plannerActive ? "no-hide-descendants" : "auto"}
+        pointerEvents={plannerActive ? "none" : "auto"}
+        style={[
+          styles.actionGroup,
+          {
+            borderColor: palette.separator,
+            backgroundColor: palette.surfaceRaised,
+            boxShadow: palette.dark ? undefined : `0 5px 18px ${palette.shadow}`,
+          },
+          actionGroupMotionStyle,
+        ]}
+        testID="calendar-header-actions"
+      >
+        {viewMode === "MONTH" ? (
+          <>
+            <HeaderIconButton
+              label={`${year}, Jahresansicht öffnen`}
+              name="calendar-number-outline"
+              onPress={onOpenYear}
+            />
+            <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+            <HeaderIconButton
+              label="Kalenderdarstellung öffnen"
+              name="options-outline"
+              onPress={onOpenDisplay}
+            />
+          </>
+        ) : (
+          <>
+            <HeaderIconButton
+              label="Vorheriges Jahr"
+              name="chevron-back"
+              onPress={() => onMoveYear(-1)}
+            />
+            <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+            <HeaderIconButton
+              label="Nächstes Jahr"
+              name="chevron-forward"
+              onPress={() => onMoveYear(1)}
+            />
+          </>
+        )}
+      </Animated.View>
     </View>
   );
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: SPACING.md,
+    paddingLeft: 24,
+    paddingRight: 6,
+    paddingBottom: 24,
+  },
+  title: {
+    minWidth: 0,
+    flex: 1,
+  },
+  actionGroup: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderRadius: RADII.pill,
+    borderCurve: "continuous",
+    transform: [{ translateY: 4 }],
+  },
+  action: {
+    width: 61,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  separator: {
+    width: StyleSheet.hairlineWidth,
+    height: 24,
+  },
 });

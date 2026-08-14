@@ -13,6 +13,7 @@ jest.mock("expo-sqlite", () => ({
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
+  useFocusEffect: (effect: () => void) => effect(),
 }));
 
 jest.mock("@/application/pflegeshift-provider", () => ({

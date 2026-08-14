@@ -1,7 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 
-import { InlineNotice, SegmentedControl } from "@/ui/design-system";
+import { InlineNotice, RowButton, SegmentedControl } from "@/ui/design-system";
 
 describe("design system accessibility", () => {
   it("exposes selected tabs and announces changes", async () => {
@@ -26,5 +26,17 @@ describe("design system accessibility", () => {
     const screen = await render(<InlineNotice message="Speichern fehlgeschlagen" tone="error" />);
 
     expect(screen.getByRole("alert")).toHaveTextContent("Speichern fehlgeschlagen");
+  });
+
+  it("keeps animated rows in one horizontal line", async () => {
+    const screen = await render(
+      <RowButton leading={<></>} onPress={() => undefined} subtitle="Beschreibung" title="Titel" />,
+    );
+
+    expect(screen.getByRole("button")).toHaveStyle({
+      minHeight: 56,
+      flexDirection: "row",
+      alignItems: "center",
+    });
   });
 });

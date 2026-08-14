@@ -1,6 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
-import * as Haptics from "expo-haptics";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
@@ -24,6 +23,7 @@ import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
+import { selectionFeedback } from "@/ui/haptics";
 import {
   ReportFootnote,
   ReportPeriodContent,
@@ -94,7 +94,7 @@ export function SalaryScreen() {
       .slice(0, 7);
     activeMonthCoordinator.setMonth(nextMonth);
     setMonth(nextMonth);
-    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    selectionFeedback();
   }
 
   const hasPremiums = pay.shiftBreakdowns.some((item) => item.premiumLines.length > 0);
