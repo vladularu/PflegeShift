@@ -6,6 +6,21 @@ export interface CalendarEntryPreview {
   readonly overflowCount: number;
 }
 
+interface CalendarEntryPreviewOptions {
+  readonly detailedShifts: boolean;
+  readonly rowCapacity: number;
+}
+
+function calendarEntryRows(entry: CalendarEntry, detailedShifts: boolean): number {
+  return detailedShifts &&
+    entry.kind === "SHIFT" &&
+    !entry.allDay &&
+    entry.startTime !== null &&
+    entry.endTime !== null
+    ? 2
+    : 1;
+}
+
 export type CalendarDayPressAction = "OPEN_QUICK_ENTRY" | "STAMP" | "AWAIT_TOOL";
 
 export function yearMonths(year: number): readonly string[] {
@@ -16,12 +31,29 @@ export function yearMonths(year: number): readonly string[] {
 
 export function calendarEntryPreview(
   entries: readonly CalendarEntry[],
-  limit = 2,
+  options: CalendarEntryPreviewOptions,
 ): CalendarEntryPreview {
-  const visibleLimit = Math.max(0, limit);
+  const rowCapacity = Math.max(0, Math.floor(options.rowCapacity));
+  const visibleEntries: CalendarEntry[] = [];
+  let usedRows = 0;
+
+  for (const entry of entries) {
+    const entryRows = calendarEntryRows(entry, options.detailedShifts);
+    if (usedRows + entryRows > rowCapacity) break;
+    visibleEntries.push(entry);
+    usedRows += entryRows;
+  }
+
+  let overflowCount = entries.length - visibleEntries.length;
+  while (overflowCount > 0 && visibleEntries.length > 1 && usedRows + 1 > rowCapacity) {
+    const removed = visibleEntries.pop();
+    if (removed) usedRows -= calendarEntryRows(removed, options.detailedShifts);
+    overflowCount += 1;
+  }
+
   return Object.freeze({
-    entries: Object.freeze(entries.slice(0, visibleLimit)),
-    overflowCount: Math.max(0, entries.length - visibleLimit),
+    entries: Object.freeze(visibleEntries),
+    overflowCount,
   });
 }
 

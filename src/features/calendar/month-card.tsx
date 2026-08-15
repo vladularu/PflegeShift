@@ -39,7 +39,7 @@ import {
 import { holidayShortLabel } from "@/features/calendar/holiday-label";
 import { stampDayAccessibilityHint } from "@/features/calendar/stamp-accessibility";
 import { holidayMapForMonth } from "@/engine/holidays";
-import { calendarChipPalette } from "@/theme/color-contrast";
+import { calendarChipPalette, chipTextColor } from "@/theme/color-contrast";
 import { MOTION } from "@/theme/motion";
 import { usePalette } from "@/theme/palette";
 import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
@@ -69,6 +69,7 @@ interface DayCellProps {
   readonly showShiftTimes: boolean;
   readonly showShiftDuration: boolean;
   readonly timeZone: string;
+  readonly entryRowCapacity: number;
   readonly weekNumber?: number;
 }
 
@@ -92,21 +93,25 @@ const EntryMark = memo(function EntryMark({
         entering={FadeIn.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
         exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(MOTION.reduceMotion)}
         style={{
-          height: 17,
+          height: CALENDAR_METRICS.entryRowHeight,
           flexDirection: "row",
           alignItems: "center",
           gap: 3,
           paddingHorizontal: 2,
+          borderRadius: 4,
+          borderCurve: "continuous",
+          backgroundColor: palette.dark ? "transparent" : palette.calendarToday,
         }}
       >
-        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: entry.color }} />
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: entry.color }} />
         <Text
           maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
           numberOfLines={1}
           style={{
             flex: 1,
-            color: palette.textSecondary,
+            color: chipTextColor,
             fontSize: CALENDAR_METRICS.entryFontSize,
+            lineHeight: CALENDAR_METRICS.entryLineHeight,
             fontWeight: "600",
           }}
         >
@@ -234,6 +239,7 @@ const DayCell = memo(
     showShiftTimes,
     showShiftDuration,
     timeZone,
+    entryRowCapacity,
     weekNumber,
   }: DayCellProps) {
     const palette = usePalette();
@@ -241,8 +247,9 @@ const DayCell = memo(
     const cellRef = useRef<View>(null);
     const detailed = showShiftTimes || showShiftDuration;
     const preview = useMemo(
-      () => calendarEntryPreview(entries, detailed ? 1 : 2),
-      [detailed, entries],
+      () =>
+        calendarEntryPreview(entries, { detailedShifts: detailed, rowCapacity: entryRowCapacity }),
+      [detailed, entries, entryRowCapacity],
     );
     const showEmptyStampSlot =
       stampMode && preview.entries.length === 0 && preview.overflowCount === 0;
@@ -427,6 +434,7 @@ const DayCell = memo(
     previous.cell === next.cell &&
     previous.compactLabels === next.compactLabels &&
     calendarEntryListsEqual(previous.entries, next.entries) &&
+    previous.entryRowCapacity === next.entryRowCapacity &&
     previous.holidayName === next.holidayName &&
     previous.isSelected === next.isSelected &&
     previous.isToday === next.isToday &&
@@ -535,6 +543,12 @@ export const MonthCard = memo(function MonthCard({
     bottomReserve,
     testData,
   });
+  const entryRowCapacity = Math.max(
+    showShiftTimes || showShiftDuration ? 3 : 2,
+    Math.floor(
+      (gridLayout.rowHeight - CALENDAR_METRICS.dayNumberHeight) / CALENDAR_METRICS.entryRowHeight,
+    ),
+  );
   const weeks = Array.from({ length: weekCount }, (_, index) =>
     grid.slice(index * 7, index * 7 + 7),
   );
@@ -617,6 +631,7 @@ export const MonthCard = memo(function MonthCard({
                 cell={cell}
                 compactLabels={compactLabels}
                 entries={entriesByDate.get(cell.date) ?? EMPTY_ENTRIES}
+                entryRowCapacity={entryRowCapacity}
                 holidayName={holidays.get(cell.date)?.name}
                 isSelected={selectedDate !== null && cell.date === selectedDate}
                 isToday={cell.date === currentDate}

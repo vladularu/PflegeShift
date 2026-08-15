@@ -24,6 +24,8 @@ describe("accessible service chips", () => {
   it.each([false, true])("builds readable two-line calendar chips in dark=%s", (dark) => {
     for (const color of ["#62B94C", "#F05C59", "#31A7C3", "#D95F9A"]) {
       const chip = calendarChipPalette(color, dark);
+      expect(chip.onMain).toBe("#FFFFFF");
+      expect(chip.onDetail).toBe("#FFFFFF");
       expect(colorContrastRatio(chip.onMain, chip.main)).toBeGreaterThanOrEqual(
         MINIMUM_TEXT_CONTRAST,
       );

@@ -60,12 +60,13 @@ export function readableTextColor(backgroundColor: string): string {
 }
 
 export function calendarChipPalette(backgroundColor: string, dark: boolean) {
-  const detail = mixHexColors(backgroundColor, dark ? "#000000" : "#FFFFFF", dark ? 0.42 : 0.72);
+  const main = accessibleChipBackgroundColor(backgroundColor);
+  const detail = accessibleChipBackgroundColor(mixHexColors(main, "#000000", dark ? 0.2 : 0.14));
   return Object.freeze({
-    main: backgroundColor,
+    main,
     detail,
-    onMain: readableTextColor(backgroundColor),
-    onDetail: readableTextColor(detail),
+    onMain: LIGHT_TEXT,
+    onDetail: LIGHT_TEXT,
   });
 }
 
