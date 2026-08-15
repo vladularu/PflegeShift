@@ -176,21 +176,21 @@ describe("MonthCard", () => {
       fontSize: 12,
     });
     expect(within(day).getByText("06:00")).toHaveStyle({
-      color: "#FFFFFF",
+      color: "#171719",
       fontSize: 12,
     });
     expect(within(day).getByText("A")).toHaveStyle({
-      color: "#FFFFFF",
+      color: LIGHT_PALETTE.text,
       fontSize: 12,
     });
     expect(within(day).getByText("Z")).toHaveStyle({
-      color: "#FFFFFF",
+      color: LIGHT_PALETTE.text,
       fontSize: 12,
     });
     expect(within(day).queryByText(/^\+/)).toBeNull();
   });
 
-  it("uses a dark appointment surface in light mode so white labels stay readable", async () => {
+  it("keeps appointments on the calendar surface like the visual reference", async () => {
     const date = "2026-09-18";
     const screen = await render(
       <MonthCard
@@ -207,8 +207,8 @@ describe("MonthCard", () => {
     const day = screen.getByRole("button", { name: new RegExp(formatDateTitle(date)) });
     const appointmentLabel = within(day).getByText("A");
     expect(appointmentLabel.parent).toHaveStyle({
-      height: 19,
-      backgroundColor: LIGHT_PALETTE.calendarToday,
+      height: 17,
+      backgroundColor: "transparent",
     });
   });
 
@@ -251,7 +251,7 @@ describe("MonthCard", () => {
 
     const slot = screen.getByTestId("quick-stamp-slot-2026-08-04");
     expect(slot).toHaveStyle({
-      minHeight: 19,
+      minHeight: 17,
       borderWidth: 1,
       borderColor: LIGHT_PALETTE.border,
       borderRadius: 4,

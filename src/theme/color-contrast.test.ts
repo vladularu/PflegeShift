@@ -25,7 +25,6 @@ describe("accessible service chips", () => {
     for (const color of ["#62B94C", "#F05C59", "#31A7C3", "#D95F9A"]) {
       const chip = calendarChipPalette(color, dark);
       expect(chip.onMain).toBe("#FFFFFF");
-      expect(chip.onDetail).toBe("#FFFFFF");
       expect(colorContrastRatio(chip.onMain, chip.main)).toBeGreaterThanOrEqual(
         MINIMUM_TEXT_CONTRAST,
       );
@@ -33,6 +32,11 @@ describe("accessible service chips", () => {
         MINIMUM_TEXT_CONTRAST,
       );
     }
+  });
+
+  it("adapts the detail text to pastel light-mode and muted dark-mode bands", () => {
+    expect(calendarChipPalette("#62B94C", false).onDetail).toBe("#171719");
+    expect(calendarChipPalette("#62B94C", true).onDetail).toBe("#FFFFFF");
   });
 });
 

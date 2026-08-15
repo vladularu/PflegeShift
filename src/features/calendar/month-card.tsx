@@ -39,7 +39,7 @@ import {
 import { holidayShortLabel } from "@/features/calendar/holiday-label";
 import { stampDayAccessibilityHint } from "@/features/calendar/stamp-accessibility";
 import { holidayMapForMonth } from "@/engine/holidays";
-import { calendarChipPalette, chipTextColor } from "@/theme/color-contrast";
+import { calendarChipPalette } from "@/theme/color-contrast";
 import { MOTION } from "@/theme/motion";
 import { usePalette } from "@/theme/palette";
 import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
@@ -97,22 +97,20 @@ const EntryMark = memo(function EntryMark({
           flexDirection: "row",
           alignItems: "center",
           gap: 3,
-          paddingHorizontal: 2,
-          borderRadius: 4,
-          borderCurve: "continuous",
-          backgroundColor: palette.dark ? "transparent" : palette.calendarToday,
+          paddingHorizontal: 1,
+          backgroundColor: "transparent",
         }}
       >
-        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: entry.color }} />
+        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: entry.color }} />
         <Text
           maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
           numberOfLines={1}
           style={{
             flex: 1,
-            color: chipTextColor,
+            color: palette.text,
             fontSize: CALENDAR_METRICS.entryFontSize,
             lineHeight: CALENDAR_METRICS.entryLineHeight,
-            fontWeight: "600",
+            fontWeight: "500",
           }}
         >
           {compactLabels ? entry.title.slice(0, 1) : entry.title}
@@ -152,7 +150,7 @@ const EntryMark = memo(function EntryMark({
             color: colors.onMain,
             fontSize: CALENDAR_METRICS.entryFontSize,
             lineHeight: CALENDAR_METRICS.entryLineHeight,
-            fontWeight: "700",
+            fontWeight: "600",
             textAlign: "center",
           }}
         >
