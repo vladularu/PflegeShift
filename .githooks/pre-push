@@ -1,0 +1,12 @@
+#!/bin/sh
+
+while read local_ref local_sha remote_ref remote_sha
+do
+  if [ "$remote_ref" = "refs/heads/master" ]; then
+    echo "Direkter Push nach master blockiert." >&2
+    echo "Erstelle einen codex/<thema>-Branch und merge erst nach Pull Request und quality-gates." >&2
+    exit 1
+  fi
+done
+
+exit 0

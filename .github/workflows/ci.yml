@@ -5,13 +5,18 @@ on:
   push:
     branches: [master]
 
+concurrency:
+  group: quality-gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  validate:
+  fast:
+    name: fast-feedback
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,13 +24,66 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run test:all
+      - run: npm run verify:fast
+
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - run: npm run test:coverage
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run format:check
+
+  production-safety:
+    name: production-safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - run: npm run audit:production
       - run: npm run release:check
-      - run: npm run export:web
-      - run: npm run export:android
-      - run: npm run export:ios
+
+  exports:
+    name: export-${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [web, android, ios]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run export:${{ matrix.platform }}
+
+  quality-gates:
+    name: quality-gates
+    if: ${{ always() }}
+    needs: [fast, coverage, production-safety, exports]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm required jobs
+        env:
+          FAST_RESULT: ${{ needs.fast.result }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+          PRODUCTION_RESULT: ${{ needs.production-safety.result }}
+          EXPORTS_RESULT: ${{ needs.exports.result }}
+        run: |
+          test "$FAST_RESULT" = "success"
+          test "$COVERAGE_RESULT" = "success"
+          test "$PRODUCTION_RESULT" = "success"
+          test "$EXPORTS_RESULT" = "success"
