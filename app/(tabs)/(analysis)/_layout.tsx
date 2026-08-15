@@ -7,9 +7,7 @@ export default function AnalysisStack() {
     <Stack
       screenOptions={{
         contentStyle: { backgroundColor: palette.background },
-        headerLargeTitle: true,
-        headerLargeTitleShadowVisible: false,
-        headerLargeTitleStyle: { color: palette.text },
+        headerLargeTitle: false,
         headerShadowVisible: false,
         headerStyle: { backgroundColor: palette.background },
         headerTintColor: palette.text,

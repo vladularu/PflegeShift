@@ -667,7 +667,8 @@ function checkPlanningSeries(intervals: readonly Interval[]): ComplianceIssue[] 
     }
   }
 
-  for (const streak of consecutiveDateStreaks(shifts.filter((shift) => shift.type === "NIGHT"))) {
+  const nightShifts = intervals.filter(isNightWork).map((item) => item.shift);
+  for (const streak of consecutiveDateStreaks(nightShifts)) {
     if (streak.length >= 5) {
       issues.push(
         issue(
