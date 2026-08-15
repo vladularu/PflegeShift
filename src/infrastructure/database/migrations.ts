@@ -84,13 +84,23 @@ CREATE INDEX IF NOT EXISTS idx_shift_templates_order_active
 `;
 
 const DEFAULT_TEMPLATES = [
-  ["default-early", "Früh", "EARLY", "06:00", "14:12", 30, "#7E57C2", "F", 10],
-  ["default-late", "Spät", "LATE", "13:18", "21:30", 30, "#2FA36B", "S", 20],
-  ["default-night", "Nacht", "NIGHT", "21:00", "07:30", 60, "#EA5B55", "N", 30],
-  ["default-day", "Tag", "DAY", "08:00", "16:12", 30, "#2F80ED", "T", 40],
-  ["default-vacation", "Urlaub", "VACATION", null, null, 0, "#25A9A4", "U", 50],
-  ["default-sick", "Krank", "SICK", null, null, 0, "#F09A3E", "K", 60],
-  ["default-free", "Frei", "FREE", null, null, 0, "#8A9490", "–", 70],
+  ["default-early", "Früh", "EARLY", "06:00", "14:12", 30, "#4FCB68", "rise", 10],
+  ["default-late", "Spät", "LATE", "13:18", "21:30", 30, "#F05C68", "sun", 20],
+  ["default-night", "Nacht", "NIGHT", "21:00", "07:30", 60, "#F2A93B", "moon", 30],
+  ["default-day", "Tag", "DAY", "08:00", "16:12", 30, "#31A7C3", "home", 40],
+  ["default-vacation", "Urlaub", "VACATION", null, null, 0, "#858A8E", "palm", 50],
+  ["default-sick", "Krank", "SICK", null, null, 0, "#F09A3E", "med", 60],
+  ["default-free", "Frei", "FREE", null, null, 0, "#858A8E", "star", 70],
+] as const;
+
+const DEFAULT_APPEARANCE_UPDATES = [
+  ["default-early", "#7E57C2", "#4FCB68", "F", "rise"],
+  ["default-late", "#2FA36B", "#F05C68", "S", "sun"],
+  ["default-night", "#EA5B55", "#F2A93B", "N", "moon"],
+  ["default-day", "#2F80ED", "#31A7C3", "T", "home"],
+  ["default-vacation", "#25A9A4", "#858A8E", "U", "palm"],
+  ["default-sick", "#F09A3E", "#F09A3E", "K", "med"],
+  ["default-free", "#8A9490", "#858A8E", "–", "star"],
 ] as const;
 
 const MIGRATION_4 = `
@@ -312,5 +322,34 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     await addColumnIfMissing(db, "appointments", "location_json", "TEXT");
     await db.execAsync(MIGRATION_7);
     await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 7, now);
+  }
+
+  const migration8 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=8",
+  );
+  if (migration8 === null) {
+    for (const [id, oldColor, nextColor, oldSymbol, nextSymbol] of DEFAULT_APPEARANCE_UPDATES) {
+      if (oldColor !== nextColor) {
+        await db.runAsync(
+          `UPDATE shift_templates
+             SET color=?, revision=revision+1, updated_at=?
+           WHERE id=? AND color=?`,
+          nextColor,
+          now,
+          id,
+          oldColor,
+        );
+      }
+      await db.runAsync(
+        `UPDATE shift_templates
+           SET symbol=?, revision=revision+1, updated_at=?
+         WHERE id=? AND symbol=?`,
+        nextSymbol,
+        now,
+        id,
+        oldSymbol,
+      );
+    }
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 8, now);
   }
 }

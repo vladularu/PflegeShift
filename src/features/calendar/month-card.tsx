@@ -45,6 +45,7 @@ import { usePalette } from "@/theme/palette";
 import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
 import { CALENDAR_METRICS, SPACING } from "@/theme/tokens";
 import { usePressMotion } from "@/ui/press-motion";
+import { ShiftSymbol } from "@/ui/shift-symbol";
 
 const WEEKDAYS = ["M", "D", "M", "D", "F", "S", "S"];
 const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
@@ -96,21 +97,25 @@ const EntryMark = memo(function EntryMark({
           height: CALENDAR_METRICS.entryRowHeight,
           flexDirection: "row",
           alignItems: "center",
-          gap: 3,
-          paddingHorizontal: 1,
+          gap: 2,
+          paddingHorizontal: 0,
           backgroundColor: "transparent",
         }}
       >
-        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: entry.color }} />
+        <View
+          style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: palette.textMuted }}
+        />
         <Text
+          adjustsFontSizeToFit
           maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+          minimumFontScale={0.88}
           numberOfLines={1}
           style={{
             flex: 1,
             color: palette.text,
             fontSize: CALENDAR_METRICS.entryFontSize,
             lineHeight: CALENDAR_METRICS.entryLineHeight,
-            fontWeight: "500",
+            fontWeight: "400",
           }}
         >
           {compactLabels ? entry.title.slice(0, 1) : entry.title}
@@ -143,19 +148,23 @@ const EntryMark = memo(function EntryMark({
           paddingHorizontal: 3,
         }}
       >
-        <Text
-          maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-          numberOfLines={1}
-          style={{
-            color: colors.onMain,
-            fontSize: CALENDAR_METRICS.entryFontSize,
-            lineHeight: CALENDAR_METRICS.entryLineHeight,
-            fontWeight: "600",
-            textAlign: "center",
-          }}
-        >
-          {compactLabels ? entry.symbol : entry.title}
-        </Text>
+        {compactLabels ? (
+          <ShiftSymbol color={colors.onMain} size={12} value={entry.symbol} />
+        ) : (
+          <Text
+            maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+            numberOfLines={1}
+            style={{
+              color: colors.onMain,
+              fontSize: CALENDAR_METRICS.entryFontSize,
+              lineHeight: CALENDAR_METRICS.entryLineHeight,
+              fontWeight: "500",
+              textAlign: "center",
+            }}
+          >
+            {entry.title}
+          </Text>
+        )}
       </View>
       {detail ? (
         <View

@@ -11,10 +11,11 @@ import Animated, { FadeIn } from "react-native-reanimated";
 
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
-import { COMPACT_TEXT_MAX_SCALE, TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
+import { ShiftSymbol } from "@/ui/shift-symbol";
 
 export function SurfaceCard({
   children,
@@ -502,19 +503,7 @@ export function ColorBadge({
         backgroundColor: accessibleChipBackgroundColor(color),
       }}
     >
-      <Text
-        adjustsFontSizeToFit
-        maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-        numberOfLines={1}
-        style={{
-          maxWidth: size - 10,
-          color: chipTextColor,
-          fontSize: size * 0.34,
-          fontWeight: "700",
-        }}
-      >
-        {label}
-      </Text>
+      <ShiftSymbol color={chipTextColor} size={size * 0.48} value={label} />
     </View>
   );
 }

@@ -66,11 +66,31 @@ describe("SQLite repository", () => {
     await migrateDatabase(db);
     const templates = await listTemplates(db);
     expect(templates).toHaveLength(7);
-    expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("–");
+    expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("star");
     expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({
-      count: 7,
+      count: 8,
     });
     expect(testDb.database.pragma("secure_delete", { simple: true })).toBe(1);
+  });
+
+  it("updates only untouched standard colors and symbols", async () => {
+    testDb.database.exec(`
+      DELETE FROM schema_migrations WHERE version=8;
+      UPDATE shift_templates SET color='#7E57C2', symbol='F' WHERE id='default-early';
+      UPDATE shift_templates SET color='#123456', symbol='XY' WHERE id='default-late';
+    `);
+
+    await migrateDatabase(db);
+    const templates = await listTemplates(db);
+
+    expect(templates.find((template) => template.id === "default-early")).toMatchObject({
+      color: "#4FCB68",
+      symbol: "rise",
+    });
+    expect(templates.find((template) => template.id === "default-late")).toMatchObject({
+      color: "#123456",
+      symbol: "XY",
+    });
   });
 
   it("rejects malformed persisted values before they reach engine rendering", async () => {

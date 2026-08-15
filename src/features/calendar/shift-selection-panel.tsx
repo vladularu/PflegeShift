@@ -11,9 +11,10 @@ import type {
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
-import { COMPACT_TEXT_MAX_SCALE, TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
+import { ShiftSymbol } from "@/ui/shift-symbol";
 
 function longDate(date: string): string {
   return new Intl.DateTimeFormat("de-DE", {
@@ -157,13 +158,7 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
                           { backgroundColor: accessibleChipBackgroundColor(action.color) },
                         ]}
                       >
-                        <Text
-                          maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-                          numberOfLines={1}
-                          style={styles.serviceBadgeText}
-                        >
-                          {action.symbol}
-                        </Text>
+                        <ShiftSymbol color={chipTextColor} size={18} value={action.symbol} />
                       </View>
                       <View style={styles.rowCopy}>
                         <Text
@@ -334,12 +329,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 19,
-  },
-  serviceBadgeText: {
-    maxWidth: 28,
-    color: chipTextColor,
-    fontSize: 14,
-    fontWeight: "700",
   },
   rowCopy: {
     minWidth: 0,

@@ -27,7 +27,8 @@ import {
   parseLocalDateRouteParam,
   type RouteParam,
 } from "@/navigation/route-params";
-import { DEFAULT_TEMPLATE_COLOR, usePalette } from "@/theme/palette";
+import { DEFAULT_TEMPLATE_COLOR, SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { DEFAULT_SHIFT_SYMBOLS } from "@/theme/shift-symbols";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { ColorPicker, Field, ResponsiveFieldRow, TimePickerField } from "@/ui/form-controls";
@@ -41,6 +42,7 @@ import {
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
 import { LabeledSwitch } from "@/ui/labeled-switch";
+import { ShiftSymbolPicker } from "@/ui/shift-symbol-picker";
 import {
   NotificationSheet,
   notificationLabel,
@@ -142,7 +144,7 @@ function TemplateEditorForm({
   const [endTime, setEndTime] = useState(existing?.endTime ?? "16:00");
   const [breakMinutes, setBreakMinutes] = useState(String(existing?.breakMinutes ?? 30));
   const [color, setColor] = useState(existing?.color ?? DEFAULT_TEMPLATE_COLOR);
-  const [symbol, setSymbol] = useState(existing?.symbol ?? "D");
+  const [symbol, setSymbol] = useState(existing?.symbol ?? DEFAULT_SHIFT_SYMBOLS.CUSTOM);
   const [notification, setNotification] = useState<EntryNotification | null>(
     existing?.notification ?? null,
   );
@@ -158,6 +160,15 @@ function TemplateEditorForm({
   const breakRef = useRef<TextInput>(null);
   const absence = isAbsenceType(type);
   const typeLocked = existing !== null && isAbsenceType(existing.type);
+
+  function changeType(candidate: ShiftType) {
+    const useCandidateColor =
+      existing === null && (color === SHIFT_TYPE_COLORS[type] || color === DEFAULT_TEMPLATE_COLOR);
+    const useCandidateSymbol = existing === null && symbol === DEFAULT_SHIFT_SYMBOLS[type];
+    setType(candidate);
+    if (useCandidateColor) setColor(SHIFT_TYPE_COLORS[candidate]);
+    if (useCandidateSymbol) setSymbol(DEFAULT_SHIFT_SYMBOLS[candidate]);
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -262,19 +273,17 @@ function TemplateEditorForm({
           }}
           value={name}
         />
-        <Field
-          autoCapitalize="characters"
+        <ShiftSymbolPicker
+          color={color}
           error={symbolError}
           inputRef={symbolRef}
-          label="Kürzel"
-          maxLength={4}
-          onChangeText={(value) => {
+          onChange={(value) => {
             setSymbol(value);
             if (symbolError) setSymbolError(null);
           }}
           value={symbol}
         />
-        <ColorPicker onChange={setColor} value={color} />
+        <ColorPicker onChange={setColor} symbol={symbol} value={color} />
       </FormSection>
 
       <FormSection title="Dienstart">
@@ -287,7 +296,7 @@ function TemplateEditorForm({
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 disabled={typeLocked && candidate !== type}
-                onPress={() => setType(candidate)}
+                onPress={() => changeType(candidate)}
                 style={({ pressed }) => ({
                   minHeight: 44,
                   justifyContent: "center",
