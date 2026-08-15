@@ -1,2 +1,4 @@
+* text=auto eol=lf
+
 .githooks/* text eol=lf
 .github/workflows/*.yml text eol=lf

@@ -52,7 +52,6 @@ export const SHIFT_TYPES = [
 
 export type ShiftType = (typeof SHIFT_TYPES)[number];
 export type TimedShiftType = Exclude<ShiftType, "VACATION" | "SICK" | "FREE">;
-export type AbsenceShiftType = "VACATION" | "SICK";
 
 export const PAY_GROUPS = [
   "P7",

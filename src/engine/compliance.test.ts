@@ -124,6 +124,20 @@ describe("ArbZG compliance", () => {
     });
   });
 
+  it("keeps the deferred night-series recovery hint disabled", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [
+        shift("night-1", "2026-07-01", "21:00", "07:00", 60, "NIGHT"),
+        shift("night-2", "2026-07-02", "21:00", "07:00", 60, "NIGHT"),
+        shift("early", "2026-07-04", "06:00", "14:00", 30, "EARLY"),
+      ],
+      "Europe/Berlin",
+    );
+
+    expect(result.issues.some((item) => item.rule === "PLANNING_NIGHT_RECOVERY")).toBe(false);
+  });
+
   it("ignores vacation, sickness and free entries", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",

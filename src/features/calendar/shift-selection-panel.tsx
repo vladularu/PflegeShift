@@ -137,7 +137,7 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
             ]}
           >
             {templateActions.length > 0 ? (
-              templateActions.map((action, index) => (
+              templateActions.map((action) => (
                 <View key={action.key}>
                   <View style={[styles.serviceRow, { opacity: busy ? 0.45 : 1 }]}>
                     <Pressable

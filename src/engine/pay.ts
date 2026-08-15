@@ -459,11 +459,17 @@ function allowanceAmount(
   status: AllowanceStatus | null,
   workMinutes: number,
   profile: UserProfile,
+  date: string,
 ): number {
   if (status === null || status === "NONE" || profile.tariff === null) return 0;
   const factor = profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes;
-  if (status === "SHIFT_MONTHLY") return roundMoney(100 * factor);
-  if (status === "ALTERNATING_MONTHLY") return roundMoney(250 * factor);
+  const currentRates = date >= "2025-07-01";
+  if (status === "SHIFT_MONTHLY") return roundMoney((currentRates ? 100 : 40) * factor);
+  if (status === "ALTERNATING_MONTHLY") return roundMoney((currentRates ? 250 : 155) * factor);
+  if (!currentRates) {
+    const hourly = status === "ALTERNATING_HOURLY" ? 0.93 : 0.24;
+    return roundMoney((workMinutes / 60) * hourly);
+  }
   const isBw = profile.federalState === "BW";
   const hourly =
     status === "ALTERNATING_HOURLY"
@@ -488,7 +494,10 @@ function tvoedAllowanceAmount(date: string, profile: UserProfile): number {
   if (profile.tariff === null) return 0;
   const validFrom = profile.tariff.sector === "BT_K" ? "2008-07-01" : "2021-03-01";
   if (date < validFrom) return 0;
-  return roundMoney(25 * (profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes));
+  const fullTimeAmount = profile.federalState === "BW" ? 35 : 25;
+  return roundMoney(
+    fullTimeAmount * (profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes),
+  );
 }
 
 export function calculateMonthlyPayEstimate(
@@ -559,7 +568,7 @@ export function calculateMonthlyPayEstimate(
   const workMinutes = shiftBreakdowns.reduce((sum, item) => sum + item.netMinutes, 0);
   const confirmedAllowance = decision?.allowanceStatus ?? null;
   const effectiveAllowance = confirmedAllowance ?? assessment.suggestedAllowance;
-  const monthlyAllowanceAmount = allowanceAmount(effectiveAllowance, workMinutes, profile);
+  const monthlyAllowanceAmount = allowanceAmount(effectiveAllowance, workMinutes, profile, dateKey);
   const monthlyTvoedAllowanceAmount = tvoedAllowanceAmount(dateKey, profile);
   const monthlyCareAllowanceAmount = careAllowanceAmount(dateKey, profile);
   return {

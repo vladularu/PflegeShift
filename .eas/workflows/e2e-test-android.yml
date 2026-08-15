@@ -1,8 +1,7 @@
 name: e2e-test-android
 
 on:
-  pull_request:
-    branches: ["*"]
+  workflow_dispatch:
 
 jobs:
   build_android_for_e2e:

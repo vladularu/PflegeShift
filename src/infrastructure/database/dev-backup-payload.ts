@@ -4,12 +4,15 @@ export interface RawShiftRow {
   template_id: string | null;
   title: string;
   type: string;
+  all_day: number;
   start_time: string | null;
   end_time: string | null;
   break_minutes: number;
   color: string;
   symbol: string;
   note: string | null;
+  notification_json: string | null;
+  location_json: string | null;
   overtime_minutes: number;
   holiday_premium_mode: string;
   revision: number;
@@ -28,6 +31,10 @@ export interface RawAppointmentRow {
   end_time: string | null;
   color: string;
   note: string | null;
+  recurrence_frequency: string | null;
+  recurrence_interval: number | null;
+  notification_json: string | null;
+  location_json: string | null;
   revision: number;
   created_at: string;
   updated_at: string;
@@ -44,7 +51,7 @@ export interface RawDecisionRow {
 }
 
 export interface BackupPayload {
-  version: 1;
+  version: 2;
   month: string;
   counts: {
     appointments: number;
@@ -70,6 +77,7 @@ const SHIFT_TYPES = new Set([
   "CUSTOM",
 ]);
 const PREMIUM_MODES = new Set(["WITH_TIME_OFF", "WITHOUT_TIME_OFF"]);
+const RECURRENCE_FREQUENCIES = new Set(["DAY", "WEEK", "MONTH", "YEAR"]);
 const ALLOWANCE_STATUSES = new Set([
   "NONE",
   "SHIFT_MONTHLY",
@@ -107,13 +115,32 @@ function integerValue(row: UnknownRecord, key: string, minimum = 0): number {
   return value as number;
 }
 
+function versionedInteger(
+  row: UnknownRecord,
+  key: string,
+  currentPayload: boolean,
+  fallback: number,
+): number {
+  if (!currentPayload && row[key] === undefined) return fallback;
+  return integerValue(row, key);
+}
+
+function versionedNullableString(
+  row: UnknownRecord,
+  key: string,
+  currentPayload: boolean,
+): string | null {
+  if (!currentPayload && row[key] === undefined) return null;
+  return nullableString(row, key);
+}
+
 function assertDateInMonth(date: string, month: string): void {
   if (!/^\d{4}-(0[1-9]|1[0-2])-([012]\d|3[01])$/.test(date) || !date.startsWith(`${month}-`)) {
     invalid("Monatszuordnung");
   }
 }
 
-function validateShift(value: unknown, month: string): RawShiftRow {
+function validateShift(value: unknown, month: string, currentPayload: boolean): RawShiftRow {
   const row = record(value, "Dienst");
   const date = stringValue(row, "date");
   assertDateInMonth(date, month);
@@ -121,42 +148,75 @@ function validateShift(value: unknown, month: string): RawShiftRow {
   if (!PREMIUM_MODES.has(stringValue(row, "holiday_premium_mode"))) {
     invalid("Feiertagsmodus");
   }
-  stringValue(row, "id");
-  nullableString(row, "template_id");
-  stringValue(row, "title");
-  nullableString(row, "start_time");
-  nullableString(row, "end_time");
-  integerValue(row, "break_minutes");
-  stringValue(row, "color");
-  stringValue(row, "symbol");
-  nullableString(row, "note");
-  integerValue(row, "overtime_minutes");
-  integerValue(row, "revision", 1);
-  stringValue(row, "created_at");
-  stringValue(row, "updated_at");
-  nullableString(row, "deleted_at");
-  nullableString(row, "test_run_id");
-  return row as unknown as RawShiftRow;
+  const allDay = versionedInteger(row, "all_day", currentPayload, 0);
+  if (allDay !== 0 && allDay !== 1) invalid("Ganztagsstatus");
+  return {
+    id: stringValue(row, "id"),
+    date,
+    template_id: nullableString(row, "template_id"),
+    title: stringValue(row, "title"),
+    type: stringValue(row, "type"),
+    all_day: allDay,
+    start_time: nullableString(row, "start_time"),
+    end_time: nullableString(row, "end_time"),
+    break_minutes: integerValue(row, "break_minutes"),
+    color: stringValue(row, "color"),
+    symbol: stringValue(row, "symbol"),
+    note: nullableString(row, "note"),
+    notification_json: versionedNullableString(row, "notification_json", currentPayload),
+    location_json: versionedNullableString(row, "location_json", currentPayload),
+    overtime_minutes: integerValue(row, "overtime_minutes"),
+    holiday_premium_mode: stringValue(row, "holiday_premium_mode"),
+    revision: integerValue(row, "revision", 1),
+    created_at: stringValue(row, "created_at"),
+    updated_at: stringValue(row, "updated_at"),
+    deleted_at: nullableString(row, "deleted_at"),
+    test_run_id: nullableString(row, "test_run_id"),
+  };
 }
 
-function validateAppointment(value: unknown, month: string): RawAppointmentRow {
+function validateAppointment(
+  value: unknown,
+  month: string,
+  currentPayload: boolean,
+): RawAppointmentRow {
   const row = record(value, "Termin");
   const date = stringValue(row, "date");
   assertDateInMonth(date, month);
-  stringValue(row, "id");
-  stringValue(row, "title");
   const allDay = integerValue(row, "all_day");
   if (allDay !== 0 && allDay !== 1) invalid("Ganztagsstatus");
-  nullableString(row, "start_time");
-  nullableString(row, "end_time");
-  stringValue(row, "color");
-  nullableString(row, "note");
-  integerValue(row, "revision", 1);
-  stringValue(row, "created_at");
-  stringValue(row, "updated_at");
-  nullableString(row, "deleted_at");
-  nullableString(row, "test_run_id");
-  return row as unknown as RawAppointmentRow;
+  const recurrenceFrequency = versionedNullableString(row, "recurrence_frequency", currentPayload);
+  const recurrenceInterval =
+    !currentPayload && row.recurrence_interval === undefined
+      ? null
+      : row.recurrence_interval === null
+        ? null
+        : integerValue(row, "recurrence_interval", 1);
+  if (
+    (recurrenceFrequency === null) !== (recurrenceInterval === null) ||
+    (recurrenceFrequency !== null && !RECURRENCE_FREQUENCIES.has(recurrenceFrequency))
+  ) {
+    invalid("Terminserie");
+  }
+  return {
+    id: stringValue(row, "id"),
+    date,
+    title: stringValue(row, "title"),
+    all_day: allDay,
+    start_time: nullableString(row, "start_time"),
+    end_time: nullableString(row, "end_time"),
+    color: stringValue(row, "color"),
+    note: nullableString(row, "note"),
+    recurrence_frequency: recurrenceFrequency,
+    recurrence_interval: recurrenceInterval,
+    notification_json: versionedNullableString(row, "notification_json", currentPayload),
+    location_json: versionedNullableString(row, "location_json", currentPayload),
+    revision: integerValue(row, "revision", 1),
+    created_at: stringValue(row, "created_at"),
+    updated_at: stringValue(row, "updated_at"),
+    deleted_at: nullableString(row, "deleted_at"),
+    test_run_id: nullableString(row, "test_run_id"),
+  };
 }
 
 function validateDecision(value: unknown, month: string): RawDecisionRow | null {
@@ -184,14 +244,19 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
   if (!Array.isArray(sourceShifts) || !Array.isArray(sourceAppointments)) {
     invalid("Datensatzlisten");
   }
-  const shifts = sourceShifts.map((row) => validateShift(row, expectedMonth));
-  const appointments = sourceAppointments.map((row) => validateAppointment(row, expectedMonth));
+  const currentPayload = payload.version === 2;
+  const shifts = sourceShifts.map((row) => validateShift(row, expectedMonth, currentPayload));
+  const appointments = sourceAppointments.map((row) =>
+    validateAppointment(row, expectedMonth, currentPayload),
+  );
   const decision = validateDecision(payload.decision, expectedMonth);
   assertUniqueIds(shifts, "doppelte Dienst-ID");
   assertUniqueIds(appointments, "doppelte Termin-ID");
 
   if (payload.version !== undefined) {
-    if (payload.version !== 1 || payload.month !== expectedMonth) invalid("Version oder Monat");
+    if ((payload.version !== 1 && payload.version !== 2) || payload.month !== expectedMonth) {
+      invalid("Version oder Monat");
+    }
     const counts = record(payload.counts, "Zeilenanzahlen");
     if (
       counts.shifts !== shifts.length ||
@@ -203,7 +268,7 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
   }
 
   return {
-    version: 1,
+    version: 2,
     month: expectedMonth,
     counts: {
       appointments: appointments.length,
@@ -229,7 +294,7 @@ export function createDevBackupPayload(
         shifts: data.shifts.length,
       },
       month,
-      version: 1,
+      version: 2,
     },
     month,
   );

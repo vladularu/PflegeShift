@@ -1,20 +1,18 @@
 appId: com.pflegeshift.app.internal
 ---
 - runFlow: onboarding.yml
-- tapOn: "Schnelleintrag öffnen"
-- tapOn: "Dienst auswählen"
-- assertVisible: "Bezeichnung"
-- tapOn: "Bezeichnung"
-- eraseText
-- inputText: "SQLCipher Persistenz"
-- hideKeyboard
-- tapOn: "Sichern und schließen"
+- tapOn:
+    text: ".*0 Einträge.*"
+    index: 10
+- tapOn: "Schicht hinzufügen"
+- assertVisible: "Meine Dienste"
+- tapOn: "Früh direkt eintragen"
 - extendedWaitUntil:
-    visible: "SQLCipher Persistenz"
+    visible: "Früh"
     timeout: 10000
 - stopApp
 - launchApp:
     clearState: false
 - extendedWaitUntil:
-    visible: "SQLCipher Persistenz"
+    visible: "Früh"
     timeout: 15000

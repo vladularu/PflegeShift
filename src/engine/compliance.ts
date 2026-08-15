@@ -680,26 +680,6 @@ function checkPlanningSeries(intervals: readonly Interval[]): ComplianceIssue[] 
         ),
       );
     }
-    if (streak.length >= 2) {
-      const last = streak.at(-1)!;
-      const lastIndex = intervals.findIndex((item) => item.shift.id === last.id);
-      const next = intervals[lastIndex + 1];
-      if (next && (next.shift.type === "EARLY" || next.shift.type === "DAY")) {
-        const rest = minutesBetween(intervals[lastIndex].end, next.start);
-        if (rest >= 660 && rest < 1_440) {
-          issues.push(
-            issue(
-              "warning",
-              "PLANNING",
-              "PLANNING_NIGHT_RECOVERY",
-              "Kurze Erholung nach Nachtserie",
-              `Nach der Nachtserie folgen nur ${hours(rest)} Erholungszeit.`,
-              [...streak, next.shift],
-            ),
-          );
-        }
-      }
-    }
   }
 
   const weekends = new Map<string, ShiftEntry>();

@@ -309,9 +309,7 @@ export function TimePickerField({
             is24Hour: true,
             mode: "time",
             value: asTimeDate(value),
-            onChange: (event, date) => {
-              if (event.type === "set" && date) onChange(asTimeString(date));
-            },
+            onValueChange: (_, date) => onChange(asTimeString(date)),
           });
         }}
         style={({ pressed }) => ({
@@ -364,9 +362,7 @@ export function TimePickerField({
         accessibilityLabel={`${label} wählen`}
         display="compact"
         mode="time"
-        onChange={(_, date) => {
-          if (date) onChange(asTimeString(date));
-        }}
+        onValueChange={(_, date) => onChange(asTimeString(date))}
         value={asTimeDate(value)}
       />
     </View>
