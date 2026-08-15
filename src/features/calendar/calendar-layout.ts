@@ -3,7 +3,6 @@ import { CALENDAR_METRICS } from "@/theme/tokens";
 export interface CalendarGridLayout {
   readonly headerHeight: number;
   readonly rowHeight: number;
-  readonly lastRowHeight: number;
   readonly gridHeight: number;
 }
 
@@ -102,16 +101,11 @@ export function calculateCalendarGridLayout({
   const safeWeekCount = Math.max(1, weekCount);
   const equalRowHeight = Math.max(48, usableHeight / safeWeekCount);
   const rowHeight = Math.min(CALENDAR_METRICS.weekRowHeight, equalRowHeight);
-  const lastRowHeight = Math.max(
-    rowHeight,
-    usableHeight - rowHeight * Math.max(0, safeWeekCount - 1),
-  );
 
   return Object.freeze({
     headerHeight,
     rowHeight,
-    lastRowHeight,
-    gridHeight: headerHeight + rowHeight * Math.max(0, safeWeekCount - 1) + lastRowHeight,
+    gridHeight: headerHeight + rowHeight * safeWeekCount,
   });
 }
 

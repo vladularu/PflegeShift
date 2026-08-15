@@ -11,6 +11,7 @@ import {
   quickAddRoute,
   settingsEditorRoute,
   settingsInfoRoute,
+  shiftSelectionRoute,
   tariffAssessmentRoute,
   templateEditorRoute,
 } from "@/navigation/routes";
@@ -103,6 +104,14 @@ describe("navigation contracts", () => {
     expect(templateEditorRoute("default-early")).toEqual({
       pathname: "/template-editor",
       params: { id: "default-early" },
+    });
+    expect(shiftSelectionRoute("2026-08-13")).toEqual({
+      pathname: "/shift-selection",
+      params: { date: "2026-08-13" },
+    });
+    expect(templateEditorRoute("default-early", "2026-08-13")).toEqual({
+      pathname: "/template-editor",
+      params: { id: "default-early", quickEntryDate: "2026-08-13" },
     });
     expect(settingsEditorRoute("TARIFF")).toEqual({
       pathname: "/settings-editor",

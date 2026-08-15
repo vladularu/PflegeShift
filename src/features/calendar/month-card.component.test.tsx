@@ -3,7 +3,7 @@ import { describe, expect, it, jest } from "@jest/globals";
 import { useSharedValue } from "react-native-reanimated";
 
 import type { UserProfile } from "@/domain/types";
-import { createVisibleMonthGrid, formatDateTitle } from "@/engine/calendar";
+import { createMonthGrid, formatDateTitle } from "@/engine/calendar";
 import { MonthCard } from "@/features/calendar/month-card";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
@@ -57,7 +57,7 @@ describe("MonthCard", () => {
   });
 
   it("keeps interactive days outside the month at full contrast", async () => {
-    const outsideDate = createVisibleMonthGrid("2026-08")[0].date;
+    const outsideDate = createMonthGrid("2026-08")[0].date;
     const screen = await render(
       <MonthCard
         bottomReserve={80}
@@ -77,6 +77,28 @@ describe("MonthCard", () => {
       backgroundColor: LIGHT_PALETTE.outsideMonth,
     });
     expect(outsideDay).not.toHaveStyle({ opacity: 0.3 });
+  });
+
+  it("renders a muted sixth week for a five-week month", async () => {
+    const screen = await render(
+      <MonthCard
+        bottomReserve={55}
+        entriesByDate={new Map()}
+        month="2026-09"
+        onSelectDate={jest.fn()}
+        pageHeight={795}
+        profile={PROFILE}
+        selectedDate={null}
+      />,
+    );
+
+    const sixthWeekDay = screen.getByRole("button", {
+      name: new RegExp(formatDateTitle("2026-10-05")),
+    });
+    expect(screen.getByTestId("calendar-week-6")).toHaveStyle({ height: 114 });
+    expect(sixthWeekDay).toHaveStyle({
+      backgroundColor: LIGHT_PALETTE.outsideMonth,
+    });
   });
 
   it("describes the active stamp action on every calendar day", async () => {

@@ -21,7 +21,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import type { CalendarEntry, CalendarLabelMode, UserProfile } from "@/domain/types";
-import { createVisibleMonthGrid, formatDateTitle, isoWeekNumber, today } from "@/engine/calendar";
+import { createMonthGrid, formatDateTitle, isoWeekNumber, today } from "@/engine/calendar";
 import {
   calendarShiftDetail,
   calendarEntryPreview,
@@ -49,7 +49,7 @@ import { usePressMotion } from "@/ui/press-motion";
 const WEEKDAYS = ["M", "D", "M", "D", "F", "S", "S"];
 const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
 
-type CalendarCell = ReturnType<typeof createVisibleMonthGrid>[number];
+type CalendarCell = ReturnType<typeof createMonthGrid>[number];
 
 interface DayCellProps {
   readonly cell: CalendarCell;
@@ -521,7 +521,7 @@ export const MonthCard = memo(function MonthCard({
       easing: MOTION.easing.emphasized,
     });
   }, [internalStampProgress, stampMode, stampTransitionProgress]);
-  const grid = useMemo(() => createVisibleMonthGrid(month), [month]);
+  const grid = useMemo(() => createMonthGrid(month), [month]);
   const holidays = useMemo(
     () => (showHolidays ? holidayMapForMonth(month, profile.federalState) : new Map()),
     [month, profile.federalState, showHolidays],
@@ -603,9 +603,9 @@ export const MonthCard = memo(function MonthCard({
         {weeks.map((week, weekIndex) => (
           <View
             key={week[0].date}
+            testID={`calendar-week-${weekIndex + 1}`}
             style={{
-              height:
-                weekIndex === weeks.length - 1 ? gridLayout.lastRowHeight : gridLayout.rowHeight,
+              height: gridLayout.rowHeight,
               flexDirection: "row",
               borderTopWidth: weekIndex === 0 ? 0 : 1,
               borderTopColor: palette.separator,

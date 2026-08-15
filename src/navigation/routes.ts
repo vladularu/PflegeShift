@@ -48,6 +48,13 @@ export function quickAddRoute(date: string) {
   });
 }
 
+export function shiftSelectionRoute(date: string) {
+  return Object.freeze({
+    pathname: "/shift-selection" as const,
+    params: Object.freeze({ date: requireDate(date) }),
+  });
+}
+
 export function premiumDetailsRoute(month: string) {
   const normalizedMonth = requireMonth(month);
   return Object.freeze({
@@ -104,10 +111,20 @@ export function analysisRoute(month: string) {
   });
 }
 
-export function templateEditorRoute(id?: string) {
+export function templateEditorRoute(id?: string, quickEntryDate?: string) {
   return Object.freeze({
     pathname: "/template-editor" as const,
-    params: Object.freeze(id ? { id: requireIdentifier(id) } : {}),
+    params: Object.freeze({
+      ...(id ? { id: requireIdentifier(id) } : {}),
+      ...(quickEntryDate ? { quickEntryDate: requireDate(quickEntryDate) } : {}),
+    }),
+  });
+}
+
+export function locationPickerRoute(current?: string) {
+  return Object.freeze({
+    pathname: "/location-picker" as const,
+    params: Object.freeze(current ? { current } : {}),
   });
 }
 

@@ -1,12 +1,12 @@
 import type { CalendarEntry } from "@/domain/types";
-import { createVisibleMonthGrid } from "@/engine/calendar";
+import { createMonthGrid } from "@/engine/calendar";
 
 const visibleDatesCache = new Map<string, readonly string[]>();
 
 function visibleDatesForMonth(month: string): readonly string[] {
   const cached = visibleDatesCache.get(month);
   if (cached) return cached;
-  const dates = Object.freeze(createVisibleMonthGrid(month).map((cell) => cell.date));
+  const dates = Object.freeze(createMonthGrid(month).map((cell) => cell.date));
   visibleDatesCache.set(month, dates);
   return dates;
 }

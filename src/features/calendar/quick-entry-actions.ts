@@ -90,12 +90,19 @@ export function quickEntryEditorTarget(
 }
 
 export function quickEntryShiftInput(action: QuickEntryStampAction, date: string): SaveShiftInput {
-  const template = action.template;
+  return quickEntryShiftInputFromTemplate(action.template, date);
+}
+
+export function quickEntryShiftInputFromTemplate(
+  template: ShiftTemplate,
+  date: string,
+): SaveShiftInput {
   return Object.freeze({
     date,
     templateId: template.id,
     title: template.name,
     type: template.type,
+    allDay: template.allDay,
     startTime: template.startTime,
     endTime: template.endTime,
     breakMinutes: template.breakMinutes,

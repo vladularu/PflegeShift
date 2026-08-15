@@ -49,18 +49,6 @@ export function createMonthGrid(month: string): readonly CalendarCell[] {
   );
 }
 
-export function createVisibleMonthGrid(month: string): readonly CalendarCell[] {
-  const grid = createMonthGrid(month);
-  let lastDayIndex = grid.length - 1;
-
-  while (lastDayIndex >= 0 && !grid[lastDayIndex].inMonth) {
-    lastDayIndex -= 1;
-  }
-
-  const visibleWeekCount = Math.ceil((lastDayIndex + 1) / 7);
-  return Object.freeze(grid.slice(0, visibleWeekCount * 7));
-}
-
 export function formatMonthTitle(month: string): string {
   const date = Temporal.PlainYearMonth.from(month).toPlainDate({ day: 1 });
   return new Intl.DateTimeFormat("de-DE", {

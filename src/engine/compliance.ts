@@ -37,6 +37,7 @@ export interface ComplianceOptions {
 function isRelevant(shift: ShiftEntry): boolean {
   return (
     shift.deletedAt === null &&
+    !shift.allDay &&
     RELEVANT_TYPES.has(shift.type) &&
     shift.startTime !== null &&
     shift.endTime !== null

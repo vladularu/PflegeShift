@@ -8,9 +8,10 @@ import {
   usePflegeShiftProfile,
   usePflegeShiftStatus,
 } from "@/application/pflegeshift-provider";
-import { SHIFT_TYPE_LABELS, type CalendarEntry } from "@/domain/types";
+import { type CalendarEntry } from "@/domain/types";
 import { formatDateTitle, today } from "@/engine/calendar";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
+import { expandCalendarEntries } from "@/engine/recurrence";
 import { getPublicHolidays } from "@/engine/holidays";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { calculateDailySummary } from "@/features/calendar/calendar-metrics";
@@ -33,7 +34,7 @@ function timeLabel(entry: CalendarEntry): string {
   if (entry.kind === "APPOINTMENT") {
     return entry.allDay ? "Ganztägig" : `${entry.startTime}–${entry.endTime}`;
   }
-  if (entry.startTime === null) return SHIFT_TYPE_LABELS[entry.type];
+  if (entry.allDay || entry.startTime === null) return "Ganztägig";
   return `${entry.startTime}–${entry.endTime} · ${entry.breakMinutes} Min. Pause`;
 }
 
@@ -47,10 +48,7 @@ export function DayDetailsScreen() {
   const parsedDate = parseLocalDateRouteParam(params.date);
   const date = parsedDate.status === "valid" ? parsedDate.value : today();
   const dayEntries = useMemo(
-    () =>
-      entries
-        .filter((entry) => entry.deletedAt === null && entry.date === date)
-        .sort(compareCalendarEntries),
+    () => [...expandCalendarEntries(entries, date, date)].sort(compareCalendarEntries),
     [date, entries],
   );
   const summary = useMemo(
@@ -141,7 +139,10 @@ export function DayDetailsScreen() {
         </SurfaceCard>
       </View>
       <PrimaryButton onPress={() => router.push(quickAddRoute(date))}>
-        Eintrag hinzufügen
+        Schicht hinzufügen
+      </PrimaryButton>
+      <PrimaryButton onPress={() => router.push(dayEditorRoute(date, "APPOINTMENT"))}>
+        Termin hinzufügen
       </PrimaryButton>
     </ScrollView>
   );

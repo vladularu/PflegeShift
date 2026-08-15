@@ -55,7 +55,7 @@ describe("calendar layout", () => {
     });
   });
 
-  it("uses the available page height for five- and six-week grids", () => {
+  it("keeps every row equal in five- and six-week grids", () => {
     const fiveWeeks = calculateCalendarGridLayout({
       pageHeight: 560,
       weekCount: 5,
@@ -68,14 +68,12 @@ describe("calendar layout", () => {
     });
 
     expect(fiveWeeks.rowHeight).toBeCloseTo(103.2, 1);
-    expect(fiveWeeks.lastRowHeight).toBeCloseTo(103.2, 1);
     expect(sixWeeks.rowHeight).toBeCloseTo(86, 2);
-    expect(sixWeeks.lastRowHeight).toBeCloseTo(86, 2);
     expect(fiveWeeks.gridHeight + 16).toBe(560);
     expect(sixWeeks.gridHeight + 16).toBe(560);
   });
 
-  it("keeps SuperShift-like week density and lets the final row absorb extra height", () => {
+  it("keeps six SuperShift-like 114-point rows without stretching the final row", () => {
     const layout = calculateCalendarGridLayout({
       pageHeight: 795,
       weekCount: 6,
@@ -84,8 +82,7 @@ describe("calendar layout", () => {
 
     expect(layout.headerHeight).toBe(28);
     expect(layout.rowHeight).toBe(114);
-    expect(layout.lastRowHeight).toBe(134);
-    expect(layout.gridHeight + 63).toBe(795);
+    expect(layout.gridHeight).toBe(712);
   });
 
   it("reserves exactly the native tab inset and keeps the planner action above it", () => {

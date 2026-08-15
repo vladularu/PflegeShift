@@ -28,7 +28,7 @@ export function useQuickStampAction({
 
   return useCallback(
     async (action: QuickEntryStampAction, date: string) => {
-      if (savingDates.current.has(date)) return;
+      if (savingDates.current.has(date)) return false;
       savingDates.current.add(date);
       onBusyChange(true);
       onError("");
@@ -48,9 +48,11 @@ export function useQuickStampAction({
           announceStampResult(AccessibilityInfo.announceForAccessibility, action.label, date, 0);
           successFeedback();
         }
+        return true;
       } catch (saveError) {
         warningFeedback();
         onError(userFacingErrorMessage(saveError, "Eintrag konnte nicht geändert werden."));
+        return false;
       } finally {
         savingDates.current.delete(date);
         onBusyChange(savingDates.current.size > 0);

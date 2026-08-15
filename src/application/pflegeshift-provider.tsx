@@ -46,6 +46,10 @@ import { listTestBackupMonths } from "@/infrastructure/database/test-backup-stat
 import { DEV_TOOLS_AVAILABLE, shouldLoadDevToolState } from "@/infrastructure/dev-tools-policy";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
 import { recordDiagnostic } from "@/infrastructure/diagnostics";
+import {
+  cancelEntryNotifications,
+  syncEntryNotifications,
+} from "@/infrastructure/notifications/entry-notifications";
 
 interface PflegeShiftStatusValue {
   readonly ready: boolean;
@@ -162,6 +166,18 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       setWorkPatternSettings(nextWorkPatternSettings);
       setTestDataLoadRevision((current) => current + 1);
       setError(null);
+      const notificationTimeZone = nextProfile?.timeZone ?? "Europe/Berlin";
+      void Promise.allSettled(
+        nextEntries
+          .filter((entry) => entry.notification != null)
+          .map((entry) => syncEntryNotifications(db, entry, notificationTimeZone)),
+      ).then((results) => {
+        for (const result of results) {
+          if (result.status === "rejected") {
+            recordDiagnostic("notifications", "ENTRY_NOTIFICATION_RECONCILE_FAILED", result.reason);
+          }
+        }
+      });
     } catch (loadError) {
       recordDiagnostic("provider", "PROVIDER_RELOAD_FAILED", loadError);
       setError(DATA_LOAD_FAILURE_MESSAGE);
@@ -267,24 +283,43 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
     async (input: SaveShiftInput) => {
       const saved = await saveShift(db, input);
       setEntries((current) => upsertSortedCalendarEntry(current, saved));
+      try {
+        await syncEntryNotifications(db, saved, profile?.timeZone ?? "Europe/Berlin");
+      } catch (notificationError) {
+        recordDiagnostic("notifications", "SHIFT_NOTIFICATION_SYNC_FAILED", notificationError);
+      }
       return saved;
     },
-    [db],
+    [db, profile],
   );
 
   const upsertAppointment = useCallback(
     async (input: SaveAppointmentInput) => {
       const saved = await saveAppointment(db, input);
       setEntries((current) => upsertSortedCalendarEntry(current, saved));
+      try {
+        await syncEntryNotifications(db, saved, profile?.timeZone ?? "Europe/Berlin");
+      } catch (notificationError) {
+        recordDiagnostic(
+          "notifications",
+          "APPOINTMENT_NOTIFICATION_SYNC_FAILED",
+          notificationError,
+        );
+      }
       return saved;
     },
-    [db],
+    [db, profile],
   );
 
   const removeEntry = useCallback(
     async (entry: CalendarEntry) => {
       await deleteCalendarEntry(db, entry);
       setEntries((current) => current.filter((item) => item.id !== entry.id));
+      try {
+        await cancelEntryNotifications(db, entry);
+      } catch (notificationError) {
+        recordDiagnostic("notifications", "ENTRY_NOTIFICATION_CANCEL_FAILED", notificationError);
+      }
     },
     [db],
   );

@@ -33,9 +33,10 @@ import {
   usePflegeShiftTemplates,
   usePflegeShiftTestData,
 } from "@/application/pflegeshift-provider";
-import { type CalendarEntry } from "@/domain/types";
-import { addMonths, currentMonth, today } from "@/engine/calendar";
+import type { CalendarEntry } from "@/domain/types";
+import { addMonths, createMonthGrid, currentMonth, today } from "@/engine/calendar";
 import { holidayMapForMonth } from "@/engine/holidays";
+import { expandCalendarEntries } from "@/engine/recurrence";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
@@ -56,12 +57,14 @@ import {
   type QuickEntryAction,
   type QuickEntryStampAction,
 } from "@/features/calendar/quick-entry-actions";
-import { QuickPlannerDock } from "@/features/calendar/quick-planner-dock";
+import { consumeShiftSelectionPopupRestore } from "@/features/calendar/quick-entry-navigation";
 import { QuickEntryPopup } from "@/features/calendar/quick-entry-popup";
+import { QuickPlannerDock } from "@/features/calendar/quick-planner-dock";
 import { stampToolSelectedAnnouncement } from "@/features/calendar/stamp-accessibility";
 import { YearOverview } from "@/features/calendar/year-overview";
+import { useOpenShiftSelection } from "@/features/calendar/use-open-shift-selection";
 import { useQuickStampAction } from "@/features/calendar/use-quick-stamp-action";
-import { dayDetailsRoute, dayEditorRoute } from "@/navigation/routes";
+import { dayDetailsRoute, dayEditorRoute, quickAddRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { calendarTabShouldOpenToday, useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
@@ -78,7 +81,6 @@ const MONTHS_AFTER = 36;
 interface QuickPopupState {
   readonly date: string;
   readonly anchor: CalendarAnchorRect;
-  readonly accessibilityTarget?: number | null;
 }
 
 export function CalendarScreen() {
@@ -129,17 +131,6 @@ export function CalendarScreen() {
     [reduceMotion],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const pending = pendingSelectedDate.current;
-      if (pending !== null) {
-        pendingSelectedDate.current = null;
-        setSelectedDate(pending);
-        setSelectionVisible(true);
-      }
-    }, []),
-  );
-
   useEffect(() => {
     if (ready && error === null && profile === null) router.replace("/onboarding");
   }, [error, profile, ready]);
@@ -151,6 +142,7 @@ export function CalendarScreen() {
     setSelectedDate(next);
     setSelectionVisible(false);
     setVisibleMonth(targetMonth);
+    setQuickPopup(null);
     settledMonth.current = targetMonth;
     setMonthAnchor(targetMonth);
   }, [activeMonthCoordinator, profileReady, targetMonth, timeZone]);
@@ -166,17 +158,25 @@ export function CalendarScreen() {
     if (isFocused) return;
     setPlannerMode(false);
     setStampTool(null);
-    setQuickPopup(null);
     setPlannerError(null);
   }, [isFocused]);
 
+  const calendarEntries = useMemo(() => {
+    const firstMonth = months[0];
+    const lastMonth = months[months.length - 1];
+    const firstDate = createMonthGrid(firstMonth)[0].date;
+    const lastGrid = createMonthGrid(lastMonth);
+    const lastDate = lastGrid[lastGrid.length - 1].date;
+    return expandCalendarEntries(entries, firstDate, lastDate);
+  }, [entries, months]);
+
   const entryIndex = useMemo(
     () =>
-      buildCalendarEntryIndex(entries, {
+      buildCalendarEntryIndex(calendarEntries, {
         showAppointments: preferences.showAppointments,
         showShifts: preferences.showShifts,
       }),
-    [entries, preferences.showAppointments, preferences.showShifts],
+    [calendarEntries, preferences.showAppointments, preferences.showShifts],
   );
   const { entriesByDate, visibleEntries } = entryIndex;
   const quickActions = useMemo(() => buildQuickEntryActions(templates), [templates]);
@@ -205,7 +205,7 @@ export function CalendarScreen() {
   );
 
   const selectDate = useCallback(
-    (date: string, anchor: CalendarAnchorRect, accessibilityTarget?: number | null) => {
+    (date: string, anchor: CalendarAnchorRect) => {
       const action = calendarDayPressAction(plannerMode, stampTool !== null);
       if (action === "STAMP") {
         setSelectedDate(date);
@@ -224,7 +224,7 @@ export function CalendarScreen() {
       }
       setSelectedDate(date);
       setSelectionVisible(true);
-      setQuickPopup({ date, anchor, accessibilityTarget });
+      setQuickPopup({ date, anchor });
       selectionFeedback();
     },
     [plannerMode, stampDate, stampTool],
@@ -245,8 +245,8 @@ export function CalendarScreen() {
       const activeMonth = activeMonthCoordinator.getMonth();
       if (activeMonth === visibleMonth) return;
 
-      setQuickPopup(null);
       setVisibleMonth(activeMonth);
+      setQuickPopup(null);
       settledMonth.current = activeMonth;
       setSelectedDate((date) => clampDateToMonth(date, activeMonth));
       setSelectionVisible(false);
@@ -259,10 +259,22 @@ export function CalendarScreen() {
     }, [activeMonthCoordinator, months, preferences.viewMode, scrollToMonth, visibleMonth]),
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      const pending = pendingSelectedDate.current;
+      if (pending !== null) {
+        pendingSelectedDate.current = null;
+        setSelectedDate(pending);
+        setSelectionVisible(true);
+      }
+      if (!consumeShiftSelectionPopupRestore()) setQuickPopup(null);
+    }, []),
+  );
+
   const goToToday = useCallback(() => {
     const currentDate = today(timeZone);
-    const target = calendarTodayTarget(currentDate);
     setQuickPopup(null);
+    const target = calendarTodayTarget(currentDate);
     setSelectedDate(target.selectedDate);
     setSelectionVisible(true);
     setVisibleMonth(target.visibleMonth);
@@ -340,8 +352,8 @@ export function CalendarScreen() {
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const month = monthAtPagerOffset(months, pageHeight, event.nativeEvent.contentOffset.y);
       if (!month || month === visibleMonth) return;
-      setHeaderDirection(month > visibleMonth ? "NEXT" : "PREVIOUS");
       setQuickPopup(null);
+      setHeaderDirection(month > visibleMonth ? "NEXT" : "PREVIOUS");
       setVisibleMonth(month);
       activeMonthCoordinator.setMonth(month);
       setSelectedDate((date) => clampDateToMonth(date, month));
@@ -354,9 +366,9 @@ export function CalendarScreen() {
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const month = monthAtPagerOffset(months, pageHeight, event.nativeEvent.contentOffset.y);
       if (!month) return;
+      setQuickPopup(null);
       const didChangeMonth = settledMonth.current !== month;
       settledMonth.current = month;
-      setQuickPopup(null);
       setVisibleMonth(month);
       activeMonthCoordinator.setMonth(month);
       setSelectedDate((date) => clampDateToMonth(date, month));
@@ -385,32 +397,18 @@ export function CalendarScreen() {
     AccessibilityInfo.announceForAccessibility("Planungsmodus beendet.");
   }, []);
 
-  const closeQuickPopup = useCallback(() => {
-    setQuickPopup(null);
-  }, []);
-
   const openQuickEditor = useCallback((action: QuickEntryAction, date: string) => {
-    const target = quickEntryEditorTarget(action, date);
-    if (target === null) return;
-    pendingSelectedDate.current = target.date;
+    pendingSelectedDate.current = date;
     setQuickPopup(null);
     setPlannerMode(false);
     setStampTool(null);
+    if (action.kind === "CUSTOM_SHIFT") {
+      router.push(quickAddRoute(date));
+      return;
+    }
+    const target = quickEntryEditorTarget(action, date);
+    if (target === null) return;
     router.push(dayEditorRoute(target.date, target.mode));
-  }, []);
-
-  const openEntry = useCallback((entry: CalendarEntry) => {
-    pendingSelectedDate.current = entry.date;
-    setQuickPopup(null);
-    router.push(
-      dayEditorRoute(entry.date, entry.kind === "APPOINTMENT" ? "APPOINTMENT" : "SHIFT", entry.id),
-    );
-  }, []);
-
-  const openDayDetails = useCallback((date: string) => {
-    pendingSelectedDate.current = date;
-    setQuickPopup(null);
-    router.push(dayDetailsRoute(date));
   }, []);
 
   const selectPlannerAction = useCallback(
@@ -426,10 +424,21 @@ export function CalendarScreen() {
     [openQuickEditor, selectedDate],
   );
 
+  const closeQuickPopup = useCallback(() => setQuickPopup(null), []);
+  const openShiftPicker = useOpenShiftSelection({ setPlannerMode, setStampTool });
+  const openEntry = useCallback((entry: CalendarEntry) => {
+    pendingSelectedDate.current = entry.date;
+    setQuickPopup(null);
+    router.push(dayEditorRoute(entry.date, entry.kind, entry.id));
+  }, []);
+  const openDayDetails = useCallback((date: string) => {
+    pendingSelectedDate.current = date;
+    setQuickPopup(null);
+    router.push(dayDetailsRoute(date));
+  }, []);
   const selectPopupAction = useCallback(
     (action: QuickEntryAction, date: string) => {
       if (isQuickEntryStampAction(action)) {
-        setQuickPopup(null);
         void saveStampAction(action, date);
         return;
       }
@@ -444,6 +453,7 @@ export function CalendarScreen() {
   const moveYear = useCallback(
     (amount: number) => {
       const nextMonth = addMonths(visibleMonth, amount * 12);
+      setQuickPopup(null);
       setHeaderDirection(amount >= 0 ? "NEXT" : "PREVIOUS");
       setVisibleMonth(nextMonth);
       activeMonthCoordinator.setMonth(nextMonth);
@@ -534,6 +544,7 @@ export function CalendarScreen() {
           exiting={FadeOut.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
           onLayout={measurePager}
           style={{ flex: 1 }}
+          testID="calendar-month-pager-shell"
         >
           <Animated.View style={[{ flex: 1 }, calendarHopStyle]}>
             {pageHeight > 0 ? (
@@ -570,7 +581,7 @@ export function CalendarScreen() {
               />
             ) : null}
           </Animated.View>
-          {!isFocused ? null : (
+          {!isFocused || quickPopup !== null ? null : (
             <QuickPlannerDock
               actions={quickPlannerActions}
               activeKey={activeKey}
@@ -598,7 +609,7 @@ export function CalendarScreen() {
           />
         </Animated.View>
       )}
-      {isFocused && quickPopup ? (
+      {quickPopup ? (
         <QuickEntryPopup
           actions={quickActions}
           anchor={quickPopup.anchor}
@@ -607,10 +618,10 @@ export function CalendarScreen() {
           entries={entriesByDate.get(quickPopup.date) ?? []}
           holidayName={quickPopupHolidayName}
           onClose={closeQuickPopup}
-          onOpenEntry={openEntry}
           onOpenDetails={openDayDetails}
+          onOpenEntry={openEntry}
+          onOpenShiftPicker={openShiftPicker}
           onSelectAction={selectPopupAction}
-          restoreFocusTarget={quickPopup.accessibilityTarget}
         />
       ) : null}
     </View>

@@ -11,8 +11,8 @@ import type { ShiftTemplate } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { formatDateTitle, today } from "@/engine/calendar";
 import { parseLocalDateRouteParam, type RouteParam } from "@/navigation/route-params";
-import { dayEditorRoute } from "@/navigation/routes";
-import { APPOINTMENT_COLOR, usePalette } from "@/theme/palette";
+import { templateEditorRoute } from "@/navigation/routes";
+import { usePalette } from "@/theme/palette";
 import {
   CardSeparator,
   ColorBadge,
@@ -22,8 +22,10 @@ import {
 } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { successFeedback, warningFeedback } from "@/ui/haptics";
+import { PrimaryButton } from "@/ui/form-controls";
 
 function templateSubtitle(template: ShiftTemplate): string {
+  if (template.allDay) return "Ganztägig";
   if (template.type === "FREE") return "Keine Arbeitszeit";
   if (template.startTime === null || template.endTime === null) {
     return "Wird bis zum Tages-Soll angerechnet";
@@ -68,11 +70,14 @@ export function QuickAddScreen() {
         templateId: template.id,
         title: template.name,
         type: template.type,
+        allDay: template.allDay,
         startTime: template.startTime,
         endTime: template.endTime,
         breakMinutes: template.breakMinutes,
         color: template.color,
         symbol: template.symbol,
+        notification: template.notification,
+        location: template.location,
       });
       successFeedback();
       router.back();
@@ -90,25 +95,8 @@ export function QuickAddScreen() {
       style={{ backgroundColor: palette.background }}
       contentContainerStyle={{ gap: 12, padding: 16, paddingBottom: 32 }}
     >
-      <Stack.Screen options={{ title: formatDateTitle(date) }} />
-      <SectionHeader title="Eintrag" />
-      <SurfaceCard>
-        <RowButton
-          leading={<ColorBadge color={palette.primary} label="D" />}
-          onPress={() => router.replace(dayEditorRoute(date, "SHIFT"))}
-          subtitle="Zeiten und Dienstart festlegen"
-          title="Dienst"
-        />
-        <CardSeparator inset={70} />
-        <RowButton
-          leading={<ColorBadge color={APPOINTMENT_COLOR} label="T" />}
-          onPress={() => router.replace(dayEditorRoute(date, "APPOINTMENT"))}
-          subtitle="Privater oder beruflicher Termin"
-          title="Termin"
-        />
-      </SurfaceCard>
-
-      <SectionHeader title="Schnellauswahl" caption="Mit einem Tipp direkt speichern" />
+      <Stack.Screen options={{ title: "Schicht" }} />
+      <SectionHeader title={formatDateTitle(date)} caption="Schicht auswählen" />
       <SurfaceCard>
         {templates.map((template, index) => (
           <View key={template.id}>
@@ -123,6 +111,9 @@ export function QuickAddScreen() {
           </View>
         ))}
       </SurfaceCard>
+      <PrimaryButton onPress={() => router.push(templateEditorRoute())}>
+        Schicht hinzufügen
+      </PrimaryButton>
       {error ? (
         <Text accessibilityRole="alert" style={{ color: palette.danger, fontWeight: "700" }}>
           {error}

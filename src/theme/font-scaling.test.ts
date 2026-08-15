@@ -9,6 +9,7 @@ const COMPACT_SCALE_ALLOWLIST = new Set([
   "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
   "features/calendar/quick-entry-popup.tsx",
+  "features/calendar/shift-selection-panel.tsx",
   "features/calendar/year-overview.tsx",
   "ui/design-system.tsx",
 ]);
@@ -18,6 +19,7 @@ const TEXT_SHRINK_ALLOWLIST = new Set(["ui/design-system.tsx"]);
 const SINGLE_LINE_ALLOWLIST = new Set([
   "features/calendar/month-card.tsx",
   "features/calendar/quick-entry-popup.tsx",
+  "features/calendar/shift-selection-panel.tsx",
   "ui/design-system.tsx",
 ]);
 

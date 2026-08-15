@@ -36,6 +36,7 @@ const SHIFT_SYMBOLS: Readonly<Record<ShiftType, string>> = {
 export interface ShiftTypePreset {
   readonly templateId: string | null;
   readonly title: string;
+  readonly allDay: boolean;
   readonly startTime: string | null;
   readonly endTime: string | null;
   readonly breakMinutes: number;
@@ -58,6 +59,7 @@ export function resolveShiftTypePreset(
     return {
       templateId: template.id,
       title: template.name,
+      allDay: template.allDay ?? template.startTime === null,
       startTime: template.startTime,
       endTime: template.endTime,
       breakMinutes: template.breakMinutes,
@@ -70,6 +72,7 @@ export function resolveShiftTypePreset(
     return {
       templateId: null,
       title: SHIFT_TYPE_LABELS[type],
+      allDay: true,
       startTime: null,
       endTime: null,
       breakMinutes: 0,
@@ -82,6 +85,7 @@ export function resolveShiftTypePreset(
   return {
     templateId: null,
     title: SHIFT_TYPE_LABELS[type],
+    allDay: false,
     ...fallback,
     color: SHIFT_TYPE_COLORS[type],
     symbol: SHIFT_SYMBOLS[type],

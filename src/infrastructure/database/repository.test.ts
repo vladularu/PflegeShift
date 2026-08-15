@@ -68,7 +68,7 @@ describe("SQLite repository", () => {
     expect(templates).toHaveLength(7);
     expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("–");
     expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({
-      count: 6,
+      count: 7,
     });
     expect(testDb.database.pragma("secure_delete", { simple: true })).toBe(1);
   });
@@ -289,6 +289,19 @@ describe("SQLite repository", () => {
       startTime: "16:00",
       endTime: "17:00",
       color: "#F2A93B",
+      recurrence: { frequency: "WEEK", interval: 1 },
+      notification: {
+        amount: 30,
+        unit: "MINUTE",
+        direction: "BEFORE",
+        reference: "START",
+      },
+      location: { name: "Heppenheim", latitude: 49.6408, longitude: 8.6373 },
+    });
+    expect(appointment).toMatchObject({
+      recurrence: { frequency: "WEEK", interval: 1 },
+      notification: { amount: 30, unit: "MINUTE" },
+      location: { name: "Heppenheim" },
     });
     expect(await listCalendarEntries(db, "2026-07-30", "2026-07-30")).toHaveLength(2);
 

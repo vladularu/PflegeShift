@@ -19,14 +19,14 @@ import {
   SurfaceCard,
 } from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
-import { useFeedback } from "@/ui/feedback";
 import { FormStatus } from "@/ui/form-layout";
-import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
+import { selectionFeedback } from "@/ui/haptics";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { TabRootHeader } from "@/ui/tab-root-header";
 import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
 function templateSubtitle(template: ShiftTemplate): string {
+  if (template.allDay) return "Ganztägig";
   if (template.type === "FREE") return "Keine Arbeitszeit";
   if (template.startTime === null || template.endTime === null) {
     return "Ergänzt bis zum Tages-Soll";
@@ -37,11 +37,10 @@ function templateSubtitle(template: ShiftTemplate): string {
 export function TemplatesManagerScreen() {
   const palette = usePalette();
   useThemeStatusBar();
-  const { showFeedback } = useFeedback();
   const { fontScale } = useWindowDimensions();
   const stackActions = fontScale >= 1.6;
   const { error: loadError, ready, reload } = usePflegeShiftStatus();
-  const { templates, removeTemplate, restoreTemplate, moveTemplate } = usePflegeShiftTemplates();
+  const { templates, removeTemplate, moveTemplate } = usePflegeShiftTemplates();
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [busyTemplateId, setBusyTemplateId] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
@@ -76,25 +75,6 @@ export function TemplatesManagerScreen() {
         void runTemplateAction(template, "Vorlage konnte nicht gelöscht werden.", async () => {
           await removeTemplate(template);
           selectionFeedback();
-          showFeedback({
-            message: "Vorlage gelöscht.",
-            actionLabel: "Rückgängig",
-            onAction: async () => {
-              try {
-                await restoreTemplate(template);
-                successFeedback();
-                showFeedback({ message: "Vorlage wiederhergestellt.", duration: 2200 });
-              } catch (restoreError) {
-                warningFeedback();
-                showFeedback({
-                  message: userFacingErrorMessage(
-                    restoreError,
-                    "Vorlage konnte nicht wiederhergestellt werden.",
-                  ),
-                });
-              }
-            },
-          });
         }),
     });
   }

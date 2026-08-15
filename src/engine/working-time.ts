@@ -15,10 +15,10 @@ function timeParts(value: string): { hour: number; minute: number } {
 }
 
 export function calculateTimedShiftBounds(
-  shift: Pick<ShiftEntry, "date" | "startTime" | "endTime" | "breakMinutes">,
+  shift: Pick<ShiftEntry, "date" | "startTime" | "endTime" | "breakMinutes" | "allDay">,
   timeZone: string,
 ): TimedShiftBounds | null {
-  if (shift.startTime === null || shift.endTime === null) {
+  if (shift.allDay || shift.startTime === null || shift.endTime === null) {
     return null;
   }
 
@@ -47,7 +47,7 @@ export function calculateTimedShiftBounds(
 }
 
 export function calculateTimedShiftMinutes(
-  shift: Pick<ShiftEntry, "date" | "startTime" | "endTime" | "breakMinutes">,
+  shift: Pick<ShiftEntry, "date" | "startTime" | "endTime" | "breakMinutes" | "allDay">,
   timeZone: string,
 ): number {
   return calculateTimedShiftBounds(shift, timeZone)?.netMinutes ?? 0;

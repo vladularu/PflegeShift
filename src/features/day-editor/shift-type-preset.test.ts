@@ -35,6 +35,7 @@ describe("resolveShiftTypePreset", () => {
     expect(resolveShiftTypePreset("NIGHT", [night])).toEqual({
       templateId: "night-custom",
       title: "Meine Nacht",
+      allDay: false,
       startTime: "20:45",
       endTime: "07:15",
       breakMinutes: 45,

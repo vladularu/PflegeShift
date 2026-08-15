@@ -172,6 +172,18 @@ CREATE INDEX IF NOT EXISTS idx_shift_templates_deleted_at
   ON shift_templates(deleted_at) WHERE deleted_at IS NOT NULL;
 `;
 
+const MIGRATION_7 = `
+CREATE TABLE IF NOT EXISTS scheduled_entry_notifications (
+  entry_kind TEXT NOT NULL CHECK (entry_kind IN ('SHIFT','APPOINTMENT')),
+  entry_id TEXT NOT NULL,
+  occurrence_date TEXT NOT NULL CHECK (length(occurrence_date) = 10),
+  notification_id TEXT NOT NULL,
+  PRIMARY KEY (entry_kind, entry_id, occurrence_date, notification_id)
+);
+CREATE INDEX IF NOT EXISTS idx_scheduled_entry_notifications_entry
+  ON scheduled_entry_notifications(entry_kind, entry_id);
+`;
+
 async function addColumnIfMissing(
   db: SQLiteDatabase,
   table: string,
@@ -282,5 +294,23 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
   if (migration6 === null) {
     await db.execAsync(MIGRATION_6);
     await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 6, now);
+  }
+
+  const migration7 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=7",
+  );
+  if (migration7 === null) {
+    await addColumnIfMissing(db, "shift_templates", "notification_json", "TEXT");
+    await addColumnIfMissing(db, "shift_templates", "location_json", "TEXT");
+    await addColumnIfMissing(db, "shift_templates", "all_day", "INTEGER NOT NULL DEFAULT 0");
+    await addColumnIfMissing(db, "shift_entries", "notification_json", "TEXT");
+    await addColumnIfMissing(db, "shift_entries", "location_json", "TEXT");
+    await addColumnIfMissing(db, "shift_entries", "all_day", "INTEGER NOT NULL DEFAULT 0");
+    await addColumnIfMissing(db, "appointments", "recurrence_frequency", "TEXT");
+    await addColumnIfMissing(db, "appointments", "recurrence_interval", "INTEGER");
+    await addColumnIfMissing(db, "appointments", "notification_json", "TEXT");
+    await addColumnIfMissing(db, "appointments", "location_json", "TEXT");
+    await db.execAsync(MIGRATION_7);
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 7, now);
   }
 }

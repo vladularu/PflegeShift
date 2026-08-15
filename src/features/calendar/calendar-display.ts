@@ -45,7 +45,7 @@ export function calendarShiftDetail(
     readonly timeZone: string;
   },
 ): string | null {
-  if (entry.startTime === null || entry.endTime === null) return null;
+  if (entry.allDay || entry.startTime === null || entry.endTime === null) return null;
   const parts: string[] = [];
   if (options.showShiftTimes) parts.push(entry.startTime);
   if (options.showShiftDuration) {

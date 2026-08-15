@@ -43,7 +43,12 @@ function roundMoney(value: number): number {
 }
 
 function isWorkShift(shift: ShiftEntry): boolean {
-  return WORK_TYPES.has(shift.type) && shift.startTime !== null && shift.endTime !== null;
+  return (
+    !shift.allDay &&
+    WORK_TYPES.has(shift.type) &&
+    shift.startTime !== null &&
+    shift.endTime !== null
+  );
 }
 
 function zonedStart(shift: ShiftEntry, timeZone: string): Temporal.ZonedDateTime {

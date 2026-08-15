@@ -108,15 +108,44 @@ export interface UserProfile {
   readonly updatedAt: string;
 }
 
+export const RECURRENCE_FREQUENCIES = ["DAY", "WEEK", "MONTH", "YEAR"] as const;
+export type RecurrenceFrequency = (typeof RECURRENCE_FREQUENCIES)[number];
+
+export interface RecurrenceRule {
+  readonly interval: number;
+  readonly frequency: RecurrenceFrequency;
+}
+
+export const NOTIFICATION_UNITS = ["MINUTE", "HOUR", "DAY", "WEEK"] as const;
+export type NotificationUnit = (typeof NOTIFICATION_UNITS)[number];
+export type NotificationDirection = "BEFORE" | "AFTER";
+export type NotificationReference = "START" | "END";
+
+export interface EntryNotification {
+  readonly amount: number;
+  readonly unit: NotificationUnit;
+  readonly direction: NotificationDirection;
+  readonly reference: NotificationReference;
+}
+
+export interface EntryLocation {
+  readonly name: string;
+  readonly latitude: number;
+  readonly longitude: number;
+}
+
 export interface ShiftTemplate {
   readonly id: string;
   readonly name: string;
   readonly type: ShiftType;
+  readonly allDay?: boolean;
   readonly startTime: string | null;
   readonly endTime: string | null;
   readonly breakMinutes: number;
   readonly color: string;
   readonly symbol: string;
+  readonly notification?: EntryNotification | null;
+  readonly location?: EntryLocation | null;
   readonly sortOrder: number;
   readonly revision: number;
   readonly createdAt: string;
@@ -131,12 +160,15 @@ export interface ShiftEntry {
   readonly templateId: string | null;
   readonly title: string;
   readonly type: ShiftType;
+  readonly allDay?: boolean;
   readonly startTime: string | null;
   readonly endTime: string | null;
   readonly breakMinutes: number;
   readonly color: string;
   readonly symbol: string;
   readonly note: string | null;
+  readonly notification?: EntryNotification | null;
+  readonly location?: EntryLocation | null;
   readonly overtimeMinutes: number;
   readonly holidayPremiumMode: HolidayPremiumMode;
   readonly revision: number;
@@ -155,6 +187,9 @@ export interface Appointment {
   readonly endTime: string | null;
   readonly color: string;
   readonly note: string | null;
+  readonly recurrence?: RecurrenceRule | null;
+  readonly notification?: EntryNotification | null;
+  readonly location?: EntryLocation | null;
   readonly revision: number;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -199,11 +234,14 @@ export interface SaveShiftTemplateInput {
   readonly expectedRevision?: number;
   readonly name: string;
   readonly type: ShiftType;
+  readonly allDay?: boolean;
   readonly startTime: string | null;
   readonly endTime: string | null;
   readonly breakMinutes: number;
   readonly color: string;
   readonly symbol: string;
+  readonly notification?: EntryNotification | null;
+  readonly location?: EntryLocation | null;
   readonly sortOrder: number;
 }
 
@@ -214,12 +252,15 @@ export interface SaveShiftInput {
   readonly templateId?: string | null;
   readonly title: string;
   readonly type: ShiftType;
+  readonly allDay?: boolean;
   readonly startTime?: string | null;
   readonly endTime?: string | null;
   readonly breakMinutes?: number;
   readonly color: string;
   readonly symbol: string;
   readonly note?: string | null;
+  readonly notification?: EntryNotification | null;
+  readonly location?: EntryLocation | null;
   readonly overtimeMinutes?: number;
   readonly holidayPremiumMode?: HolidayPremiumMode;
 }
@@ -344,6 +385,9 @@ export interface SaveAppointmentInput {
   readonly endTime?: string | null;
   readonly color: string;
   readonly note?: string | null;
+  readonly recurrence?: RecurrenceRule | null;
+  readonly notification?: EntryNotification | null;
+  readonly location?: EntryLocation | null;
 }
 
 export const TEST_SCENARIOS = [

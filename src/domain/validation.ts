@@ -5,14 +5,19 @@ import {
   FEDERAL_STATES,
   PAY_GROUPS,
   PAY_LEVELS,
+  NOTIFICATION_UNITS,
+  RECURRENCE_FREQUENCIES,
   SHIFT_TYPES,
   type AllowanceStatus,
   type FederalState,
+  type EntryLocation,
+  type EntryNotification,
   type MonthlyTariffDecision,
   type SaveAppointmentInput,
   type SaveShiftInput,
   type SaveProfileInput,
   type SaveShiftTemplateInput,
+  type RecurrenceRule,
 } from "@/domain/types";
 import { UserFacingError } from "@/domain/errors";
 
@@ -169,18 +174,67 @@ function requireTimedRange(startTime: string, endTime: string): void {
   }
 }
 
+function validateLocation(value: EntryLocation | null | undefined): EntryLocation | null {
+  if (value === null || value === undefined) return null;
+  const name = requireNonEmpty(value.name, "Ort");
+  if (
+    !Number.isFinite(value.latitude) ||
+    value.latitude < -90 ||
+    value.latitude > 90 ||
+    !Number.isFinite(value.longitude) ||
+    value.longitude < -180 ||
+    value.longitude > 180
+  ) {
+    throw new ValidationError("Der ausgewählte Ort enthält ungültige Koordinaten.");
+  }
+  return Object.freeze({ name, latitude: value.latitude, longitude: value.longitude });
+}
+
+function validateNotification(
+  value: EntryNotification | null | undefined,
+): EntryNotification | null {
+  if (value === null || value === undefined) return null;
+  if (!Number.isInteger(value.amount) || value.amount < 0 || value.amount > 365) {
+    throw new ValidationError("Der Benachrichtigungsabstand ist ungültig.");
+  }
+  if (!NOTIFICATION_UNITS.includes(value.unit)) {
+    throw new ValidationError("Die Benachrichtigungseinheit ist ungültig.");
+  }
+  if (value.direction !== "BEFORE" && value.direction !== "AFTER") {
+    throw new ValidationError("Die Benachrichtigungsrichtung ist ungültig.");
+  }
+  if (value.reference !== "START" && value.reference !== "END") {
+    throw new ValidationError("Der Benachrichtigungszeitpunkt ist ungültig.");
+  }
+  return Object.freeze({ ...value });
+}
+
+function validateRecurrence(value: RecurrenceRule | null | undefined): RecurrenceRule | null {
+  if (value === null || value === undefined) return null;
+  if (!Number.isInteger(value.interval) || value.interval < 1 || value.interval > 99) {
+    throw new ValidationError("Das Wiederholungsintervall muss zwischen 1 und 99 liegen.");
+  }
+  if (!RECURRENCE_FREQUENCIES.includes(value.frequency)) {
+    throw new ValidationError("Die Wiederholung ist ungültig.");
+  }
+  return Object.freeze({ ...value });
+}
+
 export function validateTemplate(input: SaveShiftTemplateInput): SaveShiftTemplateInput {
   if (!SHIFT_TYPES.includes(input.type)) {
     throw new ValidationError("Unbekannte Dienstart.");
   }
   const base = {
     ...input,
+    allDay: input.allDay ?? false,
     name: requireNonEmpty(input.name, "Name"),
     color: requireColor(input.color),
     symbol: requireNonEmpty(input.symbol, "Symbol").slice(0, 4),
+    notification: validateNotification(input.notification),
+    location: validateLocation(input.location),
   };
   if (input.type === "VACATION" || input.type === "SICK" || input.type === "FREE") {
-    return { ...base, startTime: null, endTime: null, breakMinutes: 0 };
+    return { ...base, allDay: true, startTime: null, endTime: null, breakMinutes: 0 };
   }
   const startTime = requireLocalTime(input.startTime ?? "");
   const endTime = requireLocalTime(input.endTime ?? "");
@@ -190,7 +244,7 @@ export function validateTemplate(input: SaveShiftTemplateInput): SaveShiftTempla
     ...base,
     startTime,
     endTime,
-    breakMinutes: requireBreakMinutes(input.breakMinutes),
+    breakMinutes: base.allDay ? 0 : requireBreakMinutes(input.breakMinutes),
   };
 }
 
@@ -201,11 +255,14 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
 
   const base = {
     ...input,
+    allDay: input.allDay ?? false,
     date: requireLocalDate(input.date),
     title: requireNonEmpty(input.title, "Bezeichnung"),
     color: requireColor(input.color),
     symbol: requireNonEmpty(input.symbol, "Symbol").slice(0, 4),
     note: input.note?.trim() || null,
+    notification: validateNotification(input.notification),
+    location: validateLocation(input.location),
     overtimeMinutes: input.overtimeMinutes ?? 0,
     holidayPremiumMode: input.holidayPremiumMode ?? "WITH_TIME_OFF",
   };
@@ -221,7 +278,14 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
   }
 
   if (input.type === "VACATION" || input.type === "SICK" || input.type === "FREE") {
-    return { ...base, startTime: null, endTime: null, breakMinutes: 0, overtimeMinutes: 0 };
+    return {
+      ...base,
+      allDay: true,
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+      overtimeMinutes: 0,
+    };
   }
 
   const startTime = requireLocalTime(input.startTime ?? "");
@@ -231,7 +295,7 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
     ...base,
     startTime,
     endTime,
-    breakMinutes: requireBreakMinutes(input.breakMinutes ?? 0),
+    breakMinutes: base.allDay ? 0 : requireBreakMinutes(input.breakMinutes ?? 0),
   };
 }
 
@@ -242,6 +306,9 @@ export function validateAppointment(input: SaveAppointmentInput): SaveAppointmen
     title: requireNonEmpty(input.title, "Titel"),
     color: requireColor(input.color),
     note: input.note?.trim() || null,
+    recurrence: validateRecurrence(input.recurrence),
+    notification: validateNotification(input.notification),
+    location: validateLocation(input.location),
   };
 
   if (input.allDay) {

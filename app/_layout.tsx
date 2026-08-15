@@ -140,11 +140,30 @@ export default function RootLayout() {
                         }}
                       />
                       <Stack.Screen
+                        name="shift-selection"
+                        options={{
+                          headerShown: false,
+                          presentation: "card",
+                          animation: "slide_from_bottom",
+                          contentStyle: { backgroundColor: palette.background },
+                        }}
+                      />
+                      <Stack.Screen
                         name="template-editor"
                         options={{
                           title: "Schicht",
                           presentation: "card",
                           contentStyle: { backgroundColor: palette.background },
+                        }}
+                      />
+                      <Stack.Screen
+                        name="location-picker"
+                        options={{
+                          title: "Ort",
+                          presentation: "formSheet",
+                          contentStyle: { backgroundColor: "transparent" },
+                          sheetAllowedDetents: [0.92, 1],
+                          sheetGrabberVisible: true,
                         }}
                       />
                       <Stack.Screen name="salary" options={{ headerShown: false }} />

@@ -12,12 +12,16 @@ const mockUpsertShift = jest.fn<() => Promise<ShiftEntry>>();
 const mockUpsertAppointment = jest.fn();
 
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), dismissTo: jest.fn() },
   Stack: {
-    Screen: ({ options }: { options: { headerRight?: () => React.ReactNode } }) =>
-      options.headerRight?.() ?? null,
+    Screen: ({ options }: { options: { headerLeft?: () => React.ReactNode } }) =>
+      options.headerLeft?.() ?? null,
   },
-  useLocalSearchParams: () => ({ date: "2026-08-04", mode: "SHIFT" }),
+  useFocusEffect: (effect: () => void) => effect(),
+  useLocalSearchParams: () => ({
+    date: "2026-08-04",
+    mode: "SHIFT",
+  }),
 }));
 
 jest.mock("@/application/pflegeshift-provider", () => ({
@@ -25,6 +29,7 @@ jest.mock("@/application/pflegeshift-provider", () => ({
     entries: [],
     upsertShift: mockUpsertShift,
     upsertAppointment: mockUpsertAppointment,
+    removeEntry: jest.fn(),
   }),
   usePflegeShiftProfile: () => ({ profile: null }),
   usePflegeShiftStatus: () => ({ error: null, ready: true, reload: jest.fn() }),
@@ -43,7 +48,11 @@ jest.mock("@/ui/haptics", () => ({
 
 describe("DayEditorScreen", () => {
   beforeEach(() => {
+    mockUpsertShift.mockReset();
     mockUpsertShift.mockResolvedValue({ id: "saved" } as ShiftEntry);
+    jest.mocked(router.back).mockClear();
+    jest.mocked(router.dismissTo).mockClear();
+    jest.mocked(successFeedback).mockClear();
   });
 
   it("saves and closes without showing a success snackbar", async () => {
@@ -61,7 +70,7 @@ describe("DayEditorScreen", () => {
     );
 
     await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Sichern und schließen" }));
+      fireEvent.press(screen.getByRole("button", { name: "Schließen und speichern" }));
     });
 
     await waitFor(() => expect(mockUpsertShift).toHaveBeenCalledTimes(1));
