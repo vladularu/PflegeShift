@@ -49,3 +49,9 @@ app-example
 # generated native folders
 /ios
 /android
+
+# separate project and local workflow evidence
+/dashboard/
+/artifacts/
+/design-qa.md
+/pflegeshift-preview-build-*-qr.png

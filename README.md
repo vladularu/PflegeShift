@@ -2,7 +2,7 @@
 
 PflegeShift ist ein lokaler, iPhone-first Dienstplaner für Schichtarbeit. Die App verbindet Kalender, Arbeitszeitauswertung und eine unverbindliche TVöD-P-Gehaltsberechnung in einer ruhigen, systemadaptiven Oberfläche.
 
-PflegeShift basiert auf Expo SDK 54, React Native und SQLite. Die Nutzung benötigt weder Konto noch Backend; alle persönlichen Planungsdaten bleiben lokal auf dem Gerät.
+PflegeShift basiert auf Expo SDK 57, React Native und SQLite. Die Nutzung benötigt weder Konto noch Backend; alle persönlichen Planungsdaten bleiben lokal auf dem Gerät.
 
 > **Beta:** Die aktuelle Vorabversion ist [`v0.1.0-beta.1`](https://github.com/vladularu/PflegeShift/releases/tag/v0.1.0-beta.1).
 
@@ -75,6 +75,7 @@ Voraussetzungen:
 
 ```powershell
 npm.cmd install
+npm.cmd run workflow:setup
 npm.cmd run web
 ```
 
@@ -95,18 +96,14 @@ Die generierten Verzeichnisse `android/` und `ios/` sind lokale Buildartefakte u
 ## Qualitätssicherung
 
 ```powershell
-npm.cmd run lint -- --max-warnings 0
-npm.cmd run typecheck
-npm.cmd run test:all
-npm.cmd run test:coverage
-npm.cmd run audit:production
-npm.cmd run export:web
-npm.cmd run export:android
-npm.cmd run export:ios
-npm.cmd run release:check
+npm.cmd run verify:fast
+# vor Release-Kandidaten oder größeren Integrationen:
+npm.cmd run verify:full
 ```
 
 Die Tests decken unter anderem Kalender- und Feiertagslogik, Monatswechsel, Schnelleingabe, Abwesenheiten, Nachtarbeit, TVöD-Zulagen, Gehaltsaggregation, ArbZG-Hinweise sowie SQLite-Migrationen und CRUD-Lebenszyklen ab.
+
+Aufgaben werden über kurzlebige `codex/<thema>`-Branches und Pull Requests bearbeitet. Scope, Gates und Geräteabnahme sind in der [Workflow-Dokumentation](WORKFLOW.md) festgelegt.
 
 ## Release-Kandidat
 
@@ -154,7 +151,7 @@ scripts/                     reproduzierbare Markenassets
 
 ## Technischer Stand
 
-- Expo SDK 54
+- Expo SDK 57
 - Expo Router mit nativen Tabs auf iOS und Android
 - React Native New Architecture und React Compiler
 - SQLite als lokale Datenquelle

@@ -7,11 +7,8 @@ Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds 
 - [ ] `npm.cmd ci`
 - [ ] `npx.cmd expo install --check`
 - [ ] `npx.cmd expo-doctor`
-- [ ] `npm.cmd run release:check`
-- [ ] `npm.cmd run audit:production` (keine hohen oder kritischen Produktionsbefunde)
-- [ ] `npm.cmd run lint -- --max-warnings 0`
-- [ ] `npm.cmd run typecheck`
-- [ ] `npm.cmd test`
+- [ ] `npm.cmd run verify:full`
+- [ ] Produktionsaudit enthält keine nicht freigegebenen hohen oder kritischen Befunde
 - [ ] Web-, Android- und iOS-Export erfolgreich
 - [ ] Release-Check bestätigt SQLCipher und deaktivierte Android-App-Datenbackups
 - [ ] Arbeitsverzeichnis enthält nur beabsichtigte Release-Änderungen
