@@ -7,40 +7,43 @@ Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds 
 - [ ] `npm.cmd ci`
 - [ ] `npx.cmd expo install --check`
 - [ ] `npx.cmd expo-doctor`
-- [ ] `npm.cmd run verify:full`
+- [ ] `npm.cmd run verify:fast`
+- [ ] `npm.cmd run release:check`
+- [ ] `npm.cmd run export:ios`
 - [ ] Produktionsaudit enthält keine nicht freigegebenen hohen oder kritischen Befunde
-- [ ] Web-, Android- und iOS-Export erfolgreich
 - [ ] Release-Check bestätigt SQLCipher und deaktivierte Android-App-Datenbackups
+- [ ] Tarifstand für Auswertungsmonate ab April 2027 ergänzt oder der betroffene Zeitraum in der App kontrolliert gesperrt
 - [ ] Arbeitsverzeichnis enthält nur beabsichtigte Release-Änderungen
 
-## 2. Einmalige EAS-Einrichtung
+## 2. EAS-Verknüpfung und Zugangsdaten
 
 - [ ] Mit dem vorgesehenen Expo-Konto anmelden
-- [ ] `npx.cmd eas-cli@latest init` ausführen und die erzeugte `projectId` prüfen
+- [ ] `npx.cmd eas-cli@latest whoami` ausführen und die bestehende `projectId` `010fe78f-de53-42b8-9635-a73ea099b5fc` prüfen
 - [ ] iOS-Zertifikate und Provisioning-Profil einrichten
-- [ ] Android-Keystore erstellen oder den vorhandenen sicheren Schlüssel hinterlegen
+- [ ] Android-Zugangsdaten erst bei ausdrücklicher Wiederaufnahme der Android-Arbeit prüfen
 - [ ] Keine Zugangsdaten oder Service-Account-Dateien committen
 
 ## 3. Signierte interne Builds
 
 - [ ] iOS-Preview-Build erstellen und auf einem echten iPhone installieren
-- [ ] Android-Preview-APK erstellen und auf einem echten Android-Gerät installieren
-- [ ] Produktions-Builds erzeugen: iOS-Archiv und Android-AAB
+- [ ] iOS-Produktionsarchiv erst nach erfolgreicher Preview-Abnahme erzeugen
 - [ ] iOS zunächst intern über TestFlight verteilen
-- [ ] Android zunächst im internen Play-Test-Track verteilen
+
+Android bleibt technisch im Repository, ist aber pausiert. APK, AAB und Play-Test-Track sind keine Freigabebedingung für den aktuellen iOS-Kandidaten. Vor einer Wiederaufnahme müssen Datenbank-Bootstrap, Kartenkonfiguration und reale Android-Geräteabnahme separat erfolgreich sein.
 
 ## 4. Geräteabnahme
 
+Das ausführliche, ausfüllbare Prüfprotokoll steht unter [`docs/iphone-acceptance.md`](iphone-acceptance.md).
+
 - [ ] Kleines und großes iPhone, Hell- und Dunkelmodus
-- [ ] Mindestens ein aktuelles Android-Gerät, Hell- und Dunkelmodus
-- [ ] Große Systemschrift, VoiceOver/TalkBack und 44-Punkt-Touchziele
+- [ ] Große Systemschrift, VoiceOver und 44-Punkt-Touchziele
 - [ ] Safe Areas, Tastatur, native Zeitwahl und alle Form-Sheets
 - [ ] Monatswechsel zwischen Kalender, Auswertung und Gehalt ohne Flickern
 - [ ] Schnelleingabe, Mehrfachstempel, Bearbeiten und Löschen
 - [ ] Neustart mit bestehenden Daten ohne Verlust oder sichtbaren Zwischenzustand
-- [ ] `.maestro/sqlcipher-persistence.yml` auf dem internen iOS- und Android-Build bestanden
-- [ ] Update-Test von der letzten unverschlüsselten Beta: vorhandene Dienste bleiben sichtbar, zweiter Neustart funktioniert
-- [ ] Nach erfolgreichem Update ist keine alte `pflegeshift.db.plaintext*`-Datei mehr im App-Sandbox-Verzeichnis vorhanden
+- [ ] `.maestro/sqlcipher-persistence.yml` auf dem internen iOS-Build bestanden
+- [ ] Update-Test von einem signierten unverschlüsselten PflegeShift-Build mit derselben App-ID und `pflegeshift.db`: vorhandene Dienste bleiben sichtbar, zweiter Neustart funktioniert
+- [ ] Nach erfolgreichem Update sind `pflegeshift.db` samt WAL-/SHM-/Journal-Dateien und `pflegeshift-secure-v1.tmp.db` nicht mehr vorhanden
 - [ ] Falscher/verlorener Schlüssel führt kontrolliert in den Fehlerzustand und überschreibt keine vorhandene Datenbank
 - [ ] Stresstest mit mindestens zwölf Monaten realistischer Dienstplandaten
 
@@ -54,14 +57,14 @@ Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds 
 
 ## Freigaberegel
 
-Ein Release Candidate ist erst freigegeben, wenn alle lokalen Prüfungen sowie mindestens ein signierter iOS- und Android-Gerätetest bestanden sind. Releasekritische Fehler werden vor neuen Funktionen behoben.
+Ein aktueller iOS-Release-Candidate ist erst freigegeben, wenn alle lokalen Prüfungen sowie mindestens ein signierter iPhone-Gerätetest bestanden sind. Android erhält nach der ausdrücklichen Wiederaufnahme eine unabhängige Freigabe. Releasekritische Fehler werden vor neuen Funktionen behoben.
 
 ## SQLCipher-Abnahmeprotokoll
 
 Die automatisierten Unit-Tests prüfen Promotion, Integrität und Fail-closed-Verhalten isoliert. Der Maestro-Persistenzlauf prüft zusätzlich Schlüsselkontinuität in einem echten nativen Build. Die einmalige Klartext-Promotion benötigt einen Update-Test mit zwei installierten Builds und bleibt deshalb ein zwingender manueller Release-Gate:
 
-1. Letzte unverschlüsselte Beta installieren, Beispieldienst und Notiz anlegen, App vollständig beenden.
-2. Internen SQLCipher-Build ohne Deinstallation darüber installieren.
+1. Einen signierten unverschlüsselten PflegeShift-Baseline-Build mit `com.pflegeshift.app` und `pflegeshift.db` installieren, Beispieldienst und Notiz anlegen, App vollständig beenden. Der MediShift-Tag `v0.1.0-beta.1` ist wegen `com.medishift.app` und `medishift.db` keine gültige Basis.
+2. Einen signierten SQLCipher-Build mit derselben App-ID ohne Deinstallation darüber installieren. Das `preview`-Profil mit `.internal`-ID ist dafür nicht geeignet.
 3. Datenbestand prüfen, App zweimal neu starten und anschließend einen neuen Dienst speichern.
 4. Auf einem separaten Testgerät den Schlüsselverlust simulieren und bestätigen, dass kein leerer Datenbestand über die bestehende Datenbank geschrieben wird.
 5. Datum, Plattform, Alt-/Neubuildnummer und Ergebnis im Release-Ticket dokumentieren.

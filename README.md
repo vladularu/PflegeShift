@@ -2,9 +2,9 @@
 
 PflegeShift ist ein lokaler, iPhone-first Dienstplaner für Schichtarbeit. Die App verbindet Kalender, Arbeitszeitauswertung und eine unverbindliche TVöD-P-Gehaltsberechnung in einer ruhigen, systemadaptiven Oberfläche.
 
-PflegeShift basiert auf Expo SDK 57, React Native und SQLite. Die Nutzung benötigt weder Konto noch Backend; alle persönlichen Planungsdaten bleiben lokal auf dem Gerät.
+PflegeShift basiert auf Expo SDK 57, React Native und SQLite. Die Kernfunktionen benötigen weder Konto noch PflegeShift-Backend; persönliche Planungsdaten bleiben lokal auf dem Gerät. Die optionale Ortssuche und Kartenansicht verwenden die Geocoding- und Kartendienste des Betriebssystems und benötigen eine Verbindung.
 
-> **Beta:** Die aktuelle Vorabversion ist [`v0.1.0-beta.1`](https://github.com/vladularu/PflegeShift/releases/tag/v0.1.0-beta.1).
+> **Veröffentlichungsstand:** Für PflegeShift ist derzeit kein Beta-Tag als aktuelle Installations- oder Migrationsbasis freigegeben. [`v0.1.0-beta.1`](https://github.com/vladularu/PflegeShift/releases/tag/v0.1.0-beta.1) gehört noch zu MediShift und verwendet andere App- und Datenbank-IDs.
 
 ## Hauptbereiche
 
@@ -17,6 +17,7 @@ PflegeShift basiert auf Expo SDK 57, React Native und SQLite. Die Nutzung benöt
 - Tagesdetails mit Soll-, Ist- und Saldostunden
 - Schnelleingabe für vorhandene Dienstvorlagen, Urlaub, Krank und Frei
 - Stempelmodus zum Eintragen desselben Dienstes an mehreren Tagen
+- Terminserien, lokale Erinnerungen sowie optionale Orts- und Kartenangaben
 - native Zeitwahl auf iOS und Android
 
 ### Auswertung
@@ -62,7 +63,7 @@ Nicht enthalten sind:
 - Benutzerkonten oder Cloud-Synchronisation
 - externe Kalender-Synchronisation
 - automatische Backups
-- Serien- und Rotationsregeln
+- automatische Dienstserien und Rotationsregeln
 - verbindliche Lohnabrechnungen
 
 ## Entwicklung starten
@@ -81,7 +82,7 @@ npm.cmd run web
 
 Expo Go wird nicht unterstützt, weil es nicht mit der projektspezifischen SQLCipher-Konfiguration gebaut ist. Native Entwicklung und Abnahme müssen in einem eigenen nativen Build erfolgen.
 
-Lokalen Native-Build starten:
+Lokalen Native-Build starten. Android bleibt bis zur erneuten technischen und realen Geräteabnahme pausiert:
 
 ```powershell
 npx.cmd expo run:android
@@ -89,7 +90,7 @@ npx.cmd expo run:android
 npx.cmd expo run:ios
 ```
 
-Auf Windows wird der iOS-Build über EAS erzeugt. Vor dem ersten EAS-Build ist die einmalige Einrichtung aus dem Abschnitt „Release-Kandidat“ erforderlich.
+Auf Windows wird der iOS-Build über EAS erzeugt. Das EAS-Projekt ist bereits verknüpft; vor einem freigegebenen Build werden Konto, Projekt und Zugangsdaten geprüft.
 
 Die generierten Verzeichnisse `android/` und `ios/` sind lokale Buildartefakte und werden nicht committed.
 
@@ -109,15 +110,14 @@ Aufgaben werden über kurzlebige `codex/<thema>`-Branches und Pull Requests bear
 
 Die lokale Release-Konfiguration trennt zwei sichere Wege:
 
-- `preview`: intern installierbare iOS-Builds und Android-APKs für Gerätetests
-- `production`: Store-Builds mit automatisch erhöhten Buildnummern; Android wird zunächst nur in den internen Test-Track eingereicht
+- `preview`: intern installierbare iOS-Builds; das vorhandene Android-Profil bleibt für die spätere Wiederaufnahme erhalten
+- `production`: Store-Builds mit automatisch erhöhten Buildnummern; Android bleibt bis zur ausdrücklichen Wiederaufnahme pausiert
 
-Vor dem ersten signierten Build muss das Projekt einmalig mit dem eigenen Expo-Konto verknüpft werden:
+Vor einem ausdrücklich freigegebenen signierten Build werden die bestehende Projektverknüpfung und das Expo-Konto geprüft:
 
 ```powershell
-npx.cmd eas-cli@latest init
+npx.cmd eas-cli@latest whoami
 npx.cmd eas-cli@latest build --platform ios --profile preview
-npx.cmd eas-cli@latest build --platform android --profile preview
 ```
 
 Expo-, Apple- und Google-Zugangsdaten gehören nicht ins Repository. TestFlight-, Play-Console-, Datenschutz- und Store-Metadaten werden außerhalb des Quellcodes gepflegt.

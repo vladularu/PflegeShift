@@ -253,6 +253,107 @@ describe("test lab repository", () => {
     expect(await listTestBackups(db)).toHaveLength(0);
   });
 
+  it("restores all current shift and appointment fields exactly", async () => {
+    await setDeveloperMode(db, true);
+    const profile = await loadProfile(db);
+    if (!profile) throw new Error("missing profile");
+    adapter.database.exec(`
+      INSERT INTO shift_entries(
+        id,date,template_id,title,type,all_day,start_time,end_time,break_minutes,color,symbol,note,
+        notification_json,location_json,overtime_minutes,holiday_premium_mode,
+        revision,created_at,updated_at,deleted_at,test_run_id
+      ) VALUES(
+        'rich-shift','2026-05-04',NULL,'Ganztagsdienst','CUSTOM',1,NULL,NULL,0,'#2F80ED','G','Notiz',
+        '{"amount":30,"unit":"MINUTE","direction":"BEFORE","reference":"START"}',
+        '{"name":"Klinik","latitude":51.5,"longitude":7.4}',0,'WITH_TIME_OFF',2,'a','b',NULL,NULL
+      );
+      INSERT INTO appointments(
+        id,date,title,all_day,start_time,end_time,color,note,
+        recurrence_frequency,recurrence_interval,notification_json,location_json,
+        revision,created_at,updated_at,deleted_at,test_run_id
+      ) VALUES(
+        'rich-appointment','2026-05-05','Terminserie',0,'10:00','11:00','#0891B2','Notiz',
+        'WEEK',2,'{"amount":1,"unit":"HOUR","direction":"BEFORE","reference":"START"}',
+        '{"name":"Praxis","latitude":52.5,"longitude":13.4}',3,'a','c',NULL,NULL
+      );
+    `);
+    const originalShifts = adapter.database
+      .prepare("SELECT * FROM shift_entries WHERE substr(date,1,7)='2026-05' ORDER BY id")
+      .all();
+    const originalAppointments = adapter.database
+      .prepare("SELECT * FROM appointments WHERE substr(date,1,7)='2026-05' ORDER BY id")
+      .all();
+
+    await generateTestRun(
+      db,
+      { startMonth: "2026-05", range: 1, scenario: "NORMAL_ROTATION" },
+      profile,
+    );
+    await restoreTestBackup(db, ["2026-05"]);
+
+    expect(
+      adapter.database
+        .prepare("SELECT * FROM shift_entries WHERE substr(date,1,7)='2026-05' ORDER BY id")
+        .all(),
+    ).toEqual(originalShifts);
+    expect(
+      adapter.database
+        .prepare("SELECT * FROM appointments WHERE substr(date,1,7)='2026-05' ORDER BY id")
+        .all(),
+    ).toEqual(originalAppointments);
+  });
+
+  it("restores legacy version-one backups with safe defaults for newer fields", async () => {
+    await setDeveloperMode(db, true);
+    const profile = await loadProfile(db);
+    if (!profile) throw new Error("missing profile");
+    adapter.database.exec(`
+      INSERT INTO appointments(
+        id,date,title,all_day,start_time,end_time,color,note,revision,created_at,updated_at,deleted_at,test_run_id
+      ) VALUES('legacy','2026-05-05','Alter Termin',1,NULL,NULL,'#0891B2',NULL,1,'a','b',NULL,NULL)
+    `);
+    await generateTestRun(
+      db,
+      { startMonth: "2026-05", range: 1, scenario: "NORMAL_ROTATION" },
+      profile,
+    );
+    const backup = adapter.database
+      .prepare("SELECT payload FROM dev_test_backups WHERE month='2026-05'")
+      .get() as { payload: string };
+    const legacy = JSON.parse(backup.payload) as {
+      version: number;
+      shifts: Record<string, unknown>[];
+      appointments: Record<string, unknown>[];
+    };
+    legacy.version = 1;
+    for (const row of legacy.shifts) {
+      delete row.all_day;
+      delete row.notification_json;
+      delete row.location_json;
+    }
+    for (const row of legacy.appointments) {
+      delete row.recurrence_frequency;
+      delete row.recurrence_interval;
+      delete row.notification_json;
+      delete row.location_json;
+    }
+    adapter.database
+      .prepare("UPDATE dev_test_backups SET payload=? WHERE month='2026-05'")
+      .run(JSON.stringify(legacy));
+
+    await restoreTestBackup(db, ["2026-05"]);
+
+    expect(
+      adapter.database.prepare("SELECT * FROM appointments WHERE id='legacy'").get(),
+    ).toMatchObject({
+      all_day: 1,
+      recurrence_frequency: null,
+      recurrence_interval: null,
+      notification_json: null,
+      location_json: null,
+    });
+  });
+
   it("keeps the first backup across repeated test runs and can accept generated data", async () => {
     await setDeveloperMode(db, true);
     const profile = await loadProfile(db);
@@ -271,7 +372,7 @@ describe("test lab repository", () => {
       .prepare("SELECT payload FROM dev_test_backups WHERE month='2026-08'")
       .get() as { payload: string };
     expect(JSON.parse(firstBackup.payload)).toMatchObject({
-      version: 1,
+      version: 2,
       month: "2026-08",
       counts: { appointments: 1, decisions: 0 },
     });

@@ -1,20 +1,17 @@
 appId: com.pflegeshift.app.internal
 ---
 - runFlow: onboarding.yml
-- tapOn: "Schnelleintrag öffnen"
-- tapOn: "Dienst auswählen"
-- assertVisible: "Bezeichnung"
-- tapOn: "Bezeichnung"
-- eraseText
-- inputText: "E2E Dienst"
-- hideKeyboard
-- tapOn: "Sichern und schließen"
+- tapOn:
+    text: ".*0 Einträge.*"
+    index: 10
+- tapOn: "Schicht hinzufügen"
+- assertVisible: "Meine Dienste"
+- tapOn: "Früh direkt eintragen"
 - extendedWaitUntil:
-    visible: "E2E Dienst"
+    visible: "Früh"
     timeout: 10000
-- tapOn: "E2E Dienst"
-- tapOn: "E2E Dienst bearbeiten"
+- tapOn: "Früh bearbeiten"
 - assertVisible: "Eintrag löschen"
 - tapOn: "Eintrag löschen"
 - tapOn: "Löschen"
-- assertNotVisible: "E2E Dienst"
+- assertNotVisible: "Früh bearbeiten"

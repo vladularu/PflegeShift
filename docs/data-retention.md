@@ -22,9 +22,11 @@ und eine spätere Synchronisation kann Löschungen eindeutig übertragen.
   abgeschlossen, damit gelöschte Inhalte nicht unnötig in WAL-Seiten verbleiben.
 
 Testlabor-Backups bleiben erhalten, bis die Person ausdrücklich entweder das
-Original wiederherstellt oder die Testdaten übernimmt. Neue Backup-Payloads
-sind versioniert; alte und neue Payloads werden vor jedem Ersetzen vollständig
-auf Monat, IDs, Zeilenanzahl und Feldtypen geprüft.
+Original wiederherstellt oder die Testdaten übernimmt. Backup-Payload v2 erhält
+auch Ganztagsstatus, Erinnerungen, Orte und Terminserien. Payload v1 bleibt
+lesbar und erhält für später ergänzte Felder sichere Standardwerte. Alte und
+neue Payloads werden vor jedem Ersetzen vollständig auf Monat, IDs,
+Zeilenanzahl und Feldtypen geprüft.
 
 Vor Einführung einer Cloud-Synchronisation muss der automatische Purge um ein
 Server-Acknowledgement und eine leere lokale Outbox als zusätzliche Bedingungen

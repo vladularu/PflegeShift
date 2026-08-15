@@ -21,7 +21,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   STORAGE: {
     title: "Lokale Datenspeicherung",
     intro:
-      "PflegeShift arbeitet offline und speichert deine Angaben ausschließlich auf diesem Gerät.",
+      "Die PflegeShift-Kernfunktionen arbeiten offline und speichern deine Angaben auf diesem Gerät.",
     items: [
       {
         title: "Kein Konto erforderlich",
@@ -33,7 +33,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
       },
       {
         title: "Datenschutz",
-        text: "Die App überträgt diese Daten nicht an einen PflegeShift-Server.",
+        text: "Die App überträgt diese Daten nicht an einen PflegeShift-Server. Die optionale Ortssuche und Kartenansicht verwenden Dienste des Betriebssystems und benötigen eine Verbindung.",
       },
     ],
   },
@@ -63,7 +63,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     items: [
       {
         title: "Vollzeitbetrag",
-        text: "PflegeShift berücksichtigt 25 Euro pro Monat bei Vollzeit. Bei Teilzeit wird der Betrag entsprechend der hinterlegten Wochenarbeitszeit anteilig berechnet.",
+        text: "PflegeShift berücksichtigt 25 Euro pro Monat bei Vollzeit, für Beschäftigte von Mitgliedern des KAV Baden-Württemberg 35 Euro. Bei Teilzeit wird der Betrag entsprechend der hinterlegten Wochenarbeitszeit anteilig berechnet.",
       },
       {
         title: "Geltungsbereich",

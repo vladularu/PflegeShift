@@ -148,6 +148,44 @@ describe("TVöD-P pay engine", () => {
     );
   });
 
+  it("uses the pre-July-2025 shift allowance amounts for historical months", () => {
+    const mayShift = shift({
+      date: "2025-05-05",
+      type: "DAY",
+      startTime: "08:00",
+      endTime: "16:00",
+      breakMinutes: 0,
+      overtimeMinutes: 0,
+    });
+    const allowanceFor = (
+      allowanceStatus:
+        "SHIFT_MONTHLY" | "SHIFT_HOURLY" | "ALTERNATING_MONTHLY" | "ALTERNATING_HOURLY",
+    ) =>
+      calculateMonthlyPayEstimate("2025-05", [mayShift], profile, {
+        month: "2025-05",
+        allowanceStatus,
+        revision: 1,
+        confirmedAt: "2025-05-01T00:00:00.000Z",
+        updatedAt: "2025-05-01T00:00:00.000Z",
+      }).allowanceAmount;
+
+    expect(allowanceFor("SHIFT_MONTHLY")).toBe(20);
+    expect(allowanceFor("ALTERNATING_MONTHLY")).toBe(77.5);
+    expect(allowanceFor("SHIFT_HOURLY")).toBe(1.92);
+    expect(allowanceFor("ALTERNATING_HOURLY")).toBe(7.44);
+  });
+
+  it("uses the Baden-Württemberg TVöD-P allowance", () => {
+    const result = calculateMonthlyPayEstimate(
+      "2026-07",
+      [shift()],
+      { ...profile, federalState: "BW" },
+      null,
+    );
+
+    expect(result.tvoedAllowanceAmount).toBe(17.5);
+  });
+
   it("detects shift and alternating-shift patterns", () => {
     const result = assessTvoedPattern(
       [

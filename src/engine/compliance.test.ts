@@ -124,6 +124,37 @@ describe("ArbZG compliance", () => {
     });
   });
 
+  it("recognizes a five-night series from actual hours instead of the saved shift type", () => {
+    const shifts = Array.from({ length: 5 }, (_, index) =>
+      shift(
+        `custom-night-${index + 1}`,
+        `2026-07-${String(index + 1).padStart(2, "0")}`,
+        "21:00",
+        "07:00",
+        60,
+        "CUSTOM",
+      ),
+    );
+
+    const result = calculateMonthlyCompliance("2026-07", shifts, "Europe/Berlin");
+
+    expect(result.issues.some((item) => item.rule === "PLANNING_NIGHT_SERIES")).toBe(true);
+  });
+
+  it("keeps the deferred night-series recovery hint disabled", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [
+        shift("night-1", "2026-07-01", "21:00", "07:00", 60, "NIGHT"),
+        shift("night-2", "2026-07-02", "21:00", "07:00", 60, "NIGHT"),
+        shift("early", "2026-07-04", "06:00", "14:00", 30, "EARLY"),
+      ],
+      "Europe/Berlin",
+    );
+
+    expect(result.issues.some((item) => item.rule === "PLANNING_NIGHT_RECOVERY")).toBe(false);
+  });
+
   it("ignores vacation, sickness and free entries", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",

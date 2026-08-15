@@ -667,7 +667,8 @@ function checkPlanningSeries(intervals: readonly Interval[]): ComplianceIssue[] 
     }
   }
 
-  for (const streak of consecutiveDateStreaks(shifts.filter((shift) => shift.type === "NIGHT"))) {
+  const nightShifts = intervals.filter(isNightWork).map((item) => item.shift);
+  for (const streak of consecutiveDateStreaks(nightShifts)) {
     if (streak.length >= 5) {
       issues.push(
         issue(
@@ -679,26 +680,6 @@ function checkPlanningSeries(intervals: readonly Interval[]): ComplianceIssue[] 
           streak,
         ),
       );
-    }
-    if (streak.length >= 2) {
-      const last = streak.at(-1)!;
-      const lastIndex = intervals.findIndex((item) => item.shift.id === last.id);
-      const next = intervals[lastIndex + 1];
-      if (next && (next.shift.type === "EARLY" || next.shift.type === "DAY")) {
-        const rest = minutesBetween(intervals[lastIndex].end, next.start);
-        if (rest >= 660 && rest < 1_440) {
-          issues.push(
-            issue(
-              "warning",
-              "PLANNING",
-              "PLANNING_NIGHT_RECOVERY",
-              "Kurze Erholung nach Nachtserie",
-              `Nach der Nachtserie folgen nur ${hours(rest)} Erholungszeit.`,
-              [...streak, next.shift],
-            ),
-          );
-        }
-      }
     }
   }
 

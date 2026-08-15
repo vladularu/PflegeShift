@@ -265,9 +265,9 @@ export async function listTestBackups(db: SQLiteDatabase): Promise<readonly Test
 }
 
 const SHIFT_COLUMNS =
-  "id,date,template_id,title,type,start_time,end_time,break_minutes,color,symbol,note,overtime_minutes,holiday_premium_mode,revision,created_at,updated_at,deleted_at,test_run_id";
+  "id,date,template_id,title,type,all_day,start_time,end_time,break_minutes,color,symbol,note,notification_json,location_json,overtime_minutes,holiday_premium_mode,revision,created_at,updated_at,deleted_at,test_run_id";
 const APPOINTMENT_COLUMNS =
-  "id,date,title,all_day,start_time,end_time,color,note,revision,created_at,updated_at,deleted_at,test_run_id";
+  "id,date,title,all_day,start_time,end_time,color,note,recurrence_frequency,recurrence_interval,notification_json,location_json,revision,created_at,updated_at,deleted_at,test_run_id";
 
 export async function restoreTestBackup(
   db: SQLiteDatabase,
@@ -289,18 +289,21 @@ export async function restoreTestBackup(
       await tx.runAsync("DELETE FROM monthly_tariff_decisions WHERE month=?", month);
       for (const row of payload.shifts) {
         await tx.runAsync(
-          `INSERT INTO shift_entries(${SHIFT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          `INSERT INTO shift_entries(${SHIFT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           row.id,
           row.date,
           row.template_id,
           row.title,
           row.type,
+          row.all_day,
           row.start_time,
           row.end_time,
           row.break_minutes,
           row.color,
           row.symbol,
           row.note,
+          row.notification_json,
+          row.location_json,
           row.overtime_minutes,
           row.holiday_premium_mode,
           row.revision,
@@ -312,7 +315,7 @@ export async function restoreTestBackup(
       }
       for (const row of payload.appointments) {
         await tx.runAsync(
-          `INSERT INTO appointments(${APPOINTMENT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          `INSERT INTO appointments(${APPOINTMENT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           row.id,
           row.date,
           row.title,
@@ -321,6 +324,10 @@ export async function restoreTestBackup(
           row.end_time,
           row.color,
           row.note,
+          row.recurrence_frequency,
+          row.recurrence_interval,
+          row.notification_json,
+          row.location_json,
           row.revision,
           row.created_at,
           row.updated_at,

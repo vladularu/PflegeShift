@@ -9,5 +9,5 @@ appId: com.pflegeshift.app.internal
 - hideKeyboard
 - tapOn: "PflegeShift starten"
 - extendedWaitUntil:
-    visible: "Schnelleintrag öffnen"
+    visible: "Dienstplan bearbeiten"
     timeout: 15000
