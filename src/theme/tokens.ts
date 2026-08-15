@@ -38,8 +38,8 @@ export const CALENDAR_METRICS = {
   dayNumberFontSize: 15,
   weekRowHeight: 114,
   entryRowHeight: 17,
-  entryFontSize: 11,
-  entryLineHeight: 14,
+  entryFontSize: 12,
+  entryLineHeight: 15,
   cardRadius: 22,
   floatingActionSize: 40,
 } as const;

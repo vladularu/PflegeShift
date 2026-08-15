@@ -19,13 +19,14 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { SHIFT_COLOR_PAIRS, usePalette } from "@/theme/palette";
+import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
 import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
 
 export { SegmentedButton } from "@/ui/segmented-button";
+export { ColorPicker } from "@/ui/color-picker";
 
 export interface DropdownOption<T extends string | number> {
   readonly value: T;
@@ -472,49 +473,5 @@ export function PrimaryButton({
         {children}
       </Text>
     </AnimatedPressable>
-  );
-}
-
-export function ColorPicker({
-  value,
-  onChange,
-}: {
-  readonly value: string;
-  readonly onChange: (value: string) => void;
-}) {
-  const palette = usePalette();
-  return (
-    <View style={{ gap: SPACING.sm }}>
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        selectable
-        style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
-      >
-        Farbe
-      </Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm }}>
-        {SHIFT_COLOR_PAIRS.map(({ main, soft }) => (
-          <Pressable
-            key={main}
-            accessibilityLabel={`Farbpaar ${main}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: value === main }}
-            onPress={() => onChange(main)}
-            style={{
-              width: 58,
-              height: 44,
-              flexDirection: "row",
-              overflow: "hidden",
-              borderWidth: value === main ? 2 : 1,
-              borderColor: value === main ? palette.primary : palette.border,
-              borderRadius: RADII.control,
-            }}
-          >
-            <View style={{ flex: 1, backgroundColor: main }} />
-            <View style={{ flex: 1, backgroundColor: soft }} />
-          </Pressable>
-        ))}
-      </View>
-    </View>
   );
 }

@@ -18,7 +18,43 @@ describe("calendar display helpers", () => {
 
   it("limits calendar entries and reports the remaining count", () => {
     const entries = [{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }];
-    const preview = calendarEntryPreview(entries as never, 2);
+    const preview = calendarEntryPreview(entries as never, {
+      detailedShifts: false,
+      rowCapacity: 3,
+    });
+
+    expect(preview.entries).toHaveLength(2);
+    expect(preview.overflowCount).toBe(2);
+  });
+
+  it("keeps one detailed shift and two appointments when four rows are available", () => {
+    const entries = [
+      { kind: "SHIFT", startTime: "06:00", endTime: "14:00", allDay: false },
+      { kind: "APPOINTMENT" },
+      { kind: "APPOINTMENT" },
+    ];
+
+    const preview = calendarEntryPreview(entries as never, {
+      detailedShifts: true,
+      rowCapacity: 4,
+    });
+
+    expect(preview.entries).toHaveLength(3);
+    expect(preview.overflowCount).toBe(0);
+  });
+
+  it("reserves one row for the overflow count", () => {
+    const entries = [
+      { kind: "SHIFT", startTime: "06:00", endTime: "14:00", allDay: false },
+      { kind: "APPOINTMENT" },
+      { kind: "APPOINTMENT" },
+      { kind: "APPOINTMENT" },
+    ];
+
+    const preview = calendarEntryPreview(entries as never, {
+      detailedShifts: true,
+      rowCapacity: 4,
+    });
 
     expect(preview.entries).toHaveLength(2);
     expect(preview.overflowCount).toBe(2);

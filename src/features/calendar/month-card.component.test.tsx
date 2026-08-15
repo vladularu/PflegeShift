@@ -2,7 +2,7 @@ import { render, within } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 import { useSharedValue } from "react-native-reanimated";
 
-import type { UserProfile } from "@/domain/types";
+import type { Appointment, ShiftEntry, UserProfile } from "@/domain/types";
 import { createMonthGrid, formatDateTitle } from "@/engine/calendar";
 import { MonthCard } from "@/features/calendar/month-card";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
@@ -15,6 +15,49 @@ const PROFILE: UserProfile = {
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
+
+const ENTRY_META = {
+  revision: 1,
+  createdAt: "2026-09-01T00:00:00.000Z",
+  updatedAt: "2026-09-01T00:00:00.000Z",
+  deletedAt: null,
+} as const;
+
+function shift(date: string): ShiftEntry {
+  return {
+    ...ENTRY_META,
+    kind: "SHIFT",
+    id: `${date}-shift`,
+    date,
+    templateId: null,
+    title: "Frühdienst",
+    type: "EARLY",
+    allDay: false,
+    startTime: "06:00",
+    endTime: "14:00",
+    breakMinutes: 30,
+    color: "#62B94C",
+    symbol: "D",
+    note: null,
+    overtimeMinutes: 0,
+    holidayPremiumMode: "WITH_TIME_OFF",
+  };
+}
+
+function appointment(date: string, id: string, title: string): Appointment {
+  return {
+    ...ENTRY_META,
+    kind: "APPOINTMENT",
+    id,
+    date,
+    title,
+    allDay: true,
+    startTime: null,
+    endTime: null,
+    color: "#2F80ED",
+    note: null,
+  };
+}
 
 function MonthCardWithTransition({ progress }: { readonly progress: number }) {
   const stampTransitionProgress = useSharedValue(progress);
@@ -98,6 +141,74 @@ describe("MonthCard", () => {
     expect(screen.getByTestId("calendar-week-6")).toHaveStyle({ height: 114 });
     expect(sixthWeekDay).toHaveStyle({
       backgroundColor: LIGHT_PALETTE.outsideMonth,
+    });
+  });
+
+  it("shows a detailed shift with two airy appointment rows in the same day", async () => {
+    const date = "2026-09-18";
+    const screen = await render(
+      <MonthCard
+        bottomReserve={55}
+        entriesByDate={
+          new Map([
+            [
+              date,
+              [
+                shift(date),
+                appointment(date, "appointment-1", "Arzttermin"),
+                appointment(date, "appointment-2", "Zahnarzt"),
+              ],
+            ],
+          ])
+        }
+        month="2026-09"
+        onSelectDate={jest.fn()}
+        pageHeight={795}
+        profile={PROFILE}
+        selectedDate={null}
+        showShiftTimes
+      />,
+    );
+
+    const day = screen.getByRole("button", { name: new RegExp(formatDateTitle(date)) });
+    expect(within(day).getByText("D")).toHaveStyle({
+      color: "#FFFFFF",
+      fontSize: 12,
+    });
+    expect(within(day).getByText("06:00")).toHaveStyle({
+      color: "#171719",
+      fontSize: 12,
+    });
+    expect(within(day).getByText("A")).toHaveStyle({
+      color: LIGHT_PALETTE.text,
+      fontSize: 12,
+    });
+    expect(within(day).getByText("Z")).toHaveStyle({
+      color: LIGHT_PALETTE.text,
+      fontSize: 12,
+    });
+    expect(within(day).queryByText(/^\+/)).toBeNull();
+  });
+
+  it("keeps appointments on the calendar surface like the visual reference", async () => {
+    const date = "2026-09-18";
+    const screen = await render(
+      <MonthCard
+        bottomReserve={55}
+        entriesByDate={new Map([[date, [appointment(date, "appointment-1", "Arzttermin")]]])}
+        month="2026-09"
+        onSelectDate={jest.fn()}
+        pageHeight={795}
+        profile={PROFILE}
+        selectedDate={null}
+      />,
+    );
+
+    const day = screen.getByRole("button", { name: new RegExp(formatDateTitle(date)) });
+    const appointmentLabel = within(day).getByText("A");
+    expect(appointmentLabel.parent).toHaveStyle({
+      height: 17,
+      backgroundColor: "transparent",
     });
   });
 

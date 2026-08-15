@@ -20,8 +20,9 @@ import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
-import { COMPACT_TEXT_MAX_SCALE, TEXT_MAX_SCALE } from "@/theme/typography";
+import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
+import { ShiftSymbol } from "@/ui/shift-symbol";
 
 const HEADER_HEIGHT = 42;
 const HOLIDAY_HEADER_HEIGHT = 58;
@@ -308,18 +309,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
                     }}
                   >
                     {entry.kind === "SHIFT" ? (
-                      <Text
-                        maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-                        numberOfLines={1}
-                        style={{
-                          maxWidth: 24,
-                          color: chipTextColor,
-                          fontSize: 10,
-                          fontWeight: "700",
-                        }}
-                      >
-                        {entry.symbol}
-                      </Text>
+                      <ShiftSymbol color={chipTextColor} size={15} value={entry.symbol} />
                     ) : (
                       <Ionicons color={chipTextColor} name="calendar-outline" size={15} />
                     )}
