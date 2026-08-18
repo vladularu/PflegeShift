@@ -70,7 +70,7 @@ export async function loadCalendarPreferences(
       values.get(CALENDAR_PREFERENCE_KEYS.showHolidays),
       DEFAULT_CALENDAR_PREFERENCES.showHolidays,
     ),
-    labelMode: labelMode === "SYMBOL" ? "SYMBOL" : "FULL",
+    labelMode: labelMode === "SHORT" || labelMode === "SYMBOL" ? labelMode : "FULL",
     showShiftTimes: storedBoolean(
       values.get(CALENDAR_PREFERENCE_KEYS.showShiftTimes),
       DEFAULT_CALENDAR_PREFERENCES.showShiftTimes,

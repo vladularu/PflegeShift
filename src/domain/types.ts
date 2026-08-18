@@ -198,7 +198,7 @@ export interface Appointment {
 export type CalendarEntry = ShiftEntry | Appointment;
 
 export type CalendarViewMode = "MONTH" | "YEAR";
-export type CalendarLabelMode = "FULL" | "SYMBOL";
+export type CalendarLabelMode = "FULL" | "SHORT" | "SYMBOL";
 
 export interface CalendarPreferencesData {
   readonly viewMode: CalendarViewMode;

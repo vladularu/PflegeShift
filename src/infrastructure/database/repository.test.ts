@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { CalendarLabelMode } from "@/domain/types";
 import { migrateDatabase } from "@/infrastructure/database/migrations";
 import {
   deleteCalendarEntry,
@@ -23,6 +24,8 @@ import {
   saveTvoedWorkPatternSettings,
   swapTemplateSortOrder,
 } from "@/infrastructure/database/repository";
+
+const SHORT_LABEL_MODE: CalendarLabelMode = "SHORT";
 
 class TestDatabase {
   readonly database = new Database(":memory:");
@@ -399,7 +402,7 @@ describe("SQLite repository", () => {
       showShifts: true,
       showAppointments: false,
       showHolidays: false,
-      labelMode: "SYMBOL",
+      labelMode: SHORT_LABEL_MODE,
       showShiftTimes: true,
       showShiftDuration: true,
     });
@@ -408,9 +411,22 @@ describe("SQLite repository", () => {
       showShifts: true,
       showAppointments: false,
       showHolidays: false,
-      labelMode: "SYMBOL",
+      labelMode: "SHORT",
       showShiftTimes: true,
       showShiftDuration: true,
+    });
+
+    await saveCalendarPreferences(db, {
+      viewMode: "MONTH",
+      showShifts: true,
+      showAppointments: true,
+      showHolidays: true,
+      labelMode: "SYMBOL",
+      showShiftTimes: false,
+      showShiftDuration: false,
+    });
+    expect(await loadCalendarPreferences(db)).toMatchObject({
+      labelMode: "SYMBOL",
     });
   });
 

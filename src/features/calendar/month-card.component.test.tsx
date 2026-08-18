@@ -2,10 +2,33 @@ import { render, within } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 import { useSharedValue } from "react-native-reanimated";
 
-import type { Appointment, ShiftEntry, UserProfile } from "@/domain/types";
-import { createMonthGrid, formatDateTitle } from "@/engine/calendar";
+import type { Appointment, CalendarLabelMode, ShiftEntry, UserProfile } from "@/domain/types";
+import { createMonthGrid, formatDateTitle, today } from "@/engine/calendar";
 import { MonthCard } from "@/features/calendar/month-card";
-import { LIGHT_PALETTE } from "@/theme/palette-values";
+import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
+
+jest.mock("@/ui/shift-symbol", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const { Text } = jest.requireActual<typeof import("react-native")>("react-native");
+  return {
+    ShiftSymbol: ({
+      color,
+      size,
+      value,
+    }: {
+      readonly color: string;
+      readonly size: number;
+      readonly value: string;
+    }) =>
+      React.createElement(
+        Text,
+        { style: { color, fontSize: size }, testID: `shift-symbol-${value}` },
+        value,
+      ),
+  };
+});
+
+const SHORT_LABEL_MODE: CalendarLabelMode = "SHORT";
 
 const PROFILE: UserProfile = {
   federalState: "NW",
@@ -23,7 +46,7 @@ const ENTRY_META = {
   deletedAt: null,
 } as const;
 
-function shift(date: string): ShiftEntry {
+function shift(date: string, overrides: Partial<ShiftEntry> = {}): ShiftEntry {
   return {
     ...ENTRY_META,
     kind: "SHIFT",
@@ -41,6 +64,7 @@ function shift(date: string): ShiftEntry {
     note: null,
     overtimeMinutes: 0,
     holidayPremiumMode: "WITH_TIME_OFF",
+    ...overrides,
   };
 }
 
@@ -97,14 +121,15 @@ describe("MonthCard", () => {
     const weekNumber = within(monday).getByText("32");
     expect(weekNumber).toBeTruthy();
     expect(weekNumber).toHaveStyle({ left: 1 });
+    expect(monday).toHaveStyle({ marginHorizontal: 0.25 });
   });
 
-  it("keeps interactive days outside the month at full contrast", async () => {
+  it("fades adjacent-month day cells together with their content", async () => {
     const outsideDate = createMonthGrid("2026-08")[0].date;
     const screen = await render(
       <MonthCard
         bottomReserve={80}
-        entriesByDate={new Map()}
+        entriesByDate={new Map([[outsideDate, [shift(outsideDate)]]])}
         month="2026-08"
         onSelectDate={jest.fn()}
         pageHeight={700}
@@ -118,8 +143,69 @@ describe("MonthCard", () => {
     });
     expect(outsideDay).toHaveStyle({
       backgroundColor: LIGHT_PALETTE.outsideMonth,
+      opacity: 1,
     });
-    expect(outsideDay).not.toHaveStyle({ opacity: 0.3 });
+    expect(within(outsideDay).getByTestId(`calendar-entry-layer-${outsideDate}`)).toHaveStyle({
+      opacity: 0.2,
+    });
+    expect(within(outsideDay).getByText("Frühdienst")).toBeTruthy();
+  });
+
+  it("uses a subtle dedicated surface for in-month weekends only", async () => {
+    const screen = await render(
+      <MonthCard
+        bottomReserve={80}
+        entriesByDate={new Map()}
+        month="2026-08"
+        onSelectDate={jest.fn()}
+        pageHeight={700}
+        profile={PROFILE}
+        selectedDate="2026-08-01"
+      />,
+    );
+
+    const saturday = screen.getByRole("button", {
+      name: new RegExp(formatDateTitle("2026-08-01")),
+    });
+    const monday = screen.getByRole("button", {
+      name: new RegExp(formatDateTitle("2026-08-03")),
+    });
+
+    expect(saturday).toHaveStyle({ backgroundColor: LIGHT_PALETTE.weekend });
+    expect(monday).toHaveStyle({ backgroundColor: "transparent" });
+    expect(within(saturday).getByText("1").parent).toHaveStyle({
+      backgroundColor: LIGHT_PALETTE.calendarSelection,
+    });
+  });
+
+  it("keeps weekend surfaces subtle but distinct in both color schemes", () => {
+    for (const palette of [LIGHT_PALETTE, DARK_PALETTE]) {
+      expect(palette.weekend).not.toBe(palette.surface);
+      expect(palette.weekend).not.toBe(palette.outsideMonth);
+    }
+  });
+
+  it("keeps today above the weekend and selection hierarchy", async () => {
+    const currentDate = today(PROFILE.timeZone);
+    const screen = await render(
+      <MonthCard
+        bottomReserve={80}
+        entriesByDate={new Map()}
+        month={currentDate.slice(0, 7)}
+        onSelectDate={jest.fn()}
+        pageHeight={700}
+        profile={PROFILE}
+        selectedDate={currentDate}
+      />,
+    );
+
+    const currentDay = screen.getByRole("button", {
+      name: new RegExp(formatDateTitle(currentDate)),
+    });
+    const dateNumber = within(currentDay).getByText(String(Number(currentDate.slice(-2))));
+
+    expect(currentDay).toHaveStyle({ backgroundColor: LIGHT_PALETTE.calendarToday });
+    expect(dateNumber).toHaveStyle({ color: LIGHT_PALETTE.onCalendarToday });
   });
 
   it("renders a muted sixth week for a five-week month", async () => {
@@ -141,7 +227,77 @@ describe("MonthCard", () => {
     expect(screen.getByTestId("calendar-week-6")).toHaveStyle({ height: 114 });
     expect(sixthWeekDay).toHaveStyle({
       backgroundColor: LIGHT_PALETTE.outsideMonth,
+      opacity: 1,
     });
+    expect(within(sixthWeekDay).getByTestId("calendar-entry-layer-2026-10-05")).toHaveStyle({
+      opacity: 0.2,
+    });
+  });
+
+  it("renders the full shift title in full-name mode", async () => {
+    const date = "2026-09-18";
+    const entry = shift(date, { symbol: "rise" });
+    const screen = await render(
+      <MonthCard
+        bottomReserve={55}
+        entriesByDate={new Map([[date, [entry]]])}
+        labelMode="FULL"
+        month="2026-09"
+        onSelectDate={jest.fn()}
+        pageHeight={795}
+        profile={PROFILE}
+        selectedDate={null}
+      />,
+    );
+    const day = within(screen.getByRole("button", { name: new RegExp(formatDateTitle(date)) }));
+    const shrinkProp = ["adjusts", "FontSizeToFit"].join("");
+
+    expect(day.getByText("Frühdienst")).toBeTruthy();
+    expect(day.getByText("Frühdienst")).toHaveProp(shrinkProp, true);
+    expect(day.getByText("Frühdienst")).toHaveProp("minimumFontScale", 0.72);
+    expect(day.queryByTestId("shift-symbol-rise")).toBeNull();
+  });
+
+  it("renders the first title letter in short-label mode", async () => {
+    const date = "2026-09-18";
+    const entry = shift(date, { symbol: "rise" });
+    const screen = await render(
+      <MonthCard
+        bottomReserve={55}
+        entriesByDate={new Map([[date, [entry]]])}
+        labelMode={SHORT_LABEL_MODE}
+        month="2026-09"
+        onSelectDate={jest.fn()}
+        pageHeight={795}
+        profile={PROFILE}
+        selectedDate={null}
+      />,
+    );
+    const day = within(screen.getByRole("button", { name: new RegExp(formatDateTitle(date)) }));
+
+    expect(day.getByText("F")).toBeTruthy();
+    expect(day.queryByTestId("shift-symbol-rise")).toBeNull();
+  });
+
+  it("renders the stored ShiftSymbol in symbol mode", async () => {
+    const date = "2026-09-18";
+    const entry = shift(date, { symbol: "rise" });
+    const screen = await render(
+      <MonthCard
+        bottomReserve={55}
+        entriesByDate={new Map([[date, [entry]]])}
+        labelMode="SYMBOL"
+        month="2026-09"
+        onSelectDate={jest.fn()}
+        pageHeight={795}
+        profile={PROFILE}
+        selectedDate={null}
+      />,
+    );
+    const day = within(screen.getByRole("button", { name: new RegExp(formatDateTitle(date)) }));
+
+    expect(day.getByTestId("shift-symbol-rise")).toBeTruthy();
+    expect(day.queryByText("Frühdienst")).toBeNull();
   });
 
   it("shows a detailed shift with two airy appointment rows in the same day", async () => {
@@ -166,6 +322,7 @@ describe("MonthCard", () => {
         pageHeight={795}
         profile={PROFILE}
         selectedDate={null}
+        labelMode="SYMBOL"
         showShiftTimes
       />,
     );
@@ -196,6 +353,7 @@ describe("MonthCard", () => {
       <MonthCard
         bottomReserve={55}
         entriesByDate={new Map([[date, [appointment(date, "appointment-1", "Arzttermin")]]])}
+        labelMode={SHORT_LABEL_MODE}
         month="2026-09"
         onSelectDate={jest.fn()}
         pageHeight={795}

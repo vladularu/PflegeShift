@@ -22,11 +22,7 @@ import Animated, {
 
 import type { CalendarEntry, CalendarLabelMode, UserProfile } from "@/domain/types";
 import { createMonthGrid, formatDateTitle, isoWeekNumber, today } from "@/engine/calendar";
-import {
-  calendarShiftDetail,
-  calendarEntryPreview,
-  shouldUseCompactCalendarLabels,
-} from "@/features/calendar/calendar-display";
+import { calendarShiftDetail, calendarEntryPreview } from "@/features/calendar/calendar-display";
 import {
   calculateCalendarGridLayout,
   type CalendarAnchorRect,
@@ -66,7 +62,7 @@ interface DayCellProps {
   readonly stampMode: boolean;
   readonly stampTransitionProgress: SharedValue<number>;
   readonly stampToolLabel: string | null;
-  readonly compactLabels: boolean;
+  readonly labelMode: CalendarLabelMode;
   readonly showShiftTimes: boolean;
   readonly showShiftDuration: boolean;
   readonly timeZone: string;
@@ -75,13 +71,13 @@ interface DayCellProps {
 }
 
 const EntryMark = memo(function EntryMark({
-  compactLabels,
+  labelMode,
   entry,
   showShiftTimes,
   showShiftDuration,
   timeZone,
 }: {
-  readonly compactLabels: boolean;
+  readonly labelMode: CalendarLabelMode;
   readonly entry: CalendarEntry;
   readonly showShiftTimes: boolean;
   readonly showShiftDuration: boolean;
@@ -118,7 +114,7 @@ const EntryMark = memo(function EntryMark({
             fontWeight: "400",
           }}
         >
-          {compactLabels ? entry.title.slice(0, 1) : entry.title}
+          {labelMode === "FULL" ? entry.title : entry.title.slice(0, 1)}
         </Text>
       </Animated.View>
     );
@@ -148,11 +144,13 @@ const EntryMark = memo(function EntryMark({
           paddingHorizontal: 3,
         }}
       >
-        {compactLabels ? (
+        {labelMode === "SYMBOL" ? (
           <ShiftSymbol color={colors.onMain} size={12} value={entry.symbol} />
         ) : (
           <Text
+            adjustsFontSizeToFit
             maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+            minimumFontScale={0.72}
             numberOfLines={1}
             style={{
               color: colors.onMain,
@@ -162,7 +160,7 @@ const EntryMark = memo(function EntryMark({
               textAlign: "center",
             }}
           >
-            {entry.title}
+            {labelMode === "SHORT" ? entry.title.slice(0, 1) : entry.title}
           </Text>
         )}
       </View>
@@ -242,7 +240,7 @@ const DayCell = memo(
     stampMode,
     stampTransitionProgress,
     stampToolLabel,
-    compactLabels,
+    labelMode,
     showShiftTimes,
     showShiftDuration,
     timeZone,
@@ -294,8 +292,9 @@ const DayCell = memo(
           style={({ pressed }: PressableStateCallbackType) => ({
             flex: 1,
             minWidth: 0,
-            marginHorizontal: 1,
+            marginHorizontal: 0.25,
             marginVertical: 2,
+            opacity: 1,
             overflow: "hidden",
             borderRadius: 4,
             borderCurve: "continuous",
@@ -388,10 +387,12 @@ const DayCell = memo(
             ) : null}
           </View>
           <View
+            testID={`calendar-entry-layer-${cell.date}`}
             style={{
               minHeight: stampMode
                 ? CALENDAR_METRICS.entryRowHeight * (detailed ? 2 : 1)
                 : undefined,
+              opacity: !cell.inMonth && !isToday && !isSelected ? 0.2 : 1,
               gap: 1,
               overflow: "hidden",
               borderRadius: 4,
@@ -412,7 +413,7 @@ const DayCell = memo(
             {preview.entries.map((entry) => (
               <EntryMark
                 key={`${entry.kind}-${entry.id}`}
-                compactLabels={compactLabels}
+                labelMode={labelMode}
                 entry={entry}
                 showShiftDuration={showShiftDuration}
                 showShiftTimes={showShiftTimes}
@@ -439,7 +440,7 @@ const DayCell = memo(
   },
   (previous, next) =>
     previous.cell === next.cell &&
-    previous.compactLabels === next.compactLabels &&
+    previous.labelMode === next.labelMode &&
     calendarEntryListsEqual(previous.entries, next.entries) &&
     previous.entryRowCapacity === next.entryRowCapacity &&
     previous.holidayName === next.holidayName &&
@@ -527,8 +528,7 @@ export const MonthCard = memo(function MonthCard({
   const palette = usePalette();
   const internalStampProgress = useSharedValue(stampMode ? 1 : 0);
   const stampProgress = stampTransitionProgress ?? internalStampProgress;
-  const { fontScale, width } = useWindowDimensions();
-  const compactLabels = labelMode === "SYMBOL" || shouldUseCompactCalendarLabels(fontScale);
+  const { width } = useWindowDimensions();
   useEffect(() => {
     if (stampTransitionProgress !== undefined) return;
     internalStampProgress.value = withTiming(stampMode ? 1 : 0, {
@@ -606,7 +606,13 @@ export const MonthCard = memo(function MonthCard({
           {WEEKDAYS.map((weekday, index) => (
             <View
               key={`${weekday}-${index}`}
-              style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 4,
+                backgroundColor: index >= 5 ? palette.weekend : "transparent",
+              }}
             >
               <Text
                 maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
@@ -636,7 +642,7 @@ export const MonthCard = memo(function MonthCard({
               <DayCell
                 key={cell.date}
                 cell={cell}
-                compactLabels={compactLabels}
+                labelMode={labelMode}
                 entries={entriesByDate.get(cell.date) ?? EMPTY_ENTRIES}
                 entryRowCapacity={entryRowCapacity}
                 holidayName={holidays.get(cell.date)?.name}
