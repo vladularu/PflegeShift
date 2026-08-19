@@ -65,10 +65,6 @@ export function calendarDayPressAction(
   return hasStampTool ? "STAMP" : "AWAIT_TOOL";
 }
 
-export function shouldUseCompactCalendarLabels(fontScale: number): boolean {
-  return Number.isFinite(fontScale) && fontScale >= 1.3;
-}
-
 export function calendarShiftDetail(
   entry: ShiftEntry,
   options: {

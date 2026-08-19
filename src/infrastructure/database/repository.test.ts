@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { CalendarLabelMode } from "@/domain/types";
 import { migrateDatabase } from "@/infrastructure/database/migrations";
 import {
   deleteCalendarEntry,
@@ -23,6 +24,8 @@ import {
   saveTvoedWorkPatternSettings,
   swapTemplateSortOrder,
 } from "@/infrastructure/database/repository";
+
+const SHORT_LABEL_MODE: CalendarLabelMode = "SHORT";
 
 class TestDatabase {
   readonly database = new Database(":memory:");
@@ -68,7 +71,7 @@ describe("SQLite repository", () => {
     expect(templates).toHaveLength(7);
     expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("star");
     expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({
-      count: 8,
+      count: 9,
     });
     expect(testDb.database.pragma("secure_delete", { simple: true })).toBe(1);
   });
@@ -299,6 +302,13 @@ describe("SQLite repository", () => {
       breakMinutes: 30,
       color: "#7E57C2",
       symbol: "F",
+      notification: {
+        amount: 15,
+        unit: "MINUTE",
+        direction: "BEFORE",
+        reference: "START",
+      },
+      alarmEnabled: true,
       overtimeMinutes: 30,
       holidayPremiumMode: "WITHOUT_TIME_OFF",
     });
@@ -332,6 +342,8 @@ describe("SQLite repository", () => {
     });
     expect(updated.revision).toBe(2);
     expect(updated).toMatchObject({
+      notification: { amount: 15, unit: "MINUTE" },
+      alarmEnabled: true,
       overtimeMinutes: 30,
       holidayPremiumMode: "WITHOUT_TIME_OFF",
     });
@@ -348,6 +360,33 @@ describe("SQLite repository", () => {
     const restored = await restoreCalendarEntry(db, updated);
     expect(restored).toMatchObject({ id: updated.id, revision: 4, deletedAt: null });
     expect(await listCalendarEntries(db)).toHaveLength(1);
+  });
+
+  it("reads legacy shift notifications without enabling the separate alarm", async () => {
+    const shift = await saveShift(db, {
+      date: "2026-07-31",
+      title: "Spät",
+      type: "LATE",
+      startTime: "13:00",
+      endTime: "21:30",
+      breakMinutes: 30,
+      color: "#F05C68",
+      symbol: "S",
+    });
+    testDb.database.prepare("UPDATE shift_entries SET notification_json=? WHERE id=?").run(
+      JSON.stringify({
+        amount: 30,
+        unit: "MINUTE",
+        direction: "BEFORE",
+        reference: "START",
+      }),
+      shift.id,
+    );
+
+    expect((await listCalendarEntries(db))[0]).toMatchObject({
+      notification: { amount: 30, unit: "MINUTE" },
+      alarmEnabled: false,
+    });
   });
 
   it("persists and revises monthly tariff decisions", async () => {
@@ -399,7 +438,7 @@ describe("SQLite repository", () => {
       showShifts: true,
       showAppointments: false,
       showHolidays: false,
-      labelMode: "SYMBOL",
+      labelMode: SHORT_LABEL_MODE,
       showShiftTimes: true,
       showShiftDuration: true,
     });
@@ -408,9 +447,22 @@ describe("SQLite repository", () => {
       showShifts: true,
       showAppointments: false,
       showHolidays: false,
-      labelMode: "SYMBOL",
+      labelMode: "SHORT",
       showShiftTimes: true,
       showShiftDuration: true,
+    });
+
+    await saveCalendarPreferences(db, {
+      viewMode: "MONTH",
+      showShifts: true,
+      showAppointments: true,
+      showHolidays: true,
+      labelMode: "SYMBOL",
+      showShiftTimes: false,
+      showShiftDuration: false,
+    });
+    expect(await loadCalendarPreferences(db)).toMatchObject({
+      labelMode: "SYMBOL",
     });
   });
 

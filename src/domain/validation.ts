@@ -262,6 +262,7 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
     symbol: requireNonEmpty(input.symbol, "Symbol").slice(0, 4),
     note: input.note?.trim() || null,
     notification: validateNotification(input.notification),
+    alarmEnabled: input.alarmEnabled ?? false,
     location: validateLocation(input.location),
     overtimeMinutes: input.overtimeMinutes ?? 0,
     holidayPremiumMode: input.holidayPremiumMode ?? "WITH_TIME_OFF",
@@ -272,6 +273,9 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
     base.overtimeMinutes > 24 * 60
   ) {
     throw new ValidationError("Überstunden müssen zwischen 0 und 1.440 Minuten liegen.");
+  }
+  if (typeof base.alarmEnabled !== "boolean") {
+    throw new ValidationError("Die Weckereinstellung ist ungültig.");
   }
   if (!["WITH_TIME_OFF", "WITHOUT_TIME_OFF"].includes(base.holidayPremiumMode)) {
     throw new ValidationError("Ungültige Feiertagsoption.");

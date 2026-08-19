@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FullWindowOverlay } from "react-native-screens";
 import Animated, {
   Extrapolation,
+  FadeIn,
   cancelAnimation,
   interpolate,
   runOnJS,
@@ -178,7 +179,14 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   }, [openBottom, reduceMotion]);
 
   const control = (
-    <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+    <Animated.View
+      entering={FadeIn.delay(MOTION.duration.fast)
+        .duration(MOTION.duration.fast)
+        .reduceMotion(MOTION.reduceMotion)}
+      pointerEvents="box-none"
+      style={StyleSheet.absoluteFill}
+      testID="quick-planner-mount-reveal"
+    >
       <View
         pointerEvents="box-none"
         style={[styles.stack, { bottom: openBottom, height: CONTROL_HEIGHT }]}
@@ -286,7 +294,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
           </AnimatedPressable>
         </Animated.View>
       </View>
-    </View>
+    </Animated.View>
   );
 
   if (Platform.OS === "ios") {

@@ -12,9 +12,14 @@ const COMPACT_SCALE_ALLOWLIST = new Set([
   "ui/shift-symbol.tsx",
 ]);
 
-const TEXT_SHRINK_ALLOWLIST = new Set(["features/calendar/month-card.tsx", "ui/shift-symbol.tsx"]);
+const TEXT_SHRINK_ALLOWLIST = new Set([
+  "features/calendar/calendar-view-screen.tsx",
+  "features/calendar/month-card.tsx",
+  "ui/shift-symbol.tsx",
+]);
 
 const SINGLE_LINE_ALLOWLIST = new Set([
+  "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
   "features/calendar/shift-selection-panel.tsx",
   "ui/shift-symbol.tsx",

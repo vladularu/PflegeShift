@@ -87,13 +87,26 @@ export function settingsInfoRoute(section: SettingsInfoSection) {
 }
 
 export function dayEditorRoute(date: string, mode: "SHIFT" | "APPOINTMENT", entryId?: string) {
+  const params = Object.freeze({
+    date: requireDate(date),
+    mode,
+    ...(entryId ? { entryId: requireIdentifier(entryId) } : {}),
+  });
+  if (mode === "APPOINTMENT") {
+    return Object.freeze({
+      pathname: "/appointment-editor" as const,
+      params,
+    });
+  }
+  if (entryId) {
+    return Object.freeze({
+      pathname: "/shift-editor" as const,
+      params,
+    });
+  }
   return Object.freeze({
     pathname: "/day-editor" as const,
-    params: Object.freeze({
-      date: requireDate(date),
-      mode,
-      ...(entryId ? { entryId: requireIdentifier(entryId) } : {}),
-    }),
+    params,
   });
 }
 

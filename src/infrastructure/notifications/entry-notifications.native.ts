@@ -12,8 +12,8 @@ import {
 const MAX_PENDING_FOR_ENTRY = 48;
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: false,
+  handleNotification: async (notification) => ({
+    shouldPlaySound: notification.request.content.data?.reminderKind === "ALARM",
     shouldSetBadge: false,
     shouldShowBanner: true,
     shouldShowList: true,
@@ -51,6 +51,29 @@ function scheduledInstant(
   return new Date(instant.epochMilliseconds);
 }
 
+interface ReminderSpec {
+  readonly kind: "NOTIFICATION" | "ALARM";
+  readonly rule: EntryNotification;
+}
+
+function reminderSpecs(entry: CalendarEntry): readonly ReminderSpec[] {
+  const specs: ReminderSpec[] = [];
+  if (entry.notification) specs.push({ kind: "NOTIFICATION", rule: entry.notification });
+  if (entry.kind === "SHIFT" && entry.alarmEnabled && entry.startTime !== null) {
+    const alarmRule: EntryNotification = {
+      amount: 0,
+      unit: "MINUTE",
+      direction: "BEFORE",
+      reference: "START",
+    };
+    const notificationIsSameInstant =
+      entry.notification?.amount === 0 && entry.notification.reference === "START";
+    if (notificationIsSameInstant) specs.length = 0;
+    specs.push({ kind: "ALARM", rule: alarmRule });
+  }
+  return Object.freeze(specs);
+}
+
 function occurrenceDates(entry: CalendarEntry, today: string, endDate: string): readonly string[] {
   if (entry.kind === "SHIFT")
     return entry.date >= today ? Object.freeze([entry.date]) : Object.freeze([]);
@@ -76,8 +99,8 @@ export async function syncEntryNotifications(
   timeZone: string,
 ): Promise<void> {
   await cancelEntryNotifications(db, entry);
-  const rule = entry.notification ?? null;
-  if (rule === null || entry.deletedAt !== null) return;
+  const specs = reminderSpecs(entry);
+  if (specs.length === 0 || entry.deletedAt !== null) return;
 
   const currentPermission = await Notifications.getPermissionsAsync();
   const permission = currentPermission.granted
@@ -92,23 +115,33 @@ export async function syncEntryNotifications(
 
   try {
     for (const occurrenceDate of occurrenceDates(entry, today, endDate)) {
-      const triggerDate = scheduledInstant(entry, occurrenceDate, rule, timeZone);
-      if (triggerDate.getTime() <= Date.now()) continue;
-      const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: entry.title,
-          body:
-            entry.kind === "SHIFT"
-              ? "Erinnerung an deinen Dienst."
-              : "Erinnerung an deinen Termin.",
-          data: { entryId: entry.id, entryKind: entry.kind, occurrenceDate },
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: triggerDate,
-        },
-      });
-      schedules.push({ occurrenceDate, notificationId });
+      for (const spec of specs) {
+        const triggerDate = scheduledInstant(entry, occurrenceDate, spec.rule, timeZone);
+        if (triggerDate.getTime() <= Date.now()) continue;
+        const alarm = spec.kind === "ALARM";
+        const notificationId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: alarm ? "Dienst beginnt" : entry.title,
+            body: alarm
+              ? `${entry.title} beginnt jetzt.`
+              : entry.kind === "SHIFT"
+                ? "Erinnerung an deinen Dienst."
+                : "Erinnerung an deinen Termin.",
+            sound: alarm ? "default" : undefined,
+            data: {
+              entryId: entry.id,
+              entryKind: entry.kind,
+              occurrenceDate,
+              reminderKind: spec.kind,
+            },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: triggerDate,
+          },
+        });
+        schedules.push({ occurrenceDate, notificationId });
+      }
     }
   } finally {
     await replaceScheduledNotifications(db, entry, schedules);

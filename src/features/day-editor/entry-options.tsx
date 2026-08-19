@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,7 +29,7 @@ export function notificationLabel(rule: EntryNotification | null | undefined): s
   const direction = rule.direction === "BEFORE" ? "vor" : "nach";
   const reference = rule.reference === "START" ? "Beginn" : "Ende";
   return rule.amount === 0
-    ? `Zum ${reference.toLowerCase()}`
+    ? `Zum ${reference}`
     : `${rule.amount} ${units[rule.unit]} ${direction} ${reference}`;
 }
 
@@ -250,10 +251,12 @@ export function RecurrenceSheet({
 }
 
 export function NotificationSheet({
+  deferredSelection = false,
   onChange,
   onClose,
   value,
 }: {
+  readonly deferredSelection?: boolean;
   readonly onChange: (value: EntryNotification | null) => void;
   readonly onClose: () => void;
   readonly value: EntryNotification | null;
@@ -263,22 +266,31 @@ export function NotificationSheet({
   const [unit, setUnit] = useState<NotificationUnit>(value?.unit ?? "MINUTE");
   const [direction, setDirection] = useState(value?.direction ?? "BEFORE");
   const [reference, setReference] = useState<NotificationReference>(value?.reference ?? "START");
+  const [enabled, setEnabled] = useState(value !== null);
   return (
     <SheetShell onClose={onClose} title="Benachrichtigung">
       <ChoiceButton
         label="Keine"
         onPress={() => {
+          if (deferredSelection) {
+            setEnabled(false);
+            return;
+          }
           onChange(null);
           onClose();
         }}
-        selected={value === null}
+        selected={!enabled}
       />
       <View
         style={{ gap: 16, borderRadius: 20, backgroundColor: palette.surfaceRaised, padding: 16 }}
       >
         <TextInput
+          accessibilityLabel="Benachrichtigungsabstand"
           keyboardType="number-pad"
-          onChangeText={setAmount}
+          onChangeText={(nextAmount) => {
+            setEnabled(true);
+            setAmount(nextAmount);
+          }}
           style={{
             borderRadius: 12,
             backgroundColor: palette.surfaceMuted,
@@ -289,57 +301,59 @@ export function NotificationSheet({
           }}
           value={amount}
         />
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 8 }}>
           {(["MINUTE", "HOUR", "DAY", "WEEK"] as const).map((candidate) => (
-            <Pressable
+            <ChoicePill
               key={candidate}
-              onPress={() => setUnit(candidate)}
-              style={{
-                borderRadius: 20,
-                backgroundColor: unit === candidate ? palette.primarySoft : palette.surfaceMuted,
-                paddingHorizontal: 13,
-                paddingVertical: 10,
+              label={{ MINUTE: "Minuten", HOUR: "Stunden", DAY: "Tage", WEEK: "Wochen" }[candidate]}
+              onPress={() => {
+                setEnabled(true);
+                setUnit(candidate);
               }}
-            >
-              <Text
-                style={{
-                  color: unit === candidate ? palette.primary : palette.text,
-                  fontWeight: "600",
-                }}
-              >
-                {{ MINUTE: "Minuten", HOUR: "Stunden", DAY: "Tage", WEEK: "Wochen" }[candidate]}
-              </Text>
-            </Pressable>
+              selected={unit === candidate}
+            />
           ))}
         </View>
-        <View style={{ flexDirection: "row", gap: 8 }}>
+        <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 8 }}>
           {(["BEFORE", "AFTER"] as const).map((candidate) => (
             <ChoicePill
               key={candidate}
               label={candidate === "BEFORE" ? "vor" : "nach"}
               selected={direction === candidate}
-              onPress={() => setDirection(candidate)}
+              onPress={() => {
+                setEnabled(true);
+                setDirection(candidate);
+              }}
             />
           ))}
         </View>
-        <View style={{ flexDirection: "row", gap: 8 }}>
+        <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 8 }}>
           {(["START", "END"] as const).map((candidate) => (
             <ChoicePill
               key={candidate}
               label={candidate === "START" ? "Beginn" : "Ende"}
               selected={reference === candidate}
-              onPress={() => setReference(candidate)}
+              onPress={() => {
+                setEnabled(true);
+                setReference(candidate);
+              }}
             />
           ))}
         </View>
         <Pressable
+          accessibilityLabel="Benachrichtigung übernehmen"
+          accessibilityRole="button"
           onPress={() => {
-            onChange({
-              amount: Math.max(0, Math.min(365, Number(amount) || 0)),
-              unit,
-              direction,
-              reference,
-            });
+            onChange(
+              enabled
+                ? {
+                    amount: Math.max(0, Math.min(365, Number(amount) || 0)),
+                    unit,
+                    direction,
+                    reference,
+                  }
+                : null,
+            );
             onClose();
           }}
           style={{
@@ -357,6 +371,107 @@ export function NotificationSheet({
   );
 }
 
+function pausePickerDate(minutes: number): Date {
+  const rounded = Math.min(23 * 60 + 45, Math.max(0, Math.round(minutes / 15) * 15));
+  const value = new Date(2000, 0, 1, 0, 0, 0, 0);
+  value.setHours(Math.floor(rounded / 60), rounded % 60, 0, 0);
+  return value;
+}
+
+export function PauseSheet({
+  onChange,
+  onClose,
+  value,
+}: {
+  readonly onChange: (value: number) => void;
+  readonly onClose: () => void;
+  readonly value: number;
+}) {
+  const palette = usePalette();
+  const [selected, setSelected] = useState(() => pausePickerDate(value));
+  const minutes = selected.getHours() * 60 + selected.getMinutes();
+  return (
+    <SheetShell onClose={onClose} title="Pause">
+      <View
+        style={{
+          overflow: "hidden",
+          borderRadius: 20,
+          backgroundColor: palette.surfaceRaised,
+          padding: 16,
+        }}
+      >
+        <DateTimePicker
+          accessibilityLabel="Pausendauer in 15-Minuten-Schritten"
+          display="spinner"
+          minuteInterval={15}
+          mode="countdown"
+          onValueChange={(_, nextValue) => setSelected(nextValue)}
+          themeVariant={palette.dark ? "dark" : "light"}
+          value={selected}
+        />
+      </View>
+      <Pressable
+        accessibilityLabel={`Pause übernehmen: ${minutes} Minuten`}
+        accessibilityRole="button"
+        onPress={() => {
+          onChange(minutes);
+          onClose();
+        }}
+        style={{
+          minHeight: 50,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 25,
+          backgroundColor: palette.primary,
+        }}
+      >
+        <Text style={{ color: palette.onPrimary, fontSize: 16, fontWeight: "700" }}>Fertig</Text>
+      </Pressable>
+    </SheetShell>
+  );
+}
+
+export function AlarmSheet({
+  onChange,
+  onClose,
+  value,
+}: {
+  readonly onChange: (value: boolean) => void;
+  readonly onClose: () => void;
+  readonly value: boolean;
+}) {
+  const palette = usePalette();
+  return (
+    <SheetShell onClose={onClose} title="Wecker">
+      <View
+        accessibilityRole="radiogroup"
+        style={{ overflow: "hidden", borderRadius: 20, backgroundColor: palette.surfaceRaised }}
+      >
+        <ChoiceButton
+          label="Aus"
+          onPress={() => {
+            onChange(false);
+            onClose();
+          }}
+          selected={!value}
+        />
+        <ChoiceButton
+          label="Zum Dienstbeginn"
+          onPress={() => {
+            onChange(true);
+            onClose();
+          }}
+          selected={value}
+        />
+      </View>
+      <Text style={{ color: palette.textSecondary, fontSize: 14, lineHeight: 20 }}>
+        Der Wecker verwendet den iOS-Standardton. Fokusmodus und Stummschaltung können den Ton
+        unterdrücken.
+      </Text>
+    </SheetShell>
+  );
+}
+
 function ChoicePill({
   label,
   onPress,
@@ -369,6 +484,8 @@ function ChoicePill({
   const palette = usePalette();
   return (
     <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
       onPress={onPress}
       style={{
         flex: 1,

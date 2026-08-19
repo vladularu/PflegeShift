@@ -12,6 +12,7 @@ export interface RawShiftRow {
   symbol: string;
   note: string | null;
   notification_json: string | null;
+  alarm_enabled: number;
   location_json: string | null;
   overtime_minutes: number;
   holiday_premium_mode: string;
@@ -150,6 +151,8 @@ function validateShift(value: unknown, month: string, currentPayload: boolean): 
   }
   const allDay = versionedInteger(row, "all_day", currentPayload, 0);
   if (allDay !== 0 && allDay !== 1) invalid("Ganztagsstatus");
+  const alarmEnabled = row.alarm_enabled === undefined ? 0 : integerValue(row, "alarm_enabled");
+  if (alarmEnabled !== 0 && alarmEnabled !== 1) invalid("Weckerstatus");
   return {
     id: stringValue(row, "id"),
     date,
@@ -164,6 +167,7 @@ function validateShift(value: unknown, month: string, currentPayload: boolean): 
     symbol: stringValue(row, "symbol"),
     note: nullableString(row, "note"),
     notification_json: versionedNullableString(row, "notification_json", currentPayload),
+    alarm_enabled: alarmEnabled,
     location_json: versionedNullableString(row, "location_json", currentPayload),
     overtime_minutes: integerValue(row, "overtime_minutes"),
     holiday_premium_mode: stringValue(row, "holiday_premium_mode"),
