@@ -90,6 +90,7 @@ interface ShiftRow {
   symbol: string;
   note: string | null;
   notification_json: string | null;
+  alarm_enabled: number;
   location_json: string | null;
   overtime_minutes: number;
   holiday_premium_mode: ShiftEntry["holidayPremiumMode"];
@@ -216,6 +217,7 @@ function mapShift(row: ShiftRow): ShiftEntry {
     symbol: row.symbol,
     note: row.note,
     notification: parseJson<EntryNotification>(row.notification_json, "Benachrichtigung"),
+    alarmEnabled: row.alarm_enabled === 1,
     location: parseJson<EntryLocation>(row.location_json, "Ort"),
     overtimeMinutes: row.overtime_minutes,
     holidayPremiumMode: row.holiday_premium_mode,
@@ -235,6 +237,7 @@ function mapShift(row: ShiftRow): ShiftEntry {
     symbol: validated.symbol,
     note: validated.note ?? null,
     notification: validated.notification ?? null,
+    alarmEnabled: validated.alarmEnabled ?? false,
     location: validated.location ?? null,
     overtimeMinutes: validated.overtimeMinutes ?? 0,
     holidayPremiumMode: validated.holidayPremiumMode ?? "WITH_TIME_OFF",
@@ -485,7 +488,7 @@ export async function listCalendarEntries(
       entries.start_time,entries.end_time,entries.break_minutes,
       COALESCE(templates.color,entries.color) AS color,
       COALESCE(templates.symbol,entries.symbol) AS symbol,
-      entries.note,entries.notification_json,entries.location_json,
+      entries.note,entries.notification_json,entries.alarm_enabled,entries.location_json,
       entries.overtime_minutes,entries.holiday_premium_mode,
       entries.revision,entries.created_at,entries.updated_at,entries.deleted_at
      FROM shift_entries entries
@@ -514,9 +517,9 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
     await db.runAsync(
       `INSERT INTO shift_entries(
         id,date,template_id,title,type,all_day,start_time,end_time,break_minutes,color,
-        symbol,note,notification_json,location_json,overtime_minutes,holiday_premium_mode,
+        symbol,note,notification_json,alarm_enabled,location_json,overtime_minutes,holiday_premium_mode,
         revision,created_at,updated_at,deleted_at
-      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,NULL)`,
+      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,NULL)`,
       id,
       input.date,
       input.templateId ?? null,
@@ -530,6 +533,7 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
       input.symbol,
       input.note ?? null,
       serializeJson(input.notification),
+      input.alarmEnabled ? 1 : 0,
       serializeJson(input.location),
       input.overtimeMinutes ?? 0,
       input.holidayPremiumMode ?? "WITH_TIME_OFF",
@@ -540,7 +544,7 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
     const result = await db.runAsync(
       `UPDATE shift_entries SET
         date=?,template_id=?,title=?,type=?,all_day=?,start_time=?,end_time=?,break_minutes=?,
-        color=?,symbol=?,note=?,notification_json=?,location_json=?,
+        color=?,symbol=?,note=?,notification_json=?,alarm_enabled=?,location_json=?,
         overtime_minutes=?,holiday_premium_mode=?,
         revision=revision+1,updated_at=?
        WHERE id=? AND revision=? AND deleted_at IS NULL`,
@@ -556,6 +560,7 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
       input.symbol,
       input.note ?? null,
       serializeJson(input.notification),
+      input.alarmEnabled ? 1 : 0,
       serializeJson(input.location),
       input.overtimeMinutes ?? 0,
       input.holidayPremiumMode ?? "WITH_TIME_OFF",
@@ -568,7 +573,7 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
 
   const row = await db.getFirstAsync<ShiftRow>(
     `SELECT id,date,template_id,title,type,all_day,start_time,end_time,break_minutes,color,
-      symbol,note,notification_json,location_json,overtime_minutes,holiday_premium_mode,
+      symbol,note,notification_json,alarm_enabled,location_json,overtime_minutes,holiday_premium_mode,
       revision,created_at,updated_at,deleted_at
      FROM shift_entries WHERE id=?`,
     id,

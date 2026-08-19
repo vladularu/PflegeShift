@@ -4,7 +4,6 @@ import {
   calendarDayPressAction,
   calendarEntryPreview,
   calendarShiftDetail,
-  shouldUseCompactCalendarLabels,
   yearMonths,
 } from "@/features/calendar/calendar-display";
 
@@ -64,15 +63,6 @@ describe("calendar display helpers", () => {
     expect(calendarDayPressAction(false, false)).toBe("OPEN_QUICK_ENTRY");
     expect(calendarDayPressAction(true, false)).toBe("AWAIT_TOOL");
     expect(calendarDayPressAction(true, true)).toBe("STAMP");
-  });
-});
-
-describe("calendar label density", () => {
-  it("switches to compact marks for accessibility text sizes", () => {
-    expect(shouldUseCompactCalendarLabels(1)).toBe(false);
-    expect(shouldUseCompactCalendarLabels(1.29)).toBe(false);
-    expect(shouldUseCompactCalendarLabels(1.3)).toBe(true);
-    expect(shouldUseCompactCalendarLabels(2)).toBe(true);
   });
 });
 

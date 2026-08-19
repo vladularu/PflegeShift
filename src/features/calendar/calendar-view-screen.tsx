@@ -1,6 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { ScrollView, Text, View } from "react-native";
 
+import type { CalendarLabelMode } from "@/domain/types";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
 import { calendarChipPalette, chipTextColor } from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
@@ -16,21 +17,59 @@ import {
 } from "@/ui/design-system";
 import { PrimaryButton } from "@/ui/form-controls";
 import { LabeledSwitch } from "@/ui/labeled-switch";
+import { ShiftSymbol } from "@/ui/shift-symbol";
 
 function CalendarDisplayPreview({
-  compact,
-  showDetail,
+  labelMode,
+  showShiftDuration,
+  showShiftTimes,
 }: {
-  readonly compact: boolean;
-  readonly showDetail: boolean;
+  readonly labelMode: CalendarLabelMode;
+  readonly showShiftDuration: boolean;
+  readonly showShiftTimes: boolean;
 }) {
   const palette = usePalette();
   const samples = [
-    { day: "27", title: compact ? "F" : "Früh", time: "06:00", color: SHIFT_TYPE_COLORS.EARLY },
-    { day: "28", title: compact ? "S" : "Spät", time: "14:00", color: SHIFT_TYPE_COLORS.LATE },
-    { day: "29", title: compact ? "N" : "Nacht", time: "22:00", color: SHIFT_TYPE_COLORS.NIGHT },
-    { day: "30", title: compact ? "T" : "Tag", time: "08:00", color: SHIFT_TYPE_COLORS.DAY },
-    { day: "31", title: compact ? "U" : "Urlaub", time: "GT", color: SHIFT_TYPE_COLORS.VACATION },
+    {
+      day: "27",
+      title: "Früh",
+      symbol: "rise",
+      startTime: "06:00",
+      duration: "8:00 h",
+      color: SHIFT_TYPE_COLORS.EARLY,
+    },
+    {
+      day: "28",
+      title: "Spät",
+      symbol: "sun",
+      startTime: "14:00",
+      duration: "8:00 h",
+      color: SHIFT_TYPE_COLORS.LATE,
+    },
+    {
+      day: "29",
+      title: "Nacht",
+      symbol: "moon",
+      startTime: "22:00",
+      duration: "8:00 h",
+      color: SHIFT_TYPE_COLORS.NIGHT,
+    },
+    {
+      day: "30",
+      title: "Tag",
+      symbol: "home",
+      startTime: "08:00",
+      duration: "8:00 h",
+      color: SHIFT_TYPE_COLORS.DAY,
+    },
+    {
+      day: "31",
+      title: "Urlaub",
+      symbol: "palm",
+      startTime: null,
+      duration: null,
+      color: SHIFT_TYPE_COLORS.VACATION,
+    },
   ];
 
   return (
@@ -51,6 +90,14 @@ function CalendarDisplayPreview({
       {samples.map((sample, index) => {
         const colors = calendarChipPalette(sample.color, palette.dark);
         const today = index === 1;
+        const detail =
+          sample.startTime === null
+            ? showShiftTimes || showShiftDuration
+              ? "GT"
+              : null
+            : [showShiftTimes ? sample.startTime : null, showShiftDuration ? sample.duration : null]
+                .filter((value): value is string => value !== null)
+                .join(" · ") || null;
         return (
           <View
             key={sample.day}
@@ -78,24 +125,34 @@ function CalendarDisplayPreview({
             </Text>
             <View style={{ overflow: "hidden", borderRadius: 4 }}>
               <View style={{ height: 19, justifyContent: "center", backgroundColor: colors.main }}>
-                <Text
-                  maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-                  style={{
-                    color: colors.onMain,
-                    fontSize: 10,
-                    fontWeight: "700",
-                    textAlign: "center",
-                  }}
-                >
-                  {sample.title}
-                </Text>
+                {labelMode === "SYMBOL" ? (
+                  <ShiftSymbol color={colors.onMain} size={13} value={sample.symbol} />
+                ) : (
+                  <Text
+                    adjustsFontSizeToFit
+                    maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+                    minimumFontScale={0.72}
+                    numberOfLines={1}
+                    style={{
+                      color: colors.onMain,
+                      fontSize: 10,
+                      fontWeight: "700",
+                      textAlign: "center",
+                    }}
+                  >
+                    {labelMode === "SHORT" ? sample.title.slice(0, 1) : sample.title}
+                  </Text>
+                )}
               </View>
-              {showDetail ? (
+              {detail ? (
                 <View
                   style={{ height: 19, justifyContent: "center", backgroundColor: colors.detail }}
                 >
                   <Text
+                    adjustsFontSizeToFit
                     maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+                    minimumFontScale={0.72}
+                    numberOfLines={1}
                     style={{
                       color: colors.onDetail,
                       fontSize: 10,
@@ -104,7 +161,7 @@ function CalendarDisplayPreview({
                       fontVariant: ["tabular-nums"],
                     }}
                   >
-                    {sample.time}
+                    {detail}
                   </Text>
                 </View>
               ) : null}
@@ -182,8 +239,9 @@ export function CalendarViewScreen() {
       <View style={{ gap: 10 }}>
         <SectionHeader title="Vorschau" />
         <CalendarDisplayPreview
-          compact={preferences.labelMode === "SYMBOL"}
-          showDetail={preferences.showShiftTimes || preferences.showShiftDuration}
+          labelMode={preferences.labelMode}
+          showShiftDuration={preferences.showShiftDuration}
+          showShiftTimes={preferences.showShiftTimes}
         />
       </View>
       <View style={{ gap: 10 }}>
@@ -233,9 +291,12 @@ export function CalendarViewScreen() {
             <SegmentedControl
               items={[
                 { value: "FULL", label: "Voller Name" },
-                { value: "SYMBOL", label: "Nur Kürzel" },
+                { value: "SHORT", label: "Nur Kürzel" },
+                { value: "SYMBOL", label: "Symbol" },
               ]}
-              onChange={(value) => preferences.setLabelMode(value === "SYMBOL" ? "SYMBOL" : "FULL")}
+              onChange={(value) =>
+                preferences.setLabelMode(value === "SHORT" || value === "SYMBOL" ? value : "FULL")
+              }
               value={preferences.labelMode}
             />
           </View>

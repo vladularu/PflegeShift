@@ -7,6 +7,7 @@ import {
   colorContrastRatio,
   MINIMUM_TEXT_CONTRAST,
   MINIMUM_UI_CONTRAST,
+  relativeLuminance,
 } from "@/theme/color-contrast";
 import { DARK_PALETTE, LIGHT_PALETTE, type Palette } from "@/theme/palette-values";
 
@@ -34,9 +35,31 @@ describe("accessible service chips", () => {
     }
   });
 
-  it("adapts the detail text to pastel light-mode and muted dark-mode bands", () => {
-    expect(calendarChipPalette("#62B94C", false).onDetail).toBe("#171719");
-    expect(calendarChipPalette("#62B94C", true).onDetail).toBe("#FFFFFF");
+  it("keeps the existing pastel detail band in light mode", () => {
+    const chip = calendarChipPalette("#62B94C", false);
+
+    expect(chip.detail).toBe("#D3EBCD");
+    expect(chip.onDetail).toBe("#171719");
+  });
+
+  it("makes the dark-mode detail band distinctly darker than the label band", () => {
+    expect(calendarChipPalette("#62B94C", true).detail).toBe("#25461D");
+
+    for (const color of ["#62B94C", "#F05C59", "#31A7C3", "#D95F9A"]) {
+      const chip = calendarChipPalette(color, true);
+      const mainLuminance = relativeLuminance(chip.main);
+      const detailLuminance = relativeLuminance(chip.detail);
+
+      expect(mainLuminance).not.toBeNull();
+      expect(detailLuminance).not.toBeNull();
+      expect(
+        detailLuminance!,
+        `${chip.detail} should be visibly darker than ${chip.main}`,
+      ).toBeLessThanOrEqual(mainLuminance! * 0.55);
+      expect(colorContrastRatio(chip.onDetail, chip.detail)).toBeGreaterThanOrEqual(
+        MINIMUM_TEXT_CONTRAST,
+      );
+    }
   });
 });
 

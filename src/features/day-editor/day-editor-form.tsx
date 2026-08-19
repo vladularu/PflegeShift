@@ -1,5 +1,5 @@
-import { router, Stack, useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { router, Stack, useFocusEffect, useNavigation } from "expo-router";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
 
@@ -20,14 +20,18 @@ import { userFacingErrorMessage } from "@/domain/errors";
 import { ValidationError } from "@/domain/validation";
 import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
+import { AppointmentEditOverlay } from "@/features/day-editor/appointment-edit-overlay";
 import { shiftOverlapsHoliday } from "@/features/day-editor/holiday-premium";
 import {
   DAY_EDITOR_SHIFT_TYPES,
   SHIFT_TYPE_GRID_STYLE,
 } from "@/features/day-editor/day-editor-layout";
 import { resolveShiftTypePreset } from "@/features/day-editor/shift-type-preset";
+import { ShiftEditOverlay } from "@/features/day-editor/shift-edit-overlay";
 import {
+  AlarmSheet,
   NotificationSheet,
+  PauseSheet,
   notificationLabel,
   OptionRow,
   RecurrenceSheet,
@@ -70,6 +74,7 @@ export function DayEditorForm({
   readonly sessionKey: string;
 }) {
   const palette = usePalette();
+  const navigation = useNavigation();
   const { profile } = usePflegeShiftProfile();
   const { templates } = usePflegeShiftTemplates();
   const { entries, removeEntry, upsertShift, upsertAppointment } = usePflegeShiftEntries();
@@ -91,6 +96,7 @@ export function DayEditorForm({
   const [shiftNotification, setShiftNotification] = useState<EntryNotification | null>(
     initialShift?.notification ?? null,
   );
+  const [shiftAlarmEnabled, setShiftAlarmEnabled] = useState(initialShift?.alarmEnabled ?? false);
   const [shiftLocation, setShiftLocation] = useState<EntryLocation | null>(
     initialShift?.location ?? null,
   );
@@ -121,7 +127,9 @@ export function DayEditorForm({
   const [appointmentLocation, setAppointmentLocation] = useState<EntryLocation | null>(
     initialAppointment?.location ?? null,
   );
-  const [optionSheet, setOptionSheet] = useState<"RECURRENCE" | "NOTIFICATION" | null>(null);
+  const [optionSheet, setOptionSheet] = useState<
+    "ALARM" | "PAUSE" | "RECURRENCE" | "NOTIFICATION" | null
+  >(null);
   const [shiftTitleError, setShiftTitleError] = useState<string | null>(null);
   const [breakError, setBreakError] = useState<string | null>(null);
   const [overtimeError, setOvertimeError] = useState<string | null>(null);
@@ -134,6 +142,8 @@ export function DayEditorForm({
   const breakRef = useRef<TextInput>(null);
   const overtimeRef = useRef<TextInput>(null);
   const appointmentTitleRef = useRef<TextInput>(null);
+  const savingRef = useRef(false);
+  const allowRemovalRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -145,6 +155,12 @@ export function DayEditorForm({
   );
   const shiftIsAbsence = ["VACATION", "SICK", "FREE"].includes(shiftType);
   const shiftIsTimed = !shiftIsAbsence && !shiftAllDay;
+  const compactShiftEditor = existing?.kind === "SHIFT" && mode === "SHIFT";
+  const compactAppointmentEditor =
+    requestedMode === "APPOINTMENT" &&
+    mode === "APPOINTMENT" &&
+    (existing === null || existing.kind === "APPOINTMENT");
+  const compactOverlayEditor = compactShiftEditor || compactAppointmentEditor;
   const hasHolidayOverlap =
     profile && shiftIsTimed
       ? shiftOverlapsHoliday(date, startTime, endTime, profile.federalState)
@@ -183,7 +199,7 @@ export function DayEditorForm({
     selectionFeedback();
   }
 
-  async function save() {
+  async function save(closeAfterSave = true): Promise<boolean> {
     const nextShiftTitleError =
       mode === "SHIFT" ? requiredFieldError(shiftTitle, "Bezeichnung") : null;
     const nextBreakError =
@@ -230,9 +246,10 @@ export function DayEditorForm({
               : appointmentTitleRef,
         firstError,
       );
-      return;
+      return false;
     }
     try {
+      savingRef.current = true;
       setSaving(true);
       setError(null);
       if (mode === "SHIFT") {
@@ -263,6 +280,7 @@ export function DayEditorForm({
           symbol: shiftSymbol,
           note: shiftNote,
           notification: shiftNotification,
+          alarmEnabled: shiftIsTimed ? shiftAlarmEnabled : false,
           location: shiftLocation,
           overtimeMinutes: overtime,
           holidayPremiumMode,
@@ -299,12 +317,18 @@ export function DayEditorForm({
           location: appointmentLocation,
         });
       }
-      successFeedback();
-      router.back();
+      if (!compactOverlayEditor) successFeedback();
+      if (closeAfterSave) {
+        if (compactOverlayEditor) allowRemovalRef.current = true;
+        router.back();
+      }
+      return true;
     } catch (saveError) {
       warningFeedback();
       setError(userFacingErrorMessage(saveError, "Eintrag konnte nicht gespeichert werden."));
+      return false;
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -312,17 +336,207 @@ export function DayEditorForm({
   async function deleteEntry() {
     if (!existing) return;
     try {
+      savingRef.current = true;
       setSaving(true);
       setError(null);
       await removeEntry(existing);
       successFeedback();
+      allowRemovalRef.current = true;
       router.back();
     } catch (deleteError) {
       warningFeedback();
       setError(userFacingErrorMessage(deleteError, "Eintrag konnte nicht gelöscht werden."));
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
+  }
+
+  const saveFromDismiss = useEffectEvent(() => save(false));
+  useEffect(() => {
+    if (!compactOverlayEditor) return;
+    return navigation.addListener("beforeRemove", (event) => {
+      if (allowRemovalRef.current) {
+        allowRemovalRef.current = false;
+        return;
+      }
+      event.preventDefault();
+      if (savingRef.current) return;
+      void saveFromDismiss().then((saved) => {
+        if (!saved) return;
+        allowRemovalRef.current = true;
+        navigation.dispatch(event.data.action);
+      });
+    });
+  }, [compactOverlayEditor, navigation]);
+
+  if (compactShiftEditor) {
+    const durationMinutes = shiftIsTimed
+      ? calculateTimedShiftMinutes(
+          {
+            date,
+            startTime,
+            endTime,
+            breakMinutes: Number(breakMinutes) || 0,
+            allDay: false,
+          },
+          profile?.timeZone ?? "Europe/Berlin",
+        )
+      : null;
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ShiftEditOverlay
+          alarmEnabled={shiftAlarmEnabled}
+          breakMinutes={breakMinutes}
+          busy={saving}
+          date={date}
+          durationMinutes={durationMinutes}
+          endTime={endTime}
+          error={error}
+          locationName={shiftLocation?.name ?? null}
+          note={shiftNote}
+          notification={shiftNotification}
+          onAlarmPress={() => setOptionSheet("ALARM")}
+          onBreakMinutesChange={(value) => {
+            setBreakMinutes(String(value));
+            if (breakError) setBreakError(null);
+          }}
+          onBreakPress={() => setOptionSheet("PAUSE")}
+          onDismiss={() => {
+            allowRemovalRef.current = true;
+            router.back();
+          }}
+          onDelete={() => {
+            Alert.alert("Dienst löschen?", "Dieser Dienst wird aus dem Kalender entfernt.", [
+              { text: "Abbrechen", style: "cancel" },
+              { text: "Löschen", style: "destructive", onPress: () => void deleteEntry() },
+            ]);
+          }}
+          onEndTimeChange={setEndTime}
+          onLocationPress={() => router.push(locationPickerRoute(shiftLocation?.name) as never)}
+          onNoteChange={setShiftNote}
+          onNotificationChange={setShiftNotification}
+          onNotificationPress={() => setOptionSheet("NOTIFICATION")}
+          onRequestClose={() => save(false)}
+          onShiftTypeChange={chooseType}
+          onStartTimeChange={setStartTime}
+          shiftColor={shiftColor}
+          shiftIsTimed={shiftIsTimed}
+          shiftSymbol={shiftSymbol}
+          shiftTitle={shiftTitle}
+          shiftType={shiftType}
+          startTime={startTime}
+        />
+        {optionSheet === "NOTIFICATION" ? (
+          <NotificationSheet
+            deferredSelection
+            onChange={setShiftNotification}
+            onClose={() => setOptionSheet(null)}
+            value={shiftNotification}
+          />
+        ) : null}
+        {optionSheet === "PAUSE" ? (
+          <PauseSheet
+            onChange={(value) => {
+              setBreakMinutes(String(value));
+              if (breakError) setBreakError(null);
+            }}
+            onClose={() => setOptionSheet(null)}
+            value={Number(breakMinutes) || 0}
+          />
+        ) : null}
+        {optionSheet === "ALARM" ? (
+          <AlarmSheet
+            onChange={setShiftAlarmEnabled}
+            onClose={() => setOptionSheet(null)}
+            value={shiftAlarmEnabled}
+          />
+        ) : null}
+      </>
+    );
+  }
+
+  if (compactAppointmentEditor) {
+    const durationMinutes = allDay
+      ? null
+      : calculateTimedShiftMinutes(
+          {
+            date,
+            startTime: appointmentStart,
+            endTime: appointmentEnd,
+            breakMinutes: 0,
+            allDay: false,
+          },
+          profile?.timeZone ?? "Europe/Berlin",
+        );
+    const isSeries = Boolean(initialAppointment?.recurrence);
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <AppointmentEditOverlay
+          allDay={allDay}
+          appointmentColor={appointmentColor}
+          busy={saving}
+          date={date}
+          durationMinutes={durationMinutes}
+          endTime={appointmentEnd}
+          error={error}
+          locationName={appointmentLocation?.name ?? null}
+          note={appointmentNote}
+          notification={appointmentNotification}
+          onAllDayChange={setAllDay}
+          onDelete={
+            initialAppointment
+              ? () => {
+                  Alert.alert(
+                    isSeries ? "Terminserie löschen?" : "Termin löschen?",
+                    isSeries
+                      ? "Alle Termine dieser Serie werden gelöscht."
+                      : "Dieser Termin wird aus dem Kalender entfernt.",
+                    [
+                      { text: "Abbrechen", style: "cancel" },
+                      {
+                        text: "Löschen",
+                        style: "destructive",
+                        onPress: () => void deleteEntry(),
+                      },
+                    ],
+                  );
+                }
+              : undefined
+          }
+          onDismiss={() => {
+            allowRemovalRef.current = true;
+            router.back();
+          }}
+          onEndTimeChange={setAppointmentEnd}
+          onLocationPress={() =>
+            router.push(locationPickerRoute(appointmentLocation?.name) as never)
+          }
+          onNoteChange={setAppointmentNote}
+          onNotificationChange={setAppointmentNotification}
+          onNotificationPress={() => setOptionSheet("NOTIFICATION")}
+          onRecurrenceChange={setAppointmentRecurrence}
+          onRequestClose={() => save(false)}
+          onStartTimeChange={setAppointmentStart}
+          onTitleChange={(value) => {
+            setAppointmentTitle(value);
+            if (appointmentTitleError) setAppointmentTitleError(null);
+          }}
+          recurrence={appointmentRecurrence}
+          startTime={appointmentStart}
+          title={appointmentTitle}
+        />
+        {optionSheet === "NOTIFICATION" ? (
+          <NotificationSheet
+            onChange={setAppointmentNotification}
+            onClose={() => setOptionSheet(null)}
+            value={appointmentNotification}
+          />
+        ) : null}
+      </>
+    );
   }
 
   return (

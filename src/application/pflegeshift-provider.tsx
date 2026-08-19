@@ -169,7 +169,10 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       const notificationTimeZone = nextProfile?.timeZone ?? "Europe/Berlin";
       void Promise.allSettled(
         nextEntries
-          .filter((entry) => entry.notification != null)
+          .filter(
+            (entry) =>
+              entry.notification != null || (entry.kind === "SHIFT" && entry.alarmEnabled === true),
+          )
           .map((entry) => syncEntryNotifications(db, entry, notificationTimeZone)),
       ).then((results) => {
         for (const result of results) {

@@ -62,6 +62,7 @@ function renderDock({
 describe("QuickPlannerDock", () => {
   it("keeps the pencil, dock and close action in one persistent synchronized control", async () => {
     const screen = await renderDock();
+    const mountReveal = screen.getByTestId("quick-planner-mount-reveal");
     const stack = screen.getByTestId("quick-planner-stack");
     const closeRow = screen.getByTestId("quick-planner-close-row");
     const closeTarget = screen.getByTestId("quick-planner-close-hit-target");
@@ -75,6 +76,7 @@ describe("QuickPlannerDock", () => {
     const dockStyle = StyleSheet.flatten(dock.props.style);
 
     expect(stackStyle.position).toBe("absolute");
+    expect(mountReveal).toContainElement(stack);
     expect(stackStyle.bottom).toBe(-24);
     expect(stackStyle.left).toBe(8);
     expect(stackStyle.right).toBe(8);

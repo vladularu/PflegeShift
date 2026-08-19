@@ -39,12 +39,16 @@ describe("navigation contracts", () => {
 
   it("includes entryId only for editing", () => {
     expect(dayEditorRoute("2026-08-13", "SHIFT", "shift-1")).toEqual({
-      pathname: "/day-editor",
+      pathname: "/shift-editor",
       params: { date: "2026-08-13", mode: "SHIFT", entryId: "shift-1" },
     });
     expect(dayEditorRoute("2026-08-13", "APPOINTMENT")).toEqual({
-      pathname: "/day-editor",
+      pathname: "/appointment-editor",
       params: { date: "2026-08-13", mode: "APPOINTMENT" },
+    });
+    expect(dayEditorRoute("2026-08-13", "APPOINTMENT", "appointment-1")).toEqual({
+      pathname: "/appointment-editor",
+      params: { date: "2026-08-13", mode: "APPOINTMENT", entryId: "appointment-1" },
     });
   });
 

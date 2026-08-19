@@ -352,4 +352,17 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     }
     await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 8, now);
   }
+
+  const migration9 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=9",
+  );
+  if (migration9 === null) {
+    await addColumnIfMissing(
+      db,
+      "shift_entries",
+      "alarm_enabled",
+      "INTEGER NOT NULL DEFAULT 0 CHECK (alarm_enabled IN (0,1))",
+    );
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 9, now);
+  }
 }

@@ -167,6 +167,7 @@ export interface ShiftEntry {
   readonly symbol: string;
   readonly note: string | null;
   readonly notification?: EntryNotification | null;
+  readonly alarmEnabled?: boolean;
   readonly location?: EntryLocation | null;
   readonly overtimeMinutes: number;
   readonly holidayPremiumMode: HolidayPremiumMode;
@@ -198,7 +199,7 @@ export interface Appointment {
 export type CalendarEntry = ShiftEntry | Appointment;
 
 export type CalendarViewMode = "MONTH" | "YEAR";
-export type CalendarLabelMode = "FULL" | "SYMBOL";
+export type CalendarLabelMode = "FULL" | "SHORT" | "SYMBOL";
 
 export interface CalendarPreferencesData {
   readonly viewMode: CalendarViewMode;
@@ -259,6 +260,7 @@ export interface SaveShiftInput {
   readonly symbol: string;
   readonly note?: string | null;
   readonly notification?: EntryNotification | null;
+  readonly alarmEnabled?: boolean;
   readonly location?: EntryLocation | null;
   readonly overtimeMinutes?: number;
   readonly holidayPremiumMode?: HolidayPremiumMode;

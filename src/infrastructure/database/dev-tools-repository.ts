@@ -265,7 +265,7 @@ export async function listTestBackups(db: SQLiteDatabase): Promise<readonly Test
 }
 
 const SHIFT_COLUMNS =
-  "id,date,template_id,title,type,all_day,start_time,end_time,break_minutes,color,symbol,note,notification_json,location_json,overtime_minutes,holiday_premium_mode,revision,created_at,updated_at,deleted_at,test_run_id";
+  "id,date,template_id,title,type,all_day,start_time,end_time,break_minutes,color,symbol,note,notification_json,alarm_enabled,location_json,overtime_minutes,holiday_premium_mode,revision,created_at,updated_at,deleted_at,test_run_id";
 const APPOINTMENT_COLUMNS =
   "id,date,title,all_day,start_time,end_time,color,note,recurrence_frequency,recurrence_interval,notification_json,location_json,revision,created_at,updated_at,deleted_at,test_run_id";
 
@@ -289,7 +289,7 @@ export async function restoreTestBackup(
       await tx.runAsync("DELETE FROM monthly_tariff_decisions WHERE month=?", month);
       for (const row of payload.shifts) {
         await tx.runAsync(
-          `INSERT INTO shift_entries(${SHIFT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          `INSERT INTO shift_entries(${SHIFT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           row.id,
           row.date,
           row.template_id,
@@ -303,6 +303,7 @@ export async function restoreTestBackup(
           row.symbol,
           row.note,
           row.notification_json,
+          row.alarm_enabled,
           row.location_json,
           row.overtime_minutes,
           row.holiday_premium_mode,
