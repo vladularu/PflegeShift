@@ -1,8 +1,8 @@
 import MapView, { Marker } from "react-native-maps";
 
-import type { EntryLocation } from "@/domain/types";
+import type { GeocodedEntryLocation } from "@/domain/types";
 
-export function LocationMap({ location }: { readonly location: EntryLocation }) {
+export function LocationMap({ location }: { readonly location: GeocodedEntryLocation }) {
   return (
     <MapView
       initialRegion={{

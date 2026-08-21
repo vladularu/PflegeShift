@@ -53,6 +53,42 @@ describe("domain validation", () => {
     ).toThrow("am selben Tag");
   });
 
+  it("accepts custom locations and validates optional map coordinates as a pair", () => {
+    const shift = {
+      date: "2026-07-30",
+      title: "Dienst",
+      type: "CUSTOM" as const,
+      startTime: "08:00",
+      endTime: "16:00",
+      breakMinutes: 30,
+      color: "#2F80ED",
+      symbol: "D",
+    };
+
+    expect(validateShift({ ...shift, location: { name: " Station 3 " } }).location).toEqual({
+      name: "Station 3",
+    });
+    expect(
+      validateShift({
+        ...shift,
+        location: {
+          name: "Klinikum",
+          address: " Hauptstraße 1 ",
+          latitude: 49.6408,
+          longitude: 8.6373,
+        },
+      }).location,
+    ).toEqual({
+      name: "Klinikum",
+      address: "Hauptstraße 1",
+      latitude: 49.6408,
+      longitude: 8.6373,
+    });
+    expect(() =>
+      validateShift({ ...shift, location: { name: "Klinikum", latitude: 49.6408 } }),
+    ).toThrow("unvollständige Koordinaten");
+  });
+
   it("rejects an invalid profile time zone before engine calculations", () => {
     expect(() =>
       validateProfile({
