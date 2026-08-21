@@ -167,11 +167,13 @@ export default function RootLayout() {
                         <Stack.Screen
                           name="location-picker"
                           options={{
-                            title: "Ort",
+                            headerShown: false,
                             presentation: "formSheet",
-                            contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [0.92, 1],
-                            sheetGrabberVisible: true,
+                            contentStyle: { backgroundColor: palette.surface },
+                            sheetAllowedDetents: [0.72, 0.92],
+                            sheetCornerRadius: 28,
+                            sheetGrabberVisible: false,
+                            sheetInitialDetentIndex: 0,
                           }}
                         />
                         <Stack.Screen name="salary" options={{ headerShown: false }} />

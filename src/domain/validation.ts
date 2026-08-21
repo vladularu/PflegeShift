@@ -177,6 +177,15 @@ function requireTimedRange(startTime: string, endTime: string): void {
 function validateLocation(value: EntryLocation | null | undefined): EntryLocation | null {
   if (value === null || value === undefined) return null;
   const name = requireNonEmpty(value.name, "Ort");
+  const address = value.address?.trim() || undefined;
+  const hasLatitude = value.latitude !== null && value.latitude !== undefined;
+  const hasLongitude = value.longitude !== null && value.longitude !== undefined;
+  if (hasLatitude !== hasLongitude) {
+    throw new ValidationError("Der ausgewählte Ort enthält unvollständige Koordinaten.");
+  }
+  if (!hasLatitude || !hasLongitude) {
+    return Object.freeze({ name, ...(address ? { address } : {}) });
+  }
   if (
     !Number.isFinite(value.latitude) ||
     value.latitude < -90 ||
@@ -187,7 +196,12 @@ function validateLocation(value: EntryLocation | null | undefined): EntryLocatio
   ) {
     throw new ValidationError("Der ausgewählte Ort enthält ungültige Koordinaten.");
   }
-  return Object.freeze({ name, latitude: value.latitude, longitude: value.longitude });
+  return Object.freeze({
+    name,
+    ...(address ? { address } : {}),
+    latitude: value.latitude,
+    longitude: value.longitude,
+  });
 }
 
 function validateNotification(

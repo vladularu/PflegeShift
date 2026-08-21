@@ -1,10 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { View } from "react-native";
 
-import type { EntryLocation } from "@/domain/types";
+import type { GeocodedEntryLocation } from "@/domain/types";
 import { usePalette } from "@/theme/palette";
 
-export function LocationMap({ location: _location }: { readonly location: EntryLocation }) {
+export function LocationMap({ location: _location }: { readonly location: GeocodedEntryLocation }) {
   const palette = usePalette();
   return (
     <View
