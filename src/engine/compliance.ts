@@ -580,6 +580,7 @@ function checkRestAndSequence(
   const compensated = compensatedShortRestIndexes(periods);
   for (let index = 0; index < periods.length; index += 1) {
     const { current, next, minutes: rest } = periods[index];
+    if (rest < 0) continue;
     if (rest < 600) {
       issues.push(
         issue(

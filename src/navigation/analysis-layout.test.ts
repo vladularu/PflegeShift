@@ -4,13 +4,30 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("analysis native header", () => {
-  it("keeps the fixed Stunden/Gehalt selector below the iOS header", () => {
-    const source = readFileSync(
+  it("keeps one compact analysis screen and opens salary inline", () => {
+    const layoutSource = readFileSync(
       join(process.cwd(), "app", "(tabs)", "(analysis)", "_layout.tsx"),
       "utf8",
     );
+    const screenSource = readFileSync(
+      join(process.cwd(), "src", "features", "analysis", "insights-screen.tsx"),
+      "utf8",
+    );
+    const annualSource = readFileSync(
+      join(process.cwd(), "src", "features", "analysis", "annual-report-view.tsx"),
+      "utf8",
+    );
 
-    expect(source).toContain("headerLargeTitle: false");
-    expect(source).not.toContain("headerLargeTitle: true");
+    expect(layoutSource).toContain("headerLargeTitle: false");
+    expect(screenSource).toContain("headerShown: false");
+    expect(screenSource).not.toContain("headerLargeTitle: true");
+    expect(screenSource).toContain('title: "Auswertung"');
+    expect(screenSource).toContain(
+      'initialExpandedCard={requestedSection === "PAY" ? "PAY" : null}',
+    );
+    expect(screenSource).not.toContain("SalaryScreen");
+    expect(screenSource).not.toContain("SegmentedControl");
+    expect(annualSource).not.toContain("Stack.Screen");
+    expect(annualSource).toContain("<AnalysisYearHeader");
   });
 });

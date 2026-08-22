@@ -75,6 +75,34 @@ describe("ArbZG compliance", () => {
     expect(result.issues.some((item) => item.rule === "ARBZG_5_REST_10H")).toBe(true);
   });
 
+  it("reports a cross-date overlap without duplicating it as negative rest", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [
+        shift("night", "2026-07-01", "22:00", "06:00", 0, "NIGHT"),
+        shift("early", "2026-07-02", "05:00", "13:00", 0, "EARLY"),
+      ],
+      "Europe/Berlin",
+    );
+
+    expect(result.issues.filter((item) => item.rule === "SHIFT_OVERLAP")).toHaveLength(1);
+    expect(result.issues.some((item) => item.rule === "ARBZG_5_REST_10H")).toBe(false);
+  });
+
+  it("keeps zero-minute rest as a rest violation when shifts only touch", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [
+        shift("late", "2026-07-01", "16:00", "00:00", 0, "LATE"),
+        shift("early", "2026-07-02", "00:00", "08:00", 0, "EARLY"),
+      ],
+      "Europe/Berlin",
+    );
+
+    expect(result.issues.some((item) => item.rule === "SHIFT_OVERLAP")).toBe(false);
+    expect(result.issues.some((item) => item.rule === "ARBZG_5_REST_10H")).toBe(true);
+  });
+
   it("separates legal issues from planning hints", () => {
     const shifts = Array.from({ length: 7 }, (_, index) =>
       shift(String(index), `2026-07-${String(index + 1).padStart(2, "0")}`),

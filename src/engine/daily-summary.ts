@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-import type { ShiftEntry, UserProfile } from "@/domain/types";
+import type { ShiftEntry, ShiftType, UserProfile } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
 import { calculateTimedShiftBounds } from "@/engine/working-time";
 
@@ -21,6 +21,7 @@ export interface DailyWorkCredit {
   readonly vacationMinutes: number;
   readonly sickMinutes: number;
   readonly overlapMinutes: number;
+  readonly minutesByType: Readonly<Partial<Record<ShiftType, number>>>;
 }
 
 const HOLIDAY_DATE_CACHE = new Map<string, ReadonlySet<string>>();
@@ -84,6 +85,7 @@ function creditTimedEntries(
   readonly minutes: number;
   readonly overlapMinutes: number;
   readonly coverage: readonly MinuteInterval[];
+  readonly minutesByType: Readonly<Partial<Record<ShiftType, number>>>;
 } {
   const candidates = entries
     .map((entry) => ({ entry, bounds: calculateTimedShiftBounds(entry, timeZone) }))
@@ -103,8 +105,9 @@ function creditTimedEntries(
   let coverage = [...initialCoverage];
   let minutes = 0;
   let overlapMinutes = 0;
+  const minutesByType: Partial<Record<ShiftType, number>> = {};
 
-  for (const { bounds } of candidates) {
+  for (const { entry, bounds } of candidates) {
     const interval = {
       start: bounds.startEpochMinutes,
       end: bounds.endEpochMinutes,
@@ -115,11 +118,17 @@ function creditTimedEntries(
     );
     const creditedMinutes = Math.min(bounds.netMinutes, uncoveredGrossMinutes);
     minutes += creditedMinutes;
+    minutesByType[entry.type] = (minutesByType[entry.type] ?? 0) + creditedMinutes;
     overlapMinutes += bounds.netMinutes - creditedMinutes;
     coverage = [...mergeInterval(coverage, interval)];
   }
 
-  return Object.freeze({ minutes, overlapMinutes, coverage: Object.freeze(coverage) });
+  return Object.freeze({
+    minutes,
+    overlapMinutes,
+    coverage: Object.freeze(coverage),
+    minutesByType: Object.freeze(minutesByType),
+  });
 }
 
 export function calculateDailyWorkCredit(
@@ -143,6 +152,12 @@ export function calculateDailyWorkCredit(
   const vacationMinutes =
     sickMinutes === 0 && active.some((entry) => entry.type === "VACATION") ? absenceMinutes : 0;
   const actualMinutes = timedMinutes + absenceMinutes;
+  const minutesByType: Partial<Record<ShiftType, number>> = {
+    ...work.minutesByType,
+    ...training.minutesByType,
+  };
+  if (sickMinutes > 0) minutesByType.SICK = sickMinutes;
+  if (vacationMinutes > 0) minutesByType.VACATION = vacationMinutes;
 
   return Object.freeze({
     date,
@@ -154,5 +169,6 @@ export function calculateDailyWorkCredit(
     vacationMinutes,
     sickMinutes,
     overlapMinutes: work.overlapMinutes + training.overlapMinutes,
+    minutesByType: Object.freeze(minutesByType),
   });
 }
