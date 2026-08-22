@@ -84,6 +84,7 @@ describe("daily work credit", () => {
     expect(result.trainingMinutes).toBe(108);
     expect(result.overlapMinutes).toBe(132);
     expect(result.actualMinutes).toBe(570);
+    expect(result.minutesByType).toEqual({ EARLY: 462, TRAINING: 108 });
   });
 
   it("does not double-count fully overlapping training", () => {
@@ -116,5 +117,21 @@ describe("daily work credit", () => {
         profile,
       ).actualMinutes,
     ).toBe(0);
+  });
+
+  it("assigns absence credit to the effective absence type", () => {
+    const sickness = calculateDailyWorkCredit(
+      "2026-07-01",
+      [
+        shift("vacation", "2026-07-01", "VACATION", null, null),
+        shift("sick", "2026-07-01", "SICK", null, null),
+      ],
+      profile,
+    );
+
+    expect(sickness.minutesByType).toEqual({ SICK: 462 });
+    expect(Object.values(sickness.minutesByType).reduce((sum, minutes) => sum + minutes, 0)).toBe(
+      sickness.actualMinutes,
+    );
   });
 });

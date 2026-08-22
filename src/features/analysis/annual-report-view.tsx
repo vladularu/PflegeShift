@@ -1,227 +1,290 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useEffect } from "react";
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
-  type PressableStateCallbackType,
-} from "react-native";
-import Animated, {
-  FadeInUp,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import Animated, { FadeInUp } from "react-native-reanimated";
 
 import { SHIFT_TYPE_LABELS, type ShiftType } from "@/domain/types";
 import { formatMonthTitle } from "@/engine/calendar";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { buildAnnualDistributionSections } from "@/features/analysis/annual-distribution";
 import type { AnnualReport } from "@/features/analysis/annual-report";
+import {
+  AnalysisYearHeader,
+  ExpandableHighlightCard,
+  formatEuro,
+  ReportCardTitle,
+  WorktimeCard,
+} from "@/features/analysis/analysis-overview-cards";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import { MetricCard, SectionHeader, SegmentedControl, SurfaceCard } from "@/ui/design-system";
-import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
+import { RADII, SPACING } from "@/theme/tokens";
+import { CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { selectionFeedback } from "@/ui/haptics";
+import { ReportFootnote, ReportPeriodContent, ReportScrollView } from "@/ui/report-layout";
 
 export type AnalysisPeriod = "MONTH" | "YEAR";
-
-export function AnalysisPeriodPicker({
-  value,
-  onChange,
-}: {
-  readonly value: AnalysisPeriod;
-  readonly onChange: (value: AnalysisPeriod) => void;
-}) {
-  return (
-    <SegmentedControl
-      items={[
-        { value: "MONTH", label: "Monat" },
-        { value: "YEAR", label: "Jahr" },
-      ]}
-      onChange={(nextValue) => onChange(nextValue as AnalysisPeriod)}
-      value={value}
-    />
-  );
-}
 
 export function AnnualReportScreen({
   report,
   testMonths,
-  onChangePeriod,
+  onBackToMonth,
   onMoveYear,
   onSelectMonth,
 }: {
   readonly report: AnnualReport;
   readonly testMonths: readonly string[];
-  readonly onChangePeriod: (period: AnalysisPeriod) => void;
+  readonly onBackToMonth: () => void;
   readonly onMoveYear: (delta: number) => void;
-  readonly onSelectMonth: (month: string) => void;
+  readonly onSelectMonth: (month: string, expandedCard?: "CHECK") => void;
 }) {
   const palette = usePalette();
-  const { fontScale } = useWindowDimensions();
-  const stacked = fontScale >= 1.6;
-  const progress =
-    report.targetMinutes === 0
-      ? 0
-      : Math.max(0, Math.min(1, report.actualMinutes / report.targetMinutes));
+  const [expandedCard, setExpandedCard] = useState<"CHECK" | "PAY" | null>(null);
   const testMonthCount = report.months.filter((item) => testMonths.includes(item.month)).length;
 
+  function toggleExpandedCard(nextCard: "CHECK" | "PAY") {
+    setExpandedCard((current) => (current === nextCard ? null : nextCard));
+    selectionFeedback();
+  }
+
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.groupedBackground }}
-      contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 48 }}
+    <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
+      <AnalysisYearHeader
+        activeMonthCount={report.activeMonthCount}
+        onNext={() => onMoveYear(1)}
+        onOpenMonth={onBackToMonth}
+        onPrevious={() => onMoveYear(-1)}
+        year={report.year}
+      />
+      <ReportScrollView>
+        <ReportPeriodContent>
+          {testMonthCount > 0 ? <AnnualTestBadge count={testMonthCount} /> : null}
+
+          <AnnualCheckCard
+            expanded={expandedCard === "CHECK"}
+            onSelectMonth={(month) => onSelectMonth(month, "CHECK")}
+            onToggle={() => toggleExpandedCard("CHECK")}
+            report={report}
+          />
+
+          <AnnualSalaryCard
+            expanded={expandedCard === "PAY"}
+            onToggle={() => toggleExpandedCard("PAY")}
+            report={report}
+          />
+
+          <WorktimeCard
+            actual={formatMinutes(report.actualMinutes)}
+            balance={formatSignedMinutes(report.balanceMinutes)}
+            balanceAccent={report.balanceMinutes < 0 ? palette.danger : palette.success}
+            target={formatMinutes(report.targetMinutes)}
+          />
+
+          <MonthlyBars report={report} testMonths={testMonths} onSelectMonth={onSelectMonth} />
+
+          <DistributionList distribution={report.distribution} />
+
+          <ReportFootnote>
+            Unverbindliche Schätzung · automatische Prüfung · keine Rechtsberatung
+          </ReportFootnote>
+        </ReportPeriodContent>
+      </ReportScrollView>
+    </View>
+  );
+}
+
+function AnnualTestBadge({ count }: { readonly count: number }) {
+  const palette = usePalette();
+  return (
+    <View
+      accessibilityLabel={`${count} Testmonate enthalten`}
+      style={{
+        alignSelf: "center",
+        borderRadius: RADII.pill,
+        backgroundColor: palette.primarySoft,
+        paddingHorizontal: 11,
+        paddingVertical: SPACING.xs,
+      }}
     >
-      <View
-        style={{
-          minHeight: 48,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <YearButton direction="back" onPress={() => onMoveYear(-1)} />
-        <View style={{ alignItems: "center", gap: SPACING.xxs }}>
-          <Text
-            selectable
-            style={{
-              color: palette.text,
-              ...TYPOGRAPHY.screenTitle,
-              fontVariant: ["tabular-nums"],
-            }}
-          >
-            {report.year}
-          </Text>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-          >
-            {report.activeMonthCount} Monate mit Einträgen
-          </Text>
-        </View>
-        <YearButton direction="forward" onPress={() => onMoveYear(1)} />
-      </View>
-
-      <AnalysisPeriodPicker value="YEAR" onChange={onChangePeriod} />
-
-      <SurfaceCard
-        style={{
-          gap: SPACING.lg,
-          borderColor: `${palette.primary}2E`,
-          backgroundColor: palette.primarySoft,
-          padding: SPACING.xl,
-        }}
-      >
-        <View style={{ gap: SPACING.xs }}>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
-          >
-            JAHRESARBEITSZEIT
-          </Text>
-          <Text
-            selectable
-            style={{
-              color: palette.text,
-              ...TYPOGRAPHY.hero,
-              fontVariant: ["tabular-nums"],
-            }}
-          >
-            {formatMinutes(report.actualMinutes)}
-          </Text>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-          >
-            von {formatMinutes(report.targetMinutes)} Soll
-          </Text>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-          >
-            Dienste {formatMinutes(report.workMinutes)}
-            {report.trainingMinutes > 0
-              ? ` · Fortbildung ${formatMinutes(report.trainingMinutes)}`
-              : ""}
-          </Text>
-        </View>
-        <View
-          style={{
-            height: 6,
-            overflow: "hidden",
-            borderRadius: 3,
-            backgroundColor: palette.surface,
-          }}
-        >
-          <AnimatedProgressFill color={palette.primary} progress={progress} />
-        </View>
-        <View style={{ flexDirection: stacked ? "column" : "row", gap: 18 }}>
-          <HeroValue label="Saldo" value={formatSignedMinutes(report.balanceMinutes)} />
-          <HeroValue label="Einträge" value={String(report.entryCount)} />
-          <HeroValue label="Abdeckung" value={`${Math.round(progress * 100)} %`} />
-        </View>
-      </SurfaceCard>
-
-      <View style={{ gap: SPACING.sm }}>
-        <SectionHeader title="Jahresverlauf" caption="Monat antippen, um Details zu öffnen." />
-        <MonthlyBars report={report} testMonths={testMonths} onSelectMonth={onSelectMonth} />
-      </View>
-
-      <View style={{ flexDirection: stacked ? "column" : "row", gap: SPACING.sm }}>
-        <MetricCard
-          label="ArbZG kritisch"
-          value={String(report.criticalCount)}
-          accent={report.criticalCount > 0 ? palette.danger : palette.primary}
-        />
-        <MetricCard
-          label="Planungshinweise"
-          value={String(report.warningCount)}
-          accent={report.warningCount > 0 ? palette.warning : palette.primary}
-        />
-      </View>
-
-      <View style={{ gap: SPACING.sm }}>
-        <SectionHeader title="Verteilung" caption="Anteile beziehen sich nur auf Dienste." />
-        <DistributionList distribution={report.distribution} />
-      </View>
-
-      {testMonthCount > 0 ? (
-        <View
-          style={{
-            alignSelf: "center",
-            borderRadius: RADII.pill,
-            backgroundColor: palette.primarySoft,
-            paddingHorizontal: 11,
-            paddingVertical: SPACING.xs,
-          }}
-        >
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
-          >
-            {testMonthCount} TESTMONATE ENTHALTEN
-          </Text>
-        </View>
-      ) : null}
-
       <Text
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
-        style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.footnote }}
+        style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
       >
-        Automatische Jahresauswertung · keine Rechtsberatung
+        {count} TESTMONATE ENTHALTEN
       </Text>
-    </ScrollView>
+    </View>
+  );
+}
+
+function AnnualCheckCard({
+  report,
+  expanded,
+  onToggle,
+  onSelectMonth,
+}: {
+  readonly report: AnnualReport;
+  readonly expanded: boolean;
+  readonly onToggle: () => void;
+  readonly onSelectMonth: (month: string) => void;
+}) {
+  const palette = usePalette();
+  const issueMonths = report.months.filter(
+    (item) => item.criticalCount > 0 || item.warningCount > 0,
+  );
+  const clear = report.criticalCount === 0 && report.warningCount === 0;
+  const accent = clear
+    ? palette.success
+    : report.criticalCount > 0
+      ? palette.danger
+      : palette.warning;
+  const messageCount = report.criticalCount + report.warningCount;
+
+  return (
+    <ExpandableHighlightCard
+      accent={accent}
+      countBadge={messageCount}
+      expanded={expanded}
+      icon={clear ? "shield-checkmark-outline" : "warning-outline"}
+      onToggle={onToggle}
+      title="Prüfung"
+      value={messageCount === 1 ? "Meldung" : "Meldungen"}
+    >
+      {issueMonths.length === 0 ? (
+        <View style={{ padding: SPACING.lg }}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            selectable
+            style={{ color: palette.success, ...TYPOGRAPHY.bodyStrong }}
+          >
+            In keinem Monat wurden Auffälligkeiten erkannt.
+          </Text>
+        </View>
+      ) : (
+        <View style={{ paddingHorizontal: SPACING.lg }}>
+          {issueMonths.map((item, index) => (
+            <View key={item.month}>
+              {index > 0 ? <CardSeparator inset={0} /> : null}
+              <Pressable
+                accessibilityHint="Öffnet den Monat mit der aufgeklappten Monatsauswertung"
+                accessibilityRole="button"
+                onPress={() => onSelectMonth(item.month)}
+                style={({ pressed }) => ({
+                  minHeight: 58,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: SPACING.md,
+                  backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+                  opacity: pressed ? 0.72 : 1,
+                  paddingVertical: SPACING.sm,
+                })}
+              >
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: item.criticalCount > 0 ? palette.danger : palette.warning,
+                  }}
+                />
+                <View style={{ minWidth: 0, flex: 1, gap: SPACING.xxs }}>
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    selectable
+                    style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                  >
+                    {formatMonthTitle(item.month)}
+                  </Text>
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    selectable
+                    style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                  >
+                    {item.criticalCount + item.warningCount}{" "}
+                    {item.criticalCount + item.warningCount === 1 ? "Meldung" : "Meldungen"}
+                  </Text>
+                </View>
+                <Ionicons color={palette.textMuted} name="chevron-forward" size={18} />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      )}
+    </ExpandableHighlightCard>
+  );
+}
+
+function AnnualSalaryCard({
+  report,
+  expanded,
+  onToggle,
+}: {
+  readonly report: AnnualReport;
+  readonly expanded: boolean;
+  readonly onToggle: () => void;
+}) {
+  const palette = usePalette();
+  const available = report.availablePayMonthCount > 0;
+  const rows = [
+    {
+      label: "Berücksichtigte Monate",
+      value: `${report.availablePayMonthCount} von 12`,
+    },
+    { label: "Zeitzuschläge", value: formatEuro(report.premiumAmount) },
+    { label: "Überstunden", value: formatEuro(report.overtimeAmount) },
+    { label: "Zulagen", value: formatEuro(report.allowanceAmount) },
+  ];
+  return (
+    <ExpandableHighlightCard
+      accent={palette.primary}
+      expanded={expanded}
+      icon="wallet-outline"
+      onToggle={onToggle}
+      summary={
+        available
+          ? `Summe aus ${report.availablePayMonthCount} von 12 Monatsschätzungen`
+          : "Keine unterstützte Monatsschätzung verfügbar"
+      }
+      title="Gehalt"
+      value={available ? formatEuro(report.estimatedGrossAmount) : "Nicht verfügbar"}
+    >
+      <View style={{ paddingHorizontal: SPACING.lg }}>
+        {rows.map((row, index) => (
+          <View key={row.label}>
+            {index > 0 ? <CardSeparator inset={0} /> : null}
+            <View
+              style={{
+                minHeight: 56,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: SPACING.md,
+                paddingVertical: SPACING.sm,
+              }}
+            >
+              <Text
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                selectable
+                style={{ minWidth: 0, flex: 1, color: palette.textMuted, ...TYPOGRAPHY.label }}
+              >
+                {row.label}
+              </Text>
+              <Text
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                selectable
+                style={{
+                  color: palette.text,
+                  ...TYPOGRAPHY.bodyStrong,
+                  fontVariant: ["tabular-nums"],
+                }}
+              >
+                {row.value}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </ExpandableHighlightCard>
   );
 }
 
@@ -240,58 +303,69 @@ function MonthlyBars({
     ...report.months.map((item) => Math.max(item.actualMinutes, item.targetMinutes)),
   );
   return (
-    <SurfaceCard style={{ gap: 12, padding: 16 }}>
-      <View style={{ height: 112, flexDirection: "row", alignItems: "flex-end", gap: 4 }}>
-        {report.months.map((item, index) => {
-          const height = Math.max(3, (item.actualMinutes / maximum) * 82);
-          const hasIssue = item.criticalCount > 0 || item.warningCount > 0;
-          const isTest = testMonths.includes(item.month);
-          return (
-            <Pressable
-              key={item.month}
-              accessibilityLabel={`${formatMonthTitle(item.month)}, ${formatMinutes(item.actualMinutes)} Ist`}
-              accessibilityRole="button"
-              onPress={() => onSelectMonth(item.month)}
-              style={({ pressed }) => ({
-                minWidth: 0,
-                flex: 1,
-                alignItems: "center",
-                justifyContent: "flex-end",
-                gap: 5,
-                opacity: pressed ? 0.58 : 1,
-              })}
-            >
-              <Animated.View
-                entering={FadeInUp.delay(index * 24)
-                  .duration(MOTION.duration.normal)
-                  .reduceMotion(MOTION.reduceMotion)}
-                style={{
-                  width: "72%",
-                  height,
-                  minHeight: 3,
-                  borderRadius: 5,
-                  backgroundColor: hasIssue ? palette.warning : palette.primary,
-                }}
-              />
-              <Text
-                selectable
-                style={{
-                  color: isTest ? palette.primary : palette.textMuted,
-                  fontSize: 11,
-                  fontWeight: isTest ? "700" : "500",
-                }}
+    <SurfaceCard>
+      <ReportCardTitle title="Jahresverlauf" />
+      <CardSeparator inset={0} />
+      <View style={{ gap: SPACING.md, padding: SPACING.lg }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+        >
+          Monat antippen, um die Monatsauswertung zu öffnen.
+        </Text>
+        <View style={{ height: 112, flexDirection: "row", alignItems: "flex-end", gap: 4 }}>
+          {report.months.map((item, index) => {
+            const height = Math.max(3, (item.actualMinutes / maximum) * 82);
+            const hasIssue = item.criticalCount > 0 || item.warningCount > 0;
+            const isTest = testMonths.includes(item.month);
+            return (
+              <Pressable
+                key={item.month}
+                accessibilityLabel={`${formatMonthTitle(item.month)}, ${formatMinutes(item.actualMinutes)} Ist`}
+                accessibilityRole="button"
+                onPress={() => onSelectMonth(item.month)}
+                style={({ pressed }) => ({
+                  minWidth: 0,
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 5,
+                  opacity: pressed ? 0.58 : 1,
+                })}
               >
-                {new Intl.DateTimeFormat("de-DE", { month: "narrow", timeZone: "UTC" }).format(
-                  new Date(`${item.month}-01T00:00:00Z`),
-                )}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      <View style={{ flexDirection: "row", gap: 14 }}>
-        <LegendDot color={palette.primary} label="Arbeitszeit" />
-        <LegendDot color={palette.warning} label="mit Hinweis" />
+                <Animated.View
+                  entering={FadeInUp.delay(index * 24)
+                    .duration(MOTION.duration.normal)
+                    .reduceMotion(MOTION.reduceMotion)}
+                  style={{
+                    width: "72%",
+                    height,
+                    minHeight: 3,
+                    borderRadius: 5,
+                    backgroundColor: hasIssue ? palette.warning : palette.primary,
+                  }}
+                />
+                <Text
+                  selectable
+                  style={{
+                    color: isTest ? palette.primary : palette.textMuted,
+                    fontSize: 11,
+                    fontWeight: isTest ? "700" : "500",
+                  }}
+                >
+                  {new Intl.DateTimeFormat("de-DE", { month: "narrow", timeZone: "UTC" }).format(
+                    new Date(`${item.month}-01T00:00:00Z`),
+                  )}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={{ flexDirection: "row", gap: 14 }}>
+          <LegendDot color={palette.primary} label="Arbeitszeit" />
+          <LegendDot color={palette.warning} label="mit Hinweis" />
+        </View>
       </View>
     </SurfaceCard>
   );
@@ -306,101 +380,32 @@ function DistributionList({
   const sections = buildAnnualDistributionSections(distribution);
   const hasEntries = sections.services.length > 0 || sections.absences.length > 0;
   return (
-    <SurfaceCard style={{ gap: 14, padding: 18 }}>
-      {!hasEntries ? (
-        <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>
-          Keine Einträge in diesem Jahr.
-        </Text>
-      ) : null}
-
-      {sections.services.length > 0 ? (
-        <View style={{ gap: 10 }}>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}
-          >
-            DIENSTE & FORTBILDUNG
+    <SurfaceCard>
+      <ReportCardTitle title="Dienstverteilung" />
+      <CardSeparator inset={0} />
+      <View style={{ gap: 14, padding: SPACING.lg }}>
+        {!hasEntries ? (
+          <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>
+            Keine Einträge in diesem Jahr.
           </Text>
-          {sections.services.map(({ type, count, percentage }, index) => (
-            <Animated.View
-              key={type}
-              entering={FadeInUp.delay(index * 28)
-                .duration(MOTION.duration.normal)
-                .reduceMotion(MOTION.reduceMotion)}
-              style={{ minHeight: 24, flexDirection: "row", alignItems: "center", gap: 9 }}
+        ) : null}
+
+        {sections.services.length > 0 ? (
+          <View style={{ gap: 10 }}>
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              selectable
+              style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}
             >
-              <View
-                style={{
-                  width: 9,
-                  height: 9,
-                  borderRadius: 5,
-                  backgroundColor: SHIFT_TYPE_COLORS[type],
-                }}
-              />
-              <Text selectable style={{ flex: 1, color: palette.textSecondary, fontSize: 13 }}>
-                {SHIFT_TYPE_LABELS[type]}
-              </Text>
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                selectable
-                style={{
-                  color: palette.text,
-                  ...TYPOGRAPHY.label,
-                  fontWeight: "700",
-                  fontVariant: ["tabular-nums"],
-                }}
-              >
-                {count}
-              </Text>
-              <Text
-                selectable
-                style={{
-                  width: 38,
-                  color: palette.textMuted,
-                  fontSize: 12,
-                  textAlign: "right",
-                  fontVariant: ["tabular-nums"],
-                }}
-              >
-                {percentage}%
-              </Text>
-            </Animated.View>
-          ))}
-        </View>
-      ) : null}
-
-      {sections.services.length > 0 && sections.absences.length > 0 ? (
-        <View style={{ height: 1, backgroundColor: palette.border }} />
-      ) : null}
-
-      {sections.absences.length > 0 ? (
-        <View style={{ gap: 10 }}>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}
-          >
-            ABWESENHEITEN
-          </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {sections.absences.map(({ type, count }) => (
-              <View
+              DIENSTE & FORTBILDUNG
+            </Text>
+            {sections.services.map(({ type, count, percentage }, index) => (
+              <Animated.View
                 key={type}
-                style={{
-                  minWidth: 104,
-                  minHeight: 52,
-                  flexGrow: 1,
-                  flexBasis: 0,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8,
-                  borderRadius: RADII.control,
-                  borderCurve: "continuous",
-                  backgroundColor: palette.surfaceRaised,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                }}
+                entering={FadeInUp.delay(index * 28)
+                  .duration(MOTION.duration.normal)
+                  .reduceMotion(MOTION.reduceMotion)}
+                style={{ minHeight: 24, flexDirection: "row", alignItems: "center", gap: 9 }}
               >
                 <View
                   style={{
@@ -410,133 +415,106 @@ function DistributionList({
                     backgroundColor: SHIFT_TYPE_COLORS[type],
                   }}
                 />
-                <View style={{ minWidth: 0, flex: 1, gap: 1 }}>
-                  <Text
-                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    selectable
-                    style={{ color: palette.textSecondary, fontSize: 12 }}
-                  >
-                    {SHIFT_TYPE_LABELS[type]}
-                  </Text>
-                  <Text
-                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    selectable
-                    style={{
-                      color: palette.text,
-                      ...TYPOGRAPHY.label,
-                      fontWeight: "700",
-                      fontVariant: ["tabular-nums"],
-                    }}
-                  >
-                    {count} {count === 1 ? "Tag" : "Tage"}
-                  </Text>
-                </View>
-              </View>
+                <Text selectable style={{ flex: 1, color: palette.textSecondary, fontSize: 13 }}>
+                  {SHIFT_TYPE_LABELS[type]}
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{
+                    color: palette.text,
+                    ...TYPOGRAPHY.label,
+                    fontWeight: "700",
+                    fontVariant: ["tabular-nums"],
+                  }}
+                >
+                  {count}
+                </Text>
+                <Text
+                  selectable
+                  style={{
+                    width: 38,
+                    color: palette.textMuted,
+                    fontSize: 12,
+                    textAlign: "right",
+                    fontVariant: ["tabular-nums"],
+                  }}
+                >
+                  {percentage}%
+                </Text>
+              </Animated.View>
             ))}
           </View>
-        </View>
-      ) : null}
+        ) : null}
+
+        {sections.services.length > 0 && sections.absences.length > 0 ? (
+          <View style={{ height: 1, backgroundColor: palette.border }} />
+        ) : null}
+
+        {sections.absences.length > 0 ? (
+          <View style={{ gap: 10 }}>
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              selectable
+              style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}
+            >
+              ABWESENHEITEN
+            </Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {sections.absences.map(({ type, count }) => (
+                <View
+                  key={type}
+                  style={{
+                    minWidth: 104,
+                    minHeight: 52,
+                    flexGrow: 1,
+                    flexBasis: 0,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    borderRadius: RADII.control,
+                    borderCurve: "continuous",
+                    backgroundColor: palette.surfaceRaised,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 9,
+                      height: 9,
+                      borderRadius: 5,
+                      backgroundColor: SHIFT_TYPE_COLORS[type],
+                    }}
+                  />
+                  <View style={{ minWidth: 0, flex: 1, gap: 1 }}>
+                    <Text
+                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                      selectable
+                      style={{ color: palette.textSecondary, fontSize: 12 }}
+                    >
+                      {SHIFT_TYPE_LABELS[type]}
+                    </Text>
+                    <Text
+                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                      selectable
+                      style={{
+                        color: palette.text,
+                        ...TYPOGRAPHY.label,
+                        fontWeight: "700",
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {count} {count === 1 ? "Tag" : "Tage"}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
+      </View>
     </SurfaceCard>
-  );
-}
-
-function YearButton({
-  direction,
-  onPress,
-}: {
-  readonly direction: "back" | "forward";
-  readonly onPress: () => void;
-}) {
-  const palette = usePalette();
-  const pressMotion = usePressMotion();
-  return (
-    <AnimatedPressable
-      accessibilityLabel={direction === "back" ? "Vorheriges Jahr" : "Nächstes Jahr"}
-      accessibilityRole="button"
-      onPressIn={pressMotion.onPressIn}
-      onPressOut={pressMotion.onPressOut}
-      onPress={onPress}
-      style={({ pressed }: PressableStateCallbackType) => [
-        {
-          width: CONTROL_HEIGHT.compact,
-          height: CONTROL_HEIGHT.compact,
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: RADII.control,
-          backgroundColor: pressed ? palette.primarySoft : "transparent",
-          opacity: pressed ? 0.72 : 1,
-        },
-        pressMotion.animatedStyle,
-      ]}
-    >
-      <Ionicons
-        accessibilityElementsHidden
-        color={palette.textSecondary}
-        name={direction === "back" ? "chevron-back" : "chevron-forward"}
-        size={20}
-      />
-    </AnimatedPressable>
-  );
-}
-
-function AnimatedProgressFill({
-  color,
-  progress,
-}: {
-  readonly color: string;
-  readonly progress: number;
-}) {
-  const reduceMotion = useReducedMotion();
-  const scale = useSharedValue(reduceMotion ? progress : 0);
-
-  useEffect(() => {
-    scale.value = reduceMotion
-      ? progress
-      : withTiming(progress, {
-          duration: MOTION.duration.deliberate,
-          easing: MOTION.easing.emphasized,
-        });
-  }, [progress, reduceMotion, scale]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: scale.value }],
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        {
-          width: "100%",
-          height: "100%",
-          borderRadius: 3,
-          backgroundColor: color,
-          transformOrigin: "left",
-        },
-        animatedStyle,
-      ]}
-    />
-  );
-}
-
-function HeroValue({ label, value }: { readonly label: string; readonly value: string }) {
-  const palette = usePalette();
-  return (
-    <View style={{ minWidth: 0, flex: 1, gap: SPACING.xxs }}>
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        selectable
-        style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-      >
-        {label}
-      </Text>
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        selectable
-        style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}
-      >
-        {value}
-      </Text>
-    </View>
   );
 }
 

@@ -1,16 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
 import { router, useFocusEffect, useIsFocused, useLocalSearchParams } from "expo-router";
-import { SymbolView, type SymbolViewProps } from "expo-symbols";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentProps,
-  type ReactNode,
-} from "react";
-import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Pressable, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
 
 import {
@@ -20,49 +12,55 @@ import {
   usePflegeShiftTariff,
   usePflegeShiftTestData,
 } from "@/application/pflegeshift-provider";
-import {
-  SHIFT_TYPE_LABELS,
-  type AllowanceStatus,
-  type MonthlyComplianceResult,
-  type ShiftEntry,
-  type ShiftType,
+import type {
+  ComplianceIssue,
+  ComplianceSeverity,
+  MonthlyComplianceResult,
+  ShiftEntry,
 } from "@/domain/types";
-import { formatDateTitle, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
+import { buildMonthlyShiftTypeAnalysis } from "@/features/analysis/analysis-metrics";
 import {
-  AnalysisPeriodPicker,
-  AnnualReportScreen,
-  type AnalysisPeriod,
-} from "@/features/analysis/annual-report-view";
+  AnalysisMonthHeader,
+  ExpandableHighlightCard,
+  formatMonthRangeLabel,
+  ReportCardTitle,
+  SalarySummaryCard,
+  ShiftTypeCountCard,
+  ShiftTypeHoursCard,
+  WorktimeCard,
+} from "@/features/analysis/analysis-overview-cards";
+import { AnnualReportScreen, type AnalysisPeriod } from "@/features/analysis/annual-report-view";
 import { useAnnualReportInputs } from "@/features/analysis/use-annual-report-inputs";
 import { useDeferredAnnualReport } from "@/features/analysis/use-annual-report";
 import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-compliance";
-import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
-import { complianceDetailsRoute, tariffAssessmentRoute } from "@/navigation/routes";
+import { tariffAssessmentRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
-import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
-import { EmptyState, SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { CardSeparator, EmptyState, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
-import { MonthNavigator } from "@/ui/month-navigator";
 import { selectionFeedback } from "@/ui/haptics";
-import { ReportPeriodContent, ReportScrollView, ReportTestBadge } from "@/ui/report-layout";
+import {
+  ReportFootnote,
+  ReportPeriodContent,
+  ReportScrollView,
+  ReportTestBadge,
+} from "@/ui/report-layout";
 
-const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
-  NONE: "Keine Zulage",
-  SHIFT_MONTHLY: "Ständige Schichtarbeit",
-  SHIFT_HOURLY: "Nichtständige Schichtarbeit",
-  ALTERNATING_MONTHLY: "Ständige Wechselschicht",
-  ALTERNATING_HOURLY: "Nichtständige Wechselschicht",
-};
+export type AnalysisExpandedCard = "CHECK" | "PAY";
 
-export function AnalysisScreen() {
+export function AnalysisScreen({
+  initialExpandedCard = null,
+}: {
+  readonly initialExpandedCard?: AnalysisExpandedCard | null;
+}) {
   const palette = usePalette();
   const isFocused = useIsFocused();
   const activeMonthCoordinator = useActiveMonthCoordinator();
@@ -75,6 +73,9 @@ export function AnalysisScreen() {
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
   const [year, setYear] = useState(() => Number(activeMonthCoordinator.getMonth().slice(0, 4)));
+  const [expandedCard, setExpandedCard] = useState<AnalysisExpandedCard | null>(
+    initialExpandedCard,
+  );
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
 
@@ -84,6 +85,10 @@ export function AnalysisScreen() {
       setMonth(routeMonth);
     }
   }, [activeMonthCoordinator, routeMonth]);
+
+  useEffect(() => {
+    setExpandedCard(initialExpandedCard);
+  }, [initialExpandedCard]);
 
   useFocusEffect(
     useCallback(() => {
@@ -123,9 +128,9 @@ export function AnalysisScreen() {
     () => (profile ? calculateMonthlySummary(month, monthShifts, profile) : null),
     [month, monthShifts, profile],
   );
-  const distribution = useMemo(
-    () => buildShiftTypeDistribution(month, monthEntries),
-    [month, monthEntries],
+  const shiftTypeAnalysis = useMemo(
+    () => (profile === null ? null : buildMonthlyShiftTypeAnalysis(month, monthEntries, profile)),
+    [month, monthEntries, profile],
   );
   const annualInputs = useAnnualReportInputs(year, entries, tariffDecisions);
   const annualReport = useDeferredAnnualReport({
@@ -150,7 +155,14 @@ export function AnalysisScreen() {
     );
   }
 
-  if (!ready || profile === null || compliance === null || pay === null || summary === null) {
+  if (
+    !ready ||
+    profile === null ||
+    compliance === null ||
+    pay === null ||
+    summary === null ||
+    shiftTypeAnalysis === null
+  ) {
     return <LoadingView />;
   }
 
@@ -160,9 +172,10 @@ export function AnalysisScreen() {
     selectionFeedback();
   }
 
-  function selectAnnualMonth(nextMonth: string) {
+  function selectAnnualMonth(nextMonth: string, nextExpandedCard?: "CHECK") {
     activeMonthCoordinator.setMonth(nextMonth);
     setMonth(nextMonth);
+    if (nextExpandedCard) setExpandedCard(nextExpandedCard);
     setPeriod("MONTH");
   }
 
@@ -182,7 +195,7 @@ export function AnalysisScreen() {
       <AnnualReportScreen
         report={annualReport.report}
         testMonths={testMonths}
-        onChangePeriod={changePeriod}
+        onBackToMonth={() => changePeriod("MONTH")}
         onMoveYear={moveYear}
         onSelectMonth={selectAnnualMonth}
       />
@@ -208,494 +221,423 @@ export function AnalysisScreen() {
     selectionFeedback();
   }
 
-  const complianceIsClear = compliance.criticalCount === 0 && compliance.warningCount === 0;
-  const allowanceTitle = decision
-    ? ALLOWANCE_LABELS[decision.allowanceStatus]
-    : pay.assessment.suggestedAllowance !== "NONE"
-      ? `${ALLOWANCE_LABELS[pay.assessment.suggestedAllowance]} · erkannt`
-      : pay.assessment.requiresConfirmation
-        ? "Angaben bestätigen"
-        : "Noch nicht eindeutig";
+  function toggleExpandedCard(nextCard: AnalysisExpandedCard) {
+    setExpandedCard((current) => (current === nextCard ? null : nextCard));
+    selectionFeedback();
+  }
+
   return (
-    <ReportScrollView>
-      <MonthNavigator
-        label={formatMonthTitle(month)}
+    <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
+      <AnalysisMonthHeader
+        label={formatMonthRangeLabel(month)}
+        onOpenYear={() => changePeriod("YEAR")}
         onNext={() => moveMonth(1)}
         onPrevious={() => moveMonth(-1)}
       />
-      <AnalysisPeriodPicker value={period} onChange={changePeriod} />
-      <Animated.View
-        key={`month-analysis-${month}`}
-        entering={FadeIn.duration(MOTION.duration.normal).reduceMotion(MOTION.reduceMotion)}
-      >
-        <ReportPeriodContent>
-          {testMonths.includes(month) ? <ReportTestBadge /> : null}
+      <ReportScrollView>
+        <Animated.View
+          key={`month-analysis-${month}`}
+          entering={FadeIn.duration(MOTION.duration.normal).reduceMotion(MOTION.reduceMotion)}
+        >
+          <ReportPeriodContent>
+            {testMonths.includes(month) ? <ReportTestBadge /> : null}
 
-          <WorktimeSummary
-            actual={formatMinutes(summary.actualMinutes)}
-            balance={formatSignedMinutes(summary.balanceMinutes)}
-            balanceAccent={summary.balanceMinutes < 0 ? palette.danger : palette.success}
-            target={formatMinutes(summary.targetMinutes)}
-          />
-
-          <SurfaceCard>
-            <StatusCard
-              accent={
-                complianceIsClear
-                  ? palette.success
-                  : compliance.criticalCount > 0
-                    ? palette.danger
-                    : palette.warning
-              }
-              icon={complianceIsClear ? "checkmark.shield.fill" : "exclamationmark.shield.fill"}
-              fallbackIcon={complianceIsClear ? "checkmark-circle-outline" : "alert-circle-outline"}
-              label="Arbeitszeitregeln"
-              title={
-                complianceIsClear
-                  ? "Keine Auffälligkeiten"
-                  : compliance.criticalCount > 0
-                    ? `${compliance.criticalCount} kritisch`
-                    : `${compliance.warningCount} Hinweise`
-              }
-              onPress={() => router.push(complianceDetailsRoute(month))}
+            <AssessmentSummaryCard
+              compliance={compliance}
+              expanded={expandedCard === "CHECK"}
+              onToggle={() => toggleExpandedCard("CHECK")}
+              shifts={complianceShifts}
             />
-            <View style={{ height: 1, marginLeft: 60, backgroundColor: palette.separator }} />
-            <StatusCard
-              accent={decision ? palette.success : palette.warning}
-              icon={decision ? "checkmark.seal.fill" : "sparkles"}
-              fallbackIcon={decision ? "ribbon-outline" : "sparkles-outline"}
-              label="Schichtzulage"
-              title={allowanceTitle}
-              onPress={() => router.push(tariffAssessmentRoute(month))}
-            />
-          </SurfaceCard>
 
-          <View style={{ gap: SPACING.sm }}>
-            <SectionHeader title="Dienstverteilung" />
-            <DistributionChart distribution={distribution} />
-          </View>
-        </ReportPeriodContent>
-      </Animated.View>
-    </ReportScrollView>
+            <SalarySummaryCard
+              expanded={expandedCard === "PAY"}
+              onOpenAllowance={() => router.push(tariffAssessmentRoute(month))}
+              onSetup={() => router.push("/more")}
+              onToggle={() => toggleExpandedCard("PAY")}
+              pay={pay}
+              tariffReady={profile.tariff !== null}
+            />
+
+            <WorktimeCard
+              actual={formatMinutes(summary.actualMinutes)}
+              balance={formatSignedMinutes(summary.balanceMinutes)}
+              balanceAccent={summary.balanceMinutes < 0 ? palette.danger : palette.success}
+              target={formatMinutes(summary.targetMinutes)}
+            />
+
+            {shiftTypeAnalysis.totalCount === 0 ? (
+              <SurfaceCard>
+                <ReportCardTitle title="Schichten zählen" />
+                <CardSeparator inset={0} />
+                <EmptyState
+                  message="Trage Dienste ein, um den Monat auszuwerten."
+                  title="Noch keine Dienste"
+                />
+              </SurfaceCard>
+            ) : (
+              <>
+                <ShiftTypeCountCard analysis={shiftTypeAnalysis} />
+                <ShiftTypeHoursCard analysis={shiftTypeAnalysis} />
+              </>
+            )}
+
+            <ReportFootnote>Unverbindliche Schätzung · keine Lohnabrechnung</ReportFootnote>
+          </ReportPeriodContent>
+        </Animated.View>
+      </ReportScrollView>
+    </View>
   );
 }
 
-function DistributionChart({
-  distribution,
+export function AssessmentSummaryCard({
+  compliance,
+  shifts,
+  expanded,
+  onToggle,
 }: {
-  readonly distribution: ReadonlyMap<ShiftType, number>;
+  readonly compliance: MonthlyComplianceResult;
+  readonly shifts: readonly ShiftEntry[];
+  readonly expanded: boolean;
+  readonly onToggle: () => void;
 }) {
   const palette = usePalette();
-  const items = [...distribution.entries()].filter(([, count]) => count > 0);
-  const total = items.reduce((sum, [, count]) => sum + count, 0);
-  if (total === 0) {
-    return (
-      <SurfaceCard>
-        <EmptyState
-          message="Trage Dienste ein, um ihre Verteilung zu sehen."
-          title="Noch keine Dienste"
-        />
-      </SurfaceCard>
-    );
-  }
+  const messageCount = compliance.criticalCount + compliance.warningCount + compliance.infoCount;
+  const clear = messageCount === 0;
+  const accent = clear
+    ? palette.success
+    : compliance.criticalCount > 0
+      ? palette.danger
+      : compliance.warningCount > 0
+        ? palette.warning
+        : palette.primary;
+
   return (
-    <SurfaceCard
-      accessibilityLabel={`${total} Dienste insgesamt`}
-      style={{ gap: SPACING.lg, padding: SPACING.lg }}
+    <ExpandableHighlightCard
+      accent={accent}
+      countBadge={messageCount}
+      expanded={expanded}
+      icon={clear ? "shield-checkmark-outline" : "warning-outline"}
+      onToggle={onToggle}
+      title="Prüfung"
+      value={messageCount === 1 ? "Meldung" : "Meldungen"}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: SPACING.md,
-        }}
-      >
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
-        >
-          {total} {total === 1 ? "Dienst" : "Dienste"}
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-        >
-          im Monat
-        </Text>
-      </View>
-      <View style={{ gap: SPACING.md }}>
-        {items.map(([type, count]) => (
-          <View key={type} style={{ gap: SPACING.xs }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: SHIFT_TYPE_COLORS[type],
-                }}
-              />
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                selectable
-                style={{ flex: 1, color: palette.textSecondary, ...TYPOGRAPHY.label }}
-              >
-                {SHIFT_TYPE_LABELS[type]}
-              </Text>
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                selectable
-                style={{
-                  color: palette.text,
-                  ...TYPOGRAPHY.label,
-                  fontWeight: "700",
-                  fontVariant: ["tabular-nums"],
-                }}
-              >
-                {count}
-              </Text>
-            </View>
-            <View
-              style={{
-                height: 5,
-                overflow: "hidden",
-                borderRadius: 3,
-                backgroundColor: palette.surfaceMuted,
-              }}
-            >
-              <View
-                style={{
-                  width: `${(count / total) * 100}%`,
-                  height: "100%",
-                  borderRadius: 3,
-                  backgroundColor: SHIFT_TYPE_COLORS[type],
-                }}
-              />
-            </View>
-          </View>
-        ))}
-      </View>
-    </SurfaceCard>
+      <ComplianceDetails compliance={compliance} embedded shifts={shifts} />
+    </ExpandableHighlightCard>
   );
 }
 
-function WorktimeSummary({
-  target,
-  actual,
-  balance,
-  balanceAccent,
-}: {
-  readonly target: string;
-  readonly actual: string;
-  readonly balance: string;
-  readonly balanceAccent: string;
-}) {
-  const palette = usePalette();
-  const { fontScale } = useWindowDimensions();
-  const stacked = fontScale >= 1.6;
-  const values = [
-    { label: "Soll", value: target, accent: palette.text },
-    { label: "Ist", value: actual, accent: palette.text },
-    { label: "Saldo", value: balance, accent: balanceAccent },
-  ];
-  return (
-    <SurfaceCard style={{ flexDirection: stacked ? "column" : "row", paddingVertical: SPACING.md }}>
-      {values.map((item, index) => (
-        <View
-          key={item.label}
-          accessibilityLabel={`${item.label}: ${item.value}`}
-          accessible
-          style={{
-            minWidth: 0,
-            flex: 1,
-            gap: SPACING.xs,
-            borderLeftWidth: !stacked && index > 0 ? 1 : 0,
-            borderLeftColor: palette.separator,
-            borderTopWidth: stacked && index > 0 ? 1 : 0,
-            borderTopColor: palette.separator,
-            paddingHorizontal: SPACING.md,
-            paddingVertical: stacked ? SPACING.sm : 0,
-          }}
-        >
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-          >
-            {item.label}
-          </Text>
-          <Text
-            selectable
-            style={{
-              color: item.accent,
-              fontSize: 18,
-              fontWeight: "700",
-              fontVariant: ["tabular-nums"],
-              letterSpacing: -0.3,
-            }}
-          >
-            {item.value}
-          </Text>
-        </View>
-      ))}
-    </SurfaceCard>
+interface ComplianceIssueGroup {
+  readonly rule: string;
+  readonly title: string;
+  readonly severity: ComplianceSeverity;
+  readonly issues: readonly ComplianceIssue[];
+}
+
+const COMPLIANCE_SEVERITY_PRIORITY: Readonly<Record<ComplianceSeverity, number>> = {
+  critical: 0,
+  warning: 1,
+  info: 2,
+};
+
+const COMPLIANCE_DATE_FORMATTER = new Intl.DateTimeFormat("de-DE", {
+  weekday: "short",
+  day: "2-digit",
+  month: "short",
+  timeZone: "UTC",
+});
+
+function groupComplianceIssues(
+  issues: readonly ComplianceIssue[],
+): readonly ComplianceIssueGroup[] {
+  const issuesByRule = new Map<string, ComplianceIssue[]>();
+  for (const issue of issues) {
+    const group = issuesByRule.get(issue.rule) ?? [];
+    group.push(issue);
+    issuesByRule.set(issue.rule, group);
+  }
+  return [...issuesByRule.entries()]
+    .map(([rule, groupIssues]) => {
+      const orderedIssues = [...groupIssues].sort(
+        (left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id),
+      );
+      const representative = orderedIssues[0];
+      const severity = orderedIssues.reduce<ComplianceSeverity>(
+        (highest, issue) =>
+          COMPLIANCE_SEVERITY_PRIORITY[issue.severity] < COMPLIANCE_SEVERITY_PRIORITY[highest]
+            ? issue.severity
+            : highest,
+        representative.severity,
+      );
+      return {
+        rule,
+        title: representative.title,
+        severity,
+        issues: orderedIssues,
+      };
+    })
+    .sort(
+      (left, right) =>
+        COMPLIANCE_SEVERITY_PRIORITY[left.severity] -
+          COMPLIANCE_SEVERITY_PRIORITY[right.severity] ||
+        right.issues.length - left.issues.length ||
+        left.title.localeCompare(right.title, "de-DE"),
+    );
+}
+
+function formatComplianceDate(date: string): string {
+  const value = Temporal.PlainDate.from(date);
+  return COMPLIANCE_DATE_FORMATTER.format(
+    new Date(Date.UTC(value.year, value.month - 1, value.day)),
   );
+}
+
+function formatComplianceGroupTitle(group: ComplianceIssueGroup): string {
+  return group.rule === "ARBZG_5_REST_10H" ? "Ruhezeitverletzung" : group.title;
 }
 
 export function ComplianceDetails({
   compliance,
   shifts,
+  embedded = false,
 }: {
   readonly compliance: MonthlyComplianceResult;
   readonly shifts: readonly ShiftEntry[];
+  readonly embedded?: boolean;
 }) {
   const palette = usePalette();
-  const [expandedIssueId, setExpandedIssueId] = useState<string | null>(null);
+  const [expandedRule, setExpandedRule] = useState<string | null>(null);
+  const groups = useMemo(() => groupComplianceIssues(compliance.issues), [compliance.issues]);
+  const shiftsById = useMemo(() => new Map(shifts.map((shift) => [shift.id, shift])), [shifts]);
   if (compliance.issues.length === 0) {
     return (
-      <Card>
+      <DetailContainer embedded={embedded}>
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
-          style={{ color: palette.primary, ...TYPOGRAPHY.sectionTitle }}
+          style={{ color: palette.success, ...TYPOGRAPHY.sectionTitle }}
         >
-          Keine Auffälligkeiten
+          Arbeitszeitregeln · keine Auffälligkeiten
         </Text>
-      </Card>
+      </DetailContainer>
     );
   }
   return (
-    <Card>
+    <DetailContainer embedded={embedded}>
       <Text
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
         style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
       >
-        Prüfung
+        {embedded ? "Arbeitszeitregeln" : "Prüfung"}
       </Text>
-      {compliance.issues.map((item) => {
-        const expanded = expandedIssueId === item.id;
-        const relatedShifts = shifts.filter((shift) => item.relatedShiftIds.includes(shift.id));
-        return (
-          <Animated.View
-            key={item.id}
-            layout={LinearTransition.duration(MOTION.duration.normal).reduceMotion(
-              MOTION.reduceMotion,
-            )}
-            style={{ borderTopWidth: 1, borderTopColor: palette.border }}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded }}
-              onPress={() =>
-                setExpandedIssueId((current) => (current === item.id ? null : item.id))
-              }
-              style={({ pressed }) => ({
-                minHeight: 58,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 11,
-                backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                opacity: pressed ? 0.72 : 1,
-                paddingVertical: 10,
-              })}
+      <View style={{ gap: SPACING.sm }}>
+        {groups.map((group) => {
+          const expanded = expandedRule === group.rule;
+          const accent =
+            group.severity === "critical"
+              ? palette.danger
+              : group.severity === "warning"
+                ? palette.warning
+                : palette.primary;
+          const displayTitle = formatComplianceGroupTitle(group);
+          const accessibleCountLabel = `${group.issues.length} ${
+            group.issues.length === 1 ? "Meldung" : "Meldungen"
+          }`;
+          return (
+            <Animated.View
+              key={group.rule}
+              layout={LinearTransition.duration(MOTION.duration.normal).reduceMotion(
+                MOTION.reduceMotion,
+              )}
+              style={{
+                overflow: "hidden",
+                borderWidth: 1,
+                borderColor: palette.separator,
+                borderRadius: RADII.control,
+                backgroundColor: palette.surface,
+              }}
             >
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: item.severity === "critical" ? palette.danger : palette.warning,
+              <Pressable
+                accessibilityLabel={`${displayTitle}, ${accessibleCountLabel}`}
+                accessibilityRole="button"
+                accessibilityState={{ expanded }}
+                onPress={() => {
+                  setExpandedRule((current) => (current === group.rule ? null : group.rule));
+                  selectionFeedback();
                 }}
-              />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
-                >
-                  {item.title}
-                </Text>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-                >
-                  {formatDateTitle(item.date)} · {item.kind === "LEGAL" ? "ArbZG" : "Planung"}
-                </Text>
-              </View>
-              <Ionicons
-                accessibilityElementsHidden
-                color={palette.textMuted}
-                name={expanded ? "chevron-up" : "chevron-down"}
-                size={18}
-              />
-            </Pressable>
-            {expanded ? (
-              <Animated.View
-                entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(
-                  MOTION.reduceMotion,
-                )}
-                exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(
-                  MOTION.reduceMotion,
-                )}
-                style={{
-                  gap: 10,
-                  borderRadius: RADII.control,
-                  backgroundColor: palette.surfaceMuted,
-                  marginBottom: 10,
-                  padding: SPACING.md,
-                }}
+                style={({ pressed }) => ({
+                  minHeight: 64,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: SPACING.sm,
+                  backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+                  opacity: pressed ? 0.78 : 1,
+                  paddingHorizontal: SPACING.md,
+                  paddingVertical: 10,
+                })}
               >
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.textSecondary, ...TYPOGRAPHY.caption }}
+                <View
+                  accessibilityElementsHidden
+                  style={{
+                    width: 28,
+                    height: 28,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: RADII.small,
+                    backgroundColor: `${accent}1F`,
+                  }}
                 >
-                  {item.description}
-                </Text>
-                {relatedShifts.map((shift) => (
-                  <View
-                    key={shift.id}
+                  <Ionicons
+                    color={accent}
+                    name={
+                      group.severity === "critical" ? "alert-circle-outline" : "warning-outline"
+                    }
+                    size={16}
+                  />
+                </View>
+                <View style={{ minWidth: 0, flex: 1 }}>
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    selectable
+                    style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                  >
+                    {displayTitle}
+                  </Text>
+                </View>
+                <View
+                  accessibilityElementsHidden
+                  style={{
+                    minWidth: 28,
+                    height: 24,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: RADII.pill,
+                    backgroundColor: `${accent}1F`,
+                    paddingHorizontal: SPACING.xs,
+                  }}
+                >
+                  <Text
                     style={{
-                      flexDirection: "row",
-                      flexWrap: "wrap",
-                      justifyContent: "space-between",
-                      gap: 12,
+                      color: accent,
+                      ...TYPOGRAPHY.label,
+                      fontVariant: ["tabular-nums"],
                     }}
                   >
-                    <Text
-                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                      selectable
-                      style={{
-                        minWidth: 0,
-                        flexGrow: 1,
-                        color: palette.text,
-                        ...TYPOGRAPHY.caption,
-                        fontWeight: "600",
-                      }}
-                    >
-                      {shift.title}
-                    </Text>
-                    <Text
-                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                      selectable
-                      style={{
-                        color: palette.textMuted,
-                        ...TYPOGRAPHY.caption,
-                        fontVariant: ["tabular-nums"],
-                      }}
-                    >
-                      {formatDateTitle(shift.date)} · {shift.startTime ?? "ganztägig"}
-                      {shift.endTime ? `–${shift.endTime}` : ""}
-                    </Text>
-                  </View>
-                ))}
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.textMuted, ...TYPOGRAPHY.footnote }}
+                    {group.issues.length}
+                  </Text>
+                </View>
+                <Ionicons
+                  accessibilityElementsHidden
+                  color={palette.textMuted}
+                  name={expanded ? "chevron-up" : "chevron-down"}
+                  size={18}
+                />
+              </Pressable>
+              {expanded ? (
+                <Animated.View
+                  entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(
+                    MOTION.reduceMotion,
+                  )}
+                  exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(
+                    MOTION.reduceMotion,
+                  )}
                 >
-                  Regel: {item.rule}
-                </Text>
-              </Animated.View>
-            ) : null}
-          </Animated.View>
-        );
-      })}
-    </Card>
-  );
-}
-
-function StatusCard({
-  label,
-  title,
-  icon,
-  fallbackIcon,
-  accent,
-  onPress,
-}: {
-  readonly label: string;
-  readonly title: string;
-  readonly icon: SymbolViewProps["name"];
-  readonly fallbackIcon: ComponentProps<typeof Ionicons>["name"];
-  readonly accent: string;
-  readonly onPress: () => void;
-}) {
-  const palette = usePalette();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => ({
-        minHeight: 72,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: SPACING.md,
-        backgroundColor: "transparent",
-        opacity: pressed ? 0.72 : 1,
-        paddingHorizontal: SPACING.lg,
-        paddingVertical: 10,
-      })}
-    >
-      <StatusIcon accent={accent} fallbackIcon={fallbackIcon} icon={icon} />
-      <View style={{ flex: 1, gap: SPACING.xxs }}>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-        >
-          {label}
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          numberOfLines={2}
-          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
-        >
-          {title}
-        </Text>
+                  <CardSeparator inset={0} />
+                  <View style={{ paddingHorizontal: SPACING.md }}>
+                    {group.issues.map((item, index) => {
+                      const relatedShifts = item.relatedShiftIds
+                        .map((id) => shiftsById.get(id))
+                        .filter((shift): shift is ShiftEntry => shift !== undefined);
+                      return (
+                        <View
+                          key={item.id}
+                          style={{
+                            gap: SPACING.sm,
+                            borderTopWidth: index > 0 ? 1 : 0,
+                            borderTopColor: palette.separator,
+                            paddingVertical: SPACING.md,
+                          }}
+                        >
+                          <Text
+                            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                            selectable
+                            style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                          >
+                            {formatComplianceDate(item.date)}
+                          </Text>
+                          <Text
+                            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                            selectable
+                            style={{ color: palette.textSecondary, ...TYPOGRAPHY.caption }}
+                          >
+                            {item.description}
+                          </Text>
+                          {relatedShifts.length > 0 ? (
+                            <View
+                              style={{
+                                gap: SPACING.xs,
+                                borderRadius: RADII.small,
+                                backgroundColor: palette.surfaceMuted,
+                                padding: 10,
+                              }}
+                            >
+                              {relatedShifts.map((shift) => (
+                                <View
+                                  key={shift.id}
+                                  style={{
+                                    flexDirection: "row",
+                                    flexWrap: "wrap",
+                                    justifyContent: "space-between",
+                                    gap: SPACING.sm,
+                                  }}
+                                >
+                                  <Text
+                                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                                    selectable
+                                    style={{ color: palette.text, ...TYPOGRAPHY.caption }}
+                                  >
+                                    {shift.title}
+                                  </Text>
+                                  <Text
+                                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                                    selectable
+                                    style={{
+                                      color: palette.textMuted,
+                                      ...TYPOGRAPHY.footnote,
+                                      fontVariant: ["tabular-nums"],
+                                    }}
+                                  >
+                                    {formatComplianceDate(shift.date)} ·{" "}
+                                    {shift.startTime ?? "ganztägig"}
+                                    {shift.endTime ? `–${shift.endTime}` : ""}
+                                  </Text>
+                                </View>
+                              ))}
+                            </View>
+                          ) : null}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </Animated.View>
+              ) : null}
+            </Animated.View>
+          );
+        })}
       </View>
-      <Ionicons
-        accessibilityElementsHidden
-        color={palette.textMuted}
-        name="chevron-forward"
-        size={18}
-      />
-    </Pressable>
+    </DetailContainer>
   );
 }
 
-function StatusIcon({
-  icon,
-  fallbackIcon,
-  accent,
+function DetailContainer({
+  embedded,
+  children,
 }: {
-  readonly icon: SymbolViewProps["name"];
-  readonly fallbackIcon: ComponentProps<typeof Ionicons>["name"];
-  readonly accent: string;
+  readonly embedded: boolean;
+  readonly children: ReactNode;
 }) {
-  return (
-    <View
-      style={{
-        width: 36,
-        height: 36,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: RADII.control,
-        backgroundColor: `${accent}1F`,
-      }}
-    >
-      {process.env.EXPO_OS === "ios" ? (
-        <SymbolView name={icon} size={18} tintColor={accent} weight="semibold" />
-      ) : (
-        <Ionicons accessibilityElementsHidden color={accent} name={fallbackIcon} size={19} />
-      )}
-    </View>
-  );
+  if (!embedded) return <Card>{children}</Card>;
+  return <View style={{ gap: SPACING.md, padding: SPACING.lg }}>{children}</View>;
 }
 
 function Card({ children }: { readonly children: ReactNode }) {
