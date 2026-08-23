@@ -1,6 +1,21 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useCallback, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
+import {
+  ActionSheetIOS,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type TextInputProps,
+} from "react-native";
+import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
+import { FullWindowOverlay } from "react-native-screens";
 
 import {
   usePflegeShiftEntries,
@@ -27,35 +42,27 @@ import {
   parseLocalDateRouteParam,
   type RouteParam,
 } from "@/navigation/route-params";
+import { chipTextColor } from "@/theme/color-contrast";
+import { MOTION } from "@/theme/motion";
 import { DEFAULT_TEMPLATE_COLOR, SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { DEFAULT_SHIFT_SYMBOLS } from "@/theme/shift-symbols";
-import { TEXT_MAX_SCALE } from "@/theme/typography";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
-import { ColorPicker, Field, ResponsiveFieldRow, TimePickerField } from "@/ui/form-controls";
-import {
-  DestructiveFormAction,
-  FormScreen,
-  FormSection,
-  FormStatus,
-  HeaderSaveAction,
-} from "@/ui/form-layout";
+import { CardSeparator, SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { ColorPicker, SecondaryButton, TimePickerField } from "@/ui/form-controls";
+import { DestructiveFormAction, FormScreen, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
 import { LabeledSwitch } from "@/ui/labeled-switch";
+import { ShiftSymbol } from "@/ui/shift-symbol";
 import { ShiftSymbolPicker } from "@/ui/shift-symbol-picker";
-import {
-  NotificationSheet,
-  notificationLabel,
-  OptionRow,
-} from "@/features/day-editor/entry-options";
+import { NotificationSheet, notificationLabel } from "@/features/day-editor/entry-options";
+import { ShiftNotificationOverlay } from "@/features/day-editor/shift-notification-overlay";
 import { LocationPreview } from "@/features/location/location-preview";
 import { consumeLocationSelection } from "@/features/location/location-selection";
 import { locationPickerRoute } from "@/navigation/routes";
-import {
-  focusInvalidField,
-  integerRangeFieldError,
-  requiredFieldError,
-} from "@/ui/form-validation";
+import { focusInvalidField, requiredFieldError } from "@/ui/form-validation";
 
 const TEMPLATE_TYPES: readonly ShiftType[] = [
   "EARLY",
@@ -69,8 +76,435 @@ const TEMPLATE_TYPES: readonly ShiftType[] = [
   "CUSTOM",
 ];
 
+const PAUSE_OPTIONS = [0, 15, 30, 45, 60] as const;
+const PAUSE_WHEEL_ITEM_HEIGHT = 44;
+const PAUSE_WHEEL_PADDING = PAUSE_WHEEL_ITEM_HEIGHT * 2;
+
+function pauseIndexForMinutes(minutes: number): number {
+  const exactIndex = PAUSE_OPTIONS.findIndex((option) => option === minutes);
+  if (exactIndex >= 0) return exactIndex;
+  return PAUSE_OPTIONS.reduce<number>(
+    (closestIndex, option, index) =>
+      Math.abs(option - minutes) < Math.abs((PAUSE_OPTIONS[closestIndex] ?? 0) - minutes)
+        ? index
+        : closestIndex,
+    0,
+  );
+}
+
+function pauseMinutesForOffset(offsetY: number): number {
+  const index = Math.max(
+    0,
+    Math.min(PAUSE_OPTIONS.length - 1, Math.round(offsetY / PAUSE_WHEEL_ITEM_HEIGHT)),
+  );
+  return PAUSE_OPTIONS[index];
+}
+
 function isAbsenceType(type: ShiftType): boolean {
   return type === "VACATION" || type === "SICK" || type === "FREE";
+}
+
+function CompactInputRow({
+  error,
+  inputRef,
+  keyboardType,
+  label,
+  maxLength,
+  onChangeText,
+  suffix,
+  testID,
+  value,
+}: {
+  readonly error?: string | null;
+  readonly inputRef?: Ref<TextInput>;
+  readonly keyboardType?: TextInputProps["keyboardType"];
+  readonly label: string;
+  readonly maxLength?: number;
+  readonly onChangeText: (value: string) => void;
+  readonly suffix?: string;
+  readonly testID?: string;
+  readonly value: string;
+}) {
+  const palette = usePalette();
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale >= 1.6;
+
+  return (
+    <View>
+      <View
+        testID={testID}
+        style={{
+          minHeight: CONTROL_HEIGHT.large,
+          flexDirection: stacked ? "column" : "row",
+          alignItems: stacked ? "stretch" : "center",
+          justifyContent: "space-between",
+          gap: SPACING.sm,
+          paddingHorizontal: SPACING.lg,
+          paddingVertical: SPACING.xs,
+        }}
+      >
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+        >
+          {label}
+        </Text>
+        <View
+          style={{
+            minWidth: 0,
+            flex: stacked ? undefined : 1,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: stacked ? "flex-start" : "flex-end",
+            gap: SPACING.xs,
+          }}
+        >
+          <TextInput
+            ref={inputRef}
+            accessibilityLabel={error ? `${label}, ungültig` : label}
+            accessibilityHint={error ? `Fehler: ${error}` : undefined}
+            enablesReturnKeyAutomatically
+            keyboardType={keyboardType}
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            maxLength={maxLength}
+            onChangeText={onChangeText}
+            placeholderTextColor={palette.textMuted}
+            selectTextOnFocus={keyboardType === "number-pad"}
+            style={{
+              minWidth: keyboardType === "number-pad" ? 44 : 96,
+              minHeight: CONTROL_HEIGHT.compact,
+              flex: keyboardType === "number-pad" ? undefined : 1,
+              color: error ? palette.danger : palette.textSecondary,
+              textAlign: stacked ? "left" : "right",
+              paddingVertical: 0,
+              ...TYPOGRAPHY.body,
+              ...(keyboardType === "number-pad" ? { fontVariant: ["tabular-nums"] } : {}),
+            }}
+            value={value}
+          />
+          {suffix ? (
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
+            >
+              {suffix}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+      {error ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          selectable
+          style={{
+            color: palette.danger,
+            paddingHorizontal: SPACING.lg,
+            paddingBottom: SPACING.sm,
+            ...TYPOGRAPHY.footnote,
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function CompactActionRow({
+  disabled = false,
+  expanded,
+  icon,
+  label,
+  onPress,
+  testID,
+  trailing,
+  value,
+}: {
+  readonly disabled?: boolean;
+  readonly expanded?: boolean;
+  readonly icon?: keyof typeof Ionicons.glyphMap;
+  readonly label: string;
+  readonly onPress: () => void;
+  readonly testID?: string;
+  readonly trailing?: ReactNode;
+  readonly value?: string;
+}) {
+  const palette = usePalette();
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale >= 1.6;
+
+  return (
+    <Pressable
+      accessibilityHint="Öffnet die Auswahl"
+      accessibilityLabel={value ? `${label}: ${value}` : label}
+      accessibilityRole="button"
+      accessibilityState={{ disabled, expanded }}
+      disabled={disabled}
+      onPress={onPress}
+      testID={testID}
+      style={({ pressed }) => ({
+        minHeight: 56,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: SPACING.md,
+        backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+        opacity: disabled ? 0.42 : 1,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+      })}
+    >
+      {icon ? (
+        <Ionicons accessibilityElementsHidden color={palette.textMuted} name={icon} size={21} />
+      ) : null}
+      <View
+        style={{
+          minWidth: 0,
+          flex: 1,
+          flexDirection: stacked ? "column" : "row",
+          alignItems: stacked ? "flex-start" : "center",
+          justifyContent: "space-between",
+          gap: stacked ? SPACING.xxs : SPACING.md,
+        }}
+      >
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+        >
+          {label}
+        </Text>
+        {value ? (
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{
+              color: palette.textMuted,
+              textAlign: stacked ? "left" : "right",
+              ...TYPOGRAPHY.body,
+            }}
+          >
+            {value}
+          </Text>
+        ) : null}
+      </View>
+      {trailing}
+      <Ionicons
+        accessibilityElementsHidden
+        color={palette.textMuted}
+        name={expanded ? "chevron-up" : "chevron-forward"}
+        size={17}
+      />
+    </Pressable>
+  );
+}
+
+function CompactSwitchRow({
+  label,
+  onValueChange,
+  testID,
+  value,
+}: {
+  readonly label: string;
+  readonly onValueChange: (value: boolean) => void;
+  readonly testID?: string;
+  readonly value: boolean;
+}) {
+  const palette = usePalette();
+  return (
+    <View
+      testID={testID}
+      style={{
+        minHeight: 56,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: SPACING.md,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.xs,
+      }}
+    >
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        style={{ flex: 1, color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+      >
+        {label}
+      </Text>
+      <LabeledSwitch
+        label={`Schicht ${label.toLocaleLowerCase("de-DE")}`}
+        onValueChange={onValueChange}
+        value={value}
+      />
+    </View>
+  );
+}
+
+function CompactPausePicker({
+  onChange,
+  value,
+}: {
+  readonly onChange: (value: string) => void;
+  readonly value: string;
+}) {
+  const palette = usePalette();
+  const minutes = Number(value) || 0;
+  const initialIndex = pauseIndexForMinutes(minutes);
+  const [expanded, setExpanded] = useState(false);
+  const [previewMinutes, setPreviewMinutes] = useState<number>(PAUSE_OPTIONS[initialIndex]);
+  const [initialOffset, setInitialOffset] = useState(initialIndex * PAUSE_WHEEL_ITEM_HEIGHT);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const commitAtOffset = useCallback(
+    (offsetY: number) => {
+      const nextMinutes = pauseMinutesForOffset(offsetY);
+      setPreviewMinutes(nextMinutes);
+      onChange(String(nextMinutes));
+    },
+    [onChange],
+  );
+
+  function togglePicker() {
+    if (expanded) {
+      setExpanded(false);
+      return;
+    }
+    const nextIndex = pauseIndexForMinutes(minutes);
+    setPreviewMinutes(PAUSE_OPTIONS[nextIndex]);
+    setInitialOffset(nextIndex * PAUSE_WHEEL_ITEM_HEIGHT);
+    setExpanded(true);
+  }
+
+  return (
+    <SurfaceCard>
+      <Pressable
+        accessibilityHint={expanded ? "Klappt die Auswahl ein" : "Öffnet die Pausenauswahl"}
+        accessibilityLabel={`Pause: ${minutes} Minuten`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        onPress={togglePicker}
+        testID="template-pause-row"
+        style={({ pressed }) => ({
+          minHeight: 56,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: SPACING.md,
+          backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+          paddingHorizontal: SPACING.lg,
+          paddingVertical: SPACING.xs,
+        })}
+      >
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+        >
+          Pause
+        </Text>
+        <View
+          style={{
+            minHeight: 36,
+            minWidth: 92,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: RADII.control,
+            backgroundColor: palette.surfaceMuted,
+            paddingHorizontal: SPACING.md,
+          }}
+        >
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{ color: palette.text, fontVariant: ["tabular-nums"], ...TYPOGRAPHY.body }}
+          >
+            {minutes} Min.
+          </Text>
+        </View>
+      </Pressable>
+      {expanded ? (
+        <>
+          <CardSeparator />
+          <Animated.View
+            accessibilityLabel="Pausendauer auswählen"
+            entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+            exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(MOTION.reduceMotion)}
+            style={{ alignItems: "center", paddingVertical: SPACING.sm }}
+            testID="template-pause-popover"
+          >
+            <View style={{ width: 210, height: 220 }}>
+              <View
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  top: PAUSE_WHEEL_PADDING,
+                  right: 12,
+                  left: 12,
+                  height: PAUSE_WHEEL_ITEM_HEIGHT,
+                  borderRadius: RADII.control,
+                  backgroundColor: palette.surfaceMuted,
+                }}
+                testID="template-pause-selection"
+              />
+              <ScrollView
+                accessibilityLabel="Pausendauer in 15-Minuten-Schritten"
+                accessibilityRole="radiogroup"
+                contentContainerStyle={{ paddingVertical: PAUSE_WHEEL_PADDING }}
+                contentOffset={{ x: 0, y: initialOffset }}
+                decelerationRate={0.97}
+                onMomentumScrollEnd={(event: NativeSyntheticEvent<NativeScrollEvent>) =>
+                  commitAtOffset(event.nativeEvent.contentOffset.y)
+                }
+                onScrollEndDrag={(event: NativeSyntheticEvent<NativeScrollEvent>) =>
+                  commitAtOffset(
+                    event.nativeEvent.targetContentOffset?.y ?? event.nativeEvent.contentOffset.y,
+                  )
+                }
+                ref={scrollRef}
+                scrollEventThrottle={16}
+                showsVerticalScrollIndicator={false}
+                snapToAlignment="start"
+                snapToInterval={PAUSE_WHEEL_ITEM_HEIGHT}
+                testID="template-pause-wheel"
+              >
+                {PAUSE_OPTIONS.map((option, index) => {
+                  const selected = previewMinutes === option;
+                  return (
+                    <Pressable
+                      key={option}
+                      accessibilityLabel={`${option} Minuten`}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      onPress={() => {
+                        setPreviewMinutes(option);
+                        onChange(String(option));
+                        scrollRef.current?.scrollTo?.({
+                          animated: true,
+                          y: index * PAUSE_WHEEL_ITEM_HEIGHT,
+                        });
+                      }}
+                      style={{
+                        height: PAUSE_WHEEL_ITEM_HEIGHT,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                        style={{
+                          color: palette.text,
+                          ...TYPOGRAPHY.body,
+                          fontWeight: selected ? "600" : "400",
+                          fontVariant: ["tabular-nums"],
+                        }}
+                      >
+                        {option} Min.
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </Animated.View>
+        </>
+      ) : null}
+    </SurfaceCard>
+  );
 }
 
 export function TemplateEditorScreen() {
@@ -149,15 +583,15 @@ function TemplateEditorForm({
     existing?.notification ?? null,
   );
   const [location, setLocation] = useState<EntryLocation | null>(existing?.location ?? null);
+  const [appearanceExpanded, setAppearanceExpanded] = useState(false);
+  const [typePickerExpanded, setTypePickerExpanded] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [symbolError, setSymbolError] = useState<string | null>(null);
-  const [breakError, setBreakError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const nameRef = useRef<TextInput>(null);
   const symbolRef = useRef<TextInput>(null);
-  const breakRef = useRef<TextInput>(null);
   const absence = isAbsenceType(type);
   const typeLocked = existing !== null && isAbsenceType(existing.type);
 
@@ -166,8 +600,31 @@ function TemplateEditorForm({
       existing === null && (color === SHIFT_TYPE_COLORS[type] || color === DEFAULT_TEMPLATE_COLOR);
     const useCandidateSymbol = existing === null && symbol === DEFAULT_SHIFT_SYMBOLS[type];
     setType(candidate);
+    setTypePickerExpanded(false);
     if (useCandidateColor) setColor(SHIFT_TYPE_COLORS[candidate]);
     if (useCandidateSymbol) setSymbol(DEFAULT_SHIFT_SYMBOLS[candidate]);
+  }
+
+  function openTypePicker() {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          cancelButtonIndex: TEMPLATE_TYPES.length,
+          options: [
+            ...TEMPLATE_TYPES.map((candidate) => SHIFT_TYPE_LABELS[candidate]),
+            "Abbrechen",
+          ],
+          title: "Dienstart",
+          userInterfaceStyle: palette.dark ? "dark" : "light",
+        },
+        (index) => {
+          const candidate = TEMPLATE_TYPES[index];
+          if (candidate) changeType(candidate);
+        },
+      );
+      return;
+    }
+    setTypePickerExpanded((current) => !current);
   }
 
   useFocusEffect(
@@ -180,18 +637,13 @@ function TemplateEditorForm({
   async function submit() {
     const nextNameError = requiredFieldError(name, "Titel");
     const nextSymbolError = requiredFieldError(symbol, "Symbol");
-    const nextBreakError =
-      absence || allDay ? null : integerRangeFieldError(breakMinutes, "Pause", 0, 1_440);
     setNameError(nextNameError);
     setSymbolError(nextSymbolError);
-    setBreakError(nextBreakError);
-    const firstError = nextNameError ?? nextSymbolError ?? nextBreakError;
+    if (nextSymbolError) setAppearanceExpanded(true);
+    const firstError = nextNameError ?? nextSymbolError;
     if (firstError) {
       setError(firstError);
-      focusInvalidField(
-        nextNameError ? nameRef : nextSymbolError ? symbolRef : breakRef,
-        firstError,
-      );
+      focusInvalidField(nextNameError ? nameRef : symbolRef, firstError);
       return;
     }
     try {
@@ -261,8 +713,8 @@ function TemplateEditorForm({
         }}
       />
 
-      <FormSection title="Darstellung">
-        <Field
+      <SurfaceCard>
+        <CompactInputRow
           error={nameError}
           inputRef={nameRef}
           label="Titel"
@@ -271,124 +723,216 @@ function TemplateEditorForm({
             setName(value);
             if (nameError) setNameError(null);
           }}
+          testID="template-title-row"
           value={name}
         />
-        <ShiftSymbolPicker
-          color={color}
-          error={symbolError}
-          inputRef={symbolRef}
-          onChange={(value) => {
-            setSymbol(value);
-            if (symbolError) setSymbolError(null);
-          }}
-          value={symbol}
-        />
-        <ColorPicker onChange={setColor} symbol={symbol} value={color} />
-      </FormSection>
-
-      <FormSection title="Dienstart">
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {TEMPLATE_TYPES.map((candidate) => {
-            const selected = candidate === type;
-            return (
-              <Pressable
-                key={candidate}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                disabled={typeLocked && candidate !== type}
-                onPress={() => changeType(candidate)}
-                style={({ pressed }) => ({
-                  minHeight: 44,
-                  justifyContent: "center",
-                  borderWidth: 1,
-                  borderColor: selected ? palette.primary : palette.border,
-                  borderRadius: 22,
-                  backgroundColor: selected ? palette.primarySoft : palette.surface,
-                  opacity: typeLocked && candidate !== type ? 0.32 : pressed ? 0.68 : 1,
-                  paddingHorizontal: 14,
-                })}
-              >
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  style={{ color: selected ? palette.primary : palette.text, fontWeight: "600" }}
-                >
-                  {SHIFT_TYPE_LABELS[candidate]}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </FormSection>
-
-      {absence ? (
-        <FormSection title="Arbeitszeit">
-          <Text style={{ color: palette.textSecondary, fontSize: 14, lineHeight: 20 }}>
-            {type === "FREE"
-              ? "Frei wird mit 0 Stunden geführt."
-              : "Die Abwesenheit ergänzt Arbeitszeit bis zum Tages-Soll."}
-          </Text>
-        </FormSection>
-      ) : (
-        <FormSection title="Zeiten">
-          <View
-            style={{
-              minHeight: 50,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
+        <CardSeparator />
+        {appearanceExpanded ? (
+          <Animated.View
+            entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+            exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(MOTION.reduceMotion)}
+            style={{ gap: SPACING.md, padding: SPACING.lg }}
+            testID="template-appearance-options"
           >
-            <Text style={{ color: palette.text, fontSize: 15, fontWeight: "600" }}>Ganztägig</Text>
-            <LabeledSwitch label="Schicht ganztägig" onValueChange={setAllDay} value={allDay} />
-          </View>
-          {!allDay ? (
-            <>
-              <ResponsiveFieldRow>
-                <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
-                <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
-              </ResponsiveFieldRow>
-              <Field
-                error={breakError}
-                inputRef={breakRef}
-                keyboardType="number-pad"
-                label="Pause (Min.)"
-                onChangeText={(value) => {
-                  setBreakMinutes(value);
-                  if (breakError) setBreakError(null);
+            <ShiftSymbolPicker
+              color={color}
+              error={symbolError}
+              inputRef={symbolRef}
+              onChange={(value) => {
+                setSymbol(value);
+                if (symbolError) setSymbolError(null);
+              }}
+              onHeaderPress={() => setAppearanceExpanded(false)}
+              value={symbol}
+            />
+            <ColorPicker onChange={setColor} symbol={symbol} value={color} />
+          </Animated.View>
+        ) : (
+          <CompactActionRow
+            expanded={false}
+            label="Symbol und Farbe"
+            onPress={() => setAppearanceExpanded(true)}
+            testID="template-appearance-toggle"
+            trailing={
+              <View
+                style={{
+                  width: 38,
+                  height: 38,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: RADII.pill,
+                  backgroundColor: color,
                 }}
-                value={breakMinutes}
-              />
+              >
+                <ShiftSymbol color={chipTextColor} size={21} value={symbol} />
+              </View>
+            }
+          />
+        )}
+      </SurfaceCard>
+
+      <View style={{ gap: SPACING.sm }}>
+        <SectionHeader title="Standardwerte" />
+        <SurfaceCard>
+          <CompactActionRow
+            disabled={typeLocked}
+            expanded={Platform.OS === "ios" ? undefined : typePickerExpanded}
+            label="Dienstart"
+            onPress={openTypePicker}
+            testID="template-type-row"
+            value={SHIFT_TYPE_LABELS[type]}
+          />
+          {typePickerExpanded ? (
+            <>
+              <CardSeparator />
+              <Animated.View
+                entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(
+                  MOTION.reduceMotion,
+                )}
+                exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(
+                  MOTION.reduceMotion,
+                )}
+                style={{ gap: SPACING.md, padding: SPACING.lg }}
+              >
+                <View
+                  accessibilityLabel="Dienstart auswählen"
+                  accessibilityRole="radiogroup"
+                  style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm }}
+                >
+                  {TEMPLATE_TYPES.map((candidate) => {
+                    const selected = candidate === type;
+                    return (
+                      <Pressable
+                        key={candidate}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected }}
+                        onPress={() => changeType(candidate)}
+                        style={({ pressed }) => ({
+                          minHeight: CONTROL_HEIGHT.compact,
+                          justifyContent: "center",
+                          borderWidth: 1,
+                          borderColor: selected ? palette.primary : palette.border,
+                          borderRadius: RADII.pill,
+                          backgroundColor: selected ? palette.primarySoft : palette.surface,
+                          opacity: pressed ? 0.68 : 1,
+                          paddingHorizontal: SPACING.md,
+                        })}
+                      >
+                        <Text
+                          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                          style={{
+                            color: selected ? palette.primary : palette.text,
+                            ...TYPOGRAPHY.label,
+                          }}
+                        >
+                          {SHIFT_TYPE_LABELS[candidate]}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <SecondaryButton onPress={() => setTypePickerExpanded(false)}>
+                  Fertig
+                </SecondaryButton>
+              </Animated.View>
             </>
           ) : null}
-        </FormSection>
-      )}
+          <CardSeparator />
+          {absence ? (
+            <View
+              style={{
+                minHeight: 56,
+                justifyContent: "center",
+                paddingHorizontal: SPACING.lg,
+                paddingVertical: SPACING.sm,
+              }}
+            >
+              <Text
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                style={{ color: palette.textSecondary, ...TYPOGRAPHY.body }}
+              >
+                {type === "FREE"
+                  ? "Frei wird mit 0 Stunden geführt."
+                  : "Die Abwesenheit ergänzt Arbeitszeit bis zum Tages-Soll."}
+              </Text>
+            </View>
+          ) : (
+            <>
+              <CompactSwitchRow
+                label="Ganztägig"
+                onValueChange={setAllDay}
+                testID="template-all-day-row"
+                value={allDay}
+              />
+              {!allDay ? (
+                <>
+                  <CardSeparator />
+                  <View testID="template-start-row" style={{ paddingHorizontal: SPACING.lg }}>
+                    <TimePickerField label="Start" onChange={setStartTime} value={startTime} />
+                  </View>
+                  <CardSeparator />
+                  <View testID="template-end-row" style={{ paddingHorizontal: SPACING.lg }}>
+                    <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
+                  </View>
+                </>
+              ) : null}
+            </>
+          )}
+        </SurfaceCard>
+      </View>
 
-      <FormSection title="Weitere Angaben">
-        <OptionRow
-          icon="notifications-outline"
-          label="Benachrichtigung"
-          onPress={() => setNotificationOpen(true)}
-          value={notificationLabel(notification)}
-        />
-        <OptionRow
-          icon="location-outline"
-          label="Ort"
-          onPress={() => router.push(locationPickerRoute(location?.name) as never)}
-          value={location?.name ?? "Kein Ort"}
-        />
-        {location ? <LocationPreview location={location} /> : null}
-      </FormSection>
+      <View style={{ gap: SPACING.md }}>
+        {!absence && !allDay ? (
+          <CompactPausePicker onChange={setBreakMinutes} value={breakMinutes} />
+        ) : null}
+        <SurfaceCard>
+          <CompactActionRow
+            icon={notification ? "notifications-outline" : "add"}
+            label="Benachrichtigung"
+            onPress={() => setNotificationOpen(true)}
+            testID="template-notification-row"
+            value={notificationLabel(notification)}
+          />
+        </SurfaceCard>
+        <SurfaceCard>
+          <CompactActionRow
+            icon="location-outline"
+            label="Ort"
+            onPress={() => router.push(locationPickerRoute(location?.name) as never)}
+            testID="template-location-row"
+            value={location?.name ?? "Kein Ort"}
+          />
+          {location ? (
+            <>
+              <CardSeparator />
+              <View style={{ padding: SPACING.lg }}>
+                <LocationPreview location={location} />
+              </View>
+            </>
+          ) : null}
+        </SurfaceCard>
+      </View>
 
       <FormStatus error={error} />
       {existing ? (
         <DestructiveFormAction disabled={saving} label="Vorlage löschen" onPress={confirmArchive} />
       ) : null}
       {notificationOpen ? (
-        <NotificationSheet
-          onChange={setNotification}
-          onClose={() => setNotificationOpen(false)}
-          value={notification}
-        />
+        Platform.OS === "ios" ? (
+          <FullWindowOverlay>
+            <ShiftNotificationOverlay
+              onChange={setNotification}
+              onClose={() => setNotificationOpen(false)}
+              value={notification}
+            />
+          </FullWindowOverlay>
+        ) : (
+          <NotificationSheet
+            onChange={setNotification}
+            onClose={() => setNotificationOpen(false)}
+            value={notification}
+          />
+        )
       ) : null}
     </FormScreen>
   );

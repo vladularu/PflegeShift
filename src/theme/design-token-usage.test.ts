@@ -49,7 +49,6 @@ const LEGACY_TYPOGRAPHY_LITERAL_FILES = [
   "src/features/dev-tools/dev-tools-screen.tsx",
   "src/features/location/location-picker-screen.tsx",
   "src/features/settings/settings-info-details-screen.tsx",
-  "src/features/templates/template-editor-screen.tsx",
   "src/ui/shift-color-picker-sheet.tsx",
   "src/ui/shift-symbol-picker.tsx",
 ].sort();
@@ -72,7 +71,6 @@ const LEGACY_RADIUS_LITERAL_FILES = [
   "src/features/dev-tools/dev-tools-screen.tsx",
   "src/features/location/location-picker-screen.tsx",
   "src/features/location/location-preview.tsx",
-  "src/features/templates/template-editor-screen.tsx",
   "src/ui/color-picker.tsx",
   "src/ui/loading-view.tsx",
   "src/ui/shift-color-picker-sheet.tsx",
@@ -97,7 +95,6 @@ const LEGACY_HORIZONTAL_PADDING_LITERAL_FILES = [
   "src/features/day-editor/shift-notification-overlay.tsx",
   "src/features/location/location-picker-screen.tsx",
   "src/features/settings/settings-info-details-screen.tsx",
-  "src/features/templates/template-editor-screen.tsx",
   "src/features/templates/templates-manager-screen.tsx",
   "src/ui/form-layout.tsx",
   "src/ui/loading-view.tsx",
