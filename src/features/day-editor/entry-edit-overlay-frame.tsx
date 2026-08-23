@@ -92,7 +92,7 @@ export function EntryEditOverlayFrame({
     cancelAnimation(sheetTranslateY);
     cancelAnimation(backdropProgress);
     sheetTranslateY.value = withSpring(0, {
-      ...MOTION.spring,
+      ...MOTION.spring.settle,
       reduceMotion: MOTION.reduceMotion,
     });
     backdropProgress.value = withTiming(1, {
@@ -182,7 +182,7 @@ export function EntryEditOverlayFrame({
         return;
       }
       sheetTranslateY.value = withSpring(0, {
-        ...MOTION.spring,
+        ...MOTION.spring.settle,
         reduceMotion: MOTION.reduceMotion,
       });
       backdropProgress.value = withTiming(1, {
@@ -194,7 +194,7 @@ export function EntryEditOverlayFrame({
     .onFinalize((_event, success) => {
       if (success) return;
       sheetTranslateY.value = withSpring(0, {
-        ...MOTION.spring,
+        ...MOTION.spring.settle,
         reduceMotion: MOTION.reduceMotion,
       });
       backdropProgress.value = withTiming(1, {

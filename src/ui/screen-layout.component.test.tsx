@@ -2,6 +2,7 @@ import { render } from "@testing-library/react-native";
 import { describe, expect, it } from "@jest/globals";
 import { Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { FadeIn, FadeOut } from "react-native-reanimated";
 
 import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { ScreenScrollView, TabScreenHeader } from "@/ui/screen-layout";
@@ -89,5 +90,23 @@ describe("screen layout", () => {
     expect(screen.getByTestId("analysis-header-title-area").props.style).toEqual(
       screen.getByTestId("calendar-header-title-area").props.style,
     );
+  });
+
+  it("forwards a complete title enter and exit contract", async () => {
+    const entering = FadeIn.duration(300);
+    const exiting = FadeOut.duration(300);
+    const screen = await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <TabScreenHeader
+          title="August"
+          titleEntering={entering}
+          titleExiting={exiting}
+          titleKey="2026-08"
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByRole("header", { name: "August" })).toHaveProp("entering", entering);
+    expect(screen.getByRole("header", { name: "August" })).toHaveProp("exiting", exiting);
   });
 });
