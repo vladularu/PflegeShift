@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import * as MockReact from "react";
 import { Pressable as MockPressable, Text as MockText, View as MockView } from "react-native";
 
+import { addMonths, today } from "@/engine/calendar";
 import { CalendarScreen } from "@/features/calendar/calendar-screen";
 
 const mockPreferences = {
@@ -20,9 +21,20 @@ const mockPreferences = {
   viewMode: "MONTH",
 };
 
+let mockActiveMonth = "2026-08";
+let mockTodayRequestRevision = 0;
+let mockCompletedTodayRequestRevision = 0;
+
 const mockActiveMonthCoordinator = {
-  getMonth: () => "2026-08",
-  setMonth: jest.fn(),
+  completeTodayRequest: jest.fn((revision: number) => {
+    mockCompletedTodayRequestRevision = Math.max(mockCompletedTodayRequestRevision, revision);
+  }),
+  getMonth: () => mockActiveMonth,
+  hasPendingTodayRequest: (revision: number) => revision > mockCompletedTodayRequestRevision,
+  setMonth: jest.fn((month: string) => {
+    mockActiveMonth = month;
+    return month;
+  }),
 };
 
 jest.mock("expo-router", () => ({
@@ -56,21 +68,38 @@ jest.mock("@/features/calendar/calendar-preferences", () => ({
 }));
 
 jest.mock("@/navigation/active-month", () => ({
-  calendarTabShouldOpenToday: () => false,
   useActiveMonthCoordinator: () => mockActiveMonthCoordinator,
+  useCalendarTodayRequestRevision: () => mockTodayRequestRevision,
 }));
 
 jest.mock("@/features/calendar/calendar-header", () => ({ CalendarHeader: () => null }));
 
 jest.mock("@/features/calendar/month-card", () => ({
-  MonthCard: ({ onSelectDate }: { onSelectDate: (date: string, anchor: object) => void }) => {
+  MonthCard: ({
+    month,
+    onSelectDate,
+    selectedDate,
+  }: {
+    month: string;
+    onSelectDate: (date: string, anchor: object) => void;
+    selectedDate: string | null;
+  }) => {
     return MockReact.createElement(
-      MockPressable,
-      {
-        onPress: () => onSelectDate("2026-08-14", { height: 40, width: 40, x: 20, y: 120 }),
-        testID: "calendar-day",
-      },
-      MockReact.createElement(MockText, null, "14"),
+      MockView,
+      { testID: `month-card-${month}` },
+      MockReact.createElement(
+        MockText,
+        { testID: `month-card-selection-${month}` },
+        selectedDate ?? "none",
+      ),
+      MockReact.createElement(
+        MockPressable,
+        {
+          onPress: () => onSelectDate("2026-08-14", { height: 40, width: 40, x: 20, y: 120 }),
+          testID: "calendar-day",
+        },
+        MockReact.createElement(MockText, null, "14"),
+      ),
     );
   },
 }));
@@ -108,7 +137,13 @@ jest.mock("@/ui/use-theme-status-bar", () => ({ useThemeStatusBar: () => undefin
 
 describe("CalendarScreen quick-entry navigation", () => {
   beforeEach(() => {
+    mockActiveMonth = "2026-08";
+    mockTodayRequestRevision = 0;
+    mockCompletedTodayRequestRevision = 0;
     jest.mocked(router.push).mockClear();
+    mockActiveMonthCoordinator.completeTodayRequest.mockClear();
+    mockActiveMonthCoordinator.setMonth.mockClear();
+    mockPreferences.setViewMode.mockClear();
     jest.spyOn(global, "requestAnimationFrame").mockImplementation((callback) => {
       callback(0);
       return 1;
@@ -133,5 +168,57 @@ describe("CalendarScreen quick-entry navigation", () => {
       params: { date: "2026-08-14" },
     });
     expect(screen.getByTestId("mounted-quick-entry-popup")).toBeTruthy();
+  });
+
+  it("keeps Today selected after a calendar tab reselect settles", async () => {
+    const currentDate = today("Europe/Berlin");
+    const currentMonth = currentDate.slice(0, 7);
+    const scrollStartMonth = addMonths(currentMonth, -4);
+    mockActiveMonth = scrollStartMonth;
+    const screen = await render(<CalendarScreen />);
+    const pagerShell = screen.getByTestId("calendar-month-pager-shell");
+
+    await act(async () => {
+      fireEvent(pagerShell, "layout", { nativeEvent: { layout: { height: 700 } } });
+    });
+
+    await act(async () => {
+      mockTodayRequestRevision = 1;
+      screen.rerender(<CalendarScreen />);
+    });
+
+    expect(mockPreferences.setViewMode).toHaveBeenCalledWith("MONTH");
+    expect(mockActiveMonthCoordinator.completeTodayRequest).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.scroll(screen.getByTestId("calendar-month-pager"), {
+        nativeEvent: { contentOffset: { y: 700 * 25 } },
+      });
+    });
+
+    expect(mockPreferences.setViewMode).toHaveBeenCalledTimes(1);
+    expect(mockActiveMonthCoordinator.completeTodayRequest).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent(screen.getByTestId("calendar-month-pager"), "momentumScrollEnd", {
+        nativeEvent: { contentOffset: { y: 700 * 28 } },
+      });
+    });
+
+    expect(mockActiveMonthCoordinator.setMonth).toHaveBeenLastCalledWith(currentMonth);
+    expect(mockActiveMonthCoordinator.completeTodayRequest).toHaveBeenCalledWith(1);
+    expect(screen.getByTestId(`month-card-selection-${scrollStartMonth}`).props.children).toBe(
+      currentDate,
+    );
+
+    await act(async () => {
+      fireEvent(screen.getByTestId("calendar-month-pager"), "momentumScrollEnd", {
+        nativeEvent: { contentOffset: { y: 700 * 28 } },
+      });
+    });
+
+    expect(screen.getByTestId(`month-card-selection-${scrollStartMonth}`).props.children).toBe(
+      currentDate,
+    );
   });
 });

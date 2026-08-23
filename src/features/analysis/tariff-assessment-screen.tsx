@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import {
   usePflegeShiftEntries,
@@ -21,15 +21,19 @@ import { userFacingErrorMessage } from "@/domain/errors";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
+import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-layout";
 import { TariffQuestion } from "@/features/analysis/tariff-question";
 import { resolveEditorSession } from "@/features/editor-session";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
+import { RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { FormStatus } from "@/ui/form-layout";
+import { PrimaryButton } from "@/ui/form-controls";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { successFeedback } from "@/ui/haptics";
+import { ReportFootnote, ReportScrollView } from "@/ui/report-layout";
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   NONE: "Keine Zulage",
@@ -38,6 +42,8 @@ const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   ALTERNATING_MONTHLY: "Ständige Wechselschicht",
   ALTERNATING_HOURLY: "Nichtständige Wechselschicht",
 };
+
+const CRITERION_ICON_SIZE = 28;
 
 export function TariffAssessmentScreen() {
   const params = useLocalSearchParams<{ month?: RouteParam }>();
@@ -154,58 +160,36 @@ function TariffAssessmentForm({
   }
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-      style={{ backgroundColor: palette.groupedBackground }}
-      contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
-    >
-      <View style={{ gap: SPACING.xs }}>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
-        >
-          {formatMonthTitle(month)}
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}
-        >
-          {resultTitle}
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-        >
-          Dienstmuster werden aus den letzten drei Monaten erkannt. Angaben zum Arbeitsplatz
-          bestätigst du einmal selbst.
-        </Text>
-      </View>
+    <ReportScrollView>
+      <AnalysisDetailSummaryCard
+        caption="Dienstmuster werden aus den letzten drei Monaten erkannt. Angaben zum Arbeitsplatz bestätigst du einmal selbst."
+        period={formatMonthTitle(month)}
+        title={resultTitle}
+      />
 
       <SurfaceCard>
         {assessment.criteria.map((criterion, index) => (
           <View key={criterion.key}>
-            {index > 0 ? <CardSeparator inset={48} /> : null}
+            {index > 0 ? (
+              <CardSeparator inset={SPACING.lg + CRITERION_ICON_SIZE + SPACING.md} />
+            ) : null}
             <View
               style={{
-                minHeight: 60,
+                minHeight: 64,
                 flexDirection: "row",
                 alignItems: "center",
-                gap: 11,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
+                gap: SPACING.md,
+                paddingHorizontal: SPACING.lg,
+                paddingVertical: SPACING.sm,
               }}
             >
               <View
                 style={{
-                  width: 24,
-                  height: 24,
+                  width: CRITERION_ICON_SIZE,
+                  height: CRITERION_ICON_SIZE,
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 12,
+                  borderRadius: RADII.pill,
                   backgroundColor:
                     criterion.state === "MET"
                       ? palette.primarySoft
@@ -233,11 +217,19 @@ function TariffAssessmentForm({
                   size={16}
                 />
               </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text selectable style={{ color: palette.text, fontSize: 13, fontWeight: "600" }}>
+              <View style={{ flex: 1, gap: SPACING.xxs }}>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                >
                   {criterion.label}
                 </Text>
-                <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                >
                   {criterion.detail}
                 </Text>
               </View>
@@ -270,35 +262,15 @@ function TariffAssessmentForm({
         onChange={(value) => setAssignment(value as TvoedAssignment)}
       />
 
-      {error ? (
-        <Text selectable style={{ color: palette.danger, fontSize: 12, lineHeight: 17 }}>
-          {error}
-        </Text>
-      ) : null}
+      <FormStatus error={error} />
 
-      <Pressable
-        accessibilityLabel="Angaben speichern"
-        accessibilityRole="button"
-        accessibilityState={{ busy: saving, disabled: saving }}
-        disabled={saving}
+      <PrimaryButton
+        busy={saving}
+        busyLabel="Angaben werden gespeichert"
         onPress={() => void saveSettings()}
-        style={({ pressed }) => ({
-          minHeight: CONTROL_HEIGHT.regular,
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: RADII.control,
-          borderCurve: "continuous",
-          backgroundColor: palette.primary,
-          opacity: saving ? 0.5 : pressed ? 0.75 : 1,
-        })}
       >
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
-        >
-          Angaben speichern
-        </Text>
-      </Pressable>
+        Angaben speichern
+      </PrimaryButton>
 
       <Pressable
         accessibilityLabel="Monatswert manuell festlegen"
@@ -306,23 +278,35 @@ function TariffAssessmentForm({
         accessibilityState={{ expanded: showOverride }}
         onPress={() => setShowOverride((current) => !current)}
         style={({ pressed }) => ({
-          minHeight: 46,
+          minHeight: 56,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: SPACING.md,
           opacity: pressed ? 0.7 : 1,
-          paddingHorizontal: 4,
+          paddingHorizontal: SPACING.xxs,
         })}
       >
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ color: palette.text, fontSize: 13, fontWeight: "600" }}>
+        <View style={{ flex: 1, gap: SPACING.xxs }}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+          >
             Monatswert manuell festlegen
           </Text>
-          <Text style={{ color: palette.textMuted, fontSize: 12 }}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+          >
             Nur verwenden, wenn die automatische Einordnung abweicht.
           </Text>
         </View>
-        <Text style={{ color: palette.textMuted, fontSize: 19 }}>{showOverride ? "−" : "+"}</Text>
+        <Ionicons
+          accessibilityElementsHidden
+          color={palette.textMuted}
+          name={showOverride ? "chevron-up" : "chevron-down"}
+          size={20}
+        />
       </Pressable>
 
       {showOverride ? (
@@ -330,7 +314,7 @@ function TariffAssessmentForm({
           <View accessibilityLabel="Monatswert manuell festlegen" accessibilityRole="radiogroup">
             {ALLOWANCE_STATUSES.map((status, index) => (
               <View key={status}>
-                {index > 0 ? <CardSeparator inset={16} /> : null}
+                {index > 0 ? <CardSeparator inset={SPACING.lg} /> : null}
                 <Pressable
                   accessibilityLabel={`Monatswert manuell festlegen: ${ALLOWANCE_LABELS[status]}`}
                   accessibilityRole="radio"
@@ -341,27 +325,31 @@ function TariffAssessmentForm({
                   disabled={saving}
                   onPress={() => void confirmOverride(status)}
                   style={({ pressed }) => ({
-                    minHeight: 50,
+                    minHeight: 56,
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    gap: SPACING.md,
                     backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                    paddingHorizontal: 16,
+                    paddingHorizontal: SPACING.lg,
                   })}
                 >
-                  <Text style={{ color: palette.text, fontSize: 13, fontWeight: "700" }}>
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    style={{ flex: 1, color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                  >
                     {ALLOWANCE_LABELS[status]}
                   </Text>
-                  <Text
+                  <Ionicons
                     accessibilityElementsHidden
-                    style={{
-                      color:
-                        decision?.allowanceStatus === status ? palette.primary : palette.textMuted,
-                      fontSize: 17,
-                    }}
-                  >
-                    {decision?.allowanceStatus === status ? "●" : "○"}
-                  </Text>
+                    color={
+                      decision?.allowanceStatus === status ? palette.primary : palette.textMuted
+                    }
+                    name={
+                      decision?.allowanceStatus === status ? "radio-button-on" : "radio-button-off"
+                    }
+                    size={20}
+                  />
                 </Pressable>
               </View>
             ))}
@@ -369,12 +357,9 @@ function TariffAssessmentForm({
         </SurfaceCard>
       ) : null}
 
-      <Text
-        selectable
-        style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17, textAlign: "center" }}
-      >
+      <ReportFootnote>
         Automatische Plausibilitätsprüfung · keine Rechts- oder Lohnberatung
-      </Text>
-    </ScrollView>
+      </ReportFootnote>
+    </ReportScrollView>
   );
 }

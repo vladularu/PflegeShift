@@ -21,14 +21,17 @@ export function SurfaceCard({
   children,
   style,
   accessibilityLabel,
+  testID,
 }: PropsWithChildren<{
   readonly style?: ViewStyle;
   readonly accessibilityLabel?: string;
+  readonly testID?: string;
 }>) {
   const palette = usePalette();
   return (
     <View
       accessibilityLabel={accessibilityLabel}
+      testID={testID}
       style={{
         overflow: "hidden",
         borderWidth: 1,

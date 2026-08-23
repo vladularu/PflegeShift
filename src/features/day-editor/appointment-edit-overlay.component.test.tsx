@@ -58,6 +58,10 @@ describe("AppointmentEditOverlay", () => {
       shadowOpacity: 0.28,
     });
     expect(screen.getByTestId("appointment-edit-drag-handle")).toHaveStyle({ minHeight: 56 });
+    expect(screen.getByTestId("appointment-edit-sheet")).toHaveProp(
+      "accessibilityViewIsModal",
+      true,
+    );
     expect(screen.getByText("Sa. 22. Aug.")).toBeTruthy();
     expect(screen.getByText("1h")).toBeTruthy();
     expect(screen.getByDisplayValue("Ohne Titel")).toBeTruthy();

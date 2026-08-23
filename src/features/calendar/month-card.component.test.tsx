@@ -187,10 +187,15 @@ describe("MonthCard", () => {
 
   it("keeps today above the weekend and selection hierarchy", async () => {
     const currentDate = today(PROFILE.timeZone);
+    const currentCell = createMonthGrid(currentDate.slice(0, 7)).find(
+      (cell) => cell.date === currentDate,
+    );
     const screen = await render(
       <MonthCard
         bottomReserve={80}
-        entriesByDate={new Map()}
+        entriesByDate={
+          new Map([[currentDate, [appointment(currentDate, "today", "Termin heute")]]])
+        }
         month={currentDate.slice(0, 7)}
         onSelectDate={jest.fn()}
         pageHeight={700}
@@ -203,9 +208,15 @@ describe("MonthCard", () => {
       name: new RegExp(formatDateTitle(currentDate)),
     });
     const dateNumber = within(currentDay).getByText(String(Number(currentDate.slice(-2))));
+    const todayAppointment = within(currentDay).getByText("Termin heute");
 
-    expect(currentDay).toHaveStyle({ backgroundColor: LIGHT_PALETTE.calendarToday });
+    expect(currentCell).toBeDefined();
+    expect(currentDay).toHaveStyle({
+      backgroundColor: currentCell?.weekend ? LIGHT_PALETTE.weekend : "transparent",
+    });
+    expect(dateNumber.parent).toHaveStyle({ backgroundColor: LIGHT_PALETTE.calendarToday });
     expect(dateNumber).toHaveStyle({ color: LIGHT_PALETTE.onCalendarToday });
+    expect(todayAppointment).toHaveStyle({ color: LIGHT_PALETTE.text });
   });
 
   it("renders a muted sixth week for a five-week month", async () => {

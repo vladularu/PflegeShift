@@ -1,13 +1,4 @@
-import {
-  router,
-  Stack,
-  useFocusEffect,
-  useIsFocused,
-  useLocalSearchParams,
-  useNavigation,
-} from "expo-router";
-import type { BottomTabNavigationProp } from "expo-router/js-tabs";
-import type { ParamListBase } from "expo-router/react-navigation";
+import { router, useFocusEffect, useIsFocused, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AccessibilityInfo,
@@ -40,7 +31,7 @@ import { expandCalendarEntries } from "@/engine/recurrence";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
-import { calendarTodayTarget, type CalendarAnchorRect } from "@/features/calendar/calendar-layout";
+import type { CalendarAnchorRect } from "@/features/calendar/calendar-layout";
 import { clampDateToMonth } from "@/features/calendar/calendar-metrics";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
 import { MonthCard } from "@/features/calendar/month-card";
@@ -62,13 +53,15 @@ import { QuickEntryPopup } from "@/features/calendar/quick-entry-popup";
 import { QuickPlannerDock } from "@/features/calendar/quick-planner-dock";
 import { stampToolSelectedAnnouncement } from "@/features/calendar/stamp-accessibility";
 import { YearOverview } from "@/features/calendar/year-overview";
+import { useCalendarTodayScroll } from "@/features/calendar/use-calendar-today-scroll";
 import { useOpenShiftSelection } from "@/features/calendar/use-open-shift-selection";
 import { useQuickStampAction } from "@/features/calendar/use-quick-stamp-action";
 import { dayDetailsRoute, dayEditorRoute, quickAddRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
-import { calendarTabShouldOpenToday, useActiveMonthCoordinator } from "@/navigation/active-month";
+import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
+import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { InlineNotice } from "@/ui/design-system";
 import { PrimaryButton } from "@/ui/form-controls";
 import { planningModeFeedback, selectionFeedback } from "@/ui/haptics";
@@ -87,8 +80,8 @@ export function CalendarScreen() {
   const palette = usePalette();
   useThemeStatusBar();
   const isFocused = useIsFocused();
-  const navigation = useNavigation();
   const preferences = useCalendarPreferences();
+  const { setViewMode } = preferences;
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { ready, error, reload } = usePflegeShiftStatus();
@@ -112,6 +105,7 @@ export function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectionVisible, setSelectionVisible] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(targetMonth);
+  const [pagerResetRevision, setPagerResetRevision] = useState(0);
   const [headerDirection, setHeaderDirection] = useState<"NEXT" | "PREVIOUS">("NEXT");
   const [pageHeight, setPageHeight] = useState(0);
   const [plannerMode, setPlannerMode] = useState(false);
@@ -233,8 +227,9 @@ export function CalendarScreen() {
   const scrollToMonth = useCallback(
     (month: string, animated = true): boolean => {
       const index = months.indexOf(month);
-      if (index < 0) return false;
-      listRef.current?.scrollToIndex({ index, animated });
+      const list = listRef.current;
+      if (index < 0 || list === null) return false;
+      list.scrollToIndex({ index, animated });
       return true;
     },
     [months],
@@ -271,41 +266,33 @@ export function CalendarScreen() {
     }, []),
   );
 
-  const goToToday = useCallback(() => {
-    const currentDate = today(timeZone);
+  const resetTodayUi = useCallback(() => {
     setQuickPopup(null);
-    const target = calendarTodayTarget(currentDate);
-    setSelectedDate(target.selectedDate);
-    setSelectionVisible(true);
-    setVisibleMonth(target.visibleMonth);
-    activeMonthCoordinator.setMonth(target.visibleMonth);
-    settledMonth.current = target.visibleMonth;
-    const recenter = shouldRecenterMonthWindow(months, target.visibleMonth);
-    if (recenter) setMonthAnchor(target.visibleMonth);
-    preferences.setViewMode(target.viewMode);
-    if (!recenter) scrollToMonth(target.visibleMonth);
-  }, [activeMonthCoordinator, months, preferences, scrollToMonth, timeZone]);
+    setPlannerMode(false);
+    setStampTool(null);
+    setPlannerError(null);
+  }, []);
 
-  useEffect(() => {
-    let currentNavigation = navigation.getParent();
-    let tabNavigation: BottomTabNavigationProp<ParamListBase> | undefined;
-
-    while (currentNavigation) {
-      if (currentNavigation.getState()?.type === "tab") {
-        tabNavigation = currentNavigation as unknown as BottomTabNavigationProp<ParamListBase>;
-        break;
-      }
-      currentNavigation = currentNavigation.getParent();
-    }
-
-    if (!tabNavigation) return;
-
-    return tabNavigation.addListener("tabPress", () => {
-      if (calendarTabShouldOpenToday(isFocused)) {
-        requestAnimationFrame(goToToday);
-      }
-    });
-  }, [goToToday, isFocused, navigation]);
+  const { finishTodayScrollAtMonth, todayScrollActive } = useCalendarTodayScroll({
+    activeMonthCoordinator,
+    isFocused,
+    months,
+    pageHeight,
+    reduceMotion,
+    resetTransientUi: resetTodayUi,
+    scrollToMonth,
+    setHeaderDirection,
+    setMonthAnchor,
+    setPagerResetRevision,
+    setSelectedDate,
+    setSelectionVisible,
+    setViewMode,
+    setVisibleMonth,
+    settledMonthRef: settledMonth,
+    timeZone,
+    viewMode: preferences.viewMode,
+    visibleMonth,
+  });
 
   const openMonth = useCallback(
     (month: string) => {
@@ -367,16 +354,21 @@ export function CalendarScreen() {
       const month = monthAtPagerOffset(months, pageHeight, event.nativeEvent.contentOffset.y);
       if (!month) return;
       setQuickPopup(null);
+
+      if (finishTodayScrollAtMonth(month)) return;
+
       const didChangeMonth = settledMonth.current !== month;
       settledMonth.current = month;
       setVisibleMonth(month);
       activeMonthCoordinator.setMonth(month);
-      setSelectedDate((date) => clampDateToMonth(date, month));
-      setSelectionVisible(false);
+      if (didChangeMonth) {
+        setSelectedDate((date) => clampDateToMonth(date, month));
+        setSelectionVisible(false);
+      }
       if (shouldRecenterMonthWindow(months, month)) setMonthAnchor(month);
       if (didChangeMonth) selectionFeedback();
     },
-    [activeMonthCoordinator, months, pageHeight],
+    [activeMonthCoordinator, finishTodayScrollAtMonth, months, pageHeight],
   );
 
   const beginPlanning = useCallback(() => {
@@ -512,9 +504,6 @@ export function CalendarScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.background }}>
-      <Stack.Screen
-        options={{ headerShown: false, statusBarStyle: palette.dark ? "light" : "dark" }}
-      />
       <CalendarHeader
         direction={headerDirection}
         month={visibleMonth}
@@ -526,12 +515,23 @@ export function CalendarScreen() {
         viewMode={preferences.viewMode}
       />
       {plannerError ? (
-        <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+        <View
+          style={{
+            paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
+            paddingBottom: SPACING.sm,
+          }}
+        >
           <InlineNotice message={plannerError} tone="error" />
         </View>
       ) : null}
       {preferences.error ? (
-        <View style={{ gap: 8, paddingHorizontal: 12, paddingBottom: 8 }}>
+        <View
+          style={{
+            gap: SPACING.sm,
+            paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
+            paddingBottom: SPACING.sm,
+          }}
+        >
           <InlineNotice message={preferences.error} tone="error" />
           <PrimaryButton disabled={preferences.saving} onPress={preferences.retry}>
             Speichern erneut versuchen
@@ -561,21 +561,30 @@ export function CalendarScreen() {
                 })}
                 initialScrollIndex={visibleMonthIndex >= 0 ? visibleMonthIndex : MONTHS_BEFORE}
                 initialNumToRender={1}
-                key={`month-pager-${pageHeight}-${monthAnchor}`}
+                key={`month-pager-${pageHeight}-${monthAnchor}-${pagerResetRevision}`}
                 keyExtractor={(month) => month}
                 maxToRenderPerBatch={2}
                 onMomentumScrollEnd={finishPaging}
                 onScroll={trackPaging}
                 onScrollToIndexFailed={({ index }) => {
-                  setTimeout(() => listRef.current?.scrollToIndex({ index, animated: false }), 60);
+                  setTimeout(
+                    () =>
+                      listRef.current?.scrollToIndex({
+                        index,
+                        animated: todayScrollActive,
+                      }),
+                    60,
+                  );
                 }}
                 pagingEnabled
                 removeClippedSubviews={process.env.EXPO_OS !== "web"}
                 renderItem={renderMonth}
+                scrollEnabled={!todayScrollActive}
                 showsVerticalScrollIndicator={false}
                 snapToAlignment="start"
                 snapToInterval={pageHeight}
                 scrollEventThrottle={16}
+                testID="calendar-month-pager"
                 updateCellsBatchingPeriod={24}
                 windowSize={3}
               />

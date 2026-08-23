@@ -1,8 +1,10 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { CONTROL_HEIGHT, RADII, SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { selectionFeedback } from "@/ui/haptics";
-import { TEXT_MAX_SCALE } from "@/theme/typography";
 
 export function TariffQuestion({
   title,
@@ -19,22 +21,30 @@ export function TariffQuestion({
 }) {
   const palette = usePalette();
   const { fontScale } = useWindowDimensions();
-  const stacked = fontScale >= 1.6;
+  const stacked = fontScale >= SCREEN_LAYOUT.headerAccessoryStackFontScale;
 
   return (
-    <View style={{ gap: 9 }}>
-      <View style={{ gap: 3, paddingHorizontal: 2 }}>
-        <Text selectable style={{ color: palette.text, fontSize: 14, fontWeight: "600" }}>
+    <View style={{ gap: SPACING.md }}>
+      <View style={{ gap: SPACING.xxs }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+        >
           {title}
         </Text>
-        <Text selectable style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+        >
           {caption}
         </Text>
       </View>
       <View
         accessibilityLabel={title}
         accessibilityRole="radiogroup"
-        style={{ flexDirection: stacked ? "column" : "row", gap: 7 }}
+        style={{ flexDirection: stacked ? "column" : "row", gap: SPACING.sm }}
       >
         {options.map((option) => {
           const selected = option.value === value;
@@ -49,25 +59,32 @@ export function TariffQuestion({
                 selectionFeedback();
               }}
               style={({ pressed }) => ({
-                minHeight: 44,
+                minHeight: CONTROL_HEIGHT.compact,
                 flex: stacked ? undefined : 1,
+                flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
+                gap: SPACING.xxs,
                 borderWidth: 1,
                 borderColor: selected ? palette.primary : palette.border,
-                borderRadius: 14,
+                borderRadius: RADII.control,
                 borderCurve: "continuous",
                 backgroundColor: selected ? palette.primarySoft : palette.surface,
                 opacity: pressed ? 0.72 : 1,
-                paddingHorizontal: 8,
+                paddingHorizontal: SPACING.sm,
               })}
             >
+              <Ionicons
+                accessibilityElementsHidden
+                color={selected ? palette.primary : palette.textMuted}
+                name={selected ? "checkmark-circle" : "ellipse-outline"}
+                size={16}
+              />
               <Text
                 maxFontSizeMultiplier={TEXT_MAX_SCALE}
                 style={{
                   color: selected ? palette.primary : palette.textSecondary,
-                  fontSize: 12,
-                  fontWeight: "600",
+                  ...TYPOGRAPHY.label,
                   textAlign: "center",
                 }}
               >

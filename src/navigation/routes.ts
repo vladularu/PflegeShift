@@ -98,14 +98,8 @@ export function dayEditorRoute(date: string, mode: "SHIFT" | "APPOINTMENT", entr
       params,
     });
   }
-  if (entryId) {
-    return Object.freeze({
-      pathname: "/shift-editor" as const,
-      params,
-    });
-  }
   return Object.freeze({
-    pathname: "/day-editor" as const,
+    pathname: "/shift-editor" as const,
     params,
   });
 }

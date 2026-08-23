@@ -12,11 +12,13 @@ import {
   type QuickEntryStampAction,
 } from "@/features/calendar/quick-entry-actions";
 import { completeShiftSelectionNavigation } from "@/features/calendar/quick-entry-navigation";
-import { ShiftSelectionPanel } from "@/features/calendar/shift-selection-panel";
+import {
+  ShiftSelectionErrorNotice,
+  ShiftSelectionPanel,
+} from "@/features/calendar/shift-selection-panel";
 import { useQuickStampAction } from "@/features/calendar/use-quick-stamp-action";
 import { templateEditorRoute } from "@/navigation/routes";
 import { parseLocalDateRouteParam, type RouteParam } from "@/navigation/route-params";
-import { InlineNotice } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
@@ -74,11 +76,7 @@ export function ShiftSelectionScreen() {
         onEditTemplate={(templateId) => router.push(templateEditorRoute(templateId, date))}
         onSelectAction={(action, selectedDate) => void selectAction(action, selectedDate)}
       />
-      {saveError ? (
-        <View style={{ position: "absolute", right: 16, bottom: 16, left: 16, zIndex: 10_003 }}>
-          <InlineNotice message={saveError} tone="error" />
-        </View>
-      ) : null}
+      {saveError ? <ShiftSelectionErrorNotice message={saveError} /> : null}
     </View>
   );
 }

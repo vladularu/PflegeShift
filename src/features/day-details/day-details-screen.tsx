@@ -1,7 +1,6 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text, useWindowDimensions, View } from "react-native";
 
 import {
   usePflegeShiftEntries,
@@ -18,6 +17,8 @@ import { calculateDailySummary } from "@/features/calendar/calendar-metrics";
 import { dayEditorRoute, quickAddRoute } from "@/navigation/routes";
 import { parseLocalDateRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
+import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
+import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import {
   CardSeparator,
   ColorBadge,
@@ -27,8 +28,9 @@ import {
   SectionHeader,
   SurfaceCard,
 } from "@/ui/design-system";
-import { PrimaryButton } from "@/ui/form-controls";
+import { PrimaryButton, SecondaryButton } from "@/ui/form-controls";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { ScreenScrollView } from "@/ui/screen-layout";
 
 function timeLabel(entry: CalendarEntry): string {
   if (entry.kind === "APPOINTMENT") {
@@ -40,7 +42,7 @@ function timeLabel(entry: CalendarEntry): string {
 
 export function DayDetailsScreen() {
   const palette = usePalette();
-  const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const params = useLocalSearchParams<{ date?: RouteParam }>();
   const { entries } = usePflegeShiftEntries();
   const { profile } = usePflegeShiftProfile();
@@ -81,25 +83,26 @@ export function DayDetailsScreen() {
   if (!ready || profile === null) return <LoadingView />;
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={{
-        gap: 16,
-        padding: 16,
-        paddingBottom: Math.max(insets.bottom, 20) + 28,
-      }}
-    >
+    <ScreenScrollView testID="day-details-screen">
       <Stack.Screen options={{ title: formatDateTitle(date) }} />
       {holiday ? (
-        <SurfaceCard style={{ padding: 14, backgroundColor: palette.primarySoft }}>
-          <Text style={{ color: palette.primary, fontSize: 13, fontWeight: "600" }}>
+        <SurfaceCard style={{ padding: SPACING.lg, backgroundColor: palette.primarySoft }}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{ color: palette.primary, ...TYPOGRAPHY.label }}
+          >
             {holiday.name}
           </Text>
         </SurfaceCard>
       ) : null}
       {summary ? (
-        <View style={{ flexDirection: "row", gap: 8 }}>
+        <View
+          style={{
+            flexDirection:
+              fontScale >= SCREEN_LAYOUT.headerAccessoryStackFontScale ? "column" : "row",
+            gap: SPACING.sm,
+          }}
+        >
           <MetricCard compact label="Soll" value={formatMinutes(summary.targetMinutes)} />
           <MetricCard compact label="Ist" value={formatMinutes(summary.actualMinutes)} />
           <MetricCard
@@ -110,7 +113,7 @@ export function DayDetailsScreen() {
           />
         </View>
       ) : null}
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: SPACING.md }}>
         <SectionHeader title="Einträge" caption={`${dayEntries.length} an diesem Tag`} />
         <SurfaceCard>
           {dayEntries.length === 0 ? (
@@ -138,12 +141,14 @@ export function DayDetailsScreen() {
           )}
         </SurfaceCard>
       </View>
-      <PrimaryButton onPress={() => router.push(quickAddRoute(date))}>
-        Schicht hinzufügen
-      </PrimaryButton>
-      <PrimaryButton onPress={() => router.push(dayEditorRoute(date, "APPOINTMENT"))}>
-        Termin hinzufügen
-      </PrimaryButton>
-    </ScrollView>
+      <View style={{ gap: SPACING.md }}>
+        <PrimaryButton onPress={() => router.push(quickAddRoute(date))}>
+          Schicht hinzufügen
+        </PrimaryButton>
+        <SecondaryButton onPress={() => router.push(dayEditorRoute(date, "APPOINTMENT"))}>
+          Termin hinzufügen
+        </SecondaryButton>
+      </View>
+    </ScreenScrollView>
   );
 }

@@ -38,6 +38,10 @@ describe("navigation contracts", () => {
   });
 
   it("includes entryId only for editing", () => {
+    expect(dayEditorRoute("2026-08-13", "SHIFT")).toEqual({
+      pathname: "/shift-editor",
+      params: { date: "2026-08-13", mode: "SHIFT" },
+    });
     expect(dayEditorRoute("2026-08-13", "SHIFT", "shift-1")).toEqual({
       pathname: "/shift-editor",
       params: { date: "2026-08-13", mode: "SHIFT", entryId: "shift-1" },

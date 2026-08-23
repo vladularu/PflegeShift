@@ -12,14 +12,29 @@ export const RADII = {
   small: 10,
   control: 12,
   card: 20,
+  sheet: 24,
   large: 24,
   pill: 999,
 } as const;
 
+export const MINIMUM_TOUCH_TARGET = 44;
+
 export const CONTROL_HEIGHT = {
-  compact: 44,
+  compact: MINIMUM_TOUCH_TARGET,
   regular: 48,
   large: 52,
+} as const;
+
+export const SCREEN_LAYOUT = {
+  horizontalPadding: SPACING.xl,
+  contentTopPadding: SPACING.md,
+  contentBottomPadding: 48,
+  contentGap: SPACING.xxl,
+  sectionGap: SPACING.xl,
+  headerMinHeight: 84,
+  headerTopPadding: SPACING.sm,
+  headerBottomPadding: SPACING.lg,
+  headerAccessoryStackFontScale: 1.6,
 } as const;
 
 export const SHADOWS = {

@@ -14,6 +14,14 @@ import { FeedbackProvider } from "@/ui/feedback";
 
 SplashScreen.setOptions({ duration: 300, fade: true });
 
+const ENTRY_EDITOR_SCREEN_OPTIONS = {
+  headerShown: false,
+  presentation: "transparentModal" as const,
+  animation: "none" as const,
+  gestureEnabled: false,
+  contentStyle: { backgroundColor: "transparent" },
+};
+
 export default function RootLayout() {
   const palette = usePalette();
   const dark = palette.dark;
@@ -53,35 +61,11 @@ export default function RootLayout() {
                             presentation: "fullScreenModal",
                           }}
                         />
-                        <Stack.Screen
-                          name="day-editor"
-                          options={{
-                            title: "Eintrag",
-                            presentation: "formSheet",
-                            contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [0.72, 1],
-                            sheetGrabberVisible: true,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="shift-editor"
-                          options={{
-                            headerShown: false,
-                            presentation: "transparentModal",
-                            animation: "none",
-                            gestureEnabled: false,
-                            contentStyle: { backgroundColor: "transparent" },
-                          }}
-                        />
+                        <Stack.Screen name="day-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
+                        <Stack.Screen name="shift-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
                         <Stack.Screen
                           name="appointment-editor"
-                          options={{
-                            headerShown: false,
-                            presentation: "transparentModal",
-                            animation: "none",
-                            gestureEnabled: false,
-                            contentStyle: { backgroundColor: "transparent" },
-                          }}
+                          options={ENTRY_EDITOR_SCREEN_OPTIONS}
                         />
                         <Stack.Screen
                           name="day-details"
@@ -96,11 +80,10 @@ export default function RootLayout() {
                         <Stack.Screen
                           name="quick-add"
                           options={{
-                            title: "Neuer Eintrag",
-                            presentation: "formSheet",
-                            contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [0.5, 0.78],
-                            sheetGrabberVisible: true,
+                            headerShown: false,
+                            presentation: "card",
+                            animation: "slide_from_bottom",
+                            contentStyle: { backgroundColor: palette.background },
                           }}
                         />
                         <Stack.Screen

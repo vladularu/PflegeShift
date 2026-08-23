@@ -1,5 +1,19 @@
 import { addMonths } from "@/engine/calendar";
 
+function monthOrdinal(month: string): number {
+  return Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
+}
+
+export function boundedMonthScrollStart(
+  visibleMonth: string,
+  targetMonth: string,
+  maxVisibleMonths = 4,
+): string {
+  const distance = monthOrdinal(targetMonth) - monthOrdinal(visibleMonth);
+  if (Math.abs(distance) <= maxVisibleMonths) return visibleMonth;
+  return addMonths(targetMonth, distance > 0 ? -maxVisibleMonths : maxVisibleMonths);
+}
+
 export function createMonthWindow(
   anchor: string,
   before: number,

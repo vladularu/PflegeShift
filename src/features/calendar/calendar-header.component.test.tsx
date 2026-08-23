@@ -39,5 +39,15 @@ describe("CalendarHeader", () => {
     expect(toolbar.props.accessibilityElementsHidden).toBe(true);
     expect(toolbar.props.importantForAccessibility).toBe("no-hide-descendants");
     expect(StyleSheet.flatten(toolbar.props.style).opacity).toBe(0);
+    expect(screen.getByRole("header", { name: "August" })).toHaveProp(
+      "dynamicTypeRamp",
+      "largeTitle",
+    );
+    expect(
+      screen.getByRole("button", {
+        name: "2026, Jahresansicht öffnen",
+        includeHiddenElements: true,
+      }),
+    ).toHaveStyle({ width: 44, height: 44 });
   });
 });

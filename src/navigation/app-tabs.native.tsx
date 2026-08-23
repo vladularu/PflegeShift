@@ -1,10 +1,16 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 
+import {
+  requestCalendarTodayOnReselect,
+  useActiveMonthCoordinator,
+} from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
+import { TYPOGRAPHY } from "@/theme/typography";
 
 export function AppTabs() {
   const palette = usePalette();
+  const activeMonthCoordinator = useActiveMonthCoordinator();
   return (
     <NativeTabs
       backgroundColor={palette.tabBar}
@@ -12,19 +18,27 @@ export function AppTabs() {
       labelStyle={{
         default: {
           color: palette.textMuted,
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: TYPOGRAPHY.overline.fontSize,
+          fontWeight: TYPOGRAPHY.overline.fontWeight,
         },
         selected: {
           color: palette.primary,
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: TYPOGRAPHY.overline.fontSize,
+          fontWeight: TYPOGRAPHY.overline.fontWeight,
         },
       }}
       minimizeBehavior="never"
       tintColor={palette.primary}
     >
-      <NativeTabs.Trigger name="(calendar)">
+      <NativeTabs.Trigger
+        disableScrollToTop
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            requestCalendarTodayOnReselect(activeMonthCoordinator, navigation.isFocused());
+          },
+        })}
+        name="(calendar)"
+      >
         <NativeTabs.Trigger.Label>Kalender</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf="calendar"

@@ -217,7 +217,11 @@ export function EntryEditOverlayFrame({
         style={StyleSheet.absoluteFill}
       >
         <Animated.View
-          style={[StyleSheet.absoluteFill, styles.backdrop, backdropMotionStyle]}
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: palette.overlay },
+            backdropMotionStyle,
+          ]}
           testID={`${testIDPrefix}-backdrop`}
         />
       </Animated.View>
@@ -247,6 +251,7 @@ export function EntryEditOverlayFrame({
             style={styles.shell}
           >
             <Animated.View
+              accessibilityViewIsModal
               pointerEvents={closing ? "none" : "auto"}
               style={[styles.sheetContent, sheetMotionStyle]}
               testID={`${testIDPrefix}-sheet`}
@@ -331,7 +336,6 @@ export function EntryEditOverlayFrame({
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: "transparent" },
-  backdrop: { backgroundColor: "rgba(0, 0, 0, 0.64)" },
   keyboardLayer: { flex: 1 },
   scrollContent: {
     flexGrow: 1,

@@ -1,11 +1,16 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 
+import {
+  requestCalendarTodayOnReselect,
+  useActiveMonthCoordinator,
+} from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { TYPOGRAPHY } from "@/theme/typography";
 
 export function AppTabs() {
   const palette = usePalette();
+  const activeMonthCoordinator = useActiveMonthCoordinator();
   return (
     <Tabs
       initialRouteName="(calendar)"
@@ -16,11 +21,16 @@ export function AppTabs() {
         tabBarActiveTintColor: palette.primary,
         tabBarHideOnKeyboard: true,
         tabBarInactiveTintColor: palette.textMuted,
-        tabBarLabelStyle: { ...TYPOGRAPHY.caption, fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: TYPOGRAPHY.overline,
         tabBarStyle: { backgroundColor: palette.tabBar, borderTopColor: palette.border },
       }}
     >
       <Tabs.Screen
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            requestCalendarTodayOnReselect(activeMonthCoordinator, navigation.isFocused());
+          },
+        })}
         name="(calendar)"
         options={{
           title: "Kalender",

@@ -8,13 +8,19 @@ import type {
   QuickEntryAction,
   QuickEntryStampAction,
 } from "@/features/calendar/quick-entry-actions";
-import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
+import {
+  ShiftTemplateAddRow,
+  ShiftTemplateListCard,
+  ShiftTemplateListRow,
+  ShiftTemplateListSeparator,
+  shiftTemplateSubtitle,
+} from "@/features/templates/shift-template-list";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { RADII, SPACING } from "@/theme/tokens";
+import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
-import { ShiftSymbol } from "@/ui/shift-symbol";
+import { InlineNotice } from "@/ui/design-system";
 
 function longDate(date: string): string {
   return new Intl.DateTimeFormat("de-DE", {
@@ -24,18 +30,6 @@ function longDate(date: string): string {
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(`${date}T00:00:00Z`));
-}
-
-function templateSubtitle(action: QuickEntryStampAction): string {
-  const { template } = action;
-  const parts = [
-    template.allDay || template.startTime === null || template.endTime === null
-      ? "Ganztägig"
-      : `${template.startTime}–${template.endTime}`,
-  ];
-  if (template.breakMinutes > 0) parts.push(`${template.breakMinutes} Min. Pause`);
-  if (template.location?.name) parts.push(template.location.name);
-  return parts.join(" · ");
 }
 
 export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
@@ -102,16 +96,23 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
         <View
           ref={headingRef}
           accessible
-          accessibilityLabel="Schicht auswählen, Überschrift"
+          accessibilityLabel={`Schicht auswählen für ${longDate(date)}, Überschrift`}
           accessibilityRole="header"
           style={styles.navigationTitleWrap}
         >
           <Text
+            dynamicTypeRamp="headline"
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            numberOfLines={1}
             style={[styles.navigationTitle, { color: palette.text }]}
           >
-            Schicht
+            Schicht auswählen
+          </Text>
+          <Text
+            dynamicTypeRamp="caption1"
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={[styles.navigationDate, { color: palette.textMuted }]}
+          >
+            {longDate(date)}
           </Text>
         </View>
         <View accessibilityElementsHidden style={styles.navigationPlaceholder} />
@@ -131,72 +132,22 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
           >
             Meine Dienste
           </Text>
-          <View
-            style={[
-              styles.card,
-              { borderColor: palette.separator, backgroundColor: palette.surface },
-            ]}
-          >
+          <ShiftTemplateListCard>
             {templateActions.length > 0 ? (
-              templateActions.map((action) => (
+              templateActions.map((action, index) => (
                 <View key={action.key}>
-                  <View style={[styles.serviceRow, { opacity: busy ? 0.45 : 1 }]}>
-                    <Pressable
-                      accessibilityLabel={`${action.label} direkt eintragen`}
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: busy }}
-                      disabled={busy}
-                      onPress={() => onSelectAction(action, date)}
-                      style={({ pressed }) => [
-                        styles.serviceSelect,
-                        { backgroundColor: pressed ? palette.surfaceMuted : "transparent" },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.serviceBadge,
-                          { backgroundColor: accessibleChipBackgroundColor(action.color) },
-                        ]}
-                      >
-                        <ShiftSymbol color={chipTextColor} size={18} value={action.symbol} />
-                      </View>
-                      <View style={styles.rowCopy}>
-                        <Text
-                          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                          numberOfLines={1}
-                          style={[styles.serviceTitle, { color: palette.text }]}
-                        >
-                          {action.label}
-                        </Text>
-                        <Text
-                          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                          numberOfLines={1}
-                          style={[styles.serviceSubtitle, { color: palette.textMuted }]}
-                        >
-                          {templateSubtitle(action)}
-                        </Text>
-                      </View>
-                    </Pressable>
-                    <Pressable
-                      accessibilityLabel={`${action.label} Dienstvorlage bearbeiten`}
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: busy }}
-                      disabled={busy}
-                      hitSlop={4}
-                      onPress={() => onEditTemplate(action.template.id)}
-                      style={({ pressed }) => [styles.moreButton, { opacity: pressed ? 0.58 : 1 }]}
-                    >
-                      <View style={[styles.moreCircle, { borderColor: palette.textMuted }]}>
-                        <Ionicons
-                          accessibilityElementsHidden
-                          color={palette.textMuted}
-                          name="ellipsis-horizontal"
-                          size={13}
-                        />
-                      </View>
-                    </Pressable>
-                  </View>
-                  <View style={[styles.serviceSeparator, { backgroundColor: palette.separator }]} />
+                  {index > 0 ? <ShiftTemplateListSeparator /> : null}
+                  <ShiftTemplateListRow
+                    accessibilityLabel={`${action.label} direkt eintragen`}
+                    color={action.color}
+                    disabled={busy}
+                    moreAccessibilityLabel={`${action.label} Dienstvorlage bearbeiten`}
+                    onMorePress={() => onEditTemplate(action.template.id)}
+                    onPress={() => onSelectAction(action, date)}
+                    subtitle={shiftTemplateSubtitle(action.template)}
+                    symbol={action.symbol}
+                    title={action.label}
+                  />
                 </View>
               ))
             ) : (
@@ -209,41 +160,33 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
                 </Text>
               </View>
             )}
-            <Pressable
+            {templateActions.length > 0 ? <ShiftTemplateListSeparator /> : null}
+            <ShiftTemplateAddRow
               accessibilityLabel="Neue Schichtvorlage hinzufügen"
-              accessibilityRole="button"
-              accessibilityState={{ disabled: busy }}
               disabled={busy}
               onPress={onAddTemplate}
-              style={({ pressed }) => [
-                styles.addTemplateRow,
-                {
-                  backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                  opacity: busy ? 0.45 : 1,
-                },
-              ]}
-            >
-              <View style={[styles.addTemplateBadge, { backgroundColor: palette.textSecondary }]}>
-                <Ionicons
-                  accessibilityElementsHidden
-                  color={palette.background}
-                  name="add"
-                  size={22}
-                />
-              </View>
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                style={[styles.addTemplateText, { color: palette.textSecondary }]}
-              >
-                Schicht hinzufügen
-              </Text>
-            </Pressable>
-          </View>
+            />
+          </ShiftTemplateListCard>
         </View>
       </ScrollView>
     </Animated.View>
   );
 });
+
+export function ShiftSelectionErrorNotice({ message }: { readonly message: string }) {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View
+      style={[
+        styles.errorNotice,
+        { bottom: Math.max(insets.bottom, SCREEN_LAYOUT.contentTopPadding) },
+      ]}
+    >
+      <InlineNotice message={message} tone="error" />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   screen: {
@@ -256,7 +199,7 @@ const styles = StyleSheet.create({
     elevation: 26,
   },
   navigationBar: {
-    minHeight: 60,
+    minHeight: 76,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: SPACING.md,
@@ -272,13 +215,16 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flex: 1,
     alignItems: "center",
+    gap: SPACING.xxs,
     paddingHorizontal: SPACING.sm,
   },
   navigationTitle: {
-    ...TYPOGRAPHY.sectionTitle,
-    fontSize: 21,
-    lineHeight: 27,
-    letterSpacing: -0.3,
+    ...TYPOGRAPHY.screenTitle,
+    textAlign: "center",
+  },
+  navigationDate: {
+    ...TYPOGRAPHY.footnote,
+    textAlign: "center",
   },
   navigationPlaceholder: {
     width: 44,
@@ -288,8 +234,8 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 560,
     alignSelf: "center",
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
+    paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
+    paddingTop: SCREEN_LAYOUT.contentTopPadding,
   },
   section: {
     gap: SPACING.md,
@@ -297,69 +243,6 @@ const styles = StyleSheet.create({
   sectionHeading: {
     ...TYPOGRAPHY.sectionTitle,
     paddingHorizontal: SPACING.sm,
-    fontSize: 17,
-    lineHeight: 22,
-  },
-  card: {
-    overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: RADII.large,
-    borderCurve: "continuous",
-  },
-  serviceRow: {
-    minHeight: 72,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingLeft: SPACING.lg,
-    paddingRight: SPACING.sm,
-  },
-  serviceSelect: {
-    minWidth: 0,
-    minHeight: 72,
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.md,
-    borderRadius: RADII.control,
-    paddingVertical: SPACING.sm,
-  },
-  serviceBadge: {
-    width: 38,
-    height: 38,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 19,
-  },
-  rowCopy: {
-    minWidth: 0,
-    flex: 1,
-    gap: 2,
-  },
-  serviceTitle: {
-    ...TYPOGRAPHY.body,
-    fontWeight: "600",
-  },
-  serviceSubtitle: {
-    ...TYPOGRAPHY.caption,
-    fontVariant: ["tabular-nums"],
-  },
-  moreButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  moreCircle: {
-    width: 22,
-    height: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderRadius: 11,
-  },
-  serviceSeparator: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: 66,
   },
   emptyTemplates: {
     minHeight: 74,
@@ -372,22 +255,10 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
     textAlign: "center",
   },
-  addTemplateRow: {
-    minHeight: 64,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-  },
-  addTemplateBadge: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 17,
-  },
-  addTemplateText: {
-    ...TYPOGRAPHY.body,
-    fontWeight: "500",
+  errorNotice: {
+    position: "absolute",
+    right: SCREEN_LAYOUT.horizontalPadding,
+    left: SCREEN_LAYOUT.horizontalPadding,
+    zIndex: 10_003,
   },
 });

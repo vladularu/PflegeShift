@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   calendarTabShouldOpenToday,
   createActiveMonthCoordinator,
+  requestCalendarTodayOnReselect,
   requireActiveMonth,
 } from "@/navigation/active-month";
 
@@ -23,5 +24,37 @@ describe("active month coordinator", () => {
   it("uses Today only when the calendar tab is selected again", () => {
     expect(calendarTabShouldOpenToday(false)).toBe(false);
     expect(calendarTabShouldOpenToday(true)).toBe(true);
+  });
+
+  it("publishes a Today request only for a focused calendar reselect", () => {
+    const coordinator = createActiveMonthCoordinator("2026-08");
+    const listener = vi.fn();
+    const unsubscribe = coordinator.subscribeTodayRequests(listener);
+
+    expect(requestCalendarTodayOnReselect(coordinator, false)).toBe(false);
+    expect(coordinator.getTodayRequestRevision()).toBe(0);
+    expect(listener).not.toHaveBeenCalled();
+
+    expect(requestCalendarTodayOnReselect(coordinator, true)).toBe(true);
+    expect(coordinator.getTodayRequestRevision()).toBe(1);
+    expect(coordinator.hasPendingTodayRequest(1)).toBe(true);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    coordinator.requestToday();
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the newest Today request pending until it is completed", () => {
+    const coordinator = createActiveMonthCoordinator("2026-08");
+
+    const firstRevision = coordinator.requestToday();
+    const secondRevision = coordinator.requestToday();
+
+    coordinator.completeTodayRequest(firstRevision);
+    expect(coordinator.hasPendingTodayRequest(secondRevision)).toBe(true);
+
+    coordinator.completeTodayRequest(secondRevision);
+    expect(coordinator.hasPendingTodayRequest(secondRevision)).toBe(false);
   });
 });

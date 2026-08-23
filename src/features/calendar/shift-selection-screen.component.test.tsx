@@ -75,6 +75,12 @@ describe("ShiftSelectionScreen", () => {
   it("keeps Meine Dienste mounted while opening edit or add above it", async () => {
     const screen = await render(<TestScreen />);
 
+    expect(screen.getByRole("header", { name: /Schicht auswählen/ })).toBeVisible();
+    expect(screen.getByText(/15\. August 2026/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Schichtauswahl schließen" })).toHaveStyle({
+      width: 44,
+      height: 44,
+    });
     expect(screen.getByText("Meine Dienste")).toBeVisible();
     expect(screen.getByTestId("shift-selection-panel").props.entering).toBeUndefined();
 

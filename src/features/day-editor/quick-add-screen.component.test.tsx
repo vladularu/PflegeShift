@@ -11,7 +11,7 @@ import { successFeedback } from "@/ui/haptics";
 const mockUpsertShift = jest.fn<() => Promise<ShiftEntry>>();
 
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn(), replace: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), replace: jest.fn() },
   Stack: { Screen: () => null },
   useLocalSearchParams: () => ({ date: "2026-08-04" }),
 }));
@@ -45,8 +45,12 @@ jest.mock("@/ui/haptics", () => ({
   warningFeedback: jest.fn(),
 }));
 
+jest.mock("@/ui/use-theme-status-bar", () => ({ useThemeStatusBar: () => undefined }));
+
 describe("QuickAddScreen", () => {
   beforeEach(() => {
+    jest.mocked(router.back).mockClear();
+    jest.mocked(router.push).mockClear();
     mockUpsertShift.mockResolvedValue({} as ShiftEntry);
   });
 
@@ -64,8 +68,20 @@ describe("QuickAddScreen", () => {
       </SafeAreaProvider>,
     );
 
+    expect(screen.getByRole("header", { name: /Schicht auswählen/ })).toBeVisible();
+    expect(screen.getByText(/4\. August 2026/)).toBeVisible();
+    expect(screen.getByTestId("shift-selection-panel").props.entering).toBeUndefined();
+
     await act(async () => {
-      fireEvent.press(screen.getByText("Tag"));
+      fireEvent.press(screen.getByRole("button", { name: "Neue Schichtvorlage hinzufügen" }));
+    });
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/template-editor",
+      params: {},
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Tag direkt eintragen" }));
     });
 
     await waitFor(() => expect(mockUpsertShift).toHaveBeenCalledTimes(1));
