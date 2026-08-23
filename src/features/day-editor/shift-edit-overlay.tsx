@@ -1,9 +1,7 @@
 /* eslint-disable react-hooks/immutability -- Reanimated SharedValue.value is intentionally mutable on the UI thread. */
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -13,32 +11,20 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
-  useWindowDimensions,
 } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   Extrapolation,
   FadeIn,
-  SlideInDown,
-  cancelAnimation,
   interpolate,
-  runOnJS,
   useAnimatedScrollHandler,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
-  withSpring,
-  withTiming,
   type SharedValue,
 } from "react-native-reanimated";
 
 import { SHIFT_TYPE_LABELS, type EntryNotification, type ShiftType } from "@/domain/types";
-import {
-  entryEditDurationLabel,
-  entryEditShortDate,
-  shouldDismissEntryEditOverlay,
-} from "@/features/day-editor/entry-edit-overlay-pattern";
+import { EntryEditOverlayFrame } from "@/features/day-editor/entry-edit-overlay-frame";
+import { shouldDismissEntryEditOverlay } from "@/features/day-editor/entry-edit-overlay-pattern";
 import { notificationLabel } from "@/features/day-editor/entry-options";
 import { DAY_EDITOR_SHIFT_TYPES } from "@/features/day-editor/day-editor-layout";
 import { ShiftNotificationOverlay } from "@/features/day-editor/shift-notification-overlay";
@@ -281,7 +267,7 @@ export function ShiftEditOverlay({
   readonly onAlarmPress: () => void;
   readonly onBreakMinutesChange: (value: number) => void;
   readonly onBreakPress: () => void;
-  readonly onDelete: () => void;
+  readonly onDelete?: (() => void) | undefined;
   readonly onDismiss: () => void;
   readonly onEndTimeChange: (value: string) => void;
   readonly onLocationPress: () => void;
@@ -300,12 +286,8 @@ export function ShiftEditOverlay({
   readonly endTime: string;
 }) {
   const palette = usePalette();
-  const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
-  const reduceMotion = useReducedMotion();
   const [popup, setPopup] = useState<Popup>(null);
   const [notificationVisible, setNotificationVisible] = useState(false);
-  const [closing, setClosing] = useState(false);
   const pauseMinutes = Number(breakMinutes) || 0;
   const initialPauseIndex = pauseIndexForMinutes(pauseMinutes);
   const [pausePreviewMinutes, setPausePreviewMinutes] = useState<number>(
@@ -316,16 +298,9 @@ export function ShiftEditOverlay({
   );
   const headerColor = accessibleChipBackgroundColor(shiftColor);
   const serviceLabel = shiftType === "CUSTOM" ? shiftTitle : SHIFT_TYPE_LABELS[shiftType];
-  const closedOffset = height + Math.max(insets.bottom, 24);
-  const sheetTranslateY = useSharedValue(0);
-  const backdropProgress = useSharedValue(1);
-  const dragOriginY = useSharedValue(0);
   const pauseScrollRef = useRef<ScrollView>(null);
   const pausePreviewIndexRef = useRef(initialPauseIndex);
   const pauseScrollOffset = useSharedValue(initialPauseIndex * PAUSE_WHEEL_ITEM_HEIGHT);
-  const exitAnimationFinishedRef = useRef(false);
-  const saveSucceededRef = useRef<boolean | null>(null);
-  const [gestureCloseRequest, setGestureCloseRequest] = useState(0);
 
   const commitPauseAtOffset = useCallback(
     (offsetY: number, notifyUnchanged = true) => {
@@ -389,524 +364,245 @@ export function ShiftEditOverlay({
     setNotificationVisible(true);
   }, [onNotificationPress]);
 
-  const finishDismissIfReady = useCallback(() => {
-    if (!exitAnimationFinishedRef.current || saveSucceededRef.current !== true) return;
-    onDismiss();
-  }, [onDismiss]);
-
-  const markExitAnimationFinished = useCallback(() => {
-    exitAnimationFinishedRef.current = true;
-    finishDismissIfReady();
-  }, [finishDismissIfReady]);
-
-  const restoreOpenPosition = useCallback(() => {
-    cancelAnimation(sheetTranslateY);
-    cancelAnimation(backdropProgress);
-    sheetTranslateY.value = withSpring(0, {
-      ...MOTION.spring,
-      reduceMotion: MOTION.reduceMotion,
-    });
-    backdropProgress.value = withTiming(1, {
-      duration: reduceMotion ? MOTION.duration.instant : MOTION.duration.fast,
-      easing: MOTION.easing.standard,
-      reduceMotion: MOTION.reduceMotion,
-    });
-    setClosing(false);
-  }, [backdropProgress, reduceMotion, sheetTranslateY]);
-
-  const handleSaveResult = useCallback(
-    (saved: boolean) => {
-      saveSucceededRef.current = saved;
-      if (!saved) {
-        restoreOpenPosition();
-        return;
-      }
-      finishDismissIfReady();
-    },
-    [finishDismissIfReady, restoreOpenPosition],
-  );
-
-  const requestClose = useCallback(() => {
-    if (busy || closing) return;
-    setClosing(true);
-    setPopup(null);
-    setNotificationVisible(false);
-    exitAnimationFinishedRef.current = false;
-    saveSucceededRef.current = null;
-    cancelAnimation(sheetTranslateY);
-    cancelAnimation(backdropProgress);
-    sheetTranslateY.value = withTiming(
-      closedOffset,
-      {
-        duration: reduceMotion ? MOTION.duration.instant : MOTION.duration.normal,
-        easing: MOTION.easing.standard,
-        reduceMotion: MOTION.reduceMotion,
-      },
-      (finished) => {
-        if (finished) runOnJS(markExitAnimationFinished)();
-      },
-    );
-    backdropProgress.value = withTiming(0, {
-      duration: reduceMotion ? MOTION.duration.instant : MOTION.duration.normal,
-      easing: MOTION.easing.standard,
-      reduceMotion: MOTION.reduceMotion,
-    });
-    void onRequestClose().then(handleSaveResult, () => handleSaveResult(false));
-  }, [
-    backdropProgress,
-    busy,
-    closedOffset,
-    closing,
-    handleSaveResult,
-    markExitAnimationFinished,
-    onRequestClose,
-    reduceMotion,
-    sheetTranslateY,
-  ]);
-
-  const queueGestureClose = useCallback(() => {
-    setGestureCloseRequest((current) => current + 1);
-  }, []);
-  useEffect(() => {
-    if (gestureCloseRequest === 0) return;
-    requestClose();
-  }, [gestureCloseRequest, requestClose]);
-
-  const dismissGesture = Gesture.Pan()
-    .withTestId("shift-edit-dismiss-gesture")
-    .enabled(!busy && !closing)
-    .activeOffsetY([-6, 6])
-    .failOffsetX([-28, 28])
-    .onBegin(() => {
-      cancelAnimation(sheetTranslateY);
-      cancelAnimation(backdropProgress);
-      dragOriginY.value = sheetTranslateY.value;
-    })
-    .onUpdate((event) => {
-      const nextTranslateY = Math.max(0, dragOriginY.value + event.translationY);
-      sheetTranslateY.value = nextTranslateY;
-      backdropProgress.value = Math.max(0, 1 - nextTranslateY / Math.max(closedOffset * 0.7, 1));
-    })
-    .onEnd((event) => {
-      if (shouldDismissShiftEditOverlay(event.translationY, event.velocityY)) {
-        runOnJS(queueGestureClose)();
-        return;
-      }
-      sheetTranslateY.value = withSpring(0, {
-        ...MOTION.spring,
-        reduceMotion: MOTION.reduceMotion,
-      });
-      backdropProgress.value = withTiming(1, {
-        duration: MOTION.duration.fast,
-        easing: MOTION.easing.standard,
-        reduceMotion: MOTION.reduceMotion,
-      });
-    })
-    .onFinalize((_event, success) => {
-      if (success) return;
-      sheetTranslateY.value = withSpring(0, {
-        ...MOTION.spring,
-        reduceMotion: MOTION.reduceMotion,
-      });
-      backdropProgress.value = withTiming(1, {
-        duration: MOTION.duration.fast,
-        easing: MOTION.easing.standard,
-        reduceMotion: MOTION.reduceMotion,
-      });
-    });
-
-  const backdropMotionStyle = useAnimatedStyle(() => ({
-    opacity: backdropProgress.value,
-  }));
-  const sheetMotionStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: sheetTranslateY.value }],
-  }));
-
   return (
-    <View style={styles.overlay} testID="shift-edit-overlay">
-      <Animated.View
-        entering={FadeIn.duration(MOTION.duration.normal).reduceMotion(MOTION.reduceMotion)}
-        pointerEvents="none"
-        style={StyleSheet.absoluteFill}
-      >
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: palette.overlay },
-            backdropMotionStyle,
-          ]}
-          testID="shift-edit-backdrop"
-        />
-      </Animated.View>
-      <Pressable
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-        onPress={() => setPopup(null)}
-        style={StyleSheet.absoluteFill}
-      />
-      <KeyboardAvoidingView behavior="padding" style={styles.keyboardLayer}>
-        <ScrollView
-          automaticallyAdjustKeyboardInsets
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingTop: Math.max(insets.top, 16),
-              paddingBottom: Math.max(insets.bottom, 12),
-            },
-          ]}
-          keyboardDismissMode="interactive"
-          keyboardShouldPersistTaps="handled"
-        >
-          <Animated.View
-            entering={SlideInDown.duration(MOTION.duration.deliberate)
-              .easing(MOTION.easing.emphasized)
-              .reduceMotion(MOTION.reduceMotion)}
-            style={styles.shell}
-          >
-            <Animated.View
-              pointerEvents={closing ? "none" : "auto"}
-              style={[styles.sheetContent, sheetMotionStyle]}
-              testID="shift-edit-sheet"
+    <EntryEditOverlayFrame
+      busy={busy}
+      cardContent={
+        <>
+          <View style={styles.body}>
+            <ValueRow label="Dienst" onPress={() => setPopup("TYPE")} value={serviceLabel} />
+            {shiftIsTimed ? (
+              <>
+                <TimeRow label="Beginn" onChange={onStartTimeChange} value={startTime} />
+                <TimeRow label="Ende" onChange={onEndTimeChange} value={endTime} />
+                <PauseRow onPress={openPausePicker} value={breakMinutes} />
+              </>
+            ) : (
+              <ValueRow label="Dauer" value="Ganztägig" />
+            )}
+            <ValueRow
+              label="Benachrichtigung"
+              onPress={openNotificationPicker}
+              value={notificationLabel(notification)}
+            />
+            {shiftIsTimed ? (
+              <ValueRow
+                label="Wecker"
+                onPress={() => {
+                  setPopup(null);
+                  onAlarmPress();
+                }}
+                value={alarmEnabled ? "Zum Beginn" : "Aus"}
+              />
+            ) : null}
+
+            <View
+              style={[
+                styles.noteLocationGroup,
+                { borderColor: palette.border, backgroundColor: palette.surfaceRaised },
+              ]}
             >
-              <View
-                testID="shift-edit-card"
+              <TextInput
+                accessibilityLabel="Notizen"
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                multiline
+                onChangeText={onNoteChange}
+                placeholder="Notizen"
+                placeholderTextColor={palette.textMuted}
                 style={[
-                  styles.card,
-                  {
-                    backgroundColor: palette.surface,
-                    borderColor: palette.border,
-                    shadowColor: palette.shadow,
-                  },
+                  styles.noteInput,
+                  { color: palette.text, borderBottomColor: palette.separator },
                 ]}
-              >
-                <GestureDetector gesture={dismissGesture}>
-                  <Animated.View
-                    style={[styles.header, { backgroundColor: headerColor }]}
-                    testID="shift-edit-drag-handle"
-                  >
-                    <View
-                      accessibilityElementsHidden
-                      style={[styles.grabber, { backgroundColor: chipTextColor }]}
-                    />
-                    <ShiftSymbol color={chipTextColor} size={23} value={shiftSymbol} />
-                    <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={styles.headerDate}>
-                      {entryEditShortDate(date)}
-                    </Text>
-                    <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={styles.headerDuration}>
-                      {entryEditDurationLabel(durationMinutes)}
-                    </Text>
-                  </Animated.View>
-                </GestureDetector>
-
-                <View style={styles.body}>
-                  <ValueRow label="Dienst" onPress={() => setPopup("TYPE")} value={serviceLabel} />
-                  {shiftIsTimed ? (
-                    <>
-                      <TimeRow label="Beginn" onChange={onStartTimeChange} value={startTime} />
-                      <TimeRow label="Ende" onChange={onEndTimeChange} value={endTime} />
-                      <PauseRow onPress={openPausePicker} value={breakMinutes} />
-                    </>
-                  ) : (
-                    <ValueRow label="Dauer" value="Ganztägig" />
-                  )}
-                  <ValueRow
-                    label="Benachrichtigung"
-                    onPress={openNotificationPicker}
-                    value={notificationLabel(notification)}
-                  />
-                  {shiftIsTimed ? (
-                    <ValueRow
-                      label="Wecker"
-                      onPress={() => {
-                        setPopup(null);
-                        onAlarmPress();
-                      }}
-                      value={alarmEnabled ? "Zum Beginn" : "Aus"}
-                    />
-                  ) : null}
-
-                  <View
-                    style={[
-                      styles.noteLocationGroup,
-                      { borderColor: palette.border, backgroundColor: palette.surfaceRaised },
-                    ]}
-                  >
-                    <TextInput
-                      accessibilityLabel="Notizen"
-                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                      multiline
-                      onChangeText={onNoteChange}
-                      placeholder="Notizen"
-                      placeholderTextColor={palette.textMuted}
-                      style={[
-                        styles.noteInput,
-                        { color: palette.text, borderBottomColor: palette.separator },
-                      ]}
-                      value={note}
-                    />
-                    <View style={styles.locationActionsRow}>
-                      <Pressable
-                        accessibilityLabel={`Ort: ${locationName ?? "Kein Ort"}`}
-                        accessibilityRole="button"
-                        onPress={onLocationPress}
-                        style={({ pressed }) => [
-                          styles.locationRow,
-                          { backgroundColor: pressed ? palette.surfaceMuted : "transparent" },
-                        ]}
-                      >
-                        <Text
-                          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                          style={{
-                            color: locationName ? palette.text : palette.textMuted,
-                            fontSize: 16,
-                          }}
-                        >
-                          {locationName ?? "Ort"}
-                        </Text>
-                      </Pressable>
-                      <View
-                        style={[styles.locationDivider, { backgroundColor: palette.separator }]}
-                      />
-                      <Pressable
-                        accessibilityLabel="Dienst löschen"
-                        accessibilityRole="button"
-                        disabled={busy}
-                        onPress={onDelete}
-                        style={({ pressed }) => [
-                          styles.deleteButton,
-                          { backgroundColor: pressed ? `${palette.danger}18` : "transparent" },
-                        ]}
-                      >
-                        <Ionicons color={palette.text} name="trash-outline" size={23} />
-                      </Pressable>
-                    </View>
-                  </View>
-                </View>
-
-                {popup === "PAUSE" ? (
-                  <Pressable
-                    accessibilityLabel="Auswahl schließen"
-                    onPress={() => setPopup(null)}
-                    style={styles.popupDismissLayer}
-                    testID="shift-edit-popup-dismiss-layer"
-                  />
-                ) : null}
-
-                {popup === "PAUSE" ? (
-                  <Animated.View
-                    accessibilityLabel="Pausendauer auswählen"
-                    entering={FadeIn.duration(MOTION.duration.fast).reduceMotion(
-                      MOTION.reduceMotion,
-                    )}
-                    style={[
-                      styles.pausePopup,
-                      {
-                        backgroundColor: palette.surfaceRaised,
-                        borderColor: palette.border,
-                        shadowColor: palette.shadow,
-                      },
-                    ]}
-                    testID="shift-edit-pause-popover"
-                  >
-                    <View
-                      pointerEvents="none"
-                      style={[
-                        styles.pauseWheelSelection,
-                        { backgroundColor: palette.surfaceMuted },
-                      ]}
-                      testID="shift-edit-pause-selection"
-                    />
-                    <Animated.ScrollView
-                      accessibilityLabel="Pausendauer in 15-Minuten-Schritten"
-                      accessibilityRole="radiogroup"
-                      contentContainerStyle={styles.pauseWheelContent}
-                      contentOffset={{
-                        x: 0,
-                        y: pauseInitialOffset,
-                      }}
-                      decelerationRate={0.97}
-                      onMomentumScrollEnd={handlePauseMomentumEnd}
-                      onScroll={handlePauseScroll}
-                      onScrollEndDrag={handlePauseScrollEndDrag}
-                      ref={pauseScrollRef}
-                      scrollEventThrottle={16}
-                      showsVerticalScrollIndicator={false}
-                      snapToAlignment="start"
-                      snapToInterval={PAUSE_WHEEL_ITEM_HEIGHT}
-                      style={styles.pauseWheel}
-                      testID="shift-edit-pause-wheel"
-                    >
-                      {PAUSE_OPTIONS.map((minutes, index) => (
-                        <PauseWheelOption
-                          key={minutes}
-                          index={index}
-                          minutes={minutes}
-                          onPress={() => {
-                            pausePreviewIndexRef.current = index;
-                            setPausePreviewMinutes(minutes);
-                            onBreakMinutesChange(minutes);
-                            pauseScrollRef.current?.scrollTo?.({
-                              animated: true,
-                              y: index * PAUSE_WHEEL_ITEM_HEIGHT,
-                            });
-                          }}
-                          scrollOffset={pauseScrollOffset}
-                          selected={pausePreviewMinutes === minutes}
-                        />
-                      ))}
-                    </Animated.ScrollView>
-                  </Animated.View>
-                ) : null}
-
-                {popup === "TYPE" ? (
-                  <View
-                    style={[
-                      styles.typePopup,
-                      {
-                        backgroundColor: palette.surfaceRaised,
-                        borderColor: palette.border,
-                        shadowColor: palette.shadow,
-                      },
-                    ]}
-                  >
-                    <ScrollView style={styles.typeScroll}>
-                      {DAY_EDITOR_SHIFT_TYPES.map((type) => {
-                        const selected = type === shiftType;
-                        return (
-                          <Pressable
-                            key={type}
-                            accessibilityRole="radio"
-                            accessibilityState={{ selected }}
-                            onPress={() => {
-                              onShiftTypeChange(type);
-                              setPopup(null);
-                            }}
-                            style={({ pressed }) => [
-                              styles.typeItem,
-                              {
-                                borderBottomColor: palette.separator,
-                                backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                              },
-                            ]}
-                          >
-                            <Text style={[styles.typeLabel, { color: palette.text }]}>
-                              {SHIFT_TYPE_LABELS[type]}
-                            </Text>
-                            {selected ? (
-                              <Ionicons color={palette.primary} name="checkmark" size={21} />
-                            ) : null}
-                          </Pressable>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-                ) : null}
-              </View>
-
-              {error ? (
-                <View accessibilityLiveRegion="polite" accessibilityRole="alert">
-                  <Text style={[styles.errorText, { color: palette.danger }]}>{error}</Text>
-                </View>
-              ) : null}
-
-              <Pressable
-                accessibilityLabel="Schließen und speichern"
-                accessibilityRole="button"
-                disabled={busy || closing}
-                onPress={requestClose}
-                style={({ pressed }) => [
-                  styles.closeButton,
-                  {
-                    borderColor: palette.border,
-                    backgroundColor: palette.surface,
-                    opacity: busy || closing ? 0.55 : pressed ? 0.72 : 1,
-                  },
-                ]}
-              >
-                {busy ? (
-                  <ActivityIndicator color={palette.text} size="small" />
-                ) : (
+                value={note}
+              />
+              <View style={styles.locationActionsRow}>
+                <Pressable
+                  accessibilityLabel={`Ort: ${locationName ?? "Kein Ort"}`}
+                  accessibilityRole="button"
+                  onPress={onLocationPress}
+                  style={({ pressed }) => [
+                    styles.locationRow,
+                    { backgroundColor: pressed ? palette.surfaceMuted : "transparent" },
+                  ]}
+                >
                   <Text
                     maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    style={[styles.closeLabel, { color: palette.text }]}
+                    style={{
+                      color: locationName ? palette.text : palette.textMuted,
+                      fontSize: 16,
+                    }}
                   >
-                    Schließen
+                    {locationName ?? "Ort"}
                   </Text>
-                )}
-              </Pressable>
+                </Pressable>
+                {onDelete ? (
+                  <>
+                    <View
+                      style={[styles.locationDivider, { backgroundColor: palette.separator }]}
+                    />
+                    <Pressable
+                      accessibilityLabel="Dienst löschen"
+                      accessibilityRole="button"
+                      disabled={busy}
+                      onPress={onDelete}
+                      style={({ pressed }) => [
+                        styles.deleteButton,
+                        {
+                          backgroundColor: pressed ? `${palette.danger}18` : "transparent",
+                        },
+                      ]}
+                    >
+                      <Ionicons color={palette.text} name="trash-outline" size={23} />
+                    </Pressable>
+                  </>
+                ) : null}
+              </View>
+            </View>
+          </View>
+
+          {popup === "PAUSE" ? (
+            <Pressable
+              accessibilityLabel="Auswahl schließen"
+              onPress={() => setPopup(null)}
+              style={styles.popupDismissLayer}
+              testID="shift-edit-popup-dismiss-layer"
+            />
+          ) : null}
+
+          {popup === "PAUSE" ? (
+            <Animated.View
+              accessibilityLabel="Pausendauer auswählen"
+              entering={FadeIn.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+              style={[
+                styles.pausePopup,
+                {
+                  backgroundColor: palette.surfaceRaised,
+                  borderColor: palette.border,
+                  shadowColor: palette.shadow,
+                },
+              ]}
+              testID="shift-edit-pause-popover"
+            >
+              <View
+                pointerEvents="none"
+                style={[styles.pauseWheelSelection, { backgroundColor: palette.surfaceMuted }]}
+                testID="shift-edit-pause-selection"
+              />
+              <Animated.ScrollView
+                accessibilityLabel="Pausendauer in 15-Minuten-Schritten"
+                accessibilityRole="radiogroup"
+                contentContainerStyle={styles.pauseWheelContent}
+                contentOffset={{
+                  x: 0,
+                  y: pauseInitialOffset,
+                }}
+                decelerationRate={0.97}
+                onMomentumScrollEnd={handlePauseMomentumEnd}
+                onScroll={handlePauseScroll}
+                onScrollEndDrag={handlePauseScrollEndDrag}
+                ref={pauseScrollRef}
+                scrollEventThrottle={16}
+                showsVerticalScrollIndicator={false}
+                snapToAlignment="start"
+                snapToInterval={PAUSE_WHEEL_ITEM_HEIGHT}
+                style={styles.pauseWheel}
+                testID="shift-edit-pause-wheel"
+              >
+                {PAUSE_OPTIONS.map((minutes, index) => (
+                  <PauseWheelOption
+                    key={minutes}
+                    index={index}
+                    minutes={minutes}
+                    onPress={() => {
+                      pausePreviewIndexRef.current = index;
+                      setPausePreviewMinutes(minutes);
+                      onBreakMinutesChange(minutes);
+                      pauseScrollRef.current?.scrollTo?.({
+                        animated: true,
+                        y: index * PAUSE_WHEEL_ITEM_HEIGHT,
+                      });
+                    }}
+                    scrollOffset={pauseScrollOffset}
+                    selected={pausePreviewMinutes === minutes}
+                  />
+                ))}
+              </Animated.ScrollView>
             </Animated.View>
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-      {notificationVisible ? (
-        <ShiftNotificationOverlay
-          onChange={onNotificationChange}
-          onClose={() => setNotificationVisible(false)}
-          value={notification}
-        />
-      ) : null}
-    </View>
+          ) : null}
+
+          {popup === "TYPE" ? (
+            <View
+              style={[
+                styles.typePopup,
+                {
+                  backgroundColor: palette.surfaceRaised,
+                  borderColor: palette.border,
+                  shadowColor: palette.shadow,
+                },
+              ]}
+            >
+              <ScrollView style={styles.typeScroll}>
+                {DAY_EDITOR_SHIFT_TYPES.map((type) => {
+                  const selected = type === shiftType;
+                  return (
+                    <Pressable
+                      key={type}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      onPress={() => {
+                        onShiftTypeChange(type);
+                        setPopup(null);
+                      }}
+                      style={({ pressed }) => [
+                        styles.typeItem,
+                        {
+                          borderBottomColor: palette.separator,
+                          backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.typeLabel, { color: palette.text }]}>
+                        {SHIFT_TYPE_LABELS[type]}
+                      </Text>
+                      {selected ? (
+                        <Ionicons color={palette.primary} name="checkmark" size={21} />
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ) : null}
+        </>
+      }
+      date={date}
+      durationMinutes={durationMinutes}
+      error={error}
+      headerColor={headerColor}
+      headerForeground={chipTextColor}
+      headerLeading={<ShiftSymbol color={chipTextColor} size={23} value={shiftSymbol} />}
+      onBackdropPress={() => setPopup(null)}
+      onClosingStart={() => {
+        setPopup(null);
+        setNotificationVisible(false);
+      }}
+      onDismiss={onDismiss}
+      onRequestClose={onRequestClose}
+      overlay={
+        notificationVisible ? (
+          <ShiftNotificationOverlay
+            onChange={onNotificationChange}
+            onClose={() => setNotificationVisible(false)}
+            value={notification}
+          />
+        ) : null
+      }
+      testIDPrefix="shift-edit"
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "transparent",
-  },
-  keyboardLayer: { flex: 1 },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "flex-end",
-    paddingHorizontal: 20,
-  },
-  shell: {
-    width: "100%",
-    maxWidth: 510,
-    alignSelf: "center",
-  },
-  sheetContent: { gap: 10 },
-  card: {
-    position: "relative",
-    overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 22,
-    borderCurve: "continuous",
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.28,
-    shadowRadius: 24,
-    elevation: 14,
-  },
-  header: {
-    minHeight: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 4,
-  },
-  grabber: {
-    position: "absolute",
-    top: 6,
-    left: "50%",
-    width: 34,
-    height: 4,
-    marginLeft: -17,
-    borderRadius: 2,
-    opacity: 0.62,
-  },
-  headerDate: {
-    flex: 1,
-    color: chipTextColor,
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  headerDuration: {
-    color: chipTextColor,
-    fontSize: 16,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
-  },
   body: { paddingHorizontal: 16 },
   valueRow: {
     minHeight: 46,
@@ -1029,14 +725,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   typeLabel: { fontSize: 15, fontWeight: "500" },
-  errorText: { paddingHorizontal: 8, fontSize: 14, lineHeight: 20, textAlign: "center" },
-  closeButton: {
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 25,
-    borderCurve: "continuous",
-  },
-  closeLabel: { fontSize: 17, fontWeight: "500" },
 });

@@ -3,6 +3,7 @@ import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/d
 import { Children, useId, useRef, useState, type PropsWithChildren, type Ref } from "react";
 import {
   ActionSheetIOS,
+  ActivityIndicator,
   findNodeHandle,
   Modal,
   Platform,
@@ -435,21 +436,32 @@ export function Field({
 type FormActionButtonProps = PropsWithChildren<{
   readonly onPress: () => void;
   readonly disabled?: boolean;
+  readonly busy?: boolean;
+  readonly busyLabel?: string;
   readonly tone: "primary" | "danger" | "secondary";
 }>;
 
-function FormActionButton({ children, onPress, disabled = false, tone }: FormActionButtonProps) {
+function FormActionButton({
+  busy = false,
+  busyLabel,
+  children,
+  onPress,
+  disabled = false,
+  tone,
+}: FormActionButtonProps) {
   const palette = usePalette();
   const pressMotion = usePressMotion();
   const secondary = tone === "secondary";
+  const blocked = disabled || busy;
   const backgroundColor = tone === "danger" ? palette.danger : palette.primary;
   const foregroundColor = tone === "danger" ? palette.onDanger : palette.onPrimary;
 
   return (
     <AnimatedPressable
+      accessibilityLabel={busy ? busyLabel : undefined}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ busy, disabled: blocked }}
+      disabled={blocked}
       onPressIn={pressMotion.onPressIn}
       onPressOut={pressMotion.onPressOut}
       onPress={onPress}
@@ -467,19 +479,27 @@ function FormActionButton({ children, onPress, disabled = false, tone }: FormAct
               ? palette.surfaceMuted
               : palette.surfaceRaised
             : backgroundColor,
-          opacity: disabled ? 0.45 : pressed && !secondary ? 0.82 : 1,
+          opacity: blocked ? 0.45 : pressed && !secondary ? 0.82 : 1,
           paddingHorizontal: SPACING.lg,
         },
         pressMotion.animatedStyle,
       ]}
     >
-      <Text
-        dynamicTypeRamp="headline"
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        style={{ color: secondary ? palette.primary : foregroundColor, ...TYPOGRAPHY.button }}
-      >
-        {children}
-      </Text>
+      {busy ? (
+        <ActivityIndicator
+          accessibilityElementsHidden
+          color={secondary ? palette.primary : foregroundColor}
+          size="small"
+        />
+      ) : (
+        <Text
+          dynamicTypeRamp="headline"
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: secondary ? palette.primary : foregroundColor, ...TYPOGRAPHY.button }}
+        >
+          {children}
+        </Text>
+      )}
     </AnimatedPressable>
   );
 }
@@ -489,13 +509,23 @@ export function PrimaryButton({
   onPress,
   disabled = false,
   danger = false,
+  busy = false,
+  busyLabel = "Wird gespeichert",
 }: PropsWithChildren<{
   readonly onPress: () => void;
   readonly disabled?: boolean;
   readonly danger?: boolean;
+  readonly busy?: boolean;
+  readonly busyLabel?: string;
 }>) {
   return (
-    <FormActionButton disabled={disabled} onPress={onPress} tone={danger ? "danger" : "primary"}>
+    <FormActionButton
+      busy={busy}
+      busyLabel={busyLabel}
+      disabled={disabled}
+      onPress={onPress}
+      tone={danger ? "danger" : "primary"}
+    >
       {children}
     </FormActionButton>
   );

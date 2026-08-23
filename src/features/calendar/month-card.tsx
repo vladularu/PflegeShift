@@ -300,13 +300,11 @@ const DayCell = memo(
             borderCurve: "continuous",
             backgroundColor: pressed
               ? palette.primarySoft
-              : isToday
-                ? palette.calendarToday
-                : !cell.inMonth
-                  ? palette.outsideMonth
-                  : cell.weekend
-                    ? palette.weekend
-                    : "transparent",
+              : !cell.inMonth
+                ? palette.outsideMonth
+                : cell.weekend
+                  ? palette.weekend
+                  : "transparent",
             paddingHorizontal: 1,
             paddingTop: 0,
           })}
@@ -345,7 +343,11 @@ const DayCell = memo(
                 borderWidth: isSelected && !isToday ? 1 : 0,
                 borderColor: isSelected && !isToday ? palette.calendarSelection : "transparent",
                 borderRadius: 10,
-                backgroundColor: isSelected && !isToday ? palette.calendarSelection : "transparent",
+                backgroundColor: isToday
+                  ? palette.calendarToday
+                  : isSelected
+                    ? palette.calendarSelection
+                    : "transparent",
                 paddingHorizontal: 4,
               }}
             >

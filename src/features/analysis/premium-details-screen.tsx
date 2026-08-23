@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { ScrollView, Text, View } from "react-native";
+import { Text, useWindowDimensions, View } from "react-native";
 
 import {
   usePflegeShiftEntries,
@@ -11,12 +11,14 @@ import { currentMonth, formatDateTitle, formatMonthTitle } from "@/engine/calend
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { formatMinutes } from "@/engine/working-time";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
+import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-layout";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { SPACING } from "@/theme/tokens";
-import { SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { CONTROL_HEIGHT, SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
+import { CardSeparator, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { ReportScrollView } from "@/ui/report-layout";
 
 function euro(value: number): string {
   return new Intl.NumberFormat("de-DE", {
@@ -27,6 +29,7 @@ function euro(value: number): string {
 
 export function PremiumDetailsScreen() {
   const palette = usePalette();
+  const { fontScale } = useWindowDimensions();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { error, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
@@ -64,50 +67,29 @@ export function PremiumDetailsScreen() {
   const shiftsById = new Map(monthShifts.map((shift) => [shift.id, shift]));
   const premiumShifts = pay.shiftBreakdowns.filter((item) => item.premiumLines.length > 0);
   const lineCount = premiumShifts.reduce((sum, item) => sum + item.premiumLines.length, 0);
+  const stackAmounts = fontScale >= SCREEN_LAYOUT.headerAccessoryStackFontScale;
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.groupedBackground }}
-      contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
-    >
-      <SurfaceCard style={{ gap: SPACING.xs, padding: SPACING.lg }}>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
-        >
-          {formatMonthTitle(month)}
-        </Text>
-        <Text
-          selectable
-          style={{
-            color: palette.text,
-            ...TYPOGRAPHY.hero,
-            fontVariant: ["tabular-nums"],
-            letterSpacing: -0.6,
-          }}
-        >
-          {euro(pay.timePremiumAmount)}
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-        >
-          {lineCount} {lineCount === 1 ? "Zuschlagsposition" : "Zuschlagspositionen"} aus{" "}
-          {premiumShifts.length} {premiumShifts.length === 1 ? "Dienst" : "Diensten"}
-        </Text>
-      </SurfaceCard>
+    <ReportScrollView>
+      <AnalysisDetailSummaryCard
+        caption={`${lineCount} ${lineCount === 1 ? "Zuschlagsposition" : "Zuschlagspositionen"} aus ${premiumShifts.length} ${premiumShifts.length === 1 ? "Dienst" : "Diensten"}`}
+        emphasis="metric"
+        period={formatMonthTitle(month)}
+        title={euro(pay.timePremiumAmount)}
+      />
 
-      <View style={{ gap: SPACING.sm }}>
+      <View style={{ gap: SCREEN_LAYOUT.sectionGap }}>
         <SectionHeader
           title="Aufschlüsselung"
           caption="Jeder Betrag wird nur einmal ausgewiesen."
         />
         {premiumShifts.length === 0 ? (
-          <SurfaceCard style={{ padding: 18 }}>
-            <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>
+          <SurfaceCard style={{ padding: SPACING.xl }}>
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              selectable
+              style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
+            >
               In diesem Monat wurden keine Zeitzuschläge berechnet.
             </Text>
           </SurfaceCard>
@@ -115,8 +97,8 @@ export function PremiumDetailsScreen() {
           premiumShifts.map((item) => {
             const shift = shiftsById.get(item.shiftId);
             return (
-              <SurfaceCard key={item.shiftId} style={{ gap: 12, padding: 16 }}>
-                <View style={{ gap: 3 }}>
+              <SurfaceCard key={item.shiftId} style={{ gap: SPACING.md, padding: SPACING.lg }}>
+                <View style={{ gap: SPACING.xxs }}>
                   <Text
                     maxFontSizeMultiplier={TEXT_MAX_SCALE}
                     selectable
@@ -135,18 +117,18 @@ export function PremiumDetailsScreen() {
                       : ""}
                   </Text>
                 </View>
-                <View style={{ height: 1, backgroundColor: palette.separator }} />
+                <CardSeparator inset={0} />
                 {item.premiumLines.map((line) => (
                   <View
                     key={line.key}
                     style={{
-                      minHeight: 48,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 14,
+                      minHeight: CONTROL_HEIGHT.regular,
+                      flexDirection: stackAmounts ? "column" : "row",
+                      alignItems: stackAmounts ? "stretch" : "center",
+                      gap: SPACING.md,
                     }}
                   >
-                    <View style={{ minWidth: 0, flex: 1, gap: 3 }}>
+                    <View style={{ minWidth: 0, flex: 1, gap: SPACING.xxs }}>
                       <Text
                         maxFontSizeMultiplier={TEXT_MAX_SCALE}
                         selectable
@@ -166,6 +148,7 @@ export function PremiumDetailsScreen() {
                     <Text
                       selectable
                       style={{
+                        alignSelf: stackAmounts ? "flex-end" : undefined,
                         color: palette.primary,
                         ...TYPOGRAPHY.label,
                         fontWeight: "700",
@@ -181,6 +164,6 @@ export function PremiumDetailsScreen() {
           })
         )}
       </View>
-    </ScrollView>
+    </ReportScrollView>
   );
 }

@@ -77,7 +77,7 @@ describe("DayEditorScreen", () => {
     mockRouteParams = { date: "2026-08-04", mode: "SHIFT" };
   });
 
-  it("saves and closes without showing a success snackbar", async () => {
+  it("enters a new shift in the compact overlay and saves without deletion", async () => {
     const screen = await render(
       <SafeAreaProvider
         initialMetrics={{
@@ -91,13 +91,16 @@ describe("DayEditorScreen", () => {
       </SafeAreaProvider>,
     );
 
+    expect(screen.getByTestId("shift-edit-overlay")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Dienst löschen" })).toBeNull();
+
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Schließen und speichern" }));
     });
 
     await waitFor(() => expect(mockUpsertShift).toHaveBeenCalledTimes(1));
-    expect(successFeedback).toHaveBeenCalledTimes(1);
-    expect(router.back).toHaveBeenCalledTimes(1);
+    expect(successFeedback).not.toHaveBeenCalled();
+    await waitFor(() => expect(router.back).toHaveBeenCalledTimes(1));
     expect(screen.queryByText("Eintrag gespeichert.")).toBeNull();
     expect(screen.queryByText("Eintrag aktualisiert.")).toBeNull();
   });

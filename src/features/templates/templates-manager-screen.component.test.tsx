@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { router } from "expo-router";
 
 import { TemplatesManagerScreen } from "@/features/templates/templates-manager-screen";
+import { RADII } from "@/theme/tokens";
 import { FeedbackProvider } from "@/ui/feedback";
 
 const mockMoveTemplate = jest.fn<() => Promise<void>>();
@@ -57,6 +58,28 @@ describe("TemplatesManagerScreen", () => {
       pathname: "/template-editor",
       params: { id: "early" },
     });
+    expect(screen.getByText("Meine Dienste")).toBeVisible();
+    expect(screen.getByTestId("templates-manager-scroll").props.contentContainerStyle).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ width: "100%", maxWidth: 560, alignSelf: "center" }),
+      ]),
+    );
+    expect(screen.getByTestId("template-manager-list")).toHaveStyle({
+      borderRadius: RADII.large,
+    });
+    expect(screen.getByTestId("template-manager-row-early")).toHaveStyle({ minHeight: 72 });
+    expect(screen.getByTestId("template-manager-row-early-badge")).toHaveStyle({
+      width: 38,
+      height: 38,
+      borderRadius: RADII.pill,
+    });
+    expect(screen.getByTestId("template-manager-row-early-more-circle")).toHaveStyle({
+      width: 22,
+      height: 22,
+      borderRadius: RADII.pill,
+    });
+    expect(screen.getByTestId("template-manager-add-row")).toHaveStyle({ minHeight: 64 });
+    expect(screen.getByText("Schicht hinzufügen")).toBeVisible();
   });
 
   it("opens management actions without also opening the editor", async () => {

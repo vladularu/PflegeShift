@@ -79,14 +79,16 @@ export function TabScreenHeader({
   const stackAccessory =
     Boolean(accessory) && fontScale >= SCREEN_LAYOUT.headerAccessoryStackFontScale;
   const safeTop = process.env.EXPO_OS === "web" ? SCREEN_LAYOUT.contentTopPadding : topInset;
+  const titleAreaMinHeight =
+    SCREEN_LAYOUT.headerMinHeight -
+    SCREEN_LAYOUT.headerTopPadding -
+    SCREEN_LAYOUT.headerBottomPadding;
 
   return (
     <View
       testID={testID}
       style={{
         minHeight: safeTop + SCREEN_LAYOUT.headerMinHeight,
-        justifyContent: "flex-end",
-        gap: toolbar ? SPACING.xs : 0,
         backgroundColor: palette[surface],
         paddingTop: safeTop + SCREEN_LAYOUT.headerTopPadding,
         paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
@@ -94,34 +96,53 @@ export function TabScreenHeader({
       }}
     >
       <View
+        testID={testID ? `${testID}-title-area` : undefined}
         style={{
-          flexDirection: stackAccessory ? "column" : "row",
-          alignItems: stackAccessory ? "stretch" : "flex-end",
-          gap: SPACING.md,
+          minHeight: titleAreaMinHeight,
+          justifyContent: "flex-end",
         }}
       >
-        <Animated.Text
-          key={titleKey}
-          accessibilityRole="header"
-          dynamicTypeRamp="largeTitle"
-          entering={titleEntering}
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ flex: stackAccessory ? undefined : 1, color: palette.text, ...TYPOGRAPHY.hero }}
+        <View
+          style={{
+            flexDirection: stackAccessory ? "column" : "row",
+            alignItems: stackAccessory ? "stretch" : "flex-end",
+            gap: SPACING.md,
+          }}
         >
-          {title}
-        </Animated.Text>
-        {accessory ? (
-          <View
+          <Animated.Text
+            key={titleKey}
+            accessibilityRole="header"
+            dynamicTypeRamp="largeTitle"
+            entering={titleEntering}
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
             style={{
-              alignSelf: stackAccessory ? "stretch" : "auto",
-              alignItems: stackAccessory ? "flex-end" : undefined,
+              flex: stackAccessory ? undefined : 1,
+              color: palette.text,
+              ...TYPOGRAPHY.hero,
             }}
           >
-            {accessory}
-          </View>
-        ) : null}
+            {title}
+          </Animated.Text>
+          {accessory ? (
+            <View
+              style={{
+                alignSelf: stackAccessory ? "stretch" : "auto",
+                alignItems: stackAccessory ? "flex-end" : undefined,
+              }}
+            >
+              {accessory}
+            </View>
+          ) : null}
+        </View>
       </View>
-      {toolbar}
+      {toolbar ? (
+        <View
+          testID={testID ? `${testID}-toolbar-area` : undefined}
+          style={{ marginTop: SPACING.xs }}
+        >
+          {toolbar}
+        </View>
+      ) : null}
     </View>
   );
 }

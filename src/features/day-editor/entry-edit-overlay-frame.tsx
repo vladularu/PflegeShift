@@ -251,6 +251,7 @@ export function EntryEditOverlayFrame({
             style={styles.shell}
           >
             <Animated.View
+              accessibilityViewIsModal
               pointerEvents={closing ? "none" : "auto"}
               style={[styles.sheetContent, sheetMotionStyle]}
               testID={`${testIDPrefix}-sheet`}

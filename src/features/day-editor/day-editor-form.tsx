@@ -155,11 +155,9 @@ export function DayEditorForm({
   );
   const shiftIsAbsence = ["VACATION", "SICK", "FREE"].includes(shiftType);
   const shiftIsTimed = !shiftIsAbsence && !shiftAllDay;
-  const compactShiftEditor = existing?.kind === "SHIFT" && mode === "SHIFT";
+  const compactShiftEditor = mode === "SHIFT" && (existing === null || existing.kind === "SHIFT");
   const compactAppointmentEditor =
-    requestedMode === "APPOINTMENT" &&
-    mode === "APPOINTMENT" &&
-    (existing === null || existing.kind === "APPOINTMENT");
+    mode === "APPOINTMENT" && (existing === null || existing.kind === "APPOINTMENT");
   const compactOverlayEditor = compactShiftEditor || compactAppointmentEditor;
   const hasHolidayOverlap =
     profile && shiftIsTimed
@@ -407,12 +405,16 @@ export function DayEditorForm({
             allowRemovalRef.current = true;
             router.back();
           }}
-          onDelete={() => {
-            Alert.alert("Dienst löschen?", "Dieser Dienst wird aus dem Kalender entfernt.", [
-              { text: "Abbrechen", style: "cancel" },
-              { text: "Löschen", style: "destructive", onPress: () => void deleteEntry() },
-            ]);
-          }}
+          onDelete={
+            initialShift
+              ? () => {
+                  Alert.alert("Dienst löschen?", "Dieser Dienst wird aus dem Kalender entfernt.", [
+                    { text: "Abbrechen", style: "cancel" },
+                    { text: "Löschen", style: "destructive", onPress: () => void deleteEntry() },
+                  ]);
+                }
+              : undefined
+          }
           onEndTimeChange={setEndTime}
           onLocationPress={() => router.push(locationPickerRoute(shiftLocation?.name) as never)}
           onNoteChange={setShiftNote}

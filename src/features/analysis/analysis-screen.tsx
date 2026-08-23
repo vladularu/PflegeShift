@@ -397,10 +397,12 @@ function formatComplianceGroupTitle(group: ComplianceIssueGroup): string {
 
 export function ComplianceDetails({
   compliance,
+  heading,
   shifts,
   embedded = false,
 }: {
   readonly compliance: MonthlyComplianceResult;
+  readonly heading?: string;
   readonly shifts: readonly ShiftEntry[];
   readonly embedded?: boolean;
 }) {
@@ -428,7 +430,7 @@ export function ComplianceDetails({
         selectable
         style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
       >
-        {embedded ? "Arbeitszeitregeln" : "Prüfung"}
+        {heading ?? (embedded ? "Arbeitszeitregeln" : "Prüfung")}
       </Text>
       <View style={{ gap: SPACING.sm }}>
         {groups.map((group) => {

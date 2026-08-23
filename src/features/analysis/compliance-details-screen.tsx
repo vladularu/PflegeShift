@@ -1,6 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { ScrollView, Text, View } from "react-native";
 
 import {
   usePflegeShiftEntries,
@@ -8,14 +7,14 @@ import {
   usePflegeShiftStatus,
 } from "@/application/pflegeshift-provider";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
+import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-layout";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
 import { ComplianceDetails } from "@/features/analysis/analysis-screen";
 import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-compliance";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
-import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { SPACING } from "@/theme/tokens";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { ReportScrollView } from "@/ui/report-layout";
 
 export function ComplianceDetailsScreen() {
   const palette = usePalette();
@@ -58,39 +57,33 @@ export function ComplianceDetailsScreen() {
     );
   }
   if (!ready || profile === null || compliance === null) return <LoadingView />;
+  const messageCount = compliance.criticalCount + compliance.warningCount + compliance.infoCount;
+  const accent =
+    messageCount === 0
+      ? palette.success
+      : compliance.criticalCount > 0
+        ? palette.danger
+        : compliance.warningCount > 0
+          ? palette.warning
+          : palette.primary;
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.groupedBackground }}
-      contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
-    >
-      <View style={{ gap: SPACING.xxs }}>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
-        >
-          {formatMonthTitle(month)}
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}
-        >
-          {compliance.criticalCount === 0 && compliance.warningCount === 0
+    <ReportScrollView>
+      <AnalysisDetailSummaryCard
+        accent={accent}
+        caption="Automatische Prüfung deiner Dienste. Die Hinweise ersetzen keine Rechtsberatung."
+        period={formatMonthTitle(month)}
+        title={
+          messageCount === 0
             ? "Alles im grünen Bereich"
-            : `${compliance.criticalCount} kritisch · ${compliance.warningCount} Hinweise`}
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-        >
-          Automatische Prüfung deiner Dienste. Die Hinweise ersetzen keine Rechtsberatung.
-        </Text>
-      </View>
-      <ComplianceDetails compliance={compliance} shifts={window.complianceShifts} />
-    </ScrollView>
+            : `${messageCount} ${messageCount === 1 ? "Meldung" : "Meldungen"}`
+        }
+      />
+      <ComplianceDetails
+        compliance={compliance}
+        heading="Meldungen"
+        shifts={window.complianceShifts}
+      />
+    </ReportScrollView>
   );
 }

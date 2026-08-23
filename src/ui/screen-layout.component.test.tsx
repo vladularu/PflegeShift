@@ -3,7 +3,7 @@ import { describe, expect, it } from "@jest/globals";
 import { Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { SCREEN_LAYOUT } from "@/theme/tokens";
+import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { ScreenScrollView, TabScreenHeader } from "@/ui/screen-layout";
 
 const SAFE_AREA_METRICS = {
@@ -53,10 +53,41 @@ describe("screen layout", () => {
       paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
       paddingBottom: SCREEN_LAYOUT.headerBottomPadding,
     });
+    expect(screen.getByTestId("tab-screen-header-title-area")).toHaveStyle({
+      minHeight:
+        SCREEN_LAYOUT.headerMinHeight -
+        SCREEN_LAYOUT.headerTopPadding -
+        SCREEN_LAYOUT.headerBottomPadding,
+      justifyContent: "flex-end",
+    });
+    expect(screen.getByTestId("tab-screen-header-toolbar-area")).toHaveStyle({
+      marginTop: SPACING.xs,
+    });
     expect(screen.getByRole("header", { name: "Kalender" })).toHaveProp(
       "dynamicTypeRamp",
       "largeTitle",
     );
     expect(screen.getByTestId("header-toolbar")).toHaveTextContent("Zeitraum");
+  });
+
+  it("keeps the title anchor identical with and without a toolbar", async () => {
+    const screen = await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <TabScreenHeader testID="calendar-header" title="August" />
+        <TabScreenHeader
+          testID="analysis-header"
+          title="Auswertung"
+          toolbar={
+            <View accessibilityRole="toolbar">
+              <Text>Zeitraum</Text>
+            </View>
+          }
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByTestId("analysis-header-title-area").props.style).toEqual(
+      screen.getByTestId("calendar-header-title-area").props.style,
+    );
   });
 });

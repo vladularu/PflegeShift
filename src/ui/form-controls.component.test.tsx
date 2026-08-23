@@ -77,6 +77,20 @@ describe("form controls", () => {
     expect(screen.getByText("Abbrechen")).toHaveProp("dynamicTypeRamp", "headline");
   });
 
+  it("announces a busy primary action and blocks repeated submission", async () => {
+    const onPress = jest.fn();
+    const screen = await render(
+      <PrimaryButton busy busyLabel="Angaben werden gespeichert" onPress={onPress}>
+        Angaben speichern
+      </PrimaryButton>,
+    );
+
+    const button = screen.getByRole("button", { name: "Angaben werden gespeichert" });
+    expect(button).toHaveProp("accessibilityState", { busy: true, disabled: true });
+    await fireEvent.press(button);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
   it("keeps dropdown interaction inside the modal and offers an explicit close action", async () => {
     const currentOS = Platform.OS;
     Object.defineProperty(Platform, "OS", { configurable: true, value: "android" });

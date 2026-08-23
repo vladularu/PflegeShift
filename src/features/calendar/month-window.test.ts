@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   appendMonths,
+  boundedMonthScrollStart,
   createMonthWindow,
   monthAtPagerOffset,
   prependMonths,
@@ -49,5 +50,13 @@ describe("continuous calendar month window", () => {
     expect(monthAtPagerOffset(months, 600, 301)).toBe("2026-08");
     expect(monthAtPagerOffset(months, 600, 901)).toBe("2026-09");
     expect(monthAtPagerOffset(months, 0, 0)).toBeNull();
+  });
+
+  it("keeps short Today jumps intact and limits long jumps to four visible months", () => {
+    expect(boundedMonthScrollStart("2026-05", "2026-08")).toBe("2026-05");
+    expect(boundedMonthScrollStart("2026-11", "2026-08")).toBe("2026-11");
+    expect(boundedMonthScrollStart("2024-01", "2026-08")).toBe("2026-04");
+    expect(boundedMonthScrollStart("2028-12", "2026-08")).toBe("2026-12");
+    expect(boundedMonthScrollStart("2026-08", "2026-08")).toBe("2026-08");
   });
 });

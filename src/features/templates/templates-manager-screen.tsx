@@ -6,11 +6,18 @@ import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { usePflegeShiftStatus, usePflegeShiftTemplates } from "@/application/pflegeshift-provider";
 import type { ShiftTemplate } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
+import {
+  ShiftTemplateAddRow,
+  ShiftTemplateListCard,
+  ShiftTemplateListRow,
+  ShiftTemplateListSeparator,
+  shiftTemplateSubtitle,
+} from "@/features/templates/shift-template-list";
 import { usePalette } from "@/theme/palette";
 import { templateEditorRoute } from "@/navigation/routes";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import { CardSeparator, ColorBadge, EmptyState, RowButton, SurfaceCard } from "@/ui/design-system";
+import { RADII, SPACING } from "@/theme/tokens";
+import { EmptyState } from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { FormStatus } from "@/ui/form-layout";
 import { selectionFeedback } from "@/ui/haptics";
@@ -18,15 +25,6 @@ import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { ScreenScrollView } from "@/ui/screen-layout";
 import { TabRootHeader } from "@/ui/tab-root-header";
 import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
-
-function templateSubtitle(template: ShiftTemplate): string {
-  if (template.allDay) return "Ganztägig";
-  if (template.type === "FREE") return "Keine Arbeitszeit";
-  if (template.startTime === null || template.endTime === null) {
-    return "Ergänzt bis zum Tages-Soll";
-  }
-  return `${template.startTime}–${template.endTime} · ${template.breakMinutes} Min. Pause`;
-}
 
 export function TemplatesManagerScreen() {
   const palette = usePalette();
@@ -76,124 +74,107 @@ export function TemplatesManagerScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
       <TabRootHeader surface="groupedBackground" title="Schichten" />
-      <ScreenScrollView surface="groupedBackground">
+      <ScreenScrollView
+        contentContainerStyle={{ width: "100%", maxWidth: 560, alignSelf: "center" }}
+        surface="groupedBackground"
+        testID="templates-manager-scroll"
+      >
         <FormStatus error={operationError} />
-        <SurfaceCard>
-          {templates.length === 0 ? (
-            <EmptyState
-              title="Keine Vorlagen"
-              message="Lege häufige Dienste einmal an und stemple sie danach direkt in den Kalender."
-            />
-          ) : (
-            templates.map((template, index) => (
-              <View key={template.id}>
-                {index > 0 ? <CardSeparator inset={70} /> : null}
-                <RowButton
-                  leading={<ColorBadge color={template.color} label={template.symbol} />}
-                  onPress={() => router.push(templateEditorRoute(template.id))}
-                  subtitle={templateSubtitle(template)}
-                  title={template.name}
-                  trailing={
-                    <Pressable
-                      accessibilityLabel={`${template.name} verwalten`}
-                      accessibilityRole="button"
-                      disabled={busyTemplateId !== null}
-                      onPress={(event) => {
-                        event.stopPropagation();
-                        setActiveTemplateId((current) =>
-                          current === template.id ? null : template.id,
-                        );
-                      }}
-                      style={({ pressed }) => ({
-                        minWidth: 44,
-                        minHeight: 44,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        opacity: pressed ? 0.55 : 1,
-                      })}
-                    >
-                      <Ionicons
-                        accessibilityElementsHidden
-                        color={palette.textSecondary}
-                        name="ellipsis-horizontal"
-                        size={20}
-                      />
-                    </Pressable>
-                  }
-                />
-                {activeTemplateId === template.id ? (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      flexWrap: stackActions ? "wrap" : "nowrap",
-                      gap: SPACING.xs,
-                      borderTopWidth: 1,
-                      borderTopColor: palette.separator,
-                      backgroundColor: palette.surfaceMuted,
-                      padding: SPACING.sm,
-                    }}
-                  >
-                    <ManagerButton
-                      disabled={busyTemplateId !== null || index === 0}
-                      icon="arrow-up"
-                      label="Nach oben"
-                      onPress={() =>
-                        void runTemplateAction(
-                          template,
-                          "Vorlage konnte nicht verschoben werden.",
-                          () => moveTemplate(template, -1),
-                        )
-                      }
-                    />
-                    <ManagerButton
-                      disabled={busyTemplateId !== null || index === templates.length - 1}
-                      icon="arrow-down"
-                      label="Nach unten"
-                      onPress={() =>
-                        void runTemplateAction(
-                          template,
-                          "Vorlage konnte nicht verschoben werden.",
-                          () => moveTemplate(template, 1),
-                        )
-                      }
-                    />
-                    <ManagerButton
-                      danger
-                      disabled={busyTemplateId !== null}
-                      label="Löschen"
-                      onPress={() => confirmDelete(template)}
-                    />
-                  </View>
-                ) : null}
-              </View>
-            ))
-          )}
-        </SurfaceCard>
-        <Pressable
-          accessibilityLabel="Neue Dienstvorlage erstellen"
-          accessibilityRole="button"
-          onPress={() => router.push("/template-editor")}
-          style={({ pressed }) => ({
-            minHeight: CONTROL_HEIGHT.large,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: SPACING.sm,
-            borderRadius: RADII.control,
-            borderCurve: "continuous",
-            backgroundColor: palette.primary,
-            opacity: pressed ? 0.68 : 1,
-            paddingHorizontal: SPACING.lg,
-          })}
-        >
-          <Ionicons accessibilityElementsHidden color={palette.onPrimary} name="add" size={20} />
+        <View style={{ gap: SPACING.md }}>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
+            style={{
+              color: palette.text,
+              ...TYPOGRAPHY.sectionTitle,
+              paddingHorizontal: SPACING.sm,
+            }}
           >
-            Vorlage hinzufügen
+            Meine Dienste
           </Text>
-        </Pressable>
+          <ShiftTemplateListCard testID="template-manager-list">
+            {templates.length === 0 ? (
+              <EmptyState
+                title="Keine Vorlagen"
+                message="Lege häufige Dienste einmal an und stemple sie danach direkt in den Kalender."
+              />
+            ) : (
+              templates.map((template, index) => {
+                const subtitle = shiftTemplateSubtitle(template);
+                return (
+                  <View key={template.id}>
+                    {index > 0 ? <ShiftTemplateListSeparator /> : null}
+                    <ShiftTemplateListRow
+                      accessibilityLabel={`${template.name}, ${subtitle}, Vorlage bearbeiten`}
+                      color={template.color}
+                      disabled={busyTemplateId !== null}
+                      moreAccessibilityLabel={`${template.name} verwalten`}
+                      onMorePress={() =>
+                        setActiveTemplateId((current) =>
+                          current === template.id ? null : template.id,
+                        )
+                      }
+                      onPress={() => router.push(templateEditorRoute(template.id))}
+                      subtitle={subtitle}
+                      symbol={template.symbol}
+                      testID={`template-manager-row-${template.id}`}
+                      title={template.name}
+                    />
+                    {activeTemplateId === template.id ? (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          flexWrap: stackActions ? "wrap" : "nowrap",
+                          gap: SPACING.xs,
+                          borderTopWidth: 1,
+                          borderTopColor: palette.separator,
+                          backgroundColor: palette.surfaceMuted,
+                          padding: SPACING.sm,
+                        }}
+                      >
+                        <ManagerButton
+                          disabled={busyTemplateId !== null || index === 0}
+                          icon="arrow-up"
+                          label="Nach oben"
+                          onPress={() =>
+                            void runTemplateAction(
+                              template,
+                              "Vorlage konnte nicht verschoben werden.",
+                              () => moveTemplate(template, -1),
+                            )
+                          }
+                        />
+                        <ManagerButton
+                          disabled={busyTemplateId !== null || index === templates.length - 1}
+                          icon="arrow-down"
+                          label="Nach unten"
+                          onPress={() =>
+                            void runTemplateAction(
+                              template,
+                              "Vorlage konnte nicht verschoben werden.",
+                              () => moveTemplate(template, 1),
+                            )
+                          }
+                        />
+                        <ManagerButton
+                          danger
+                          disabled={busyTemplateId !== null}
+                          label="Löschen"
+                          onPress={() => confirmDelete(template)}
+                        />
+                      </View>
+                    ) : null}
+                  </View>
+                );
+              })
+            )}
+            {templates.length > 0 ? <ShiftTemplateListSeparator /> : null}
+            <ShiftTemplateAddRow
+              accessibilityLabel="Neue Dienstvorlage erstellen"
+              onPress={() => router.push("/template-editor")}
+              testID="template-manager-add-row"
+            />
+          </ShiftTemplateListCard>
+        </View>
       </ScreenScrollView>
     </View>
   );

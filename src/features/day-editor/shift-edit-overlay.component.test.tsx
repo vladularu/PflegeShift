@@ -81,6 +81,7 @@ describe("ShiftEditOverlay", () => {
     expect(screen.queryByLabelText("Pausendauer in 15-Minuten-Schritten")).toBeNull();
     expect(screen.getByRole("button", { name: "Wecker: Aus" })).toBeTruthy();
     expect(screen.getByTestId("shift-edit-sheet")).toHaveStyle({ gap: 10 });
+    expect(screen.getByTestId("shift-edit-sheet")).toHaveProp("accessibilityViewIsModal", true);
     expect(screen.getByTestId("shift-edit-card")).toHaveStyle({
       borderRadius: 22,
       shadowOpacity: 0.28,
@@ -167,6 +168,13 @@ describe("ShiftEditOverlay", () => {
     await fireEvent.press(screen.getByRole("button", { name: "Schließen und speichern" }));
     expect(props.onRequestClose).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(props.onDismiss).toHaveBeenCalledTimes(1));
+  });
+
+  it("hides deletion while entering a new shift", async () => {
+    const { screen } = await renderOverlay({ onDelete: undefined });
+
+    expect(screen.queryByRole("button", { name: "Dienst löschen" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Ort: Kein Ort" })).toBeTruthy();
   });
 
   it("shows the iOS settings action when notifications are denied", async () => {
