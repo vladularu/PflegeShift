@@ -1,7 +1,8 @@
-import { Easing } from "react-native";
-import { ReduceMotion } from "react-native-reanimated";
+import { Easing as NativeEasing } from "react-native";
+import { Easing as ReanimatedEasing, ReduceMotion } from "react-native-reanimated";
 
-const calmEasing = Easing.bezier(0.22, 1, 0.36, 1);
+const calmEasing = ReanimatedEasing.bezier(0.22, 1, 0.36, 1);
+const navigationEasing = NativeEasing.bezier(0.22, 1, 0.36, 1);
 
 export const MOTION = {
   duration: {
@@ -24,6 +25,7 @@ export const MOTION = {
   },
   easing: {
     calm: calmEasing,
+    navigation: navigationEasing,
     standard: calmEasing,
     emphasized: calmEasing,
   },

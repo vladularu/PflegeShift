@@ -9,7 +9,10 @@ import {
   QUICK_PLANNER_COLORS,
   QUICK_PLANNER_METRICS,
 } from "@/features/calendar/quick-planner-appearance";
-import { QuickPlannerDock } from "@/features/calendar/quick-planner-dock";
+import {
+  QuickPlannerDock,
+  quickPlannerTransitionDuration,
+} from "@/features/calendar/quick-planner-dock";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const TEMPLATE: ShiftTemplate = {
@@ -121,7 +124,15 @@ describe("QuickPlannerDock", () => {
     expect(onClose).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(screen.getByTestId("quick-planner-close-row").props.pointerEvents).toBe("none");
+      expect(screen.getByTestId("quick-planner-dock").props.pointerEvents).toBe("none");
+      expect(screen.getByTestId("quick-planner-pencil-anchor").props.pointerEvents).toBe("none");
     });
+  });
+
+  it("opens over 420 milliseconds and closes over 380 milliseconds", () => {
+    expect(quickPlannerTransitionDuration(true, false)).toBe(420);
+    expect(quickPlannerTransitionDuration(false, false)).toBe(380);
+    expect(quickPlannerTransitionDuration(true, true)).toBe(100);
   });
 
   it("opens from the persistent pencil target", async () => {

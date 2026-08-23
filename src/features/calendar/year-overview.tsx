@@ -8,14 +8,12 @@ import {
   useWindowDimensions,
   type ListRenderItemInfo,
 } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CalendarEntry, UserProfile } from "@/domain/types";
 import { createMonthGrid, today } from "@/engine/calendar";
 import { yearMonths } from "@/features/calendar/calendar-display";
 import { usePalette } from "@/theme/palette";
-import { MOTION } from "@/theme/motion";
 import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
 
 const MONTH_LABELS = [
@@ -145,7 +143,6 @@ const MiniMonth = memo(function MiniMonth({
 interface YearRow {
   readonly key: string;
   readonly months: readonly string[];
-  readonly index: number;
 }
 
 interface YearRowProps extends YearRow {
@@ -158,18 +155,12 @@ interface YearRowProps extends YearRow {
 const YearRowView = memo(function YearRowView({
   currentDate,
   entriesByDate,
-  index,
   months,
   onSelectMonth,
   selectedMonth,
 }: YearRowProps) {
   return (
-    <Animated.View
-      entering={FadeInUp.delay(index * 36)
-        .duration(MOTION.duration.normal)
-        .reduceMotion(MOTION.reduceMotion)}
-      style={{ flexDirection: "row" }}
-    >
+    <View style={{ flexDirection: "row" }}>
       {months.map((month) => (
         <View key={month} style={{ width: "33.333333%", padding: 1 }}>
           <MiniMonth
@@ -181,7 +172,7 @@ const YearRowView = memo(function YearRowView({
           />
         </View>
       ))}
-    </Animated.View>
+    </View>
   );
 });
 
@@ -216,7 +207,6 @@ export function YearOverview({
     return Array.from({ length: 4 }, (_, index) => ({
       key: `${year}-row-${index}`,
       months: months.slice(index * 3, index * 3 + 3),
-      index,
     }));
   }, [year]);
   const currentDate = today(profile.timeZone);
@@ -227,7 +217,6 @@ export function YearOverview({
         <YearRowView
           currentDate={currentDate}
           entriesByDate={entriesByDate}
-          index={item.index}
           key={item.key}
           months={item.months}
           onSelectMonth={onSelectMonth}
