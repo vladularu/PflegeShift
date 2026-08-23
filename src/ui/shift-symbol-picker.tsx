@@ -13,12 +13,14 @@ export function ShiftSymbolPicker({
   color,
   error,
   inputRef,
+  onHeaderPress,
   value,
   onChange,
 }: {
   readonly color: string;
   readonly error?: string | null;
   readonly inputRef?: Ref<TextInput>;
+  readonly onHeaderPress?: () => void;
   readonly value: string;
   readonly onChange: (value: string) => void;
 }) {
@@ -34,17 +36,37 @@ export function ShiftSymbolPicker({
 
   return (
     <View style={styles.container}>
-      <View style={styles.headingRow}>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+      {onHeaderPress ? (
+        <Pressable
+          accessibilityHint="Klappt die Auswahl ein"
+          accessibilityLabel="Symbol und Farbe schließen"
+          accessibilityRole="button"
+          onPress={onHeaderPress}
+          style={({ pressed }) => [styles.headingRow, { opacity: pressed ? 0.58 : 1 }]}
         >
-          Symbol
-        </Text>
-        <View style={[styles.preview, { backgroundColor: color }]}>
-          <ShiftSymbol color={chipTextColor} size={22} value={value} />
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+          >
+            Symbol
+          </Text>
+          <View style={[styles.preview, { backgroundColor: color }]}>
+            <ShiftSymbol color={chipTextColor} size={22} value={value} />
+          </View>
+        </Pressable>
+      ) : (
+        <View style={styles.headingRow}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+          >
+            Symbol
+          </Text>
+          <View style={[styles.preview, { backgroundColor: color }]}>
+            <ShiftSymbol color={chipTextColor} size={22} value={value} />
+          </View>
         </View>
-      </View>
+      )}
       <View
         accessibilityLabel="Symbol auswählen"
         accessibilityRole="radiogroup"
