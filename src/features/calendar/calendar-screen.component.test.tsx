@@ -157,6 +157,12 @@ describe("CalendarScreen quick-entry navigation", () => {
     await act(async () => {
       fireEvent(pager, "layout", { nativeEvent: { layout: { height: 700 } } });
     });
+    expect(screen.getByTestId("calendar-month-pager").props).toMatchObject({
+      decelerationRate: "normal",
+      disableIntervalMomentum: true,
+      pagingEnabled: true,
+      snapToInterval: 700,
+    });
     expect(screen.getByTestId("quick-planner-dock")).toBeTruthy();
     await fireEvent.press(screen.getByTestId("calendar-day"));
     expect(screen.getByTestId("mounted-quick-entry-popup")).toBeTruthy();

@@ -39,7 +39,7 @@ export function appTabMotionOptions(reduceMotion: boolean) {
       animation: "timing" as const,
       config: {
         duration: MOTION.duration.scene,
-        easing: MOTION.easing.calm,
+        easing: MOTION.easing.navigation,
       },
     },
   };

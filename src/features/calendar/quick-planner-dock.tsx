@@ -42,7 +42,10 @@ const CLOSED_TARGET_SIZE = Math.max(44, CALENDAR_METRICS.floatingActionSize + 8)
 const CLOSED_TARGET_INSET = (CLOSED_TARGET_SIZE - CALENDAR_METRICS.floatingActionSize) / 2;
 const CLOSED_TARGET_RIGHT = CLOSED_SCREEN_RIGHT - CONTROL_SIDE_INSET - CLOSED_TARGET_INSET;
 
-const PLANNER_TRANSITION_DURATION = 480;
+export function quickPlannerTransitionDuration(open: boolean, reduceMotion: boolean): number {
+  if (reduceMotion) return MOTION.duration.instant;
+  return open ? MOTION.duration.scene : MOTION.duration.deliberate;
+}
 
 export const QuickPlannerDock = memo(function QuickPlannerDock({
   actions,
@@ -87,14 +90,14 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
     cancelAnimation(progress);
     if (reduceMotion) {
       progress.value = withTiming(open ? 1 : 0, {
-        duration: MOTION.duration.instant,
+        duration: quickPlannerTransitionDuration(open, true),
         easing: MOTION.easing.standard,
       });
       return;
     }
     progress.value = withTiming(open ? 1 : 0, {
-      duration: PLANNER_TRANSITION_DURATION,
-      easing: MOTION.easing.standard,
+      duration: quickPlannerTransitionDuration(open, false),
+      easing: MOTION.easing.calm,
     });
   }, [closing, open, progress, reduceMotion]);
 
@@ -110,8 +113,8 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
     progress.value = withTiming(
       0,
       {
-        duration: reduceMotion ? MOTION.duration.instant : PLANNER_TRANSITION_DURATION,
-        easing: MOTION.easing.standard,
+        duration: quickPlannerTransitionDuration(false, reduceMotion),
+        easing: MOTION.easing.calm,
       },
       (finished) => {
         if (finished) runOnJS(finishClose)();

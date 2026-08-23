@@ -1,9 +1,10 @@
-import { fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, jest } from "@jest/globals";
+import { act, fireEvent, render } from "@testing-library/react-native";
+import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import type { ShiftEntry } from "@/domain/types";
 import { QuickEntryPopup } from "@/features/calendar/quick-entry-popup";
+import { MOTION } from "@/theme/motion";
 
 const earlyTemplateAction = {
   kind: "TEMPLATE" as const,
@@ -50,6 +51,10 @@ const existingShift: ShiftEntry = {
 };
 
 describe("QuickEntryPopup", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it("opens the stacked shift selection from the compact day popup", async () => {
     const onSelectAction = jest.fn();
     const onOpenShiftPicker = jest.fn();
@@ -124,5 +129,105 @@ describe("QuickEntryPopup", () => {
     expect(screen.getByTestId("quick-entry-popup").props.entering).toBeUndefined();
     expect(screen.getByTestId("quick-entry-popup")).toBeVisible();
     expect(screen.getByText("Nacht")).toBeVisible();
+  });
+
+  it("moves eight points from the calendar day and exits faster", async () => {
+    const screen = await render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { height: 800, width: 400, x: 0, y: 0 },
+          insets: { bottom: 0, left: 0, right: 0, top: 0 },
+        }}
+      >
+        <QuickEntryPopup
+          actions={[{ kind: "CUSTOM_SHIFT", key: "editor:shift", label: "Dienst" }]}
+          anchor={{ height: 48, width: 48, x: 40, y: 100 }}
+          busy={false}
+          date="2026-08-04"
+          entries={[]}
+          onClose={jest.fn()}
+          onOpenDetails={jest.fn()}
+          onOpenEntry={jest.fn()}
+          onOpenShiftPicker={jest.fn()}
+          onSelectAction={jest.fn()}
+        />
+      </SafeAreaProvider>,
+    );
+    const popup = screen.getByTestId("quick-entry-popup");
+
+    expect(popup.props.entering.durationV).toBe(MOTION.duration.normal);
+    expect(popup.props.entering.definitions[0].transform).toEqual([
+      { translateY: -MOTION.distance.small },
+      { scale: MOTION.scale.enter },
+    ]);
+    expect(popup.props.exiting.durationV).toBe(MOTION.duration.fast);
+    expect(popup.props.exiting.definitions[100].transform).toEqual([
+      { translateY: -MOTION.distance.small },
+      { scale: MOTION.scale.enter },
+    ]);
+  });
+
+  it("reverses its origin when it opens above the calendar day", async () => {
+    const screen = await render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { height: 800, width: 400, x: 0, y: 0 },
+          insets: { bottom: 0, left: 0, right: 0, top: 0 },
+        }}
+      >
+        <QuickEntryPopup
+          actions={[{ kind: "CUSTOM_SHIFT", key: "editor:shift", label: "Dienst" }]}
+          anchor={{ height: 48, width: 48, x: 40, y: 10_000 }}
+          busy={false}
+          date="2026-08-04"
+          entries={[]}
+          onClose={jest.fn()}
+          onOpenDetails={jest.fn()}
+          onOpenEntry={jest.fn()}
+          onOpenShiftPicker={jest.fn()}
+          onSelectAction={jest.fn()}
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByTestId("quick-entry-popup").props.entering.definitions[0].transform).toEqual(
+      [{ translateY: MOTION.distance.small }, { scale: MOTION.scale.enter }],
+    );
+  });
+
+  it("releases the touch overlay immediately while its exit finishes", async () => {
+    jest.useFakeTimers();
+    const onClose = jest.fn();
+    const screen = await render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { height: 800, width: 400, x: 0, y: 0 },
+          insets: { bottom: 0, left: 0, right: 0, top: 0 },
+        }}
+      >
+        <QuickEntryPopup
+          actions={[{ kind: "CUSTOM_SHIFT", key: "editor:shift", label: "Dienst" }]}
+          anchor={{ height: 48, width: 48, x: 40, y: 100 }}
+          busy={false}
+          date="2026-08-04"
+          entries={[]}
+          onClose={onClose}
+          onOpenDetails={jest.fn()}
+          onOpenEntry={jest.fn()}
+          onOpenShiftPicker={jest.fn()}
+          onSelectAction={jest.fn()}
+        />
+      </SafeAreaProvider>,
+    );
+
+    await fireEvent.press(screen.getByRole("button", { name: "Schnellauswahl schließen" }));
+
+    expect(screen.getByTestId("quick-entry-overlay")).toHaveProp("pointerEvents", "none");
+    expect(onClose).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(MOTION.duration.fast);
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

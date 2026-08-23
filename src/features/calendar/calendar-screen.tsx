@@ -107,6 +107,7 @@ export function CalendarScreen() {
   const [visibleMonth, setVisibleMonth] = useState(targetMonth);
   const [pagerResetRevision, setPagerResetRevision] = useState(0);
   const [headerDirection, setHeaderDirection] = useState<"NEXT" | "PREVIOUS">("NEXT");
+  const [headerTransition, setHeaderTransition] = useState<"SPATIAL" | "CROSSFADE">("SPATIAL");
   const [pageHeight, setPageHeight] = useState(0);
   const [plannerMode, setPlannerMode] = useState(false);
   const plannerTransition = useSharedValue(0);
@@ -120,7 +121,11 @@ export function CalendarScreen() {
   const listRef = useRef<FlatList<string>>(null);
   const calendarHopStyle = useAnimatedStyle(
     () => ({
-      transform: [{ translateY: reduceMotion ? 0 : -8 * plannerTransition.value }],
+      transform: [
+        {
+          translateY: reduceMotion ? 0 : -MOTION.distance.small * plannerTransition.value,
+        },
+      ],
     }),
     [reduceMotion],
   );
@@ -241,6 +246,7 @@ export function CalendarScreen() {
       if (activeMonth === visibleMonth) return;
 
       setVisibleMonth(activeMonth);
+      setHeaderTransition("SPATIAL");
       setQuickPopup(null);
       settledMonth.current = activeMonth;
       setSelectedDate((date) => clampDateToMonth(date, activeMonth));
@@ -282,6 +288,7 @@ export function CalendarScreen() {
     resetTransientUi: resetTodayUi,
     scrollToMonth,
     setHeaderDirection,
+    setHeaderTransition,
     setMonthAnchor,
     setPagerResetRevision,
     setSelectedDate,
@@ -300,6 +307,7 @@ export function CalendarScreen() {
       setSelectedDate((date) => clampDateToMonth(date, month));
       setSelectionVisible(false);
       setHeaderDirection(month >= visibleMonth ? "NEXT" : "PREVIOUS");
+      setHeaderTransition("CROSSFADE");
       setVisibleMonth(month);
       activeMonthCoordinator.setMonth(month);
       settledMonth.current = month;
@@ -315,6 +323,7 @@ export function CalendarScreen() {
     setQuickPopup(null);
     setPlannerMode(false);
     setStampTool(null);
+    setHeaderTransition("CROSSFADE");
     preferences.setViewMode("YEAR");
     selectionFeedback();
   }, [preferences]);
@@ -341,6 +350,7 @@ export function CalendarScreen() {
       if (!month || month === visibleMonth) return;
       setQuickPopup(null);
       setHeaderDirection(month > visibleMonth ? "NEXT" : "PREVIOUS");
+      setHeaderTransition("SPATIAL");
       setVisibleMonth(month);
       activeMonthCoordinator.setMonth(month);
       setSelectedDate((date) => clampDateToMonth(date, month));
@@ -447,6 +457,7 @@ export function CalendarScreen() {
       const nextMonth = addMonths(visibleMonth, amount * 12);
       setQuickPopup(null);
       setHeaderDirection(amount >= 0 ? "NEXT" : "PREVIOUS");
+      setHeaderTransition("SPATIAL");
       setVisibleMonth(nextMonth);
       activeMonthCoordinator.setMonth(nextMonth);
       settledMonth.current = nextMonth;
@@ -512,6 +523,7 @@ export function CalendarScreen() {
         onOpenYear={openYear}
         plannerActive={plannerMode}
         plannerTransition={plannerTransition}
+        transition={headerTransition}
         viewMode={preferences.viewMode}
       />
       {plannerError ? (
@@ -540,8 +552,12 @@ export function CalendarScreen() {
       ) : null}
       {preferences.viewMode === "MONTH" ? (
         <Animated.View
-          entering={FadeIn.duration(MOTION.duration.normal).reduceMotion(MOTION.reduceMotion)}
-          exiting={FadeOut.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+          entering={FadeIn.duration(MOTION.duration.deliberate)
+            .easing(MOTION.easing.calm)
+            .reduceMotion(MOTION.reduceMotion)}
+          exiting={FadeOut.duration(MOTION.duration.deliberate)
+            .easing(MOTION.easing.calm)
+            .reduceMotion(MOTION.reduceMotion)}
           onLayout={measurePager}
           style={{ flex: 1 }}
           testID="calendar-month-pager-shell"
@@ -552,7 +568,7 @@ export function CalendarScreen() {
                 ref={listRef}
                 contentInsetAdjustmentBehavior="never"
                 data={months}
-                decelerationRate="fast"
+                decelerationRate="normal"
                 disableIntervalMomentum
                 getItemLayout={(_, index) => ({
                   index,
@@ -605,8 +621,12 @@ export function CalendarScreen() {
         </Animated.View>
       ) : (
         <Animated.View
-          entering={FadeIn.duration(MOTION.duration.deliberate).reduceMotion(MOTION.reduceMotion)}
-          exiting={FadeOut.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+          entering={FadeIn.duration(MOTION.duration.deliberate)
+            .easing(MOTION.easing.calm)
+            .reduceMotion(MOTION.reduceMotion)}
+          exiting={FadeOut.duration(MOTION.duration.deliberate)
+            .easing(MOTION.easing.calm)
+            .reduceMotion(MOTION.reduceMotion)}
           style={{ flex: 1 }}
         >
           <YearOverview

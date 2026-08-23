@@ -8,7 +8,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, Keyframe } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CalendarEntry } from "@/domain/types";
@@ -121,10 +121,38 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
     18,
     Math.min(popupWidth - 28, anchor.x + anchor.width / 2 - placement.left - 6),
   );
-  const entering =
-    placement.direction === "BELOW"
-      ? FadeInDown.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)
-      : FadeInUp.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion);
+  const popupMotion = useMemo(() => {
+    const anchorOffset =
+      placement.direction === "BELOW" ? -MOTION.distance.small : MOTION.distance.small;
+    return {
+      entering: new Keyframe({
+        0: {
+          opacity: 0,
+          transform: [{ translateY: anchorOffset }, { scale: MOTION.scale.enter }],
+        },
+        100: {
+          opacity: 1,
+          transform: [{ translateY: 0 }, { scale: 1 }],
+          easing: MOTION.easing.calm,
+        },
+      })
+        .duration(MOTION.duration.normal)
+        .reduceMotion(MOTION.reduceMotion),
+      exiting: new Keyframe({
+        0: {
+          opacity: 1,
+          transform: [{ translateY: 0 }, { scale: 1 }],
+        },
+        100: {
+          opacity: 0,
+          transform: [{ translateY: anchorOffset }, { scale: MOTION.scale.enter }],
+          easing: MOTION.easing.calm,
+        },
+      })
+        .duration(MOTION.duration.fast)
+        .reduceMotion(MOTION.reduceMotion),
+    };
+  }, [placement.direction]);
 
   useEffect(() => {
     scheduleAccessibilityFocus(findNodeHandle(dialogHeadingRef.current));
@@ -144,6 +172,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
 
   return (
     <View
+      pointerEvents={closing ? "none" : "box-none"}
       testID="quick-entry-overlay"
       style={{
         position: "absolute",
@@ -162,7 +191,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
               ? FadeIn.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)
               : undefined
           }
-          exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(MOTION.reduceMotion)}
+          exiting={FadeOut.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
           style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
         >
           <Pressable
@@ -180,8 +209,9 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
           accessibilityLabel={`Schnellauswahl für ${compactDate(date)}`}
           accessibilityViewIsModal
           testID="quick-entry-popup"
-          entering={animateEntry ? entering : undefined}
-          exiting={FadeOut.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+          entering={animateEntry ? popupMotion.entering : undefined}
+          exiting={popupMotion.exiting}
+          pointerEvents={closing ? "none" : "auto"}
           style={{
             position: "absolute",
             left: placement.left,

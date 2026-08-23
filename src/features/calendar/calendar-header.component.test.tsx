@@ -6,8 +6,18 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 
-function PlannerHeader() {
-  const transition = useSharedValue(1);
+function PlannerHeader({
+  direction = "NEXT",
+  month = "2026-08",
+  titleTransition = "SPATIAL",
+  viewMode = "MONTH",
+}: {
+  direction?: "NEXT" | "PREVIOUS";
+  month?: string;
+  titleTransition?: "SPATIAL" | "CROSSFADE";
+  viewMode?: "MONTH" | "YEAR";
+} = {}) {
+  const plannerTransition = useSharedValue(1);
   return (
     <SafeAreaProvider
       initialMetrics={{
@@ -16,13 +26,15 @@ function PlannerHeader() {
       }}
     >
       <CalendarHeader
-        month="2026-08"
+        direction={direction}
+        month={month}
         onMoveYear={jest.fn()}
         onOpenDisplay={jest.fn()}
         onOpenYear={jest.fn()}
         plannerActive
-        plannerTransition={transition}
-        viewMode="MONTH"
+        plannerTransition={plannerTransition}
+        transition={titleTransition}
+        viewMode={viewMode}
       />
     </SafeAreaProvider>
   );
@@ -49,5 +61,34 @@ describe("CalendarHeader", () => {
         includeHiddenElements: true,
       }),
     ).toHaveStyle({ width: 44, height: 44 });
+  });
+
+  it("uses complete eight-point title swaps in both time directions", async () => {
+    const nextScreen = await render(<PlannerHeader direction="NEXT" />);
+    const nextTitle = nextScreen.getByRole("header", { name: "August" });
+
+    expect(nextTitle.props.entering.durationV).toBe(300);
+    expect(nextTitle.props.entering.initialValues).toMatchObject({ translateY: 8 });
+    expect(nextTitle.props.exiting.durationV).toBe(300);
+    expect(nextTitle.props.exiting.targetValues).toMatchObject({ translateY: -8 });
+    await nextScreen.unmount();
+
+    const previousScreen = await render(<PlannerHeader direction="PREVIOUS" />);
+    const previousTitle = previousScreen.getByRole("header", { name: "August" });
+
+    expect(previousTitle.props.entering.initialValues).toMatchObject({ translateY: -8 });
+    expect(previousTitle.props.exiting.targetValues).toMatchObject({ translateY: 8 });
+  });
+
+  it("uses a transform-free 380 millisecond crossfade between month and year", async () => {
+    const screen = await render(
+      <PlannerHeader month="2026-08" titleTransition="CROSSFADE" viewMode="YEAR" />,
+    );
+    const title = screen.getByRole("header", { name: "2026" });
+
+    expect(title.props.entering.durationV).toBe(380);
+    expect(title.props.entering.initialValues).toBeUndefined();
+    expect(title.props.exiting.durationV).toBe(380);
+    expect(title.props.exiting.targetValues).toBeUndefined();
   });
 });

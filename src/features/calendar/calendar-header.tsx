@@ -3,8 +3,12 @@ import { memo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Extrapolation,
+  FadeIn,
   FadeInDown,
   FadeInUp,
+  FadeOut,
+  FadeOutDown,
+  FadeOutUp,
   interpolate,
   useAnimatedStyle,
   type SharedValue,
@@ -49,6 +53,7 @@ export const CalendarHeader = memo(function CalendarHeader({
   plannerActive,
   plannerTransition,
   direction = "NEXT",
+  transition = "SPATIAL",
 }: {
   readonly month: string;
   readonly viewMode: CalendarViewMode;
@@ -58,14 +63,36 @@ export const CalendarHeader = memo(function CalendarHeader({
   readonly plannerActive: boolean;
   readonly plannerTransition: SharedValue<number>;
   readonly direction?: "NEXT" | "PREVIOUS";
+  readonly transition?: "SPATIAL" | "CROSSFADE";
 }) {
   const palette = usePalette();
   const year = month.slice(0, 4);
   const monthName = formatMonthTitle(month).replace(/\s+\d{4}$/, "");
   const title = viewMode === "YEAR" ? year : monthName;
-  const titleEntering = (direction === "NEXT" ? FadeInUp : FadeInDown)
-    .duration(MOTION.duration.fast)
-    .reduceMotion(MOTION.reduceMotion);
+  const titleEntering =
+    transition === "CROSSFADE"
+      ? FadeIn.duration(MOTION.duration.deliberate)
+          .easing(MOTION.easing.calm)
+          .reduceMotion(MOTION.reduceMotion)
+      : (direction === "NEXT" ? FadeInDown : FadeInUp)
+          .duration(MOTION.duration.normal)
+          .easing(MOTION.easing.calm)
+          .withInitialValues({
+            translateY: direction === "NEXT" ? MOTION.distance.small : -MOTION.distance.small,
+          })
+          .reduceMotion(MOTION.reduceMotion);
+  const titleExiting =
+    transition === "CROSSFADE"
+      ? FadeOut.duration(MOTION.duration.deliberate)
+          .easing(MOTION.easing.calm)
+          .reduceMotion(MOTION.reduceMotion)
+      : (direction === "NEXT" ? FadeOutUp : FadeOutDown)
+          .duration(MOTION.duration.normal)
+          .easing(MOTION.easing.calm)
+          .withTargetValues({
+            translateY: direction === "NEXT" ? -MOTION.distance.small : MOTION.distance.small,
+          })
+          .reduceMotion(MOTION.reduceMotion);
   const actionGroupMotionStyle = useAnimatedStyle(() => ({
     opacity: interpolate(plannerTransition.value, [0, 0.5], [1, 0], Extrapolation.CLAMP),
   }));
@@ -122,6 +149,7 @@ export const CalendarHeader = memo(function CalendarHeader({
       }
       title={title}
       titleEntering={titleEntering}
+      titleExiting={titleExiting}
       titleKey={`${viewMode}-${title}`}
     />
   );

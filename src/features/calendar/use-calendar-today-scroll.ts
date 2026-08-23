@@ -32,6 +32,7 @@ interface CalendarTodayScrollOptions {
   readonly resetTransientUi: () => void;
   readonly scrollToMonth: (month: string, animated?: boolean) => boolean;
   readonly setHeaderDirection: Dispatch<SetStateAction<"NEXT" | "PREVIOUS">>;
+  readonly setHeaderTransition: Dispatch<SetStateAction<"SPATIAL" | "CROSSFADE">>;
   readonly setMonthAnchor: Dispatch<SetStateAction<string>>;
   readonly setPagerResetRevision: Dispatch<SetStateAction<number>>;
   readonly setSelectedDate: Dispatch<SetStateAction<string>>;
@@ -53,6 +54,7 @@ export function useCalendarTodayScroll({
   resetTransientUi,
   scrollToMonth,
   setHeaderDirection,
+  setHeaderTransition,
   setMonthAnchor,
   setPagerResetRevision,
   setSelectedDate,
@@ -101,6 +103,7 @@ export function useCalendarTodayScroll({
       };
 
       resetTransientUi();
+      setHeaderTransition(viewMode === "MONTH" ? "SPATIAL" : "CROSSFADE");
       setViewMode(target.viewMode);
 
       if (!changesVisibleMonth || reduceMotion) {
@@ -130,6 +133,7 @@ export function useCalendarTodayScroll({
       reduceMotion,
       resetTransientUi,
       setHeaderDirection,
+      setHeaderTransition,
       setMonthAnchor,
       setPagerResetRevision,
       setSelectedDate,
@@ -139,6 +143,7 @@ export function useCalendarTodayScroll({
       settledMonthRef,
       timeZone,
       visibleMonth,
+      viewMode,
     ],
   );
 
