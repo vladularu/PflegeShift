@@ -19,8 +19,8 @@ export const TYPOGRAPHY = {
     letterSpacing: -0.2,
   },
   sectionTitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 23,
     fontWeight: "600",
   },
   value: {
@@ -30,18 +30,18 @@ export const TYPOGRAPHY = {
     letterSpacing: -0.2,
   },
   body: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 23,
     fontWeight: "400",
   },
   bodyStrong: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 23,
     fontWeight: "600",
   },
   button: {
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: "600",
   },
   label: {

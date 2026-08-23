@@ -9,14 +9,13 @@ import Animated, {
   useAnimatedStyle,
   type SharedValue,
 } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CalendarViewMode } from "@/domain/types";
 import { formatMonthTitle } from "@/engine/calendar";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
-import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { RADII, SPACING } from "@/theme/tokens";
+import { CONTROL_HEIGHT, RADII } from "@/theme/tokens";
+import { TabScreenHeader } from "@/ui/screen-layout";
 
 function HeaderIconButton({
   label,
@@ -61,7 +60,6 @@ export const CalendarHeader = memo(function CalendarHeader({
   readonly direction?: "NEXT" | "PREVIOUS";
 }) {
   const palette = usePalette();
-  const insets = useSafeAreaInsets();
   const year = month.slice(0, 4);
   const monthName = formatMonthTitle(month).replace(/\s+\d{4}$/, "");
   const title = viewMode === "YEAR" ? year : monthName;
@@ -73,103 +71,75 @@ export const CalendarHeader = memo(function CalendarHeader({
   }));
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          minHeight: (process.env.EXPO_OS === "web" ? 12 : insets.top) + 79,
-          backgroundColor: palette.background,
-          paddingTop: (process.env.EXPO_OS === "web" ? 12 : insets.top) + SPACING.sm,
-        },
-      ]}
-    >
-      <Animated.Text
-        key={`${viewMode}-${title}`}
-        accessibilityRole="header"
-        entering={titleEntering}
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        style={[styles.title, TYPOGRAPHY.hero, { color: palette.text }]}
-      >
-        {title}
-      </Animated.Text>
-
-      <Animated.View
-        accessibilityElementsHidden={plannerActive}
-        accessibilityRole="toolbar"
-        importantForAccessibility={plannerActive ? "no-hide-descendants" : "auto"}
-        pointerEvents={plannerActive ? "none" : "auto"}
-        style={[
-          styles.actionGroup,
-          {
-            borderColor: palette.separator,
-            backgroundColor: palette.surfaceRaised,
-            boxShadow: palette.dark ? undefined : `0 5px 18px ${palette.shadow}`,
-          },
-          actionGroupMotionStyle,
-        ]}
-        testID="calendar-header-actions"
-      >
-        {viewMode === "MONTH" ? (
-          <>
-            <HeaderIconButton
-              label={`${year}, Jahresansicht öffnen`}
-              name="calendar-number-outline"
-              onPress={onOpenYear}
-            />
-            <View style={[styles.separator, { backgroundColor: palette.separator }]} />
-            <HeaderIconButton
-              label="Kalenderdarstellung öffnen"
-              name="options-outline"
-              onPress={onOpenDisplay}
-            />
-          </>
-        ) : (
-          <>
-            <HeaderIconButton
-              label="Vorheriges Jahr"
-              name="chevron-back"
-              onPress={() => onMoveYear(-1)}
-            />
-            <View style={[styles.separator, { backgroundColor: palette.separator }]} />
-            <HeaderIconButton
-              label="Nächstes Jahr"
-              name="chevron-forward"
-              onPress={() => onMoveYear(1)}
-            />
-          </>
-        )}
-      </Animated.View>
-    </View>
+    <TabScreenHeader
+      accessory={
+        <Animated.View
+          accessibilityElementsHidden={plannerActive}
+          accessibilityRole="toolbar"
+          importantForAccessibility={plannerActive ? "no-hide-descendants" : "auto"}
+          pointerEvents={plannerActive ? "none" : "auto"}
+          style={[
+            styles.actionGroup,
+            {
+              borderColor: palette.separator,
+              backgroundColor: palette.surfaceRaised,
+              boxShadow: palette.dark ? undefined : `0 5px 18px ${palette.shadow}`,
+            },
+            actionGroupMotionStyle,
+          ]}
+          testID="calendar-header-actions"
+        >
+          {viewMode === "MONTH" ? (
+            <>
+              <HeaderIconButton
+                label={`${year}, Jahresansicht öffnen`}
+                name="calendar-number-outline"
+                onPress={onOpenYear}
+              />
+              <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+              <HeaderIconButton
+                label="Kalenderdarstellung öffnen"
+                name="options-outline"
+                onPress={onOpenDisplay}
+              />
+            </>
+          ) : (
+            <>
+              <HeaderIconButton
+                label="Vorheriges Jahr"
+                name="chevron-back"
+                onPress={() => onMoveYear(-1)}
+              />
+              <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+              <HeaderIconButton
+                label="Nächstes Jahr"
+                name="chevron-forward"
+                onPress={() => onMoveYear(1)}
+              />
+            </>
+          )}
+        </Animated.View>
+      }
+      title={title}
+      titleEntering={titleEntering}
+      titleKey={`${viewMode}-${title}`}
+    />
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: SPACING.md,
-    paddingLeft: 24,
-    paddingRight: 6,
-    paddingBottom: 24,
-  },
-  title: {
-    minWidth: 0,
-    flex: 1,
-  },
   actionGroup: {
-    minHeight: 44,
+    minHeight: CONTROL_HEIGHT.compact,
     flexDirection: "row",
     alignItems: "center",
     overflow: "hidden",
     borderWidth: 1,
     borderRadius: RADII.pill,
     borderCurve: "continuous",
-    transform: [{ translateY: 4 }],
   },
   action: {
-    width: 61,
-    height: 44,
+    width: CONTROL_HEIGHT.compact,
+    height: CONTROL_HEIGHT.compact,
     alignItems: "center",
     justifyContent: "center",
   },

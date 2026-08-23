@@ -1,47 +1,33 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-  type ScrollViewProps,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View, type ScrollViewProps } from "react-native";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
+import { CONTROL_HEIGHT, RADII, SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { SectionHeader, SurfaceCard } from "@/ui/design-system";
+import { ScreenScrollView } from "@/ui/screen-layout";
 
 export function FormScreen({
   children,
-  bottomPadding = 40,
+  bottomPadding = SCREEN_LAYOUT.contentBottomPadding,
   testID,
 }: PropsWithChildren<{
   readonly bottomPadding?: number;
   readonly testID?: string;
 }>) {
-  const palette = usePalette();
   const keyboardDismissMode: ScrollViewProps["keyboardDismissMode"] =
     process.env.EXPO_OS === "ios" ? "interactive" : "on-drag";
 
   return (
-    <ScrollView
+    <ScreenScrollView
       automaticallyAdjustKeyboardInsets
-      contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={{
-        gap: SPACING.xl,
-        paddingHorizontal: SPACING.lg,
-        paddingTop: SPACING.md,
-        paddingBottom: bottomPadding,
-      }}
+      bottomPadding={bottomPadding}
       keyboardDismissMode={keyboardDismissMode}
       keyboardShouldPersistTaps="handled"
-      style={{ backgroundColor: palette.background }}
       testID={testID}
     >
       {children}
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

@@ -1,26 +1,13 @@
 import type { PropsWithChildren } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { RADII, SPACING } from "@/theme/tokens";
+import { RADII, SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
+import { ScreenScrollView } from "@/ui/screen-layout";
 
 export function ReportScrollView({ children }: PropsWithChildren) {
-  const palette = usePalette();
-  return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: palette.groupedBackground }}
-      contentContainerStyle={{
-        gap: SPACING.lg,
-        paddingHorizontal: SPACING.lg,
-        paddingTop: SPACING.md,
-        paddingBottom: 48,
-      }}
-    >
-      {children}
-    </ScrollView>
-  );
+  return <ScreenScrollView surface="groupedBackground">{children}</ScreenScrollView>;
 }
 
 export function ReportTestBadge() {
@@ -66,5 +53,5 @@ export function ReportFootnote({ children }: PropsWithChildren) {
 }
 
 export function ReportPeriodContent({ children }: PropsWithChildren) {
-  return <View style={{ gap: SPACING.lg }}>{children}</View>;
+  return <View style={{ gap: SCREEN_LAYOUT.sectionGap }}>{children}</View>;
 }

@@ -5,7 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
-import { DropdownField, Field, PrimaryButton } from "@/ui/form-controls";
+import { DropdownField, Field, PrimaryButton, SecondaryButton } from "@/ui/form-controls";
 
 describe("form controls", () => {
   it("exposes a labeled field and forwards changes", async () => {
@@ -51,6 +51,30 @@ describe("form controls", () => {
     );
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps primary and secondary actions visually distinct", async () => {
+    const screen = await render(
+      <>
+        <PrimaryButton onPress={() => undefined}>Speichern</PrimaryButton>
+        <SecondaryButton onPress={() => undefined}>Abbrechen</SecondaryButton>
+      </>,
+    );
+
+    const primaryStyle = screen.getByRole("button", { name: "Speichern" }).props.style[0]({
+      pressed: false,
+    });
+    const secondaryStyle = screen.getByRole("button", { name: "Abbrechen" }).props.style[0]({
+      pressed: false,
+    });
+
+    expect(primaryStyle).toEqual(
+      expect.arrayContaining([expect.objectContaining({ minHeight: 52, borderWidth: 0 })]),
+    );
+    expect(secondaryStyle).toEqual(
+      expect.arrayContaining([expect.objectContaining({ minHeight: 48, borderWidth: 1 })]),
+    );
+    expect(screen.getByText("Abbrechen")).toHaveProp("dynamicTypeRamp", "headline");
   });
 
   it("keeps dropdown interaction inside the modal and offers an explicit close action", async () => {

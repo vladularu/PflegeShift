@@ -530,7 +530,11 @@ export function ShiftEditOverlay({
         style={StyleSheet.absoluteFill}
       >
         <Animated.View
-          style={[StyleSheet.absoluteFill, styles.backdrop, backdropMotionStyle]}
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: palette.overlay },
+            backdropMotionStyle,
+          ]}
           testID="shift-edit-backdrop"
         />
       </Animated.View>
@@ -580,7 +584,10 @@ export function ShiftEditOverlay({
                     style={[styles.header, { backgroundColor: headerColor }]}
                     testID="shift-edit-drag-handle"
                   >
-                    <View accessibilityElementsHidden style={styles.grabber} />
+                    <View
+                      accessibilityElementsHidden
+                      style={[styles.grabber, { backgroundColor: chipTextColor }]}
+                    />
                     <ShiftSymbol color={chipTextColor} size={23} value={shiftSymbol} />
                     <Text maxFontSizeMultiplier={TEXT_MAX_SCALE} style={styles.headerDate}>
                       {entryEditShortDate(date)}
@@ -847,7 +854,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  backdrop: { backgroundColor: "rgba(0, 0, 0, 0.64)" },
   keyboardLayer: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
@@ -887,7 +893,7 @@ const styles = StyleSheet.create({
     height: 4,
     marginLeft: -17,
     borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.62)",
+    opacity: 0.62,
   },
   headerDate: {
     flex: 1,

@@ -1,9 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
-import { useContext, type ComponentProps, type ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import Animated, { FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
-import { SafeAreaInsetsContext } from "react-native-safe-area-context";
 
 import type { MonthlyPayEstimate } from "@/domain/types";
 import { formatMinutes } from "@/engine/working-time";
@@ -13,8 +12,9 @@ import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { DEFAULT_SHIFT_SYMBOLS } from "@/theme/shift-symbols";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
+import { CONTROL_HEIGHT, MINIMUM_TOUCH_TARGET, RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, ColorBadge, SurfaceCard } from "@/ui/design-system";
+import { TabScreenHeader } from "@/ui/screen-layout";
 
 const HIGHLIGHT_TITLE_TYPOGRAPHY = {
   fontSize: 17,
@@ -145,98 +145,80 @@ function AnalysisPeriodHeader({
   readonly onToggle: () => void;
 }) {
   const palette = usePalette();
-  const topInset = useContext(SafeAreaInsetsContext)?.top ?? 0;
-  const safeTop = process.env.EXPO_OS === "web" ? 12 : topInset;
   return (
-    <View
-      style={{
-        position: "relative",
-        backgroundColor: palette.groupedBackground,
-        paddingTop: safeTop + SPACING.xs,
-        paddingHorizontal: SPACING.xxl,
-        paddingBottom: SPACING.sm,
-      }}
-    >
-      <Text
-        accessibilityRole="header"
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        style={{
-          paddingRight: CONTROL_HEIGHT.compact + SPACING.md,
-          color: palette.text,
-          ...TYPOGRAPHY.hero,
-        }}
-      >
-        Auswertung
-      </Text>
-      <View
-        accessibilityRole="toolbar"
-        testID={testID}
-        style={{
-          width: "72%",
-          minHeight: secondaryLabel ? 40 : 28,
-          flexDirection: "row",
-          alignItems: "center",
-          marginTop: -SPACING.xs,
-          marginLeft: -14,
-        }}
-      >
-        <PeriodArrow
-          accessibilityLabel={previousAccessibilityLabel}
-          direction="back"
-          onPress={onPrevious}
-        />
-        <View style={{ minWidth: 0, flex: 1, alignItems: "center" }}>
-          <Text
-            accessibilityLiveRegion="polite"
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{
-              color: palette.text,
-              textAlign: "center",
-              ...(secondaryLabel ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body),
-              fontVariant: ["tabular-nums"],
-            }}
-          >
-            {label}
-          </Text>
-          {secondaryLabel ? (
+    <TabScreenHeader
+      accessory={
+        <Pressable
+          accessibilityLabel={toggleAccessibilityLabel}
+          accessibilityRole="button"
+          onPress={onToggle}
+          style={({ pressed }) => ({
+            width: CONTROL_HEIGHT.compact,
+            height: CONTROL_HEIGHT.compact,
+            alignItems: "center",
+            justifyContent: "center",
+            borderWidth: 1,
+            borderColor: palette.separator,
+            borderRadius: RADII.pill,
+            backgroundColor: pressed ? palette.surfaceMuted : palette.surface,
+            opacity: pressed ? 0.72 : 1,
+          })}
+        >
+          <Ionicons accessible={false} color={palette.text} name="calendar-outline" size={21} />
+        </Pressable>
+      }
+      surface="groupedBackground"
+      title="Auswertung"
+      toolbar={
+        <View
+          accessibilityRole="toolbar"
+          testID={testID}
+          style={{
+            minHeight: MINIMUM_TOUCH_TARGET,
+            flexDirection: "row",
+            alignItems: "center",
+            marginHorizontal: -SPACING.sm,
+          }}
+        >
+          <PeriodArrow
+            accessibilityLabel={previousAccessibilityLabel}
+            direction="back"
+            onPress={onPrevious}
+          />
+          <View style={{ minWidth: 0, flex: 1, alignItems: "center", gap: SPACING.xxs }}>
             <Text
+              accessibilityLiveRegion="polite"
+              dynamicTypeRamp="body"
               maxFontSizeMultiplier={TEXT_MAX_SCALE}
               selectable
-              style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.caption }}
+              style={{
+                color: palette.text,
+                textAlign: "center",
+                ...(secondaryLabel ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body),
+                fontVariant: ["tabular-nums"],
+              }}
             >
-              {secondaryLabel}
+              {label}
             </Text>
-          ) : null}
+            {secondaryLabel ? (
+              <Text
+                dynamicTypeRamp="caption1"
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                selectable
+                style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.caption }}
+              >
+                {secondaryLabel}
+              </Text>
+            ) : null}
+          </View>
+          <PeriodArrow
+            accessibilityLabel={nextAccessibilityLabel}
+            direction="forward"
+            onPress={onNext}
+          />
         </View>
-        <PeriodArrow
-          accessibilityLabel={nextAccessibilityLabel}
-          direction="forward"
-          onPress={onNext}
-        />
-      </View>
-      <Pressable
-        accessibilityLabel={toggleAccessibilityLabel}
-        accessibilityRole="button"
-        onPress={onToggle}
-        style={({ pressed }) => ({
-          width: CONTROL_HEIGHT.compact,
-          height: CONTROL_HEIGHT.compact,
-          position: "absolute",
-          top: safeTop + SPACING.sm,
-          right: SPACING.xl,
-          alignItems: "center",
-          justifyContent: "center",
-          borderWidth: 1,
-          borderColor: palette.separator,
-          borderRadius: RADII.pill,
-          backgroundColor: pressed ? palette.surfaceMuted : palette.surface,
-          opacity: pressed ? 0.72 : 1,
-        })}
-      >
-        <Ionicons color={palette.text} name="calendar-outline" size={21} />
-      </Pressable>
-    </View>
+      }
+    />
   );
 }
 
@@ -258,8 +240,8 @@ function PeriodArrow({
       hitSlop={8}
       onPress={onPress}
       style={({ pressed }) => ({
-        width: 28,
-        height: 28,
+        width: MINIMUM_TOUCH_TARGET,
+        height: MINIMUM_TOUCH_TARGET,
         alignItems: "center",
         justifyContent: "center",
         borderRadius: RADII.control,

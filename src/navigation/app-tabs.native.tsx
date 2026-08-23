@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 import { usePalette } from "@/theme/palette";
+import { TYPOGRAPHY } from "@/theme/typography";
 
 export function AppTabs() {
   const palette = usePalette();
@@ -12,13 +13,13 @@ export function AppTabs() {
       labelStyle={{
         default: {
           color: palette.textMuted,
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: TYPOGRAPHY.overline.fontSize,
+          fontWeight: TYPOGRAPHY.overline.fontWeight,
         },
         selected: {
           color: palette.primary,
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: TYPOGRAPHY.overline.fontSize,
+          fontWeight: TYPOGRAPHY.overline.fontWeight,
         },
       }}
       minimizeBehavior="never"
