@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState, type ComponentProps } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { Alert, View } from "react-native";
 
 import {
   usePflegeShiftProfile,
@@ -24,6 +24,7 @@ import { RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { successFeedback } from "@/ui/haptics";
+import { ScreenScrollView } from "@/ui/screen-layout";
 import { TabRootHeader } from "@/ui/tab-root-header";
 import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
@@ -95,12 +96,8 @@ export function SettingsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
-      <TabRootHeader title="Mehr" />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={{ flex: 1, backgroundColor: palette.groupedBackground }}
-        contentContainerStyle={{ gap: SPACING.xl, padding: SPACING.lg, paddingBottom: 42 }}
-      >
+      <TabRootHeader surface="groupedBackground" title="Mehr" />
+      <ScreenScrollView surface="groupedBackground">
         <View style={{ gap: SPACING.sm }}>
           <SectionHeader title="Profil & Berechnung" />
           <SurfaceCard>
@@ -185,7 +182,7 @@ export function SettingsScreen() {
             />
           </SurfaceCard>
         </View>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

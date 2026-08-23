@@ -1,6 +1,5 @@
 import {
   router,
-  Stack,
   useFocusEffect,
   useIsFocused,
   useLocalSearchParams,
@@ -69,6 +68,7 @@ import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params
 import { calendarTabShouldOpenToday, useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
+import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { InlineNotice } from "@/ui/design-system";
 import { PrimaryButton } from "@/ui/form-controls";
 import { planningModeFeedback, selectionFeedback } from "@/ui/haptics";
@@ -512,9 +512,6 @@ export function CalendarScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.background }}>
-      <Stack.Screen
-        options={{ headerShown: false, statusBarStyle: palette.dark ? "light" : "dark" }}
-      />
       <CalendarHeader
         direction={headerDirection}
         month={visibleMonth}
@@ -526,12 +523,23 @@ export function CalendarScreen() {
         viewMode={preferences.viewMode}
       />
       {plannerError ? (
-        <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+        <View
+          style={{
+            paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
+            paddingBottom: SPACING.sm,
+          }}
+        >
           <InlineNotice message={plannerError} tone="error" />
         </View>
       ) : null}
       {preferences.error ? (
-        <View style={{ gap: 8, paddingHorizontal: 12, paddingBottom: 8 }}>
+        <View
+          style={{
+            gap: SPACING.sm,
+            paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
+            paddingBottom: SPACING.sm,
+          }}
+        >
           <InlineNotice message={preferences.error} tone="error" />
           <PrimaryButton disabled={preferences.saving} onPress={preferences.retry}>
             Speichern erneut versuchen

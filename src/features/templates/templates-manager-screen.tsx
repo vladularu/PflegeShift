@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import { usePflegeShiftStatus, usePflegeShiftTemplates } from "@/application/pflegeshift-provider";
 import type { ShiftTemplate } from "@/domain/types";
@@ -10,18 +10,12 @@ import { usePalette } from "@/theme/palette";
 import { templateEditorRoute } from "@/navigation/routes";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import {
-  CardSeparator,
-  ColorBadge,
-  EmptyState,
-  RowButton,
-  SectionHeader,
-  SurfaceCard,
-} from "@/ui/design-system";
+import { CardSeparator, ColorBadge, EmptyState, RowButton, SurfaceCard } from "@/ui/design-system";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { FormStatus } from "@/ui/form-layout";
 import { selectionFeedback } from "@/ui/haptics";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { ScreenScrollView } from "@/ui/screen-layout";
 import { TabRootHeader } from "@/ui/tab-root-header";
 import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
@@ -81,14 +75,9 @@ export function TemplatesManagerScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
-      <TabRootHeader title="Schichten" />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={{ flex: 1, backgroundColor: palette.groupedBackground }}
-        contentContainerStyle={{ gap: SPACING.lg, padding: SPACING.lg, paddingBottom: 36 }}
-      >
+      <TabRootHeader surface="groupedBackground" title="Schichten" />
+      <ScreenScrollView surface="groupedBackground">
         <FormStatus error={operationError} />
-        <SectionHeader title="Meine Schichten" />
         <SurfaceCard>
           {templates.length === 0 ? (
             <EmptyState
@@ -205,7 +194,7 @@ export function TemplatesManagerScreen() {
             Vorlage hinzufügen
           </Text>
         </Pressable>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

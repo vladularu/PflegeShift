@@ -8,7 +8,7 @@ export default function CalendarStack() {
     <Stack
       screenOptions={{
         contentStyle: { backgroundColor: palette.background },
-        headerLargeTitle: true,
+        headerShown: false,
         headerShadowVisible: false,
         headerStyle: { backgroundColor: palette.background },
         headerTintColor: palette.text,

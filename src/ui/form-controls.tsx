@@ -432,18 +432,19 @@ export function Field({
   );
 }
 
-export function PrimaryButton({
-  children,
-  onPress,
-  disabled = false,
-  danger = false,
-}: PropsWithChildren<{
+type FormActionButtonProps = PropsWithChildren<{
   readonly onPress: () => void;
   readonly disabled?: boolean;
-  readonly danger?: boolean;
-}>) {
+  readonly tone: "primary" | "danger" | "secondary";
+}>;
+
+function FormActionButton({ children, onPress, disabled = false, tone }: FormActionButtonProps) {
   const palette = usePalette();
   const pressMotion = usePressMotion();
+  const secondary = tone === "secondary";
+  const backgroundColor = tone === "danger" ? palette.danger : palette.primary;
+  const foregroundColor = tone === "danger" ? palette.onDanger : palette.onPrimary;
+
   return (
     <AnimatedPressable
       accessibilityRole="button"
@@ -454,24 +455,63 @@ export function PrimaryButton({
       onPress={onPress}
       style={({ pressed }: PressableStateCallbackType) => [
         {
-          minHeight: CONTROL_HEIGHT.large,
+          minHeight: secondary ? CONTROL_HEIGHT.regular : CONTROL_HEIGHT.large,
           alignItems: "center",
           justifyContent: "center",
+          borderWidth: secondary ? 1 : 0,
+          borderColor: secondary ? palette.border : "transparent",
           borderRadius: RADII.control,
           borderCurve: "continuous",
-          backgroundColor: danger ? palette.danger : palette.primary,
-          opacity: disabled ? 0.45 : pressed ? 0.82 : 1,
+          backgroundColor: secondary
+            ? pressed
+              ? palette.surfaceMuted
+              : palette.surfaceRaised
+            : backgroundColor,
+          opacity: disabled ? 0.45 : pressed && !secondary ? 0.82 : 1,
           paddingHorizontal: SPACING.lg,
         },
         pressMotion.animatedStyle,
       ]}
     >
       <Text
+        dynamicTypeRamp="headline"
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        style={{ color: danger ? palette.onDanger : palette.onPrimary, ...TYPOGRAPHY.button }}
+        style={{ color: secondary ? palette.primary : foregroundColor, ...TYPOGRAPHY.button }}
       >
         {children}
       </Text>
     </AnimatedPressable>
+  );
+}
+
+export function PrimaryButton({
+  children,
+  onPress,
+  disabled = false,
+  danger = false,
+}: PropsWithChildren<{
+  readonly onPress: () => void;
+  readonly disabled?: boolean;
+  readonly danger?: boolean;
+}>) {
+  return (
+    <FormActionButton disabled={disabled} onPress={onPress} tone={danger ? "danger" : "primary"}>
+      {children}
+    </FormActionButton>
+  );
+}
+
+export function SecondaryButton({
+  children,
+  onPress,
+  disabled = false,
+}: PropsWithChildren<{
+  readonly onPress: () => void;
+  readonly disabled?: boolean;
+}>) {
+  return (
+    <FormActionButton disabled={disabled} onPress={onPress} tone="secondary">
+      {children}
+    </FormActionButton>
   );
 }

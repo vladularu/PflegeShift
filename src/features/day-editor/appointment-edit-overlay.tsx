@@ -175,7 +175,7 @@ export function AppointmentEditOverlay({
             <Switch
               accessibilityLabel="Termin ganztägig"
               onValueChange={onAllDayChange}
-              thumbColor="#FFFFFF"
+              thumbColor={chipTextColor}
               trackColor={{ false: palette.surfaceMuted, true: palette.primary }}
               value={allDay}
             />

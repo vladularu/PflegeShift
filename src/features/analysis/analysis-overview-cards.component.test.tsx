@@ -139,8 +139,12 @@ describe("analysis overview cards", () => {
       lineHeight: 41,
     });
     expect(screen.getByTestId("analysis-month-toolbar")).toHaveStyle({
-      minHeight: 28,
-      marginTop: -6,
+      minHeight: 44,
+      marginHorizontal: -8,
+    });
+    expect(screen.getByRole("button", { name: /Vorheriger Monat/ })).toHaveStyle({
+      width: 44,
+      height: 44,
     });
     const yearButton = screen.getByRole("button", { name: "Jahresauswertung öffnen" });
     expect(yearButton).toHaveStyle({ width: 44, height: 44, borderRadius: 999 });
@@ -208,8 +212,8 @@ describe("analysis overview cards", () => {
       lineHeight: 41,
     });
     expect(screen.getByTestId("analysis-year-toolbar")).toHaveStyle({
-      minHeight: 40,
-      marginTop: -6,
+      minHeight: 44,
+      marginHorizontal: -8,
     });
     expect(screen.getByText("4 Monate mit Einträgen")).toBeTruthy();
     await fireEvent.press(screen.getByRole("button", { name: "Monatsauswertung öffnen" }));
