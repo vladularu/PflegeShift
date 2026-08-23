@@ -62,6 +62,7 @@ export function TabScreenHeader({
   testID,
   title,
   titleEntering,
+  titleExiting,
   titleKey,
   toolbar,
 }: {
@@ -70,6 +71,7 @@ export function TabScreenHeader({
   readonly testID?: string;
   readonly title: string;
   readonly titleEntering?: ComponentProps<typeof Animated.Text>["entering"];
+  readonly titleExiting?: ComponentProps<typeof Animated.Text>["exiting"];
   readonly titleKey?: Key;
   readonly toolbar?: ReactNode;
 }) {
@@ -114,6 +116,7 @@ export function TabScreenHeader({
             accessibilityRole="header"
             dynamicTypeRamp="largeTitle"
             entering={titleEntering}
+            exiting={titleExiting}
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
             style={{
               flex: stackAccessory ? undefined : 1,

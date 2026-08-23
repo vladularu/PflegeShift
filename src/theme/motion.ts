@@ -1,16 +1,21 @@
-import { Easing, ReduceMotion } from "react-native-reanimated";
+import { Easing } from "react-native";
+import { ReduceMotion } from "react-native-reanimated";
+
+const calmEasing = Easing.bezier(0.22, 1, 0.36, 1);
 
 export const MOTION = {
   duration: {
     instant: 100,
-    fast: 160,
-    normal: 220,
-    deliberate: 280,
+    fast: 180,
+    normal: 300,
+    deliberate: 380,
+    scene: 420,
   },
   distance: {
     subtle: 4,
     small: 8,
     medium: 12,
+    scene: 36,
   },
   scale: {
     press: 0.98,
@@ -18,13 +23,27 @@ export const MOTION = {
     enter: 0.985,
   },
   easing: {
-    standard: Easing.bezier(0.4, 0, 0.2, 1),
-    emphasized: Easing.bezier(0.22, 1, 0.36, 1),
+    calm: calmEasing,
+    standard: calmEasing,
+    emphasized: calmEasing,
   },
   spring: {
-    damping: 18,
-    stiffness: 260,
-    mass: 0.7,
+    press: {
+      damping: 29,
+      stiffness: 320,
+      mass: 0.65,
+      overshootClamping: true,
+      restDisplacementThreshold: 0.001,
+      restSpeedThreshold: 0.001,
+    },
+    settle: {
+      damping: 27,
+      stiffness: 210,
+      mass: 0.85,
+      overshootClamping: true,
+      restDisplacementThreshold: 0.001,
+      restSpeedThreshold: 0.001,
+    },
   },
   reduceMotion: ReduceMotion.System,
 } as const;

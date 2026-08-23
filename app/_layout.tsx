@@ -8,6 +8,7 @@ import { CalendarPreferencesProvider } from "@/features/calendar/calendar-prefer
 import { SecureDatabaseProvider } from "@/infrastructure/database/secure-database-provider";
 import { DEV_TOOLS_AVAILABLE } from "@/infrastructure/dev-tools-policy";
 import { ActiveMonthProvider } from "@/navigation/active-month";
+import { MOTION } from "@/theme/motion";
 import { usePalette } from "@/theme/palette";
 import { AppErrorBoundary } from "@/ui/app-error-boundary";
 import { FeedbackProvider } from "@/ui/feedback";
@@ -83,6 +84,7 @@ export default function RootLayout() {
                             headerShown: false,
                             presentation: "card",
                             animation: "slide_from_bottom",
+                            animationDuration: MOTION.duration.scene,
                             contentStyle: { backgroundColor: palette.background },
                           }}
                         />
@@ -150,6 +152,7 @@ export default function RootLayout() {
                             headerShown: false,
                             presentation: "card",
                             animation: "slide_from_bottom",
+                            animationDuration: MOTION.duration.scene,
                             contentStyle: { backgroundColor: palette.background },
                           }}
                         />

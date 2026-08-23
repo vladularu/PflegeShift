@@ -4,7 +4,6 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withSpring,
-  withTiming,
 } from "react-native-reanimated";
 
 import { MOTION } from "@/theme/motion";
@@ -23,8 +22,8 @@ export function usePressMotion(
         scale: reduceMotion
           ? 1
           : pressed.value
-            ? withTiming(pressedScale, { duration: MOTION.duration.instant })
-            : withSpring(restingScale, MOTION.spring),
+            ? withSpring(pressedScale, MOTION.spring.press)
+            : withSpring(restingScale, MOTION.spring.settle),
       },
     ],
   }));
