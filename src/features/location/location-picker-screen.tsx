@@ -11,9 +11,12 @@ import {
   View,
 } from "react-native";
 
-import type { EntryLocation, GeocodedEntryLocation } from "@/domain/types";
+import type { EntryLocation } from "@/domain/types";
 import { publishLocationSelection } from "@/features/location/location-selection";
-import { useLocationSearch } from "@/features/location/use-location-search";
+import {
+  type LocationSearchResult,
+  useLocationSearch,
+} from "@/features/location/use-location-search";
 import type { RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
@@ -23,7 +26,7 @@ type PickerRow =
   | {
       readonly id: string;
       readonly kind: "ADDRESS";
-      readonly location: GeocodedEntryLocation;
+      readonly result: LocationSearchResult;
     };
 
 function firstParam(value: RouteParam): string {
@@ -35,16 +38,18 @@ export function LocationPickerScreen() {
   const params = useLocalSearchParams<{ current?: RouteParam }>();
   const [initialQuery] = useState(() => firstParam(params.current).trim());
   const [query, setQuery] = useState(initialQuery);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
   const trimmedQuery = query.trim();
-  const { error, loading, results } = useLocationSearch(query);
+  const { error, loading, resolveResult, results } = useLocationSearch(query);
   const rows = useMemo<readonly PickerRow[]>(() => {
     if (!trimmedQuery) return [];
     return [
       { id: "custom", kind: "CUSTOM", query: trimmedQuery },
-      ...results.map((location) => ({
-        id: `${location.latitude}:${location.longitude}`,
+      ...results.map((result) => ({
+        id: result.id,
         kind: "ADDRESS" as const,
-        location,
+        result,
       })),
     ];
   }, [results, trimmedQuery]);
@@ -67,6 +72,24 @@ export function LocationPickerScreen() {
     choose({ name: trimmedQuery });
   }
 
+  function chooseSearchResult(result: LocationSearchResult) {
+    if (resolvingId) return;
+    setResolvingId(result.id);
+    setSelectionError(null);
+    void (async () => {
+      try {
+        const location = await resolveResult(result);
+        setResolvingId(null);
+        choose(location);
+      } catch {
+        setResolvingId(null);
+        setSelectionError(
+          "Adresse konnte nicht geladen werden. Du kannst den Ort als freien Ort übernehmen.",
+        );
+      }
+    })();
+  }
+
   function renderRow({ item }: { readonly item: PickerRow }) {
     if (item.kind === "CUSTOM") {
       return (
@@ -74,10 +97,14 @@ export function LocationPickerScreen() {
           accessibilityHint="Übernimmt die Eingabe ohne Kartenposition"
           accessibilityLabel={`${item.query} als eigenen Ort verwenden`}
           accessibilityRole="button"
+          disabled={resolvingId !== null}
           onPress={() => choose({ name: item.query })}
           style={({ pressed }) => [
             styles.resultRow,
-            { backgroundColor: pressed ? palette.surfaceMuted : "transparent" },
+            {
+              backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+              opacity: resolvingId ? 0.5 : 1,
+            },
           ]}
           testID="location-custom-result"
         >
@@ -92,37 +119,43 @@ export function LocationPickerScreen() {
       );
     }
 
-    const accessibilityLabel = [item.location.name, item.location.address]
-      .filter(Boolean)
-      .join(", ");
+    const accessibilityLabel = [item.result.name, item.result.address].filter(Boolean).join(", ");
     return (
       <Pressable
         accessibilityHint="Übernimmt diese Adresse"
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
-        onPress={() => choose(item.location)}
+        disabled={resolvingId !== null}
+        onPress={() => chooseSearchResult(item.result)}
         style={({ pressed }) => [
           styles.resultRow,
-          { backgroundColor: pressed ? palette.surfaceMuted : "transparent" },
+          {
+            backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+            opacity: resolvingId && resolvingId !== item.id ? 0.5 : 1,
+          },
         ]}
         testID="location-address-result"
       >
-        <Ionicons color={palette.danger} name="location" size={27} />
+        {resolvingId === item.id ? (
+          <ActivityIndicator color={palette.primary} size="small" />
+        ) : (
+          <Ionicons color={palette.danger} name="location" size={27} />
+        )}
         <View style={styles.resultTextColumn}>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
             style={[styles.resultTitle, { color: palette.text }]}
           >
-            {item.location.name}
+            {item.result.name}
           </Text>
-          {item.location.address ? (
+          {item.result.address ? (
             <Text
               ellipsizeMode="tail"
               maxFontSizeMultiplier={TEXT_MAX_SCALE}
               numberOfLines={2}
               style={[styles.resultAddress, { color: palette.textMuted }]}
             >
-              {item.location.address}
+              {item.result.address}
             </Text>
           ) : null}
         </View>
@@ -155,7 +188,10 @@ export function LocationPickerScreen() {
           autoCorrect={false}
           autoFocus
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          onChangeText={setQuery}
+          onChangeText={(value) => {
+            setSelectionError(null);
+            setQuery(value);
+          }}
           onSubmitEditing={submitCustomLocation}
           placeholder="Gib einen Ort ein"
           placeholderTextColor={palette.textMuted}
@@ -174,7 +210,10 @@ export function LocationPickerScreen() {
             accessibilityLabel="Ortseingabe löschen"
             accessibilityRole="button"
             hitSlop={8}
-            onPress={() => setQuery("")}
+            onPress={() => {
+              setSelectionError(null);
+              setQuery("");
+            }}
             style={({ pressed }) => [styles.clearButton, { opacity: pressed ? 0.55 : 1 }]}
           >
             <Ionicons color={palette.textMuted} name="close-circle" size={22} />
@@ -194,14 +233,14 @@ export function LocationPickerScreen() {
         keyboardShouldPersistTaps="handled"
         keyExtractor={(item) => item.id}
         ListFooterComponent={
-          error ? (
+          (selectionError ?? error) ? (
             <Text
               accessibilityLiveRegion="polite"
               accessibilityRole="alert"
               maxFontSizeMultiplier={TEXT_MAX_SCALE}
               style={[styles.error, { color: palette.textMuted }]}
             >
-              {error}
+              {selectionError ?? error}
             </Text>
           ) : null
         }

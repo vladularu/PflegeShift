@@ -25,6 +25,23 @@ const mockReverseGeocodeAsync =
   jest.fn<(coordinate: MockCoordinate) => Promise<readonly MockAddress[]>>();
 const mockRequestForegroundPermissionsAsync =
   jest.fn<() => Promise<{ readonly granted: boolean }>>();
+const mockCompleteMapSearch =
+  jest.fn<
+    (
+      query: string,
+    ) => Promise<
+      readonly { readonly id: string; readonly title: string; readonly subtitle?: string }[]
+    >
+  >();
+const mockResolveMapSearchSuggestion = jest.fn<
+  (identifier: string) => Promise<{
+    readonly name: string;
+    readonly address?: string;
+    readonly latitude: number;
+    readonly longitude: number;
+  }>
+>();
+const mockIsMapSearchAvailable = jest.fn<() => boolean>();
 let mockCurrent: string | undefined;
 
 jest.mock("expo-router", () => ({
@@ -38,6 +55,12 @@ jest.mock("expo-location", () => ({
   reverseGeocodeAsync: (coordinate: MockCoordinate) => mockReverseGeocodeAsync(coordinate),
 }));
 
+jest.mock("@/features/location/native-map-search", () => ({
+  completeMapSearch: (query: string) => mockCompleteMapSearch(query),
+  isMapSearchAvailable: () => mockIsMapSearchAvailable(),
+  resolveMapSearchSuggestion: (identifier: string) => mockResolveMapSearchSuggestion(identifier),
+}));
+
 describe("LocationPickerScreen", () => {
   beforeEach(() => {
     mockCurrent = undefined;
@@ -47,6 +70,11 @@ describe("LocationPickerScreen", () => {
     mockReverseGeocodeAsync.mockResolvedValue([]);
     mockRequestForegroundPermissionsAsync.mockReset();
     mockRequestForegroundPermissionsAsync.mockResolvedValue({ granted: true });
+    mockCompleteMapSearch.mockReset();
+    mockCompleteMapSearch.mockResolvedValue([]);
+    mockResolveMapSearchSuggestion.mockReset();
+    mockIsMapSearchAvailable.mockReset();
+    mockIsMapSearchAvailable.mockReturnValue(true);
     jest.mocked(router.back).mockClear();
     consumeLocationSelection();
   });
@@ -70,7 +98,48 @@ describe("LocationPickerScreen", () => {
     expect(router.back).toHaveBeenCalledTimes(1);
   });
 
-  it("shows geocoded places with a separate address and saves coordinates", async () => {
+  it("shows MapKit completions with a separate address and resolves coordinates on selection", async () => {
+    mockCompleteMapSearch.mockResolvedValue([
+      {
+        id: "mapkit-hepp",
+        title: "Heppy Green",
+        subtitle: "Stiftstraße 6, 60313 Frankfurt am Main, Deutschland",
+      },
+    ]);
+    mockResolveMapSearchSuggestion.mockResolvedValue({
+      name: "Heppy Green",
+      address: "Stiftstraße 6, 60313 Frankfurt am Main, Deutschland",
+      latitude: 50.112,
+      longitude: 8.671,
+    });
+    const screen = await render(<LocationPickerScreen />);
+
+    await fireEvent.changeText(screen.getByLabelText("Ort oder Adresse"), "Hepp");
+
+    await waitFor(() => expect(screen.getByText("Heppy Green")).toBeTruthy());
+    expect(screen.getByText("Stiftstraße 6, 60313 Frankfurt am Main, Deutschland")).toBeTruthy();
+    await fireEvent.press(
+      screen.getByRole("button", {
+        name: "Heppy Green, Stiftstraße 6, 60313 Frankfurt am Main, Deutschland",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(consumeLocationSelection()).toEqual({
+        name: "Heppy Green",
+        address: "Stiftstraße 6, 60313 Frankfurt am Main, Deutschland",
+        latitude: 50.112,
+        longitude: 8.671,
+      }),
+    );
+    expect(mockCompleteMapSearch).toHaveBeenCalledWith("Hepp");
+    expect(mockResolveMapSearchSuggestion).toHaveBeenCalledWith("mapkit-hepp");
+    expect(mockGeocodeAsync).not.toHaveBeenCalled();
+    expect(router.back).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the existing geocoder as the non-MapKit fallback", async () => {
+    mockIsMapSearchAvailable.mockReturnValue(false);
     mockGeocodeAsync.mockResolvedValue([{ latitude: 50.112, longitude: 8.671 }]);
     mockReverseGeocodeAsync.mockResolvedValue([
       {
@@ -79,31 +148,50 @@ describe("LocationPickerScreen", () => {
         streetNumber: "6",
         postalCode: "60313",
         city: "Frankfurt am Main",
-        region: "Hessen",
         country: "Deutschland",
       },
     ]);
     const screen = await render(<LocationPickerScreen />);
 
     await fireEvent.changeText(screen.getByLabelText("Ort oder Adresse"), "Hepp");
-
     await waitFor(() => expect(screen.getByText("Heppy Green")).toBeTruthy());
-    expect(
-      screen.getByText("Stiftstraße 6, 60313 Frankfurt am Main, Hessen, Deutschland"),
-    ).toBeTruthy();
     await fireEvent.press(
       screen.getByRole("button", {
-        name: "Heppy Green, Stiftstraße 6, 60313 Frankfurt am Main, Hessen, Deutschland",
+        name: "Heppy Green, Stiftstraße 6, 60313 Frankfurt am Main, Deutschland",
       }),
     );
 
-    expect(consumeLocationSelection()).toEqual({
-      name: "Heppy Green",
-      address: "Stiftstraße 6, 60313 Frankfurt am Main, Hessen, Deutschland",
-      latitude: 50.112,
-      longitude: 8.671,
-    });
-    expect(router.back).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(consumeLocationSelection()).toEqual({
+        name: "Heppy Green",
+        address: "Stiftstraße 6, 60313 Frankfurt am Main, Deutschland",
+        latitude: 50.112,
+        longitude: 8.671,
+      }),
+    );
+    expect(mockCompleteMapSearch).not.toHaveBeenCalled();
+  });
+
+  it("keeps the custom place selectable when resolving an address fails", async () => {
+    mockCompleteMapSearch.mockResolvedValue([
+      { id: "mapkit-hepp", title: "Hepp", subtitle: "Bonn, Deutschland" },
+    ]);
+    mockResolveMapSearchSuggestion.mockRejectedValue(new Error("MapKit nicht erreichbar"));
+    const screen = await render(<LocationPickerScreen />);
+
+    await fireEvent.changeText(screen.getByLabelText("Ort oder Adresse"), "Hepp");
+    await waitFor(() => expect(screen.getByText("Bonn, Deutschland")).toBeTruthy());
+    await fireEvent.press(screen.getByRole("button", { name: "Hepp, Bonn, Deutschland" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("alert", {
+          name: "Adresse konnte nicht geladen werden. Du kannst den Ort als freien Ort übernehmen.",
+        }),
+      ).toBeTruthy(),
+    );
+    await fireEvent.press(screen.getByRole("button", { name: "Hepp als eigenen Ort verwenden" }));
+    expect(consumeLocationSelection()).toEqual({ name: "Hepp" });
   });
 
   it("removes an existing location only after submitting the cleared field", async () => {

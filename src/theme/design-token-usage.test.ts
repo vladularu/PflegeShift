@@ -69,7 +69,6 @@ const LEGACY_RADIUS_LITERAL_FILES = [
   "src/features/day-editor/shift-edit-overlay.tsx",
   "src/features/day-editor/shift-notification-overlay.tsx",
   "src/features/dev-tools/dev-tools-screen.tsx",
-  "src/features/location/location-picker-screen.tsx",
   "src/features/location/location-preview.tsx",
   "src/ui/color-picker.tsx",
   "src/ui/loading-view.tsx",

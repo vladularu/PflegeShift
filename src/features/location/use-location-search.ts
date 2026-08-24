@@ -1,10 +1,31 @@
 import * as Location from "expo-location";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { GeocodedEntryLocation } from "@/domain/types";
+import {
+  completeMapSearch,
+  isMapSearchAvailable,
+  resolveMapSearchSuggestion,
+} from "@/features/location/native-map-search";
 
 const SEARCH_DELAY_MS = 280;
 const SEARCH_RESULT_LIMIT = 5;
+
+export type LocationSearchResult =
+  | {
+      readonly id: string;
+      readonly kind: "MAPKIT";
+      readonly name: string;
+      readonly address?: string;
+      readonly suggestionIdentifier: string;
+    }
+  | {
+      readonly id: string;
+      readonly kind: "GEOCODED";
+      readonly name: string;
+      readonly address?: string;
+      readonly location: GeocodedEntryLocation;
+    };
 
 function cleanPart(value: string | null | undefined): string {
   return value?.trim() ?? "";
@@ -66,15 +87,63 @@ function deduplicate(
   });
 }
 
+async function searchWithGeocoder(query: string): Promise<readonly LocationSearchResult[]> {
+  if (process.env.EXPO_OS === "android") {
+    const permission = await Location.requestForegroundPermissionsAsync();
+    if (!permission.granted) throw new Error("Standortberechtigung fehlt.");
+  }
+
+  const coordinates = (await Location.geocodeAsync(query)).slice(0, SEARCH_RESULT_LIMIT);
+  const resolved = await Promise.all(
+    coordinates.map(async (coordinate) => {
+      try {
+        const addresses = await Location.reverseGeocodeAsync(coordinate);
+        return locationFromGeocode(addresses[0] ?? {}, coordinate, query);
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return deduplicate(
+    resolved.filter((location): location is GeocodedEntryLocation => location !== null),
+  ).map((location) => ({
+    id: `geocoded:${location.latitude}:${location.longitude}`,
+    kind: "GEOCODED" as const,
+    name: location.name,
+    ...(location.address ? { address: location.address } : {}),
+    location,
+  }));
+}
+
+export async function searchLocations(query: string): Promise<readonly LocationSearchResult[]> {
+  if (!isMapSearchAvailable()) return searchWithGeocoder(query);
+  const suggestions = await completeMapSearch(query);
+  return suggestions.map((suggestion) => ({
+    id: `mapkit:${suggestion.id}`,
+    kind: "MAPKIT" as const,
+    name: suggestion.title,
+    ...(suggestion.subtitle ? { address: suggestion.subtitle } : {}),
+    suggestionIdentifier: suggestion.id,
+  }));
+}
+
+export async function resolveLocationSearchResult(
+  result: LocationSearchResult,
+): Promise<GeocodedEntryLocation> {
+  if (result.kind === "GEOCODED") return result.location;
+  return resolveMapSearchSuggestion(result.suggestionIdentifier);
+}
+
 export function useLocationSearch(query: string): {
   readonly error: string | null;
   readonly loading: boolean;
-  readonly results: readonly GeocodedEntryLocation[];
+  readonly resolveResult: (result: LocationSearchResult) => Promise<GeocodedEntryLocation>;
+  readonly results: readonly LocationSearchResult[];
 } {
-  const [results, setResults] = useState<readonly GeocodedEntryLocation[]>([]);
+  const [results, setResults] = useState<readonly LocationSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cacheRef = useRef(new Map<string, readonly GeocodedEntryLocation[]>());
+  const cacheRef = useRef(new Map<string, readonly LocationSearchResult[]>());
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -100,27 +169,8 @@ export function useLocationSearch(query: string): {
         try {
           setLoading(true);
           setError(null);
-          if (process.env.EXPO_OS === "android") {
-            const permission = await Location.requestForegroundPermissionsAsync();
-            if (!permission.granted) throw new Error("Standortberechtigung fehlt.");
-          }
-
-          const coordinates = (await Location.geocodeAsync(trimmed)).slice(0, SEARCH_RESULT_LIMIT);
-          const resolved = await Promise.all(
-            coordinates.map(async (coordinate) => {
-              try {
-                const addresses = await Location.reverseGeocodeAsync(coordinate);
-                return locationFromGeocode(addresses[0] ?? {}, coordinate, trimmed);
-              } catch {
-                return null;
-              }
-            }),
-          );
+          const nextResults = await searchLocations(trimmed);
           if (!active) return;
-
-          const nextResults = deduplicate(
-            resolved.filter((location): location is GeocodedEntryLocation => location !== null),
-          );
           cacheRef.current.set(cacheKey, nextResults);
           setResults(nextResults);
         } catch {
@@ -140,5 +190,10 @@ export function useLocationSearch(query: string): {
     };
   }, [query]);
 
-  return { error, loading, results };
+  const resolveResult = useCallback(
+    (result: LocationSearchResult) => resolveLocationSearchResult(result),
+    [],
+  );
+
+  return { error, loading, resolveResult, results };
 }

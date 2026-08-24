@@ -172,6 +172,7 @@ export default function RootLayout() {
                             contentStyle: { backgroundColor: palette.surface },
                             sheetAllowedDetents: [0.72, 0.92],
                             sheetCornerRadius: 28,
+                            sheetExpandsWhenScrolledToEdge: false,
                             sheetGrabberVisible: false,
                             sheetInitialDetentIndex: 0,
                           }}
