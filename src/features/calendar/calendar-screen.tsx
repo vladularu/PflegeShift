@@ -568,7 +568,7 @@ export function CalendarScreen() {
                 ref={listRef}
                 contentInsetAdjustmentBehavior="never"
                 data={months}
-                decelerationRate="normal"
+                decelerationRate="fast"
                 disableIntervalMomentum
                 getItemLayout={(_, index) => ({
                   index,

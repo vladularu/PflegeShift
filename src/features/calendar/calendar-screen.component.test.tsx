@@ -158,7 +158,7 @@ describe("CalendarScreen quick-entry navigation", () => {
       fireEvent(pager, "layout", { nativeEvent: { layout: { height: 700 } } });
     });
     expect(screen.getByTestId("calendar-month-pager").props).toMatchObject({
-      decelerationRate: "normal",
+      decelerationRate: "fast",
       disableIntervalMomentum: true,
       pagingEnabled: true,
       snapToInterval: 700,

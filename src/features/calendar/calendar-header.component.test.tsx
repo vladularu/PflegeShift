@@ -5,6 +5,7 @@ import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { CalendarHeader } from "@/features/calendar/calendar-header";
+import { MOTION } from "@/theme/motion";
 
 function PlannerHeader({
   direction = "NEXT",
@@ -67,9 +68,9 @@ describe("CalendarHeader", () => {
     const nextScreen = await render(<PlannerHeader direction="NEXT" />);
     const nextTitle = nextScreen.getByRole("header", { name: "August" });
 
-    expect(nextTitle.props.entering.durationV).toBe(300);
+    expect(nextTitle.props.entering.durationV).toBe(MOTION.duration.normal);
     expect(nextTitle.props.entering.initialValues).toMatchObject({ translateY: 8 });
-    expect(nextTitle.props.exiting.durationV).toBe(300);
+    expect(nextTitle.props.exiting.durationV).toBe(MOTION.duration.normal);
     expect(nextTitle.props.exiting.targetValues).toMatchObject({ translateY: -8 });
     await nextScreen.unmount();
 
@@ -80,15 +81,15 @@ describe("CalendarHeader", () => {
     expect(previousTitle.props.exiting.targetValues).toMatchObject({ translateY: 8 });
   });
 
-  it("uses a transform-free 380 millisecond crossfade between month and year", async () => {
+  it("uses a transform-free deliberate crossfade between month and year", async () => {
     const screen = await render(
       <PlannerHeader month="2026-08" titleTransition="CROSSFADE" viewMode="YEAR" />,
     );
     const title = screen.getByRole("header", { name: "2026" });
 
-    expect(title.props.entering.durationV).toBe(380);
+    expect(title.props.entering.durationV).toBe(MOTION.duration.deliberate);
     expect(title.props.entering.initialValues).toBeUndefined();
-    expect(title.props.exiting.durationV).toBe(380);
+    expect(title.props.exiting.durationV).toBe(MOTION.duration.deliberate);
     expect(title.props.exiting.targetValues).toBeUndefined();
   });
 });
