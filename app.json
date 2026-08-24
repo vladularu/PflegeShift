@@ -55,6 +55,7 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-secure-store",
+      "./plugins/with-native-tab-transitions",
       "./plugins/with-local-notifications-only"
     ],
     "experiments": {

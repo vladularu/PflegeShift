@@ -27,7 +27,7 @@ describe("app tab motion", () => {
     expect(result.sceneStyle.transform).toHaveLength(1);
   });
 
-  it("uses the shared 420 millisecond scene transition", () => {
+  it("uses the shared responsive scene transition", () => {
     const options = appTabMotionOptions(false);
 
     expect(options.animation).toBe("shift");
