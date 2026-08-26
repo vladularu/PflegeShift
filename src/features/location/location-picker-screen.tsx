@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,12 +12,14 @@ import {
 } from "react-native";
 
 import type { EntryLocation } from "@/domain/types";
-import { publishLocationSelection } from "@/features/location/location-selection";
+import {
+  consumeLocationPickerQuery,
+  publishLocationSelection,
+} from "@/features/location/location-selection";
 import {
   type LocationSearchResult,
   useLocationSearch,
 } from "@/features/location/use-location-search";
-import type { RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 
@@ -29,14 +31,9 @@ type PickerRow =
       readonly result: LocationSearchResult;
     };
 
-function firstParam(value: RouteParam): string {
-  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
-}
-
 export function LocationPickerScreen() {
   const palette = usePalette();
-  const params = useLocalSearchParams<{ current?: RouteParam }>();
-  const [initialQuery] = useState(() => firstParam(params.current).trim());
+  const [initialQuery] = useState(() => consumeLocationPickerQuery().trim());
   const [query, setQuery] = useState(initialQuery);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);

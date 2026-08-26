@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { PflegeShiftProvider } from "@/application/pflegeshift-provider";
 import { CalendarPreferencesProvider } from "@/features/calendar/calendar-preferences";
+import { NotificationFeedbackBridge } from "@/features/notifications/notification-feedback-bridge";
 import { SecureDatabaseProvider } from "@/infrastructure/database/secure-database-provider";
 import { DEV_TOOLS_AVAILABLE } from "@/infrastructure/dev-tools-policy";
 import { ActiveMonthProvider } from "@/navigation/active-month";
@@ -37,6 +38,7 @@ export default function RootLayout() {
                 <AppErrorBoundary title="Ansicht konnte nicht angezeigt werden">
                   <ThemeProvider value={dark ? DarkTheme : DefaultTheme}>
                     <FeedbackProvider>
+                      <NotificationFeedbackBridge />
                       <Stack
                         screenOptions={{
                           headerBackButtonDisplayMode: "minimal",

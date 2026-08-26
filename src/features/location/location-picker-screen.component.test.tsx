@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { router } from "expo-router";
 
 import { LocationPickerScreen } from "@/features/location/location-picker-screen";
-import { consumeLocationSelection } from "@/features/location/location-selection";
+import {
+  consumeLocationSelection,
+  prepareLocationPicker,
+} from "@/features/location/location-selection";
 
 interface MockCoordinate {
   readonly latitude: number;
@@ -42,11 +45,9 @@ const mockResolveMapSearchSuggestion = jest.fn<
   }>
 >();
 const mockIsMapSearchAvailable = jest.fn<() => boolean>();
-let mockCurrent: string | undefined;
 
 jest.mock("expo-router", () => ({
   router: { back: jest.fn() },
-  useLocalSearchParams: () => ({ current: mockCurrent }),
 }));
 
 jest.mock("expo-location", () => ({
@@ -63,7 +64,7 @@ jest.mock("@/features/location/native-map-search", () => ({
 
 describe("LocationPickerScreen", () => {
   beforeEach(() => {
-    mockCurrent = undefined;
+    prepareLocationPicker(null);
     mockGeocodeAsync.mockReset();
     mockGeocodeAsync.mockResolvedValue([]);
     mockReverseGeocodeAsync.mockReset();
@@ -195,7 +196,7 @@ describe("LocationPickerScreen", () => {
   });
 
   it("removes an existing location only after submitting the cleared field", async () => {
-    mockCurrent = "Klinikum";
+    prepareLocationPicker({ name: "Klinikum" });
     const screen = await render(<LocationPickerScreen />);
     const input = screen.getByLabelText("Ort oder Adresse");
 

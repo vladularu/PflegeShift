@@ -121,19 +121,10 @@ export async function syncEntryNotifications(
         const alarm = spec.kind === "ALARM";
         const notificationId = await Notifications.scheduleNotificationAsync({
           content: {
-            title: alarm ? "Dienst beginnt" : entry.title,
-            body: alarm
-              ? `${entry.title} beginnt jetzt.`
-              : entry.kind === "SHIFT"
-                ? "Erinnerung an deinen Dienst."
-                : "Erinnerung an deinen Termin.",
+            title: "PflegeShift",
+            body: alarm ? "Dein Dienst beginnt jetzt." : "Deine Erinnerung ist fällig.",
             sound: alarm ? "default" : undefined,
-            data: {
-              entryId: entry.id,
-              entryKind: entry.kind,
-              occurrenceDate,
-              reminderKind: spec.kind,
-            },
+            data: { reminderKind: spec.kind },
           },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,

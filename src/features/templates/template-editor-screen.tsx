@@ -60,7 +60,10 @@ import { ShiftSymbolPicker } from "@/ui/shift-symbol-picker";
 import { NotificationSheet, notificationLabel } from "@/features/day-editor/entry-options";
 import { ShiftNotificationOverlay } from "@/features/day-editor/shift-notification-overlay";
 import { LocationPreview } from "@/features/location/location-preview";
-import { consumeLocationSelection } from "@/features/location/location-selection";
+import {
+  consumeLocationSelection,
+  prepareLocationPicker,
+} from "@/features/location/location-selection";
 import { locationPickerRoute } from "@/navigation/routes";
 import { focusInvalidField, requiredFieldError } from "@/ui/form-validation";
 
@@ -634,6 +637,11 @@ function TemplateEditorForm({
     }, []),
   );
 
+  function openLocationPicker() {
+    prepareLocationPicker(location);
+    router.push(locationPickerRoute() as never);
+  }
+
   async function submit() {
     const nextNameError = requiredFieldError(name, "Titel");
     const nextSymbolError = requiredFieldError(symbol, "Symbol");
@@ -898,7 +906,7 @@ function TemplateEditorForm({
           <CompactActionRow
             icon="location-outline"
             label="Ort"
-            onPress={() => router.push(locationPickerRoute(location?.name) as never)}
+            onPress={openLocationPicker}
             testID="template-location-row"
             value={location?.name ?? "Kein Ort"}
           />

@@ -43,7 +43,10 @@ import {
   EditorDateHeader,
   InlineDeleteConfirmation,
 } from "@/features/day-editor/day-editor-components";
-import { consumeLocationSelection } from "@/features/location/location-selection";
+import {
+  consumeLocationSelection,
+  prepareLocationPicker,
+} from "@/features/location/location-selection";
 import { LocationPreview } from "@/features/location/location-preview";
 import { useStableEditorSession } from "@/features/editor-session";
 import { APPOINTMENT_COLOR, SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
@@ -153,6 +156,11 @@ export function DayEditorForm({
       else setAppointmentLocation(selected);
     }, [mode]),
   );
+
+  function openLocationPicker(current: EntryLocation | null) {
+    prepareLocationPicker(current);
+    router.push(locationPickerRoute() as never);
+  }
   const shiftIsAbsence = ["VACATION", "SICK", "FREE"].includes(shiftType);
   const shiftIsTimed = !shiftIsAbsence && !shiftAllDay;
   const compactShiftEditor = mode === "SHIFT" && (existing === null || existing.kind === "SHIFT");
@@ -416,7 +424,7 @@ export function DayEditorForm({
               : undefined
           }
           onEndTimeChange={setEndTime}
-          onLocationPress={() => router.push(locationPickerRoute(shiftLocation?.name) as never)}
+          onLocationPress={() => openLocationPicker(shiftLocation)}
           onNoteChange={setShiftNote}
           onNotificationChange={setShiftNotification}
           onNotificationPress={() => setOptionSheet("NOTIFICATION")}
@@ -513,9 +521,7 @@ export function DayEditorForm({
             router.back();
           }}
           onEndTimeChange={setAppointmentEnd}
-          onLocationPress={() =>
-            router.push(locationPickerRoute(appointmentLocation?.name) as never)
-          }
+          onLocationPress={() => openLocationPicker(appointmentLocation)}
           onNoteChange={setAppointmentNote}
           onNotificationChange={setAppointmentNotification}
           onNotificationPress={() => setOptionSheet("NOTIFICATION")}
@@ -710,7 +716,7 @@ export function DayEditorForm({
             <OptionRow
               icon="location-outline"
               label="Ort"
-              onPress={() => router.push(locationPickerRoute(shiftLocation?.name) as never)}
+              onPress={() => openLocationPicker(shiftLocation)}
               value={shiftLocation?.name ?? "Kein Ort"}
             />
             {shiftLocation ? <LocationPreview location={shiftLocation} /> : null}
@@ -812,7 +818,7 @@ export function DayEditorForm({
           <OptionRow
             icon="location-outline"
             label="Ort"
-            onPress={() => router.push(locationPickerRoute(appointmentLocation?.name) as never)}
+            onPress={() => openLocationPicker(appointmentLocation)}
             value={appointmentLocation?.name ?? "Kein Ort"}
           />
           {appointmentLocation ? <LocationPreview location={appointmentLocation} /> : null}

@@ -120,6 +120,7 @@ describe("MonthCard", () => {
     });
     const weekNumber = within(monday).getByText("32");
     expect(weekNumber).toBeTruthy();
+    expect(monday).toHaveProp("testID", "calendar-day-current-2026-08-03");
     expect(weekNumber).toHaveStyle({ left: 1 });
     expect(monday).toHaveStyle({ marginHorizontal: 0.25 });
   });

@@ -128,11 +128,8 @@ export function templateEditorRoute(id?: string, quickEntryDate?: string) {
   });
 }
 
-export function locationPickerRoute(current?: string) {
-  return Object.freeze({
-    pathname: "/location-picker" as const,
-    params: Object.freeze(current ? { current } : {}),
-  });
+export function locationPickerRoute() {
+  return Object.freeze({ pathname: "/location-picker" as const });
 }
 
 export function settingsEditorRoute(section: "WORK" | "TARIFF") {

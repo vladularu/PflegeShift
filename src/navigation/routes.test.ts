@@ -7,6 +7,7 @@ import {
   complianceDetailsRoute,
   dayDetailsRoute,
   dayEditorRoute,
+  locationPickerRoute,
   premiumDetailsRoute,
   quickAddRoute,
   settingsEditorRoute,
@@ -129,5 +130,9 @@ describe("navigation contracts", () => {
     expect(parseLocalDateRouteParam(dayRoute.params.date).status).toBe("valid");
     expect(parseIdentifierRouteParam(dayRoute.params.entryId).status).toBe("valid");
     expect(() => dayEditorRoute("2026-08-13", "SHIFT", "../../entry")).toThrow();
+  });
+
+  it("keeps private location data out of router parameters", () => {
+    expect(locationPickerRoute()).toEqual({ pathname: "/location-picker" });
   });
 });
