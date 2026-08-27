@@ -12,6 +12,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.pflegeshift.app",
       "buildNumber": "1",
+      "runtimeVersion": "ios-2026.09.1",
       "config": {
         "usesNonExemptEncryption": false
       }
