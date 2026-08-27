@@ -5,11 +5,22 @@ Dienste, Termine und Dienstvorlagen erzeugen zunächst einen Tombstone mit
 Revision und Löschzeitpunkt. Damit bleiben konkurrierende Änderungen erkennbar
 und eine spätere Synchronisation kann Löschungen eindeutig übertragen.
 
+## Produktentscheidung
+
+„Löschen“ entfernt einen Dienst, Termin oder eine Vorlage sofort aus der
+normalen App-Oberfläche und allen Berechnungen. Es gibt derzeit keine sichtbare
+Wiederherstellungsfunktion. Der vollständige Datensatz bleibt jedoch zunächst
+verschlüsselt in der lokalen Datenbank. Diese verzögerte physische Löschung ist
+in der App unter **Mehr → Lokale Datenspeicherung** sichtbar beschrieben.
+
+Der Vertrag gilt unabhängig von einer Cloud-Synchronisation. PflegeShift bietet
+aktuell weder Cloud-Sync noch ein automatisches Backup an.
+
 ## Aufbewahrungsfrist
 
-- Tombstones werden 90 Tage aufbewahrt.
-- Abgelaufene Dienste und Termine werden beim nativen App-Start in einer
-  exklusiven Transaktion bereinigt.
+- Tombstones gelöschter Dienste und Termine werden 90 Tage aufbewahrt und beim
+  nächsten nativen App-Start nach Ablauf der Frist in einer exklusiven
+  Transaktion bereinigt.
 - Benutzerdefinierte Dienstvorlagen werden nur bereinigt, wenn weder ein Dienst
   noch ein offenes Testlabor-Backup auf sie verweist.
 - Gelöschte mitgelieferte Standardvorlagen bleiben als Tombstone erhalten,

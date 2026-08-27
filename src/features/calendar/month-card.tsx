@@ -289,6 +289,7 @@ const DayCell = memo(
           onPressIn={pressMotion.onPressIn}
           onPressOut={pressMotion.onPressOut}
           onPress={handlePress}
+          testID={`calendar-day-${cell.inMonth ? "current" : "adjacent"}-${cell.date}`}
           style={({ pressed }: PressableStateCallbackType) => ({
             flex: 1,
             minWidth: 0,

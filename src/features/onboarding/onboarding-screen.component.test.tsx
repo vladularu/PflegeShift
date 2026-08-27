@@ -37,7 +37,9 @@ describe("OnboardingScreen", () => {
     mockUpdateProfile.mockResolvedValue(undefined);
     const screen = await render(onboarding());
 
-    await fireEvent.changeText(screen.getByLabelText("Stunden pro Woche"), "40");
+    const weeklyHours = screen.getByTestId("onboarding-weekly-hours");
+    expect(weeklyHours).toHaveProp("accessibilityLabel", "Stunden pro Woche");
+    await fireEvent.changeText(weeklyHours, "40");
     await fireEvent.press(screen.getByRole("button", { name: "Weiter zum Kalender" }));
 
     await waitFor(() => {

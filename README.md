@@ -2,7 +2,7 @@
 
 PflegeShift ist ein lokaler, iPhone-first Dienstplaner für Schichtarbeit. Die App verbindet Kalender, Arbeitszeitauswertung und eine unverbindliche TVöD-P-Gehaltsberechnung in einer ruhigen, systemadaptiven Oberfläche.
 
-PflegeShift basiert auf Expo SDK 57, React Native und SQLite. Die Kernfunktionen benötigen weder Konto noch PflegeShift-Backend; persönliche Planungsdaten bleiben lokal auf dem Gerät. Die optionale Ortssuche und Kartenansicht verwenden die Geocoding- und Kartendienste des Betriebssystems und benötigen eine Verbindung.
+PflegeShift basiert auf Expo SDK 57, React Native und SQLite. Die Kernfunktionen benötigen weder Konto noch PflegeShift-Backend; persönliche Planungsdaten bleiben lokal auf dem Gerät. Die optionale Ortssuche und Kartenansicht verwenden auf iOS Apple-Dienste und auf Android den systemseitigen Geocoder sowie Google Maps. Suchtext, Kartenbereich und gespeicherte Koordinaten können dabei an den jeweiligen Anbieter übermittelt werden; PflegeShift liest keine aktuelle GPS-Position und betreibt kein Standorttracking. Der genaue Vertrag steht in [`docs/location-data-flows.md`](docs/location-data-flows.md).
 
 > **Veröffentlichungsstand:** Für PflegeShift ist derzeit kein Beta-Tag als aktuelle Installations- oder Migrationsbasis freigegeben. [`v0.1.0-beta.1`](https://github.com/vladularu/PflegeShift/releases/tag/v0.1.0-beta.1) gehört noch zu MediShift und verwendet andere App- und Datenbank-IDs.
 

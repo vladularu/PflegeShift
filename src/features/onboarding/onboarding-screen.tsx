@@ -91,6 +91,7 @@ export function OnboardingScreen() {
           }}
           placeholder="38,5"
           returnKeyType="done"
+          testID="onboarding-weekly-hours"
           value={weeklyHours}
         />
       </FormSection>

@@ -1,16 +1,26 @@
 import { ActionSheetIOS, Linking, Pressable } from "react-native";
 
-import type { EntryLocation } from "@/domain/types";
+import type { EntryLocation, GeocodedEntryLocation } from "@/domain/types";
 import { LocationMap } from "@/features/location/location-map";
 import { usePalette } from "@/theme/palette";
 
 export function LocationPreview({ location }: { readonly location: EntryLocation }) {
   const palette = usePalette();
 
+  if (typeof location.latitude !== "number" || typeof location.longitude !== "number") {
+    return null;
+  }
+
+  const geocodedLocation: GeocodedEntryLocation = {
+    ...location,
+    latitude: location.latitude,
+    longitude: location.longitude,
+  };
+
   function openMap() {
-    const encodedName = encodeURIComponent(location.name);
-    const apple = `https://maps.apple.com/?q=${encodedName}&ll=${location.latitude},${location.longitude}`;
-    const google = `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+    const encodedName = encodeURIComponent(geocodedLocation.name);
+    const apple = `https://maps.apple.com/?q=${encodedName}&ll=${geocodedLocation.latitude},${geocodedLocation.longitude}`;
+    const google = `https://www.google.com/maps/search/?api=1&query=${geocodedLocation.latitude},${geocodedLocation.longitude}`;
     if (process.env.EXPO_OS !== "ios") {
       void Linking.openURL(google);
       return;
@@ -26,7 +36,7 @@ export function LocationPreview({ location }: { readonly location: EntryLocation
 
   return (
     <Pressable
-      accessibilityLabel={`${location.name} in Karten öffnen`}
+      accessibilityLabel={`${geocodedLocation.name} in Karten öffnen`}
       accessibilityRole="button"
       onPress={openMap}
       style={{
@@ -37,7 +47,7 @@ export function LocationPreview({ location }: { readonly location: EntryLocation
         borderRadius: 16,
       }}
     >
-      <LocationMap location={location} />
+      <LocationMap location={geocodedLocation} />
     </Pressable>
   );
 }

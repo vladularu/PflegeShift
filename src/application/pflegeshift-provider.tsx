@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from "react";
@@ -54,7 +55,14 @@ import {
 interface PflegeShiftStatusValue {
   readonly ready: boolean;
   readonly error: string | null;
+  readonly notificationWarning: NotificationWarning | null;
+  readonly clearNotificationWarning: (id: number) => void;
   readonly reload: () => Promise<void>;
+}
+
+export interface NotificationWarning {
+  readonly id: number;
+  readonly message: string;
 }
 
 interface PflegeShiftProfileValue {
@@ -148,6 +156,16 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
   });
   const [testMonths, setTestMonths] = useState<readonly string[]>([]);
   const [testDataLoadRevision, setTestDataLoadRevision] = useState(0);
+  const [notificationWarning, setNotificationWarning] = useState<NotificationWarning | null>(null);
+  const notificationWarningSequence = useRef(0);
+
+  const publishNotificationWarning = useCallback((message: string) => {
+    setNotificationWarning({ id: ++notificationWarningSequence.current, message });
+  }, []);
+
+  const clearNotificationWarning = useCallback((id: number) => {
+    setNotificationWarning((current) => (current?.id === id ? null : current));
+  }, []);
 
   const reload = useCallback(async () => {
     try {
@@ -175,10 +193,15 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
           )
           .map((entry) => syncEntryNotifications(db, entry, notificationTimeZone)),
       ).then((results) => {
+        let failed = false;
         for (const result of results) {
           if (result.status === "rejected") {
+            failed = true;
             recordDiagnostic("notifications", "ENTRY_NOTIFICATION_RECONCILE_FAILED", result.reason);
           }
+        }
+        if (failed) {
+          publishNotificationWarning("Erinnerungen konnten nicht vollständig aktualisiert werden.");
         }
       });
     } catch (loadError) {
@@ -187,7 +210,7 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
     } finally {
       setReady(true);
     }
-  }, [db]);
+  }, [db, publishNotificationWarning]);
 
   useEffect(() => {
     void reload();
@@ -290,10 +313,11 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
         await syncEntryNotifications(db, saved, profile?.timeZone ?? "Europe/Berlin");
       } catch (notificationError) {
         recordDiagnostic("notifications", "SHIFT_NOTIFICATION_SYNC_FAILED", notificationError);
+        publishNotificationWarning("Gespeichert. Erinnerung konnte nicht eingerichtet werden.");
       }
       return saved;
     },
-    [db, profile],
+    [db, profile, publishNotificationWarning],
   );
 
   const upsertAppointment = useCallback(
@@ -308,10 +332,11 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
           "APPOINTMENT_NOTIFICATION_SYNC_FAILED",
           notificationError,
         );
+        publishNotificationWarning("Gespeichert. Erinnerung konnte nicht eingerichtet werden.");
       }
       return saved;
     },
-    [db, profile],
+    [db, profile, publishNotificationWarning],
   );
 
   const removeEntry = useCallback(
@@ -322,9 +347,12 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
         await cancelEntryNotifications(db, entry);
       } catch (notificationError) {
         recordDiagnostic("notifications", "ENTRY_NOTIFICATION_CANCEL_FAILED", notificationError);
+        publishNotificationWarning(
+          "Gelöscht. Eine geplante Erinnerung konnte nicht entfernt werden.",
+        );
       }
     },
-    [db],
+    [db, publishNotificationWarning],
   );
 
   const restoreEntry = useCallback(
@@ -359,8 +387,8 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
   );
 
   const statusValue = useMemo<PflegeShiftStatusValue>(
-    () => ({ ready, error, reload }),
-    [error, ready, reload],
+    () => ({ ready, error, notificationWarning, clearNotificationWarning, reload }),
+    [clearNotificationWarning, error, notificationWarning, ready, reload],
   );
   const profileValue = useMemo<PflegeShiftProfileValue>(
     () => ({ profile, updateProfile }),

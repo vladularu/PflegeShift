@@ -2,12 +2,13 @@ appId: com.pflegeshift.app.internal
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Dein Dienstplan beginnt hier."
-- tapOn: "Stunden pro Woche"
+- assertVisible: "Zwei Angaben, dann geht’s los.*"
+- tapOn:
+    id: "onboarding-weekly-hours"
 - eraseText
 - inputText: "40"
 - hideKeyboard
-- tapOn: "PflegeShift starten"
+- tapOn: "Weiter zum Kalender"
 - extendedWaitUntil:
     visible: "Dienstplan bearbeiten"
     timeout: 15000

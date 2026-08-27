@@ -53,6 +53,10 @@ expect(
   "ios.buildNumber muss aus einer bis drei numerischen Komponenten bestehen.",
 );
 expect(
+  expo.ios?.runtimeVersion === "ios-2026.09.1",
+  "Die iOS-Runtime-Version muss den nativen September-Stand eindeutig isolieren.",
+);
+expect(
   expo.ios?.config?.usesNonExemptEncryption === false,
   "Die iOS-Export-Compliance-Angabe fehlt.",
 );

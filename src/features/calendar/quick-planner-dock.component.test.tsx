@@ -13,6 +13,7 @@ import {
   QuickPlannerDock,
   quickPlannerTransitionDuration,
 } from "@/features/calendar/quick-planner-dock";
+import { MOTION } from "@/theme/motion";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const TEMPLATE: ShiftTemplate = {
@@ -129,10 +130,10 @@ describe("QuickPlannerDock", () => {
     });
   });
 
-  it("opens over 420 milliseconds and closes over 380 milliseconds", () => {
-    expect(quickPlannerTransitionDuration(true, false)).toBe(420);
-    expect(quickPlannerTransitionDuration(false, false)).toBe(380);
-    expect(quickPlannerTransitionDuration(true, true)).toBe(100);
+  it("uses responsive scene timings and an instant reduced-motion fallback", () => {
+    expect(quickPlannerTransitionDuration(true, false)).toBe(MOTION.duration.scene);
+    expect(quickPlannerTransitionDuration(false, false)).toBe(MOTION.duration.deliberate);
+    expect(quickPlannerTransitionDuration(true, true)).toBe(MOTION.duration.instant);
   });
 
   it("opens from the persistent pencil target", async () => {

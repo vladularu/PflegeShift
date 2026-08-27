@@ -32,8 +32,20 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
         text: "Aktuell gibt es weder Cloud-Sync noch ein automatisches Backup. Eine Deinstallation kann lokale Daten entfernen.",
       },
       {
+        title: "Löschen",
+        text: "Gelöschte Dienste und Termine verschwinden sofort aus der App. Der verschlüsselte Datensatz bleibt 90 Tage lokal gespeichert und wird beim nächsten App-Start danach entfernt. Gelöschte Vorlagen bleiben länger erhalten, solange vorhandene Dienste oder ein offenes Testlabor-Backup darauf verweisen.",
+      },
+      {
+        title: "Ortssuche",
+        text: "Ab drei Zeichen wird deine Suche online über den Kartendienst des Betriebssystems aufgelöst: auf iOS über Apple, auf Android über den systemseitigen Geocoder. PflegeShift fragt dabei nicht deine aktuelle GPS-Position ab. Android kann für das Geocoding trotzdem eine Standortberechtigung verlangen.",
+      },
+      {
+        title: "Karten",
+        text: "Die Vorschau lädt auf iOS Kartendaten von Apple und auf Android von Google. Wenn du einen Ort in einer Karten-App öffnest, werden die gespeicherten Koordinaten an Apple Karten oder Google Maps übergeben. Ortsname, Adresse und Koordinaten bleiben zusätzlich verschlüsselt in deiner lokalen PflegeShift-Datenbank.",
+      },
+      {
         title: "Datenschutz",
-        text: "Die App überträgt diese Daten nicht an einen PflegeShift-Server. Die optionale Ortssuche und Kartenansicht verwenden Dienste des Betriebssystems und benötigen eine Verbindung.",
+        text: "PflegeShift überträgt diese Daten nicht an einen PflegeShift-Server. Für die Online-Suche und Kartendarstellung gelten zusätzlich die Datenschutzbedingungen von Apple beziehungsweise Google.",
       },
     ],
   },

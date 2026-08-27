@@ -362,6 +362,22 @@ describe("SQLite repository", () => {
     expect(await listCalendarEntries(db)).toHaveLength(1);
   });
 
+  it("persists a custom location without synthetic coordinates", async () => {
+    const appointment = await saveAppointment(db, {
+      date: "2026-07-31",
+      title: "Übergabe",
+      allDay: false,
+      startTime: "10:00",
+      endTime: "10:30",
+      color: "#F2A93B",
+      location: { name: "Station 3" },
+    });
+
+    expect(appointment.location).toEqual({ name: "Station 3" });
+    const [reloaded] = await listCalendarEntries(db, "2026-07-31", "2026-07-31");
+    expect(reloaded?.location).toEqual({ name: "Station 3" });
+  });
+
   it("reads legacy shift notifications without enabling the separate alarm", async () => {
     const shift = await saveShift(db, {
       date: "2026-07-31",

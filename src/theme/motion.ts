@@ -7,10 +7,10 @@ const navigationEasing = NativeEasing.bezier(0.22, 1, 0.36, 1);
 export const MOTION = {
   duration: {
     instant: 100,
-    fast: 180,
-    normal: 300,
-    deliberate: 380,
-    scene: 420,
+    fast: 160,
+    normal: 240,
+    deliberate: 280,
+    scene: 320,
   },
   distance: {
     subtle: 4,

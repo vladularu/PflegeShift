@@ -1,151 +1,333 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import * as Location from "expo-location";
-import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { router } from "expo-router";
+import { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import type { EntryLocation } from "@/domain/types";
-import { publishLocationSelection } from "@/features/location/location-selection";
-import type { RouteParam } from "@/navigation/route-params";
+import {
+  consumeLocationPickerQuery,
+  publishLocationSelection,
+} from "@/features/location/location-selection";
+import {
+  type LocationSearchResult,
+  useLocationSearch,
+} from "@/features/location/use-location-search";
 import { usePalette } from "@/theme/palette";
-import { CardSeparator, SurfaceCard } from "@/ui/design-system";
-import { warningFeedback } from "@/ui/haptics";
+import { TEXT_MAX_SCALE } from "@/theme/typography";
 
-function firstParam(value: RouteParam): string {
-  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
-}
-
-function addressLabel(address: Location.LocationGeocodedAddress, fallback: string): string {
-  const street = [address.street, address.streetNumber].filter(Boolean).join(" ");
-  const locality = [address.postalCode, address.city ?? address.subregion]
-    .filter(Boolean)
-    .join(" ");
-  return [street, locality, address.region, address.country].filter(Boolean).join(", ") || fallback;
-}
+type PickerRow =
+  | { readonly id: "custom"; readonly kind: "CUSTOM"; readonly query: string }
+  | {
+      readonly id: string;
+      readonly kind: "ADDRESS";
+      readonly result: LocationSearchResult;
+    };
 
 export function LocationPickerScreen() {
   const palette = usePalette();
-  const params = useLocalSearchParams<{ current?: RouteParam }>();
-  const [query, setQuery] = useState(firstParam(params.current));
-  const [results, setResults] = useState<readonly EntryLocation[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (trimmed.length < 3) {
-      setResults([]);
-      setError(null);
-      return;
-    }
-    let active = true;
-    const timer = setTimeout(() => {
-      void (async () => {
-        try {
-          setLoading(true);
-          setError(null);
-          if (process.env.EXPO_OS === "android") {
-            const permission = await Location.requestForegroundPermissionsAsync();
-            if (!permission.granted) throw new Error("Standortberechtigung fehlt.");
-          }
-          const coordinates = (await Location.geocodeAsync(trimmed)).slice(0, 6);
-          const resolved = await Promise.all(
-            coordinates.map(async (coordinate) => {
-              const addresses = await Location.reverseGeocodeAsync(coordinate);
-              return {
-                name: addressLabel(addresses[0] ?? {}, trimmed),
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude,
-              } satisfies EntryLocation;
-            }),
-          );
-          if (!active) return;
-          setResults(
-            resolved.filter(
-              (result, index, all) => all.findIndex((item) => item.name === result.name) === index,
-            ),
-          );
-        } catch {
-          if (active) setError("Ort konnte nicht gesucht werden. Prüfe deine Verbindung.");
-        } finally {
-          if (active) setLoading(false);
-        }
-      })();
-    }, 450);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [query]);
+  const [initialQuery] = useState(() => consumeLocationPickerQuery().trim());
+  const [query, setQuery] = useState(initialQuery);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const trimmedQuery = query.trim();
+  const { error, loading, resolveResult, results } = useLocationSearch(query);
+  const rows = useMemo<readonly PickerRow[]>(() => {
+    if (!trimmedQuery) return [];
+    return [
+      { id: "custom", kind: "CUSTOM", query: trimmedQuery },
+      ...results.map((result) => ({
+        id: result.id,
+        kind: "ADDRESS" as const,
+        result,
+      })),
+    ];
+  }, [results, trimmedQuery]);
 
   function choose(location: EntryLocation) {
     publishLocationSelection(location);
     router.back();
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: palette.background, padding: 16, gap: 14 }}>
-      <Stack.Screen options={{ title: "Ort" }} />
-      <View
-        style={{
-          minHeight: 48,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          borderRadius: 14,
-          backgroundColor: palette.surfaceRaised,
-          paddingHorizontal: 14,
-        }}
+  function submitCustomLocation() {
+    if (!trimmedQuery) {
+      if (initialQuery) publishLocationSelection(null);
+      router.back();
+      return;
+    }
+    if (trimmedQuery === initialQuery) {
+      router.back();
+      return;
+    }
+    choose({ name: trimmedQuery });
+  }
+
+  function chooseSearchResult(result: LocationSearchResult) {
+    if (resolvingId) return;
+    setResolvingId(result.id);
+    setSelectionError(null);
+    void (async () => {
+      try {
+        const location = await resolveResult(result);
+        setResolvingId(null);
+        choose(location);
+      } catch {
+        setResolvingId(null);
+        setSelectionError(
+          "Adresse konnte nicht geladen werden. Du kannst den Ort als freien Ort übernehmen.",
+        );
+      }
+    })();
+  }
+
+  function renderRow({ item }: { readonly item: PickerRow }) {
+    if (item.kind === "CUSTOM") {
+      return (
+        <Pressable
+          accessibilityHint="Übernimmt die Eingabe ohne Kartenposition"
+          accessibilityLabel={`${item.query} als eigenen Ort verwenden`}
+          accessibilityRole="button"
+          disabled={resolvingId !== null}
+          onPress={() => choose({ name: item.query })}
+          style={({ pressed }) => [
+            styles.resultRow,
+            {
+              backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+              opacity: resolvingId ? 0.5 : 1,
+            },
+          ]}
+          testID="location-custom-result"
+        >
+          <Ionicons color={palette.textSecondary} name="location-outline" size={26} />
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={[styles.customResultText, { color: palette.text }]}
+          >
+            {item.query}
+          </Text>
+        </Pressable>
+      );
+    }
+
+    const accessibilityLabel = [item.result.name, item.result.address].filter(Boolean).join(", ");
+    return (
+      <Pressable
+        accessibilityHint="Übernimmt diese Adresse"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+        disabled={resolvingId !== null}
+        onPress={() => chooseSearchResult(item.result)}
+        style={({ pressed }) => [
+          styles.resultRow,
+          {
+            backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+            opacity: resolvingId && resolvingId !== item.id ? 0.5 : 1,
+          },
+        ]}
+        testID="location-address-result"
       >
-        <Ionicons color={palette.textMuted} name="search" size={20} />
+        {resolvingId === item.id ? (
+          <ActivityIndicator color={palette.primary} size="small" />
+        ) : (
+          <Ionicons color={palette.danger} name="location" size={27} />
+        )}
+        <View style={styles.resultTextColumn}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={[styles.resultTitle, { color: palette.text }]}
+          >
+            {item.result.name}
+          </Text>
+          {item.result.address ? (
+            <Text
+              ellipsizeMode="tail"
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              numberOfLines={2}
+              style={[styles.resultAddress, { color: palette.textMuted }]}
+            >
+              {item.result.address}
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: palette.surface }]} testID="location-picker">
+      <View
+        style={[styles.header, { borderBottomColor: palette.separator }]}
+        testID="location-picker-header"
+      >
+        <Text
+          accessibilityRole="header"
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={[styles.title, { color: palette.text }]}
+        >
+          Ort
+        </Text>
+      </View>
+
+      <View
+        style={[styles.inputRow, { borderBottomColor: palette.separator }]}
+        testID="location-picker-input-row"
+      >
         <TextInput
+          accessibilityLabel="Ort oder Adresse"
+          autoCapitalize="words"
           autoCorrect={false}
           autoFocus
-          onChangeText={setQuery}
-          placeholder="Ort oder Adresse"
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          onChangeText={(value) => {
+            setSelectionError(null);
+            setQuery(value);
+          }}
+          onSubmitEditing={submitCustomLocation}
+          placeholder="Gib einen Ort ein"
           placeholderTextColor={palette.textMuted}
-          returnKeyType="search"
-          style={{ flex: 1, color: palette.text, fontSize: 16 }}
+          returnKeyType="done"
+          selectionColor={palette.primary}
+          style={[styles.input, { color: palette.text }]}
           value={query}
         />
-        {loading ? <ActivityIndicator color={palette.primary} size="small" /> : null}
+        {loading ? (
+          <View accessibilityLabel="Adressen werden gesucht" accessibilityRole="progressbar">
+            <ActivityIndicator color={palette.primary} size="small" />
+          </View>
+        ) : null}
+        {query.length > 0 ? (
+          <Pressable
+            accessibilityLabel="Ortseingabe löschen"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => {
+              setSelectionError(null);
+              setQuery("");
+            }}
+            style={({ pressed }) => [styles.clearButton, { opacity: pressed ? 0.55 : 1 }]}
+          >
+            <Ionicons color={palette.textMuted} name="close-circle" size={22} />
+          </Pressable>
+        ) : null}
       </View>
-      {error ? <Text style={{ color: palette.danger }}>{error}</Text> : null}
-      <ScrollView keyboardShouldPersistTaps="handled">
-        <SurfaceCard>
-          {results.map((result, index) => (
-            <View key={`${result.latitude}:${result.longitude}`}>
-              {index > 0 ? <CardSeparator inset={54} /> : null}
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => choose(result)}
-                style={({ pressed }) => ({
-                  minHeight: 58,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 12,
-                  opacity: pressed ? 0.58 : 1,
-                  paddingHorizontal: 14,
-                })}
-              >
-                <Ionicons color={palette.danger} name="location" size={24} />
-                <Text style={{ flex: 1, color: palette.text, fontSize: 15 }}>{result.name}</Text>
-              </Pressable>
-            </View>
-          ))}
-        </SurfaceCard>
-      </ScrollView>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => {
-          warningFeedback();
-          publishLocationSelection(null);
-          router.back();
-        }}
-        style={{ minHeight: 48, alignItems: "center", justifyContent: "center" }}
-      >
-        <Text style={{ color: palette.danger, fontWeight: "600" }}>Ort entfernen</Text>
-      </Pressable>
+
+      <FlatList
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={styles.resultsContent}
+        data={rows}
+        initialNumToRender={6}
+        ItemSeparatorComponent={() => (
+          <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+        )}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        keyExtractor={(item) => item.id}
+        ListFooterComponent={
+          (selectionError ?? error) ? (
+            <Text
+              accessibilityLiveRegion="polite"
+              accessibilityRole="alert"
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              style={[styles.error, { color: palette.textMuted }]}
+            >
+              {selectionError ?? error}
+            </Text>
+          ) : null
+        }
+        renderItem={renderRow}
+        style={styles.results}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  header: {
+    minHeight: 64,
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 19,
+    lineHeight: 24,
+    fontWeight: "600",
+  },
+  inputRow: {
+    minHeight: 60,
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingLeft: 22,
+    paddingRight: 10,
+  },
+  input: {
+    minHeight: 58,
+    flex: 1,
+    fontSize: 17,
+    lineHeight: 22,
+    paddingVertical: 0,
+  },
+  clearButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  results: {
+    flex: 1,
+  },
+  resultsContent: {
+    flexGrow: 1,
+  },
+  resultRow: {
+    minHeight: 74,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+  },
+  customResultText: {
+    flex: 1,
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: "400",
+  },
+  resultTextColumn: {
+    minWidth: 0,
+    flex: 1,
+    gap: 2,
+  },
+  resultTitle: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: "400",
+  },
+  resultAddress: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 62,
+  },
+  error: {
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+});

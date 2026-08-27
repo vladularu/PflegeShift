@@ -12,6 +12,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.pflegeshift.app",
       "buildNumber": "1",
+      "runtimeVersion": "ios-2026.09.1",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -55,6 +56,7 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-secure-store",
+      "./plugins/with-native-tab-transitions",
       "./plugins/with-local-notifications-only"
     ],
     "experiments": {

@@ -129,6 +129,12 @@ export interface EntryNotification {
 
 export interface EntryLocation {
   readonly name: string;
+  readonly address?: string;
+  readonly latitude?: number;
+  readonly longitude?: number;
+}
+
+export interface GeocodedEntryLocation extends EntryLocation {
   readonly latitude: number;
   readonly longitude: number;
 }

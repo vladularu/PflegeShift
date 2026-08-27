@@ -2,8 +2,9 @@ appId: com.pflegeshift.app.internal
 ---
 - runFlow: onboarding.yml
 - tapOn:
-    text: ".*0 Einträge.*"
+    id: "calendar-day-current-.*"
     index: 10
+    retryTapIfNoChange: true
 - tapOn: "Schicht hinzufügen"
 - assertVisible: "Meine Dienste"
 - tapOn: "Früh direkt eintragen"
