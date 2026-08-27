@@ -32,8 +32,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SecureDatabaseProvider>
         <AppErrorBoundary>
-          <PflegeShiftRuntimeProvider>
-            <ActiveMonthProvider>
+          <ActiveMonthProvider>
+            <PflegeShiftRuntimeProvider>
               <CalendarPreferencesProvider>
                 <AppErrorBoundary title="Ansicht konnte nicht angezeigt werden">
                   <ThemeProvider value={dark ? DarkTheme : DefaultTheme}>
@@ -196,8 +196,8 @@ export default function RootLayout() {
                   </ThemeProvider>
                 </AppErrorBoundary>
               </CalendarPreferencesProvider>
-            </ActiveMonthProvider>
-          </PflegeShiftRuntimeProvider>
+            </PflegeShiftRuntimeProvider>
+          </ActiveMonthProvider>
         </AppErrorBoundary>
       </SecureDatabaseProvider>
     </GestureHandlerRootView>

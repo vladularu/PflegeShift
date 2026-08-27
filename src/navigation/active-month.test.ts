@@ -16,6 +16,20 @@ describe("active month coordinator", () => {
     expect(coordinator.getMonth()).toBe("2027-01");
   });
 
+  it("publishes only actual month changes", () => {
+    const coordinator = createActiveMonthCoordinator("2026-08");
+    const listener = vi.fn();
+    const unsubscribe = coordinator.subscribeMonths(listener);
+
+    coordinator.setMonth("2026-08");
+    coordinator.setMonth("2026-09");
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    coordinator.setMonth("2026-10");
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects malformed and impossible months", () => {
     expect(() => requireActiveMonth("2026-8")).toThrow();
     expect(() => requireActiveMonth("2026-13")).toThrow();

@@ -40,8 +40,10 @@ describe("architecture boundaries", () => {
     ["engine/compliance.ts", 800],
     ["engine/pay.ts", 650],
     ["application/pflegeshift-provider.tsx", 446],
+    ["application/pflegeshift-notifications.ts", 33],
+    ["application/pflegeshift-snapshot.ts", 65],
     ["composition/create-pflegeshift-ports.ts", 66],
-    ["composition/pflegeshift-runtime-provider.tsx", 13],
+    ["composition/pflegeshift-runtime-provider.tsx", 19],
     ["features/templates/template-editor-screen.tsx", 948],
     ["features/day-editor/day-editor-form.tsx", 886],
     ["features/analysis/analysis-overview-cards.tsx", 818],
@@ -51,8 +53,9 @@ describe("architecture boundaries", () => {
     ["features/calendar/calendar-screen.tsx", 660],
     ["features/day-editor/day-editor-screen.tsx", 685],
     ["features/analysis/analysis-screen.tsx", 725],
-    ["infrastructure/database/repository-core.ts", 666],
+    ["infrastructure/database/repository-core.ts", 668],
     ["infrastructure/database/repository.ts", 600],
+    ["navigation/active-month.tsx", 120],
     ["ui/form-controls.tsx", 560],
   ] as const)("keeps %s within its refactoring budget", (file, maximumLines) => {
     const lineCount = readFileSync(join(SOURCE_ROOT, file), "utf8").split(/\r?\n/).length;

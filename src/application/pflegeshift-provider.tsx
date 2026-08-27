@@ -9,6 +9,12 @@ import React, {
 } from "react";
 
 import type { PflegeShiftPorts } from "@/application/pflegeshift-ports";
+import { reconcileLoadedEntryNotifications } from "@/application/pflegeshift-notifications";
+import {
+  EMPTY_WORK_PATTERN_SETTINGS,
+  entryRangeForYear,
+  loadPflegeShiftSnapshot,
+} from "@/application/pflegeshift-snapshot";
 import type {
   Appointment,
   CalendarEntry,
@@ -28,6 +34,7 @@ import { DATA_LOAD_FAILURE_MESSAGE } from "@/domain/errors";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
 
 interface PflegeShiftProviderProps extends PropsWithChildren {
+  readonly activeMonth: string;
   readonly ports: PflegeShiftPorts;
 }
 
@@ -120,23 +127,24 @@ function useRequiredContext<T>(context: React.Context<T | null>, name: string): 
   return value;
 }
 
-export function PflegeShiftProvider({ children, ports }: PflegeShiftProviderProps) {
+export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShiftProviderProps) {
   const { repository, notifications, diagnostics, devTools } = ports;
-  const [ready, setReady] = useState(false);
+  const activeYear = Number(activeMonth.slice(0, 4));
+  const entryRange = useMemo(() => entryRangeForYear(activeYear), [activeYear]);
+  const entryRangeKey = `${entryRange.startDate}:${entryRange.endDate}`;
+  const [loadedEntryRangeKey, setLoadedEntryRangeKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [templates, setTemplates] = useState<readonly ShiftTemplate[]>([]);
   const [entries, setEntries] = useState<readonly CalendarEntry[]>([]);
   const [tariffDecisions, setTariffDecisions] = useState<readonly MonthlyTariffDecision[]>([]);
-  const [workPatternSettings, setWorkPatternSettings] = useState<TvoedWorkPatternSettings>({
-    workplaceCoverage: "UNKNOWN",
-    assignment: "UNKNOWN",
-    updatedAt: null,
-  });
+  const [workPatternSettings, setWorkPatternSettings] = useState(EMPTY_WORK_PATTERN_SETTINGS);
   const [testMonths, setTestMonths] = useState<readonly string[]>([]);
   const [testDataLoadRevision, setTestDataLoadRevision] = useState(0);
   const [notificationWarning, setNotificationWarning] = useState<NotificationWarning | null>(null);
+  const loadSequence = useRef(0);
   const notificationWarningSequence = useRef(0);
+  const statusReady = loadedEntryRangeKey === entryRangeKey;
 
   const publishNotificationWarning = useCallback((message: string) => {
     setNotificationWarning({ id: ++notificationWarningSequence.current, message });
@@ -147,60 +155,52 @@ export function PflegeShiftProvider({ children, ports }: PflegeShiftProviderProp
   }, []);
 
   const reload = useCallback(async () => {
+    const loadRevision = ++loadSequence.current;
+    setLoadedEntryRangeKey(null);
     try {
-      const [nextProfile, nextTemplates, nextEntries, nextDecisions, nextWorkPatternSettings] =
-        await Promise.all([
-          repository.loadProfile(),
-          repository.listTemplates(),
-          repository.listCalendarEntries(),
-          repository.listMonthlyTariffDecisions(),
-          repository.loadTvoedWorkPatternSettings(),
-        ]);
-      setProfile(nextProfile);
-      setTemplates(nextTemplates);
-      setEntries(nextEntries);
-      setTariffDecisions(nextDecisions);
-      setWorkPatternSettings(nextWorkPatternSettings);
+      const snapshot = await loadPflegeShiftSnapshot(repository, entryRange);
+      if (loadRevision !== loadSequence.current) return;
+      setProfile(snapshot.profile);
+      setTemplates(snapshot.templates);
+      setEntries(snapshot.entries);
+      setTariffDecisions(snapshot.tariffDecisions);
+      setWorkPatternSettings(snapshot.workPatternSettings);
       setTestDataLoadRevision((current) => current + 1);
       setError(null);
-      const notificationTimeZone = nextProfile?.timeZone ?? "Europe/Berlin";
-      void Promise.allSettled(
-        nextEntries
-          .filter(
-            (entry) =>
-              entry.notification != null || (entry.kind === "SHIFT" && entry.alarmEnabled === true),
-          )
-          .map((entry) => notifications.syncEntry(entry, notificationTimeZone)),
-      ).then((results) => {
-        let failed = false;
-        for (const result of results) {
-          if (result.status === "rejected") {
-            failed = true;
-            diagnostics.record(
-              "notifications",
-              "ENTRY_NOTIFICATION_RECONCILE_FAILED",
-              result.reason,
-            );
-          }
-        }
+      const notificationTimeZone = snapshot.profile?.timeZone ?? "Europe/Berlin";
+      void reconcileLoadedEntryNotifications(snapshot.entries, notificationTimeZone, {
+        notifications,
+        diagnostics,
+      }).then((failed) => {
+        if (loadRevision !== loadSequence.current) return;
         if (failed) {
           publishNotificationWarning("Erinnerungen konnten nicht vollständig aktualisiert werden.");
         }
       });
     } catch (loadError) {
+      if (loadRevision !== loadSequence.current) return;
       diagnostics.record("provider", "PROVIDER_RELOAD_FAILED", loadError);
       setError(DATA_LOAD_FAILURE_MESSAGE);
     } finally {
-      setReady(true);
+      if (loadRevision === loadSequence.current) {
+        setLoadedEntryRangeKey(entryRangeKey);
+      }
     }
-  }, [diagnostics, notifications, publishNotificationWarning, repository]);
+  }, [
+    diagnostics,
+    entryRange,
+    entryRangeKey,
+    notifications,
+    publishNotificationWarning,
+    repository,
+  ]);
 
   useEffect(() => {
     void reload();
   }, [reload]);
 
   useEffect(() => {
-    if (!devTools.shouldLoadState(ready, testDataLoadRevision)) return;
+    if (!devTools.shouldLoadState(statusReady, testDataLoadRevision)) return;
     let active = true;
     void devTools
       .listBackupMonths()
@@ -215,7 +215,7 @@ export function PflegeShiftProvider({ children, ports }: PflegeShiftProviderProp
     return () => {
       active = false;
     };
-  }, [devTools, diagnostics, ready, testDataLoadRevision]);
+  }, [devTools, diagnostics, statusReady, testDataLoadRevision]);
 
   const updateProfile = useCallback(
     async (input: SaveProfileInput) => {
@@ -371,8 +371,8 @@ export function PflegeShiftProvider({ children, ports }: PflegeShiftProviderProp
   );
 
   const statusValue = useMemo<PflegeShiftStatusValue>(
-    () => ({ ready, error, notificationWarning, clearNotificationWarning, reload }),
-    [clearNotificationWarning, error, notificationWarning, ready, reload],
+    () => ({ ready: statusReady, error, notificationWarning, clearNotificationWarning, reload }),
+    [clearNotificationWarning, error, notificationWarning, reload, statusReady],
   );
   const profileValue = useMemo<PflegeShiftProfileValue>(
     () => ({ profile, updateProfile }),

@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 import { Pressable, Text } from "react-native";
 
@@ -13,7 +13,7 @@ import {
   usePflegeShiftEntries,
   usePflegeShiftStatus,
 } from "@/application/pflegeshift-provider";
-import type { ShiftEntry, TvoedWorkPatternSettings } from "@/domain/types";
+import type { CalendarEntry, ShiftEntry, TvoedWorkPatternSettings } from "@/domain/types";
 
 const mockSavedShift: ShiftEntry = {
   kind: "SHIFT",
@@ -101,6 +101,14 @@ const ports: PflegeShiftPorts = {
   },
 };
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}
+
 function Harness() {
   const { upsertShift } = usePflegeShiftEntries();
   const { notificationWarning } = usePflegeShiftStatus();
@@ -114,12 +122,18 @@ function Harness() {
   );
 }
 
+function EntryStateHarness() {
+  const { entries } = usePflegeShiftEntries();
+  const { ready } = usePflegeShiftStatus();
+  return <Text>{ready ? entries.map((entry) => entry.title).join(", ") || "Leer" : "Lädt"}</Text>;
+}
+
 describe("PflegeShiftProvider notification feedback", () => {
   it("keeps the saved entry and publishes a non-blocking scheduling warning", async () => {
     jest.mocked(repository.saveShift).mockResolvedValue(mockSavedShift);
     jest.mocked(notifications.syncEntry).mockRejectedValue(new Error("scheduler unavailable"));
     const screen = await render(
-      <PflegeShiftProvider ports={ports}>
+      <PflegeShiftProvider activeMonth="2026-08" ports={ports}>
         <Harness />
       </PflegeShiftProvider>,
     );
@@ -132,11 +146,49 @@ describe("PflegeShiftProvider notification feedback", () => {
       ).toBeTruthy(),
     );
     expect(repository.saveShift).toHaveBeenCalledWith(mockSavedShift);
+    expect(repository.listCalendarEntries).toHaveBeenCalledWith("2025-11-01", "2027-01-31");
     expect(notifications.syncEntry).toHaveBeenCalledWith(mockSavedShift, "Europe/Berlin");
     expect(diagnostics.record).toHaveBeenCalledWith(
       "notifications",
       "SHIFT_NOTIFICATION_SYNC_FAILED",
       expect.any(Error),
     );
+  });
+
+  it("reloads only when the annual window changes and ignores stale results", async () => {
+    const firstLoad = deferred<readonly CalendarEntry[]>();
+    const secondLoad = deferred<readonly CalendarEntry[]>();
+    const nextShift = { ...mockSavedShift, id: "shift-next", title: "Neues Fenster" };
+    jest
+      .mocked(repository.listCalendarEntries)
+      .mockImplementationOnce(() => firstLoad.promise)
+      .mockImplementationOnce(() => secondLoad.promise);
+    jest.mocked(notifications.syncEntry).mockResolvedValue(undefined);
+    const screen = await render(
+      <PflegeShiftProvider activeMonth="2026-08" ports={ports}>
+        <EntryStateHarness />
+      </PflegeShiftProvider>,
+    );
+
+    await screen.rerender(
+      <PflegeShiftProvider activeMonth="2026-09" ports={ports}>
+        <EntryStateHarness />
+      </PflegeShiftProvider>,
+    );
+    expect(repository.listCalendarEntries).toHaveBeenCalledTimes(1);
+
+    await screen.rerender(
+      <PflegeShiftProvider activeMonth="2027-01" ports={ports}>
+        <EntryStateHarness />
+      </PflegeShiftProvider>,
+    );
+    await waitFor(() => expect(repository.listCalendarEntries).toHaveBeenCalledTimes(2));
+
+    await act(async () => secondLoad.resolve([nextShift]));
+    await waitFor(() => expect(screen.getByText("Neues Fenster")).toBeTruthy());
+
+    await act(async () => firstLoad.resolve([mockSavedShift]));
+    expect(screen.queryByText("Intensivstation")).toBeNull();
+    expect(screen.getByText("Neues Fenster")).toBeTruthy();
   });
 });

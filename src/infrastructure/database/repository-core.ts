@@ -501,9 +501,11 @@ export async function listCalendarEntries(
     `SELECT id,date,title,all_day,start_time,end_time,color,note,
       recurrence_frequency,recurrence_interval,notification_json,location_json,revision,
       created_at,updated_at,deleted_at
-     FROM appointments WHERE deleted_at IS NULL AND date BETWEEN ? AND ?`,
-    startDate,
+     FROM appointments
+     WHERE deleted_at IS NULL AND date <= ?
+       AND (recurrence_frequency IS NOT NULL OR date >= ?)`,
     endDate,
+    startDate,
   );
   return sortCalendarEntries([...shifts.map(mapShift), ...appointments.map(mapAppointment)]);
 }

@@ -15,6 +15,7 @@ export interface ActiveMonthCoordinator {
   readonly hasPendingTodayRequest: (revision: number) => boolean;
   readonly requestToday: () => number;
   readonly setMonth: (month: string) => string;
+  readonly subscribeMonths: (listener: () => void) => () => void;
   readonly subscribeTodayRequests: (listener: () => void) => () => void;
 }
 
@@ -32,6 +33,7 @@ export function createActiveMonthCoordinator(
   let activeMonth = requireActiveMonth(initialMonth);
   let todayRequestRevision = 0;
   let completedTodayRequestRevision = 0;
+  const monthListeners = new Set<() => void>();
   const todayRequestListeners = new Set<() => void>();
 
   return Object.freeze({
@@ -50,8 +52,15 @@ export function createActiveMonthCoordinator(
       return todayRequestRevision;
     },
     setMonth: (month: string) => {
-      activeMonth = requireActiveMonth(month);
+      const nextMonth = requireActiveMonth(month);
+      if (nextMonth === activeMonth) return activeMonth;
+      activeMonth = nextMonth;
+      for (const listener of monthListeners) listener();
       return activeMonth;
+    },
+    subscribeMonths: (listener: () => void) => {
+      monthListeners.add(listener);
+      return () => monthListeners.delete(listener);
     },
     subscribeTodayRequests: (listener: () => void) => {
       todayRequestListeners.add(listener);
@@ -84,6 +93,15 @@ export function useCalendarTodayRequestRevision(): number {
     coordinator.subscribeTodayRequests,
     coordinator.getTodayRequestRevision,
     coordinator.getTodayRequestRevision,
+  );
+}
+
+export function useActiveMonth(): string {
+  const coordinator = useActiveMonthCoordinator();
+  return useSyncExternalStore(
+    coordinator.subscribeMonths,
+    coordinator.getMonth,
+    coordinator.getMonth,
   );
 }
 
