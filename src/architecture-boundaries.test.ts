@@ -22,9 +22,10 @@ function aliasedImports(source: string): readonly string[] {
 
 describe("architecture boundaries", () => {
   it.each([
-    ["domain", /^(application|features|infrastructure|navigation|theme|ui)\//],
-    ["engine", /^(application|features|infrastructure|navigation|theme|ui)\//],
-    ["infrastructure", /^(application|features|navigation|theme|ui)\//],
+    ["domain", /^(application|composition|features|infrastructure|navigation|theme|ui)\//],
+    ["engine", /^(application|composition|features|infrastructure|navigation|theme|ui)\//],
+    ["application", /^(composition|features|infrastructure|navigation|theme|ui)\//],
+    ["infrastructure", /^(application|composition|features|navigation|theme|ui)\//],
   ] as const)("keeps %s independent from outer layers", (layer, forbidden) => {
     const violations = sourceFiles(join(SOURCE_ROOT, layer)).flatMap((file) =>
       aliasedImports(readFileSync(file, "utf8"))
@@ -38,11 +39,33 @@ describe("architecture boundaries", () => {
   it.each([
     ["engine/compliance.ts", 800],
     ["engine/pay.ts", 650],
+    ["application/pflegeshift-provider.tsx", 446],
+    ["application/pflegeshift-notifications.ts", 33],
+    ["application/pflegeshift-snapshot.ts", 65],
+    ["composition/create-pflegeshift-ports.ts", 66],
+    ["composition/pflegeshift-runtime-provider.tsx", 19],
+    ["features/templates/template-editor-screen.tsx", 839],
+    ["features/day-editor/day-editor-form.tsx", 477],
+    ["features/analysis/analysis-overview-cards.tsx", 14],
+    ["features/analysis/analysis-period-header.tsx", 217],
+    ["features/analysis/analysis-report-cards.tsx", 201],
+    ["features/analysis/expandable-highlight-card.tsx", 164],
+    ["features/analysis/salary-summary-card.tsx", 223],
+    ["features/day-editor/shift-edit-overlay.tsx", 528],
+    ["features/calendar/month-card.tsx", 683],
+    ["features/day-editor/shift-notification-overlay.tsx", 667],
     ["features/calendar/calendar-screen.tsx", 660],
     ["features/day-editor/day-editor-screen.tsx", 685],
     ["features/analysis/analysis-screen.tsx", 725],
-    ["infrastructure/database/repository.ts", 600],
+    ["infrastructure/database/repository-core.ts", 19],
+    ["infrastructure/database/repository.ts", 8],
+    ["infrastructure/database/repository-shared.ts", 22],
+    ["infrastructure/database/profile-repository.ts", 96],
+    ["infrastructure/database/shift-template-repository.ts", 213],
+    ["infrastructure/database/calendar-entry-repository.ts", 341],
+    ["navigation/active-month.tsx", 120],
     ["ui/form-controls.tsx", 560],
+    ["ui/pause-wheel.tsx", 268],
   ] as const)("keeps %s within its refactoring budget", (file, maximumLines) => {
     const lineCount = readFileSync(join(SOURCE_ROOT, file), "utf8").split(/\r?\n/).length;
     expect(lineCount).toBeLessThanOrEqual(maximumLines);

@@ -3,7 +3,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { PflegeShiftProvider } from "@/application/pflegeshift-provider";
+import { PflegeShiftRuntimeProvider } from "@/composition/pflegeshift-runtime-provider";
 import { CalendarPreferencesProvider } from "@/features/calendar/calendar-preferences";
 import { NotificationFeedbackBridge } from "@/features/notifications/notification-feedback-bridge";
 import { SecureDatabaseProvider } from "@/infrastructure/database/secure-database-provider";
@@ -32,8 +32,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SecureDatabaseProvider>
         <AppErrorBoundary>
-          <PflegeShiftProvider>
-            <ActiveMonthProvider>
+          <ActiveMonthProvider>
+            <PflegeShiftRuntimeProvider>
               <CalendarPreferencesProvider>
                 <AppErrorBoundary title="Ansicht konnte nicht angezeigt werden">
                   <ThemeProvider value={dark ? DarkTheme : DefaultTheme}>
@@ -196,8 +196,8 @@ export default function RootLayout() {
                   </ThemeProvider>
                 </AppErrorBoundary>
               </CalendarPreferencesProvider>
-            </ActiveMonthProvider>
-          </PflegeShiftProvider>
+            </PflegeShiftRuntimeProvider>
+          </ActiveMonthProvider>
         </AppErrorBoundary>
       </SecureDatabaseProvider>
     </GestureHandlerRootView>

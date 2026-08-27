@@ -378,6 +378,40 @@ describe("SQLite repository", () => {
     expect(reloaded?.location).toEqual({ name: "Station 3" });
   });
 
+  it("keeps recurring appointment seeds that begin before a bounded entry window", async () => {
+    const recurring = await saveAppointment(db, {
+      date: "2025-01-06",
+      title: "Wöchentliche Physiotherapie",
+      allDay: false,
+      startTime: "10:00",
+      endTime: "10:30",
+      color: "#F2A93B",
+      recurrence: { frequency: "WEEK", interval: 1 },
+    });
+    await saveAppointment(db, {
+      date: "2025-01-07",
+      title: "Alter Einzeltermin",
+      allDay: false,
+      startTime: "11:00",
+      endTime: "11:30",
+      color: "#F2A93B",
+    });
+    await saveShift(db, {
+      date: "2025-01-08",
+      title: "Alter Dienst",
+      type: "CUSTOM",
+      startTime: "08:00",
+      endTime: "16:00",
+      breakMinutes: 30,
+      color: "#2F80ED",
+      symbol: "D",
+    });
+
+    const entries = await listCalendarEntries(db, "2026-08-01", "2026-08-31");
+
+    expect(entries.map((entry) => entry.id)).toEqual([recurring.id]);
+  });
+
   it("reads legacy shift notifications without enabling the separate alarm", async () => {
     const shift = await saveShift(db, {
       date: "2026-07-31",

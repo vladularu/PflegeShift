@@ -1,15 +1,19 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 import { Pressable, Text } from "react-native";
 
+import type {
+  PflegeShiftDiagnosticsPort,
+  PflegeShiftNotificationPort,
+  PflegeShiftPorts,
+  PflegeShiftRepositoryPort,
+} from "@/application/pflegeshift-ports";
 import {
   PflegeShiftProvider,
   usePflegeShiftEntries,
   usePflegeShiftStatus,
 } from "@/application/pflegeshift-provider";
-import type { ShiftEntry } from "@/domain/types";
-import { saveShift } from "@/infrastructure/database/repository";
-import { syncEntryNotifications } from "@/infrastructure/notifications/entry-notifications";
+import type { CalendarEntry, ShiftEntry, TvoedWorkPatternSettings } from "@/domain/types";
 
 const mockSavedShift: ShiftEntry = {
   kind: "SHIFT",
@@ -40,48 +44,70 @@ const mockSavedShift: ShiftEntry = {
   updatedAt: "2026-08-26T08:00:00.000Z",
   deletedAt: null,
 };
-const mockDatabase = {};
+const emptyWorkPatternSettings: TvoedWorkPatternSettings = {
+  workplaceCoverage: "UNKNOWN",
+  assignment: "UNKNOWN",
+  updatedAt: null,
+};
 
-jest.mock("expo-sqlite", () => ({ useSQLiteContext: () => mockDatabase }));
-
-jest.mock("@/infrastructure/database/repository", () => ({
-  deleteCalendarEntry: jest.fn(),
-  deleteTemplate: jest.fn(),
-  listCalendarEntries: jest.fn(async () => []),
-  listMonthlyTariffDecisions: jest.fn(async () => []),
-  listTemplates: jest.fn(async () => []),
+const repository: PflegeShiftRepositoryPort = {
   loadProfile: jest.fn(async () => null),
-  loadTvoedWorkPatternSettings: jest.fn(async () => ({
-    workplaceCoverage: "UNKNOWN",
-    assignment: "UNKNOWN",
-    updatedAt: null,
-  })),
-  restoreCalendarEntry: jest.fn(),
-  restoreTemplate: jest.fn(),
-  saveAppointment: jest.fn(),
-  saveMonthlyTariffDecision: jest.fn(),
-  saveProfile: jest.fn(),
-  saveShift: jest.fn(),
-  saveTemplate: jest.fn(),
-  saveTvoedWorkPatternSettings: jest.fn(),
-  swapTemplateSortOrder: jest.fn(),
-}));
+  saveProfile: jest.fn(async () => {
+    throw new Error("Unexpected saveProfile call");
+  }),
+  listTemplates: jest.fn(async () => []),
+  saveTemplate: jest.fn(async () => {
+    throw new Error("Unexpected saveTemplate call");
+  }),
+  deleteTemplate: jest.fn(async () => undefined),
+  restoreTemplate: jest.fn(async () => {
+    throw new Error("Unexpected restoreTemplate call");
+  }),
+  swapTemplateSortOrder: jest.fn(async () => {
+    throw new Error("Unexpected swapTemplateSortOrder call");
+  }),
+  listCalendarEntries: jest.fn(async () => []),
+  saveShift: jest.fn(async () => mockSavedShift),
+  saveAppointment: jest.fn(async () => {
+    throw new Error("Unexpected saveAppointment call");
+  }),
+  deleteCalendarEntry: jest.fn(async () => undefined),
+  restoreCalendarEntry: jest.fn(async () => {
+    throw new Error("Unexpected restoreCalendarEntry call");
+  }),
+  listMonthlyTariffDecisions: jest.fn(async () => []),
+  saveMonthlyTariffDecision: jest.fn(async () => {
+    throw new Error("Unexpected saveMonthlyTariffDecision call");
+  }),
+  loadTvoedWorkPatternSettings: jest.fn(async () => emptyWorkPatternSettings),
+  saveTvoedWorkPatternSettings: jest.fn(async () => {
+    throw new Error("Unexpected saveTvoedWorkPatternSettings call");
+  }),
+};
+const notifications: PflegeShiftNotificationPort = {
+  syncEntry: jest.fn(async () => undefined),
+  cancelEntry: jest.fn(async () => undefined),
+};
+const diagnostics: PflegeShiftDiagnosticsPort = {
+  record: jest.fn(),
+};
+const ports: PflegeShiftPorts = {
+  repository,
+  notifications,
+  diagnostics,
+  devTools: {
+    shouldLoadState: jest.fn(() => false),
+    listBackupMonths: jest.fn(async () => []),
+  },
+};
 
-jest.mock("@/infrastructure/database/test-backup-status-repository", () => ({
-  listTestBackupMonths: jest.fn(async () => []),
-}));
-
-jest.mock("@/infrastructure/dev-tools-policy", () => ({
-  DEV_TOOLS_AVAILABLE: false,
-  shouldLoadDevToolState: () => false,
-}));
-
-jest.mock("@/infrastructure/diagnostics", () => ({ recordDiagnostic: jest.fn() }));
-
-jest.mock("@/infrastructure/notifications/entry-notifications", () => ({
-  cancelEntryNotifications: jest.fn(),
-  syncEntryNotifications: jest.fn(),
-}));
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}
 
 function Harness() {
   const { upsertShift } = usePflegeShiftEntries();
@@ -96,12 +122,18 @@ function Harness() {
   );
 }
 
+function EntryStateHarness() {
+  const { entries } = usePflegeShiftEntries();
+  const { ready } = usePflegeShiftStatus();
+  return <Text>{ready ? entries.map((entry) => entry.title).join(", ") || "Leer" : "Lädt"}</Text>;
+}
+
 describe("PflegeShiftProvider notification feedback", () => {
   it("keeps the saved entry and publishes a non-blocking scheduling warning", async () => {
-    jest.mocked(saveShift).mockResolvedValue(mockSavedShift);
-    jest.mocked(syncEntryNotifications).mockRejectedValue(new Error("scheduler unavailable"));
+    jest.mocked(repository.saveShift).mockResolvedValue(mockSavedShift);
+    jest.mocked(notifications.syncEntry).mockRejectedValue(new Error("scheduler unavailable"));
     const screen = await render(
-      <PflegeShiftProvider>
+      <PflegeShiftProvider activeMonth="2026-08" ports={ports}>
         <Harness />
       </PflegeShiftProvider>,
     );
@@ -113,11 +145,50 @@ describe("PflegeShiftProvider notification feedback", () => {
         screen.getByText("Gespeichert. Erinnerung konnte nicht eingerichtet werden."),
       ).toBeTruthy(),
     );
-    expect(saveShift).toHaveBeenCalledTimes(1);
-    expect(syncEntryNotifications).toHaveBeenCalledWith(
-      expect.anything(),
-      mockSavedShift,
-      "Europe/Berlin",
+    expect(repository.saveShift).toHaveBeenCalledWith(mockSavedShift);
+    expect(repository.listCalendarEntries).toHaveBeenCalledWith("2025-11-01", "2027-01-31");
+    expect(notifications.syncEntry).toHaveBeenCalledWith(mockSavedShift, "Europe/Berlin");
+    expect(diagnostics.record).toHaveBeenCalledWith(
+      "notifications",
+      "SHIFT_NOTIFICATION_SYNC_FAILED",
+      expect.any(Error),
     );
+  });
+
+  it("reloads only when the annual window changes and ignores stale results", async () => {
+    const firstLoad = deferred<readonly CalendarEntry[]>();
+    const secondLoad = deferred<readonly CalendarEntry[]>();
+    const nextShift = { ...mockSavedShift, id: "shift-next", title: "Neues Fenster" };
+    jest
+      .mocked(repository.listCalendarEntries)
+      .mockImplementationOnce(() => firstLoad.promise)
+      .mockImplementationOnce(() => secondLoad.promise);
+    jest.mocked(notifications.syncEntry).mockResolvedValue(undefined);
+    const screen = await render(
+      <PflegeShiftProvider activeMonth="2026-08" ports={ports}>
+        <EntryStateHarness />
+      </PflegeShiftProvider>,
+    );
+
+    await screen.rerender(
+      <PflegeShiftProvider activeMonth="2026-09" ports={ports}>
+        <EntryStateHarness />
+      </PflegeShiftProvider>,
+    );
+    expect(repository.listCalendarEntries).toHaveBeenCalledTimes(1);
+
+    await screen.rerender(
+      <PflegeShiftProvider activeMonth="2027-01" ports={ports}>
+        <EntryStateHarness />
+      </PflegeShiftProvider>,
+    );
+    await waitFor(() => expect(repository.listCalendarEntries).toHaveBeenCalledTimes(2));
+
+    await act(async () => secondLoad.resolve([nextShift]));
+    await waitFor(() => expect(screen.getByText("Neues Fenster")).toBeTruthy());
+
+    await act(async () => firstLoad.resolve([mockSavedShift]));
+    expect(screen.queryByText("Intensivstation")).toBeNull();
+    expect(screen.getByText("Neues Fenster")).toBeTruthy();
   });
 });

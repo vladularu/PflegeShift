@@ -1,4 +1,3 @@
-import { useSQLiteContext } from "expo-sqlite";
 import React, {
   createContext,
   useCallback,
@@ -9,6 +8,13 @@ import React, {
   type PropsWithChildren,
 } from "react";
 
+import type { PflegeShiftPorts } from "@/application/pflegeshift-ports";
+import { reconcileLoadedEntryNotifications } from "@/application/pflegeshift-notifications";
+import {
+  EMPTY_WORK_PATTERN_SETTINGS,
+  entryRangeForYear,
+  loadPflegeShiftSnapshot,
+} from "@/application/pflegeshift-snapshot";
 import type {
   Appointment,
   CalendarEntry,
@@ -25,32 +31,12 @@ import type {
   UserProfile,
 } from "@/domain/types";
 import { DATA_LOAD_FAILURE_MESSAGE } from "@/domain/errors";
-import {
-  deleteCalendarEntry,
-  deleteTemplate,
-  listCalendarEntries,
-  listMonthlyTariffDecisions,
-  listTemplates,
-  loadProfile,
-  loadTvoedWorkPatternSettings,
-  saveAppointment,
-  saveMonthlyTariffDecision,
-  saveProfile,
-  saveShift,
-  saveTemplate,
-  restoreCalendarEntry,
-  restoreTemplate,
-  swapTemplateSortOrder,
-  saveTvoedWorkPatternSettings,
-} from "@/infrastructure/database/repository";
-import { listTestBackupMonths } from "@/infrastructure/database/test-backup-status-repository";
-import { DEV_TOOLS_AVAILABLE, shouldLoadDevToolState } from "@/infrastructure/dev-tools-policy";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
-import { recordDiagnostic } from "@/infrastructure/diagnostics";
-import {
-  cancelEntryNotifications,
-  syncEntryNotifications,
-} from "@/infrastructure/notifications/entry-notifications";
+
+interface PflegeShiftProviderProps extends PropsWithChildren {
+  readonly activeMonth: string;
+  readonly ports: PflegeShiftPorts;
+}
 
 interface PflegeShiftStatusValue {
   readonly ready: boolean;
@@ -141,23 +127,24 @@ function useRequiredContext<T>(context: React.Context<T | null>, name: string): 
   return value;
 }
 
-export function PflegeShiftProvider({ children }: PropsWithChildren) {
-  const db = useSQLiteContext();
-  const [ready, setReady] = useState(false);
+export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShiftProviderProps) {
+  const { repository, notifications, diagnostics, devTools } = ports;
+  const activeYear = Number(activeMonth.slice(0, 4));
+  const entryRange = useMemo(() => entryRangeForYear(activeYear), [activeYear]);
+  const entryRangeKey = `${entryRange.startDate}:${entryRange.endDate}`;
+  const [loadedEntryRangeKey, setLoadedEntryRangeKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [templates, setTemplates] = useState<readonly ShiftTemplate[]>([]);
   const [entries, setEntries] = useState<readonly CalendarEntry[]>([]);
   const [tariffDecisions, setTariffDecisions] = useState<readonly MonthlyTariffDecision[]>([]);
-  const [workPatternSettings, setWorkPatternSettings] = useState<TvoedWorkPatternSettings>({
-    workplaceCoverage: "UNKNOWN",
-    assignment: "UNKNOWN",
-    updatedAt: null,
-  });
+  const [workPatternSettings, setWorkPatternSettings] = useState(EMPTY_WORK_PATTERN_SETTINGS);
   const [testMonths, setTestMonths] = useState<readonly string[]>([]);
   const [testDataLoadRevision, setTestDataLoadRevision] = useState(0);
   const [notificationWarning, setNotificationWarning] = useState<NotificationWarning | null>(null);
+  const loadSequence = useRef(0);
   const notificationWarningSequence = useRef(0);
+  const statusReady = loadedEntryRangeKey === entryRangeKey;
 
   const publishNotificationWarning = useCallback((message: string) => {
     setNotificationWarning({ id: ++notificationWarningSequence.current, message });
@@ -168,83 +155,80 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
   }, []);
 
   const reload = useCallback(async () => {
+    const loadRevision = ++loadSequence.current;
+    setLoadedEntryRangeKey(null);
     try {
-      const [nextProfile, nextTemplates, nextEntries, nextDecisions, nextWorkPatternSettings] =
-        await Promise.all([
-          loadProfile(db),
-          listTemplates(db),
-          listCalendarEntries(db),
-          listMonthlyTariffDecisions(db),
-          loadTvoedWorkPatternSettings(db),
-        ]);
-      setProfile(nextProfile);
-      setTemplates(nextTemplates);
-      setEntries(nextEntries);
-      setTariffDecisions(nextDecisions);
-      setWorkPatternSettings(nextWorkPatternSettings);
+      const snapshot = await loadPflegeShiftSnapshot(repository, entryRange);
+      if (loadRevision !== loadSequence.current) return;
+      setProfile(snapshot.profile);
+      setTemplates(snapshot.templates);
+      setEntries(snapshot.entries);
+      setTariffDecisions(snapshot.tariffDecisions);
+      setWorkPatternSettings(snapshot.workPatternSettings);
       setTestDataLoadRevision((current) => current + 1);
       setError(null);
-      const notificationTimeZone = nextProfile?.timeZone ?? "Europe/Berlin";
-      void Promise.allSettled(
-        nextEntries
-          .filter(
-            (entry) =>
-              entry.notification != null || (entry.kind === "SHIFT" && entry.alarmEnabled === true),
-          )
-          .map((entry) => syncEntryNotifications(db, entry, notificationTimeZone)),
-      ).then((results) => {
-        let failed = false;
-        for (const result of results) {
-          if (result.status === "rejected") {
-            failed = true;
-            recordDiagnostic("notifications", "ENTRY_NOTIFICATION_RECONCILE_FAILED", result.reason);
-          }
-        }
+      const notificationTimeZone = snapshot.profile?.timeZone ?? "Europe/Berlin";
+      void reconcileLoadedEntryNotifications(snapshot.entries, notificationTimeZone, {
+        notifications,
+        diagnostics,
+      }).then((failed) => {
+        if (loadRevision !== loadSequence.current) return;
         if (failed) {
           publishNotificationWarning("Erinnerungen konnten nicht vollständig aktualisiert werden.");
         }
       });
     } catch (loadError) {
-      recordDiagnostic("provider", "PROVIDER_RELOAD_FAILED", loadError);
+      if (loadRevision !== loadSequence.current) return;
+      diagnostics.record("provider", "PROVIDER_RELOAD_FAILED", loadError);
       setError(DATA_LOAD_FAILURE_MESSAGE);
     } finally {
-      setReady(true);
+      if (loadRevision === loadSequence.current) {
+        setLoadedEntryRangeKey(entryRangeKey);
+      }
     }
-  }, [db, publishNotificationWarning]);
+  }, [
+    diagnostics,
+    entryRange,
+    entryRangeKey,
+    notifications,
+    publishNotificationWarning,
+    repository,
+  ]);
 
   useEffect(() => {
     void reload();
   }, [reload]);
 
   useEffect(() => {
-    if (!shouldLoadDevToolState(DEV_TOOLS_AVAILABLE, ready, testDataLoadRevision)) return;
+    if (!devTools.shouldLoadState(statusReady, testDataLoadRevision)) return;
     let active = true;
-    void listTestBackupMonths(db)
+    void devTools
+      .listBackupMonths()
       .then((months) => {
         if (active) setTestMonths(months);
       })
       .catch((loadError) => {
-        recordDiagnostic("dev-tools", "DEV_BACKUP_STATUS_FAILED", loadError);
+        diagnostics.record("dev-tools", "DEV_BACKUP_STATUS_FAILED", loadError);
         // Testdaten sind eine nachgelagerte Entwickleranzeige und blockieren
         // weder den Kalenderstart noch vorhandene Nutzerdaten.
       });
     return () => {
       active = false;
     };
-  }, [db, ready, testDataLoadRevision]);
+  }, [devTools, diagnostics, statusReady, testDataLoadRevision]);
 
   const updateProfile = useCallback(
     async (input: SaveProfileInput) => {
-      const saved = await saveProfile(db, input);
+      const saved = await repository.saveProfile(input);
       setProfile(saved);
       return saved;
     },
-    [db],
+    [repository],
   );
 
   const upsertTemplate = useCallback(
     async (input: SaveShiftTemplateInput) => {
-      const saved = await saveTemplate(db, input);
+      const saved = await repository.saveTemplate(input);
       setTemplates((current) =>
         replaceById(current, saved)
           .filter((template) => template.deletedAt === null)
@@ -266,26 +250,26 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       );
       return saved;
     },
-    [db],
+    [repository],
   );
 
   const removeTemplate = useCallback(
     async (template: ShiftTemplate) => {
-      await deleteTemplate(db, template.id, template.revision);
+      await repository.deleteTemplate(template.id, template.revision);
       setTemplates((current) => current.filter((item) => item.id !== template.id));
     },
-    [db],
+    [repository],
   );
 
   const restoreRemovedTemplate = useCallback(
     async (template: ShiftTemplate) => {
-      const restored = await restoreTemplate(db, template);
+      const restored = await repository.restoreTemplate(template);
       setTemplates((current) =>
         [...replaceById(current, restored)].sort((left, right) => left.sortOrder - right.sortOrder),
       );
       return restored;
     },
-    [db],
+    [repository],
   );
 
   const moveTemplate = useCallback(
@@ -295,39 +279,39 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       if (currentIndex < 0 || targetIndex < 0 || targetIndex >= templates.length) return;
 
       const target = templates[targetIndex];
-      const swapped = await swapTemplateSortOrder(db, template, target);
+      const swapped = await repository.swapTemplateSortOrder(template, target);
       setTemplates((current) =>
         current
           .map((item) => swapped.find((saved) => saved.id === item.id) ?? item)
           .sort((left, right) => left.sortOrder - right.sortOrder),
       );
     },
-    [db, templates],
+    [repository, templates],
   );
 
   const upsertShift = useCallback(
     async (input: SaveShiftInput) => {
-      const saved = await saveShift(db, input);
+      const saved = await repository.saveShift(input);
       setEntries((current) => upsertSortedCalendarEntry(current, saved));
       try {
-        await syncEntryNotifications(db, saved, profile?.timeZone ?? "Europe/Berlin");
+        await notifications.syncEntry(saved, profile?.timeZone ?? "Europe/Berlin");
       } catch (notificationError) {
-        recordDiagnostic("notifications", "SHIFT_NOTIFICATION_SYNC_FAILED", notificationError);
+        diagnostics.record("notifications", "SHIFT_NOTIFICATION_SYNC_FAILED", notificationError);
         publishNotificationWarning("Gespeichert. Erinnerung konnte nicht eingerichtet werden.");
       }
       return saved;
     },
-    [db, profile, publishNotificationWarning],
+    [diagnostics, notifications, profile, publishNotificationWarning, repository],
   );
 
   const upsertAppointment = useCallback(
     async (input: SaveAppointmentInput) => {
-      const saved = await saveAppointment(db, input);
+      const saved = await repository.saveAppointment(input);
       setEntries((current) => upsertSortedCalendarEntry(current, saved));
       try {
-        await syncEntryNotifications(db, saved, profile?.timeZone ?? "Europe/Berlin");
+        await notifications.syncEntry(saved, profile?.timeZone ?? "Europe/Berlin");
       } catch (notificationError) {
-        recordDiagnostic(
+        diagnostics.record(
           "notifications",
           "APPOINTMENT_NOTIFICATION_SYNC_FAILED",
           notificationError,
@@ -336,37 +320,37 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       }
       return saved;
     },
-    [db, profile, publishNotificationWarning],
+    [diagnostics, notifications, profile, publishNotificationWarning, repository],
   );
 
   const removeEntry = useCallback(
     async (entry: CalendarEntry) => {
-      await deleteCalendarEntry(db, entry);
+      await repository.deleteCalendarEntry(entry);
       setEntries((current) => current.filter((item) => item.id !== entry.id));
       try {
-        await cancelEntryNotifications(db, entry);
+        await notifications.cancelEntry(entry);
       } catch (notificationError) {
-        recordDiagnostic("notifications", "ENTRY_NOTIFICATION_CANCEL_FAILED", notificationError);
+        diagnostics.record("notifications", "ENTRY_NOTIFICATION_CANCEL_FAILED", notificationError);
         publishNotificationWarning(
           "Gelöscht. Eine geplante Erinnerung konnte nicht entfernt werden.",
         );
       }
     },
-    [db, publishNotificationWarning],
+    [diagnostics, notifications, publishNotificationWarning, repository],
   );
 
   const restoreEntry = useCallback(
     async (entry: CalendarEntry) => {
-      const restored = await restoreCalendarEntry(db, entry);
+      const restored = await repository.restoreCalendarEntry(entry);
       setEntries((current) => upsertSortedCalendarEntry(current, restored));
       return restored;
     },
-    [db],
+    [repository],
   );
 
   const upsertTariffDecision = useCallback(
     async (input: SaveMonthlyTariffDecisionInput) => {
-      const saved = await saveMonthlyTariffDecision(db, input);
+      const saved = await repository.saveMonthlyTariffDecision(input);
       setTariffDecisions((current) =>
         [...current.filter((item) => item.month !== saved.month), saved].sort((left, right) =>
           left.month.localeCompare(right.month),
@@ -374,21 +358,21 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       );
       return saved;
     },
-    [db],
+    [repository],
   );
 
   const updateWorkPatternSettings = useCallback(
     async (input: SaveTvoedWorkPatternSettingsInput) => {
-      const saved = await saveTvoedWorkPatternSettings(db, input);
+      const saved = await repository.saveTvoedWorkPatternSettings(input);
       setWorkPatternSettings(saved);
       return saved;
     },
-    [db],
+    [repository],
   );
 
   const statusValue = useMemo<PflegeShiftStatusValue>(
-    () => ({ ready, error, notificationWarning, clearNotificationWarning, reload }),
-    [clearNotificationWarning, error, notificationWarning, ready, reload],
+    () => ({ ready: statusReady, error, notificationWarning, clearNotificationWarning, reload }),
+    [clearNotificationWarning, error, notificationWarning, reload, statusReady],
   );
   const profileValue = useMemo<PflegeShiftProfileValue>(
     () => ({ profile, updateProfile }),

@@ -5,13 +5,10 @@ import {
   ActionSheetIOS,
   Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
   useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
   type TextInputProps,
 } from "react-native";
 import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
@@ -55,6 +52,7 @@ import { DestructiveFormAction, FormScreen, FormStatus, HeaderSaveAction } from 
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
 import { LabeledSwitch } from "@/ui/labeled-switch";
+import { PauseWheel } from "@/ui/pause-wheel";
 import { ShiftSymbol } from "@/ui/shift-symbol";
 import { ShiftSymbolPicker } from "@/ui/shift-symbol-picker";
 import { NotificationSheet, notificationLabel } from "@/features/day-editor/entry-options";
@@ -78,30 +76,6 @@ const TEMPLATE_TYPES: readonly ShiftType[] = [
   "FREE",
   "CUSTOM",
 ];
-
-const PAUSE_OPTIONS = [0, 15, 30, 45, 60] as const;
-const PAUSE_WHEEL_ITEM_HEIGHT = 44;
-const PAUSE_WHEEL_PADDING = PAUSE_WHEEL_ITEM_HEIGHT * 2;
-
-function pauseIndexForMinutes(minutes: number): number {
-  const exactIndex = PAUSE_OPTIONS.findIndex((option) => option === minutes);
-  if (exactIndex >= 0) return exactIndex;
-  return PAUSE_OPTIONS.reduce<number>(
-    (closestIndex, option, index) =>
-      Math.abs(option - minutes) < Math.abs((PAUSE_OPTIONS[closestIndex] ?? 0) - minutes)
-        ? index
-        : closestIndex,
-    0,
-  );
-}
-
-function pauseMinutesForOffset(offsetY: number): number {
-  const index = Math.max(
-    0,
-    Math.min(PAUSE_OPTIONS.length - 1, Math.round(offsetY / PAUSE_WHEEL_ITEM_HEIGHT)),
-  );
-  return PAUSE_OPTIONS[index];
-}
 
 function isAbsenceType(type: ShiftType): boolean {
   return type === "VACATION" || type === "SICK" || type === "FREE";
@@ -349,29 +323,13 @@ function CompactPausePicker({
 }) {
   const palette = usePalette();
   const minutes = Number(value) || 0;
-  const initialIndex = pauseIndexForMinutes(minutes);
   const [expanded, setExpanded] = useState(false);
-  const [previewMinutes, setPreviewMinutes] = useState<number>(PAUSE_OPTIONS[initialIndex]);
-  const [initialOffset, setInitialOffset] = useState(initialIndex * PAUSE_WHEEL_ITEM_HEIGHT);
-  const scrollRef = useRef<ScrollView>(null);
-
-  const commitAtOffset = useCallback(
-    (offsetY: number) => {
-      const nextMinutes = pauseMinutesForOffset(offsetY);
-      setPreviewMinutes(nextMinutes);
-      onChange(String(nextMinutes));
-    },
-    [onChange],
-  );
 
   function togglePicker() {
     if (expanded) {
       setExpanded(false);
       return;
     }
-    const nextIndex = pauseIndexForMinutes(minutes);
-    setPreviewMinutes(PAUSE_OPTIONS[nextIndex]);
-    setInitialOffset(nextIndex * PAUSE_WHEEL_ITEM_HEIGHT);
     setExpanded(true);
   }
 
@@ -430,79 +388,12 @@ function CompactPausePicker({
             style={{ alignItems: "center", paddingVertical: SPACING.sm }}
             testID="template-pause-popover"
           >
-            <View style={{ width: 210, height: 220 }}>
-              <View
-                pointerEvents="none"
-                style={{
-                  position: "absolute",
-                  top: PAUSE_WHEEL_PADDING,
-                  right: 12,
-                  left: 12,
-                  height: PAUSE_WHEEL_ITEM_HEIGHT,
-                  borderRadius: RADII.control,
-                  backgroundColor: palette.surfaceMuted,
-                }}
-                testID="template-pause-selection"
-              />
-              <ScrollView
-                accessibilityLabel="Pausendauer in 15-Minuten-Schritten"
-                accessibilityRole="radiogroup"
-                contentContainerStyle={{ paddingVertical: PAUSE_WHEEL_PADDING }}
-                contentOffset={{ x: 0, y: initialOffset }}
-                decelerationRate={0.97}
-                onMomentumScrollEnd={(event: NativeSyntheticEvent<NativeScrollEvent>) =>
-                  commitAtOffset(event.nativeEvent.contentOffset.y)
-                }
-                onScrollEndDrag={(event: NativeSyntheticEvent<NativeScrollEvent>) =>
-                  commitAtOffset(
-                    event.nativeEvent.targetContentOffset?.y ?? event.nativeEvent.contentOffset.y,
-                  )
-                }
-                ref={scrollRef}
-                scrollEventThrottle={16}
-                showsVerticalScrollIndicator={false}
-                snapToAlignment="start"
-                snapToInterval={PAUSE_WHEEL_ITEM_HEIGHT}
-                testID="template-pause-wheel"
-              >
-                {PAUSE_OPTIONS.map((option, index) => {
-                  const selected = previewMinutes === option;
-                  return (
-                    <Pressable
-                      key={option}
-                      accessibilityLabel={`${option} Minuten`}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      onPress={() => {
-                        setPreviewMinutes(option);
-                        onChange(String(option));
-                        scrollRef.current?.scrollTo?.({
-                          animated: true,
-                          y: index * PAUSE_WHEEL_ITEM_HEIGHT,
-                        });
-                      }}
-                      style={{
-                        height: PAUSE_WHEEL_ITEM_HEIGHT,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                        style={{
-                          color: palette.text,
-                          ...TYPOGRAPHY.body,
-                          fontWeight: selected ? "600" : "400",
-                          fontVariant: ["tabular-nums"],
-                        }}
-                      >
-                        {option} Min.
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
+            <PauseWheel
+              onChange={(nextMinutes) => onChange(String(nextMinutes))}
+              selectionTestID="template-pause-selection"
+              testID="template-pause-wheel"
+              value={minutes}
+            />
           </Animated.View>
         </>
       ) : null}
