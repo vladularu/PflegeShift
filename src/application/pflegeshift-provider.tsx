@@ -1,4 +1,3 @@
-import { useSQLiteContext } from "expo-sqlite";
 import React, {
   createContext,
   useCallback,
@@ -9,6 +8,7 @@ import React, {
   type PropsWithChildren,
 } from "react";
 
+import type { PflegeShiftPorts } from "@/application/pflegeshift-ports";
 import type {
   Appointment,
   CalendarEntry,
@@ -25,32 +25,11 @@ import type {
   UserProfile,
 } from "@/domain/types";
 import { DATA_LOAD_FAILURE_MESSAGE } from "@/domain/errors";
-import {
-  deleteCalendarEntry,
-  deleteTemplate,
-  listCalendarEntries,
-  listMonthlyTariffDecisions,
-  listTemplates,
-  loadProfile,
-  loadTvoedWorkPatternSettings,
-  saveAppointment,
-  saveMonthlyTariffDecision,
-  saveProfile,
-  saveShift,
-  saveTemplate,
-  restoreCalendarEntry,
-  restoreTemplate,
-  swapTemplateSortOrder,
-  saveTvoedWorkPatternSettings,
-} from "@/infrastructure/database/repository";
-import { listTestBackupMonths } from "@/infrastructure/database/test-backup-status-repository";
-import { DEV_TOOLS_AVAILABLE, shouldLoadDevToolState } from "@/infrastructure/dev-tools-policy";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
-import { recordDiagnostic } from "@/infrastructure/diagnostics";
-import {
-  cancelEntryNotifications,
-  syncEntryNotifications,
-} from "@/infrastructure/notifications/entry-notifications";
+
+interface PflegeShiftProviderProps extends PropsWithChildren {
+  readonly ports: PflegeShiftPorts;
+}
 
 interface PflegeShiftStatusValue {
   readonly ready: boolean;
@@ -141,8 +120,8 @@ function useRequiredContext<T>(context: React.Context<T | null>, name: string): 
   return value;
 }
 
-export function PflegeShiftProvider({ children }: PropsWithChildren) {
-  const db = useSQLiteContext();
+export function PflegeShiftProvider({ children, ports }: PflegeShiftProviderProps) {
+  const { repository, notifications, diagnostics, devTools } = ports;
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -171,11 +150,11 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
     try {
       const [nextProfile, nextTemplates, nextEntries, nextDecisions, nextWorkPatternSettings] =
         await Promise.all([
-          loadProfile(db),
-          listTemplates(db),
-          listCalendarEntries(db),
-          listMonthlyTariffDecisions(db),
-          loadTvoedWorkPatternSettings(db),
+          repository.loadProfile(),
+          repository.listTemplates(),
+          repository.listCalendarEntries(),
+          repository.listMonthlyTariffDecisions(),
+          repository.loadTvoedWorkPatternSettings(),
         ]);
       setProfile(nextProfile);
       setTemplates(nextTemplates);
@@ -191,13 +170,17 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
             (entry) =>
               entry.notification != null || (entry.kind === "SHIFT" && entry.alarmEnabled === true),
           )
-          .map((entry) => syncEntryNotifications(db, entry, notificationTimeZone)),
+          .map((entry) => notifications.syncEntry(entry, notificationTimeZone)),
       ).then((results) => {
         let failed = false;
         for (const result of results) {
           if (result.status === "rejected") {
             failed = true;
-            recordDiagnostic("notifications", "ENTRY_NOTIFICATION_RECONCILE_FAILED", result.reason);
+            diagnostics.record(
+              "notifications",
+              "ENTRY_NOTIFICATION_RECONCILE_FAILED",
+              result.reason,
+            );
           }
         }
         if (failed) {
@@ -205,46 +188,47 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
         }
       });
     } catch (loadError) {
-      recordDiagnostic("provider", "PROVIDER_RELOAD_FAILED", loadError);
+      diagnostics.record("provider", "PROVIDER_RELOAD_FAILED", loadError);
       setError(DATA_LOAD_FAILURE_MESSAGE);
     } finally {
       setReady(true);
     }
-  }, [db, publishNotificationWarning]);
+  }, [diagnostics, notifications, publishNotificationWarning, repository]);
 
   useEffect(() => {
     void reload();
   }, [reload]);
 
   useEffect(() => {
-    if (!shouldLoadDevToolState(DEV_TOOLS_AVAILABLE, ready, testDataLoadRevision)) return;
+    if (!devTools.shouldLoadState(ready, testDataLoadRevision)) return;
     let active = true;
-    void listTestBackupMonths(db)
+    void devTools
+      .listBackupMonths()
       .then((months) => {
         if (active) setTestMonths(months);
       })
       .catch((loadError) => {
-        recordDiagnostic("dev-tools", "DEV_BACKUP_STATUS_FAILED", loadError);
+        diagnostics.record("dev-tools", "DEV_BACKUP_STATUS_FAILED", loadError);
         // Testdaten sind eine nachgelagerte Entwickleranzeige und blockieren
         // weder den Kalenderstart noch vorhandene Nutzerdaten.
       });
     return () => {
       active = false;
     };
-  }, [db, ready, testDataLoadRevision]);
+  }, [devTools, diagnostics, ready, testDataLoadRevision]);
 
   const updateProfile = useCallback(
     async (input: SaveProfileInput) => {
-      const saved = await saveProfile(db, input);
+      const saved = await repository.saveProfile(input);
       setProfile(saved);
       return saved;
     },
-    [db],
+    [repository],
   );
 
   const upsertTemplate = useCallback(
     async (input: SaveShiftTemplateInput) => {
-      const saved = await saveTemplate(db, input);
+      const saved = await repository.saveTemplate(input);
       setTemplates((current) =>
         replaceById(current, saved)
           .filter((template) => template.deletedAt === null)
@@ -266,26 +250,26 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       );
       return saved;
     },
-    [db],
+    [repository],
   );
 
   const removeTemplate = useCallback(
     async (template: ShiftTemplate) => {
-      await deleteTemplate(db, template.id, template.revision);
+      await repository.deleteTemplate(template.id, template.revision);
       setTemplates((current) => current.filter((item) => item.id !== template.id));
     },
-    [db],
+    [repository],
   );
 
   const restoreRemovedTemplate = useCallback(
     async (template: ShiftTemplate) => {
-      const restored = await restoreTemplate(db, template);
+      const restored = await repository.restoreTemplate(template);
       setTemplates((current) =>
         [...replaceById(current, restored)].sort((left, right) => left.sortOrder - right.sortOrder),
       );
       return restored;
     },
-    [db],
+    [repository],
   );
 
   const moveTemplate = useCallback(
@@ -295,39 +279,39 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       if (currentIndex < 0 || targetIndex < 0 || targetIndex >= templates.length) return;
 
       const target = templates[targetIndex];
-      const swapped = await swapTemplateSortOrder(db, template, target);
+      const swapped = await repository.swapTemplateSortOrder(template, target);
       setTemplates((current) =>
         current
           .map((item) => swapped.find((saved) => saved.id === item.id) ?? item)
           .sort((left, right) => left.sortOrder - right.sortOrder),
       );
     },
-    [db, templates],
+    [repository, templates],
   );
 
   const upsertShift = useCallback(
     async (input: SaveShiftInput) => {
-      const saved = await saveShift(db, input);
+      const saved = await repository.saveShift(input);
       setEntries((current) => upsertSortedCalendarEntry(current, saved));
       try {
-        await syncEntryNotifications(db, saved, profile?.timeZone ?? "Europe/Berlin");
+        await notifications.syncEntry(saved, profile?.timeZone ?? "Europe/Berlin");
       } catch (notificationError) {
-        recordDiagnostic("notifications", "SHIFT_NOTIFICATION_SYNC_FAILED", notificationError);
+        diagnostics.record("notifications", "SHIFT_NOTIFICATION_SYNC_FAILED", notificationError);
         publishNotificationWarning("Gespeichert. Erinnerung konnte nicht eingerichtet werden.");
       }
       return saved;
     },
-    [db, profile, publishNotificationWarning],
+    [diagnostics, notifications, profile, publishNotificationWarning, repository],
   );
 
   const upsertAppointment = useCallback(
     async (input: SaveAppointmentInput) => {
-      const saved = await saveAppointment(db, input);
+      const saved = await repository.saveAppointment(input);
       setEntries((current) => upsertSortedCalendarEntry(current, saved));
       try {
-        await syncEntryNotifications(db, saved, profile?.timeZone ?? "Europe/Berlin");
+        await notifications.syncEntry(saved, profile?.timeZone ?? "Europe/Berlin");
       } catch (notificationError) {
-        recordDiagnostic(
+        diagnostics.record(
           "notifications",
           "APPOINTMENT_NOTIFICATION_SYNC_FAILED",
           notificationError,
@@ -336,37 +320,37 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       }
       return saved;
     },
-    [db, profile, publishNotificationWarning],
+    [diagnostics, notifications, profile, publishNotificationWarning, repository],
   );
 
   const removeEntry = useCallback(
     async (entry: CalendarEntry) => {
-      await deleteCalendarEntry(db, entry);
+      await repository.deleteCalendarEntry(entry);
       setEntries((current) => current.filter((item) => item.id !== entry.id));
       try {
-        await cancelEntryNotifications(db, entry);
+        await notifications.cancelEntry(entry);
       } catch (notificationError) {
-        recordDiagnostic("notifications", "ENTRY_NOTIFICATION_CANCEL_FAILED", notificationError);
+        diagnostics.record("notifications", "ENTRY_NOTIFICATION_CANCEL_FAILED", notificationError);
         publishNotificationWarning(
           "Gelöscht. Eine geplante Erinnerung konnte nicht entfernt werden.",
         );
       }
     },
-    [db, publishNotificationWarning],
+    [diagnostics, notifications, publishNotificationWarning, repository],
   );
 
   const restoreEntry = useCallback(
     async (entry: CalendarEntry) => {
-      const restored = await restoreCalendarEntry(db, entry);
+      const restored = await repository.restoreCalendarEntry(entry);
       setEntries((current) => upsertSortedCalendarEntry(current, restored));
       return restored;
     },
-    [db],
+    [repository],
   );
 
   const upsertTariffDecision = useCallback(
     async (input: SaveMonthlyTariffDecisionInput) => {
-      const saved = await saveMonthlyTariffDecision(db, input);
+      const saved = await repository.saveMonthlyTariffDecision(input);
       setTariffDecisions((current) =>
         [...current.filter((item) => item.month !== saved.month), saved].sort((left, right) =>
           left.month.localeCompare(right.month),
@@ -374,16 +358,16 @@ export function PflegeShiftProvider({ children }: PropsWithChildren) {
       );
       return saved;
     },
-    [db],
+    [repository],
   );
 
   const updateWorkPatternSettings = useCallback(
     async (input: SaveTvoedWorkPatternSettingsInput) => {
-      const saved = await saveTvoedWorkPatternSettings(db, input);
+      const saved = await repository.saveTvoedWorkPatternSettings(input);
       setWorkPatternSettings(saved);
       return saved;
     },
-    [db],
+    [repository],
   );
 
   const statusValue = useMemo<PflegeShiftStatusValue>(

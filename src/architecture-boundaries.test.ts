@@ -22,9 +22,10 @@ function aliasedImports(source: string): readonly string[] {
 
 describe("architecture boundaries", () => {
   it.each([
-    ["domain", /^(application|features|infrastructure|navigation|theme|ui)\//],
-    ["engine", /^(application|features|infrastructure|navigation|theme|ui)\//],
-    ["infrastructure", /^(application|features|navigation|theme|ui)\//],
+    ["domain", /^(application|composition|features|infrastructure|navigation|theme|ui)\//],
+    ["engine", /^(application|composition|features|infrastructure|navigation|theme|ui)\//],
+    ["application", /^(composition|features|infrastructure|navigation|theme|ui)\//],
+    ["infrastructure", /^(application|composition|features|navigation|theme|ui)\//],
   ] as const)("keeps %s independent from outer layers", (layer, forbidden) => {
     const violations = sourceFiles(join(SOURCE_ROOT, layer)).flatMap((file) =>
       aliasedImports(readFileSync(file, "utf8"))
@@ -35,30 +36,12 @@ describe("architecture boundaries", () => {
     expect(violations).toEqual([]);
   });
 
-  it("does not grow the current application-to-infrastructure coupling", () => {
-    const allowedDependencies = new Set([
-      "application/pflegeshift-provider.tsx -> infrastructure/database/repository",
-      "application/pflegeshift-provider.tsx -> infrastructure/database/test-backup-status-repository",
-      "application/pflegeshift-provider.tsx -> infrastructure/dev-tools-policy",
-      "application/pflegeshift-provider.tsx -> infrastructure/diagnostics",
-      "application/pflegeshift-provider.tsx -> infrastructure/notifications/entry-notifications",
-    ]);
-    const violations = sourceFiles(join(SOURCE_ROOT, "application")).flatMap((file) =>
-      aliasedImports(readFileSync(file, "utf8"))
-        .filter((dependency) => dependency.startsWith("infrastructure/"))
-        .map(
-          (dependency) => `${relative(SOURCE_ROOT, file).replaceAll("\\", "/")} -> ${dependency}`,
-        )
-        .filter((dependency) => !allowedDependencies.has(dependency)),
-    );
-
-    expect(violations).toEqual([]);
-  });
-
   it.each([
     ["engine/compliance.ts", 800],
     ["engine/pay.ts", 650],
-    ["application/pflegeshift-provider.tsx", 462],
+    ["application/pflegeshift-provider.tsx", 446],
+    ["composition/create-pflegeshift-ports.ts", 66],
+    ["composition/pflegeshift-runtime-provider.tsx", 13],
     ["features/templates/template-editor-screen.tsx", 948],
     ["features/day-editor/day-editor-form.tsx", 886],
     ["features/analysis/analysis-overview-cards.tsx", 818],
