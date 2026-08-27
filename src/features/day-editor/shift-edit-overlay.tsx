@@ -1,26 +1,7 @@
-/* eslint-disable react-hooks/immutability -- Reanimated SharedValue.value is intentionally mutable on the UI thread. */
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useCallback, useRef, useState } from "react";
-import {
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from "react-native";
-import Animated, {
-  Extrapolation,
-  FadeIn,
-  interpolate,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  type SharedValue,
-} from "react-native-reanimated";
+import { useCallback, useState } from "react";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { SHIFT_TYPE_LABELS, type EntryNotification, type ShiftType } from "@/domain/types";
 import { EntryEditOverlayFrame } from "@/features/day-editor/entry-edit-overlay-frame";
@@ -33,32 +14,10 @@ import { MOTION } from "@/theme/motion";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { TimePickerField } from "@/ui/form-controls";
+import { PauseWheel } from "@/ui/pause-wheel";
 import { ShiftSymbol } from "@/ui/shift-symbol";
 
 type Popup = "PAUSE" | "TYPE" | null;
-
-const PAUSE_OPTIONS = [0, 15, 30, 45, 60] as const;
-const PAUSE_WHEEL_ITEM_HEIGHT = 44;
-const PAUSE_WHEEL_PADDING = PAUSE_WHEEL_ITEM_HEIGHT * 2;
-
-function pauseIndexForOffset(offsetY: number): number {
-  return Math.max(
-    0,
-    Math.min(PAUSE_OPTIONS.length - 1, Math.round(offsetY / PAUSE_WHEEL_ITEM_HEIGHT)),
-  );
-}
-
-function pauseIndexForMinutes(minutes: number): number {
-  const exactIndex = PAUSE_OPTIONS.findIndex((option) => option === minutes);
-  if (exactIndex >= 0) return exactIndex;
-  return PAUSE_OPTIONS.reduce<number>(
-    (closestIndex, option, index) =>
-      Math.abs(option - minutes) < Math.abs((PAUSE_OPTIONS[closestIndex] ?? 0) - minutes)
-        ? index
-        : closestIndex,
-    0,
-  );
-}
 
 export function shouldDismissShiftEditOverlay(translationY: number, velocityY: number): boolean {
   "worklet";
@@ -166,64 +125,6 @@ function PauseRow({ onPress, value }: { readonly onPress: () => void; readonly v
   );
 }
 
-function PauseWheelOption({
-  index,
-  minutes,
-  onPress,
-  scrollOffset,
-  selected,
-}: {
-  readonly index: number;
-  readonly minutes: number;
-  readonly onPress: () => void;
-  readonly scrollOffset: SharedValue<number>;
-  readonly selected: boolean;
-}) {
-  const palette = usePalette();
-  const motionStyle = useAnimatedStyle(() => {
-    const distance = Math.abs(scrollOffset.value - index * PAUSE_WHEEL_ITEM_HEIGHT);
-    return {
-      opacity: interpolate(
-        distance,
-        [0, PAUSE_WHEEL_ITEM_HEIGHT, PAUSE_WHEEL_ITEM_HEIGHT * 2],
-        [1, 0.56, 0.26],
-        Extrapolation.CLAMP,
-      ),
-      transform: [
-        {
-          scale: interpolate(
-            distance,
-            [0, PAUSE_WHEEL_ITEM_HEIGHT, PAUSE_WHEEL_ITEM_HEIGHT * 2],
-            [1, 0.96, 0.92],
-            Extrapolation.CLAMP,
-          ),
-        },
-      ],
-    };
-  }, [index]);
-
-  return (
-    <Pressable
-      accessibilityLabel={`${minutes} Minuten`}
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={styles.pauseWheelItem}
-    >
-      <Animated.Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        style={[
-          styles.pauseWheelText,
-          { color: palette.text, fontWeight: selected ? "600" : "400" },
-          motionStyle,
-        ]}
-      >
-        {minutes} Min.
-      </Animated.Text>
-    </Pressable>
-  );
-}
-
 export function ShiftEditOverlay({
   alarmEnabled,
   breakMinutes,
@@ -288,54 +189,8 @@ export function ShiftEditOverlay({
   const palette = usePalette();
   const [popup, setPopup] = useState<Popup>(null);
   const [notificationVisible, setNotificationVisible] = useState(false);
-  const pauseMinutes = Number(breakMinutes) || 0;
-  const initialPauseIndex = pauseIndexForMinutes(pauseMinutes);
-  const [pausePreviewMinutes, setPausePreviewMinutes] = useState<number>(
-    PAUSE_OPTIONS[initialPauseIndex],
-  );
-  const [pauseInitialOffset, setPauseInitialOffset] = useState(
-    initialPauseIndex * PAUSE_WHEEL_ITEM_HEIGHT,
-  );
   const headerColor = accessibleChipBackgroundColor(shiftColor);
   const serviceLabel = shiftType === "CUSTOM" ? shiftTitle : SHIFT_TYPE_LABELS[shiftType];
-  const pauseScrollRef = useRef<ScrollView>(null);
-  const pausePreviewIndexRef = useRef(initialPauseIndex);
-  const pauseScrollOffset = useSharedValue(initialPauseIndex * PAUSE_WHEEL_ITEM_HEIGHT);
-
-  const commitPauseAtOffset = useCallback(
-    (offsetY: number, notifyUnchanged = true) => {
-      const index = pauseIndexForOffset(offsetY);
-      const changed = pausePreviewIndexRef.current !== index;
-      if (changed) {
-        pausePreviewIndexRef.current = index;
-        setPausePreviewMinutes(PAUSE_OPTIONS[index]);
-      }
-      if (changed || notifyUnchanged) onBreakMinutesChange(PAUSE_OPTIONS[index]);
-    },
-    [onBreakMinutesChange],
-  );
-
-  const handlePauseScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      pauseScrollOffset.value = event.contentOffset.y;
-    },
-  });
-
-  const handlePauseScrollEndDrag = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      commitPauseAtOffset(
-        event.nativeEvent.targetContentOffset?.y ?? event.nativeEvent.contentOffset.y,
-      );
-    },
-    [commitPauseAtOffset],
-  );
-
-  const handlePauseMomentumEnd = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      commitPauseAtOffset(event.nativeEvent.contentOffset.y, false);
-    },
-    [commitPauseAtOffset],
-  );
 
   const openPausePicker = useCallback(() => {
     if (Platform.OS !== "ios") {
@@ -346,14 +201,8 @@ export function ShiftEditOverlay({
       setPopup(null);
       return;
     }
-    const index = pauseIndexForMinutes(Number(breakMinutes) || 0);
-    const offset = index * PAUSE_WHEEL_ITEM_HEIGHT;
-    pausePreviewIndexRef.current = index;
-    pauseScrollOffset.value = offset;
-    setPausePreviewMinutes(PAUSE_OPTIONS[index]);
-    setPauseInitialOffset(offset);
     setPopup("PAUSE");
-  }, [breakMinutes, onBreakPress, pauseScrollOffset, popup]);
+  }, [onBreakPress, popup]);
 
   const openNotificationPicker = useCallback(() => {
     if (Platform.OS !== "ios") {
@@ -483,50 +332,14 @@ export function ShiftEditOverlay({
               ]}
               testID="shift-edit-pause-popover"
             >
-              <View
-                pointerEvents="none"
-                style={[styles.pauseWheelSelection, { backgroundColor: palette.surfaceMuted }]}
-                testID="shift-edit-pause-selection"
-              />
-              <Animated.ScrollView
-                accessibilityLabel="Pausendauer in 15-Minuten-Schritten"
-                accessibilityRole="radiogroup"
-                contentContainerStyle={styles.pauseWheelContent}
-                contentOffset={{
-                  x: 0,
-                  y: pauseInitialOffset,
-                }}
-                decelerationRate={0.97}
-                onMomentumScrollEnd={handlePauseMomentumEnd}
-                onScroll={handlePauseScroll}
-                onScrollEndDrag={handlePauseScrollEndDrag}
-                ref={pauseScrollRef}
-                scrollEventThrottle={16}
-                showsVerticalScrollIndicator={false}
-                snapToAlignment="start"
-                snapToInterval={PAUSE_WHEEL_ITEM_HEIGHT}
-                style={styles.pauseWheel}
+              <PauseWheel
+                animatedOptions
+                onChange={onBreakMinutesChange}
+                selectionStyle={styles.pauseWheelSelection}
+                selectionTestID="shift-edit-pause-selection"
                 testID="shift-edit-pause-wheel"
-              >
-                {PAUSE_OPTIONS.map((minutes, index) => (
-                  <PauseWheelOption
-                    key={minutes}
-                    index={index}
-                    minutes={minutes}
-                    onPress={() => {
-                      pausePreviewIndexRef.current = index;
-                      setPausePreviewMinutes(minutes);
-                      onBreakMinutesChange(minutes);
-                      pauseScrollRef.current?.scrollTo?.({
-                        animated: true,
-                        y: index * PAUSE_WHEEL_ITEM_HEIGHT,
-                      });
-                    }}
-                    scrollOffset={pauseScrollOffset}
-                    selected={pausePreviewMinutes === minutes}
-                  />
-                ))}
-              </Animated.ScrollView>
+                value={Number(breakMinutes) || 0}
+              />
             </Animated.View>
           ) : null}
 
@@ -677,29 +490,15 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 20,
     borderCurve: "continuous",
-    paddingHorizontal: 12,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 18,
   },
   pauseWheelSelection: {
-    position: "absolute",
-    top: PAUSE_WHEEL_PADDING,
-    right: 12,
-    left: 12,
-    height: PAUSE_WHEEL_ITEM_HEIGHT,
     borderRadius: 13,
     borderCurve: "continuous",
   },
-  pauseWheel: { flex: 1 },
-  pauseWheelContent: { paddingVertical: PAUSE_WHEEL_PADDING },
-  pauseWheelItem: {
-    height: PAUSE_WHEEL_ITEM_HEIGHT,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pauseWheelText: { fontSize: 19, fontVariant: ["tabular-nums"] },
   typePopup: {
     position: "absolute",
     top: 60,

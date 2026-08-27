@@ -29,6 +29,10 @@ export const TYPOGRAPHY = {
     fontWeight: "700",
     letterSpacing: -0.2,
   },
+  pickerValue: {
+    fontSize: 19,
+    fontWeight: "400",
+  },
   body: {
     fontSize: 16,
     lineHeight: 23,

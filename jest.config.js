@@ -25,10 +25,10 @@ const componentCoverageThresholds = {
     statements: 50,
   },
   "src/features/day-editor/shift-edit-overlay.tsx": {
-    branches: 70,
-    functions: 93,
-    lines: 89,
-    statements: 89,
+    branches: 77,
+    functions: 95,
+    lines: 83,
+    statements: 83,
   },
   "src/features/day-editor/shift-notification-overlay.tsx": {
     branches: 78,
@@ -37,10 +37,16 @@ const componentCoverageThresholds = {
     statements: 89,
   },
   "src/features/templates/template-editor-screen.tsx": {
-    branches: 54,
-    functions: 50,
+    branches: 55,
+    functions: 52,
     lines: 63,
-    statements: 61,
+    statements: 60,
+  },
+  "src/ui/pause-wheel.tsx": {
+    branches: 91,
+    functions: 100,
+    lines: 100,
+    statements: 100,
   },
 };
 

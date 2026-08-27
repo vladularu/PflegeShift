@@ -44,10 +44,10 @@ describe("architecture boundaries", () => {
     ["application/pflegeshift-snapshot.ts", 65],
     ["composition/create-pflegeshift-ports.ts", 66],
     ["composition/pflegeshift-runtime-provider.tsx", 19],
-    ["features/templates/template-editor-screen.tsx", 948],
+    ["features/templates/template-editor-screen.tsx", 839],
     ["features/day-editor/day-editor-form.tsx", 886],
     ["features/analysis/analysis-overview-cards.tsx", 818],
-    ["features/day-editor/shift-edit-overlay.tsx", 729],
+    ["features/day-editor/shift-edit-overlay.tsx", 528],
     ["features/calendar/month-card.tsx", 683],
     ["features/day-editor/shift-notification-overlay.tsx", 667],
     ["features/calendar/calendar-screen.tsx", 660],
@@ -57,6 +57,7 @@ describe("architecture boundaries", () => {
     ["infrastructure/database/repository.ts", 600],
     ["navigation/active-month.tsx", 120],
     ["ui/form-controls.tsx", 560],
+    ["ui/pause-wheel.tsx", 268],
   ] as const)("keeps %s within its refactoring budget", (file, maximumLines) => {
     const lineCount = readFileSync(join(SOURCE_ROOT, file), "utf8").split(/\r?\n/).length;
     expect(lineCount).toBeLessThanOrEqual(maximumLines);
