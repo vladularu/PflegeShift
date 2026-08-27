@@ -31,7 +31,6 @@ function filesMatching(pattern: RegExp) {
 const LEGACY_COLOR_LITERAL_FILES = ["src/features/calendar/quick-planner-appearance.ts"];
 
 const LEGACY_TYPOGRAPHY_LITERAL_FILES = [
-  "src/features/analysis/analysis-overview-cards.tsx",
   "src/features/analysis/annual-report-view.tsx",
   "src/features/calendar/calendar-view-screen.tsx",
   "src/features/calendar/month-card.tsx",

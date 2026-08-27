@@ -6,11 +6,29 @@ const componentCoverageThresholds = {
     lines: 51,
     statements: 48,
   },
-  "src/features/analysis/analysis-overview-cards.tsx": {
-    branches: 68,
-    functions: 95,
-    lines: 98,
-    statements: 96,
+  "src/features/analysis/analysis-period-header.tsx": {
+    branches: 71,
+    functions: 100,
+    lines: 100,
+    statements: 100,
+  },
+  "src/features/analysis/analysis-report-cards.tsx": {
+    branches: 81,
+    functions: 100,
+    lines: 100,
+    statements: 100,
+  },
+  "src/features/analysis/expandable-highlight-card.tsx": {
+    branches: 87,
+    functions: 100,
+    lines: 100,
+    statements: 100,
+  },
+  "src/features/analysis/salary-summary-card.tsx": {
+    branches: 55,
+    functions: 83,
+    lines: 93,
+    statements: 88,
   },
   "src/features/calendar/month-card.tsx": {
     branches: 69,

@@ -33,6 +33,40 @@ export const TYPOGRAPHY = {
     fontSize: 19,
     fontWeight: "400",
   },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
+  highlightTitle: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: "600",
+    letterSpacing: -0.2,
+  },
+  highlightValue: {
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: "700",
+    letterSpacing: -0.6,
+  },
+  highlightCount: {
+    fontSize: 24,
+    lineHeight: 29,
+    fontWeight: "700",
+    letterSpacing: -0.4,
+  },
+  highlightCountLabel: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: "600",
+    letterSpacing: -0.3,
+  },
+  highlightSummary: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "500",
+  },
   body: {
     fontSize: 16,
     lineHeight: 23,
