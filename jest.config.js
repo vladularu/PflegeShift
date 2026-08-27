@@ -37,10 +37,10 @@ const componentCoverageThresholds = {
     statements: 80,
   },
   "src/features/day-editor/day-editor-form.tsx": {
-    branches: 53,
-    functions: 25,
-    lines: 54,
-    statements: 50,
+    branches: 67,
+    functions: 44,
+    lines: 60,
+    statements: 58,
   },
   "src/features/day-editor/shift-edit-overlay.tsx": {
     branches: 77,

@@ -45,7 +45,7 @@ describe("architecture boundaries", () => {
     ["composition/create-pflegeshift-ports.ts", 66],
     ["composition/pflegeshift-runtime-provider.tsx", 19],
     ["features/templates/template-editor-screen.tsx", 839],
-    ["features/day-editor/day-editor-form.tsx", 886],
+    ["features/day-editor/day-editor-form.tsx", 477],
     ["features/analysis/analysis-overview-cards.tsx", 14],
     ["features/analysis/analysis-period-header.tsx", 217],
     ["features/analysis/analysis-report-cards.tsx", 201],

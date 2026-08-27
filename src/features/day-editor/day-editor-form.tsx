@@ -1,7 +1,6 @@
 import { router, Stack, useFocusEffect, useNavigation } from "expo-router";
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
-import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
+import { Alert, TextInput } from "react-native";
 
 import {
   usePflegeShiftEntries,
@@ -9,7 +8,6 @@ import {
   usePflegeShiftTemplates,
 } from "@/application/pflegeshift-provider";
 import {
-  SHIFT_TYPE_LABELS,
   type CalendarEntry,
   type EntryLocation,
   type EntryNotification,
@@ -21,40 +19,15 @@ import { ValidationError } from "@/domain/validation";
 import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import { AppointmentEditOverlay } from "@/features/day-editor/appointment-edit-overlay";
-import { shiftOverlapsHoliday } from "@/features/day-editor/holiday-premium";
-import {
-  DAY_EDITOR_SHIFT_TYPES,
-  SHIFT_TYPE_GRID_STYLE,
-} from "@/features/day-editor/day-editor-layout";
 import { resolveShiftTypePreset } from "@/features/day-editor/shift-type-preset";
 import { ShiftEditOverlay } from "@/features/day-editor/shift-edit-overlay";
-import {
-  AlarmSheet,
-  NotificationSheet,
-  PauseSheet,
-  notificationLabel,
-  OptionRow,
-  RecurrenceSheet,
-  recurrenceLabel,
-} from "@/features/day-editor/entry-options";
-import {
-  AdvancedDisclosure,
-  EditorCloseButton,
-  EditorDateHeader,
-  InlineDeleteConfirmation,
-} from "@/features/day-editor/day-editor-components";
+import { AlarmSheet, NotificationSheet, PauseSheet } from "@/features/day-editor/entry-options";
 import {
   consumeLocationSelection,
   prepareLocationPicker,
 } from "@/features/location/location-selection";
-import { LocationPreview } from "@/features/location/location-preview";
 import { useStableEditorSession } from "@/features/editor-session";
-import { APPOINTMENT_COLOR, SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
-import { MOTION } from "@/theme/motion";
-import { SegmentedControl, SectionHeader, SurfaceCard } from "@/ui/design-system";
-import { ColorPicker, Field, ResponsiveFieldRow, TimePickerField } from "@/ui/form-controls";
-import { DestructiveFormAction, FormScreen, FormStatus } from "@/ui/form-layout";
-import { LabeledSwitch } from "@/ui/labeled-switch";
+import { APPOINTMENT_COLOR, SHIFT_TYPE_COLORS } from "@/theme/palette";
 import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
 import {
   focusInvalidField,
@@ -76,14 +49,12 @@ export function DayEditorForm({
   readonly requestedMode: EditorMode;
   readonly sessionKey: string;
 }) {
-  const palette = usePalette();
   const navigation = useNavigation();
   const { profile } = usePflegeShiftProfile();
   const { templates } = usePflegeShiftTemplates();
   const { entries, removeEntry, upsertShift, upsertAppointment } = usePflegeShiftEntries();
   const { initialValue: existing } = useStableEditorSession(sessionKey, () => loadedExisting);
-  const initialMode: EditorMode = existing?.kind ?? requestedMode;
-  const [mode, setMode] = useState<EditorMode>(initialMode);
+  const mode: EditorMode = existing?.kind ?? requestedMode;
   const initialShift = existing?.kind === "SHIFT" ? existing : null;
   const initialAppointment = existing?.kind === "APPOINTMENT" ? existing : null;
   const [shiftType, setShiftType] = useState<ShiftType>(initialShift?.type ?? "CUSTOM");
@@ -103,12 +74,8 @@ export function DayEditorForm({
   const [shiftLocation, setShiftLocation] = useState<EntryLocation | null>(
     initialShift?.location ?? null,
   );
-  const [overtimeMinutes, setOvertimeMinutes] = useState(
-    String(initialShift?.overtimeMinutes ?? 0),
-  );
-  const [holidayPremiumMode, setHolidayPremiumMode] = useState<
-    "WITH_TIME_OFF" | "WITHOUT_TIME_OFF"
-  >(initialShift?.holidayPremiumMode ?? "WITH_TIME_OFF");
+  const overtimeMinutes = String(initialShift?.overtimeMinutes ?? 0);
+  const holidayPremiumMode = initialShift?.holidayPremiumMode ?? "WITH_TIME_OFF";
   const [appointmentTitle, setAppointmentTitle] = useState(
     initialAppointment?.title ?? "Ohne Titel",
   );
@@ -117,9 +84,7 @@ export function DayEditorForm({
     initialAppointment?.startTime ?? "12:00",
   );
   const [appointmentEnd, setAppointmentEnd] = useState(initialAppointment?.endTime ?? "13:00");
-  const [appointmentColor, setAppointmentColor] = useState(
-    initialAppointment?.color ?? APPOINTMENT_COLOR,
-  );
+  const appointmentColor = initialAppointment?.color ?? APPOINTMENT_COLOR;
   const [appointmentNote, setAppointmentNote] = useState(initialAppointment?.note ?? "");
   const [appointmentRecurrence, setAppointmentRecurrence] = useState<RecurrenceRule | null>(
     initialAppointment?.recurrence ?? null,
@@ -133,14 +98,10 @@ export function DayEditorForm({
   const [optionSheet, setOptionSheet] = useState<
     "ALARM" | "PAUSE" | "RECURRENCE" | "NOTIFICATION" | null
   >(null);
-  const [shiftTitleError, setShiftTitleError] = useState<string | null>(null);
   const [breakError, setBreakError] = useState<string | null>(null);
-  const [overtimeError, setOvertimeError] = useState<string | null>(null);
   const [appointmentTitleError, setAppointmentTitleError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const shiftTitleRef = useRef<TextInput>(null);
   const breakRef = useRef<TextInput>(null);
   const overtimeRef = useRef<TextInput>(null);
@@ -163,33 +124,6 @@ export function DayEditorForm({
   }
   const shiftIsAbsence = ["VACATION", "SICK", "FREE"].includes(shiftType);
   const shiftIsTimed = !shiftIsAbsence && !shiftAllDay;
-  const compactShiftEditor = mode === "SHIFT" && (existing === null || existing.kind === "SHIFT");
-  const compactAppointmentEditor =
-    mode === "APPOINTMENT" && (existing === null || existing.kind === "APPOINTMENT");
-  const compactOverlayEditor = compactShiftEditor || compactAppointmentEditor;
-  const hasHolidayOverlap =
-    profile && shiftIsTimed
-      ? shiftOverlapsHoliday(date, startTime, endTime, profile.federalState)
-      : false;
-  const editorTitle = existing
-    ? existing.kind === "SHIFT"
-      ? "Dienst bearbeiten"
-      : "Termin bearbeiten"
-    : mode === "SHIFT"
-      ? "Neuer Dienst"
-      : "Neuer Termin";
-  const detailSummary =
-    mode === "SHIFT"
-      ? [
-          shiftNote.trim() ? "Notiz" : null,
-          shiftIsTimed && Number(overtimeMinutes) > 0
-            ? `${overtimeMinutes} Min. Überstunden`
-            : null,
-          `Kürzel ${shiftSymbol || "–"}`,
-        ]
-          .filter(Boolean)
-          .join(" · ")
-      : [appointmentNote.trim() ? "Notiz" : null, "Farbe"].filter(Boolean).join(" · ");
 
   function chooseType(type: ShiftType) {
     const preset = resolveShiftTypePreset(type, templates);
@@ -233,15 +167,12 @@ export function DayEditorForm({
         nextOvertimeError = "Überstunden dürfen die Nettoarbeitszeit nicht überschreiten.";
       }
     }
-    setShiftTitleError(nextShiftTitleError);
     setBreakError(nextBreakError);
-    setOvertimeError(nextOvertimeError);
     setAppointmentTitleError(nextAppointmentTitleError);
     const firstError =
       nextShiftTitleError ?? nextBreakError ?? nextOvertimeError ?? nextAppointmentTitleError;
     if (firstError) {
       setError(firstError);
-      if (nextOvertimeError) setDetailsExpanded(true);
       focusInvalidField(
         nextShiftTitleError
           ? shiftTitleRef
@@ -323,9 +254,8 @@ export function DayEditorForm({
           location: appointmentLocation,
         });
       }
-      if (!compactOverlayEditor) successFeedback();
       if (closeAfterSave) {
-        if (compactOverlayEditor) allowRemovalRef.current = true;
+        allowRemovalRef.current = true;
         router.back();
       }
       return true;
@@ -360,7 +290,6 @@ export function DayEditorForm({
 
   const saveFromDismiss = useEffectEvent(() => save(false));
   useEffect(() => {
-    if (!compactOverlayEditor) return;
     return navigation.addListener("beforeRemove", (event) => {
       if (allowRemovalRef.current) {
         allowRemovalRef.current = false;
@@ -374,9 +303,9 @@ export function DayEditorForm({
         navigation.dispatch(event.data.action);
       });
     });
-  }, [compactOverlayEditor, navigation]);
+  }, [navigation]);
 
-  if (compactShiftEditor) {
+  if (mode === "SHIFT") {
     const durationMinutes = shiftIsTimed
       ? calculateTimedShiftMinutes(
           {
@@ -467,419 +396,81 @@ export function DayEditorForm({
     );
   }
 
-  if (compactAppointmentEditor) {
-    const durationMinutes = allDay
-      ? null
-      : calculateTimedShiftMinutes(
-          {
-            date,
-            startTime: appointmentStart,
-            endTime: appointmentEnd,
-            breakMinutes: 0,
-            allDay: false,
-          },
-          profile?.timeZone ?? "Europe/Berlin",
-        );
-    const isSeries = Boolean(initialAppointment?.recurrence);
-    return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <AppointmentEditOverlay
-          allDay={allDay}
-          appointmentColor={appointmentColor}
-          busy={saving}
-          date={date}
-          durationMinutes={durationMinutes}
-          endTime={appointmentEnd}
-          error={error}
-          locationName={appointmentLocation?.name ?? null}
-          note={appointmentNote}
-          notification={appointmentNotification}
-          onAllDayChange={setAllDay}
-          onDelete={
-            initialAppointment
-              ? () => {
-                  Alert.alert(
-                    isSeries ? "Terminserie löschen?" : "Termin löschen?",
-                    isSeries
-                      ? "Alle Termine dieser Serie werden gelöscht."
-                      : "Dieser Termin wird aus dem Kalender entfernt.",
-                    [
-                      { text: "Abbrechen", style: "cancel" },
-                      {
-                        text: "Löschen",
-                        style: "destructive",
-                        onPress: () => void deleteEntry(),
-                      },
-                    ],
-                  );
-                }
-              : undefined
-          }
-          onDismiss={() => {
-            allowRemovalRef.current = true;
-            router.back();
-          }}
-          onEndTimeChange={setAppointmentEnd}
-          onLocationPress={() => openLocationPicker(appointmentLocation)}
-          onNoteChange={setAppointmentNote}
-          onNotificationChange={setAppointmentNotification}
-          onNotificationPress={() => setOptionSheet("NOTIFICATION")}
-          onRecurrenceChange={setAppointmentRecurrence}
-          onRequestClose={() => save(false)}
-          onStartTimeChange={setAppointmentStart}
-          onTitleChange={(value) => {
-            setAppointmentTitle(value);
-            if (appointmentTitleError) setAppointmentTitleError(null);
-          }}
-          recurrence={appointmentRecurrence}
-          startTime={appointmentStart}
-          title={appointmentTitle}
-        />
-        {optionSheet === "NOTIFICATION" ? (
-          <NotificationSheet
-            onChange={setAppointmentNotification}
-            onClose={() => setOptionSheet(null)}
-            value={appointmentNotification}
-          />
-        ) : null}
-      </>
-    );
-  }
-
+  const durationMinutes = allDay
+    ? null
+    : calculateTimedShiftMinutes(
+        {
+          date,
+          startTime: appointmentStart,
+          endTime: appointmentEnd,
+          breakMinutes: 0,
+          allDay: false,
+        },
+        profile?.timeZone ?? "Europe/Berlin",
+      );
+  const isSeries = Boolean(initialAppointment?.recurrence);
   return (
-    <FormScreen bottomPadding={32}>
-      <Stack.Screen
-        options={{
-          title: editorTitle,
-          gestureEnabled: false,
-          headerLeft: () => <EditorCloseButton busy={saving} onPress={() => void save()} />,
-          headerRight: () => null,
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <AppointmentEditOverlay
+        allDay={allDay}
+        appointmentColor={appointmentColor}
+        busy={saving}
+        date={date}
+        durationMinutes={durationMinutes}
+        endTime={appointmentEnd}
+        error={error}
+        locationName={appointmentLocation?.name ?? null}
+        note={appointmentNote}
+        notification={appointmentNotification}
+        onAllDayChange={setAllDay}
+        onDelete={
+          initialAppointment
+            ? () => {
+                Alert.alert(
+                  isSeries ? "Terminserie löschen?" : "Termin löschen?",
+                  isSeries
+                    ? "Alle Termine dieser Serie werden gelöscht."
+                    : "Dieser Termin wird aus dem Kalender entfernt.",
+                  [
+                    { text: "Abbrechen", style: "cancel" },
+                    {
+                      text: "Löschen",
+                      style: "destructive",
+                      onPress: () => void deleteEntry(),
+                    },
+                  ],
+                );
+              }
+            : undefined
+        }
+        onDismiss={() => {
+          allowRemovalRef.current = true;
+          router.back();
         }}
+        onEndTimeChange={setAppointmentEnd}
+        onLocationPress={() => openLocationPicker(appointmentLocation)}
+        onNoteChange={setAppointmentNote}
+        onNotificationChange={setAppointmentNotification}
+        onNotificationPress={() => setOptionSheet("NOTIFICATION")}
+        onRecurrenceChange={setAppointmentRecurrence}
+        onRequestClose={() => save(false)}
+        onStartTimeChange={setAppointmentStart}
+        onTitleChange={(value) => {
+          setAppointmentTitle(value);
+          if (appointmentTitleError) setAppointmentTitleError(null);
+        }}
+        recurrence={appointmentRecurrence}
+        startTime={appointmentStart}
+        title={appointmentTitle}
       />
-      <EditorDateHeader date={date} label={mode === "SHIFT" ? "Dienst" : "Termin"} />
-      {!existing ? (
-        <SegmentedControl
-          items={[
-            { value: "SHIFT", label: "Dienst" },
-            { value: "APPOINTMENT", label: "Termin" },
-          ]}
-          onChange={(value) => setMode(value as EditorMode)}
-          value={mode}
-        />
-      ) : null}
-
-      {mode === "SHIFT" ? (
-        <>
-          <SectionHeader title="Dienstart" />
-          <View
-            accessibilityLabel="Dienstart auswählen"
-            accessibilityRole="radiogroup"
-            style={SHIFT_TYPE_GRID_STYLE}
-          >
-            {DAY_EDITOR_SHIFT_TYPES.map((type) => {
-              const selected = type === shiftType;
-              return (
-                <Pressable
-                  key={type}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  onPress={() => chooseType(type)}
-                  style={({ pressed }) => ({
-                    minHeight: 42,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 7,
-                    borderWidth: 1,
-                    borderColor: selected ? palette.primary : palette.border,
-                    borderRadius: 21,
-                    backgroundColor: selected ? palette.primarySoft : palette.surface,
-                    opacity: pressed ? 0.68 : 1,
-                    paddingHorizontal: 13,
-                  })}
-                >
-                  <View
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: SHIFT_TYPE_COLORS[type],
-                    }}
-                  />
-                  <Text
-                    style={{
-                      color: selected ? palette.primary : palette.text,
-                      fontSize: 13,
-                      fontWeight: "600",
-                    }}
-                  >
-                    {SHIFT_TYPE_LABELS[type]}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <SurfaceCard style={{ gap: 12, padding: 14 }}>
-            <Field
-              error={shiftTitleError}
-              inputRef={shiftTitleRef}
-              label="Bezeichnung"
-              maxLength={60}
-              onChangeText={(value) => {
-                setShiftTitle(value);
-                if (shiftTitleError) setShiftTitleError(null);
-              }}
-              value={shiftTitle}
-            />
-            {!shiftIsAbsence ? (
-              <View
-                style={{
-                  minHeight: 50,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderTopWidth: 1,
-                  borderTopColor: palette.separator,
-                }}
-              >
-                <Text style={{ color: palette.text, fontSize: 15, fontWeight: "600" }}>
-                  Ganztägig
-                </Text>
-                <LabeledSwitch
-                  label="Dienst ganztägig"
-                  onValueChange={setShiftAllDay}
-                  value={shiftAllDay}
-                />
-              </View>
-            ) : null}
-            {shiftIsTimed ? (
-              <>
-                <ResponsiveFieldRow
-                  style={{
-                    borderTopWidth: 1,
-                    borderTopColor: palette.separator,
-                    paddingTop: 4,
-                  }}
-                >
-                  <TimePickerField label="Beginn" onChange={setStartTime} value={startTime} />
-                  <TimePickerField label="Ende" onChange={setEndTime} value={endTime} />
-                </ResponsiveFieldRow>
-                <Field
-                  error={breakError}
-                  inputRef={breakRef}
-                  keyboardType="number-pad"
-                  label="Pause (Min.)"
-                  onChangeText={(value) => {
-                    setBreakMinutes(value);
-                    if (breakError) setBreakError(null);
-                  }}
-                  value={breakMinutes}
-                />
-                {hasHolidayOverlap ? (
-                  <View
-                    style={{
-                      minHeight: 54,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 14,
-                      borderTopWidth: 1,
-                      borderTopColor: palette.separator,
-                      paddingTop: 12,
-                    }}
-                  >
-                    <View style={{ flex: 1, gap: 3 }}>
-                      <Text style={{ color: palette.text, fontSize: 15, fontWeight: "600" }}>
-                        Ohne Freizeitausgleich
-                      </Text>
-                      <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 17 }}>
-                        135 % statt 35 % Feiertagszuschlag
-                      </Text>
-                    </View>
-                    <LabeledSwitch
-                      label="Feiertagsdienst ohne Freizeitausgleich"
-                      onValueChange={(enabled) =>
-                        setHolidayPremiumMode(enabled ? "WITHOUT_TIME_OFF" : "WITH_TIME_OFF")
-                      }
-                      value={holidayPremiumMode === "WITHOUT_TIME_OFF"}
-                    />
-                  </View>
-                ) : null}
-              </>
-            ) : null}
-            <OptionRow
-              icon="notifications-outline"
-              label="Benachrichtigung"
-              onPress={() => setOptionSheet("NOTIFICATION")}
-              value={notificationLabel(shiftNotification)}
-            />
-            <OptionRow
-              icon="location-outline"
-              label="Ort"
-              onPress={() => openLocationPicker(shiftLocation)}
-              value={shiftLocation?.name ?? "Kein Ort"}
-            />
-            {shiftLocation ? <LocationPreview location={shiftLocation} /> : null}
-            <AdvancedDisclosure
-              color={shiftColor}
-              expanded={detailsExpanded}
-              onPress={() => setDetailsExpanded((current) => !current)}
-              summary={detailSummary}
-            />
-            {detailsExpanded ? (
-              <Animated.View
-                entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(
-                  MOTION.reduceMotion,
-                )}
-                exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(
-                  MOTION.reduceMotion,
-                )}
-                style={{ gap: 14 }}
-              >
-                {shiftIsTimed ? (
-                  <Field
-                    error={overtimeError}
-                    inputRef={overtimeRef}
-                    keyboardType="number-pad"
-                    label="Überstunden (Min.)"
-                    onChangeText={(value) => {
-                      setOvertimeMinutes(value);
-                      if (overtimeError) setOvertimeError(null);
-                    }}
-                    value={overtimeMinutes}
-                  />
-                ) : null}
-                <Field
-                  label="Notiz (optional)"
-                  multiline
-                  onChangeText={setShiftNote}
-                  value={shiftNote}
-                />
-                <Field
-                  label="Kürzel"
-                  maxLength={4}
-                  onChangeText={setShiftSymbol}
-                  value={shiftSymbol}
-                />
-                <ColorPicker onChange={setShiftColor} value={shiftColor} />
-              </Animated.View>
-            ) : null}
-          </SurfaceCard>
-        </>
-      ) : (
-        <SurfaceCard style={{ gap: 12, padding: 14 }}>
-          <Field
-            error={appointmentTitleError}
-            inputRef={appointmentTitleRef}
-            label="Titel"
-            maxLength={60}
-            onChangeText={(value) => {
-              setAppointmentTitle(value);
-              if (appointmentTitleError) setAppointmentTitleError(null);
-            }}
-            value={appointmentTitle}
-          />
-          <View
-            style={{
-              minHeight: 50,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderTopWidth: 1,
-              borderTopColor: palette.separator,
-              paddingTop: 4,
-            }}
-          >
-            <Text style={{ color: palette.text, fontSize: 15, fontWeight: "600" }}>Ganztägig</Text>
-            <LabeledSwitch label="Termin ganztägig" onValueChange={setAllDay} value={allDay} />
-          </View>
-          {!allDay ? (
-            <ResponsiveFieldRow>
-              <TimePickerField
-                label="Beginn"
-                onChange={setAppointmentStart}
-                value={appointmentStart}
-              />
-              <TimePickerField label="Ende" onChange={setAppointmentEnd} value={appointmentEnd} />
-            </ResponsiveFieldRow>
-          ) : null}
-          <OptionRow
-            icon="repeat"
-            label="Wiederholen"
-            onPress={() => setOptionSheet("RECURRENCE")}
-            value={recurrenceLabel(appointmentRecurrence)}
-          />
-          <OptionRow
-            icon="notifications-outline"
-            label="Benachrichtigung"
-            onPress={() => setOptionSheet("NOTIFICATION")}
-            value={notificationLabel(appointmentNotification)}
-          />
-          <OptionRow
-            icon="location-outline"
-            label="Ort"
-            onPress={() => openLocationPicker(appointmentLocation)}
-            value={appointmentLocation?.name ?? "Kein Ort"}
-          />
-          {appointmentLocation ? <LocationPreview location={appointmentLocation} /> : null}
-          <AdvancedDisclosure
-            color={appointmentColor}
-            expanded={detailsExpanded}
-            onPress={() => setDetailsExpanded((current) => !current)}
-            summary={detailSummary}
-          />
-          {detailsExpanded ? (
-            <Animated.View
-              entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
-              exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(MOTION.reduceMotion)}
-              style={{ gap: 14 }}
-            >
-              <Field
-                label="Notiz (optional)"
-                multiline
-                onChangeText={setAppointmentNote}
-                value={appointmentNote}
-              />
-              <ColorPicker onChange={setAppointmentColor} value={appointmentColor} />
-            </Animated.View>
-          ) : null}
-        </SurfaceCard>
-      )}
-
-      <FormStatus error={error} />
-      {existing ? (
-        deleteConfirm ? (
-          <InlineDeleteConfirmation
-            onCancel={() => setDeleteConfirm(false)}
-            onDelete={() => void deleteEntry()}
-            series={existing.kind === "APPOINTMENT" && Boolean(existing.recurrence)}
-          />
-        ) : (
-          <DestructiveFormAction
-            disabled={saving}
-            label={
-              existing.kind === "APPOINTMENT" && existing.recurrence
-                ? "Serie löschen"
-                : "Eintrag löschen"
-            }
-            onPress={() => setDeleteConfirm(true)}
-          />
-        )
-      ) : null}
-      {optionSheet === "RECURRENCE" ? (
-        <RecurrenceSheet
-          onChange={setAppointmentRecurrence}
-          onClose={() => setOptionSheet(null)}
-          value={appointmentRecurrence}
-        />
-      ) : null}
       {optionSheet === "NOTIFICATION" ? (
         <NotificationSheet
-          onChange={mode === "SHIFT" ? setShiftNotification : setAppointmentNotification}
+          onChange={setAppointmentNotification}
           onClose={() => setOptionSheet(null)}
-          value={mode === "SHIFT" ? shiftNotification : appointmentNotification}
+          value={appointmentNotification}
         />
       ) : null}
-    </FormScreen>
+    </>
   );
 }
