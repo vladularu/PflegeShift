@@ -38,6 +38,18 @@ WP3a adds the storage half of the future activation flow without making download
 
 The repository stores the original JSON strings so a later verifier can retain the exact downloaded artifacts. WP3a does **not** verify manifest signatures, compare package bytes with descriptor SHA-256 or size, download artifacts, contact Supabase, or inject a stored resolver into calculations. Until those later gates exist, production calculations continue to use `LEGACY_EMBEDDED`, and untrusted network artifacts must not be passed to the activation repository.
 
+## Local catalog verification
+
+WP3b adds the fail-closed trust boundary in front of WP3a storage. Raw manifest and package strings are untrusted until `src/rules/rule-catalog-verification.ts` has completed every check:
+
+- The manifest must satisfy the authoritative schema and semantic validator, belong to the expected `PREVIEW` or `PRODUCTION` channel, use a key ID from the injected channel-specific public-key ring, and reference an engine contract supported by the app.
+- The Ed25519 signature is detached: the verifier removes only `signing.signature`, retains `algorithm`, `canonicalization`, `keyId`, and every other manifest field, canonicalizes that projection with RFC 8785, encodes it as UTF-8, and verifies the unpadded base64url signature with strict RFC 8032 semantics.
+- Each package is limited to the schema maximum of 524,288 UTF-8 bytes. Its exact downloaded bytes must match both `sizeBytes` and lowercase SHA-256 from the signed descriptor before the existing structural and semantic catalog validation runs.
+- Verification returns frozen artifacts with a module-private runtime marker. `activateRuleCatalog()` accepts only that verified type and checks the marker before opening a transaction, so plain network JSON and structurally similar caller objects cannot reach catalog storage.
+- The Expo SDK 57 adapter in `src/infrastructure/rule-catalog-cryptography.ts` uses the existing `expo-crypto` native digest API and a pure-JavaScript Ed25519 verifier. The contract verifier itself remains platform-neutral so a later publisher can use the same boundary without importing React Native.
+
+Trusted public keys are not secrets and are supplied by the app composition layer. WP3b deliberately does not add a production key, fetch a manifest, contact Supabase, select update intervals, or inject the stored catalog into calculations. Any verification or activation failure leaves the current SQLCipher generation untouched and production calculations on `LEGACY_EMBEDDED`.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.

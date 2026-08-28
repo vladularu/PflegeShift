@@ -113,6 +113,7 @@
         "canonicalization": { "const": "RFC8785" },
         "keyId": { "$ref": "#/$defs/identifier" },
         "signature": {
+          "description": "Unpadded base64url Ed25519 signature over the UTF-8 RFC 8785 canonical JSON of the complete manifest with only this signature property omitted.",
           "type": "string",
           "minLength": 86,
           "maxLength": 86,

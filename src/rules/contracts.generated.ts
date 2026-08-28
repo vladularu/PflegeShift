@@ -48,6 +48,9 @@ export interface Signing {
   algorithm: "ED25519";
   canonicalization: "RFC8785";
   keyId: Identifier;
+  /**
+   * Unpadded base64url Ed25519 signature over the UTF-8 RFC 8785 canonical JSON of the complete manifest with only this signature property omitted.
+   */
   signature: string;
 }
 

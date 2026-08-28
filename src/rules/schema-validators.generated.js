@@ -101,7 +101,14 @@ const schema31 = {
         algorithm: { const: "ED25519" },
         canonicalization: { const: "RFC8785" },
         keyId: { $ref: "#/$defs/identifier" },
-        signature: { type: "string", minLength: 86, maxLength: 86, pattern: "^[A-Za-z0-9_-]+$" },
+        signature: {
+          description:
+            "Unpadded base64url Ed25519 signature over the UTF-8 RFC 8785 canonical JSON of the complete manifest with only this signature property omitted.",
+          type: "string",
+          minLength: 86,
+          maxLength: 86,
+          pattern: "^[A-Za-z0-9_-]+$",
+        },
       },
     },
   },
@@ -1168,7 +1175,14 @@ const schema44 = {
     algorithm: { const: "ED25519" },
     canonicalization: { const: "RFC8785" },
     keyId: { $ref: "#/$defs/identifier" },
-    signature: { type: "string", minLength: 86, maxLength: 86, pattern: "^[A-Za-z0-9_-]+$" },
+    signature: {
+      description:
+        "Unpadded base64url Ed25519 signature over the UTF-8 RFC 8785 canonical JSON of the complete manifest with only this signature property omitted.",
+      type: "string",
+      minLength: 86,
+      maxLength: 86,
+      pattern: "^[A-Za-z0-9_-]+$",
+    },
   },
 };
 const pattern15 = new RegExp("^[A-Za-z0-9_-]+$", "u");
