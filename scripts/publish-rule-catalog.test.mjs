@@ -70,6 +70,11 @@ test("publisher CLI dry-runs, writes in order, retries idempotently, and protect
       maximumStepId: "s2",
       sourceIds: ["tvoed-vka-2026"],
     };
+    packages[1].engineContractVersion = 3;
+    packages[1].rules.nightWork.workerQualification = {
+      regularRotatingNightWorkRequiresConfirmation: true,
+      annualNightWorkDaysThreshold: 48,
+    };
     const packagePaths = packages.map(
       (rulePackage) =>
         `rules/packages/reviewed/${rulePackage.packageId}/${rulePackage.versionId}.json`,

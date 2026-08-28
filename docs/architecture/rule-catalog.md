@@ -116,7 +116,7 @@ Only `PUBLISHED` packages may be part of a validated catalog. `DRAFT` and `REVIE
 
 ## Version and compatibility rules
 
-`schemaVersion` describes the data shape. `engineContractVersion` describes behavior the calculation engine must understand. Both start at `1`. Engine contract v2 adds the tariff `overtimeBaseRule`: the individual hourly rate for actual overtime work is limited by the configured maximum table step. Legal and holiday packages remain on engine contract v1.
+`schemaVersion` describes the data shape. `engineContractVersion` describes behavior the calculation engine must understand. Both start at `1`. Engine contract v2 adds the tariff `overtimeBaseRule`: the individual hourly rate for actual overtime work is limited by the configured maximum table step. Legal engine contract v3 separates night work from night-worker status, requires either explicit confirmation of regular rotating night work or at least 48 recorded night-work days in the calendar year, evaluates the calendar-month and configured rolling average windows, and does not infer worked minutes from vacation or sickness entries. Holiday packages remain on engine contract v1.
 
 A change is compatible within the same versions only when it adds an optional field that old consumers can ignore without changing an existing result. The following require a new schema or engine contract version before publication:
 
