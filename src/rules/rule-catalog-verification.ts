@@ -1,11 +1,83 @@
-import canonicalize from "canonicalize";
-
-import type { RuleManifest } from "@/rules/contracts.generated";
-import { validateManifest, validateRuleCatalog, type ValidationIssue } from "@/rules/validation";
+import type { RuleManifest } from "./contracts.generated";
+import { validateManifest, validateRuleCatalog, type ValidationIssue } from "./validation";
 
 const MAX_RULE_ARTIFACT_BYTES = 524_288;
 const verifiedRuleCatalogArtifacts: unique symbol = Symbol("verifiedRuleCatalogArtifacts");
 const encoder = new TextEncoder();
+
+function hasLoneSurrogate(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      if (index === value.length - 1) return true;
+      const next = value.charCodeAt(index + 1);
+      if (next < 0xdc00 || next > 0xdfff) return true;
+      index += 1;
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function canonicalizeJsonValue(value: unknown, seen: Set<object>): string | undefined {
+  if (typeof value === "number" && !Number.isFinite(value)) {
+    throw new Error("Non-finite numbers are not valid canonical JSON.");
+  }
+  if (typeof value === "string" && hasLoneSurrogate(value)) {
+    throw new Error("Lone Unicode surrogates are not valid canonical JSON.");
+  }
+  if (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return JSON.stringify(value);
+  }
+  if (value === undefined || typeof value === "symbol" || typeof value === "function") {
+    return undefined;
+  }
+  if (typeof value !== "object") throw new Error("Unsupported canonical JSON value.");
+
+  const toJson = Reflect.get(value, "toJSON");
+  if (typeof toJson === "function") {
+    if (seen.has(value)) throw new Error("Circular canonical JSON value.");
+    seen.add(value);
+    const serialized = canonicalizeJsonValue(Reflect.apply(toJson, value, []), seen);
+    seen.delete(value);
+    return serialized;
+  }
+  if (seen.has(value)) throw new Error("Circular canonical JSON value.");
+  seen.add(value);
+  let serialized: string;
+  if (Array.isArray(value)) {
+    serialized = `[${Array.from(
+      value,
+      (entry) => canonicalizeJsonValue(entry, seen) ?? "null",
+    ).join(",")}]`;
+  } else {
+    const record = value as Record<string, unknown>;
+    const entries = Object.keys(record)
+      .sort()
+      .flatMap((key) => {
+        const entry = canonicalizeJsonValue(record[key], seen);
+        if (entry === undefined) return [];
+        const canonicalKey = canonicalizeJsonValue(key, seen);
+        if (canonicalKey === undefined) throw new Error("Invalid canonical JSON object key.");
+        return [`${canonicalKey}:${entry}`];
+      });
+    serialized = `{${entries.join(",")}}`;
+  }
+  seen.delete(value);
+  return serialized;
+}
+
+export function canonicalizeRuleJson(value: unknown): string {
+  const serialized = canonicalizeJsonValue(value, new Set());
+  if (serialized === undefined) throw new Error("The root value is not valid canonical JSON.");
+  return serialized;
+}
 
 export interface UntrustedRuleCatalogArtifacts {
   readonly manifestJson: string;
@@ -89,12 +161,10 @@ function parseArtifact(json: string, label: string): unknown {
   }
 }
 
-function canonicalManifestPayload(manifest: RuleManifest): Uint8Array {
+export function canonicalizeRuleManifestForSignature(manifest: RuleManifest): Uint8Array {
   const { signature: _signature, ...signing } = manifest.signing;
   try {
-    const serialized = canonicalize({ ...manifest, signing });
-    if (serialized === undefined) throw new Error("undefined canonical output");
-    return encoder.encode(serialized);
+    return encoder.encode(canonicalizeRuleJson({ ...manifest, signing }));
   } catch {
     throw new RuleCatalogVerificationError(
       "INVALID_MANIFEST",
@@ -157,7 +227,7 @@ async function verifyManifestSignature(
   try {
     const verified = await cryptography.verifyEd25519(
       signature,
-      canonicalManifestPayload(manifest),
+      canonicalizeRuleManifestForSignature(manifest),
       publicKey,
     );
     if (!verified) {
@@ -207,13 +277,13 @@ export function isVerifiedRuleCatalogArtifacts(
   );
 }
 
-export async function verifyRuleCatalogArtifacts(
-  artifacts: UntrustedRuleCatalogArtifacts,
+export async function verifyRuleManifest(
+  manifestJson: string,
   policy: RuleCatalogVerificationPolicy,
   cryptography: RuleCatalogCryptography,
-): Promise<VerifiedRuleCatalogArtifacts> {
-  artifactBytes(artifacts.manifestJson, "The rule catalog manifest");
-  const manifestValue = parseArtifact(artifacts.manifestJson, "The rule catalog manifest");
+): Promise<RuleManifest> {
+  artifactBytes(manifestJson, "The rule catalog manifest");
+  const manifestValue = parseArtifact(manifestJson, "The rule catalog manifest");
   const manifestValidation = validateManifest(manifestValue);
   if (!manifestValidation.ok) {
     throw new RuleCatalogVerificationError(
@@ -256,6 +326,15 @@ export async function verifyRuleCatalogArtifacts(
       "The rule catalog requires an unsupported engine contract version.",
     );
   }
+  return manifest;
+}
+
+export async function verifyRuleCatalogArtifacts(
+  artifacts: UntrustedRuleCatalogArtifacts,
+  policy: RuleCatalogVerificationPolicy,
+  cryptography: RuleCatalogCryptography,
+): Promise<VerifiedRuleCatalogArtifacts> {
+  const manifest = await verifyRuleManifest(artifacts.manifestJson, policy, cryptography);
   if (artifacts.packageJson.length !== manifest.packages.length) {
     throw new RuleCatalogVerificationError(
       "PACKAGE_COUNT_MISMATCH",

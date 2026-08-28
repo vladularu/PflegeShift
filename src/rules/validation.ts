@@ -1,6 +1,13 @@
-import type { PackageDescriptor, RuleManifest, RulePackage, Track } from "./contracts.generated";
+import type {
+  PackageDescriptor,
+  RuleCatalogPublicationRequest,
+  RuleManifest,
+  RulePackage,
+  Track,
+} from "./contracts.generated";
 import {
   validateManifestSchema as generatedManifestValidator,
+  validateRuleCatalogPublicationRequestSchema as generatedPublicationRequestValidator,
   validateRulePackageSchema as generatedPackageValidator,
 } from "./schema-validators.generated";
 
@@ -33,6 +40,7 @@ type HolidayPackage = Extract<RulePackage, { kind: "HOLIDAY" }>;
 
 const validateManifestSchema = generatedManifestValidator as SchemaValidator;
 const validateRulePackageSchema = generatedPackageValidator as SchemaValidator;
+const validatePublicationRequestSchema = generatedPublicationRequestValidator as SchemaValidator;
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/;
 
 function issue(code: string, path: string, message: string): ValidationIssue {
@@ -664,6 +672,41 @@ export function validateManifest(value: unknown): ValidationResult<RuleManifest>
   const manifest = value as RuleManifest;
   const issues = manifestSemanticIssues(manifest);
   return issues.length === 0 ? { ok: true, value: manifest } : { ok: false, issues };
+}
+
+export function validateRuleCatalogPublicationRequest(
+  value: unknown,
+): ValidationResult<RuleCatalogPublicationRequest> {
+  if (!validatePublicationRequestSchema(value)) {
+    return { ok: false, issues: schemaIssues(validatePublicationRequestSchema) };
+  }
+  const request = value as RuleCatalogPublicationRequest;
+  const issues: ValidationIssue[] = [];
+  if (!isRealUtcTimestamp(request.publishedAt)) {
+    issues.push(
+      issue("INVALID_TIMESTAMP", "/publishedAt", "publishedAt must be a real UTC timestamp."),
+    );
+  }
+  if (request.rollbackOfGeneration !== null && request.rollbackOfGeneration >= request.generation) {
+    issues.push(
+      issue(
+        "INVALID_ROLLBACK_GENERATION",
+        "/rollbackOfGeneration",
+        "A rollback must point to an earlier generation.",
+      ),
+    );
+  }
+  const requiredKeyPrefix = request.channel === "PREVIEW" ? "preview-" : "production-";
+  if (!request.signing.keyId.startsWith(requiredKeyPrefix)) {
+    issues.push(
+      issue(
+        "SIGNING_KEY_CHANNEL_MISMATCH",
+        "/signing/keyId",
+        `${request.channel} key IDs must start with ${requiredKeyPrefix}.`,
+      ),
+    );
+  }
+  return issues.length === 0 ? { ok: true, value: request } : { ok: false, issues };
 }
 
 export function validateRulePackage(value: unknown): ValidationResult<RulePackage> {

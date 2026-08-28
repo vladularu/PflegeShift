@@ -2,7 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { validateRuleCatalog, validateRulePackage } from "../src/rules/validation.ts";
+import {
+  validateRuleCatalog,
+  validateRuleCatalogPublicationRequest,
+  validateRulePackage,
+} from "../src/rules/validation.ts";
 
 const workspaceRoot = process.cwd();
 const requestedPaths = process.argv.slice(2);
@@ -35,6 +39,19 @@ if (inputPaths.length < 2) {
     process.exitCode = 1;
   } else {
     if (validateBundledLegacy) {
+      const publicationRequest = await readJson("rules/examples/publication-request.valid.json");
+      const publicationRequestResult = validateRuleCatalogPublicationRequest(publicationRequest);
+      if (!publicationRequestResult.ok) {
+        for (const validationIssue of publicationRequestResult.issues) {
+          console.error(
+            `publication-request.valid.json ${validationIssue.code} ${validationIssue.path}: ${validationIssue.message}`,
+          );
+        }
+        process.exitCode = 1;
+      } else {
+        console.log("Validated the rule catalog publication request contract fixture.");
+      }
+
       const legacyDirectory = path.join(workspaceRoot, "rules/packages/legacy");
       let legacyFiles = [];
       try {

@@ -70,6 +70,21 @@ WP3c-b completes that consumer switch without changing the offline architecture:
 
 WP3c-b still performs no network request and does not change the active resolver while the provider is mounted. A newly activated catalog is selected atomically on the next provider initialization; every consumer in that runtime then sees the same immutable generation.
 
+## Local publication
+
+WP4a adds the deterministic administrative publisher and its canonical publication-request
+contract. It binds every `REVIEWED` package to the rule content at its recorded Git commit,
+derives canonical `PUBLISHED` package bytes, hashes, sizes, complete tracks, and a consecutive
+manifest generation, then signs with an environment-only Ed25519 seed. The exact output is
+self-checked through the same verifier used by the app. Immutable packages and the versioned
+manifest are staged before `current.json`; same-generation changes and immutable-path changes
+fail closed.
+
+The complete source, generation, rollback, filesystem layout, and operator contract is defined
+in `docs/architecture/rule-catalog-delivery.md`. WP4a still performs no network request, creates
+no Supabase bucket, contains no production private key, and does not change app startup or
+catalog activation.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.
@@ -113,8 +128,8 @@ Every tariff or legal change follows this sequence:
 2. Create a new immutable package version with the correct `validFrom` and `validTo`. Begin with `status: DRAFT` and empty review evidence.
 3. Run `npm run rules:generate` only if the schema changed. Commit the schema and generated outputs together.
 4. Run `npm run rules:validate` and `npm run test:rules`. Add a regression fixture for every changed result boundary, including the day before and the first day of validity.
-5. Obtain the required tariff/legal review. Record reviewer, UTC review time, and the exact 40-character Git commit. Set both package and review status to `REVIEWED`.
-6. A later publisher revalidates the same files, checks review policy, changes the release artifact to `PUBLISHED`, computes the real file hash and size, and produces a new monotonically increasing manifest generation.
+5. Obtain the required tariff/legal review. Record reviewer, UTC review time, and the exact 40-character Git commit containing the reviewed rule content. Set both package and review status to `REVIEWED` in a later clean commit; the publisher compares the canonical rule payload while excluding only `status` and `review`, because a commit cannot contain its own hash.
+6. The WP4a publisher revalidates the same files, checks review provenance, changes only the release artifact to `PUBLISHED`, computes the real file hash and size, and produces the next manifest generation.
 7. The publisher canonicalizes and signs the manifest, uploads immutable package paths first, then makes the manifest available. Publication must fail if a `COMPLETE` track contains a gap or overlap.
 8. Clients verify signature, generation, hash, size, schema, semantic contract, and engine compatibility before atomically activating the catalog. On any failure they retain the last verified compatible catalog.
 9. A rollback publishes a new higher generation whose `rollbackOfGeneration` points to an earlier generation. It never lowers the generation counter and never mutates the earlier manifest.
@@ -125,6 +140,7 @@ Steps 6 through 9 are delivery work, not implemented in WP1.
 
 - `npm run rules:generate` regenerates TypeScript contracts and standalone validators.
 - `npm run rules:check` fails when generated files are stale or the complete example catalog is invalid.
+- `npm run rules:publish -- --request <path> --dry-run` validates, signs, and self-verifies a release without writing artifacts.
 - `npm run test:rules` runs valid and adversarial contract tests.
 - `npm run verify:fast` includes contract freshness, fixture validation, all repository tests, lint, formatting, type checking, and diff checks.
 
