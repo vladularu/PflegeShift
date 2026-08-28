@@ -18,7 +18,6 @@ export interface TariffVersion {
   readonly validFrom: string;
   readonly validTo: string | null;
   readonly monthly: TariffTable;
-  readonly hourly: TariffTable;
 }
 
 const VERSION_CACHE = new WeakMap<RuleTariffPackage, TariffVersion>();
@@ -39,19 +38,27 @@ function tableAmount(
   rulePackage: RuleTariffPackage,
   payGroup: PayGroup,
   stepId: string,
-  amount: "monthlyCents" | "hourlyCents",
 ): number | null {
   const entry = selectedPayTable(rulePackage).entries.find(
     (candidate) =>
       candidate.groupId === payGroup.toLowerCase() && candidate.stepId === stepId.toLowerCase(),
   );
-  return entry ? entry[amount] / 100 : null;
+  return entry ? entry.monthlyCents / 100 : null;
 }
 
-function materializeTable(
+function hourlyEntryAmount(
   rulePackage: RuleTariffPackage,
-  amount: "monthlyCents" | "hourlyCents",
-): TariffTable {
+  payGroup: PayGroup,
+  stepId: string,
+): number | null {
+  const entry = selectedPayTable(rulePackage).entries.find(
+    (candidate) =>
+      candidate.groupId === payGroup.toLowerCase() && candidate.stepId === stepId.toLowerCase(),
+  );
+  return entry?.hourlyCents === undefined ? null : entry.hourlyCents / 100;
+}
+
+function materializeMonthlyTable(rulePackage: RuleTariffPackage): TariffTable {
   return Object.freeze(
     Object.fromEntries(
       PAY_GROUPS.map((payGroup) => [
@@ -60,7 +67,7 @@ function materializeTable(
           Object.fromEntries(
             PAY_LEVELS.map((payLevel) => [
               payLevel,
-              tableAmount(rulePackage, payGroup, `s${payLevel}`, amount) ?? 0,
+              tableAmount(rulePackage, payGroup, `s${payLevel}`) ?? 0,
             ]),
           ) as Record<PayLevel, number>,
         ),
@@ -77,11 +84,53 @@ function tariffVersion(rulePackage: RuleTariffPackage): TariffVersion {
     label: rulePackage.label,
     validFrom: rulePackage.validFrom,
     validTo: rulePackage.validTo,
-    monthly: materializeTable(rulePackage, "monthlyCents"),
-    hourly: materializeTable(rulePackage, "hourlyCents"),
+    monthly: materializeMonthlyTable(rulePackage),
   });
   VERSION_CACHE.set(rulePackage, version);
   return version;
+}
+
+function resolveFullTimeWeeklyMinutes(
+  rulePackage: RuleTariffPackage,
+  profile: TariffProfile,
+): number {
+  const configuredRules = rulePackage.rules.weeklyWorkingTimeRules;
+  if (configuredRules === undefined) return profile.fullTimeWeeklyMinutes;
+  const matches = configuredRules.filter(
+    (rule) =>
+      rule.sectors.includes(profile.sector) && rule.tariffRegions.includes(profile.tariffRegion),
+  );
+  if (matches.length !== 1) {
+    throw new Error(
+      `Tariff package ${rulePackage.packageId}/${rulePackage.versionId} has no unique weekly working time for ${profile.sector}/${profile.tariffRegion}.`,
+    );
+  }
+  return matches[0].fullTimeWeeklyMinutes;
+}
+
+export function getTariffFullTimeWeeklyMinutes(
+  profile: TariffProfile,
+  date: string,
+  ruleResolver: RuleResolver = bundledRuleResolver,
+): number | null {
+  const rulePackage = getTariffRulePackage(date, ruleResolver);
+  return rulePackage ? resolveFullTimeWeeklyMinutes(rulePackage, profile) : null;
+}
+
+function hourlyTableAmount(
+  rulePackage: RuleTariffPackage,
+  profile: TariffProfile,
+  stepId: string,
+): number | null {
+  if (rulePackage.engineContractVersion < 3) {
+    return hourlyEntryAmount(rulePackage, profile.payGroup, stepId);
+  }
+  const monthlyAmount = tableAmount(rulePackage, profile.payGroup, stepId);
+  if (monthlyAmount === null) return null;
+  const monthlyFactor =
+    (rulePackage.rules.hourlyCalculation?.monthlyFactorThousandths ?? 4_348) / 1_000;
+  const weeklyHours = resolveFullTimeWeeklyMinutes(rulePackage, profile) / 60;
+  return Math.round((monthlyAmount / (monthlyFactor * weeklyHours)) * 100) / 100;
 }
 
 export const TARIFF_VERSIONS: readonly TariffVersion[] = Object.freeze(
@@ -110,9 +159,7 @@ export function getMonthlyTableAmount(
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): number | null {
   const rulePackage = getTariffRulePackage(date, ruleResolver);
-  return rulePackage
-    ? tableAmount(rulePackage, profile.payGroup, `s${profile.payLevel}`, "monthlyCents")
-    : null;
+  return rulePackage ? tableAmount(rulePackage, profile.payGroup, `s${profile.payLevel}`) : null;
 }
 
 export function getIndividualHourlyRate(
@@ -121,9 +168,7 @@ export function getIndividualHourlyRate(
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): number | null {
   const rulePackage = getTariffRulePackage(date, ruleResolver);
-  return rulePackage
-    ? tableAmount(rulePackage, profile.payGroup, `s${profile.payLevel}`, "hourlyCents")
-    : null;
+  return rulePackage ? hourlyTableAmount(rulePackage, profile, `s${profile.payLevel}`) : null;
 }
 
 export function getHourlyTableAmountForStep(
@@ -133,7 +178,7 @@ export function getHourlyTableAmountForStep(
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): number | null {
   const rulePackage = getTariffRulePackage(date, ruleResolver);
-  return rulePackage ? tableAmount(rulePackage, profile.payGroup, stepId, "hourlyCents") : null;
+  return rulePackage ? hourlyTableAmount(rulePackage, profile, stepId) : null;
 }
 
 export function getOvertimeBaseHourlyRate(
@@ -143,7 +188,7 @@ export function getOvertimeBaseHourlyRate(
 ): number {
   const maximumStepId = rulePackage.rules.overtimeBaseRule?.maximumStepId;
   if (maximumStepId === undefined) return individualRate;
-  const maximumRate = tableAmount(rulePackage, profile.payGroup, maximumStepId, "hourlyCents");
+  const maximumRate = hourlyTableAmount(rulePackage, profile, maximumStepId);
   if (maximumRate === null) {
     throw new Error(
       `Tariff package ${rulePackage.packageId}/${rulePackage.versionId} has no capped hourly rate for ${profile.payGroup}/${maximumStepId}.`,
@@ -169,5 +214,5 @@ export function getPremiumHourlyRate(
       `Tariff package ${rulePackage.packageId}/${rulePackage.versionId} has no unique premium reference step.`,
     );
   }
-  return tableAmount(rulePackage, profile.payGroup, [...referenceSteps][0], "hourlyCents");
+  return hourlyTableAmount(rulePackage, profile, [...referenceSteps][0]);
 }

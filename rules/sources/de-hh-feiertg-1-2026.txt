@@ -1,0 +1,21 @@
+Quelle: Landesrecht Hamburg, Buergerservice der Freien und Hansestadt Hamburg
+URL: https://www.landesrecht-hamburg.de/bsha/document/jlr-FeiertGHArahmen
+Abruf: 2026-08-29
+Dokumentkopf: Gesetz ueber Sonntage, Feiertage, Gedenktage und Trauertage vom 16.10.1953, Gliederungs-Nr. 113-1, zuletzt geaendert am 17.02.2021
+Normalisierung: sichtbarer Paragraphentext, UTF-8, NFC, geschuetzte Leerzeichen als U+0020, LF
+
+Gesetz ueber Sonntage, Feiertage, Gedenktage und Trauertage
+Paragraph 1
+
+Gesetzliche Feiertage sind:
+
+1. Neujahrstag,
+2. Karfreitag,
+3. Ostermontag,
+4. 1. Mai,
+5. Himmelfahrtstag,
+6. Pfingstmontag,
+7. Tag der Deutschen Einheit (3. Oktober),
+8. 31. Oktober,
+9. 1. Weihnachtstag,
+10. 2. Weihnachtstag.

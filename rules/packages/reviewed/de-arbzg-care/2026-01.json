@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "engineContractVersion": 5,
+  "engineContractVersion": 6,
   "packageId": "de-arbzg-care",
   "versionId": "2026-01",
   "kind": "LEGAL",
@@ -102,7 +102,8 @@
           "minimumMinutes": 600,
           "compensationMinutes": 720,
           "compensationWithinDays": 28,
-          "sourceIds": ["arbzg-2024"]
+          "sourceIds": ["arbzg-2024"],
+          "compensationWithinCalendarMonths": 1
         }
       ],
       "sourceIds": ["arbzg-2024"]

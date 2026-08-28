@@ -43,8 +43,8 @@ export function entryRangeForActiveMonth(activeMonth: string): CalendarEntryRang
 
 export function entryRangeForYear(year: number): CalendarEntryRange {
   return Object.freeze({
-    startDate: `${year - 1}-11-01`,
-    endDate: `${year + 1}-01-31`,
+    startDate: `${year - 1}-01-01`,
+    endDate: `${year + 1}-12-31`,
   });
 }
 

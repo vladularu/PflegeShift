@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
 
+import legalCandidateValue from "../../rules/packages/reviewed/de-arbzg-care/2026-01.json";
 import type { ShiftEntry } from "@/domain/types";
 import {
   calculateMonthlyCompliance,
   prepareComplianceIntervalsIncrementally,
 } from "@/engine/compliance";
+import type { RuleLegalPackage } from "@/rules/contracts.generated";
+import { createRuleResolver } from "@/rules/rule-resolver";
+
+const legalV6Resolver = createRuleResolver(
+  { tariff: [], legal: [legalCandidateValue as RuleLegalPackage], holiday: [] },
+  { tariff: "unused", legal: "de-arbzg-care", holiday: "unused" },
+);
 
 function shift(
   id: string,
@@ -37,6 +45,49 @@ function shift(
 }
 
 describe("ArbZG compliance", () => {
+  it("reports every unresolved profile evidence boundary without hiding the calculation", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("night", "2026-07-01", "21:00", "07:00", 30, "NIGHT")],
+      "Europe/Berlin",
+      {
+        allEmploymentWorkRecorded: null,
+        federalState: "BY",
+        holidayRegion: "UNKNOWN",
+        regularRotatingNightWork: null,
+      },
+    );
+
+    expect(result.issues.map((item) => item.rule)).toEqual(
+      expect.arrayContaining([
+        "ARBZG_DATA_ALL_EMPLOYMENT",
+        "ARBZG_6_NIGHT_STATUS_UNKNOWN",
+        "HOLIDAY_REGION_UNKNOWN",
+        "ARBZG_4_BREAK_PLACEMENT_UNVERIFIED",
+      ]),
+    );
+  });
+
+  it("keeps the one-calendar-month alternative open through its later deadline", () => {
+    const shifts = [
+      shift("late", "2026-01-29", "13:00", "22:00", 30, "LATE"),
+      shift("early", "2026-01-30", "08:30", "16:30", 30, "EARLY"),
+    ];
+    const atCalendarMonthDeadline = calculateMonthlyCompliance("2026-01", shifts, "Europe/Berlin", {
+      referenceDate: "2026-02-28",
+      ruleResolver: legalV6Resolver,
+    }).issues.find((item) => item.rule === "ARBZG_5_REST_11H");
+    const afterCalendarMonthDeadline = calculateMonthlyCompliance(
+      "2026-01",
+      shifts,
+      "Europe/Berlin",
+      { referenceDate: "2026-03-01", ruleResolver: legalV6Resolver },
+    ).issues.find((item) => item.rule === "ARBZG_5_REST_11H");
+
+    expect(atCalendarMonthDeadline?.severity).toBe("warning");
+    expect(afterCalendarMonthDeadline?.severity).toBe("critical");
+  });
+
   it("prepares cold interval conversion in bounded batches without changing results", () => {
     const shifts = Array.from({ length: 55 }, (_, index) =>
       shift(`batch-${index}`, `2026-07-${String((index % 28) + 1).padStart(2, "0")}`),

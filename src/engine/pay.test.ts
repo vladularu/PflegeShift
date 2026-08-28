@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import tariffCandidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json";
 import type { ShiftEntry, UserProfile } from "@/domain/types";
 import {
   assessTvoedPattern,
@@ -10,17 +11,24 @@ import {
   BUNDLED_HOLIDAY_RULES,
   BUNDLED_LEGAL_RULES,
   BUNDLED_TARIFF_RULES,
+  LEGACY_RULE_PACKAGE_IDS,
 } from "@/rules/bundled-rules";
+import type { RuleTariffPackage } from "@/rules/contracts.generated";
 import { createRuleResolver } from "@/rules/rule-resolver";
 
 const profile: UserProfile = {
   federalState: "NW",
+  holidayRegion: "NONE",
   weeklyMinutes: 1_155,
   timeZone: "Europe/Berlin",
+  regularRotatingNightWork: false,
+  sundayHolidayWorkEligible: true,
+  allEmploymentWorkRecorded: true,
   tariff: {
     payGroup: "P8",
     payLevel: 4,
     sector: "BT_K",
+    tariffRegion: "OTHER",
     fullTimeWeeklyMinutes: 2_310,
   },
   createdAt: "2026-01-01T00:00:00.000Z",
@@ -32,6 +40,19 @@ const permanentRoundTheClock = {
   assignment: "PERMANENT" as const,
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
+
+const candidateResolver = createRuleResolver(
+  {
+    tariff: [tariffCandidateValue as RuleTariffPackage],
+    legal: BUNDLED_LEGAL_RULES,
+    holiday: BUNDLED_HOLIDAY_RULES,
+  },
+  {
+    tariff: "tvoed-vka-bt-k",
+    legal: LEGACY_RULE_PACKAGE_IDS.legal,
+    holiday: LEGACY_RULE_PACKAGE_IDS.holiday,
+  },
+);
 
 function shift(overrides: Partial<ShiftEntry> = {}): ShiftEntry {
   return {
@@ -48,6 +69,7 @@ function shift(overrides: Partial<ShiftEntry> = {}): ShiftEntry {
     symbol: "N",
     note: null,
     overtimeMinutes: 60,
+    tariffOvertimeConfirmed: true,
     holidayPremiumMode: "WITH_TIME_OFF",
     revision: 1,
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -71,6 +93,21 @@ describe("TVöD-P pay engine", () => {
     expect(result.premiumLines.map((line) => line.key)).toEqual(["night", "sunday"]);
     expect(result.overtimeBaseAmount).toBe(24.03);
     expect(result.overtimePremiumAmount).toBe(6.83);
+  });
+
+  it("uses the corrected divisor when the reviewed tariff candidate is resolved", () => {
+    const result = calculateShiftPremiumBreakdown(shift(), profile, candidateResolver);
+    expect(result.overtimeBaseAmount).toBe(24.35);
+    expect(result.overtimePremiumAmount).toBe(6.92);
+  });
+
+  it("does not classify entered extra minutes as tariff overtime without confirmation", () => {
+    const result = calculateShiftPremiumBreakdown(
+      shift({ tariffOvertimeConfirmed: false }),
+      profile,
+    );
+    expect(result.overtimeBaseAmount).toBe(0);
+    expect(result.overtimePremiumAmount).toBe(0);
   });
 
   it("uses 30 percent through P11 and 15 percent from P12 for overtime", () => {

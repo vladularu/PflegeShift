@@ -1,6 +1,12 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-import type { ComplianceIssue, ComplianceSeverity, FederalState, ShiftEntry } from "@/domain/types";
+import type {
+  ComplianceIssue,
+  ComplianceSeverity,
+  FederalState,
+  HolidayRegion,
+  ShiftEntry,
+} from "@/domain/types";
 import type { ComplianceInterval as Interval } from "@/engine/compliance-sequences";
 import { getPublicHolidays } from "@/engine/holidays";
 import type { RuleLegalRules } from "@/rules/contracts.generated";
@@ -8,7 +14,14 @@ import { RuleResolutionError, type RuleResolver } from "@/rules/rule-resolver";
 
 interface SundayHolidayRestOptions {
   readonly federalState?: FederalState;
+  readonly holidayRegion?: HolidayRegion;
+  readonly sundayHolidayWorkEligible?: boolean | null;
   readonly sectorId?: string;
+}
+
+interface HolidayCoverage {
+  readonly dates: ReadonlySet<string>;
+  readonly missingYears: ReadonlySet<number>;
 }
 
 interface RestObligation {
@@ -106,23 +119,46 @@ function* workByCalendarDateIncrementally(
 function* knownHolidayDatesIncrementally(
   years: ReadonlySet<number>,
   federalState: FederalState,
+  holidayRegion: HolidayRegion,
   ruleResolver: RuleResolver,
-): Generator<number, ReadonlySet<string> | null, void> {
+): Generator<number, HolidayCoverage, void> {
   const dates = new Set<string>();
+  const missingYears = new Set<number>();
   let processed = 0;
   for (const year of years) {
     try {
-      for (const holiday of getPublicHolidays(year, federalState, ruleResolver)) {
+      for (const holiday of getPublicHolidays(year, federalState, ruleResolver, holidayRegion)) {
         dates.add(holiday.date);
       }
     } catch (error) {
       if (!(error instanceof RuleResolutionError)) throw error;
-      return null;
+      missingYears.add(year);
     }
     processed += 1;
     yield processed;
   }
-  return dates;
+  return { dates, missingYears };
+}
+
+function observedRestAroundCalendarDay(
+  date: Temporal.PlainDate,
+  intervals: readonly Interval[],
+  timeZone: string,
+): number | null {
+  const start = dayStart(date, timeZone);
+  const end = dayStart(date.add({ days: 1 }), timeZone);
+  let previousEnd: Temporal.ZonedDateTime | null = null;
+  let nextStart: Temporal.ZonedDateTime | null = null;
+  for (const interval of intervals) {
+    if (Temporal.ZonedDateTime.compare(interval.end, start) <= 0) {
+      if (previousEnd === null || Temporal.ZonedDateTime.compare(interval.end, previousEnd) > 0) {
+        previousEnd = interval.end;
+      }
+    } else if (nextStart === null && Temporal.ZonedDateTime.compare(interval.start, end) >= 0) {
+      nextStart = interval.start;
+    }
+  }
+  return previousEnd === null || nextStart === null ? null : minutesBetween(previousEnd, nextStart);
 }
 
 function replacementCandidate(
@@ -285,17 +321,22 @@ export function* checkSundayHolidayRestIncrementally(
   const years = new Set<number>([Number(month.slice(0, 4))]);
   for (const date of workDates.keys()) years.add(Number(date.slice(0, 4)));
   for (const shift of shifts) years.add(Number(shift.date.slice(0, 4)));
-  const holidaySteps = knownHolidayDatesIncrementally(years, options.federalState, ruleResolver);
-  let holidayDates: ReadonlySet<string> | null;
+  const holidaySteps = knownHolidayDatesIncrementally(
+    years,
+    options.federalState,
+    options.holidayRegion ?? "NONE",
+    ruleResolver,
+  );
+  let holidayCoverage: HolidayCoverage;
   while (true) {
     const step = holidaySteps.next();
     if (step.done) {
-      holidayDates = step.value;
+      holidayCoverage = step.value;
       break;
     }
     yield step.value;
   }
-  if (holidayDates === null) return [];
+  const holidayDates = holidayCoverage.dates;
   const requiredRestMinutes = restRules.replacementDayMinutes + restRules.connectedRestMinutes;
   const evidenceByDate = new Map<string, ShiftEntry>();
   for (const shift of shifts) {
@@ -333,31 +374,61 @@ export function* checkSundayHolidayRestIncrementally(
     restRules.weekdayHolidayCompensationPeriodDays,
   );
   const matches = matchObligations(obligations, candidates);
-  const issues = matches.unmatched.map((obligation) => {
-    const overdue = Temporal.PlainDate.compare(referenceDate, obligation.windowEnd) > 0;
-    const sunday = obligation.kind === "SUNDAY";
-    const periodLabel = sunday
-      ? `${restRules.sundayCompensationPeriodDays} Tagen`
-      : `${restRules.weekdayHolidayCompensationPeriodDays} Tagen`;
-    return issue(
-      overdue ? "critical" : "warning",
-      sunday ? "ARBZG_11_SUNDAY_REST" : "ARBZG_11_HOLIDAY_REST",
-      overdue
-        ? sunday
-          ? "Ersatzruhetag für Sonntagsarbeit fehlt"
-          : "Ersatzruhetag für Feiertagsarbeit fehlt"
-        : sunday
-          ? "Ersatzruhetag für Sonntagsarbeit offen"
-          : "Ersatzruhetag für Feiertagsarbeit offen",
-      `Für die Beschäftigung am ${dateLabel(obligation.date)} ist innerhalb eines den Beschäftigungstag einschließenden Zeitraums von ${periodLabel} ein eigener als „Frei“ dokumentierter, arbeitsfreier Ersatzruhetag erforderlich. Der mögliche Zuordnungsbereich reicht vom ${dateLabel(obligation.windowStart)} bis ${dateLabel(obligation.windowEnd)}.`,
-      obligation.related,
-      obligation.date.toString(),
+  const issues: ComplianceIssue[] = [];
+  if (holidayCoverage.missingYears.size > 0) {
+    issues.push(
+      issue(
+        "warning",
+        "HOLIDAY_CATALOG_COVERAGE",
+        "Feiertagskatalog unvollständig",
+        `Für ${[...holidayCoverage.missingYears].sort().join(", ")} fehlt ein gültiges Feiertagspaket. Sonntage werden weiter geprüft; Feiertagsprüfungen sind unvollständig.`,
+        obligations[0]?.related ?? [],
+        `${month}-01`,
+      ),
     );
-  });
+  }
+  if (obligations.length > 0 && options.sundayHolidayWorkEligible !== true) {
+    const related = obligations[0]!.related;
+    issues.push(
+      issue(
+        options.sundayHolidayWorkEligible === false ? "critical" : "warning",
+        "ARBZG_10_ELIGIBILITY",
+        options.sundayHolidayWorkEligible === false
+          ? "Sonn- oder Feiertagsarbeit nicht als zulässig erfasst"
+          : "Zulässigkeit der Sonn- oder Feiertagsarbeit offen",
+        "Bitte prüfen und bestätigen, ob die erfasste Sonn- oder Feiertagsarbeit unter eine Ausnahme nach § 10 ArbZG oder eine andere wirksame Ausnahme fällt.",
+        related,
+        obligations[0]!.date.toString(),
+      ),
+    );
+  }
+  issues.push(
+    ...matches.unmatched.map((obligation) => {
+      const overdue = Temporal.PlainDate.compare(referenceDate, obligation.windowEnd) > 0;
+      const sunday = obligation.kind === "SUNDAY";
+      const periodLabel = sunday
+        ? `${restRules.sundayCompensationPeriodDays} Tagen`
+        : `${restRules.weekdayHolidayCompensationPeriodDays} Tagen`;
+      return issue(
+        overdue ? "critical" : "warning",
+        sunday ? "ARBZG_11_SUNDAY_REST" : "ARBZG_11_HOLIDAY_REST",
+        overdue
+          ? sunday
+            ? "Ersatzruhetag für Sonntagsarbeit fehlt"
+            : "Ersatzruhetag für Feiertagsarbeit fehlt"
+          : sunday
+            ? "Ersatzruhetag für Sonntagsarbeit offen"
+            : "Ersatzruhetag für Feiertagsarbeit offen",
+        `Für die Beschäftigung am ${dateLabel(obligation.date)} ist innerhalb eines den Beschäftigungstag einschließenden Zeitraums von ${periodLabel} ein eigener als „Frei“ dokumentierter, arbeitsfreier Ersatzruhetag erforderlich. Der mögliche Zuordnungsbereich reicht vom ${dateLabel(obligation.windowStart)} bis ${dateLabel(obligation.windowEnd)}.`,
+        obligation.related,
+        obligation.date.toString(),
+      );
+    }),
+  );
 
   for (const match of matches.matched) {
     if (
-      match.candidate.observedRestMinutes === null ||
+      match.candidate.observedRestMinutes !== null &&
       match.candidate.observedRestMinutes >= requiredRestMinutes
     ) {
       continue;
@@ -367,11 +438,39 @@ export function* checkSundayHolidayRestIncrementally(
         "warning",
         "ARBZG_11_REST_CONNECTION",
         "Verbindung des Ersatzruhetags prüfen",
-        `Der Ersatzruhetag am ${dateLabel(match.candidate.date)} ist mit ${match.candidate.observedRestMinutes / 60} Stunden erfasster zusammenhängender Ruhe kürzer als die regulären ${requiredRestMinutes / 60} Stunden aus Ersatzruhetag und §-5-Ruhezeit. Prüfen, ob technische oder arbeitsorganisatorische Gründe nach § 11 Abs. 4 ArbZG entgegenstehen.`,
+        match.candidate.observedRestMinutes === null
+          ? `Für den Ersatzruhetag am ${dateLabel(match.candidate.date)} reicht der geladene Zeitraum nicht aus, um die Verbindung mit der §-5-Ruhezeit nachzuweisen.`
+          : `Der Ersatzruhetag am ${dateLabel(match.candidate.date)} ist mit ${match.candidate.observedRestMinutes / 60} Stunden erfasster zusammenhängender Ruhe kürzer als die regulären ${requiredRestMinutes / 60} Stunden aus Ersatzruhetag und §-5-Ruhezeit. Prüfen, ob technische oder arbeitsorganisatorische Gründe nach § 11 Abs. 4 ArbZG entgegenstehen.`,
         [...match.obligation.related, match.candidate.evidence],
         match.obligation.date.toString(),
       ),
     );
+  }
+
+  const monthStart = Temporal.PlainDate.from(`${month}-01`);
+  const monthEnd = monthStart.add({ months: 1 }).subtract({ days: 1 });
+  for (
+    let date = monthStart;
+    Temporal.PlainDate.compare(date, monthEnd) <= 0;
+    date = date.add({ days: 1 })
+  ) {
+    const dateValue = date.toString();
+    if (workDates.has(dateValue) || (date.dayOfWeek !== 7 && !holidayDates.has(dateValue))) {
+      continue;
+    }
+    const observedRest = observedRestAroundCalendarDay(date, intervals, timeZone);
+    if (observedRest !== null && observedRest < requiredRestMinutes) {
+      issues.push(
+        issue(
+          "warning",
+          "ARBZG_11_REST_CONNECTION",
+          "Verbindung der Sonn- oder Feiertagsruhe prüfen",
+          `Die arbeitsfreie Sonn- oder Feiertagsruhe am ${dateLabel(date)} ist mit ${observedRest / 60} Stunden erfasster zusammenhängender Ruhe kürzer als die regulären ${requiredRestMinutes / 60} Stunden einschließlich §-5-Ruhezeit.`,
+          [],
+          dateValue,
+        ),
+      );
+    }
   }
 
   issues.push(

@@ -99,6 +99,7 @@ describe("bundled legacy rule resolver", () => {
             payGroup,
             payLevel,
             sector: "BT_K",
+            tariffRegion: "OTHER",
             fullTimeWeeklyMinutes: 2310,
           };
           const entry = rulePackage.rules.payTables[0].entries.find(
@@ -118,6 +119,7 @@ describe("bundled legacy rule resolver", () => {
           payGroup,
           payLevel: 2,
           sector: "BT_K",
+          tariffRegion: "OTHER",
           fullTimeWeeklyMinutes: 2310,
         };
         expect(premiumEntry!.hourlyCents).toBe(

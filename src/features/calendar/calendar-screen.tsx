@@ -181,9 +181,12 @@ export function CalendarScreen() {
   const quickPlannerActions = useMemo(() => quickEntryServiceActions(quickActions), [quickActions]);
   const quickPopupHolidayName = useMemo(() => {
     if (profile === null || quickPopup === null) return undefined;
-    return holidayMapForMonth(quickPopup.date.slice(0, 7), profile.federalState, ruleResolver).get(
-      quickPopup.date,
-    )?.name;
+    return holidayMapForMonth(
+      quickPopup.date.slice(0, 7),
+      profile.federalState,
+      ruleResolver,
+      profile.holidayRegion,
+    ).get(quickPopup.date)?.name;
   }, [profile, quickPopup, ruleResolver]);
 
   const saveStampAction = useQuickStampAction({

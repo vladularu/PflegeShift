@@ -10,10 +10,50 @@ import { validateRulePackage } from "./validation";
 
 const candidates = [tariffCandidate, legalCandidate, holidayCandidate];
 const holidaySourceSnapshots = {
+  "de-hb-feiertg-2-2026": {
+    relativePath: "../../rules/sources/de-hb-feiertg-2-2026.txt",
+    url: "https://www.transparenz.bremen.de/metainformationen/gesetz-ueber-die-sonn-gedenk-und-feiertage-vom-12-november-1954-296390?template=20_gp_ifg_meta_detail_d",
+    documentDate: "2025-09-02",
+  },
+  "de-he-holidays-2026": {
+    relativePath: "../../rules/sources/de-he-holidays-2026.txt",
+    url: "https://innen.hessen.de/Buerger-Staat/Feiertage",
+    documentDate: "2026-08-29",
+  },
+  "de-hh-feiertg-1-2026": {
+    relativePath: "../../rules/sources/de-hh-feiertg-1-2026.txt",
+    url: "https://www.landesrecht-hamburg.de/bsha/document/jlr-FeiertGHArahmen",
+    documentDate: "2021-02-17",
+  },
   "de-by-holidays-2026": {
     relativePath: "../../rules/sources/de-by-ftg-art-1-2026.txt",
     url: "https://www.gesetze-bayern.de/Content/Document/BayFTG-1",
     documentDate: "2013-08-01",
+  },
+  "de-mv-ftg-2-2026": {
+    relativePath: "../../rules/sources/de-mv-ftg-2-2026.txt",
+    url: "https://www.landesrecht-mv.de/bsmv/document/jlr-FTGMVrahmen",
+    documentDate: "2022-07-07",
+  },
+  "de-ni-nfeiertagsg-2-2026": {
+    relativePath: "../../rules/sources/de-ni-nfeiertagsg-2-2026.txt",
+    url: "https://voris.wolterskluwer-online.de/browse/document/b724111b-6c20-3862-b111-589842acacba",
+    documentDate: "2018-06-22",
+  },
+  "de-nw-feiertg-2-2026": {
+    relativePath: "../../rules/sources/de-nw-feiertg-2-2026.txt",
+    url: "https://recht.nrw.de/lrgv/gesetz/01012000-bekanntmachung-der-neufassung-des-gesetzes-ueber-die-sonn-und-feiertage/",
+    documentDate: "1994-12-20",
+  },
+  "de-rp-holidays-2026": {
+    relativePath: "../../rules/sources/de-rp-holidays-2026.txt",
+    url: "https://mdi.rlp.de/themen/buerger-und-staat/verfassung-und-verwaltung/sonn-und-feiertagsrecht",
+    documentDate: "2026-08-29",
+  },
+  "de-sh-sftg-2-2018": {
+    relativePath: "../../rules/sources/de-sh-sftg-2-2018.txt",
+    url: "https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/IV/Service/GVOBl/GVOBl/2018/gvobl_6_2018.pdf",
+    documentDate: "2018-03-21",
   },
   "de-sl-sfg-2-2026": {
     relativePath: "../../rules/sources/de-sl-sfg-2-2026.txt",
@@ -67,20 +107,40 @@ describe("generation 1 rule review candidates", () => {
   it("locks the TVoeD-VKA table, premium and allowance boundaries", () => {
     expect(tariffCandidate.packageId).toBe("tvoed-vka-bt-k");
     expect(tariffCandidate.versionId).toBe("2026-05");
-    expect(tariffCandidate.engineContractVersion).toBe(2);
+    expect(tariffCandidate.engineContractVersion).toBe(3);
     expect(tariffCandidate.validFrom).toBe("2026-05-01");
     expect(tariffCandidate.validTo).toBe("2027-03-31");
     expect(tariffCandidate.rules.selector).toEqual({
       agreementId: "tvoed-vka",
-      specialPartId: "bt-k",
+      specialPartIds: ["bt-k", "bt-b"],
       payTableId: "p-2026-05",
     });
 
     const entries = tariffCandidate.rules.payTables.flatMap((table) => table.entries);
     expect(entries).toHaveLength(50);
-    for (const entry of entries) {
-      expect(entry.hourlyCents).toBe(Math.round(entry.monthlyCents / (4.348 * 39)));
-    }
+    expect(entries.every((entry) => !("hourlyCents" in entry))).toBe(true);
+    expect(tariffCandidate.rules.hourlyCalculation).toEqual({
+      monthlyFactorThousandths: 4348,
+      rounding: "HALF_UP",
+      sourceIds: ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"],
+    });
+    expect(tariffCandidate.rules.weeklyWorkingTimeRules).toEqual([
+      expect.objectContaining({
+        sectors: ["BT_K"],
+        tariffRegions: ["KAV_BW"],
+        fullTimeWeeklyMinutes: 2340,
+      }),
+      expect.objectContaining({
+        sectors: ["BT_K"],
+        tariffRegions: ["OTHER"],
+        fullTimeWeeklyMinutes: 2310,
+      }),
+      expect.objectContaining({
+        sectors: ["BT_B"],
+        tariffRegions: ["KAV_BW", "OTHER"],
+        fullTimeWeeklyMinutes: 2340,
+      }),
+    ]);
     expect(
       byId(
         entries.map((entry) => ({ ...entry, id: `${entry.groupId}-${entry.stepId}` })),
@@ -88,7 +148,6 @@ describe("generation 1 rule review candidates", () => {
       ),
     ).toMatchObject({
       monthlyCents: 351030,
-      hourlyCents: 2070,
     });
     expect(
       byId(
@@ -97,7 +156,6 @@ describe("generation 1 rule review candidates", () => {
       ),
     ).toMatchObject({
       monthlyCents: 693770,
-      hourlyCents: 4091,
     });
 
     expect(tariffCandidate.rules.premiumRules).toHaveLength(8);
@@ -152,7 +210,7 @@ describe("generation 1 rule review candidates", () => {
   it("locks statutory ArbZG boundaries apart from labelled product heuristics", () => {
     expect(legalCandidate.packageId).toBe("de-arbzg-care");
     expect(legalCandidate.versionId).toBe("2026-01");
-    expect(legalCandidate.engineContractVersion).toBe(5);
+    expect(legalCandidate.engineContractVersion).toBe(6);
     expect(legalCandidate.rules.workingTime).toMatchObject({
       standardDailyMinutes: 480,
       maxDailyMinutes: 600,
@@ -197,6 +255,7 @@ describe("generation 1 rule review candidates", () => {
           minimumMinutes: 600,
           compensationMinutes: 720,
           compensationWithinDays: 28,
+          compensationWithinCalendarMonths: 1,
         },
       ],
     });
@@ -221,13 +280,15 @@ describe("generation 1 rule review candidates", () => {
     });
   });
 
-  it("locks the 2026 nationwide and state holiday scope", () => {
+  it("locks the 2026 nationwide, state and regional holiday scope", () => {
     const holidays = holidayCandidate.rules.holidays;
     expect(holidayCandidate.packageId).toBe("de-holidays");
     expect(holidayCandidate.versionId).toBe("2026");
-    expect(holidays).toHaveLength(19);
-    expect(new Set(holidays.map((holiday) => holiday.id)).size).toBe(19);
+    expect(holidayCandidate.engineContractVersion).toBe(2);
+    expect(holidays).toHaveLength(23);
+    expect(new Set(holidays.map((holiday) => holiday.id)).size).toBe(23);
     expect(holidays.filter((holiday) => holiday.scope === "NATIONWIDE")).toHaveLength(9);
+    expect(holidays.filter((holiday) => holiday.scope === "REGIONAL")).toHaveLength(4);
     expect(holidays.every((holiday) => holiday.validFrom === "2026-01-01")).toBe(true);
     expect(holidays.every((holiday) => holiday.validTo === "2026-12-31")).toBe(true);
     expect(holidays.some((holiday) => holiday.calculation.type === "SPECIFIC_DATE")).toBe(false);
@@ -241,6 +302,14 @@ describe("generation 1 rule review candidates", () => {
       "NW",
       "RP",
       "SL",
+    ]);
+    expect(byId(holidays, "corpus-christi").sourceIds).toEqual([
+      "de-bw-holidays-2026",
+      "de-by-holidays-2026",
+      "de-he-holidays-2026",
+      "de-nw-feiertg-2-2026",
+      "de-rp-holidays-2026",
+      "de-sl-sfg-2-2026",
     ]);
     expect(byId(holidays, "assumption-day-sl").federalStates).toEqual(["SL"]);
     expect(byId(holidays, "assumption-day-sl").sourceIds).toEqual(["de-sl-sfg-2-2026"]);
@@ -257,7 +326,25 @@ describe("generation 1 rule review candidates", () => {
       "SH",
       "TH",
     ]);
+    expect(byId(holidays, "reformation-day").sourceIds).toEqual([
+      "de-bb-holidays-2026",
+      "de-hb-feiertg-2-2026",
+      "de-hh-feiertg-1-2026",
+      "de-mv-ftg-2-2026",
+      "de-ni-nfeiertagsg-2-2026",
+      "de-sn-holidays-2026",
+      "de-st-holidays-2026",
+      "de-sh-sftg-2-2018",
+      "de-th-holidays-2026",
+    ]);
     expect(byId(holidays, "all-saints-day").federalStates).toEqual(["BW", "BY", "NW", "RP", "SL"]);
+    expect(byId(holidays, "all-saints-day").sourceIds).toEqual([
+      "de-bw-holidays-2026",
+      "de-by-holidays-2026",
+      "de-nw-feiertg-2-2026",
+      "de-rp-holidays-2026",
+      "de-sl-sfg-2-2026",
+    ]);
     expect(byId(holidays, "repentance-day-sn").calculation.type).toBe("REPENTANCE_DAY");
     expect(byId(holidays, "easter-sunday-bb").calculation).toMatchObject({
       type: "EASTER_OFFSET",
@@ -267,6 +354,13 @@ describe("generation 1 rule review candidates", () => {
       type: "EASTER_OFFSET",
       offsetDays: 49,
     });
+    expect(byId(holidays, "assumption-day-by-regional").regionIds).toEqual([
+      "by.maria-himmelfahrt",
+      "by.augsburg",
+    ]);
+    expect(byId(holidays, "augsburg-peace-festival").regionIds).toEqual(["by.augsburg"]);
+    expect(byId(holidays, "corpus-christi-sn-regional").regionIds).toEqual(["sn.fronleichnam"]);
+    expect(byId(holidays, "corpus-christi-th-regional").regionIds).toEqual(["th.fronleichnam"]);
 
     for (const [sourceId, sourceSnapshot] of Object.entries(holidaySourceSnapshots)) {
       expect(byId(holidayCandidate.sources, sourceId)).toMatchObject({

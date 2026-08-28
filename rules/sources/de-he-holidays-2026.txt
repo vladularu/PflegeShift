@@ -1,0 +1,18 @@
+Quelle: Hessisches Ministerium des Innern, fuer Sicherheit und Heimatschutz
+URL: https://innen.hessen.de/Buerger-Staat/Feiertage
+Abruf: 2026-08-29
+Dokumentstand: Feiertage in Hessen im Jahr 2026
+Normalisierung: sichtbare Feiertagsliste, UTF-8, NFC, geschuetzte Leerzeichen als U+0020, LF
+
+Feiertage in Hessen im Jahr 2026
+
+Neujahr: 01.01.2026
+Karfreitag: 03.04.2026
+Ostermontag: 06.04.2026
+Tag der Arbeit: 01.05.2026
+Christi Himmelfahrt: 14.05.2026
+Pfingstmontag: 25.05.2026
+Fronleichnam: 04.06.2026
+Tag der Deutschen Einheit: 03.10.2026
+1. Weihnachtsfeiertag: 25.12.2026
+2. Weihnachtsfeiertag: 26.12.2026

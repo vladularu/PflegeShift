@@ -20,6 +20,11 @@ import {
   type RecurrenceRule,
 } from "@/domain/types";
 import { UserFacingError } from "@/domain/errors";
+import {
+  defaultHolidayRegion,
+  isHolidayRegionCompatible,
+  tariffFullTimeWeeklyMinutes,
+} from "@/domain/employment-profile";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const COLOR_PATTERN = /^#[0-9A-F]{6}$/i;
@@ -140,7 +145,21 @@ export function requireTimeZone(value: string): string {
 }
 
 export function validateProfile(input: SaveProfileInput): SaveProfileInput {
+  const federalState = requireFederalState(input.federalState);
+  const holidayRegion = input.holidayRegion ?? defaultHolidayRegion(federalState);
+  if (!isHolidayRegionCompatible(federalState, holidayRegion)) {
+    throw new ValidationError("Die regionale Feiertagsregel passt nicht zum Bundesland.");
+  }
   const tariff = input.tariff;
+  for (const evidence of [
+    input.regularRotatingNightWork,
+    input.sundayHolidayWorkEligible,
+    input.allEmploymentWorkRecorded,
+  ]) {
+    if (evidence !== undefined && evidence !== null && typeof evidence !== "boolean") {
+      throw new ValidationError("Eine Angabe zur Arbeitszeitprüfung ist ungültig.");
+    }
+  }
   if (tariff !== null && tariff !== undefined) {
     if (!PAY_GROUPS.includes(tariff.payGroup)) {
       throw new ValidationError("Bitte eine gültige TVöD-P-Gruppe wählen.");
@@ -151,12 +170,21 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
     if (tariff.sector !== "BT_K" && tariff.sector !== "BT_B") {
       throw new ValidationError("Bitte einen gültigen TVöD-Bereich wählen.");
     }
-    requireWeeklyMinutes(tariff.fullTimeWeeklyMinutes);
+    const expectedFullTimeMinutes = tariffFullTimeWeeklyMinutes(tariff.sector, tariff.tariffRegion);
+    if (tariff.fullTimeWeeklyMinutes !== expectedFullTimeMinutes) {
+      throw new ValidationError(
+        "Die tarifliche Vollzeit passt nicht zum gewählten Tarifbereich und Tarifgebiet.",
+      );
+    }
   }
   return {
-    federalState: requireFederalState(input.federalState),
+    federalState,
+    holidayRegion,
     weeklyMinutes: requireWeeklyMinutes(input.weeklyMinutes),
     timeZone: requireTimeZone(input.timeZone.trim() || "Europe/Berlin"),
+    regularRotatingNightWork: input.regularRotatingNightWork ?? null,
+    sundayHolidayWorkEligible: input.sundayHolidayWorkEligible ?? null,
+    allEmploymentWorkRecorded: input.allEmploymentWorkRecorded ?? null,
     tariff: tariff ?? null,
   };
 }
@@ -279,6 +307,7 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
     alarmEnabled: input.alarmEnabled ?? false,
     location: validateLocation(input.location),
     overtimeMinutes: input.overtimeMinutes ?? 0,
+    tariffOvertimeConfirmed: input.tariffOvertimeConfirmed ?? false,
     holidayPremiumMode: input.holidayPremiumMode ?? "WITH_TIME_OFF",
   };
   if (
@@ -290,6 +319,9 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
   }
   if (typeof base.alarmEnabled !== "boolean") {
     throw new ValidationError("Die Weckereinstellung ist ungültig.");
+  }
+  if (typeof base.tariffOvertimeConfirmed !== "boolean") {
+    throw new ValidationError("Die Bestätigung der Tarifüberstunden ist ungültig.");
   }
   if (!["WITH_TIME_OFF", "WITHOUT_TIME_OFF"].includes(base.holidayPremiumMode)) {
     throw new ValidationError("Ungültige Feiertagsoption.");
@@ -303,6 +335,7 @@ export function validateShift(input: SaveShiftInput): SaveShiftInput {
       endTime: null,
       breakMinutes: 0,
       overtimeMinutes: 0,
+      tariffOvertimeConfirmed: false,
     };
   }
 

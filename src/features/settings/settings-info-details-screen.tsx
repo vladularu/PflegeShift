@@ -56,11 +56,19 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     items: [
       {
         title: "Arbeitszeit",
-        text: "Ist-Zeit entspricht der Dienstzeit abzüglich Pause. Termine zählen nicht als Arbeitszeit; Abwesenheiten werden nach dem hinterlegten Tages-Soll bewertet.",
+        text: "Ist-Zeit entspricht der Dienstzeit abzüglich Pause. Für eine vollständige ArbZG-Prüfung müssen Arbeitszeiten aus allen Arbeitsverhältnissen erfasst sein.",
+      },
+      {
+        title: "Pausennachweis",
+        text: "Ein Dienst speichert derzeit die gesamte Pausendauer, aber nicht Lage und einzelne Pausenabschnitte. Die App kann deshalb die gesetzliche Platzierung der Pause nicht abschließend nachweisen.",
       },
       {
         title: "Feiertage und Zuschläge",
-        text: "Bundesland, Uhrzeit und Tarifstand bestimmen Feiertage und Zuschläge. Überschneidungen werden minutengenau aufgeteilt.",
+        text: "Bundesland, regionale Feiertage am Arbeitsort, Uhrzeit und Tarifstand bestimmen Feiertage und Zuschläge. Überschneidungen werden minutengenau aufgeteilt.",
+      },
+      {
+        title: "Tarifüberstunden",
+        text: "Eingetragene Mehrzeit wird nur als TVöD-Überstunde vergütet, wenn sie im Dienst ausdrücklich als tariflich bestätigt markiert wurde.",
       },
       {
         title: "Schätzung statt Abrechnung",

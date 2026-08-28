@@ -5,7 +5,8 @@ import { getPublicHolidays } from "@/engine/holidays";
 import { calculateTimedShiftBounds } from "@/engine/working-time";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
-type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">;
+type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone"> &
+  Partial<Pick<UserProfile, "holidayRegion">>;
 
 interface MinuteInterval {
   readonly start: number;
@@ -30,14 +31,17 @@ const HOLIDAY_DATE_CACHE = new WeakMap<RuleResolver, Map<string, ReadonlySet<str
 function holidayDates(
   year: number,
   federalState: UserProfile["federalState"],
+  holidayRegion: UserProfile["holidayRegion"],
   ruleResolver: RuleResolver,
 ): ReadonlySet<string> {
-  const key = `${federalState}-${year}`;
+  const key = `${federalState}-${holidayRegion}-${year}`;
   const resolverCache = HOLIDAY_DATE_CACHE.get(ruleResolver);
   const cached = resolverCache?.get(key);
   if (cached) return cached;
   const dates = new Set(
-    getPublicHolidays(year, federalState, ruleResolver).map((holiday) => holiday.date),
+    getPublicHolidays(year, federalState, ruleResolver, holidayRegion).map(
+      (holiday) => holiday.date,
+    ),
   );
   const nextCache = resolverCache ?? new Map<string, ReadonlySet<string>>();
   nextCache.set(key, dates);
@@ -47,13 +51,19 @@ function holidayDates(
 
 export function calculateDailyTargetMinutes(
   date: string,
-  profile: Pick<UserProfile, "federalState" | "weeklyMinutes">,
+  profile: Pick<UserProfile, "federalState" | "weeklyMinutes"> &
+    Partial<Pick<UserProfile, "holidayRegion">>,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): number {
   const plainDate = Temporal.PlainDate.from(date);
   if (
     plainDate.dayOfWeek > 5 ||
-    holidayDates(plainDate.year, profile.federalState, ruleResolver).has(date)
+    holidayDates(
+      plainDate.year,
+      profile.federalState,
+      profile.holidayRegion ?? "NONE",
+      ruleResolver,
+    ).has(date)
   ) {
     return 0;
   }

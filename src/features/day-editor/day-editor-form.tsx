@@ -17,11 +17,11 @@ import {
 } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { ValidationError } from "@/domain/validation";
-import { calculateMonthlyCompliance } from "@/engine/compliance";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import { AppointmentEditOverlay } from "@/features/day-editor/appointment-edit-overlay";
 import { resolveShiftTypePreset } from "@/features/day-editor/shift-type-preset";
 import { ShiftEditOverlay } from "@/features/day-editor/shift-edit-overlay";
+import { criticalIssueForSavedShift } from "@/features/day-editor/saved-shift-compliance";
 import { AlarmSheet, NotificationSheet, PauseSheet } from "@/features/day-editor/entry-options";
 import {
   consumeLocationSelection,
@@ -75,7 +75,12 @@ export function DayEditorForm({
   const [shiftLocation, setShiftLocation] = useState<EntryLocation | null>(
     initialShift?.location ?? null,
   );
-  const overtimeMinutes = String(initialShift?.overtimeMinutes ?? 0);
+  const [overtimeMinutes, setOvertimeMinutes] = useState(
+    String(initialShift?.overtimeMinutes ?? 0),
+  );
+  const [tariffOvertimeConfirmed, setTariffOvertimeConfirmed] = useState(
+    initialShift?.tariffOvertimeConfirmed ?? false,
+  );
   const holidayPremiumMode = initialShift?.holidayPremiumMode ?? "WITH_TIME_OFF";
   const [appointmentTitle, setAppointmentTitle] = useState(
     initialAppointment?.title ?? "Ohne Titel",
@@ -219,22 +224,11 @@ export function DayEditorForm({
           alarmEnabled: shiftIsTimed ? shiftAlarmEnabled : false,
           location: shiftLocation,
           overtimeMinutes: overtime,
+          tariffOvertimeConfirmed: overtime > 0 && tariffOvertimeConfirmed,
           holidayPremiumMode,
         });
         if (profile && shiftIsTimed) {
-          const shifts = entries
-            .filter(
-              (entry): entry is Extract<CalendarEntry, { kind: "SHIFT" }> =>
-                entry.kind === "SHIFT" && entry.id !== saved.id,
-            )
-            .concat(saved);
-          const critical = calculateMonthlyCompliance(date.slice(0, 7), shifts, profile.timeZone, {
-            federalState: profile.federalState,
-            ruleResolver,
-            weeklyMinutes: profile.weeklyMinutes,
-          }).issues.find(
-            (issue) => issue.severity === "critical" && issue.relatedShiftIds.includes(saved.id),
-          );
+          const critical = criticalIssueForSavedShift(saved, entries, profile, ruleResolver);
           if (critical) Alert.alert("ArbZG-Hinweis", critical.title);
         }
       } else {
@@ -357,15 +351,20 @@ export function DayEditorForm({
           onNoteChange={setShiftNote}
           onNotificationChange={setShiftNotification}
           onNotificationPress={() => setOptionSheet("NOTIFICATION")}
+          onOvertimeMinutesChange={setOvertimeMinutes}
           onRequestClose={() => save(false)}
           onShiftTypeChange={chooseType}
           onStartTimeChange={setStartTime}
+          onTariffOvertimeConfirmedChange={setTariffOvertimeConfirmed}
+          overtimeInputRef={overtimeRef}
+          overtimeMinutes={overtimeMinutes}
           shiftColor={shiftColor}
           shiftIsTimed={shiftIsTimed}
           shiftSymbol={shiftSymbol}
           shiftTitle={shiftTitle}
           shiftType={shiftType}
           startTime={startTime}
+          tariffOvertimeConfirmed={tariffOvertimeConfirmed}
         />
         {optionSheet === "NOTIFICATION" ? (
           <NotificationSheet

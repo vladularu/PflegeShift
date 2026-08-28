@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import tariffCandidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json";
 import { PAY_GROUPS, PAY_LEVELS, type TariffProfile } from "@/domain/types";
 import {
   getIndividualHourlyRate,
@@ -7,11 +8,14 @@ import {
   getPremiumHourlyRate,
   getTariffVersion,
 } from "@/engine/tariff";
+import type { RuleTariffPackage } from "@/rules/contracts.generated";
+import { createRuleResolver } from "@/rules/rule-resolver";
 
 const tariff: TariffProfile = {
   payGroup: "P8",
   payLevel: 4,
   sector: "BT_K",
+  tariffRegion: "OTHER",
   fullTimeWeeklyMinutes: 2_310,
 };
 
@@ -20,6 +24,32 @@ describe("TVöD-P tariff tables", () => {
     expect(getMonthlyTableAmount(tariff, "2026-07-01")).toBe(4075.58);
     expect(getIndividualHourlyRate(tariff, "2026-07-01")).toBe(24.03);
     expect(getPremiumHourlyRate(tariff, "2026-07-01")).toBe(22.78);
+  });
+
+  it("derives candidate hourly rates from sector and tariff-region working time", () => {
+    const resolver = createRuleResolver(
+      {
+        tariff: [tariffCandidateValue as RuleTariffPackage],
+        legal: [],
+        holiday: [],
+      },
+      { tariff: "tvoed-vka-bt-k", legal: "unused", holiday: "unused" },
+    );
+    expect(getIndividualHourlyRate(tariff, "2026-07-01", resolver)).toBe(24.35);
+    expect(
+      getIndividualHourlyRate(
+        { ...tariff, tariffRegion: "KAV_BW", fullTimeWeeklyMinutes: 2340 },
+        "2026-07-01",
+        resolver,
+      ),
+    ).toBe(24.03);
+    expect(
+      getIndividualHourlyRate(
+        { ...tariff, sector: "BT_B", fullTimeWeeklyMinutes: 2340 },
+        "2026-07-01",
+        resolver,
+      ),
+    ).toBe(24.03);
   });
 
   it("selects versions at their exact boundaries", () => {

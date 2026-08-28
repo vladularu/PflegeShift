@@ -1,17 +1,24 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-import type { ComplianceIssue, ComplianceSeverity, FederalState, ShiftEntry } from "@/domain/types";
+import type {
+  ComplianceIssue,
+  ComplianceSeverity,
+  FederalState,
+  HolidayRegion,
+  ShiftEntry,
+} from "@/domain/types";
 import type { ComplianceInterval as Interval } from "@/engine/compliance-sequences";
 import { getPublicHolidays } from "@/engine/holidays";
 import type { RuleLegalRules } from "@/rules/contracts.generated";
 import { RuleResolutionError, type RuleResolver } from "@/rules/rule-resolver";
 
 export interface NightWorkerQualificationOptions {
-  readonly regularRotatingNightWork?: boolean;
+  readonly regularRotatingNightWork?: boolean | null;
 }
 
 export interface NightWorkAverageOptions extends NightWorkerQualificationOptions {
   readonly federalState?: FederalState;
+  readonly holidayRegion?: HolidayRegion;
   readonly weeklyMinutes?: number;
 }
 
@@ -160,13 +167,19 @@ function knownHolidayDates(
   start: Temporal.PlainDate,
   end: Temporal.PlainDate,
   federalState: FederalState | undefined,
+  holidayRegion: HolidayRegion | undefined,
   ruleResolver: RuleResolver,
 ): ReadonlySet<string> {
   if (!federalState) return new Set();
   const holidays = new Set<string>();
   for (let year = start.year; year <= end.year; year += 1) {
     try {
-      for (const holiday of getPublicHolidays(year, federalState, ruleResolver)) {
+      for (const holiday of getPublicHolidays(
+        year,
+        federalState,
+        ruleResolver,
+        holidayRegion ?? "NONE",
+      )) {
         if (holiday.date >= start.toString() && holiday.date <= end.toString()) {
           holidays.add(holiday.date);
         }
@@ -206,10 +219,11 @@ function averageWorkedMinutes(
   start: Temporal.PlainDate,
   end: Temporal.PlainDate,
   federalState: FederalState | undefined,
+  holidayRegion: HolidayRegion | undefined,
   rules: RuleLegalRules,
   ruleResolver: RuleResolver,
 ): { readonly averageMinutes: number; readonly workdays: number } | null {
-  const holidays = knownHolidayDates(start, end, federalState, ruleResolver);
+  const holidays = knownHolidayDates(start, end, federalState, holidayRegion, ruleResolver);
   const workdays = statutoryWorkdays(start, end, holidays, rules.workingTime.workWeekLastDay);
   if (workdays === 0) return null;
   const workedMinutes = intervalsInRange(intervals, start, end).reduce(
@@ -261,7 +275,13 @@ function legacyNightAverageIssue(
   const monthStart = Temporal.PlainDate.from(`${month}-01`);
   const monthEnd = monthStart.add({ months: 1 }).subtract({ days: 1 });
   const monthIntervals = intervalsInRange(intervals, monthStart, monthEnd);
-  const holidays = knownHolidayDates(monthStart, monthEnd, options.federalState, ruleResolver);
+  const holidays = knownHolidayDates(
+    monthStart,
+    monthEnd,
+    options.federalState,
+    options.holidayRegion,
+    ruleResolver,
+  );
   const workdayCount = statutoryWorkdays(
     monthStart,
     monthEnd,
@@ -339,6 +359,7 @@ export function checkNightWorkingTimeAverage(
     monthStart,
     monthEnd,
     options.federalState,
+    options.holidayRegion,
     rules,
     ruleResolver,
   );
@@ -370,6 +391,7 @@ export function checkNightWorkingTimeAverage(
       rollingStart,
       rollingEnd,
       options.federalState,
+      options.holidayRegion,
       rules,
       ruleResolver,
     );

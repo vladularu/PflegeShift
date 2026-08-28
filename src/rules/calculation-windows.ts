@@ -12,6 +12,7 @@ export interface LegalCalculationWindow {
   readonly lookaheadDays: number;
   readonly shortAssessmentLookbackDays: number;
   readonly shortAssessmentLookaheadDays: number;
+  readonly shortAssessmentLookaheadCalendarMonths: number;
   readonly lookaheadCalendarMonths: number;
   readonly calendarYearCoverage: boolean;
 }
@@ -61,15 +62,24 @@ export function getLegalCalculationWindow(
     rules.nightWork.averageWindowDays ?? 0,
     ...rules.restPeriod.deviations.map((deviation) => deviation.compensationWithinDays),
   );
+  const shortAssessmentLookaheadCalendarMonths = Math.max(
+    0,
+    ...rules.restPeriod.deviations.map(
+      (deviation) => deviation.compensationWithinCalendarMonths ?? 0,
+    ),
+  );
   return Object.freeze({
     lookbackDays: Math.max(shortAssessmentLookbackDays, replacementRestReachDays),
     lookaheadDays: Math.max(shortAssessmentLookaheadDays, replacementRestReachDays),
     shortAssessmentLookbackDays,
     shortAssessmentLookaheadDays,
-    lookaheadCalendarMonths:
+    shortAssessmentLookaheadCalendarMonths,
+    lookaheadCalendarMonths: Math.max(
       legalPackage.engineContractVersion >= 4
         ? (rules.workingTime.standardAverage?.calendarMonths ?? 0)
         : 0,
+      shortAssessmentLookaheadCalendarMonths,
+    ),
     calendarYearCoverage:
       (legalPackage.engineContractVersion >= 3 &&
         rules.nightWork.workerQualification !== undefined) ||

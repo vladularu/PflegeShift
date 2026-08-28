@@ -432,4 +432,55 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     await db.execAsync(MIGRATION_10);
     await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 10, now);
   }
+
+  const migration11 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=11",
+  );
+  if (migration11 === null) {
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "holiday_region",
+      "TEXT NOT NULL DEFAULT 'UNKNOWN'",
+    );
+    await addColumnIfMissing(db, "user_profile", "tariff_region", "TEXT NOT NULL DEFAULT 'OTHER'");
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "regular_rotating_night_work",
+      "INTEGER CHECK (regular_rotating_night_work IN (0,1))",
+    );
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "sunday_holiday_work_eligible",
+      "INTEGER CHECK (sunday_holiday_work_eligible IN (0,1))",
+    );
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "all_employment_work_recorded",
+      "INTEGER CHECK (all_employment_work_recorded IN (0,1))",
+    );
+    await addColumnIfMissing(
+      db,
+      "shift_entries",
+      "tariff_overtime_confirmed",
+      "INTEGER NOT NULL DEFAULT 0 CHECK (tariff_overtime_confirmed IN (0,1))",
+    );
+    await db.execAsync(`
+      UPDATE user_profile
+      SET holiday_region=CASE
+        WHEN federal_state IN ('BY','SN','TH') THEN 'UNKNOWN'
+        ELSE 'NONE'
+      END,
+      tariff_region=CASE WHEN federal_state='BW' THEN 'KAV_BW' ELSE 'OTHER' END,
+      full_time_weekly_minutes=CASE
+        WHEN tariff_sector='BT_B' OR federal_state='BW' THEN 2340
+        WHEN tariff_sector='BT_K' THEN 2310
+        ELSE full_time_weekly_minutes
+      END;
+    `);
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 11, now);
+  }
 }

@@ -541,8 +541,10 @@ export const MonthCard = memo(function MonthCard({
   const grid = useMemo(() => createMonthGrid(month), [month]);
   const holidays = useMemo(
     () =>
-      showHolidays ? holidayMapForMonth(month, profile.federalState, ruleResolver) : new Map(),
-    [month, profile.federalState, ruleResolver, showHolidays],
+      showHolidays
+        ? holidayMapForMonth(month, profile.federalState, ruleResolver, profile.holidayRegion)
+        : new Map(),
+    [month, profile.federalState, profile.holidayRegion, ruleResolver, showHolidays],
   );
   const currentDate = today(profile.timeZone);
   const weekCount = grid.length / 7;

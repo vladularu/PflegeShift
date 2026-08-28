@@ -1,0 +1,24 @@
+Quelle: Landesrechtsinformationssystem Mecklenburg-Vorpommern
+URL: https://www.landesrecht-mv.de/bsmv/document/jlr-FTGMVrahmen
+Abruf: 2026-08-29
+Dokumentkopf: FTG M-V in der Fassung der Bekanntmachung vom 08.03.2002, Paragraph 2 gueltig ab 13.07.2022
+Normalisierung: sichtbarer Paragraphentext, UTF-8, NFC, geschuetzte Leerzeichen als U+0020, LF
+
+Gesetz ueber Sonn- und Feiertage
+(Feiertagsgesetz Mecklenburg-Vorpommern - FTG M-V)
+Paragraph 2
+Gesetzliche Feiertage
+
+(1) Gesetzliche Feiertage sind:
+
+1. der Neujahrstag (1. Januar),
+2. der Frauentag (8. Maerz),
+3. der Karfreitag,
+4. der Ostermontag,
+5. der 1. Mai,
+6. der Christi-Himmelfahrtstag,
+7. der Pfingstmontag,
+8. der Tag der Deutschen Einheit (3. Oktober),
+9. der Reformationstag (31. Oktober),
+10. der 1. Weihnachtstag (25. Dezember),
+11. der 2. Weihnachtstag (26. Dezember).

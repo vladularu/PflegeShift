@@ -165,9 +165,13 @@ function* calculateAnnualMonthContribution(
       profile.timeZone,
       {
         federalState: profile.federalState,
+        holidayRegion: profile.holidayRegion,
         referenceDate,
         ruleResolver,
         weeklyMinutes: profile.weeklyMinutes,
+        regularRotatingNightWork: profile.regularRotatingNightWork,
+        sundayHolidayWorkEligible: profile.sundayHolidayWorkEligible,
+        allEmploymentWorkRecorded: profile.allEmploymentWorkRecorded,
       },
     );
     while (true) {

@@ -35,6 +35,7 @@ interface ShiftRow {
   alarm_enabled: number;
   location_json: string | null;
   overtime_minutes: number;
+  tariff_overtime_confirmed: number;
   holiday_premium_mode: ShiftEntry["holidayPremiumMode"];
   revision: number;
   created_at: string;
@@ -82,6 +83,7 @@ function mapShift(row: ShiftRow): ShiftEntry {
     alarmEnabled: row.alarm_enabled === 1,
     location: parseJson<EntryLocation>(row.location_json, "Ort"),
     overtimeMinutes: row.overtime_minutes,
+    tariffOvertimeConfirmed: row.tariff_overtime_confirmed === 1,
     holidayPremiumMode: row.holiday_premium_mode,
   });
   return Object.freeze({
@@ -102,6 +104,7 @@ function mapShift(row: ShiftRow): ShiftEntry {
     alarmEnabled: validated.alarmEnabled ?? false,
     location: validated.location ?? null,
     overtimeMinutes: validated.overtimeMinutes ?? 0,
+    tariffOvertimeConfirmed: validated.tariffOvertimeConfirmed ?? false,
     holidayPremiumMode: validated.holidayPremiumMode ?? "WITH_TIME_OFF",
     revision: row.revision,
     createdAt: row.created_at,
@@ -162,7 +165,7 @@ export async function listCalendarEntries(
       COALESCE(templates.color,entries.color) AS color,
       COALESCE(templates.symbol,entries.symbol) AS symbol,
       entries.note,entries.notification_json,entries.alarm_enabled,entries.location_json,
-      entries.overtime_minutes,entries.holiday_premium_mode,
+      entries.overtime_minutes,entries.tariff_overtime_confirmed,entries.holiday_premium_mode,
       entries.revision,entries.created_at,entries.updated_at,entries.deleted_at
      FROM shift_entries entries
      LEFT JOIN shift_templates templates ON templates.id=entries.template_id
@@ -192,9 +195,10 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
     await db.runAsync(
       `INSERT INTO shift_entries(
         id,date,template_id,title,type,all_day,start_time,end_time,break_minutes,color,
-        symbol,note,notification_json,alarm_enabled,location_json,overtime_minutes,holiday_premium_mode,
+        symbol,note,notification_json,alarm_enabled,location_json,overtime_minutes,
+        tariff_overtime_confirmed,holiday_premium_mode,
         revision,created_at,updated_at,deleted_at
-      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,NULL)`,
+      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,NULL)`,
       id,
       input.date,
       input.templateId ?? null,
@@ -211,6 +215,7 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
       input.alarmEnabled ? 1 : 0,
       serializeJson(input.location),
       input.overtimeMinutes ?? 0,
+      input.tariffOvertimeConfirmed ? 1 : 0,
       input.holidayPremiumMode ?? "WITH_TIME_OFF",
       now,
       now,
@@ -220,7 +225,7 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
       `UPDATE shift_entries SET
         date=?,template_id=?,title=?,type=?,all_day=?,start_time=?,end_time=?,break_minutes=?,
         color=?,symbol=?,note=?,notification_json=?,alarm_enabled=?,location_json=?,
-        overtime_minutes=?,holiday_premium_mode=?,
+        overtime_minutes=?,tariff_overtime_confirmed=?,holiday_premium_mode=?,
         revision=revision+1,updated_at=?
        WHERE id=? AND revision=? AND deleted_at IS NULL`,
       input.date,
@@ -238,6 +243,7 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
       input.alarmEnabled ? 1 : 0,
       serializeJson(input.location),
       input.overtimeMinutes ?? 0,
+      input.tariffOvertimeConfirmed ? 1 : 0,
       input.holidayPremiumMode ?? "WITH_TIME_OFF",
       now,
       id,
@@ -248,7 +254,8 @@ export async function saveShift(db: SQLiteDatabase, rawInput: SaveShiftInput): P
 
   const row = await db.getFirstAsync<ShiftRow>(
     `SELECT id,date,template_id,title,type,all_day,start_time,end_time,break_minutes,color,
-      symbol,note,notification_json,alarm_enabled,location_json,overtime_minutes,holiday_premium_mode,
+      symbol,note,notification_json,alarm_enabled,location_json,overtime_minutes,
+      tariff_overtime_confirmed,holiday_premium_mode,
       revision,created_at,updated_at,deleted_at
      FROM shift_entries WHERE id=?`,
     id,

@@ -263,7 +263,10 @@ export function SalaryScreen() {
               ))}
             </SurfaceCard>
 
-            <ReportFootnote>Unverbindliche Schätzung · keine Lohnabrechnung</ReportFootnote>
+            <ReportFootnote>
+              Unverbindliche Schätzung · Pausenzeiten werden mangels Lageangabe mittig angesetzt ·
+              keine Lohnabrechnung
+            </ReportFootnote>
           </>
         )}
       </ReportPeriodContent>

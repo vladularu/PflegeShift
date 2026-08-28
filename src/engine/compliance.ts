@@ -2,12 +2,13 @@ import { Temporal } from "@js-temporal/polyfill";
 
 import type {
   ComplianceIssue,
-  ComplianceKind,
-  ComplianceSeverity,
   FederalState,
+  HolidayRegion,
   MonthlyComplianceResult,
   ShiftEntry,
 } from "@/domain/types";
+import { checkEvidenceCompleteness } from "@/engine/compliance-evidence";
+import { createComplianceIssue as issue } from "@/engine/compliance-issue";
 import {
   compensatedShortRestIndexes,
   consecutiveDateStreaks,
@@ -43,7 +44,10 @@ export interface ComplianceOptions {
   readonly federalState?: FederalState;
   readonly referenceDate?: string;
   readonly weeklyMinutes?: number;
-  readonly regularRotatingNightWork?: boolean;
+  readonly holidayRegion?: HolidayRegion;
+  readonly regularRotatingNightWork?: boolean | null;
+  readonly sundayHolidayWorkEligible?: boolean | null;
+  readonly allEmploymentWorkRecorded?: boolean | null;
   readonly ruleResolver?: RuleResolver;
   readonly sectorId?: string;
 }
@@ -141,32 +145,6 @@ export function* prepareComplianceIntervalsIncrementally(
     if (prepared % safeBatchSize === 0) yield prepared;
   }
   if (prepared % safeBatchSize !== 0) yield prepared;
-}
-
-function stableId(rule: string, date: string, shiftIds: readonly string[]): string {
-  return `${rule}:${date}:${[...shiftIds].sort().join(",")}`;
-}
-
-function issue(
-  severity: ComplianceSeverity,
-  kind: ComplianceKind,
-  rule: string,
-  title: string,
-  description: string,
-  related: readonly ShiftEntry[],
-  date = related.at(-1)?.date ?? "0000-00-00",
-): ComplianceIssue {
-  const relatedShiftIds = related.map((shift) => shift.id);
-  return {
-    id: stableId(rule, date, relatedShiftIds),
-    severity,
-    kind,
-    rule,
-    title,
-    description,
-    relatedShiftIds,
-    date,
-  };
 }
 
 function hours(minutes: number): string {
@@ -463,7 +441,12 @@ function checkRestAndSequence(
       rest < rules.restPeriod.defaultMinutes &&
       !compensated.has(index)
     ) {
-      const deadline = next.start.toPlainDate().add({ days: deviation.compensationWithinDays });
+      const dayDeadline = next.start.toPlainDate().add({ days: deviation.compensationWithinDays });
+      const monthDeadline = next.start.toPlainDate().add({
+        months: deviation.compensationWithinCalendarMonths ?? 0,
+      });
+      const deadline =
+        Temporal.PlainDate.compare(dayDeadline, monthDeadline) >= 0 ? dayDeadline : monthDeadline;
       const overdue = Temporal.PlainDate.compare(referenceDate, deadline) > 0;
       issues.push(
         issue(
@@ -584,9 +567,16 @@ export function* calculateMonthlyComplianceSteps(
   const shortAssessmentStart = first.subtract({
     days: calculationWindow.shortAssessmentLookbackDays,
   });
-  const shortAssessmentEnd = monthEnd.add({
+  const shortDayAssessmentEnd = monthEnd.add({
     days: calculationWindow.shortAssessmentLookaheadDays,
   });
+  const shortMonthAssessmentEnd = monthEnd.add({
+    months: calculationWindow.shortAssessmentLookaheadCalendarMonths,
+  });
+  const shortAssessmentEnd =
+    Temporal.PlainDate.compare(shortDayAssessmentEnd, shortMonthAssessmentEnd) >= 0
+      ? shortDayAssessmentEnd
+      : shortMonthAssessmentEnd;
   const baseEnd = getLegalCalculationEnd(monthEnd, calculationWindow);
   const yearStart = Temporal.PlainDate.from({ year: first.year, month: 1, day: 1 });
   const yearEnd = Temporal.PlainDate.from({ year: first.year, month: 12, day: 31 });
@@ -639,6 +629,7 @@ export function* calculateMonthlyComplianceSteps(
   }
   yield 1;
   const issues: ComplianceIssue[] = [];
+  issues.push(...checkEvidenceCompleteness(month, assessmentIntervals, options, rules));
   issues.push(...checkDuplicates(assessmentIntervals));
   yield 2;
   issues.push(...checkOverlaps(assessmentIntervals));

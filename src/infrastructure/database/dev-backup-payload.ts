@@ -15,6 +15,7 @@ export interface RawShiftRow {
   alarm_enabled: number;
   location_json: string | null;
   overtime_minutes: number;
+  tariff_overtime_confirmed: number;
   holiday_premium_mode: string;
   revision: number;
   created_at: string;
@@ -52,7 +53,7 @@ export interface RawDecisionRow {
 }
 
 export interface BackupPayload {
-  version: 2;
+  version: 3;
   month: string;
   counts: {
     appointments: number;
@@ -153,6 +154,13 @@ function validateShift(value: unknown, month: string, currentPayload: boolean): 
   if (allDay !== 0 && allDay !== 1) invalid("Ganztagsstatus");
   const alarmEnabled = row.alarm_enabled === undefined ? 0 : integerValue(row, "alarm_enabled");
   if (alarmEnabled !== 0 && alarmEnabled !== 1) invalid("Weckerstatus");
+  const tariffOvertimeConfirmed =
+    row.tariff_overtime_confirmed === undefined
+      ? 0
+      : integerValue(row, "tariff_overtime_confirmed");
+  if (tariffOvertimeConfirmed !== 0 && tariffOvertimeConfirmed !== 1) {
+    invalid("Tarifüberstundenstatus");
+  }
   return {
     id: stringValue(row, "id"),
     date,
@@ -170,6 +178,7 @@ function validateShift(value: unknown, month: string, currentPayload: boolean): 
     alarm_enabled: alarmEnabled,
     location_json: versionedNullableString(row, "location_json", currentPayload),
     overtime_minutes: integerValue(row, "overtime_minutes"),
+    tariff_overtime_confirmed: tariffOvertimeConfirmed,
     holiday_premium_mode: stringValue(row, "holiday_premium_mode"),
     revision: integerValue(row, "revision", 1),
     created_at: stringValue(row, "created_at"),
@@ -248,7 +257,7 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
   if (!Array.isArray(sourceShifts) || !Array.isArray(sourceAppointments)) {
     invalid("Datensatzlisten");
   }
-  const currentPayload = payload.version === 2;
+  const currentPayload = payload.version === 3;
   const shifts = sourceShifts.map((row) => validateShift(row, expectedMonth, currentPayload));
   const appointments = sourceAppointments.map((row) =>
     validateAppointment(row, expectedMonth, currentPayload),
@@ -258,7 +267,10 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
   assertUniqueIds(appointments, "doppelte Termin-ID");
 
   if (payload.version !== undefined) {
-    if ((payload.version !== 1 && payload.version !== 2) || payload.month !== expectedMonth) {
+    if (
+      (payload.version !== 1 && payload.version !== 2 && payload.version !== 3) ||
+      payload.month !== expectedMonth
+    ) {
       invalid("Version oder Monat");
     }
     const counts = record(payload.counts, "Zeilenanzahlen");
@@ -272,7 +284,7 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
   }
 
   return {
-    version: 2,
+    version: 3,
     month: expectedMonth,
     counts: {
       appointments: appointments.length,
@@ -298,7 +310,7 @@ export function createDevBackupPayload(
         shifts: data.shifts.length,
       },
       month,
-      version: 2,
+      version: 3,
     },
     month,
   );

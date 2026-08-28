@@ -1,62 +1,18 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-import type {
-  PayGroup,
-  PayLevel,
-  SaveProfileInput,
-  TariffSector,
-  UserProfile,
-} from "@/domain/types";
+import type { SaveProfileInput, UserProfile } from "@/domain/types";
+import { defaultHolidayRegion } from "@/domain/employment-profile";
 import { validateProfile } from "@/domain/validation";
-
-interface ProfileRow {
-  federal_state: UserProfile["federalState"];
-  weekly_minutes: number;
-  time_zone: string;
-  pay_group: PayGroup | null;
-  pay_level: PayLevel | null;
-  tariff_sector: TariffSector | null;
-  full_time_weekly_minutes: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-function mapProfile(row: ProfileRow): UserProfile {
-  const tariff =
-    row.pay_group !== null &&
-    row.pay_level !== null &&
-    row.tariff_sector !== null &&
-    row.full_time_weekly_minutes !== null
-      ? {
-          payGroup: row.pay_group as NonNullable<UserProfile["tariff"]>["payGroup"],
-          payLevel: row.pay_level as NonNullable<UserProfile["tariff"]>["payLevel"],
-          sector: row.tariff_sector as NonNullable<UserProfile["tariff"]>["sector"],
-          fullTimeWeeklyMinutes: row.full_time_weekly_minutes,
-        }
-      : null;
-  const validated = validateProfile({
-    federalState: row.federal_state,
-    weeklyMinutes: row.weekly_minutes,
-    timeZone: row.time_zone,
-    tariff,
-  });
-  return Object.freeze({
-    federalState: validated.federalState,
-    weeklyMinutes: validated.weeklyMinutes,
-    timeZone: validated.timeZone,
-    tariff: validated.tariff ?? null,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  });
-}
+import { mapProfileRow, type ProfileRow } from "@/infrastructure/database/profile-row";
 
 export async function loadProfile(db: SQLiteDatabase): Promise<UserProfile | null> {
   const row = await db.getFirstAsync<ProfileRow>(
-    `SELECT federal_state,weekly_minutes,time_zone,pay_group,pay_level,
-      tariff_sector,full_time_weekly_minutes,created_at,updated_at
+    `SELECT federal_state,holiday_region,weekly_minutes,time_zone,pay_group,pay_level,
+      tariff_sector,tariff_region,full_time_weekly_minutes,regular_rotating_night_work,
+      sunday_holiday_work_eligible,all_employment_work_recorded,created_at,updated_at
      FROM user_profile WHERE id='singleton'`,
   );
-  return row === null ? null : mapProfile(row);
+  return row === null ? null : mapProfileRow(row);
 }
 
 export async function saveProfile(
@@ -67,25 +23,36 @@ export async function saveProfile(
   const now = new Date().toISOString();
   await db.runAsync(
     `INSERT INTO user_profile(
-       id,federal_state,weekly_minutes,time_zone,pay_group,pay_level,
-       tariff_sector,full_time_weekly_minutes,created_at,updated_at
-     ) VALUES('singleton',?,?,?,?,?,?,?,?,?)
+       id,federal_state,holiday_region,weekly_minutes,time_zone,pay_group,pay_level,
+       tariff_sector,tariff_region,full_time_weekly_minutes,regular_rotating_night_work,
+       sunday_holiday_work_eligible,all_employment_work_recorded,created_at,updated_at
+     ) VALUES('singleton',?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        federal_state=excluded.federal_state,
+       holiday_region=excluded.holiday_region,
        weekly_minutes=excluded.weekly_minutes,
        time_zone=excluded.time_zone,
        pay_group=excluded.pay_group,
        pay_level=excluded.pay_level,
        tariff_sector=excluded.tariff_sector,
+       tariff_region=excluded.tariff_region,
        full_time_weekly_minutes=excluded.full_time_weekly_minutes,
+       regular_rotating_night_work=excluded.regular_rotating_night_work,
+       sunday_holiday_work_eligible=excluded.sunday_holiday_work_eligible,
+       all_employment_work_recorded=excluded.all_employment_work_recorded,
        updated_at=excluded.updated_at`,
     input.federalState,
+    input.holidayRegion ?? defaultHolidayRegion(input.federalState),
     input.weeklyMinutes,
     input.timeZone,
     input.tariff?.payGroup ?? null,
     input.tariff?.payLevel ?? null,
     input.tariff?.sector ?? null,
+    input.tariff?.tariffRegion ?? "OTHER",
     input.tariff?.fullTimeWeeklyMinutes ?? null,
+    input.regularRotatingNightWork === null ? null : input.regularRotatingNightWork ? 1 : 0,
+    input.sundayHolidayWorkEligible === null ? null : input.sundayHolidayWorkEligible ? 1 : 0,
+    input.allEmploymentWorkRecorded === null ? null : input.allEmploymentWorkRecorded ? 1 : 0,
     now,
     now,
   );

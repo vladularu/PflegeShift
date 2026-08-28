@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import holidayCandidateValue from "../../rules/packages/reviewed/de-holidays/2026.json";
 import { easterSunday, getPublicHolidays } from "@/engine/holidays";
 import { BUNDLED_HOLIDAY_RULES } from "@/rules/bundled-rules";
+import type { RuleHolidayPackage } from "@/rules/contracts.generated";
 import { createRuleResolver } from "@/rules/rule-resolver";
 
 describe("German public holidays", () => {
@@ -80,5 +82,24 @@ describe("German public holidays", () => {
         }),
       ]),
     );
+  });
+
+  it("isolates regional holidays by the confirmed workplace region", () => {
+    const resolver = createRuleResolver(
+      { tariff: [], legal: [], holiday: [holidayCandidateValue as RuleHolidayPackage] },
+      { tariff: "unused", legal: "unused", holiday: "de-holidays" },
+    );
+    const names = (state: "BY" | "SN" | "TH", region: Parameters<typeof getPublicHolidays>[3]) =>
+      getPublicHolidays(2026, state, resolver, region).map((holiday) => holiday.name);
+
+    expect(names("BY", "NONE")).not.toContain("Mariä Himmelfahrt");
+    expect(names("BY", "BY_MARIA_HIMMELFAHRT")).toContain("Mariä Himmelfahrt");
+    expect(names("BY", "BY_AUGSBURG")).toEqual(
+      expect.arrayContaining(["Augsburger Friedensfest", "Mariä Himmelfahrt"]),
+    );
+    expect(names("SN", "SN_FRONLEICHNAM")).toContain("Fronleichnam");
+    expect(names("TH", "TH_FRONLEICHNAM")).toContain("Fronleichnam");
+    expect(names("SN", "NONE")).not.toContain("Fronleichnam");
+    expect(names("TH", "NONE")).not.toContain("Fronleichnam");
   });
 });

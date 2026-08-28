@@ -3,7 +3,14 @@ import { useRef, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 
 import { usePflegeShiftProfile } from "@/application/pflegeshift-provider";
-import { FEDERAL_STATES, FEDERAL_STATE_LABELS, type FederalState } from "@/domain/types";
+import {
+  FEDERAL_STATES,
+  FEDERAL_STATE_LABELS,
+  HOLIDAY_REGION_LABELS,
+  type FederalState,
+  type HolidayRegion,
+} from "@/domain/types";
+import { defaultHolidayRegion, holidayRegionsForState } from "@/domain/employment-profile";
 import { ValidationError } from "@/domain/validation";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { usePalette } from "@/theme/palette";
@@ -25,6 +32,7 @@ export function OnboardingScreen() {
   const palette = usePalette();
   const { updateProfile } = usePflegeShiftProfile();
   const [federalState, setFederalState] = useState<FederalState>("NW");
+  const [holidayRegion, setHolidayRegion] = useState<HolidayRegion>("NONE");
   const [weeklyHours, setWeeklyHours] = useState("38,5");
   const [weeklyHoursError, setWeeklyHoursError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +52,7 @@ export function OnboardingScreen() {
       setError(null);
       await updateProfile({
         federalState,
+        holidayRegion,
         weeklyMinutes: parseWeeklyHours(weeklyHours),
         timeZone: "Europe/Berlin",
       });
@@ -70,13 +79,27 @@ export function OnboardingScreen() {
       <FormSection title="Bundesland">
         <DropdownField
           label="Bundesland auswählen"
-          onChange={setFederalState}
+          onChange={(value) => {
+            setFederalState(value);
+            setHolidayRegion(defaultHolidayRegion(value));
+          }}
           options={FEDERAL_STATES.map((state) => ({
             value: state,
             label: FEDERAL_STATE_LABELS[state],
           }))}
           value={federalState}
         />
+        {holidayRegionsForState(federalState).length > 1 ? (
+          <DropdownField
+            label="Regionale Feiertage am Arbeitsort"
+            onChange={setHolidayRegion}
+            options={holidayRegionsForState(federalState).map((region) => ({
+              value: region,
+              label: HOLIDAY_REGION_LABELS[region],
+            }))}
+            value={holidayRegion}
+          />
+        ) : null}
       </FormSection>
 
       <FormSection title="Wochenarbeitszeit">

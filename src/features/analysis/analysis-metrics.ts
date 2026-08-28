@@ -8,7 +8,8 @@ import {
 import { calculateDailyWorkCredit } from "@/engine/daily-summary";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
-type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">;
+type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone"> &
+  Partial<Pick<UserProfile, "holidayRegion">>;
 
 export interface ShiftTypeAnalysisItem {
   readonly type: ShiftType;

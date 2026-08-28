@@ -52,6 +52,51 @@ function rulesForContract(version: 4 | 5) {
 }
 
 describe("ArbZG Sunday and public-holiday rest", () => {
+  it("fails closed when section 10 eligibility is denied or still unknown", () => {
+    const denied = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("denied", "2026-07-05")],
+      "Europe/Berlin",
+      {
+        federalState: "NW",
+        referenceDate: "2026-07-31",
+        sundayHolidayWorkEligible: false,
+      },
+    );
+    const unknown = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("unknown", "2026-07-05")],
+      "Europe/Berlin",
+      {
+        federalState: "NW",
+        referenceDate: "2026-07-31",
+        sundayHolidayWorkEligible: null,
+      },
+    );
+
+    expect(denied.issues).toContainEqual(
+      expect.objectContaining({ rule: "ARBZG_10_ELIGIBILITY", severity: "critical" }),
+    );
+    expect(unknown.issues).toContainEqual(
+      expect.objectContaining({ rule: "ARBZG_10_ELIGIBILITY", severity: "warning" }),
+    );
+  });
+
+  it("does not emit a section 10 evidence issue after explicit confirmation", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("eligible", "2026-07-05")],
+      "Europe/Berlin",
+      {
+        federalState: "NW",
+        referenceDate: "2026-07-31",
+        sundayHolidayWorkEligible: true,
+      },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_10_ELIGIBILITY")).toBe(false);
+  });
+
   it("accepts a dedicated FREE day with a connected 35-hour rest block", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
@@ -115,6 +160,24 @@ describe("ArbZG Sunday and public-holiday rest", () => {
     );
 
     expect(result.issues.some((item) => item.rule === "ARBZG_11_SUNDAY_REST")).toBe(false);
+  });
+
+  it("warns when the loaded range cannot prove the connected rest around a matched day", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [shift("sunday", "2026-07-05"), free("replacement", "2026-07-06")],
+      "Europe/Berlin",
+      {
+        federalState: "NW",
+        referenceDate: "2026-07-31",
+        sundayHolidayWorkEligible: true,
+      },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_11_SUNDAY_REST")).toBe(false);
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({ rule: "ARBZG_11_REST_CONNECTION", severity: "warning" }),
+    );
   });
 
   it("accepts the last possible day of the inclusive Sunday matching window", () => {
@@ -253,7 +316,7 @@ describe("ArbZG Sunday and public-holiday rest", () => {
     expect(result.issues.some((item) => item.rule.startsWith("ARBZG_11_"))).toBe(false);
   });
 
-  it("fails closed instead of producing a partial v5 result without holiday rules", () => {
+  it("keeps Sunday checks active and reports missing holiday coverage", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
       [shift("sunday", "2026-07-05")],
@@ -265,6 +328,7 @@ describe("ArbZG Sunday and public-holiday rest", () => {
       },
     );
 
-    expect(result.issues.some((item) => item.rule.startsWith("ARBZG_11_"))).toBe(false);
+    expect(result.issues.some((item) => item.rule === "ARBZG_11_SUNDAY_REST")).toBe(true);
+    expect(result.issues.some((item) => item.rule === "HOLIDAY_CATALOG_COVERAGE")).toBe(true);
   });
 });
