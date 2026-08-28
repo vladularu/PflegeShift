@@ -108,3 +108,77 @@ The publisher automatically uses the channel's local `current.json` as the previ
 Use `--previous-manifest`, `--rollback-manifest`, and repeatable
 `--trusted-public-key <keyId=base64url>` only when the verified state or signing key is located
 elsewhere. Public keys are not secret; the private seed remains environment-only.
+
+## WP4b Preview delivery
+
+WP4b adds a backend-only Supabase Storage adapter and deliberately remains separate from the app
+runtime. It accepts one already published local manifest below
+`dist/rule-catalog/.../preview/manifests/<generation>.json`, loads the package paths from that
+manifest, and verifies the signature, byte size, SHA-256, schema, semantic catalog contract, and
+engine compatibility again before any network request.
+
+The adapter is Preview-only. A `PRODUCTION` manifest, production key ID, unsafe path, generation
+gap, untrusted remote pointer, or bucket configuration drift fails closed. It never receives the
+private catalog signing seed. Public signing keys are supplied with repeatable
+`--trusted-public-key <keyId=base64url>` arguments.
+
+### Supabase boundary
+
+The Storage bucket is named `rule-catalog` and has one exact configuration:
+
+- public reads, because packages and manifests contain no user or shift data;
+- authenticated administrative writes only;
+- `application/json` as the only MIME type;
+- 524,288 bytes as the per-object limit, matching the signed rule contract.
+
+The administrative adapter uses `SUPABASE_URL` and a current `SUPABASE_SECRET_KEY` with the
+`sb_secret_` prefix. The secret is accepted only from the process environment, removed from that
+environment after startup, never passed as a command-line argument, and never included in output
+or remote error bodies. Legacy `service_role` JWTs and client-side `EXPO_PUBLIC_` secrets are not
+accepted.
+
+The first operator run may create the bucket with `--create-bucket`. Later runs verify the exact
+configuration and never silently loosen it. Public access affects downloads only; uploads remain
+authorized by the backend secret.
+
+### Remote ordering and concurrency
+
+Delivery preserves the WP4a artifact order:
+
+1. immutable package paths with `x-upsert: false`;
+2. `preview/manifests/<generation>.json` with `x-upsert: false`;
+3. `preview/current.json` with `x-upsert: true`, only after every immutable write succeeds.
+
+An existing immutable object is reused only after an exact byte comparison. A concurrent writer
+with different bytes collides on the versioned manifest and cannot update `current.json`; the
+immutable manifest therefore acts as the publication serialization barrier. The adapter also
+requires remote `current.json` to have a trusted signature and to equal its immutable versioned
+manifest before accepting a consecutive generation. After replacing `current.json`, it reads the
+origin object back and requires exact acknowledgement.
+
+Immutable objects use `public, max-age=31536000, immutable`. The stable pointer uses
+`public, max-age=0, must-revalidate`. This keeps package and versioned-manifest URLs cacheable
+without allowing a mutable package path.
+
+### Operator commands
+
+Verify the complete signed local publication without contacting Supabase:
+
+```powershell
+npm.cmd run rules:deliver -- --manifest dist/rule-catalog/preview/manifests/1.json --trusted-public-key "preview-2026=<public-key-base64url>" --dry-run
+```
+
+For the first authorized Preview delivery, configure the project URL and a dedicated secret key,
+then create the locked-down bucket and upload:
+
+```powershell
+$env:SUPABASE_URL = "https://<project-ref>.supabase.co"
+$env:SUPABASE_SECRET_KEY = "<sb_secret_...>"
+npm.cmd run rules:deliver -- --manifest dist/rule-catalog/preview/manifests/1.json --trusted-public-key "preview-2026=<public-key-base64url>" --create-bucket
+Remove-Item Env:SUPABASE_SECRET_KEY
+Remove-Item Env:SUPABASE_URL
+```
+
+Omit `--create-bucket` after provisioning. A real remote delivery remains a separately approved
+publication action. WP4b does not configure a production bucket or key, download into the app,
+schedule update checks, or activate a catalog in SQLCipher.

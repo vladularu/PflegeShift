@@ -85,6 +85,14 @@ in `docs/architecture/rule-catalog-delivery.md`. WP4a still performs no network 
 no Supabase bucket, contains no production private key, and does not change app startup or
 catalog activation.
 
+WP4b adds the separate Preview delivery boundary. It re-verifies an already signed local
+publication, requires a locked-down public-read/administrative-write Supabase Storage bucket, and
+uploads immutable packages and the immutable versioned manifest before replacing `current.json`.
+Remote generation continuity, signature trust, exact immutable-byte reuse, and final pointer
+acknowledgement fail closed. The Supabase secret remains environment-only in the administrative
+process; no secret or network client enters the Expo app. Production delivery, client downloads,
+polling, and SQLCipher activation remain later work.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.
@@ -141,6 +149,7 @@ Steps 6 through 9 are delivery work, not implemented in WP1.
 - `npm run rules:generate` regenerates TypeScript contracts and standalone validators.
 - `npm run rules:check` fails when generated files are stale or the complete example catalog is invalid.
 - `npm run rules:publish -- --request <path> --dry-run` validates, signs, and self-verifies a release without writing artifacts.
+- `npm run rules:deliver -- --manifest <path> --trusted-public-key <keyId=base64url> --dry-run` verifies a signed local Preview publication without network access.
 - `npm run test:rules` runs valid and adversarial contract tests.
 - `npm run verify:fast` includes contract freshness, fixture validation, all repository tests, lint, formatting, type checking, and diff checks.
 
