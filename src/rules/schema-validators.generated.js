@@ -2076,9 +2076,20 @@ const schema46 = {
       ],
       properties: {
         status: { enum: ["LEGACY_EMBEDDED", "DRAFT", "REVIEWED", "PUBLISHED"] },
-        reviewedBy: { $ref: "#/$defs/nullableString" },
-        reviewedAt: { oneOf: [{ type: "null" }, { $ref: "#/$defs/utcTimestamp" }] },
-        gitCommit: { oneOf: [{ type: "null" }, { type: "string", pattern: "^[a-f0-9]{40}$" }] },
+        reviewedBy: {
+          $ref: "#/$defs/nullableString",
+          description:
+            "Stable non-personal reviewer identifier. The solo project owner may self-review; a legal name, separate role, or second reviewer is not required.",
+        },
+        reviewedAt: {
+          description: "UTC timestamp recorded when the documented owner review is completed.",
+          oneOf: [{ type: "null" }, { $ref: "#/$defs/utcTimestamp" }],
+        },
+        gitCommit: {
+          description:
+            "Exact 40-character Git commit containing the rule content that was reviewed.",
+          oneOf: [{ type: "null" }, { type: "string", pattern: "^[a-f0-9]{40}$" }],
+        },
       },
     },
     rounding: {
@@ -3574,9 +3585,19 @@ const schema59 = {
   ],
   properties: {
     status: { enum: ["LEGACY_EMBEDDED", "DRAFT", "REVIEWED", "PUBLISHED"] },
-    reviewedBy: { $ref: "#/$defs/nullableString" },
-    reviewedAt: { oneOf: [{ type: "null" }, { $ref: "#/$defs/utcTimestamp" }] },
-    gitCommit: { oneOf: [{ type: "null" }, { type: "string", pattern: "^[a-f0-9]{40}$" }] },
+    reviewedBy: {
+      $ref: "#/$defs/nullableString",
+      description:
+        "Stable non-personal reviewer identifier. The solo project owner may self-review; a legal name, separate role, or second reviewer is not required.",
+    },
+    reviewedAt: {
+      description: "UTC timestamp recorded when the documented owner review is completed.",
+      oneOf: [{ type: "null" }, { $ref: "#/$defs/utcTimestamp" }],
+    },
+    gitCommit: {
+      description: "Exact 40-character Git commit containing the rule content that was reviewed.",
+      oneOf: [{ type: "null" }, { type: "string", pattern: "^[a-f0-9]{40}$" }],
+    },
   },
 };
 const schema60 = {

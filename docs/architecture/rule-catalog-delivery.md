@@ -22,7 +22,7 @@ Publishable source files live at
 all of the following:
 
 - package and review status are both `REVIEWED`;
-- reviewer, review time, and a 40-character Git commit are recorded;
+- a stable non-personal reviewer ID, UTC review time, and a 40-character Git commit are recorded;
 - the package identity matches its repository path;
 - the rule content equals the file at `review.gitCommit` after RFC 8785 canonicalization.
 
@@ -31,6 +31,12 @@ contain its own hash, so the provenance comparison excludes only the mutable gov
 `status` and `review`. Identity, validity, sources, monetary values, thresholds, and every actual
 rule remain part of the compared review payload. The later commit that records the review
 metadata must itself be tracked and clean before publication.
+
+For the solo project, `reviewedBy` may be a stable owner identifier such as `project-owner`.
+No legal name, role field, or second reviewer is required. `REVIEWED` records a completed
+source-to-rule owner check; it must not be presented as a legal opinion or external
+certification. `reviewedAt` is captured when that check is completed, while
+`review.gitCommit` remains the immutable technical evidence of what was checked.
 
 The publisher clones the reviewed input, changes only package and review status to `PUBLISHED`,
 and serializes the result as canonical JSON. Source files remain `REVIEWED` and are not modified.
