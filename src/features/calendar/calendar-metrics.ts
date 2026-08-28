@@ -2,6 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 
 import type { CalendarEntry, ShiftEntry, ShiftType, UserProfile } from "@/domain/types";
 import { calculateDailyWorkCredit } from "@/engine/daily-summary";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">;
 
@@ -38,11 +39,13 @@ export function calculateDailySummary(
   date: string,
   entries: readonly CalendarEntry[],
   profile: ProfileForTime,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): DailySummary {
   const result = calculateDailyWorkCredit(
     date,
     entries.filter((entry): entry is ShiftEntry => entry.kind === "SHIFT"),
     profile,
+    ruleResolver,
   );
 
   return Object.freeze({
@@ -57,12 +60,16 @@ export function buildMonthlyHoursSeries(
   month: string,
   entries: readonly CalendarEntry[],
   profile: ProfileForTime,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): readonly DailyHoursPoint[] {
   const yearMonth = Temporal.PlainYearMonth.from(month);
   return Object.freeze(
     Array.from({ length: yearMonth.daysInMonth }, (_, index) => {
       const date = yearMonth.toPlainDate({ day: index + 1 }).toString();
-      return Object.freeze({ day: index + 1, ...calculateDailySummary(date, entries, profile) });
+      return Object.freeze({
+        day: index + 1,
+        ...calculateDailySummary(date, entries, profile, ruleResolver),
+      });
     }),
   );
 }

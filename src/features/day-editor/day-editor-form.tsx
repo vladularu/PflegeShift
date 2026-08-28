@@ -7,6 +7,7 @@ import {
   usePflegeShiftProfile,
   usePflegeShiftTemplates,
 } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import {
   type CalendarEntry,
   type EntryLocation,
@@ -37,7 +38,6 @@ import {
 import { locationPickerRoute } from "@/navigation/routes";
 
 type EditorMode = "SHIFT" | "APPOINTMENT";
-
 export function DayEditorForm({
   date,
   existing: loadedExisting,
@@ -53,6 +53,7 @@ export function DayEditorForm({
   const { profile } = usePflegeShiftProfile();
   const { templates } = usePflegeShiftTemplates();
   const { entries, removeEntry, upsertShift, upsertAppointment } = usePflegeShiftEntries();
+  const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const { initialValue: existing } = useStableEditorSession(sessionKey, () => loadedExisting);
   const mode: EditorMode = existing?.kind ?? requestedMode;
   const initialShift = existing?.kind === "SHIFT" ? existing : null;
@@ -108,7 +109,6 @@ export function DayEditorForm({
   const appointmentTitleRef = useRef<TextInput>(null);
   const savingRef = useRef(false);
   const allowRemovalRef = useRef(false);
-
   useFocusEffect(
     useCallback(() => {
       const selected = consumeLocationSelection();
@@ -117,7 +117,6 @@ export function DayEditorForm({
       else setAppointmentLocation(selected);
     }, [mode]),
   );
-
   function openLocationPicker(current: EntryLocation | null) {
     prepareLocationPicker(current);
     router.push(locationPickerRoute() as never);
@@ -231,6 +230,7 @@ export function DayEditorForm({
             .concat(saved);
           const critical = calculateMonthlyCompliance(date.slice(0, 7), shifts, profile.timeZone, {
             federalState: profile.federalState,
+            ruleResolver,
             weeklyMinutes: profile.weeklyMinutes,
           }).issues.find(
             (issue) => issue.severity === "critical" && issue.relatedShiftIds.includes(saved.id),

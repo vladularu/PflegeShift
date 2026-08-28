@@ -5,6 +5,12 @@ import { useSharedValue } from "react-native-reanimated";
 import type { Appointment, CalendarLabelMode, ShiftEntry, UserProfile } from "@/domain/types";
 import { createMonthGrid, formatDateTitle, today } from "@/engine/calendar";
 import { MonthCard } from "@/features/calendar/month-card";
+import {
+  BUNDLED_HOLIDAY_RULES,
+  BUNDLED_LEGAL_RULES,
+  BUNDLED_TARIFF_RULES,
+} from "@/rules/bundled-rules";
+import { createRuleResolver } from "@/rules/rule-resolver";
 import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 
 jest.mock("@/ui/shift-symbol", () => {
@@ -83,6 +89,25 @@ function appointment(date: string, id: string, title: string): Appointment {
   };
 }
 
+function resolverWithRenamedNewYear() {
+  const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
+  return createRuleResolver({
+    tariff: BUNDLED_TARIFF_RULES,
+    legal: BUNDLED_LEGAL_RULES,
+    holiday: [
+      {
+        ...holidayPackage,
+        rules: {
+          ...holidayPackage.rules,
+          holidays: holidayPackage.rules.holidays.map((holiday) =>
+            holiday.id === "new-year" ? { ...holiday, name: "Neujahr aus Runtime" } : holiday,
+          ) as typeof holidayPackage.rules.holidays,
+        },
+      },
+    ],
+  });
+}
+
 function MonthCardWithTransition({ progress }: { readonly progress: number }) {
   const stampTransitionProgress = useSharedValue(progress);
   return (
@@ -102,6 +127,25 @@ function MonthCardWithTransition({ progress }: { readonly progress: number }) {
 }
 
 describe("MonthCard", () => {
+  it("renders holiday labels from the injected resolver", async () => {
+    const screen = await render(
+      <MonthCard
+        bottomReserve={80}
+        entriesByDate={new Map()}
+        month="2026-01"
+        onSelectDate={jest.fn()}
+        pageHeight={700}
+        profile={PROFILE}
+        ruleResolver={resolverWithRenamedNewYear()}
+        selectedDate={null}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /1\. Januar 2026.*Neujahr aus Runtime/ }),
+    ).toBeTruthy();
+  });
+
   it("places the ISO week number inside the Monday cell instead of a separate grid column", async () => {
     const screen = await render(
       <MonthCard

@@ -63,6 +63,12 @@ jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftTestData: () => ({ testMonths: [] }),
 }));
 
+jest.mock("@/application/rule-catalog-runtime-provider", () => {
+  const { bundledRuleResolver } =
+    jest.requireActual<typeof import("@/rules/rule-resolver")>("@/rules/rule-resolver");
+  return { useRuleCatalogRuntime: () => ({ resolver: bundledRuleResolver }) };
+});
+
 jest.mock("@/features/calendar/calendar-preferences", () => ({
   useCalendarPreferences: () => mockPreferences,
 }));

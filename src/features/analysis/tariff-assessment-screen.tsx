@@ -9,6 +9,7 @@ import {
   usePflegeShiftStatus,
   usePflegeShiftTariff,
 } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import {
   ALLOWANCE_STATUSES,
   type AllowanceStatus,
@@ -88,6 +89,7 @@ function TariffAssessmentForm({
   readonly profile: UserProfile;
 }) {
   const palette = usePalette();
+  const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const { entries } = usePflegeShiftEntries();
   const { tariffDecisions, workPatternSettings, updateWorkPatternSettings, upsertTariffDecision } =
     usePflegeShiftTariff();
@@ -99,7 +101,10 @@ function TariffAssessmentForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const window = useMemo(() => selectAnalysisEntryWindow(entries, month), [entries, month]);
+  const window = useMemo(
+    () => selectAnalysisEntryWindow(entries, month, ruleResolver),
+    [entries, month, ruleResolver],
+  );
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = useMemo(
     () =>
@@ -110,8 +115,18 @@ function TariffAssessmentForm({
         decision,
         window.allowanceShifts,
         { workplaceCoverage: coverage, assignment, updatedAt: workPatternSettings.updatedAt },
+        ruleResolver,
       ),
-    [assignment, coverage, decision, month, profile, window, workPatternSettings.updatedAt],
+    [
+      assignment,
+      coverage,
+      decision,
+      month,
+      profile,
+      ruleResolver,
+      window,
+      workPatternSettings.updatedAt,
+    ],
   );
 
   const assessment = pay.assessment;

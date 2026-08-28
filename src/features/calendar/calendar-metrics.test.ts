@@ -9,6 +9,12 @@ import {
   calculateMonthProgress,
   clampDateToMonth,
 } from "@/features/calendar/calendar-metrics";
+import {
+  BUNDLED_HOLIDAY_RULES,
+  BUNDLED_LEGAL_RULES,
+  BUNDLED_TARIFF_RULES,
+} from "@/rules/bundled-rules";
+import { createRuleResolver } from "@/rules/rule-resolver";
 
 const profile = {
   federalState: "BY" as const,
@@ -36,6 +42,25 @@ function shift(partial: Partial<ShiftEntry> & Pick<ShiftEntry, "date" | "type">)
     deletedAt: null,
     ...partial,
   };
+}
+
+function resolverWithoutNewYear() {
+  const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
+  return createRuleResolver({
+    tariff: BUNDLED_TARIFF_RULES,
+    legal: BUNDLED_LEGAL_RULES,
+    holiday: [
+      {
+        ...holidayPackage,
+        rules: {
+          ...holidayPackage.rules,
+          holidays: holidayPackage.rules.holidays.filter(
+            (holiday) => holiday.id !== "new-year",
+          ) as typeof holidayPackage.rules.holidays,
+        },
+      },
+    ],
+  });
 }
 
 describe("calendar metrics", () => {
@@ -111,6 +136,14 @@ describe("calendar metrics", () => {
       actualMinutes: 0,
       balanceMinutes: 0,
     });
+  });
+
+  it("uses the injected resolver for daily and monthly holiday targets", () => {
+    const resolver = resolverWithoutNewYear();
+
+    expect(calculateDailySummary("2026-01-01", [], profile, resolver).targetMinutes).toBe(480);
+    expect(buildMonthlyHoursSeries("2026-01", [], profile, resolver)[0].targetMinutes).toBe(480);
+    expect(calculateDailySummary("2026-01-01", [], profile).targetMinutes).toBe(0);
   });
 
   it("aggregates every day and groups shift types", () => {
