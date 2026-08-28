@@ -7,6 +7,7 @@ import {
   usePflegeShiftProfile,
   usePflegeShiftStatus,
 } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { type CalendarEntry } from "@/domain/types";
 import { formatDateTitle, today } from "@/engine/calendar";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
@@ -47,6 +48,7 @@ export function DayDetailsScreen() {
   const { entries } = usePflegeShiftEntries();
   const { profile } = usePflegeShiftProfile();
   const { error, ready, reload } = usePflegeShiftStatus();
+  const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const parsedDate = parseLocalDateRouteParam(params.date);
   const date = parsedDate.status === "valid" ? parsedDate.value : today();
   const dayEntries = useMemo(
@@ -54,17 +56,17 @@ export function DayDetailsScreen() {
     [date, entries],
   );
   const summary = useMemo(
-    () => (profile ? calculateDailySummary(date, dayEntries, profile) : null),
-    [date, dayEntries, profile],
+    () => (profile ? calculateDailySummary(date, dayEntries, profile, ruleResolver) : null),
+    [date, dayEntries, profile, ruleResolver],
   );
   const holiday = useMemo(
     () =>
       profile
-        ? getPublicHolidays(Number(date.slice(0, 4)), profile.federalState).find(
+        ? getPublicHolidays(Number(date.slice(0, 4)), profile.federalState, ruleResolver).find(
             (item) => item.date === date,
           )
         : null,
-    [date, profile],
+    [date, profile, ruleResolver],
   );
 
   if (parsedDate.status !== "valid") {

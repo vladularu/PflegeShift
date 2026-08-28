@@ -24,6 +24,7 @@ import {
   usePflegeShiftTemplates,
   usePflegeShiftTestData,
 } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type { CalendarEntry } from "@/domain/types";
 import { addMonths, createMonthGrid, currentMonth, today } from "@/engine/calendar";
 import { holidayMapForMonth } from "@/engine/holidays";
@@ -89,6 +90,7 @@ export function CalendarScreen() {
   const { templates } = usePflegeShiftTemplates();
   const { entries, removeEntry, upsertShift } = usePflegeShiftEntries();
   const { testMonths } = usePflegeShiftTestData();
+  const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const profileReady = profile !== null;
   const timeZone = profile?.timeZone ?? "Europe/Berlin";
   const parsedMonth = parseMonthRouteParam(params.month);
@@ -133,7 +135,6 @@ export function CalendarScreen() {
   useEffect(() => {
     if (ready && error === null && profile === null) router.replace("/onboarding");
   }, [error, profile, ready]);
-
   useEffect(() => {
     const next = targetMonth === currentMonth(timeZone) ? today(timeZone) : `${targetMonth}-01`;
     activeMonthCoordinator.setMonth(targetMonth);
@@ -145,14 +146,12 @@ export function CalendarScreen() {
     settledMonth.current = targetMonth;
     setMonthAnchor(targetMonth);
   }, [activeMonthCoordinator, profileReady, targetMonth, timeZone]);
-
   useEffect(() => {
     if (preferences.viewMode !== "MONTH") {
       setPlannerMode(false);
       setStampTool(null);
     }
   }, [preferences.viewMode]);
-
   useEffect(() => {
     if (isFocused) return;
     setPlannerMode(false);
@@ -182,10 +181,10 @@ export function CalendarScreen() {
   const quickPlannerActions = useMemo(() => quickEntryServiceActions(quickActions), [quickActions]);
   const quickPopupHolidayName = useMemo(() => {
     if (profile === null || quickPopup === null) return undefined;
-    return holidayMapForMonth(quickPopup.date.slice(0, 7), profile.federalState).get(
+    return holidayMapForMonth(quickPopup.date.slice(0, 7), profile.federalState, ruleResolver).get(
       quickPopup.date,
     )?.name;
-  }, [profile, quickPopup]);
+  }, [profile, quickPopup, ruleResolver]);
 
   const saveStampAction = useQuickStampAction({
     entries,
@@ -479,6 +478,7 @@ export function CalendarScreen() {
           onSelectDate={selectDate}
           pageHeight={pageHeight}
           profile={profile}
+          ruleResolver={ruleResolver}
           selectedDate={selectionVisible ? selectedDate : null}
           showShiftDuration={preferences.showShiftDuration}
           showHolidays={preferences.showHolidays}
@@ -500,6 +500,7 @@ export function CalendarScreen() {
       preferences.showShiftDuration,
       preferences.showShiftTimes,
       profile,
+      ruleResolver,
       plannerTransition,
       selectDate,
       selectedDate,

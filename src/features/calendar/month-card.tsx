@@ -35,6 +35,7 @@ import {
 import { holidayShortLabel } from "@/features/calendar/holiday-label";
 import { stampDayAccessibilityHint } from "@/features/calendar/stamp-accessibility";
 import { holidayMapForMonth } from "@/engine/holidays";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { calendarChipPalette } from "@/theme/color-contrast";
 import { MOTION } from "@/theme/motion";
 import { usePalette } from "@/theme/palette";
@@ -45,9 +46,7 @@ import { ShiftSymbol } from "@/ui/shift-symbol";
 
 const WEEKDAYS = ["M", "D", "M", "D", "F", "S", "S"];
 const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
-
 type CalendarCell = ReturnType<typeof createMonthGrid>[number];
-
 interface DayCellProps {
   readonly cell: CalendarCell;
   readonly entries: readonly CalendarEntry[];
@@ -69,7 +68,6 @@ interface DayCellProps {
   readonly entryRowCapacity: number;
   readonly weekNumber?: number;
 }
-
 const EntryMark = memo(function EntryMark({
   labelMode,
   entry,
@@ -192,7 +190,6 @@ const EntryMark = memo(function EntryMark({
     </Animated.View>
   );
 });
-
 const EmptyStampSlot = memo(function EmptyStampSlot({
   backgroundColor,
   borderColor,
@@ -228,7 +225,6 @@ const EmptyStampSlot = memo(function EmptyStampSlot({
     />
   );
 });
-
 const DayCell = memo(
   function DayCell({
     cell,
@@ -463,6 +459,7 @@ interface MonthCardProps {
   readonly month: string;
   readonly entriesByDate: ReadonlyMap<string, readonly CalendarEntry[]>;
   readonly profile: UserProfile;
+  readonly ruleResolver?: RuleResolver;
   readonly pageHeight: number;
   readonly bottomReserve: number;
   readonly onSelectDate: (
@@ -486,6 +483,7 @@ function monthCardPropsEqual(previous: MonthCardProps, next: MonthCardProps): bo
   if (
     previous.month !== next.month ||
     previous.profile !== next.profile ||
+    previous.ruleResolver !== next.ruleResolver ||
     previous.pageHeight !== next.pageHeight ||
     previous.bottomReserve !== next.bottomReserve ||
     previous.onSelectDate !== next.onSelectDate ||
@@ -514,6 +512,7 @@ export const MonthCard = memo(function MonthCard({
   month,
   entriesByDate,
   profile,
+  ruleResolver = bundledRuleResolver,
   pageHeight,
   bottomReserve,
   onSelectDate,
@@ -541,8 +540,9 @@ export const MonthCard = memo(function MonthCard({
   }, [internalStampProgress, stampMode, stampTransitionProgress]);
   const grid = useMemo(() => createMonthGrid(month), [month]);
   const holidays = useMemo(
-    () => (showHolidays ? holidayMapForMonth(month, profile.federalState) : new Map()),
-    [month, profile.federalState, showHolidays],
+    () =>
+      showHolidays ? holidayMapForMonth(month, profile.federalState, ruleResolver) : new Map(),
+    [month, profile.federalState, ruleResolver, showHolidays],
   );
   const currentDate = today(profile.timeZone);
   const weekCount = grid.length / 7;

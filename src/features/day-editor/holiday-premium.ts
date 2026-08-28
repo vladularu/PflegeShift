@@ -2,12 +2,14 @@ import { Temporal } from "@js-temporal/polyfill";
 
 import type { FederalState } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 export function shiftOverlapsHoliday(
   dateValue: string,
   startValue: string,
   endValue: string,
   federalState: FederalState,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): boolean {
   try {
     const date = Temporal.PlainDate.from(dateValue);
@@ -19,7 +21,7 @@ export function shiftOverlapsHoliday(
     }
     const holidayDates = new Set(
       [date.year, date.add({ days: 1 }).year].flatMap((year) =>
-        getPublicHolidays(year, federalState).map((holiday) => holiday.date),
+        getPublicHolidays(year, federalState, ruleResolver).map((holiday) => holiday.date),
       ),
     );
     return coveredDates.some((coveredDate) => holidayDates.has(coveredDate));

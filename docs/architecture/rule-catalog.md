@@ -62,6 +62,14 @@ WP3c-a establishes one immutable resolver snapshot before calculation consumers 
 
 The snapshot never combines packages from different generations: its resolver is created once from one validated catalog object, then deeply stable for the provider lifetime. WP3c-a does not contact a network, add Supabase, add production keys, download catalogs, or switch individual calculation consumers; centralized propagation and resolver-aware consumer caches are the separate WP3c-b scope.
 
+WP3c-b completes that consumer switch without changing the offline architecture:
+
+- Analysis, salary, tariff assessment, calendar metrics, calendar holiday labels, day details, and the day-editor ArbZG check read the same resolver snapshot from the composition provider.
+- The resolver is passed explicitly through calculation windows, monthly and daily summaries, pay, compliance, and holiday lookups. Public engine functions retain the bundled resolver only as a compatibility default for isolated callers and deterministic tests.
+- Holiday, pay-breakdown, and annual-report caches are isolated by resolver identity. Memoized React consumers also include the resolver identity in their equality and dependency checks, so activating another catalog cannot reuse results from the previous generation.
+
+WP3c-b still performs no network request and does not change the active resolver while the provider is mounted. A newly activated catalog is selected atomically on the next provider initialization; every consumer in that runtime then sees the same immutable generation.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.
