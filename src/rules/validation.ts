@@ -386,12 +386,12 @@ function validateLegalPackage(
 ): void {
   const { rules } = rulePackage;
   const workerQualification = rules.nightWork.workerQualification;
-  if (rulePackage.engineContractVersion === 3 && workerQualification === undefined) {
+  if (rulePackage.engineContractVersion >= 3 && workerQualification === undefined) {
     issues.push(
       issue(
         "MISSING_NIGHT_WORKER_QUALIFICATION",
         "/rules/nightWork/workerQualification",
-        "Legal engine contract v3 requires night-worker qualification rules.",
+        "Legal engine contracts v3 and newer require night-worker qualification rules.",
       ),
     );
   } else if (rulePackage.engineContractVersion === 1 && workerQualification !== undefined) {
@@ -400,6 +400,24 @@ function validateLegalPackage(
         "UNSUPPORTED_NIGHT_WORKER_QUALIFICATION",
         "/rules/nightWork/workerQualification",
         "Legal engine contract v1 must not define night-worker qualification rules.",
+      ),
+    );
+  }
+  const standardAverage = rules.workingTime.standardAverage;
+  if (rulePackage.engineContractVersion === 4 && standardAverage === undefined) {
+    issues.push(
+      issue(
+        "MISSING_STANDARD_WORKING_TIME_AVERAGE",
+        "/rules/workingTime/standardAverage",
+        "Legal engine contract v4 requires the standard working-time average windows.",
+      ),
+    );
+  } else if (rulePackage.engineContractVersion < 4 && standardAverage !== undefined) {
+    issues.push(
+      issue(
+        "UNSUPPORTED_STANDARD_WORKING_TIME_AVERAGE",
+        "/rules/workingTime/standardAverage",
+        "Legal engine contracts before v4 must not define standard working-time average windows.",
       ),
     );
   }

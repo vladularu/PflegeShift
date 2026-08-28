@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "engineContractVersion": 3,
+  "engineContractVersion": 4,
   "packageId": "de-arbzg-care",
   "versionId": "2026-01",
   "kind": "LEGAL",
@@ -28,6 +28,14 @@
       "documentDate": "2026-08-28",
       "section": "Produktheuristik vor WP2; keine normative ArbZG-Quelle",
       "sha256": "d848a5077731c7a1dddd9ddc07ed6d1df68b8579f68a03c95a84bf5ed2e3c272"
+    },
+    {
+      "id": "eu-2003-88",
+      "title": "Richtlinie 2003/88/EG über bestimmte Aspekte der Arbeitszeitgestaltung",
+      "url": "https://eur-lex.europa.eu/legal-content/DE/TXT/PDF/?uri=CELEX:32003L0088",
+      "documentDate": "2003-11-04",
+      "section": "Art. 6 und 16; ABl. L 299 vom 18.11.2003, S. 9–19",
+      "sha256": "13ff399696ddd77d9e3e430026056041c1bf29a77b112fcbf3bb359edd67f1f7"
     }
   ],
   "review": {
@@ -48,8 +56,14 @@
       "nightAverageMinutes": 480,
       "workWeekLastDay": 6,
       "absenceWorkdaysPerWeek": 5,
+      "standardAverage": {
+        "calendarMonths": 6,
+        "weeks": 24,
+        "assessmentMode": "FORWARD_FROM_EXTENDED_WORKDAY",
+        "neutralAbsenceTypes": ["VACATION", "SICK"]
+      },
       "grossPlanningWarningMinutes": 960,
-      "sourceIds": ["arbzg-2024", "pflegeshift-planning-policy-v1"]
+      "sourceIds": ["arbzg-2024", "eu-2003-88", "pflegeshift-planning-policy-v1"]
     },
     "breaks": {
       "minimumSegmentMinutes": 15,

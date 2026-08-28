@@ -169,7 +169,7 @@
       ],
       "properties": {
         "schemaVersion": { "const": 1 },
-        "engineContractVersion": { "enum": [1, 2, 3] },
+        "engineContractVersion": { "enum": [1, 2, 3, 4] },
         "packageId": { "$ref": "#/$defs/identifier" },
         "versionId": { "$ref": "#/$defs/versionIdentifier" },
         "kind": { "enum": ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -611,6 +611,17 @@
             "nightAverageMinutes": { "type": "integer", "minimum": 1, "maximum": 1440 },
             "workWeekLastDay": { "type": "integer", "minimum": 1, "maximum": 7 },
             "absenceWorkdaysPerWeek": { "type": "integer", "minimum": 1, "maximum": 7 },
+            "standardAverage": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["calendarMonths", "weeks", "assessmentMode", "neutralAbsenceTypes"],
+              "properties": {
+                "calendarMonths": { "type": "integer", "minimum": 1, "maximum": 24 },
+                "weeks": { "type": "integer", "minimum": 1, "maximum": 104 },
+                "assessmentMode": { "const": "FORWARD_FROM_EXTENDED_WORKDAY" },
+                "neutralAbsenceTypes": { "const": ["VACATION", "SICK"] }
+              }
+            },
             "grossPlanningWarningMinutes": {
               "type": "integer",
               "minimum": 1,
@@ -717,7 +728,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
-            "engineContractVersion": { "enum": [1, 3] },
+            "engineContractVersion": { "enum": [1, 3, 4] },
             "kind": { "const": "LEGAL" },
             "rules": { "$ref": "#/$defs/legalRules" }
           }

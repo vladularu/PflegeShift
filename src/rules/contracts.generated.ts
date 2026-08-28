@@ -37,7 +37,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3;
+  engineContractVersion: 1 | 2 | 3 | 4;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -119,7 +119,7 @@ export type RuleReview1 =
 export type RuleSourceIds = [RuleIdentifier, ...RuleIdentifier[]];
 export type RuleNullableIdentifier = null | RuleIdentifier;
 export type RuleLegalPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 3;
+  engineContractVersion?: 1 | 3 | 4;
   kind: "LEGAL";
   rules: RuleLegalRules;
 };
@@ -131,7 +131,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3;
+  engineContractVersion: 1 | 2 | 3 | 4;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -293,6 +293,12 @@ export interface RuleLegalRules {
     nightAverageMinutes: number;
     workWeekLastDay: number;
     absenceWorkdaysPerWeek: number;
+    standardAverage?: {
+      calendarMonths: number;
+      weeks: number;
+      assessmentMode: "FORWARD_FROM_EXTENDED_WORKDAY";
+      neutralAbsenceTypes: ["VACATION", "SICK"];
+    };
     grossPlanningWarningMinutes: number;
     sourceIds: RuleSourceIds;
   };
