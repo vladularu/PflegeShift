@@ -27,9 +27,11 @@ function shift(id: string, date: string): ShiftEntry {
 }
 
 describe("selectAnalysisEntryWindow", () => {
-  it("keeps the selected month small while preserving the compliance compensation window", () => {
+  it("keeps the selected month small while loading the legal qualification year", () => {
     const result = selectAnalysisEntryWindow(
       [
+        shift("previous-year", "2025-12-31"),
+        shift("year-start", "2026-01-01"),
         shift("too-old", "2026-04-30"),
         shift("two-month-lookback", "2026-05-01"),
         shift("outside", "2026-06-22"),
@@ -37,6 +39,8 @@ describe("selectAnalysisEntryWindow", () => {
         shift("month", "2026-07-15"),
         shift("after", "2026-08-01"),
         shift("after-window", "2026-08-29"),
+        shift("year-end", "2026-12-31"),
+        shift("next-year", "2027-01-01"),
       ],
       "2026-07",
     );
@@ -44,9 +48,15 @@ describe("selectAnalysisEntryWindow", () => {
     expect(result.monthEntries.map((entry) => entry.id)).toEqual(["month"]);
     expect(result.monthShifts.map((entry) => entry.id)).toEqual(["month"]);
     expect(result.complianceShifts.map((entry) => entry.id)).toEqual([
+      "year-start",
+      "too-old",
+      "two-month-lookback",
+      "outside",
       "lookback",
       "month",
       "after",
+      "after-window",
+      "year-end",
     ]);
     expect(result.allowanceShifts.map((entry) => entry.id)).toEqual([
       "two-month-lookback",

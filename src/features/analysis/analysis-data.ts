@@ -21,16 +21,29 @@ export function selectAnalysisEntryWindow(
 ): AnalysisEntryWindow {
   const first = Temporal.PlainDate.from(`${month}-01`);
   const legalWindow = getLegalCalculationWindow(first.toString(), ruleResolver);
-  const complianceStart = first.subtract({ days: legalWindow.lookbackDays }).toString();
+  const baseComplianceStart = first.subtract({ days: legalWindow.lookbackDays });
+  const yearStart = Temporal.PlainDate.from({ year: first.year, month: 1, day: 1 });
+  const complianceStart = (
+    legalWindow.calendarYearCoverage &&
+    Temporal.PlainDate.compare(yearStart, baseComplianceStart) < 0
+      ? yearStart
+      : baseComplianceStart
+  ).toString();
   const allowanceStart = first
     .subtract({
       months: getTariffAssessmentLookbackMonths(first.toString(), ruleResolver),
     })
     .toString();
   const monthEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
-  const complianceEnd = Temporal.PlainDate.from(monthEnd)
-    .add({ days: legalWindow.lookaheadDays })
-    .toString();
+  const baseComplianceEnd = Temporal.PlainDate.from(monthEnd).add({
+    days: legalWindow.lookaheadDays,
+  });
+  const yearEnd = Temporal.PlainDate.from({ year: first.year, month: 12, day: 31 });
+  const complianceEnd = (
+    legalWindow.calendarYearCoverage && Temporal.PlainDate.compare(yearEnd, baseComplianceEnd) > 0
+      ? yearEnd
+      : baseComplianceEnd
+  ).toString();
   const monthPrefix = `${month}-`;
   const monthEntries: CalendarEntry[] = [];
   const monthShifts: ShiftEntry[] = [];

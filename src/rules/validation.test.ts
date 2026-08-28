@@ -143,6 +143,39 @@ describe("rule contract validation", () => {
     expect(issueCodes(validateRulePackage(v1WithRule))).toContain("UNSUPPORTED_OVERTIME_BASE_RULE");
   });
 
+  it("enforces night-worker qualification for legal engine v3", () => {
+    type VersionedLegalFixture = typeof legalPackageFixture & {
+      engineContractVersion: number;
+      rules: typeof legalPackageFixture.rules & {
+        nightWork: typeof legalPackageFixture.rules.nightWork & {
+          workerQualification?: {
+            regularRotatingNightWorkRequiresConfirmation: true;
+            annualNightWorkDaysThreshold: number;
+          };
+        };
+      };
+    };
+    const v3Package = clone(legalPackageFixture) as VersionedLegalFixture;
+    v3Package.engineContractVersion = 3;
+    v3Package.rules.nightWork.workerQualification = {
+      regularRotatingNightWorkRequiresConfirmation: true,
+      annualNightWorkDaysThreshold: 48,
+    };
+    expect(validateRulePackage(v3Package).ok).toBe(true);
+
+    const missingQualification = clone(v3Package);
+    delete missingQualification.rules.nightWork.workerQualification;
+    expect(issueCodes(validateRulePackage(missingQualification))).toContain(
+      "MISSING_NIGHT_WORKER_QUALIFICATION",
+    );
+
+    const v1WithQualification = clone(v3Package);
+    v1WithQualification.engineContractVersion = 1;
+    expect(issueCodes(validateRulePackage(v1WithQualification))).toContain(
+      "UNSUPPORTED_NIGHT_WORKER_QUALIFICATION",
+    );
+  });
+
   it("rejects invalid allowance ranges and work-pattern boundaries", () => {
     const allowanceOutsidePackage = clone(tariffPackageFixture);
     allowanceOutsidePackage.rules.allowanceRules[0].validFrom = "2026-04-30";

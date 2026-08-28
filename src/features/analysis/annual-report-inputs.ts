@@ -35,15 +35,25 @@ export function selectAnnualReportInputs(
       months: getTariffAssessmentLookbackMonths(first.toString(), ruleResolver),
     });
     const complianceStart = first.subtract({ days: legalWindow.lookbackDays });
-    const complianceEnd = first
+    const baseComplianceEnd = first
       .add({ months: 1 })
       .subtract({ days: 1 })
       .add({ days: legalWindow.lookaheadDays });
+    const yearStart = Temporal.PlainDate.from({ year: first.year, month: 1, day: 1 });
+    const yearEnd = Temporal.PlainDate.from({ year: first.year, month: 12, day: 31 });
+    const legalComplianceStart =
+      legalWindow.calendarYearCoverage && Temporal.PlainDate.compare(yearStart, complianceStart) < 0
+        ? yearStart
+        : complianceStart;
+    const complianceEnd =
+      legalWindow.calendarYearCoverage && Temporal.PlainDate.compare(yearEnd, baseComplianceEnd) > 0
+        ? yearEnd
+        : baseComplianceEnd;
     if (Temporal.PlainDate.compare(allowanceStart, rangeStart) < 0) {
       rangeStart = allowanceStart;
     }
-    if (Temporal.PlainDate.compare(complianceStart, rangeStart) < 0) {
-      rangeStart = complianceStart;
+    if (Temporal.PlainDate.compare(legalComplianceStart, rangeStart) < 0) {
+      rangeStart = legalComplianceStart;
     }
     if (Temporal.PlainDate.compare(complianceEnd, rangeEnd) > 0) {
       rangeEnd = complianceEnd;

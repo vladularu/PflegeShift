@@ -362,6 +362,11 @@ async function writeSignedCliFixture() {
     maximumStepId: "s2",
     sourceIds: ["tvoed-vka-2026"],
   };
+  packages[1].engineContractVersion = 3;
+  packages[1].rules.nightWork.workerQualification = {
+    regularRotatingNightWorkRequiresConfirmation: true,
+    annualNightWorkDaysThreshold: 48,
+  };
   const packageJson = packages.map((value) => `${JSON.stringify(value, null, 2)}\n`);
   const manifest = await fixture("manifest.valid.json");
   manifest.packages = packages.map((rulePackage, index) => ({

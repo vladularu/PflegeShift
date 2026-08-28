@@ -55,8 +55,13 @@ Der Projekt-Owner gleicht gegen die hinterlegte amtliche ArbZG-Fassung ab:
 
 - acht Stunden Regelarbeitszeit und zehn Stunden Höchstgrenze;
 - 30/45 Minuten Pause nach mehr als sechs/neun Stunden sowie 15-Minuten-Segmente;
-- Nachtzeit 23:00–06:00, Qualifikation bei mehr als zwei Stunden Nachtarbeit und
-  28-Tage-Ausgleichsfenster;
+- Nachtzeit 23:00–06:00 und Nachtarbeit bei mehr als zwei Stunden in diesem Zeitraum;
+- Nachtarbeitnehmerstatus getrennt davon: ausdrücklich bestätigte regelmäßige
+  Nachtarbeit in Wechselschicht oder mindestens 48 erfasste Nachtarbeitstage im
+  Kalenderjahr;
+- für Nachtarbeitnehmer durchschnittlich höchstens acht Stunden innerhalb eines
+  Kalendermonats oder eines tatsächlich berechneten 28-Tage-Zeitraums;
+- keine pauschale Anrechnung von Urlaub oder Krankheit als fiktive Arbeitszeit;
 - elf Stunden Ruhezeit;
 - Verkürzung auf zehn Stunden in Krankenhaus/Pflege nur zusammen mit zwölf Stunden
   Ausgleich innerhalb von vier Wochen.

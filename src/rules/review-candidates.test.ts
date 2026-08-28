@@ -152,6 +152,7 @@ describe("generation 1 rule review candidates", () => {
   it("locks statutory ArbZG boundaries apart from labelled product heuristics", () => {
     expect(legalCandidate.packageId).toBe("de-arbzg-care");
     expect(legalCandidate.versionId).toBe("2026-01");
+    expect(legalCandidate.engineContractVersion).toBe(3);
     expect(legalCandidate.rules.workingTime).toMatchObject({
       standardDailyMinutes: 480,
       maxDailyMinutes: 600,
@@ -168,6 +169,10 @@ describe("generation 1 rule review candidates", () => {
       startMinute: 1380,
       endMinute: 360,
       qualification: { comparator: "GT", thresholdMinutes: 120 },
+      workerQualification: {
+        regularRotatingNightWorkRequiresConfirmation: true,
+        annualNightWorkDaysThreshold: 48,
+      },
       averageWindowDays: 28,
     });
     expect(legalCandidate.rules.restPeriod).toMatchObject({
