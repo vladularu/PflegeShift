@@ -54,6 +54,12 @@ ersetzen keine Tarifprüfung.
 Der Projekt-Owner gleicht gegen die hinterlegte amtliche ArbZG-Fassung ab:
 
 - acht Stunden Regelarbeitszeit und zehn Stunden Höchstgrenze;
+- für jeden auf mehr als acht und höchstens zehn Nettoarbeitsstunden verlängerten Tag
+  durchschnittlich höchstens acht Stunden je Werktag innerhalb der folgenden sechs
+  Kalendermonate oder alternativ innerhalb der folgenden 24 Wochen;
+- Urlaub und Krankheit ohne tatsächliche Arbeit bleiben in diesem Durchschnitt neutral
+  und dürfen Mehrarbeit nicht als Nulltage ausgleichen; ausdrücklich erfasste freie Tage
+  bleiben mögliche Ausgleichstage;
 - 30/45 Minuten Pause nach mehr als sechs/neun Stunden sowie 15-Minuten-Segmente;
 - Nachtzeit 23:00–06:00 und Nachtarbeit bei mehr als zwei Stunden in diesem Zeitraum;
 - Nachtarbeitnehmerstatus getrennt davon: ausdrücklich bestätigte regelmäßige

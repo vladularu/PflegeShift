@@ -70,7 +70,13 @@ test("publisher CLI dry-runs, writes in order, retries idempotently, and protect
       maximumStepId: "s2",
       sourceIds: ["tvoed-vka-2026"],
     };
-    packages[1].engineContractVersion = 3;
+    packages[1].engineContractVersion = 4;
+    packages[1].rules.workingTime.standardAverage = {
+      calendarMonths: 6,
+      weeks: 24,
+      assessmentMode: "FORWARD_FROM_EXTENDED_WORKDAY",
+      neutralAbsenceTypes: ["VACATION", "SICK"],
+    };
     packages[1].rules.nightWork.workerQualification = {
       regularRotatingNightWorkRequiresConfirmation: true,
       annualNightWorkDaysThreshold: 48,
