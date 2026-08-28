@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 1,
+  "packageId": "de-holidays",
+  "versionId": "2026",
+  "kind": "HOLIDAY",
+  "label": "Deutsche Feiertage 2026 Vertragsbeispiel",
+  "status": "PUBLISHED",
+  "validFrom": "2026-01-01",
+  "validTo": "2026-12-31",
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "holiday-laws-2026",
+      "title": "Feiertagsgesetze der Laender",
+      "url": "https://www.bmi.bund.de/",
+      "documentDate": "2026-01-01",
+      "section": "Vertragsbeispiel",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+    }
+  ],
+  "review": {
+    "status": "PUBLISHED",
+    "reviewedBy": "pflegeShift-rule-review",
+    "reviewedAt": "2026-01-02T12:00:00Z",
+    "gitCommit": "3333333333333333333333333333333333333333"
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "AFTER_SUM"
+  },
+  "rules": {
+    "holidays": [
+      {
+        "id": "new-year",
+        "name": "Neujahr",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 1,
+          "day": 1
+        },
+        "sourceIds": ["holiday-laws-2026"]
+      },
+      {
+        "id": "repentance-day-saxony",
+        "name": "Buss- und Bettag",
+        "scope": "STATEWIDE",
+        "federalStates": ["SN"],
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "calculation": {
+          "type": "REPENTANCE_DAY"
+        },
+        "sourceIds": ["holiday-laws-2026"]
+      }
+    ]
+  }
+}

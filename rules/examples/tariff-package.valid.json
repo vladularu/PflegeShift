@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 1,
+  "packageId": "tvoed-vka-bt-k",
+  "versionId": "2026-05",
+  "kind": "TARIFF",
+  "label": "TVoeD VKA BT-K Vertragsbeispiel",
+  "status": "PUBLISHED",
+  "validFrom": "2026-05-01",
+  "validTo": "2027-03-31",
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "tvoed-vka-2026",
+      "title": "TVoeD VKA Tarifquelle",
+      "url": "https://www.vka.de/tarifvertraege/tvoed",
+      "documentDate": "2026-04-01",
+      "section": "Entgelttabelle und Zuschlaege",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  ],
+  "review": {
+    "status": "PUBLISHED",
+    "reviewedBy": "pflegeShift-rule-review",
+    "reviewedAt": "2026-04-20T12:00:00Z",
+    "gitCommit": "1111111111111111111111111111111111111111"
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "PER_LINE"
+  },
+  "rules": {
+    "selector": {
+      "agreementId": "tvoed-vka",
+      "specialPartId": "bt-k",
+      "payTableId": "vka-p16"
+    },
+    "payTables": [
+      {
+        "id": "vka-p16",
+        "entries": [
+          {
+            "groupId": "p7",
+            "stepId": "s2",
+            "monthlyCents": 367500,
+            "hourlyCents": 2175
+          }
+        ],
+        "sourceIds": ["tvoed-vka-2026"]
+      }
+    ],
+    "premiumRules": [
+      {
+        "id": "night",
+        "label": "Nacht",
+        "premiumType": "NIGHT",
+        "percentageBasisPoints": 2000,
+        "rateBasis": "INDIVIDUAL_HOURLY",
+        "referenceStepId": null,
+        "timeWindow": {
+          "startMinute": 1260,
+          "endMinute": 360
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["tvoed-vka-2026"]
+      },
+      {
+        "id": "sunday",
+        "label": "Sonntag",
+        "premiumType": "SUNDAY",
+        "percentageBasisPoints": 2500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s2",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["tvoed-vka-2026"]
+      }
+    ],
+    "allowanceRules": [
+      {
+        "id": "care-allowance",
+        "allowanceType": "care",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 15000,
+        "prorateByPartTime": true,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["tvoed-vka-2026"]
+      }
+    ],
+    "combinationRules": [
+      {
+        "id": "night-sunday-stack",
+        "memberRuleIds": ["night", "sunday"],
+        "mode": "STACK",
+        "priorityRuleIds": [],
+        "sourceIds": ["tvoed-vka-2026"]
+      }
+    ],
+    "workPatternRules": [
+      {
+        "id": "night-series-observation",
+        "metric": "CONSECUTIVE_NIGHT_SHIFTS",
+        "comparator": "GTE",
+        "threshold": 4,
+        "windowDays": null,
+        "sourceIds": ["tvoed-vka-2026"]
+      }
+    ],
+    "workPatternPolicy": {
+      "nightWindow": {
+        "startMinute": 1260,
+        "endMinute": 360
+      },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["tvoed-vka-2026"]
+    }
+  }
+}

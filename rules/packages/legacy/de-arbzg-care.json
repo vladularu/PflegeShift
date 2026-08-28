@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 1,
+  "packageId": "de-arbzg-care-legacy",
+  "versionId": "code-fea614c",
+  "kind": "LEGAL",
+  "label": "ArbZG- und Planungslogik Legacy",
+  "status": "LEGACY_EMBEDDED",
+  "validFrom": "1900-01-01",
+  "validTo": null,
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "legacy-compliance-code",
+      "title": "Legacy-Codebestand der Arbeitszeitpruefung",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/compliance.ts",
+      "documentDate": "2026-08-28",
+      "section": "src/engine/compliance.ts vor WP2",
+      "sha256": "d848a5077731c7a1dddd9ddc07ed6d1df68b8579f68a03c95a84bf5ed2e3c272"
+    }
+  ],
+  "review": {
+    "status": "LEGACY_EMBEDDED",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "gitCommit": null
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "AFTER_SUM"
+  },
+  "rules": {
+    "workingTime": {
+      "standardDailyMinutes": 480,
+      "maxDailyMinutes": 600,
+      "nightAverageMinutes": 480,
+      "workWeekLastDay": 6,
+      "absenceWorkdaysPerWeek": 5,
+      "grossPlanningWarningMinutes": 960,
+      "sourceIds": ["legacy-compliance-code"]
+    },
+    "breaks": {
+      "minimumSegmentMinutes": 15,
+      "tiers": [
+        {
+          "overMinutes": 360,
+          "requiredMinutes": 30
+        },
+        {
+          "overMinutes": 540,
+          "requiredMinutes": 45
+        }
+      ],
+      "sourceIds": ["legacy-compliance-code"]
+    },
+    "nightWork": {
+      "startMinute": 1380,
+      "endMinute": 360,
+      "qualification": {
+        "comparator": "GT",
+        "thresholdMinutes": 120
+      },
+      "averageWindowDays": 28,
+      "sourceIds": ["legacy-compliance-code"]
+    },
+    "restPeriod": {
+      "defaultMinutes": 660,
+      "deviations": [
+        {
+          "id": "care-rest-deviation",
+          "sectorIds": ["hospital", "care"],
+          "minimumMinutes": 600,
+          "compensationMinutes": 720,
+          "compensationWithinDays": 28,
+          "sourceIds": ["legacy-compliance-code"]
+        }
+      ],
+      "sourceIds": ["legacy-compliance-code"]
+    },
+    "planning": {
+      "consecutiveWorkDaysWarning": 7,
+      "consecutiveNightShiftsWarning": 5,
+      "consecutiveWeekendGapDays": 7,
+      "lateEarlyDayGap": 1,
+      "sourceIds": ["legacy-compliance-code"]
+    }
+  }
+}

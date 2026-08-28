@@ -1,6 +1,11 @@
 import { Temporal } from "@js-temporal/polyfill";
 
 import type { CalendarEntry, ShiftEntry } from "@/domain/types";
+import {
+  getLegalCalculationWindow,
+  getTariffAssessmentLookbackMonths,
+} from "@/rules/calculation-windows";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 export interface AnalysisEntryWindow {
   readonly monthEntries: readonly CalendarEntry[];
@@ -12,12 +17,20 @@ export interface AnalysisEntryWindow {
 export function selectAnalysisEntryWindow(
   entries: readonly CalendarEntry[],
   month: string,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): AnalysisEntryWindow {
   const first = Temporal.PlainDate.from(`${month}-01`);
-  const complianceStart = first.subtract({ days: 8 }).toString();
-  const allowanceStart = first.subtract({ months: 2 }).toString();
+  const legalWindow = getLegalCalculationWindow(first.toString(), ruleResolver);
+  const complianceStart = first.subtract({ days: legalWindow.lookbackDays }).toString();
+  const allowanceStart = first
+    .subtract({
+      months: getTariffAssessmentLookbackMonths(first.toString(), ruleResolver),
+    })
+    .toString();
   const monthEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
-  const complianceEnd = Temporal.PlainDate.from(monthEnd).add({ days: 28 }).toString();
+  const complianceEnd = Temporal.PlainDate.from(monthEnd)
+    .add({ days: legalWindow.lookaheadDays })
+    .toString();
   const monthPrefix = `${month}-`;
   const monthEntries: CalendarEntry[] = [];
   const monthShifts: ShiftEntry[] = [];

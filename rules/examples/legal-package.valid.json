@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 1,
+  "packageId": "de-arbzg-care",
+  "versionId": "2026-01",
+  "kind": "LEGAL",
+  "label": "ArbZG Vertragsbeispiel Pflege",
+  "status": "PUBLISHED",
+  "validFrom": "2026-01-01",
+  "validTo": null,
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "arbzg-2026",
+      "title": "Arbeitszeitgesetz",
+      "url": "https://www.gesetze-im-internet.de/arbzg/",
+      "documentDate": "2026-01-01",
+      "section": "Paragraphen 3 bis 7",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "review": {
+    "status": "PUBLISHED",
+    "reviewedBy": "pflegeShift-rule-review",
+    "reviewedAt": "2026-01-02T12:00:00Z",
+    "gitCommit": "2222222222222222222222222222222222222222"
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "AFTER_SUM"
+  },
+  "rules": {
+    "workingTime": {
+      "standardDailyMinutes": 480,
+      "maxDailyMinutes": 600,
+      "nightAverageMinutes": 480,
+      "workWeekLastDay": 6,
+      "absenceWorkdaysPerWeek": 5,
+      "grossPlanningWarningMinutes": 960,
+      "sourceIds": ["arbzg-2026"]
+    },
+    "breaks": {
+      "minimumSegmentMinutes": 15,
+      "tiers": [
+        {
+          "overMinutes": 360,
+          "requiredMinutes": 30
+        },
+        {
+          "overMinutes": 540,
+          "requiredMinutes": 45
+        }
+      ],
+      "sourceIds": ["arbzg-2026"]
+    },
+    "nightWork": {
+      "startMinute": 1380,
+      "endMinute": 360,
+      "qualification": {
+        "comparator": "GT",
+        "thresholdMinutes": 120
+      },
+      "averageWindowDays": 28,
+      "sourceIds": ["arbzg-2026"]
+    },
+    "restPeriod": {
+      "defaultMinutes": 660,
+      "deviations": [
+        {
+          "id": "care-rest-deviation",
+          "sectorIds": ["care"],
+          "minimumMinutes": 600,
+          "compensationMinutes": 720,
+          "compensationWithinDays": 28,
+          "sourceIds": ["arbzg-2026"]
+        }
+      ],
+      "sourceIds": ["arbzg-2026"]
+    },
+    "planning": {
+      "consecutiveWorkDaysWarning": 7,
+      "consecutiveNightShiftsWarning": 5,
+      "consecutiveWeekendGapDays": 7,
+      "lateEarlyDayGap": 1,
+      "sourceIds": ["arbzg-2026"]
+    }
+  }
+}

@@ -1,0 +1,87 @@
+# Rule catalog contract v1
+
+## Decision
+
+PflegeShift calculates salary, tariff, legal, and public-holiday results locally. The app must not send shifts, salary data, or calculation inputs to a rule backend. A later delivery service distributes only signed, immutable rule packages and a signed manifest. This preserves offline operation and prevents 100,000 monthly active users from creating a backend request for every calculation.
+
+The authoritative machine-readable contracts are:
+
+- `rules/schema/manifest.schema.json`
+- `rules/schema/rule-package.schema.json`
+
+`src/rules/contracts.generated.ts` and `src/rules/schema-validators.generated.js` are generated from those schemas. They are never edited manually. The standalone validators are compiled during development so the app does not compile JSON Schema at runtime. Both the app and every future publishing tool must call the semantic functions in `src/rules/validation.ts`; a second validator implementation is not permitted.
+
+WP1 does not change the existing calculation engine, persist rule packages, contact Supabase, or verify a cryptographic signature. Those integrations follow only after the contract and later parity tests are accepted.
+
+## Local runtime integration
+
+WP2b makes the calculation engine a consumer of this contract without adding a network dependency:
+
+- `src/engine/tariff.ts` resolves pay-table entries and validity boundaries from a `RuleTariffPackage`.
+- `src/engine/pay.ts` resolves premium windows, percentages, table references, combination priority, allowances, and work-pattern thresholds from the same tariff package.
+- `src/engine/holidays.ts` derives each state holiday from the holiday package that is active on the holiday date.
+- `src/engine/compliance.ts` resolves working-time, break, night-work, rest-period, and planning thresholds from a legal package.
+
+Every public calculation keeps the bundled resolver as its default and accepts an injected `RuleResolver` at the engine boundary. That makes a later verified on-device catalog replaceable without changing UI consumers or sending calculation inputs to a server. Resolver-specific caches prevent values from one catalog being reused after another catalog is activated.
+
+The production default is still the immutable `LEGACY_EMBEDDED` catalog. WP2b does not download or persist packages, activate a manifest, verify signatures, contact Supabase, or make the current legacy packages publishable. Those remain separate delivery and governance work.
+
+## Contract boundaries
+
+The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.
+
+Canonical units are fixed:
+
+- money: integer cents;
+- percentages: integer basis points;
+- time of day and durations: integer minutes;
+- dates: ISO calendar dates (`YYYY-MM-DD`);
+- timestamps: UTC with a trailing `Z`;
+- package integrity: lowercase SHA-256 hex;
+- signature contract: Ed25519 over RFC 8785 canonical JSON.
+
+The two validation layers have different jobs:
+
+1. Generated JSON Schema validators enforce shape, closed fields, types, ranges, and discriminated tariff/legal/holiday variants.
+2. `src/rules/validation.ts` enforces relationships that JSON Schema cannot express safely: real calendar dates, source and rule references, unique identities, review consistency, non-overlapping validity intervals, complete coverage without gaps, and equality between manifest descriptors and loaded packages.
+
+Only `PUBLISHED` packages may be part of a validated catalog. `DRAFT` and `REVIEWED` packages may be validated individually but cannot become active through a manifest.
+
+## Version and compatibility rules
+
+`schemaVersion` describes the data shape. `engineContractVersion` describes behavior the calculation engine must understand. Both start at `1`.
+
+A change is compatible within the same versions only when it adds an optional field that old consumers can ignore without changing an existing result. The following require a new schema or engine contract version before publication:
+
+- a new required field;
+- a new rule kind, operator, enum value, unit, or rounding meaning;
+- changed interpretation of an existing field;
+- removal or renaming of any accepted field;
+- a calculation change that can alter an old input's result.
+
+Published package files are immutable. A correction creates a new `versionId` and a new manifest generation. Existing files are never overwritten or deleted while a supported app can reference them. An app that does not support a package's `engineContractVersion` must keep its last verified compatible catalog and report the incompatibility; it must not guess or partially interpret the new package.
+
+## Exact update procedure
+
+Every tariff or legal change follows this sequence:
+
+1. Record the primary source URL, document date, exact section, and SHA-256 of the reviewed source document.
+2. Create a new immutable package version with the correct `validFrom` and `validTo`. Begin with `status: DRAFT` and empty review evidence.
+3. Run `npm run rules:generate` only if the schema changed. Commit the schema and generated outputs together.
+4. Run `npm run rules:validate` and `npm run test:rules`. Add a regression fixture for every changed result boundary, including the day before and the first day of validity.
+5. Obtain the required tariff/legal review. Record reviewer, UTC review time, and the exact 40-character Git commit. Set both package and review status to `REVIEWED`.
+6. A later publisher revalidates the same files, checks review policy, changes the release artifact to `PUBLISHED`, computes the real file hash and size, and produces a new monotonically increasing manifest generation.
+7. The publisher canonicalizes and signs the manifest, uploads immutable package paths first, then makes the manifest available. Publication must fail if a `COMPLETE` track contains a gap or overlap.
+8. Clients verify signature, generation, hash, size, schema, semantic contract, and engine compatibility before atomically activating the catalog. On any failure they retain the last verified compatible catalog.
+9. A rollback publishes a new higher generation whose `rollbackOfGeneration` points to an earlier generation. It never lowers the generation counter and never mutates the earlier manifest.
+
+Steps 6 through 9 are delivery work, not implemented in WP1.
+
+## Verification commands
+
+- `npm run rules:generate` regenerates TypeScript contracts and standalone validators.
+- `npm run rules:check` fails when generated files are stale or the complete example catalog is invalid.
+- `npm run test:rules` runs valid and adversarial contract tests.
+- `npm run verify:fast` includes contract freshness, fixture validation, all repository tests, lint, formatting, type checking, and diff checks.
+
+The files in `rules/examples` are contract fixtures. Their hashes, signatures, source metadata, and sample monetary values are deliberately non-production placeholders and must never be published as a real catalog.

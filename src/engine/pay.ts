@@ -7,48 +7,48 @@ import type {
   PremiumLine,
   ShiftEntry,
   ShiftPremiumBreakdown,
-  TvoedAssessment,
   TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
 import {
+  getHourlyTableAmountForStep,
   getIndividualHourlyRate,
   getMonthlyTableAmount,
-  getPremiumHourlyRate,
+  getTariffRulePackage,
   getTariffVersion,
 } from "@/engine/tariff";
+import {
+  assessTvoedPattern,
+  DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
+  isPayWorkShift as isWorkShift,
+} from "@/engine/tvoed-pattern";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
+import { getTariffAssessmentLookbackMonths } from "@/rules/calculation-windows";
+import type {
+  RuleConditions,
+  RulePremiumRule,
+  RuleTariffPackage,
+  RuleTimeWindow,
+} from "@/rules/contracts.generated";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
-const WORK_TYPES = new Set(["EARLY", "LATE", "NIGHT", "DAY", "CUSTOM"]);
-const HOLIDAY_DATE_CACHE = new Map<string, ReadonlySet<string>>();
+const HOLIDAY_DATE_CACHE = new WeakMap<RuleResolver, Map<string, ReadonlySet<string>>>();
+
+export { assessTvoedPattern, DEFAULT_TVOED_WORK_PATTERN_SETTINGS };
 
 interface PremiumMinuteBuckets {
-  night: number;
-  sunday: number;
-  holiday: number;
-  saturday: number;
-  preholiday: number;
+  readonly byRuleId: Map<string, number>;
 }
 
 interface PremiumDayContext {
   readonly holiday: boolean;
-  readonly preholiday: boolean;
   readonly sunday: boolean;
   readonly saturday: boolean;
 }
 
 function roundMoney(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
-}
-
-function isWorkShift(shift: ShiftEntry): boolean {
-  return (
-    !shift.allDay &&
-    WORK_TYPES.has(shift.type) &&
-    shift.startTime !== null &&
-    shift.endTime !== null
-  );
 }
 
 function zonedStart(shift: ShiftEntry, timeZone: string): Temporal.ZonedDateTime {
@@ -74,42 +74,137 @@ function grossMinutes(shift: ShiftEntry, timeZone: string): number {
 function holidayDates(
   year: number,
   federalState: UserProfile["federalState"],
+  ruleResolver: RuleResolver,
 ): ReadonlySet<string> {
   const key = `${federalState}-${year}`;
-  const cached = HOLIDAY_DATE_CACHE.get(key);
+  const resolverCache = HOLIDAY_DATE_CACHE.get(ruleResolver);
+  const cached = resolverCache?.get(key);
   if (cached) return cached;
-  const dates = new Set(getPublicHolidays(year, federalState).map((holiday) => holiday.date));
-  HOLIDAY_DATE_CACHE.set(key, dates);
+  const dates = new Set(
+    getPublicHolidays(year, federalState, ruleResolver).map((holiday) => holiday.date),
+  );
+  const nextCache = resolverCache ?? new Map<string, ReadonlySet<string>>();
+  nextCache.set(key, dates);
+  if (!resolverCache) HOLIDAY_DATE_CACHE.set(ruleResolver, nextCache);
   return dates;
 }
 
 function premiumDayContext(
   date: Temporal.PlainDate,
   federalState: UserProfile["federalState"],
+  ruleResolver: RuleResolver,
 ): PremiumDayContext {
   return {
-    holiday: holidayDates(date.year, federalState).has(date.toString()),
-    preholiday: date.month === 12 && (date.day === 24 || date.day === 31),
+    holiday: holidayDates(date.year, federalState, ruleResolver).has(date.toString()),
     sunday: date.dayOfWeek === 7,
     saturday: date.dayOfWeek === 6,
   };
 }
 
+function normalizedIdentifier(value: string): string {
+  return value.toLowerCase().replaceAll("_", "-");
+}
+
+function conditionsMatch(
+  conditions: RuleConditions,
+  profile: UserProfile,
+  date: string,
+  shift: ShiftEntry | null,
+  allowanceStatus: AllowanceStatus | null,
+): boolean {
+  const shiftType = shift ? normalizedIdentifier(shift.type) : null;
+  const tariff = profile.tariff;
+  return (
+    (conditions.requiresShiftTypes.length === 0 ||
+      (shiftType !== null && conditions.requiresShiftTypes.includes(shiftType))) &&
+    (shiftType === null || !conditions.excludesShiftTypes.includes(shiftType)) &&
+    (conditions.payGroups === null ||
+      (tariff !== null && conditions.payGroups.includes(tariff.payGroup.toLowerCase()))) &&
+    (conditions.sectors === null ||
+      (tariff !== null && conditions.sectors.includes(tariff.sector))) &&
+    (conditions.federalStates === null ||
+      conditions.federalStates.includes(profile.federalState)) &&
+    (conditions.holidayPremiumModes === null ||
+      (shift !== null && conditions.holidayPremiumModes.includes(shift.holidayPremiumMode))) &&
+    (conditions.allowanceStatuses === null ||
+      (allowanceStatus !== null &&
+        allowanceStatus !== "NONE" &&
+        conditions.allowanceStatuses.includes(allowanceStatus))) &&
+    (conditions.monthDays === null || conditions.monthDays.includes(date.slice(5)))
+  );
+}
+
+function timeWindowContains(window: RuleTimeWindow | null, minuteOfDay: number): boolean {
+  if (window === null) return true;
+  if (window.startMinute < window.endMinute) {
+    return minuteOfDay >= window.startMinute && minuteOfDay < window.endMinute;
+  }
+  return minuteOfDay >= window.startMinute || minuteOfDay < window.endMinute;
+}
+
+function premiumAppliesOnDay(rule: RulePremiumRule, day: PremiumDayContext): boolean {
+  switch (rule.premiumType) {
+    case "NIGHT":
+      return true;
+    case "SUNDAY":
+      return day.sunday;
+    case "HOLIDAY_WITH_TIME_OFF":
+    case "HOLIDAY_WITHOUT_TIME_OFF":
+      return day.holiday;
+    case "SATURDAY":
+      return day.saturday;
+    case "PRE_HOLIDAY":
+      return true;
+    case "OVERTIME":
+      return false;
+  }
+}
+
+function applyCombinationRules(
+  candidates: readonly RulePremiumRule[],
+  rulePackage: RuleTariffPackage,
+): readonly RulePremiumRule[] {
+  const selected = new Map(candidates.map((rule) => [rule.id, rule]));
+  for (const combination of rulePackage.rules.combinationRules) {
+    const members = combination.memberRuleIds
+      .map((ruleId) => selected.get(ruleId))
+      .filter((rule): rule is RulePremiumRule => rule !== undefined);
+    if (members.length <= 1 || combination.mode === "STACK") continue;
+    const winner =
+      combination.mode === "PRIORITY"
+        ? combination.priorityRuleIds
+            .map((ruleId) => selected.get(ruleId))
+            .find((rule): rule is RulePremiumRule => rule !== undefined)
+        : members.reduce((left, right) =>
+            left.percentageBasisPoints >= right.percentageBasisPoints ? left : right,
+          );
+    if (!winner) {
+      throw new Error(`Combination rule ${combination.id} has no active priority winner.`);
+    }
+    for (const member of members) {
+      if (member !== winner) selected.delete(member.id);
+    }
+  }
+  return [...selected.values()];
+}
+
 function countPremiumMinute(
   buckets: PremiumMinuteBuckets,
   day: PremiumDayContext,
+  date: string,
   minuteOfDay: number,
+  shift: ShiftEntry,
+  profile: UserProfile,
+  rulePackage: RuleTariffPackage,
 ): void {
-  if (minuteOfDay >= 21 * 60 || minuteOfDay < 6 * 60) buckets.night++;
-
-  if (day.holiday) {
-    buckets.holiday++;
-  } else if (day.preholiday && minuteOfDay >= 6 * 60) {
-    buckets.preholiday++;
-  } else if (day.sunday) {
-    buckets.sunday++;
-  } else if (day.saturday && minuteOfDay >= 13 * 60 && minuteOfDay < 21 * 60) {
-    buckets.saturday++;
+  const candidates = rulePackage.rules.premiumRules.filter(
+    (rule) =>
+      premiumAppliesOnDay(rule, day) &&
+      timeWindowContains(rule.timeWindow, minuteOfDay) &&
+      conditionsMatch(rule.conditions, profile, date, shift, null),
+  );
+  for (const rule of applyCombinationRules(candidates, rulePackage)) {
+    buckets.byRuleId.set(rule.id, (buckets.byRuleId.get(rule.id) ?? 0) + 1);
   }
 }
 
@@ -119,13 +214,11 @@ function countPremiumMinutes(
   gross: number,
   breakStart: number,
   breakEnd: number,
+  rulePackage: RuleTariffPackage,
+  ruleResolver: RuleResolver,
 ): PremiumMinuteBuckets {
   const buckets: PremiumMinuteBuckets = {
-    night: 0,
-    sunday: 0,
-    holiday: 0,
-    saturday: 0,
-    preholiday: 0,
+    byRuleId: new Map(),
   };
   if (gross <= 0) return buckets;
 
@@ -142,10 +235,18 @@ function countPremiumMinutes(
       const dateKey = date.toString();
       let day = dayContexts.get(dateKey);
       if (!day) {
-        day = premiumDayContext(date, profile.federalState);
+        day = premiumDayContext(date, profile.federalState, ruleResolver);
         dayContexts.set(dateKey, day);
       }
-      countPremiumMinute(buckets, day, cursor.hour * 60 + cursor.minute);
+      countPremiumMinute(
+        buckets,
+        day,
+        dateKey,
+        cursor.hour * 60 + cursor.minute,
+        shift,
+        profile,
+        rulePackage,
+      );
     }
     return buckets;
   }
@@ -154,7 +255,7 @@ function countPremiumMinutes(
   const startMinuteOfDay = start.hour * 60 + start.minute;
   let cachedDayOffset = 0;
   let cachedDate = startDate;
-  let cachedDay = premiumDayContext(startDate, profile.federalState);
+  let cachedDay = premiumDayContext(startDate, profile.federalState, ruleResolver);
 
   for (let index = 0; index < gross; index++) {
     if (index >= breakStart && index < breakEnd) continue;
@@ -163,9 +264,17 @@ function countPremiumMinutes(
     if (dayOffset !== cachedDayOffset) {
       cachedDayOffset = dayOffset;
       cachedDate = dayOffset === 0 ? startDate : startDate.add({ days: dayOffset });
-      cachedDay = premiumDayContext(cachedDate, profile.federalState);
+      cachedDay = premiumDayContext(cachedDate, profile.federalState, ruleResolver);
     }
-    countPremiumMinute(buckets, cachedDay, localMinute % (24 * 60));
+    countPremiumMinute(
+      buckets,
+      cachedDay,
+      cachedDate.toString(),
+      localMinute % (24 * 60),
+      shift,
+      profile,
+      rulePackage,
+    );
   }
   return buckets;
 }
@@ -188,7 +297,10 @@ function premiumLine(
   };
 }
 
-const SHIFT_PREMIUM_CACHE = new WeakMap<ShiftEntry, Map<string, ShiftPremiumBreakdown>>();
+const SHIFT_PREMIUM_CACHE = new WeakMap<
+  ShiftEntry,
+  WeakMap<RuleResolver, Map<string, ShiftPremiumBreakdown>>
+>();
 
 function premiumCacheKey(shift: ShiftEntry, profile: UserProfile): string {
   const tariff = profile.tariff;
@@ -216,9 +328,11 @@ function premiumCacheKey(shift: ShiftEntry, profile: UserProfile): string {
 function calculateShiftPremiumBreakdownUncached(
   shift: ShiftEntry,
   profile: UserProfile,
+  ruleResolver: RuleResolver,
 ): ShiftPremiumBreakdown {
   const tariff = profile.tariff;
-  if (!isWorkShift(shift) || tariff === null) {
+  const rulePackage = getTariffRulePackage(shift.date, ruleResolver);
+  if (!isWorkShift(shift) || tariff === null || rulePackage === null) {
     return {
       shiftId: shift.id,
       date: shift.date,
@@ -230,36 +344,68 @@ function calculateShiftPremiumBreakdownUncached(
     };
   }
 
-  const premiumRate = getPremiumHourlyRate(tariff, shift.date) ?? 0;
-  const individualRate = getIndividualHourlyRate(tariff, shift.date) ?? 0;
+  const individualRate = getIndividualHourlyRate(tariff, shift.date, ruleResolver) ?? 0;
   const gross = grossMinutes(shift, profile.timeZone);
   const breakStart = Math.floor((gross - Math.min(gross, shift.breakMinutes)) / 2);
   const breakEnd = breakStart + Math.min(gross, shift.breakMinutes);
-  const buckets = countPremiumMinutes(shift, profile, gross, breakStart, breakEnd);
+  const buckets = countPremiumMinutes(
+    shift,
+    profile,
+    gross,
+    breakStart,
+    breakEnd,
+    rulePackage,
+    ruleResolver,
+  );
 
-  const holidayPercentage = shift.holidayPremiumMode === "WITHOUT_TIME_OFF" ? 135 : 35;
-  const lines = [
-    premiumLine("night", "Nacht", buckets.night, 20, premiumRate),
-    premiumLine("sunday", "Sonntag", buckets.sunday, 25, premiumRate),
-    premiumLine(
-      "holiday",
-      shift.holidayPremiumMode === "WITHOUT_TIME_OFF"
-        ? "Feiertag ohne Freizeitausgleich"
-        : "Feiertag mit Freizeitausgleich",
-      buckets.holiday,
-      holidayPercentage,
-      premiumRate,
-    ),
-    premiumLine("saturday", "Samstag 13–21 Uhr", buckets.saturday, 20, premiumRate),
-    premiumLine("preholiday", "24./31. Dezember", buckets.preholiday, 35, premiumRate),
-  ].filter((line): line is PremiumLine => line !== null);
+  const premiumKey = (rule: RulePremiumRule): string => {
+    switch (rule.premiumType) {
+      case "HOLIDAY_WITH_TIME_OFF":
+      case "HOLIDAY_WITHOUT_TIME_OFF":
+        return "holiday";
+      case "PRE_HOLIDAY":
+        return "preholiday";
+      default:
+        return rule.premiumType.toLowerCase();
+    }
+  };
+  const hourlyRateFor = (rule: RulePremiumRule): number => {
+    if (rule.rateBasis === "INDIVIDUAL_HOURLY") return individualRate;
+    if (rule.referenceStepId === null) {
+      throw new Error(`Premium rule ${rule.id} requires a reference step.`);
+    }
+    return getHourlyTableAmountForStep(tariff, shift.date, rule.referenceStepId, ruleResolver) ?? 0;
+  };
+  const lines = rulePackage.rules.premiumRules
+    .filter((rule) => rule.premiumType !== "OVERTIME")
+    .map((rule) =>
+      premiumLine(
+        premiumKey(rule),
+        rule.label,
+        buckets.byRuleId.get(rule.id) ?? 0,
+        rule.percentageBasisPoints / 100,
+        hourlyRateFor(rule),
+      ),
+    )
+    .filter((line): line is PremiumLine => line !== null);
 
   const netMinutes = calculateTimedShiftMinutes(shift, profile.timeZone);
   const overtimeMinutes = Math.min(shift.overtimeMinutes, netMinutes);
-  const overtimePercentage = ["P7", "P8"].includes(tariff.payGroup) ? 30 : 15;
+  const overtimeRules = rulePackage.rules.premiumRules.filter(
+    (rule) =>
+      rule.premiumType === "OVERTIME" &&
+      conditionsMatch(rule.conditions, profile, shift.date, shift, null),
+  );
+  if (overtimeRules.length !== 1) {
+    throw new Error(
+      `Expected one overtime rule for ${tariff.payGroup} on ${shift.date}, found ${overtimeRules.length}.`,
+    );
+  }
+  const overtimeRule = overtimeRules[0];
+  const overtimeRate = hourlyRateFor(overtimeRule);
   const overtimeBaseAmount = roundMoney((overtimeMinutes / 60) * individualRate);
   const overtimePremiumAmount = roundMoney(
-    (overtimeMinutes / 60) * premiumRate * (overtimePercentage / 100),
+    (overtimeMinutes / 60) * overtimeRate * (overtimeRule.percentageBasisPoints / 10_000),
   );
   const totalAmount = roundMoney(
     lines.reduce((sum, line) => sum + line.amount, 0) + overtimeBaseAmount + overtimePremiumAmount,
@@ -278,181 +424,24 @@ function calculateShiftPremiumBreakdownUncached(
 export function calculateShiftPremiumBreakdown(
   shift: ShiftEntry,
   profile: UserProfile,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): ShiftPremiumBreakdown {
   const key = premiumCacheKey(shift, profile);
-  const cachedByInput = SHIFT_PREMIUM_CACHE.get(shift);
+  const cachedByResolver = SHIFT_PREMIUM_CACHE.get(shift);
+  const cachedByInput = cachedByResolver?.get(ruleResolver);
   const cached = cachedByInput?.get(key);
   if (cached) return cached;
 
-  const result = Object.freeze(calculateShiftPremiumBreakdownUncached(shift, profile));
+  const result = Object.freeze(
+    calculateShiftPremiumBreakdownUncached(shift, profile, ruleResolver),
+  );
   const nextCache = cachedByInput ?? new Map<string, ShiftPremiumBreakdown>();
   nextCache.set(key, result);
-  if (!cachedByInput) SHIFT_PREMIUM_CACHE.set(shift, nextCache);
+  const nextResolverCache =
+    cachedByResolver ?? new WeakMap<RuleResolver, Map<string, ShiftPremiumBreakdown>>();
+  if (!cachedByInput) nextResolverCache.set(ruleResolver, nextCache);
+  if (!cachedByResolver) SHIFT_PREMIUM_CACHE.set(shift, nextResolverCache);
   return result;
-}
-
-function shiftWindow(shift: ShiftEntry): string {
-  const [hour, minute] = shift.startTime!.split(":").map(Number);
-  const value = hour * 60 + minute;
-  if (value < 6 * 60 || value >= 20 * 60) return "Nacht";
-  if (value < 11 * 60) return "Früh";
-  if (value < 15 * 60) return "Tag";
-  return "Spät";
-}
-
-function intervalOverlap(start: number, end: number, rangeStart: number, rangeEnd: number): number {
-  return Math.max(0, Math.min(end, rangeEnd) - Math.max(start, rangeStart));
-}
-
-function nightOverlap(start: number, end: number): number {
-  let minutes = 0;
-  for (let day = -1; day <= 2; day += 1) {
-    const dayStart = day * 24 * 60;
-    minutes += intervalOverlap(start, end, dayStart, dayStart + 6 * 60);
-    minutes += intervalOverlap(start, end, dayStart + 21 * 60, dayStart + 24 * 60);
-  }
-  return minutes;
-}
-
-function tariffNightMinutes(shift: ShiftEntry): number {
-  const [startHour, startMinute] = shift.startTime!.split(":").map(Number);
-  const [endHour, endMinute] = shift.endTime!.split(":").map(Number);
-  const start = startHour * 60 + startMinute;
-  const rawEnd = endHour * 60 + endMinute;
-  const end = rawEnd <= start ? rawEnd + 24 * 60 : rawEnd;
-  const gross = Math.max(0, end - start);
-  const breakMinutes = Math.min(gross, shift.breakMinutes);
-  const breakStart = start + Math.floor((gross - breakMinutes) / 2);
-  const breakEnd = breakStart + breakMinutes;
-  return nightOverlap(start, end) - nightOverlap(breakStart, breakEnd);
-}
-
-export const DEFAULT_TVOED_WORK_PATTERN_SETTINGS: TvoedWorkPatternSettings = Object.freeze({
-  workplaceCoverage: "UNKNOWN",
-  assignment: "UNKNOWN",
-  updatedAt: null,
-});
-
-function hasRecurringNightShifts(shifts: readonly ShiftEntry[]): boolean {
-  const nights = shifts.filter((shift) => tariffNightMinutes(shift) >= 2 * 60);
-  return nights.some((night, index) => {
-    const deadline = Temporal.PlainDate.from(night.date).add({ months: 1 }).toString();
-    return nights.slice(index + 1).filter((candidate) => candidate.date <= deadline).length >= 2;
-  });
-}
-
-export function assessTvoedPattern(
-  shifts: readonly ShiftEntry[],
-  settings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
-): TvoedAssessment {
-  const work = shifts
-    .filter(isWorkShift)
-    .sort(
-      (left, right) =>
-        left.date.localeCompare(right.date) || left.startTime!.localeCompare(right.startTime!),
-    );
-  const orderedWindows = work.map(shiftWindow);
-  const windows = new Set(orderedWindows);
-  const nightShiftCount = work.filter((shift) => tariffNightMinutes(shift) >= 2 * 60).length;
-  const changeCount = orderedWindows.reduce(
-    (count, window, index) =>
-      index > 0 && orderedWindows[index - 1] !== window ? count + 1 : count,
-    0,
-  );
-  const hasRegularChange = changeCount >= 2;
-  const recurringNightShifts = hasRecurringNightShifts(work);
-  const hasAlternatingPattern =
-    work.length >= 5 && windows.size >= 3 && recurringNightShifts && hasRegularChange;
-  const shiftWork =
-    work.length === 0
-      ? "NOT_DETECTED"
-      : work.length >= 4 && windows.size >= 2 && hasRegularChange
-        ? "DETECTED"
-        : "REVIEW";
-  const alternatingShiftWork =
-    work.length === 0 ||
-    nightShiftCount === 0 ||
-    settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
-      ? "NOT_DETECTED"
-      : hasAlternatingPattern && settings.workplaceCoverage === "AROUND_THE_CLOCK"
-        ? "DETECTED"
-        : hasAlternatingPattern || windows.size >= 2
-          ? "REVIEW"
-          : "NOT_DETECTED";
-  const detectedPattern =
-    alternatingShiftWork === "DETECTED" ? "ALTERNATING" : shiftWork === "DETECTED" ? "SHIFT" : null;
-  const requiresCoverage = hasAlternatingPattern && settings.workplaceCoverage === "UNKNOWN";
-  const suggestedAllowance: AllowanceStatus = requiresCoverage
-    ? "NONE"
-    : detectedPattern === "ALTERNATING" && settings.assignment === "PERMANENT"
-      ? "ALTERNATING_MONTHLY"
-      : detectedPattern === "ALTERNATING" && settings.assignment === "TEMPORARY"
-        ? "ALTERNATING_HOURLY"
-        : detectedPattern === "SHIFT" && settings.assignment === "PERMANENT"
-          ? "SHIFT_MONTHLY"
-          : detectedPattern === "SHIFT" && settings.assignment === "TEMPORARY"
-            ? "SHIFT_HOURLY"
-            : "NONE";
-  const requiresAssignment = detectedPattern !== null && settings.assignment === "UNKNOWN";
-  return {
-    shiftWork,
-    alternatingShiftWork,
-    suggestedAllowance,
-    requiresConfirmation: requiresCoverage || requiresAssignment,
-    evidence: [
-      `${work.length} Arbeitsdienste`,
-      `${windows.size} Dienstlagen${windows.size ? `: ${[...windows].join(", ")}` : ""}`,
-      `${changeCount} Wechsel der Dienstlage`,
-      nightShiftCount > 0
-        ? `${nightShiftCount} Nachtschichten mit mindestens 2 Stunden Nachtarbeit`
-        : "Keine tarifliche Nachtschicht erkannt",
-    ],
-    criteria: [
-      {
-        key: "SHIFT_CHANGES",
-        label: "Regelmäßiger Wechsel",
-        detail: hasRegularChange
-          ? `${changeCount} Wechsel zwischen ${windows.size} Dienstlagen erkannt`
-          : "Für eine belastbare Erkennung fehlen regelmäßige Wechsel",
-        state: hasRegularChange ? "MET" : work.length === 0 ? "NOT_MET" : "OPEN",
-      },
-      {
-        key: "NIGHT_SHIFTS",
-        label: "Wiederkehrende Nachtschichten",
-        detail: recurringNightShifts
-          ? "Mindestens drei tarifliche Nachtschichten innerhalb eines Monats erkannt"
-          : `${nightShiftCount} tarifliche Nachtschichten im Prüfzeitraum erkannt`,
-        state: recurringNightShifts ? "MET" : nightShiftCount === 0 ? "NOT_MET" : "OPEN",
-      },
-      {
-        key: "AROUND_THE_CLOCK",
-        label: "Arbeitsbereich rund um die Uhr",
-        detail:
-          settings.workplaceCoverage === "AROUND_THE_CLOCK"
-            ? "Vom Nutzer bestätigt"
-            : settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
-              ? "Vom Nutzer verneint"
-              : "Kann nicht aus Dienstzeiten abgeleitet werden",
-        state:
-          settings.workplaceCoverage === "AROUND_THE_CLOCK"
-            ? "MET"
-            : settings.workplaceCoverage === "NOT_AROUND_THE_CLOCK"
-              ? "NOT_MET"
-              : "OPEN",
-      },
-      {
-        key: "ASSIGNMENT",
-        label: "Dauerhafte Zuordnung",
-        detail:
-          settings.assignment === "PERMANENT"
-            ? "Dauerhaft Teil der Stelle"
-            : settings.assignment === "TEMPORARY"
-              ? "Nur gelegentlich oder vertretungsweise"
-              : "Kann nicht aus Kalendereinträgen abgeleitet werden",
-        state: settings.assignment === "UNKNOWN" ? "OPEN" : "MET",
-      },
-    ],
-  };
 }
 
 function allowanceAmount(
@@ -460,44 +449,80 @@ function allowanceAmount(
   workMinutes: number,
   profile: UserProfile,
   date: string,
+  rulePackage: RuleTariffPackage,
 ): number {
   if (status === null || status === "NONE" || profile.tariff === null) return 0;
-  const factor = profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes;
-  const currentRates = date >= "2025-07-01";
-  if (status === "SHIFT_MONTHLY") return roundMoney((currentRates ? 100 : 40) * factor);
-  if (status === "ALTERNATING_MONTHLY") return roundMoney((currentRates ? 250 : 155) * factor);
-  if (!currentRates) {
-    const hourly = status === "ALTERNATING_HOURLY" ? 0.93 : 0.24;
-    return roundMoney((workMinutes / 60) * hourly);
+  const allowanceType = status.startsWith("ALTERNATING") ? "alternating-shift" : "shift";
+  const candidates = rulePackage.rules.allowanceRules.filter(
+    (rule) =>
+      rule.allowanceType === allowanceType &&
+      rule.validFrom <= date &&
+      (rule.validTo === null || date <= rule.validTo) &&
+      conditionsMatch(rule.conditions, profile, date, null, status),
+  );
+  if (candidates.length !== 1) {
+    throw new Error(
+      `Expected one ${allowanceType} allowance rule for ${status} on ${date}, found ${candidates.length}.`,
+    );
   }
-  const isBw = profile.federalState === "BW";
-  const hourly =
-    status === "ALTERNATING_HOURLY"
-      ? profile.tariff.sector === "BT_K" && !isBw
-        ? 1.49
-        : 1.47
-      : profile.tariff.sector === "BT_K" && !isBw
-        ? 0.6
-        : 0.59;
-  return roundMoney((workMinutes / 60) * hourly);
+  return configuredAllowanceAmount(candidates[0], workMinutes, profile);
 }
 
-function careAllowanceAmount(date: string, profile: UserProfile): number {
+function configuredAllowanceAmount(
+  rule: RuleTariffPackage["rules"]["allowanceRules"][number],
+  workMinutes: number,
+  profile: UserProfile,
+): number {
   if (profile.tariff === null) return 0;
-  const fullTimeAmount = date >= "2026-05-01" ? 141.82 : date >= "2025-04-01" ? 137.96 : 133.8;
-  return roundMoney(
-    fullTimeAmount * (profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes),
-  );
+  const amount =
+    rule.amountKind === "FIXED_HOURLY"
+      ? (workMinutes / 60) * (rule.amountCents / 100)
+      : rule.amountCents / 100;
+  const factor = rule.prorateByPartTime
+    ? profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes
+    : 1;
+  return roundMoney(amount * factor);
 }
 
-function tvoedAllowanceAmount(date: string, profile: UserProfile): number {
+function fixedAllowanceAmount(
+  allowanceType: "care" | "tvoed",
+  date: string,
+  workMinutes: number,
+  profile: UserProfile,
+  rulePackage: RuleTariffPackage,
+): number {
   if (profile.tariff === null) return 0;
-  const validFrom = profile.tariff.sector === "BT_K" ? "2008-07-01" : "2021-03-01";
-  if (date < validFrom) return 0;
-  const fullTimeAmount = profile.federalState === "BW" ? 35 : 25;
-  return roundMoney(
-    fullTimeAmount * (profile.weeklyMinutes / profile.tariff.fullTimeWeeklyMinutes),
+  const candidates = rulePackage.rules.allowanceRules.filter(
+    (rule) =>
+      rule.allowanceType === allowanceType &&
+      rule.validFrom <= date &&
+      (rule.validTo === null || date <= rule.validTo) &&
+      conditionsMatch(rule.conditions, profile, date, null, null),
   );
+  if (candidates.length !== 1) {
+    throw new Error(
+      `Expected one ${allowanceType} allowance rule on ${date}, found ${candidates.length}.`,
+    );
+  }
+  return configuredAllowanceAmount(candidates[0], workMinutes, profile);
+}
+
+function careAllowanceAmount(
+  date: string,
+  workMinutes: number,
+  profile: UserProfile,
+  rulePackage: RuleTariffPackage,
+): number {
+  return fixedAllowanceAmount("care", date, workMinutes, profile, rulePackage);
+}
+
+function tvoedAllowanceAmount(
+  date: string,
+  workMinutes: number,
+  profile: UserProfile,
+  rulePackage: RuleTariffPackage,
+): number {
+  return fixedAllowanceAmount("tvoed", date, workMinutes, profile, rulePackage);
 }
 
 export function calculateMonthlyPayEstimate(
@@ -507,12 +532,19 @@ export function calculateMonthlyPayEstimate(
   decision: MonthlyTariffDecision | null,
   assessmentShifts: readonly ShiftEntry[] = shifts,
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyPayEstimate {
   const monthShifts = shifts.filter(
     (shift) => shift.deletedAt === null && shift.date.startsWith(`${month}-`) && isWorkShift(shift),
   );
   const first = Temporal.PlainDate.from(`${month}-01`);
-  const assessmentStart = first.subtract({ months: 2 }).toString();
+  const dateKey = first.toString();
+  const rulePackage = getTariffRulePackage(dateKey, ruleResolver);
+  const assessmentStart = first
+    .subtract({
+      months: getTariffAssessmentLookbackMonths(dateKey, ruleResolver),
+    })
+    .toString();
   const assessmentEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
   const relevantAssessmentShifts =
     monthShifts.length === 0
@@ -524,11 +556,15 @@ export function calculateMonthlyPayEstimate(
             shift.date <= assessmentEnd &&
             isWorkShift(shift),
         );
-  const assessment = assessTvoedPattern(relevantAssessmentShifts, workPatternSettings);
-  const dateKey = `${month}-01`;
-  const version = getTariffVersion(dateKey);
+  const assessment = assessTvoedPattern(
+    relevantAssessmentShifts,
+    workPatternSettings,
+    ruleResolver,
+    dateKey,
+  );
+  const version = getTariffVersion(dateKey, ruleResolver);
   const tariff = profile.tariff;
-  if (version === null || tariff === null) {
+  if (version === null || tariff === null || rulePackage === null) {
     return {
       month,
       tariffLabel: version?.label ?? null,
@@ -547,9 +583,9 @@ export function calculateMonthlyPayEstimate(
     };
   }
   const shiftBreakdowns = monthShifts.map((shift) =>
-    calculateShiftPremiumBreakdown(shift, profile),
+    calculateShiftPremiumBreakdown(shift, profile, ruleResolver),
   );
-  const fullTimeTableAmount = getMonthlyTableAmount(tariff, dateKey)!;
+  const fullTimeTableAmount = getMonthlyTableAmount(tariff, dateKey, ruleResolver)!;
   const personalBaseAmount = roundMoney(
     fullTimeTableAmount * (profile.weeklyMinutes / tariff.fullTimeWeeklyMinutes),
   );
@@ -568,9 +604,25 @@ export function calculateMonthlyPayEstimate(
   const workMinutes = shiftBreakdowns.reduce((sum, item) => sum + item.netMinutes, 0);
   const confirmedAllowance = decision?.allowanceStatus ?? null;
   const effectiveAllowance = confirmedAllowance ?? assessment.suggestedAllowance;
-  const monthlyAllowanceAmount = allowanceAmount(effectiveAllowance, workMinutes, profile, dateKey);
-  const monthlyTvoedAllowanceAmount = tvoedAllowanceAmount(dateKey, profile);
-  const monthlyCareAllowanceAmount = careAllowanceAmount(dateKey, profile);
+  const monthlyAllowanceAmount = allowanceAmount(
+    effectiveAllowance,
+    workMinutes,
+    profile,
+    dateKey,
+    rulePackage,
+  );
+  const monthlyTvoedAllowanceAmount = tvoedAllowanceAmount(
+    dateKey,
+    workMinutes,
+    profile,
+    rulePackage,
+  );
+  const monthlyCareAllowanceAmount = careAllowanceAmount(
+    dateKey,
+    workMinutes,
+    profile,
+    rulePackage,
+  );
   return {
     month,
     tariffLabel: version.label,

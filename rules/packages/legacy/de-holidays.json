@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 1,
+  "packageId": "de-holidays-legacy",
+  "versionId": "code-fea614c",
+  "kind": "HOLIDAY",
+  "label": "Deutsche Feiertagslogik Legacy",
+  "status": "LEGACY_EMBEDDED",
+  "validFrom": "1900-01-01",
+  "validTo": "9999-12-31",
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "legacy-holidays-code",
+      "title": "Legacy-Codebestand der Feiertagsberechnung",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/holidays.ts",
+      "documentDate": "2026-08-28",
+      "section": "src/engine/holidays.ts vor WP2",
+      "sha256": "12ab662cc69c5fd1638b874f40b36cb22000f820ab6f858fd982e643706945c8"
+    }
+  ],
+  "review": {
+    "status": "LEGACY_EMBEDDED",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "gitCommit": null
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "AFTER_SUM"
+  },
+  "rules": {
+    "holidays": [
+      {
+        "id": "new-year",
+        "name": "Neujahr",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 1,
+          "day": 1
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "good-friday",
+        "name": "Karfreitag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": -2
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "easter-monday",
+        "name": "Ostermontag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 1
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "labour-day",
+        "name": "Tag der Arbeit",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 5,
+          "day": 1
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "ascension-day",
+        "name": "Christi Himmelfahrt",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 39
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "whit-monday",
+        "name": "Pfingstmontag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 50
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "german-unity-day",
+        "name": "Tag der Deutschen Einheit",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 10,
+          "day": 3
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "christmas-day",
+        "name": "1. Weihnachtstag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 12,
+          "day": 25
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "boxing-day",
+        "name": "2. Weihnachtstag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 12,
+          "day": 26
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "epiphany",
+        "name": "Heilige Drei Könige",
+        "scope": "STATEWIDE",
+        "federalStates": ["BW", "BY", "ST"],
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 1,
+          "day": 6
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "womens-day-be",
+        "name": "Internationaler Frauentag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BE"],
+        "validFrom": "2019-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 3,
+          "day": 8
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "womens-day-mv",
+        "name": "Internationaler Frauentag",
+        "scope": "STATEWIDE",
+        "federalStates": ["MV"],
+        "validFrom": "2023-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 3,
+          "day": 8
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "easter-sunday-bb",
+        "name": "Ostersonntag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BB"],
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 0
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "whit-sunday-bb",
+        "name": "Pfingstsonntag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BB"],
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 49
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "corpus-christi",
+        "name": "Fronleichnam",
+        "scope": "STATEWIDE",
+        "federalStates": ["BW", "BY", "HE", "NW", "RP", "SL"],
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 60
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "assumption-day-sl",
+        "name": "Mariä Himmelfahrt",
+        "scope": "STATEWIDE",
+        "federalStates": ["SL"],
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 8,
+          "day": 15
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "world-childrens-day-th",
+        "name": "Weltkindertag",
+        "scope": "STATEWIDE",
+        "federalStates": ["TH"],
+        "validFrom": "2019-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 9,
+          "day": 20
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "reformation-old-states-before-2017",
+        "name": "Reformationstag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BB", "MV", "SN", "ST", "TH"],
+        "validFrom": "1900-01-01",
+        "validTo": "2016-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 10,
+          "day": 31
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "reformation-nationwide-2017",
+        "name": "Reformationstag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2017-10-31",
+        "validTo": "2017-10-31",
+        "calculation": {
+          "type": "SPECIFIC_DATE",
+          "date": "2017-10-31"
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "reformation-old-states-after-2017",
+        "name": "Reformationstag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BB", "MV", "SN", "ST", "TH"],
+        "validFrom": "2018-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 10,
+          "day": 31
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "reformation-new-states",
+        "name": "Reformationstag",
+        "scope": "STATEWIDE",
+        "federalStates": ["HB", "HH", "NI", "SH"],
+        "validFrom": "2018-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 10,
+          "day": 31
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "all-saints-day",
+        "name": "Allerheiligen",
+        "scope": "STATEWIDE",
+        "federalStates": ["BW", "BY", "NW", "RP", "SL"],
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 11,
+          "day": 1
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "repentance-day-sn",
+        "name": "Buß- und Bettag",
+        "scope": "STATEWIDE",
+        "federalStates": ["SN"],
+        "validFrom": "1900-01-01",
+        "validTo": "9999-12-31",
+        "calculation": {
+          "type": "REPENTANCE_DAY"
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "liberation-day-be-2020",
+        "name": "Tag der Befreiung",
+        "scope": "STATEWIDE",
+        "federalStates": ["BE"],
+        "validFrom": "2020-05-08",
+        "validTo": "2020-05-08",
+        "calculation": {
+          "type": "SPECIFIC_DATE",
+          "date": "2020-05-08"
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "liberation-day-be-2025",
+        "name": "Tag der Befreiung",
+        "scope": "STATEWIDE",
+        "federalStates": ["BE"],
+        "validFrom": "2025-05-08",
+        "validTo": "2025-05-08",
+        "calculation": {
+          "type": "SPECIFIC_DATE",
+          "date": "2025-05-08"
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      },
+      {
+        "id": "uprising-anniversary-be-2028",
+        "name": "75. Jahrestag des Volksaufstands vom 17. Juni 1953",
+        "scope": "STATEWIDE",
+        "federalStates": ["BE"],
+        "validFrom": "2028-06-17",
+        "validTo": "2028-06-17",
+        "calculation": {
+          "type": "SPECIFIC_DATE",
+          "date": "2028-06-17"
+        },
+        "sourceIds": ["legacy-holidays-code"]
+      }
+    ]
+  }
+}

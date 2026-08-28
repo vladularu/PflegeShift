@@ -49,6 +49,10 @@ describe("annual report input selection", () => {
 
   it("invalidates entries inside allowance and compliance boundary windows", () => {
     const first = selectAnnualReportInputs(null, 2026, [], []);
+    expect(first).toMatchObject({
+      rangeStart: "2025-11-01",
+      rangeEnd: "2027-01-28",
+    });
     const withAllowanceLookback = selectAnnualReportInputs(
       first,
       2026,
