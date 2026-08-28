@@ -2,6 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 
 import type { CalendarEntry, ShiftEntry } from "@/domain/types";
 import {
+  getLegalCalculationEnd,
   getLegalCalculationWindow,
   getTariffAssessmentLookbackMonths,
 } from "@/rules/calculation-windows";
@@ -35,9 +36,7 @@ export function selectAnalysisEntryWindow(
     })
     .toString();
   const monthEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
-  const baseComplianceEnd = Temporal.PlainDate.from(monthEnd).add({
-    days: legalWindow.lookaheadDays,
-  });
+  const baseComplianceEnd = getLegalCalculationEnd(Temporal.PlainDate.from(monthEnd), legalWindow);
   const yearEnd = Temporal.PlainDate.from({ year: first.year, month: 12, day: 31 });
   const complianceEnd = (
     legalWindow.calendarYearCoverage && Temporal.PlainDate.compare(yearEnd, baseComplianceEnd) > 0

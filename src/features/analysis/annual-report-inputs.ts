@@ -2,6 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 
 import type { CalendarEntry, MonthlyTariffDecision } from "@/domain/types";
 import {
+  getLegalCalculationEnd,
   getLegalCalculationWindow,
   getTariffAssessmentLookbackMonths,
 } from "@/rules/calculation-windows";
@@ -35,10 +36,10 @@ export function selectAnnualReportInputs(
       months: getTariffAssessmentLookbackMonths(first.toString(), ruleResolver),
     });
     const complianceStart = first.subtract({ days: legalWindow.lookbackDays });
-    const baseComplianceEnd = first
-      .add({ months: 1 })
-      .subtract({ days: 1 })
-      .add({ days: legalWindow.lookaheadDays });
+    const baseComplianceEnd = getLegalCalculationEnd(
+      first.add({ months: 1 }).subtract({ days: 1 }),
+      legalWindow,
+    );
     const yearStart = Temporal.PlainDate.from({ year: first.year, month: 1, day: 1 });
     const yearEnd = Temporal.PlainDate.from({ year: first.year, month: 12, day: 31 });
     const legalComplianceStart =

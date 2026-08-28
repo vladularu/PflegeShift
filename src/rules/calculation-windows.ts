@@ -1,3 +1,5 @@
+import { Temporal } from "@js-temporal/polyfill";
+
 import { BUNDLED_TARIFF_RULES } from "@/rules/bundled-rules";
 import {
   bundledRuleResolver,
@@ -8,7 +10,17 @@ import {
 export interface LegalCalculationWindow {
   readonly lookbackDays: number;
   readonly lookaheadDays: number;
+  readonly lookaheadCalendarMonths: number;
   readonly calendarYearCoverage: boolean;
+}
+
+export function getLegalCalculationEnd(
+  monthEnd: Temporal.PlainDate,
+  window: LegalCalculationWindow,
+): Temporal.PlainDate {
+  const dayBasedEnd = monthEnd.add({ days: window.lookaheadDays });
+  const monthBasedEnd = monthEnd.add({ months: window.lookaheadCalendarMonths });
+  return Temporal.PlainDate.compare(dayBasedEnd, monthBasedEnd) >= 0 ? dayBasedEnd : monthBasedEnd;
 }
 
 export function getTariffAssessmentLookbackMonths(
@@ -38,7 +50,11 @@ export function getLegalCalculationWindow(
       rules.nightWork.averageWindowDays ?? 0,
       ...rules.restPeriod.deviations.map((deviation) => deviation.compensationWithinDays),
     ),
+    lookaheadCalendarMonths:
+      legalPackage.engineContractVersion >= 4
+        ? (rules.workingTime.standardAverage?.calendarMonths ?? 0)
+        : 0,
     calendarYearCoverage:
-      legalPackage.engineContractVersion === 3 && rules.nightWork.workerQualification !== undefined,
+      legalPackage.engineContractVersion >= 3 && rules.nightWork.workerQualification !== undefined,
   });
 }

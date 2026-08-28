@@ -80,7 +80,7 @@ const schema31 = {
         packageId: { $ref: "#/$defs/identifier" },
         versionId: { $ref: "#/$defs/versionIdentifier" },
         kind: { $ref: "#/$defs/kind" },
-        engineContractVersion: { enum: [1, 2, 3] },
+        engineContractVersion: { enum: [1, 2, 3, 4] },
         validFrom: { $ref: "#/$defs/isoDate" },
         validTo: { oneOf: [{ type: "null" }, { $ref: "#/$defs/isoDate" }] },
         path: {
@@ -521,7 +521,7 @@ const schema38 = {
     packageId: { $ref: "#/$defs/identifier" },
     versionId: { $ref: "#/$defs/versionIdentifier" },
     kind: { $ref: "#/$defs/kind" },
-    engineContractVersion: { enum: [1, 2, 3] },
+    engineContractVersion: { enum: [1, 2, 3, 4] },
     validFrom: { $ref: "#/$defs/isoDate" },
     validTo: { oneOf: [{ type: "null" }, { $ref: "#/$defs/isoDate" }] },
     path: {
@@ -858,7 +858,7 @@ function validate23(
     }
     if (data.engineContractVersion !== undefined) {
       let data3 = data.engineContractVersion;
-      if (!(data3 === 1 || data3 === 2 || data3 === 3)) {
+      if (!(data3 === 1 || data3 === 2 || data3 === 3 || data3 === 4)) {
         const err19 = {
           instancePath: instancePath + "/engineContractVersion",
           schemaPath: "#/properties/engineContractVersion/enum",
@@ -2124,7 +2124,7 @@ const schema46 = {
       ],
       properties: {
         schemaVersion: { const: 1 },
-        engineContractVersion: { enum: [1, 2, 3] },
+        engineContractVersion: { enum: [1, 2, 3, 4] },
         packageId: { $ref: "#/$defs/identifier" },
         versionId: { $ref: "#/$defs/versionIdentifier" },
         kind: { enum: ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -2520,6 +2520,17 @@ const schema46 = {
             nightAverageMinutes: { type: "integer", minimum: 1, maximum: 1440 },
             workWeekLastDay: { type: "integer", minimum: 1, maximum: 7 },
             absenceWorkdaysPerWeek: { type: "integer", minimum: 1, maximum: 7 },
+            standardAverage: {
+              type: "object",
+              additionalProperties: false,
+              required: ["calendarMonths", "weeks", "assessmentMode", "neutralAbsenceTypes"],
+              properties: {
+                calendarMonths: { type: "integer", minimum: 1, maximum: 24 },
+                weeks: { type: "integer", minimum: 1, maximum: 104 },
+                assessmentMode: { const: "FORWARD_FROM_EXTENDED_WORKDAY" },
+                neutralAbsenceTypes: { const: ["VACATION", "SICK"] },
+              },
+            },
             grossPlanningWarningMinutes: { type: "integer", minimum: 1, maximum: 2880 },
             sourceIds: { $ref: "#/$defs/sourceIds" },
           },
@@ -2605,7 +2616,7 @@ const schema46 = {
           type: "object",
           required: ["kind", "rules"],
           properties: {
-            engineContractVersion: { enum: [1, 3] },
+            engineContractVersion: { enum: [1, 3, 4] },
             kind: { const: "LEGAL" },
             rules: { $ref: "#/$defs/legalRules" },
           },
@@ -2737,7 +2748,7 @@ const schema48 = {
   ],
   properties: {
     schemaVersion: { const: 1 },
-    engineContractVersion: { enum: [1, 2, 3] },
+    engineContractVersion: { enum: [1, 2, 3, 4] },
     packageId: { $ref: "#/$defs/identifier" },
     versionId: { $ref: "#/$defs/versionIdentifier" },
     kind: { enum: ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -4627,7 +4638,7 @@ function validate29(
     }
     if (data.engineContractVersion !== undefined) {
       let data1 = data.engineContractVersion;
-      if (!(data1 === 1 || data1 === 2 || data1 === 3)) {
+      if (!(data1 === 1 || data1 === 2 || data1 === 3 || data1 === 4)) {
         const err16 = {
           instancePath: instancePath + "/engineContractVersion",
           schemaPath: "#/properties/engineContractVersion/enum",
@@ -11613,7 +11624,7 @@ const schema99 = {
       type: "object",
       required: ["kind", "rules"],
       properties: {
-        engineContractVersion: { enum: [1, 3] },
+        engineContractVersion: { enum: [1, 3, 4] },
         kind: { const: "LEGAL" },
         rules: { $ref: "#/$defs/legalRules" },
       },
@@ -11643,6 +11654,17 @@ const schema100 = {
         nightAverageMinutes: { type: "integer", minimum: 1, maximum: 1440 },
         workWeekLastDay: { type: "integer", minimum: 1, maximum: 7 },
         absenceWorkdaysPerWeek: { type: "integer", minimum: 1, maximum: 7 },
+        standardAverage: {
+          type: "object",
+          additionalProperties: false,
+          required: ["calendarMonths", "weeks", "assessmentMode", "neutralAbsenceTypes"],
+          properties: {
+            calendarMonths: { type: "integer", minimum: 1, maximum: 24 },
+            weeks: { type: "integer", minimum: 1, maximum: 104 },
+            assessmentMode: { const: "FORWARD_FROM_EXTENDED_WORKDAY" },
+            neutralAbsenceTypes: { const: ["VACATION", "SICK"] },
+          },
+        },
         grossPlanningWarningMinutes: { type: "integer", minimum: 1, maximum: 2880 },
         sourceIds: { $ref: "#/$defs/sourceIds" },
       },
@@ -12455,6 +12477,7 @@ function validate74(
             key1 === "nightAverageMinutes" ||
             key1 === "workWeekLastDay" ||
             key1 === "absenceWorkdaysPerWeek" ||
+            key1 === "standardAverage" ||
             key1 === "grossPlanningWarningMinutes" ||
             key1 === "sourceIds"
           )) {
@@ -12723,32 +12746,31 @@ function validate74(
             }
           }
         }
-        if (data0.grossPlanningWarningMinutes !== undefined) {
-          let data6 = data0.grossPlanningWarningMinutes;
-          if (!(typeof data6 == "number" && !(data6 % 1) && !isNaN(data6) && isFinite(data6))) {
-            const err29 = {
-              instancePath: instancePath + "/workingTime/grossPlanningWarningMinutes",
-              schemaPath: "#/properties/workingTime/properties/grossPlanningWarningMinutes/type",
-              keyword: "type",
-              params: { type: "integer" },
-              message: "must be integer",
-            };
-            if (vErrors === null) {
-              vErrors = [err29];
-            } else {
-              vErrors.push(err29);
+        if (data0.standardAverage !== undefined) {
+          let data6 = data0.standardAverage;
+          if (data6 && typeof data6 == "object" && !Array.isArray(data6)) {
+            if (data6.calendarMonths === undefined) {
+              const err29 = {
+                instancePath: instancePath + "/workingTime/standardAverage",
+                schemaPath: "#/properties/workingTime/properties/standardAverage/required",
+                keyword: "required",
+                params: { missingProperty: "calendarMonths" },
+                message: "must have required property '" + "calendarMonths" + "'",
+              };
+              if (vErrors === null) {
+                vErrors = [err29];
+              } else {
+                vErrors.push(err29);
+              }
+              errors++;
             }
-            errors++;
-          }
-          if (typeof data6 == "number" && isFinite(data6)) {
-            if (data6 > 2880 || isNaN(data6)) {
+            if (data6.weeks === undefined) {
               const err30 = {
-                instancePath: instancePath + "/workingTime/grossPlanningWarningMinutes",
-                schemaPath:
-                  "#/properties/workingTime/properties/grossPlanningWarningMinutes/maximum",
-                keyword: "maximum",
-                params: { comparison: "<=", limit: 2880 },
-                message: "must be <= 2880",
+                instancePath: instancePath + "/workingTime/standardAverage",
+                schemaPath: "#/properties/workingTime/properties/standardAverage/required",
+                keyword: "required",
+                params: { missingProperty: "weeks" },
+                message: "must have required property '" + "weeks" + "'",
               };
               if (vErrors === null) {
                 vErrors = [err30];
@@ -12757,8 +12779,263 @@ function validate74(
               }
               errors++;
             }
-            if (data6 < 1 || isNaN(data6)) {
+            if (data6.assessmentMode === undefined) {
               const err31 = {
+                instancePath: instancePath + "/workingTime/standardAverage",
+                schemaPath: "#/properties/workingTime/properties/standardAverage/required",
+                keyword: "required",
+                params: { missingProperty: "assessmentMode" },
+                message: "must have required property '" + "assessmentMode" + "'",
+              };
+              if (vErrors === null) {
+                vErrors = [err31];
+              } else {
+                vErrors.push(err31);
+              }
+              errors++;
+            }
+            if (data6.neutralAbsenceTypes === undefined) {
+              const err32 = {
+                instancePath: instancePath + "/workingTime/standardAverage",
+                schemaPath: "#/properties/workingTime/properties/standardAverage/required",
+                keyword: "required",
+                params: { missingProperty: "neutralAbsenceTypes" },
+                message: "must have required property '" + "neutralAbsenceTypes" + "'",
+              };
+              if (vErrors === null) {
+                vErrors = [err32];
+              } else {
+                vErrors.push(err32);
+              }
+              errors++;
+            }
+            for (const key2 in data6) {
+              if (!(
+                key2 === "calendarMonths" ||
+                key2 === "weeks" ||
+                key2 === "assessmentMode" ||
+                key2 === "neutralAbsenceTypes"
+              )) {
+                const err33 = {
+                  instancePath: instancePath + "/workingTime/standardAverage",
+                  schemaPath:
+                    "#/properties/workingTime/properties/standardAverage/additionalProperties",
+                  keyword: "additionalProperties",
+                  params: { additionalProperty: key2 },
+                  message: "must NOT have additional properties",
+                };
+                if (vErrors === null) {
+                  vErrors = [err33];
+                } else {
+                  vErrors.push(err33);
+                }
+                errors++;
+              }
+            }
+            if (data6.calendarMonths !== undefined) {
+              let data7 = data6.calendarMonths;
+              if (!(typeof data7 == "number" && !(data7 % 1) && !isNaN(data7) && isFinite(data7))) {
+                const err34 = {
+                  instancePath: instancePath + "/workingTime/standardAverage/calendarMonths",
+                  schemaPath:
+                    "#/properties/workingTime/properties/standardAverage/properties/calendarMonths/type",
+                  keyword: "type",
+                  params: { type: "integer" },
+                  message: "must be integer",
+                };
+                if (vErrors === null) {
+                  vErrors = [err34];
+                } else {
+                  vErrors.push(err34);
+                }
+                errors++;
+              }
+              if (typeof data7 == "number" && isFinite(data7)) {
+                if (data7 > 24 || isNaN(data7)) {
+                  const err35 = {
+                    instancePath: instancePath + "/workingTime/standardAverage/calendarMonths",
+                    schemaPath:
+                      "#/properties/workingTime/properties/standardAverage/properties/calendarMonths/maximum",
+                    keyword: "maximum",
+                    params: { comparison: "<=", limit: 24 },
+                    message: "must be <= 24",
+                  };
+                  if (vErrors === null) {
+                    vErrors = [err35];
+                  } else {
+                    vErrors.push(err35);
+                  }
+                  errors++;
+                }
+                if (data7 < 1 || isNaN(data7)) {
+                  const err36 = {
+                    instancePath: instancePath + "/workingTime/standardAverage/calendarMonths",
+                    schemaPath:
+                      "#/properties/workingTime/properties/standardAverage/properties/calendarMonths/minimum",
+                    keyword: "minimum",
+                    params: { comparison: ">=", limit: 1 },
+                    message: "must be >= 1",
+                  };
+                  if (vErrors === null) {
+                    vErrors = [err36];
+                  } else {
+                    vErrors.push(err36);
+                  }
+                  errors++;
+                }
+              }
+            }
+            if (data6.weeks !== undefined) {
+              let data8 = data6.weeks;
+              if (!(typeof data8 == "number" && !(data8 % 1) && !isNaN(data8) && isFinite(data8))) {
+                const err37 = {
+                  instancePath: instancePath + "/workingTime/standardAverage/weeks",
+                  schemaPath:
+                    "#/properties/workingTime/properties/standardAverage/properties/weeks/type",
+                  keyword: "type",
+                  params: { type: "integer" },
+                  message: "must be integer",
+                };
+                if (vErrors === null) {
+                  vErrors = [err37];
+                } else {
+                  vErrors.push(err37);
+                }
+                errors++;
+              }
+              if (typeof data8 == "number" && isFinite(data8)) {
+                if (data8 > 104 || isNaN(data8)) {
+                  const err38 = {
+                    instancePath: instancePath + "/workingTime/standardAverage/weeks",
+                    schemaPath:
+                      "#/properties/workingTime/properties/standardAverage/properties/weeks/maximum",
+                    keyword: "maximum",
+                    params: { comparison: "<=", limit: 104 },
+                    message: "must be <= 104",
+                  };
+                  if (vErrors === null) {
+                    vErrors = [err38];
+                  } else {
+                    vErrors.push(err38);
+                  }
+                  errors++;
+                }
+                if (data8 < 1 || isNaN(data8)) {
+                  const err39 = {
+                    instancePath: instancePath + "/workingTime/standardAverage/weeks",
+                    schemaPath:
+                      "#/properties/workingTime/properties/standardAverage/properties/weeks/minimum",
+                    keyword: "minimum",
+                    params: { comparison: ">=", limit: 1 },
+                    message: "must be >= 1",
+                  };
+                  if (vErrors === null) {
+                    vErrors = [err39];
+                  } else {
+                    vErrors.push(err39);
+                  }
+                  errors++;
+                }
+              }
+            }
+            if (data6.assessmentMode !== undefined) {
+              if ("FORWARD_FROM_EXTENDED_WORKDAY" !== data6.assessmentMode) {
+                const err40 = {
+                  instancePath: instancePath + "/workingTime/standardAverage/assessmentMode",
+                  schemaPath:
+                    "#/properties/workingTime/properties/standardAverage/properties/assessmentMode/const",
+                  keyword: "const",
+                  params: { allowedValue: "FORWARD_FROM_EXTENDED_WORKDAY" },
+                  message: "must be equal to constant",
+                };
+                if (vErrors === null) {
+                  vErrors = [err40];
+                } else {
+                  vErrors.push(err40);
+                }
+                errors++;
+              }
+            }
+            if (data6.neutralAbsenceTypes !== undefined) {
+              if (
+                !func0(
+                  data6.neutralAbsenceTypes,
+                  schema100.properties.workingTime.properties.standardAverage.properties
+                    .neutralAbsenceTypes.const,
+                )
+              ) {
+                const err41 = {
+                  instancePath: instancePath + "/workingTime/standardAverage/neutralAbsenceTypes",
+                  schemaPath:
+                    "#/properties/workingTime/properties/standardAverage/properties/neutralAbsenceTypes/const",
+                  keyword: "const",
+                  params: {
+                    allowedValue:
+                      schema100.properties.workingTime.properties.standardAverage.properties
+                        .neutralAbsenceTypes.const,
+                  },
+                  message: "must be equal to constant",
+                };
+                if (vErrors === null) {
+                  vErrors = [err41];
+                } else {
+                  vErrors.push(err41);
+                }
+                errors++;
+              }
+            }
+          } else {
+            const err42 = {
+              instancePath: instancePath + "/workingTime/standardAverage",
+              schemaPath: "#/properties/workingTime/properties/standardAverage/type",
+              keyword: "type",
+              params: { type: "object" },
+              message: "must be object",
+            };
+            if (vErrors === null) {
+              vErrors = [err42];
+            } else {
+              vErrors.push(err42);
+            }
+            errors++;
+          }
+        }
+        if (data0.grossPlanningWarningMinutes !== undefined) {
+          let data11 = data0.grossPlanningWarningMinutes;
+          if (!(typeof data11 == "number" && !(data11 % 1) && !isNaN(data11) && isFinite(data11))) {
+            const err43 = {
+              instancePath: instancePath + "/workingTime/grossPlanningWarningMinutes",
+              schemaPath: "#/properties/workingTime/properties/grossPlanningWarningMinutes/type",
+              keyword: "type",
+              params: { type: "integer" },
+              message: "must be integer",
+            };
+            if (vErrors === null) {
+              vErrors = [err43];
+            } else {
+              vErrors.push(err43);
+            }
+            errors++;
+          }
+          if (typeof data11 == "number" && isFinite(data11)) {
+            if (data11 > 2880 || isNaN(data11)) {
+              const err44 = {
+                instancePath: instancePath + "/workingTime/grossPlanningWarningMinutes",
+                schemaPath:
+                  "#/properties/workingTime/properties/grossPlanningWarningMinutes/maximum",
+                keyword: "maximum",
+                params: { comparison: "<=", limit: 2880 },
+                message: "must be <= 2880",
+              };
+              if (vErrors === null) {
+                vErrors = [err44];
+              } else {
+                vErrors.push(err44);
+              }
+              errors++;
+            }
+            if (data11 < 1 || isNaN(data11)) {
+              const err45 = {
                 instancePath: instancePath + "/workingTime/grossPlanningWarningMinutes",
                 schemaPath:
                   "#/properties/workingTime/properties/grossPlanningWarningMinutes/minimum",
@@ -12767,9 +13044,9 @@ function validate74(
                 message: "must be >= 1",
               };
               if (vErrors === null) {
-                vErrors = [err31];
+                vErrors = [err45];
               } else {
-                vErrors.push(err31);
+                vErrors.push(err45);
               }
               errors++;
             }
@@ -12790,7 +13067,7 @@ function validate74(
           }
         }
       } else {
-        const err32 = {
+        const err46 = {
           instancePath: instancePath + "/workingTime",
           schemaPath: "#/properties/workingTime/type",
           keyword: "type",
@@ -12798,18 +13075,18 @@ function validate74(
           message: "must be object",
         };
         if (vErrors === null) {
-          vErrors = [err32];
+          vErrors = [err46];
         } else {
-          vErrors.push(err32);
+          vErrors.push(err46);
         }
         errors++;
       }
     }
     if (data.breaks !== undefined) {
-      let data8 = data.breaks;
-      if (data8 && typeof data8 == "object" && !Array.isArray(data8)) {
-        if (data8.minimumSegmentMinutes === undefined) {
-          const err33 = {
+      let data13 = data.breaks;
+      if (data13 && typeof data13 == "object" && !Array.isArray(data13)) {
+        if (data13.minimumSegmentMinutes === undefined) {
+          const err47 = {
             instancePath: instancePath + "/breaks",
             schemaPath: "#/properties/breaks/required",
             keyword: "required",
@@ -12817,14 +13094,14 @@ function validate74(
             message: "must have required property '" + "minimumSegmentMinutes" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err33];
+            vErrors = [err47];
           } else {
-            vErrors.push(err33);
+            vErrors.push(err47);
           }
           errors++;
         }
-        if (data8.tiers === undefined) {
-          const err34 = {
+        if (data13.tiers === undefined) {
+          const err48 = {
             instancePath: instancePath + "/breaks",
             schemaPath: "#/properties/breaks/required",
             keyword: "required",
@@ -12832,14 +13109,14 @@ function validate74(
             message: "must have required property '" + "tiers" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err34];
+            vErrors = [err48];
           } else {
-            vErrors.push(err34);
+            vErrors.push(err48);
           }
           errors++;
         }
-        if (data8.sourceIds === undefined) {
-          const err35 = {
+        if (data13.sourceIds === undefined) {
+          const err49 = {
             instancePath: instancePath + "/breaks",
             schemaPath: "#/properties/breaks/required",
             keyword: "required",
@@ -12847,33 +13124,33 @@ function validate74(
             message: "must have required property '" + "sourceIds" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err35];
+            vErrors = [err49];
           } else {
-            vErrors.push(err35);
+            vErrors.push(err49);
           }
           errors++;
         }
-        for (const key2 in data8) {
-          if (!(key2 === "minimumSegmentMinutes" || key2 === "tiers" || key2 === "sourceIds")) {
-            const err36 = {
+        for (const key3 in data13) {
+          if (!(key3 === "minimumSegmentMinutes" || key3 === "tiers" || key3 === "sourceIds")) {
+            const err50 = {
               instancePath: instancePath + "/breaks",
               schemaPath: "#/properties/breaks/additionalProperties",
               keyword: "additionalProperties",
-              params: { additionalProperty: key2 },
+              params: { additionalProperty: key3 },
               message: "must NOT have additional properties",
             };
             if (vErrors === null) {
-              vErrors = [err36];
+              vErrors = [err50];
             } else {
-              vErrors.push(err36);
+              vErrors.push(err50);
             }
             errors++;
           }
         }
-        if (data8.minimumSegmentMinutes !== undefined) {
-          let data9 = data8.minimumSegmentMinutes;
-          if (!(typeof data9 == "number" && !(data9 % 1) && !isNaN(data9) && isFinite(data9))) {
-            const err37 = {
+        if (data13.minimumSegmentMinutes !== undefined) {
+          let data14 = data13.minimumSegmentMinutes;
+          if (!(typeof data14 == "number" && !(data14 % 1) && !isNaN(data14) && isFinite(data14))) {
+            const err51 = {
               instancePath: instancePath + "/breaks/minimumSegmentMinutes",
               schemaPath: "#/properties/breaks/properties/minimumSegmentMinutes/type",
               keyword: "type",
@@ -12881,15 +13158,15 @@ function validate74(
               message: "must be integer",
             };
             if (vErrors === null) {
-              vErrors = [err37];
+              vErrors = [err51];
             } else {
-              vErrors.push(err37);
+              vErrors.push(err51);
             }
             errors++;
           }
-          if (typeof data9 == "number" && isFinite(data9)) {
-            if (data9 > 1440 || isNaN(data9)) {
-              const err38 = {
+          if (typeof data14 == "number" && isFinite(data14)) {
+            if (data14 > 1440 || isNaN(data14)) {
+              const err52 = {
                 instancePath: instancePath + "/breaks/minimumSegmentMinutes",
                 schemaPath: "#/properties/breaks/properties/minimumSegmentMinutes/maximum",
                 keyword: "maximum",
@@ -12897,14 +13174,14 @@ function validate74(
                 message: "must be <= 1440",
               };
               if (vErrors === null) {
-                vErrors = [err38];
+                vErrors = [err52];
               } else {
-                vErrors.push(err38);
+                vErrors.push(err52);
               }
               errors++;
             }
-            if (data9 < 1 || isNaN(data9)) {
-              const err39 = {
+            if (data14 < 1 || isNaN(data14)) {
+              const err53 = {
                 instancePath: instancePath + "/breaks/minimumSegmentMinutes",
                 schemaPath: "#/properties/breaks/properties/minimumSegmentMinutes/minimum",
                 keyword: "minimum",
@@ -12912,19 +13189,19 @@ function validate74(
                 message: "must be >= 1",
               };
               if (vErrors === null) {
-                vErrors = [err39];
+                vErrors = [err53];
               } else {
-                vErrors.push(err39);
+                vErrors.push(err53);
               }
               errors++;
             }
           }
         }
-        if (data8.tiers !== undefined) {
-          let data10 = data8.tiers;
-          if (Array.isArray(data10)) {
-            if (data10.length < 1) {
-              const err40 = {
+        if (data13.tiers !== undefined) {
+          let data15 = data13.tiers;
+          if (Array.isArray(data15)) {
+            if (data15.length < 1) {
+              const err54 = {
                 instancePath: instancePath + "/breaks/tiers",
                 schemaPath: "#/properties/breaks/properties/tiers/minItems",
                 keyword: "minItems",
@@ -12932,18 +13209,18 @@ function validate74(
                 message: "must NOT have fewer than 1 items",
               };
               if (vErrors === null) {
-                vErrors = [err40];
+                vErrors = [err54];
               } else {
-                vErrors.push(err40);
+                vErrors.push(err54);
               }
               errors++;
             }
-            const len0 = data10.length;
+            const len0 = data15.length;
             for (let i0 = 0; i0 < len0; i0++) {
-              let data11 = data10[i0];
-              if (data11 && typeof data11 == "object" && !Array.isArray(data11)) {
-                if (data11.overMinutes === undefined) {
-                  const err41 = {
+              let data16 = data15[i0];
+              if (data16 && typeof data16 == "object" && !Array.isArray(data16)) {
+                if (data16.overMinutes === undefined) {
+                  const err55 = {
                     instancePath: instancePath + "/breaks/tiers/" + i0,
                     schemaPath: "#/$defs/breakTier/required",
                     keyword: "required",
@@ -12951,14 +13228,14 @@ function validate74(
                     message: "must have required property '" + "overMinutes" + "'",
                   };
                   if (vErrors === null) {
-                    vErrors = [err41];
+                    vErrors = [err55];
                   } else {
-                    vErrors.push(err41);
+                    vErrors.push(err55);
                   }
                   errors++;
                 }
-                if (data11.requiredMinutes === undefined) {
-                  const err42 = {
+                if (data16.requiredMinutes === undefined) {
+                  const err56 = {
                     instancePath: instancePath + "/breaks/tiers/" + i0,
                     schemaPath: "#/$defs/breakTier/required",
                     keyword: "required",
@@ -12966,38 +13243,38 @@ function validate74(
                     message: "must have required property '" + "requiredMinutes" + "'",
                   };
                   if (vErrors === null) {
-                    vErrors = [err42];
+                    vErrors = [err56];
                   } else {
-                    vErrors.push(err42);
+                    vErrors.push(err56);
                   }
                   errors++;
                 }
-                for (const key3 in data11) {
-                  if (!(key3 === "overMinutes" || key3 === "requiredMinutes")) {
-                    const err43 = {
+                for (const key4 in data16) {
+                  if (!(key4 === "overMinutes" || key4 === "requiredMinutes")) {
+                    const err57 = {
                       instancePath: instancePath + "/breaks/tiers/" + i0,
                       schemaPath: "#/$defs/breakTier/additionalProperties",
                       keyword: "additionalProperties",
-                      params: { additionalProperty: key3 },
+                      params: { additionalProperty: key4 },
                       message: "must NOT have additional properties",
                     };
                     if (vErrors === null) {
-                      vErrors = [err43];
+                      vErrors = [err57];
                     } else {
-                      vErrors.push(err43);
+                      vErrors.push(err57);
                     }
                     errors++;
                   }
                 }
-                if (data11.overMinutes !== undefined) {
-                  let data12 = data11.overMinutes;
+                if (data16.overMinutes !== undefined) {
+                  let data17 = data16.overMinutes;
                   if (!(
-                    typeof data12 == "number" &&
-                    !(data12 % 1) &&
-                    !isNaN(data12) &&
-                    isFinite(data12)
+                    typeof data17 == "number" &&
+                    !(data17 % 1) &&
+                    !isNaN(data17) &&
+                    isFinite(data17)
                   )) {
-                    const err44 = {
+                    const err58 = {
                       instancePath: instancePath + "/breaks/tiers/" + i0 + "/overMinutes",
                       schemaPath: "#/$defs/breakTier/properties/overMinutes/type",
                       keyword: "type",
@@ -13005,15 +13282,15 @@ function validate74(
                       message: "must be integer",
                     };
                     if (vErrors === null) {
-                      vErrors = [err44];
+                      vErrors = [err58];
                     } else {
-                      vErrors.push(err44);
+                      vErrors.push(err58);
                     }
                     errors++;
                   }
-                  if (typeof data12 == "number" && isFinite(data12)) {
-                    if (data12 < 0 || isNaN(data12)) {
-                      const err45 = {
+                  if (typeof data17 == "number" && isFinite(data17)) {
+                    if (data17 < 0 || isNaN(data17)) {
+                      const err59 = {
                         instancePath: instancePath + "/breaks/tiers/" + i0 + "/overMinutes",
                         schemaPath: "#/$defs/breakTier/properties/overMinutes/minimum",
                         keyword: "minimum",
@@ -13021,23 +13298,23 @@ function validate74(
                         message: "must be >= 0",
                       };
                       if (vErrors === null) {
-                        vErrors = [err45];
+                        vErrors = [err59];
                       } else {
-                        vErrors.push(err45);
+                        vErrors.push(err59);
                       }
                       errors++;
                     }
                   }
                 }
-                if (data11.requiredMinutes !== undefined) {
-                  let data13 = data11.requiredMinutes;
+                if (data16.requiredMinutes !== undefined) {
+                  let data18 = data16.requiredMinutes;
                   if (!(
-                    typeof data13 == "number" &&
-                    !(data13 % 1) &&
-                    !isNaN(data13) &&
-                    isFinite(data13)
+                    typeof data18 == "number" &&
+                    !(data18 % 1) &&
+                    !isNaN(data18) &&
+                    isFinite(data18)
                   )) {
-                    const err46 = {
+                    const err60 = {
                       instancePath: instancePath + "/breaks/tiers/" + i0 + "/requiredMinutes",
                       schemaPath: "#/$defs/breakTier/properties/requiredMinutes/type",
                       keyword: "type",
@@ -13045,15 +13322,15 @@ function validate74(
                       message: "must be integer",
                     };
                     if (vErrors === null) {
-                      vErrors = [err46];
+                      vErrors = [err60];
                     } else {
-                      vErrors.push(err46);
+                      vErrors.push(err60);
                     }
                     errors++;
                   }
-                  if (typeof data13 == "number" && isFinite(data13)) {
-                    if (data13 < 0 || isNaN(data13)) {
-                      const err47 = {
+                  if (typeof data18 == "number" && isFinite(data18)) {
+                    if (data18 < 0 || isNaN(data18)) {
+                      const err61 = {
                         instancePath: instancePath + "/breaks/tiers/" + i0 + "/requiredMinutes",
                         schemaPath: "#/$defs/breakTier/properties/requiredMinutes/minimum",
                         keyword: "minimum",
@@ -13061,16 +13338,16 @@ function validate74(
                         message: "must be >= 0",
                       };
                       if (vErrors === null) {
-                        vErrors = [err47];
+                        vErrors = [err61];
                       } else {
-                        vErrors.push(err47);
+                        vErrors.push(err61);
                       }
                       errors++;
                     }
                   }
                 }
               } else {
-                const err48 = {
+                const err62 = {
                   instancePath: instancePath + "/breaks/tiers/" + i0,
                   schemaPath: "#/$defs/breakTier/type",
                   keyword: "type",
@@ -13078,15 +13355,15 @@ function validate74(
                   message: "must be object",
                 };
                 if (vErrors === null) {
-                  vErrors = [err48];
+                  vErrors = [err62];
                 } else {
-                  vErrors.push(err48);
+                  vErrors.push(err62);
                 }
                 errors++;
               }
             }
           } else {
-            const err49 = {
+            const err63 = {
               instancePath: instancePath + "/breaks/tiers",
               schemaPath: "#/properties/breaks/properties/tiers/type",
               keyword: "type",
@@ -13094,18 +13371,18 @@ function validate74(
               message: "must be array",
             };
             if (vErrors === null) {
-              vErrors = [err49];
+              vErrors = [err63];
             } else {
-              vErrors.push(err49);
+              vErrors.push(err63);
             }
             errors++;
           }
         }
-        if (data8.sourceIds !== undefined) {
+        if (data13.sourceIds !== undefined) {
           if (
-            !validate43(data8.sourceIds, {
+            !validate43(data13.sourceIds, {
               instancePath: instancePath + "/breaks/sourceIds",
-              parentData: data8,
+              parentData: data13,
               parentDataProperty: "sourceIds",
               rootData,
               dynamicAnchors,
@@ -13116,7 +13393,7 @@ function validate74(
           }
         }
       } else {
-        const err50 = {
+        const err64 = {
           instancePath: instancePath + "/breaks",
           schemaPath: "#/properties/breaks/type",
           keyword: "type",
@@ -13124,18 +13401,18 @@ function validate74(
           message: "must be object",
         };
         if (vErrors === null) {
-          vErrors = [err50];
+          vErrors = [err64];
         } else {
-          vErrors.push(err50);
+          vErrors.push(err64);
         }
         errors++;
       }
     }
     if (data.nightWork !== undefined) {
-      let data15 = data.nightWork;
-      if (data15 && typeof data15 == "object" && !Array.isArray(data15)) {
-        if (data15.startMinute === undefined) {
-          const err51 = {
+      let data20 = data.nightWork;
+      if (data20 && typeof data20 == "object" && !Array.isArray(data20)) {
+        if (data20.startMinute === undefined) {
+          const err65 = {
             instancePath: instancePath + "/nightWork",
             schemaPath: "#/properties/nightWork/required",
             keyword: "required",
@@ -13143,14 +13420,14 @@ function validate74(
             message: "must have required property '" + "startMinute" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err51];
+            vErrors = [err65];
           } else {
-            vErrors.push(err51);
+            vErrors.push(err65);
           }
           errors++;
         }
-        if (data15.endMinute === undefined) {
-          const err52 = {
+        if (data20.endMinute === undefined) {
+          const err66 = {
             instancePath: instancePath + "/nightWork",
             schemaPath: "#/properties/nightWork/required",
             keyword: "required",
@@ -13158,14 +13435,14 @@ function validate74(
             message: "must have required property '" + "endMinute" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err52];
+            vErrors = [err66];
           } else {
-            vErrors.push(err52);
+            vErrors.push(err66);
           }
           errors++;
         }
-        if (data15.qualification === undefined) {
-          const err53 = {
+        if (data20.qualification === undefined) {
+          const err67 = {
             instancePath: instancePath + "/nightWork",
             schemaPath: "#/properties/nightWork/required",
             keyword: "required",
@@ -13173,14 +13450,14 @@ function validate74(
             message: "must have required property '" + "qualification" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err53];
+            vErrors = [err67];
           } else {
-            vErrors.push(err53);
+            vErrors.push(err67);
           }
           errors++;
         }
-        if (data15.averageWindowDays === undefined) {
-          const err54 = {
+        if (data20.averageWindowDays === undefined) {
+          const err68 = {
             instancePath: instancePath + "/nightWork",
             schemaPath: "#/properties/nightWork/required",
             keyword: "required",
@@ -13188,14 +13465,14 @@ function validate74(
             message: "must have required property '" + "averageWindowDays" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err54];
+            vErrors = [err68];
           } else {
-            vErrors.push(err54);
+            vErrors.push(err68);
           }
           errors++;
         }
-        if (data15.sourceIds === undefined) {
-          const err55 = {
+        if (data20.sourceIds === undefined) {
+          const err69 = {
             instancePath: instancePath + "/nightWork",
             schemaPath: "#/properties/nightWork/required",
             keyword: "required",
@@ -13203,40 +13480,40 @@ function validate74(
             message: "must have required property '" + "sourceIds" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err55];
+            vErrors = [err69];
           } else {
-            vErrors.push(err55);
+            vErrors.push(err69);
           }
           errors++;
         }
-        for (const key4 in data15) {
+        for (const key5 in data20) {
           if (!(
-            key4 === "startMinute" ||
-            key4 === "endMinute" ||
-            key4 === "qualification" ||
-            key4 === "workerQualification" ||
-            key4 === "averageWindowDays" ||
-            key4 === "sourceIds"
+            key5 === "startMinute" ||
+            key5 === "endMinute" ||
+            key5 === "qualification" ||
+            key5 === "workerQualification" ||
+            key5 === "averageWindowDays" ||
+            key5 === "sourceIds"
           )) {
-            const err56 = {
+            const err70 = {
               instancePath: instancePath + "/nightWork",
               schemaPath: "#/properties/nightWork/additionalProperties",
               keyword: "additionalProperties",
-              params: { additionalProperty: key4 },
+              params: { additionalProperty: key5 },
               message: "must NOT have additional properties",
             };
             if (vErrors === null) {
-              vErrors = [err56];
+              vErrors = [err70];
             } else {
-              vErrors.push(err56);
+              vErrors.push(err70);
             }
             errors++;
           }
         }
-        if (data15.startMinute !== undefined) {
-          let data16 = data15.startMinute;
-          if (!(typeof data16 == "number" && !(data16 % 1) && !isNaN(data16) && isFinite(data16))) {
-            const err57 = {
+        if (data20.startMinute !== undefined) {
+          let data21 = data20.startMinute;
+          if (!(typeof data21 == "number" && !(data21 % 1) && !isNaN(data21) && isFinite(data21))) {
+            const err71 = {
               instancePath: instancePath + "/nightWork/startMinute",
               schemaPath: "#/properties/nightWork/properties/startMinute/type",
               keyword: "type",
@@ -13244,15 +13521,15 @@ function validate74(
               message: "must be integer",
             };
             if (vErrors === null) {
-              vErrors = [err57];
+              vErrors = [err71];
             } else {
-              vErrors.push(err57);
+              vErrors.push(err71);
             }
             errors++;
           }
-          if (typeof data16 == "number" && isFinite(data16)) {
-            if (data16 > 1439 || isNaN(data16)) {
-              const err58 = {
+          if (typeof data21 == "number" && isFinite(data21)) {
+            if (data21 > 1439 || isNaN(data21)) {
+              const err72 = {
                 instancePath: instancePath + "/nightWork/startMinute",
                 schemaPath: "#/properties/nightWork/properties/startMinute/maximum",
                 keyword: "maximum",
@@ -13260,14 +13537,14 @@ function validate74(
                 message: "must be <= 1439",
               };
               if (vErrors === null) {
-                vErrors = [err58];
+                vErrors = [err72];
               } else {
-                vErrors.push(err58);
+                vErrors.push(err72);
               }
               errors++;
             }
-            if (data16 < 0 || isNaN(data16)) {
-              const err59 = {
+            if (data21 < 0 || isNaN(data21)) {
+              const err73 = {
                 instancePath: instancePath + "/nightWork/startMinute",
                 schemaPath: "#/properties/nightWork/properties/startMinute/minimum",
                 keyword: "minimum",
@@ -13275,18 +13552,18 @@ function validate74(
                 message: "must be >= 0",
               };
               if (vErrors === null) {
-                vErrors = [err59];
+                vErrors = [err73];
               } else {
-                vErrors.push(err59);
+                vErrors.push(err73);
               }
               errors++;
             }
           }
         }
-        if (data15.endMinute !== undefined) {
-          let data17 = data15.endMinute;
-          if (!(typeof data17 == "number" && !(data17 % 1) && !isNaN(data17) && isFinite(data17))) {
-            const err60 = {
+        if (data20.endMinute !== undefined) {
+          let data22 = data20.endMinute;
+          if (!(typeof data22 == "number" && !(data22 % 1) && !isNaN(data22) && isFinite(data22))) {
+            const err74 = {
               instancePath: instancePath + "/nightWork/endMinute",
               schemaPath: "#/properties/nightWork/properties/endMinute/type",
               keyword: "type",
@@ -13294,15 +13571,15 @@ function validate74(
               message: "must be integer",
             };
             if (vErrors === null) {
-              vErrors = [err60];
+              vErrors = [err74];
             } else {
-              vErrors.push(err60);
+              vErrors.push(err74);
             }
             errors++;
           }
-          if (typeof data17 == "number" && isFinite(data17)) {
-            if (data17 > 1439 || isNaN(data17)) {
-              const err61 = {
+          if (typeof data22 == "number" && isFinite(data22)) {
+            if (data22 > 1439 || isNaN(data22)) {
+              const err75 = {
                 instancePath: instancePath + "/nightWork/endMinute",
                 schemaPath: "#/properties/nightWork/properties/endMinute/maximum",
                 keyword: "maximum",
@@ -13310,14 +13587,14 @@ function validate74(
                 message: "must be <= 1439",
               };
               if (vErrors === null) {
-                vErrors = [err61];
+                vErrors = [err75];
               } else {
-                vErrors.push(err61);
+                vErrors.push(err75);
               }
               errors++;
             }
-            if (data17 < 0 || isNaN(data17)) {
-              const err62 = {
+            if (data22 < 0 || isNaN(data22)) {
+              const err76 = {
                 instancePath: instancePath + "/nightWork/endMinute",
                 schemaPath: "#/properties/nightWork/properties/endMinute/minimum",
                 keyword: "minimum",
@@ -13325,19 +13602,19 @@ function validate74(
                 message: "must be >= 0",
               };
               if (vErrors === null) {
-                vErrors = [err62];
+                vErrors = [err76];
               } else {
-                vErrors.push(err62);
+                vErrors.push(err76);
               }
               errors++;
             }
           }
         }
-        if (data15.qualification !== undefined) {
-          let data18 = data15.qualification;
-          if (data18 && typeof data18 == "object" && !Array.isArray(data18)) {
-            if (data18.comparator === undefined) {
-              const err63 = {
+        if (data20.qualification !== undefined) {
+          let data23 = data20.qualification;
+          if (data23 && typeof data23 == "object" && !Array.isArray(data23)) {
+            if (data23.comparator === undefined) {
+              const err77 = {
                 instancePath: instancePath + "/nightWork/qualification",
                 schemaPath: "#/properties/nightWork/properties/qualification/required",
                 keyword: "required",
@@ -13345,14 +13622,14 @@ function validate74(
                 message: "must have required property '" + "comparator" + "'",
               };
               if (vErrors === null) {
-                vErrors = [err63];
+                vErrors = [err77];
               } else {
-                vErrors.push(err63);
+                vErrors.push(err77);
               }
               errors++;
             }
-            if (data18.thresholdMinutes === undefined) {
-              const err64 = {
+            if (data23.thresholdMinutes === undefined) {
+              const err78 = {
                 instancePath: instancePath + "/nightWork/qualification",
                 schemaPath: "#/properties/nightWork/properties/qualification/required",
                 keyword: "required",
@@ -13360,34 +13637,34 @@ function validate74(
                 message: "must have required property '" + "thresholdMinutes" + "'",
               };
               if (vErrors === null) {
-                vErrors = [err64];
+                vErrors = [err78];
               } else {
-                vErrors.push(err64);
+                vErrors.push(err78);
               }
               errors++;
             }
-            for (const key5 in data18) {
-              if (!(key5 === "comparator" || key5 === "thresholdMinutes")) {
-                const err65 = {
+            for (const key6 in data23) {
+              if (!(key6 === "comparator" || key6 === "thresholdMinutes")) {
+                const err79 = {
                   instancePath: instancePath + "/nightWork/qualification",
                   schemaPath:
                     "#/properties/nightWork/properties/qualification/additionalProperties",
                   keyword: "additionalProperties",
-                  params: { additionalProperty: key5 },
+                  params: { additionalProperty: key6 },
                   message: "must NOT have additional properties",
                 };
                 if (vErrors === null) {
-                  vErrors = [err65];
+                  vErrors = [err79];
                 } else {
-                  vErrors.push(err65);
+                  vErrors.push(err79);
                 }
                 errors++;
               }
             }
-            if (data18.comparator !== undefined) {
-              let data19 = data18.comparator;
-              if (!(data19 === "GT" || data19 === "GTE" || data19 === "EQ")) {
-                const err66 = {
+            if (data23.comparator !== undefined) {
+              let data24 = data23.comparator;
+              if (!(data24 === "GT" || data24 === "GTE" || data24 === "EQ")) {
+                const err80 = {
                   instancePath: instancePath + "/nightWork/qualification/comparator",
                   schemaPath:
                     "#/properties/nightWork/properties/qualification/properties/comparator/enum",
@@ -13400,22 +13677,22 @@ function validate74(
                   message: "must be equal to one of the allowed values",
                 };
                 if (vErrors === null) {
-                  vErrors = [err66];
+                  vErrors = [err80];
                 } else {
-                  vErrors.push(err66);
+                  vErrors.push(err80);
                 }
                 errors++;
               }
             }
-            if (data18.thresholdMinutes !== undefined) {
-              let data20 = data18.thresholdMinutes;
+            if (data23.thresholdMinutes !== undefined) {
+              let data25 = data23.thresholdMinutes;
               if (!(
-                typeof data20 == "number" &&
-                !(data20 % 1) &&
-                !isNaN(data20) &&
-                isFinite(data20)
+                typeof data25 == "number" &&
+                !(data25 % 1) &&
+                !isNaN(data25) &&
+                isFinite(data25)
               )) {
-                const err67 = {
+                const err81 = {
                   instancePath: instancePath + "/nightWork/qualification/thresholdMinutes",
                   schemaPath:
                     "#/properties/nightWork/properties/qualification/properties/thresholdMinutes/type",
@@ -13424,15 +13701,15 @@ function validate74(
                   message: "must be integer",
                 };
                 if (vErrors === null) {
-                  vErrors = [err67];
+                  vErrors = [err81];
                 } else {
-                  vErrors.push(err67);
+                  vErrors.push(err81);
                 }
                 errors++;
               }
-              if (typeof data20 == "number" && isFinite(data20)) {
-                if (data20 > 1440 || isNaN(data20)) {
-                  const err68 = {
+              if (typeof data25 == "number" && isFinite(data25)) {
+                if (data25 > 1440 || isNaN(data25)) {
+                  const err82 = {
                     instancePath: instancePath + "/nightWork/qualification/thresholdMinutes",
                     schemaPath:
                       "#/properties/nightWork/properties/qualification/properties/thresholdMinutes/maximum",
@@ -13441,14 +13718,14 @@ function validate74(
                     message: "must be <= 1440",
                   };
                   if (vErrors === null) {
-                    vErrors = [err68];
+                    vErrors = [err82];
                   } else {
-                    vErrors.push(err68);
+                    vErrors.push(err82);
                   }
                   errors++;
                 }
-                if (data20 < 1 || isNaN(data20)) {
-                  const err69 = {
+                if (data25 < 1 || isNaN(data25)) {
+                  const err83 = {
                     instancePath: instancePath + "/nightWork/qualification/thresholdMinutes",
                     schemaPath:
                       "#/properties/nightWork/properties/qualification/properties/thresholdMinutes/minimum",
@@ -13457,16 +13734,16 @@ function validate74(
                     message: "must be >= 1",
                   };
                   if (vErrors === null) {
-                    vErrors = [err69];
+                    vErrors = [err83];
                   } else {
-                    vErrors.push(err69);
+                    vErrors.push(err83);
                   }
                   errors++;
                 }
               }
             }
           } else {
-            const err70 = {
+            const err84 = {
               instancePath: instancePath + "/nightWork/qualification",
               schemaPath: "#/properties/nightWork/properties/qualification/type",
               keyword: "type",
@@ -13474,18 +13751,18 @@ function validate74(
               message: "must be object",
             };
             if (vErrors === null) {
-              vErrors = [err70];
+              vErrors = [err84];
             } else {
-              vErrors.push(err70);
+              vErrors.push(err84);
             }
             errors++;
           }
         }
-        if (data15.workerQualification !== undefined) {
-          let data21 = data15.workerQualification;
-          if (data21 && typeof data21 == "object" && !Array.isArray(data21)) {
-            if (data21.regularRotatingNightWorkRequiresConfirmation === undefined) {
-              const err71 = {
+        if (data20.workerQualification !== undefined) {
+          let data26 = data20.workerQualification;
+          if (data26 && typeof data26 == "object" && !Array.isArray(data26)) {
+            if (data26.regularRotatingNightWorkRequiresConfirmation === undefined) {
+              const err85 = {
                 instancePath: instancePath + "/nightWork/workerQualification",
                 schemaPath: "#/properties/nightWork/properties/workerQualification/required",
                 keyword: "required",
@@ -13496,14 +13773,14 @@ function validate74(
                   "'",
               };
               if (vErrors === null) {
-                vErrors = [err71];
+                vErrors = [err85];
               } else {
-                vErrors.push(err71);
+                vErrors.push(err85);
               }
               errors++;
             }
-            if (data21.annualNightWorkDaysThreshold === undefined) {
-              const err72 = {
+            if (data26.annualNightWorkDaysThreshold === undefined) {
+              const err86 = {
                 instancePath: instancePath + "/nightWork/workerQualification",
                 schemaPath: "#/properties/nightWork/properties/workerQualification/required",
                 keyword: "required",
@@ -13511,36 +13788,36 @@ function validate74(
                 message: "must have required property '" + "annualNightWorkDaysThreshold" + "'",
               };
               if (vErrors === null) {
-                vErrors = [err72];
+                vErrors = [err86];
               } else {
-                vErrors.push(err72);
+                vErrors.push(err86);
               }
               errors++;
             }
-            for (const key6 in data21) {
+            for (const key7 in data26) {
               if (!(
-                key6 === "regularRotatingNightWorkRequiresConfirmation" ||
-                key6 === "annualNightWorkDaysThreshold"
+                key7 === "regularRotatingNightWorkRequiresConfirmation" ||
+                key7 === "annualNightWorkDaysThreshold"
               )) {
-                const err73 = {
+                const err87 = {
                   instancePath: instancePath + "/nightWork/workerQualification",
                   schemaPath:
                     "#/properties/nightWork/properties/workerQualification/additionalProperties",
                   keyword: "additionalProperties",
-                  params: { additionalProperty: key6 },
+                  params: { additionalProperty: key7 },
                   message: "must NOT have additional properties",
                 };
                 if (vErrors === null) {
-                  vErrors = [err73];
+                  vErrors = [err87];
                 } else {
-                  vErrors.push(err73);
+                  vErrors.push(err87);
                 }
                 errors++;
               }
             }
-            if (data21.regularRotatingNightWorkRequiresConfirmation !== undefined) {
-              if (true !== data21.regularRotatingNightWorkRequiresConfirmation) {
-                const err74 = {
+            if (data26.regularRotatingNightWorkRequiresConfirmation !== undefined) {
+              if (true !== data26.regularRotatingNightWorkRequiresConfirmation) {
+                const err88 = {
                   instancePath:
                     instancePath +
                     "/nightWork/workerQualification/regularRotatingNightWorkRequiresConfirmation",
@@ -13551,22 +13828,22 @@ function validate74(
                   message: "must be equal to constant",
                 };
                 if (vErrors === null) {
-                  vErrors = [err74];
+                  vErrors = [err88];
                 } else {
-                  vErrors.push(err74);
+                  vErrors.push(err88);
                 }
                 errors++;
               }
             }
-            if (data21.annualNightWorkDaysThreshold !== undefined) {
-              let data23 = data21.annualNightWorkDaysThreshold;
+            if (data26.annualNightWorkDaysThreshold !== undefined) {
+              let data28 = data26.annualNightWorkDaysThreshold;
               if (!(
-                typeof data23 == "number" &&
-                !(data23 % 1) &&
-                !isNaN(data23) &&
-                isFinite(data23)
+                typeof data28 == "number" &&
+                !(data28 % 1) &&
+                !isNaN(data28) &&
+                isFinite(data28)
               )) {
-                const err75 = {
+                const err89 = {
                   instancePath:
                     instancePath + "/nightWork/workerQualification/annualNightWorkDaysThreshold",
                   schemaPath:
@@ -13576,15 +13853,15 @@ function validate74(
                   message: "must be integer",
                 };
                 if (vErrors === null) {
-                  vErrors = [err75];
+                  vErrors = [err89];
                 } else {
-                  vErrors.push(err75);
+                  vErrors.push(err89);
                 }
                 errors++;
               }
-              if (typeof data23 == "number" && isFinite(data23)) {
-                if (data23 > 366 || isNaN(data23)) {
-                  const err76 = {
+              if (typeof data28 == "number" && isFinite(data28)) {
+                if (data28 > 366 || isNaN(data28)) {
+                  const err90 = {
                     instancePath:
                       instancePath + "/nightWork/workerQualification/annualNightWorkDaysThreshold",
                     schemaPath:
@@ -13594,14 +13871,14 @@ function validate74(
                     message: "must be <= 366",
                   };
                   if (vErrors === null) {
-                    vErrors = [err76];
+                    vErrors = [err90];
                   } else {
-                    vErrors.push(err76);
+                    vErrors.push(err90);
                   }
                   errors++;
                 }
-                if (data23 < 1 || isNaN(data23)) {
-                  const err77 = {
+                if (data28 < 1 || isNaN(data28)) {
+                  const err91 = {
                     instancePath:
                       instancePath + "/nightWork/workerQualification/annualNightWorkDaysThreshold",
                     schemaPath:
@@ -13611,309 +13888,21 @@ function validate74(
                     message: "must be >= 1",
                   };
                   if (vErrors === null) {
-                    vErrors = [err77];
+                    vErrors = [err91];
                   } else {
-                    vErrors.push(err77);
+                    vErrors.push(err91);
                   }
                   errors++;
                 }
               }
             }
           } else {
-            const err78 = {
+            const err92 = {
               instancePath: instancePath + "/nightWork/workerQualification",
               schemaPath: "#/properties/nightWork/properties/workerQualification/type",
               keyword: "type",
               params: { type: "object" },
               message: "must be object",
-            };
-            if (vErrors === null) {
-              vErrors = [err78];
-            } else {
-              vErrors.push(err78);
-            }
-            errors++;
-          }
-        }
-        if (data15.averageWindowDays !== undefined) {
-          let data24 = data15.averageWindowDays;
-          const _errs54 = errors;
-          let valid10 = false;
-          let passing0 = null;
-          const _errs55 = errors;
-          if (data24 !== null) {
-            const err79 = {
-              instancePath: instancePath + "/nightWork/averageWindowDays",
-              schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf/0/type",
-              keyword: "type",
-              params: { type: "null" },
-              message: "must be null",
-            };
-            if (vErrors === null) {
-              vErrors = [err79];
-            } else {
-              vErrors.push(err79);
-            }
-            errors++;
-          }
-          var _valid0 = _errs55 === errors;
-          if (_valid0) {
-            valid10 = true;
-            passing0 = 0;
-          }
-          const _errs57 = errors;
-          if (!(typeof data24 == "number" && !(data24 % 1) && !isNaN(data24) && isFinite(data24))) {
-            const err80 = {
-              instancePath: instancePath + "/nightWork/averageWindowDays",
-              schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf/1/type",
-              keyword: "type",
-              params: { type: "integer" },
-              message: "must be integer",
-            };
-            if (vErrors === null) {
-              vErrors = [err80];
-            } else {
-              vErrors.push(err80);
-            }
-            errors++;
-          }
-          if (typeof data24 == "number" && isFinite(data24)) {
-            if (data24 > 366 || isNaN(data24)) {
-              const err81 = {
-                instancePath: instancePath + "/nightWork/averageWindowDays",
-                schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf/1/maximum",
-                keyword: "maximum",
-                params: { comparison: "<=", limit: 366 },
-                message: "must be <= 366",
-              };
-              if (vErrors === null) {
-                vErrors = [err81];
-              } else {
-                vErrors.push(err81);
-              }
-              errors++;
-            }
-            if (data24 < 1 || isNaN(data24)) {
-              const err82 = {
-                instancePath: instancePath + "/nightWork/averageWindowDays",
-                schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf/1/minimum",
-                keyword: "minimum",
-                params: { comparison: ">=", limit: 1 },
-                message: "must be >= 1",
-              };
-              if (vErrors === null) {
-                vErrors = [err82];
-              } else {
-                vErrors.push(err82);
-              }
-              errors++;
-            }
-          }
-          var _valid0 = _errs57 === errors;
-          if (_valid0 && valid10) {
-            valid10 = false;
-            passing0 = [passing0, 1];
-          } else {
-            if (_valid0) {
-              valid10 = true;
-              passing0 = 1;
-            }
-          }
-          if (!valid10) {
-            const err83 = {
-              instancePath: instancePath + "/nightWork/averageWindowDays",
-              schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf",
-              keyword: "oneOf",
-              params: { passingSchemas: passing0 },
-              message: "must match exactly one schema in oneOf",
-            };
-            if (vErrors === null) {
-              vErrors = [err83];
-            } else {
-              vErrors.push(err83);
-            }
-            errors++;
-          } else {
-            errors = _errs54;
-            if (vErrors !== null) {
-              if (_errs54) {
-                vErrors.length = _errs54;
-              } else {
-                vErrors = null;
-              }
-            }
-          }
-        }
-        if (data15.sourceIds !== undefined) {
-          if (
-            !validate43(data15.sourceIds, {
-              instancePath: instancePath + "/nightWork/sourceIds",
-              parentData: data15,
-              parentDataProperty: "sourceIds",
-              rootData,
-              dynamicAnchors,
-            })
-          ) {
-            vErrors = vErrors === null ? validate43.errors : vErrors.concat(validate43.errors);
-            errors = vErrors.length;
-          }
-        }
-      } else {
-        const err84 = {
-          instancePath: instancePath + "/nightWork",
-          schemaPath: "#/properties/nightWork/type",
-          keyword: "type",
-          params: { type: "object" },
-          message: "must be object",
-        };
-        if (vErrors === null) {
-          vErrors = [err84];
-        } else {
-          vErrors.push(err84);
-        }
-        errors++;
-      }
-    }
-    if (data.restPeriod !== undefined) {
-      let data26 = data.restPeriod;
-      if (data26 && typeof data26 == "object" && !Array.isArray(data26)) {
-        if (data26.defaultMinutes === undefined) {
-          const err85 = {
-            instancePath: instancePath + "/restPeriod",
-            schemaPath: "#/properties/restPeriod/required",
-            keyword: "required",
-            params: { missingProperty: "defaultMinutes" },
-            message: "must have required property '" + "defaultMinutes" + "'",
-          };
-          if (vErrors === null) {
-            vErrors = [err85];
-          } else {
-            vErrors.push(err85);
-          }
-          errors++;
-        }
-        if (data26.deviations === undefined) {
-          const err86 = {
-            instancePath: instancePath + "/restPeriod",
-            schemaPath: "#/properties/restPeriod/required",
-            keyword: "required",
-            params: { missingProperty: "deviations" },
-            message: "must have required property '" + "deviations" + "'",
-          };
-          if (vErrors === null) {
-            vErrors = [err86];
-          } else {
-            vErrors.push(err86);
-          }
-          errors++;
-        }
-        if (data26.sourceIds === undefined) {
-          const err87 = {
-            instancePath: instancePath + "/restPeriod",
-            schemaPath: "#/properties/restPeriod/required",
-            keyword: "required",
-            params: { missingProperty: "sourceIds" },
-            message: "must have required property '" + "sourceIds" + "'",
-          };
-          if (vErrors === null) {
-            vErrors = [err87];
-          } else {
-            vErrors.push(err87);
-          }
-          errors++;
-        }
-        for (const key7 in data26) {
-          if (!(key7 === "defaultMinutes" || key7 === "deviations" || key7 === "sourceIds")) {
-            const err88 = {
-              instancePath: instancePath + "/restPeriod",
-              schemaPath: "#/properties/restPeriod/additionalProperties",
-              keyword: "additionalProperties",
-              params: { additionalProperty: key7 },
-              message: "must NOT have additional properties",
-            };
-            if (vErrors === null) {
-              vErrors = [err88];
-            } else {
-              vErrors.push(err88);
-            }
-            errors++;
-          }
-        }
-        if (data26.defaultMinutes !== undefined) {
-          let data27 = data26.defaultMinutes;
-          if (!(typeof data27 == "number" && !(data27 % 1) && !isNaN(data27) && isFinite(data27))) {
-            const err89 = {
-              instancePath: instancePath + "/restPeriod/defaultMinutes",
-              schemaPath: "#/properties/restPeriod/properties/defaultMinutes/type",
-              keyword: "type",
-              params: { type: "integer" },
-              message: "must be integer",
-            };
-            if (vErrors === null) {
-              vErrors = [err89];
-            } else {
-              vErrors.push(err89);
-            }
-            errors++;
-          }
-          if (typeof data27 == "number" && isFinite(data27)) {
-            if (data27 > 1440 || isNaN(data27)) {
-              const err90 = {
-                instancePath: instancePath + "/restPeriod/defaultMinutes",
-                schemaPath: "#/properties/restPeriod/properties/defaultMinutes/maximum",
-                keyword: "maximum",
-                params: { comparison: "<=", limit: 1440 },
-                message: "must be <= 1440",
-              };
-              if (vErrors === null) {
-                vErrors = [err90];
-              } else {
-                vErrors.push(err90);
-              }
-              errors++;
-            }
-            if (data27 < 1 || isNaN(data27)) {
-              const err91 = {
-                instancePath: instancePath + "/restPeriod/defaultMinutes",
-                schemaPath: "#/properties/restPeriod/properties/defaultMinutes/minimum",
-                keyword: "minimum",
-                params: { comparison: ">=", limit: 1 },
-                message: "must be >= 1",
-              };
-              if (vErrors === null) {
-                vErrors = [err91];
-              } else {
-                vErrors.push(err91);
-              }
-              errors++;
-            }
-          }
-        }
-        if (data26.deviations !== undefined) {
-          let data28 = data26.deviations;
-          if (Array.isArray(data28)) {
-            const len1 = data28.length;
-            for (let i1 = 0; i1 < len1; i1++) {
-              if (
-                !validate78(data28[i1], {
-                  instancePath: instancePath + "/restPeriod/deviations/" + i1,
-                  parentData: data28,
-                  parentDataProperty: i1,
-                  rootData,
-                  dynamicAnchors,
-                })
-              ) {
-                vErrors = vErrors === null ? validate78.errors : vErrors.concat(validate78.errors);
-                errors = vErrors.length;
-              }
-            }
-          } else {
-            const err92 = {
-              instancePath: instancePath + "/restPeriod/deviations",
-              schemaPath: "#/properties/restPeriod/properties/deviations/type",
-              keyword: "type",
-              params: { type: "array" },
-              message: "must be array",
             };
             if (vErrors === null) {
               vErrors = [err92];
@@ -13923,11 +13912,120 @@ function validate74(
             errors++;
           }
         }
-        if (data26.sourceIds !== undefined) {
+        if (data20.averageWindowDays !== undefined) {
+          let data29 = data20.averageWindowDays;
+          const _errs63 = errors;
+          let valid11 = false;
+          let passing0 = null;
+          const _errs64 = errors;
+          if (data29 !== null) {
+            const err93 = {
+              instancePath: instancePath + "/nightWork/averageWindowDays",
+              schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf/0/type",
+              keyword: "type",
+              params: { type: "null" },
+              message: "must be null",
+            };
+            if (vErrors === null) {
+              vErrors = [err93];
+            } else {
+              vErrors.push(err93);
+            }
+            errors++;
+          }
+          var _valid0 = _errs64 === errors;
+          if (_valid0) {
+            valid11 = true;
+            passing0 = 0;
+          }
+          const _errs66 = errors;
+          if (!(typeof data29 == "number" && !(data29 % 1) && !isNaN(data29) && isFinite(data29))) {
+            const err94 = {
+              instancePath: instancePath + "/nightWork/averageWindowDays",
+              schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf/1/type",
+              keyword: "type",
+              params: { type: "integer" },
+              message: "must be integer",
+            };
+            if (vErrors === null) {
+              vErrors = [err94];
+            } else {
+              vErrors.push(err94);
+            }
+            errors++;
+          }
+          if (typeof data29 == "number" && isFinite(data29)) {
+            if (data29 > 366 || isNaN(data29)) {
+              const err95 = {
+                instancePath: instancePath + "/nightWork/averageWindowDays",
+                schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf/1/maximum",
+                keyword: "maximum",
+                params: { comparison: "<=", limit: 366 },
+                message: "must be <= 366",
+              };
+              if (vErrors === null) {
+                vErrors = [err95];
+              } else {
+                vErrors.push(err95);
+              }
+              errors++;
+            }
+            if (data29 < 1 || isNaN(data29)) {
+              const err96 = {
+                instancePath: instancePath + "/nightWork/averageWindowDays",
+                schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf/1/minimum",
+                keyword: "minimum",
+                params: { comparison: ">=", limit: 1 },
+                message: "must be >= 1",
+              };
+              if (vErrors === null) {
+                vErrors = [err96];
+              } else {
+                vErrors.push(err96);
+              }
+              errors++;
+            }
+          }
+          var _valid0 = _errs66 === errors;
+          if (_valid0 && valid11) {
+            valid11 = false;
+            passing0 = [passing0, 1];
+          } else {
+            if (_valid0) {
+              valid11 = true;
+              passing0 = 1;
+            }
+          }
+          if (!valid11) {
+            const err97 = {
+              instancePath: instancePath + "/nightWork/averageWindowDays",
+              schemaPath: "#/properties/nightWork/properties/averageWindowDays/oneOf",
+              keyword: "oneOf",
+              params: { passingSchemas: passing0 },
+              message: "must match exactly one schema in oneOf",
+            };
+            if (vErrors === null) {
+              vErrors = [err97];
+            } else {
+              vErrors.push(err97);
+            }
+            errors++;
+          } else {
+            errors = _errs63;
+            if (vErrors !== null) {
+              if (_errs63) {
+                vErrors.length = _errs63;
+              } else {
+                vErrors = null;
+              }
+            }
+          }
+        }
+        if (data20.sourceIds !== undefined) {
           if (
-            !validate43(data26.sourceIds, {
-              instancePath: instancePath + "/restPeriod/sourceIds",
-              parentData: data26,
+            !validate43(data20.sourceIds, {
+              instancePath: instancePath + "/nightWork/sourceIds",
+              parentData: data20,
               parentDataProperty: "sourceIds",
               rootData,
               dynamicAnchors,
@@ -13938,166 +14036,77 @@ function validate74(
           }
         }
       } else {
-        const err93 = {
-          instancePath: instancePath + "/restPeriod",
-          schemaPath: "#/properties/restPeriod/type",
+        const err98 = {
+          instancePath: instancePath + "/nightWork",
+          schemaPath: "#/properties/nightWork/type",
           keyword: "type",
           params: { type: "object" },
           message: "must be object",
         };
         if (vErrors === null) {
-          vErrors = [err93];
+          vErrors = [err98];
         } else {
-          vErrors.push(err93);
+          vErrors.push(err98);
         }
         errors++;
       }
     }
-    if (data.planning !== undefined) {
-      let data31 = data.planning;
+    if (data.restPeriod !== undefined) {
+      let data31 = data.restPeriod;
       if (data31 && typeof data31 == "object" && !Array.isArray(data31)) {
-        if (data31.consecutiveWorkDaysWarning === undefined) {
-          const err94 = {
-            instancePath: instancePath + "/planning",
-            schemaPath: "#/properties/planning/required",
+        if (data31.defaultMinutes === undefined) {
+          const err99 = {
+            instancePath: instancePath + "/restPeriod",
+            schemaPath: "#/properties/restPeriod/required",
             keyword: "required",
-            params: { missingProperty: "consecutiveWorkDaysWarning" },
-            message: "must have required property '" + "consecutiveWorkDaysWarning" + "'",
+            params: { missingProperty: "defaultMinutes" },
+            message: "must have required property '" + "defaultMinutes" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err94];
+            vErrors = [err99];
           } else {
-            vErrors.push(err94);
+            vErrors.push(err99);
           }
           errors++;
         }
-        if (data31.consecutiveNightShiftsWarning === undefined) {
-          const err95 = {
-            instancePath: instancePath + "/planning",
-            schemaPath: "#/properties/planning/required",
+        if (data31.deviations === undefined) {
+          const err100 = {
+            instancePath: instancePath + "/restPeriod",
+            schemaPath: "#/properties/restPeriod/required",
             keyword: "required",
-            params: { missingProperty: "consecutiveNightShiftsWarning" },
-            message: "must have required property '" + "consecutiveNightShiftsWarning" + "'",
+            params: { missingProperty: "deviations" },
+            message: "must have required property '" + "deviations" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err95];
+            vErrors = [err100];
           } else {
-            vErrors.push(err95);
-          }
-          errors++;
-        }
-        if (data31.consecutiveWeekendGapDays === undefined) {
-          const err96 = {
-            instancePath: instancePath + "/planning",
-            schemaPath: "#/properties/planning/required",
-            keyword: "required",
-            params: { missingProperty: "consecutiveWeekendGapDays" },
-            message: "must have required property '" + "consecutiveWeekendGapDays" + "'",
-          };
-          if (vErrors === null) {
-            vErrors = [err96];
-          } else {
-            vErrors.push(err96);
-          }
-          errors++;
-        }
-        if (data31.lateEarlyDayGap === undefined) {
-          const err97 = {
-            instancePath: instancePath + "/planning",
-            schemaPath: "#/properties/planning/required",
-            keyword: "required",
-            params: { missingProperty: "lateEarlyDayGap" },
-            message: "must have required property '" + "lateEarlyDayGap" + "'",
-          };
-          if (vErrors === null) {
-            vErrors = [err97];
-          } else {
-            vErrors.push(err97);
+            vErrors.push(err100);
           }
           errors++;
         }
         if (data31.sourceIds === undefined) {
-          const err98 = {
-            instancePath: instancePath + "/planning",
-            schemaPath: "#/properties/planning/required",
+          const err101 = {
+            instancePath: instancePath + "/restPeriod",
+            schemaPath: "#/properties/restPeriod/required",
             keyword: "required",
             params: { missingProperty: "sourceIds" },
             message: "must have required property '" + "sourceIds" + "'",
           };
           if (vErrors === null) {
-            vErrors = [err98];
+            vErrors = [err101];
           } else {
-            vErrors.push(err98);
+            vErrors.push(err101);
           }
           errors++;
         }
         for (const key8 in data31) {
-          if (!(
-            key8 === "consecutiveWorkDaysWarning" ||
-            key8 === "consecutiveNightShiftsWarning" ||
-            key8 === "consecutiveWeekendGapDays" ||
-            key8 === "lateEarlyDayGap" ||
-            key8 === "sourceIds"
-          )) {
-            const err99 = {
-              instancePath: instancePath + "/planning",
-              schemaPath: "#/properties/planning/additionalProperties",
+          if (!(key8 === "defaultMinutes" || key8 === "deviations" || key8 === "sourceIds")) {
+            const err102 = {
+              instancePath: instancePath + "/restPeriod",
+              schemaPath: "#/properties/restPeriod/additionalProperties",
               keyword: "additionalProperties",
               params: { additionalProperty: key8 },
               message: "must NOT have additional properties",
-            };
-            if (vErrors === null) {
-              vErrors = [err99];
-            } else {
-              vErrors.push(err99);
-            }
-            errors++;
-          }
-        }
-        if (data31.consecutiveWorkDaysWarning !== undefined) {
-          let data32 = data31.consecutiveWorkDaysWarning;
-          if (!(typeof data32 == "number" && !(data32 % 1) && !isNaN(data32) && isFinite(data32))) {
-            const err100 = {
-              instancePath: instancePath + "/planning/consecutiveWorkDaysWarning",
-              schemaPath: "#/properties/planning/properties/consecutiveWorkDaysWarning/type",
-              keyword: "type",
-              params: { type: "integer" },
-              message: "must be integer",
-            };
-            if (vErrors === null) {
-              vErrors = [err100];
-            } else {
-              vErrors.push(err100);
-            }
-            errors++;
-          }
-          if (typeof data32 == "number" && isFinite(data32)) {
-            if (data32 < 1 || isNaN(data32)) {
-              const err101 = {
-                instancePath: instancePath + "/planning/consecutiveWorkDaysWarning",
-                schemaPath: "#/properties/planning/properties/consecutiveWorkDaysWarning/minimum",
-                keyword: "minimum",
-                params: { comparison: ">=", limit: 1 },
-                message: "must be >= 1",
-              };
-              if (vErrors === null) {
-                vErrors = [err101];
-              } else {
-                vErrors.push(err101);
-              }
-              errors++;
-            }
-          }
-        }
-        if (data31.consecutiveNightShiftsWarning !== undefined) {
-          let data33 = data31.consecutiveNightShiftsWarning;
-          if (!(typeof data33 == "number" && !(data33 % 1) && !isNaN(data33) && isFinite(data33))) {
-            const err102 = {
-              instancePath: instancePath + "/planning/consecutiveNightShiftsWarning",
-              schemaPath: "#/properties/planning/properties/consecutiveNightShiftsWarning/type",
-              keyword: "type",
-              params: { type: "integer" },
-              message: "must be integer",
             };
             if (vErrors === null) {
               vErrors = [err102];
@@ -14106,47 +14115,44 @@ function validate74(
             }
             errors++;
           }
-          if (typeof data33 == "number" && isFinite(data33)) {
-            if (data33 < 1 || isNaN(data33)) {
-              const err103 = {
-                instancePath: instancePath + "/planning/consecutiveNightShiftsWarning",
-                schemaPath:
-                  "#/properties/planning/properties/consecutiveNightShiftsWarning/minimum",
-                keyword: "minimum",
-                params: { comparison: ">=", limit: 1 },
-                message: "must be >= 1",
-              };
-              if (vErrors === null) {
-                vErrors = [err103];
-              } else {
-                vErrors.push(err103);
-              }
-              errors++;
-            }
-          }
         }
-        if (data31.consecutiveWeekendGapDays !== undefined) {
-          let data34 = data31.consecutiveWeekendGapDays;
-          if (!(typeof data34 == "number" && !(data34 % 1) && !isNaN(data34) && isFinite(data34))) {
-            const err104 = {
-              instancePath: instancePath + "/planning/consecutiveWeekendGapDays",
-              schemaPath: "#/properties/planning/properties/consecutiveWeekendGapDays/type",
+        if (data31.defaultMinutes !== undefined) {
+          let data32 = data31.defaultMinutes;
+          if (!(typeof data32 == "number" && !(data32 % 1) && !isNaN(data32) && isFinite(data32))) {
+            const err103 = {
+              instancePath: instancePath + "/restPeriod/defaultMinutes",
+              schemaPath: "#/properties/restPeriod/properties/defaultMinutes/type",
               keyword: "type",
               params: { type: "integer" },
               message: "must be integer",
             };
             if (vErrors === null) {
-              vErrors = [err104];
+              vErrors = [err103];
             } else {
-              vErrors.push(err104);
+              vErrors.push(err103);
             }
             errors++;
           }
-          if (typeof data34 == "number" && isFinite(data34)) {
-            if (data34 < 1 || isNaN(data34)) {
+          if (typeof data32 == "number" && isFinite(data32)) {
+            if (data32 > 1440 || isNaN(data32)) {
+              const err104 = {
+                instancePath: instancePath + "/restPeriod/defaultMinutes",
+                schemaPath: "#/properties/restPeriod/properties/defaultMinutes/maximum",
+                keyword: "maximum",
+                params: { comparison: "<=", limit: 1440 },
+                message: "must be <= 1440",
+              };
+              if (vErrors === null) {
+                vErrors = [err104];
+              } else {
+                vErrors.push(err104);
+              }
+              errors++;
+            }
+            if (data32 < 1 || isNaN(data32)) {
               const err105 = {
-                instancePath: instancePath + "/planning/consecutiveWeekendGapDays",
-                schemaPath: "#/properties/planning/properties/consecutiveWeekendGapDays/minimum",
+                instancePath: instancePath + "/restPeriod/defaultMinutes",
+                schemaPath: "#/properties/restPeriod/properties/defaultMinutes/minimum",
                 keyword: "minimum",
                 params: { comparison: ">=", limit: 1 },
                 message: "must be >= 1",
@@ -14160,15 +14166,31 @@ function validate74(
             }
           }
         }
-        if (data31.lateEarlyDayGap !== undefined) {
-          let data35 = data31.lateEarlyDayGap;
-          if (!(typeof data35 == "number" && !(data35 % 1) && !isNaN(data35) && isFinite(data35))) {
+        if (data31.deviations !== undefined) {
+          let data33 = data31.deviations;
+          if (Array.isArray(data33)) {
+            const len1 = data33.length;
+            for (let i1 = 0; i1 < len1; i1++) {
+              if (
+                !validate78(data33[i1], {
+                  instancePath: instancePath + "/restPeriod/deviations/" + i1,
+                  parentData: data33,
+                  parentDataProperty: i1,
+                  rootData,
+                  dynamicAnchors,
+                })
+              ) {
+                vErrors = vErrors === null ? validate78.errors : vErrors.concat(validate78.errors);
+                errors = vErrors.length;
+              }
+            }
+          } else {
             const err106 = {
-              instancePath: instancePath + "/planning/lateEarlyDayGap",
-              schemaPath: "#/properties/planning/properties/lateEarlyDayGap/type",
+              instancePath: instancePath + "/restPeriod/deviations",
+              schemaPath: "#/properties/restPeriod/properties/deviations/type",
               keyword: "type",
-              params: { type: "integer" },
-              message: "must be integer",
+              params: { type: "array" },
+              message: "must be array",
             };
             if (vErrors === null) {
               vErrors = [err106];
@@ -14177,28 +14199,11 @@ function validate74(
             }
             errors++;
           }
-          if (typeof data35 == "number" && isFinite(data35)) {
-            if (data35 < 1 || isNaN(data35)) {
-              const err107 = {
-                instancePath: instancePath + "/planning/lateEarlyDayGap",
-                schemaPath: "#/properties/planning/properties/lateEarlyDayGap/minimum",
-                keyword: "minimum",
-                params: { comparison: ">=", limit: 1 },
-                message: "must be >= 1",
-              };
-              if (vErrors === null) {
-                vErrors = [err107];
-              } else {
-                vErrors.push(err107);
-              }
-              errors++;
-            }
-          }
         }
         if (data31.sourceIds !== undefined) {
           if (
             !validate43(data31.sourceIds, {
-              instancePath: instancePath + "/planning/sourceIds",
+              instancePath: instancePath + "/restPeriod/sourceIds",
               parentData: data31,
               parentDataProperty: "sourceIds",
               rootData,
@@ -14210,7 +14215,279 @@ function validate74(
           }
         }
       } else {
-        const err108 = {
+        const err107 = {
+          instancePath: instancePath + "/restPeriod",
+          schemaPath: "#/properties/restPeriod/type",
+          keyword: "type",
+          params: { type: "object" },
+          message: "must be object",
+        };
+        if (vErrors === null) {
+          vErrors = [err107];
+        } else {
+          vErrors.push(err107);
+        }
+        errors++;
+      }
+    }
+    if (data.planning !== undefined) {
+      let data36 = data.planning;
+      if (data36 && typeof data36 == "object" && !Array.isArray(data36)) {
+        if (data36.consecutiveWorkDaysWarning === undefined) {
+          const err108 = {
+            instancePath: instancePath + "/planning",
+            schemaPath: "#/properties/planning/required",
+            keyword: "required",
+            params: { missingProperty: "consecutiveWorkDaysWarning" },
+            message: "must have required property '" + "consecutiveWorkDaysWarning" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err108];
+          } else {
+            vErrors.push(err108);
+          }
+          errors++;
+        }
+        if (data36.consecutiveNightShiftsWarning === undefined) {
+          const err109 = {
+            instancePath: instancePath + "/planning",
+            schemaPath: "#/properties/planning/required",
+            keyword: "required",
+            params: { missingProperty: "consecutiveNightShiftsWarning" },
+            message: "must have required property '" + "consecutiveNightShiftsWarning" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err109];
+          } else {
+            vErrors.push(err109);
+          }
+          errors++;
+        }
+        if (data36.consecutiveWeekendGapDays === undefined) {
+          const err110 = {
+            instancePath: instancePath + "/planning",
+            schemaPath: "#/properties/planning/required",
+            keyword: "required",
+            params: { missingProperty: "consecutiveWeekendGapDays" },
+            message: "must have required property '" + "consecutiveWeekendGapDays" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err110];
+          } else {
+            vErrors.push(err110);
+          }
+          errors++;
+        }
+        if (data36.lateEarlyDayGap === undefined) {
+          const err111 = {
+            instancePath: instancePath + "/planning",
+            schemaPath: "#/properties/planning/required",
+            keyword: "required",
+            params: { missingProperty: "lateEarlyDayGap" },
+            message: "must have required property '" + "lateEarlyDayGap" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err111];
+          } else {
+            vErrors.push(err111);
+          }
+          errors++;
+        }
+        if (data36.sourceIds === undefined) {
+          const err112 = {
+            instancePath: instancePath + "/planning",
+            schemaPath: "#/properties/planning/required",
+            keyword: "required",
+            params: { missingProperty: "sourceIds" },
+            message: "must have required property '" + "sourceIds" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err112];
+          } else {
+            vErrors.push(err112);
+          }
+          errors++;
+        }
+        for (const key9 in data36) {
+          if (!(
+            key9 === "consecutiveWorkDaysWarning" ||
+            key9 === "consecutiveNightShiftsWarning" ||
+            key9 === "consecutiveWeekendGapDays" ||
+            key9 === "lateEarlyDayGap" ||
+            key9 === "sourceIds"
+          )) {
+            const err113 = {
+              instancePath: instancePath + "/planning",
+              schemaPath: "#/properties/planning/additionalProperties",
+              keyword: "additionalProperties",
+              params: { additionalProperty: key9 },
+              message: "must NOT have additional properties",
+            };
+            if (vErrors === null) {
+              vErrors = [err113];
+            } else {
+              vErrors.push(err113);
+            }
+            errors++;
+          }
+        }
+        if (data36.consecutiveWorkDaysWarning !== undefined) {
+          let data37 = data36.consecutiveWorkDaysWarning;
+          if (!(typeof data37 == "number" && !(data37 % 1) && !isNaN(data37) && isFinite(data37))) {
+            const err114 = {
+              instancePath: instancePath + "/planning/consecutiveWorkDaysWarning",
+              schemaPath: "#/properties/planning/properties/consecutiveWorkDaysWarning/type",
+              keyword: "type",
+              params: { type: "integer" },
+              message: "must be integer",
+            };
+            if (vErrors === null) {
+              vErrors = [err114];
+            } else {
+              vErrors.push(err114);
+            }
+            errors++;
+          }
+          if (typeof data37 == "number" && isFinite(data37)) {
+            if (data37 < 1 || isNaN(data37)) {
+              const err115 = {
+                instancePath: instancePath + "/planning/consecutiveWorkDaysWarning",
+                schemaPath: "#/properties/planning/properties/consecutiveWorkDaysWarning/minimum",
+                keyword: "minimum",
+                params: { comparison: ">=", limit: 1 },
+                message: "must be >= 1",
+              };
+              if (vErrors === null) {
+                vErrors = [err115];
+              } else {
+                vErrors.push(err115);
+              }
+              errors++;
+            }
+          }
+        }
+        if (data36.consecutiveNightShiftsWarning !== undefined) {
+          let data38 = data36.consecutiveNightShiftsWarning;
+          if (!(typeof data38 == "number" && !(data38 % 1) && !isNaN(data38) && isFinite(data38))) {
+            const err116 = {
+              instancePath: instancePath + "/planning/consecutiveNightShiftsWarning",
+              schemaPath: "#/properties/planning/properties/consecutiveNightShiftsWarning/type",
+              keyword: "type",
+              params: { type: "integer" },
+              message: "must be integer",
+            };
+            if (vErrors === null) {
+              vErrors = [err116];
+            } else {
+              vErrors.push(err116);
+            }
+            errors++;
+          }
+          if (typeof data38 == "number" && isFinite(data38)) {
+            if (data38 < 1 || isNaN(data38)) {
+              const err117 = {
+                instancePath: instancePath + "/planning/consecutiveNightShiftsWarning",
+                schemaPath:
+                  "#/properties/planning/properties/consecutiveNightShiftsWarning/minimum",
+                keyword: "minimum",
+                params: { comparison: ">=", limit: 1 },
+                message: "must be >= 1",
+              };
+              if (vErrors === null) {
+                vErrors = [err117];
+              } else {
+                vErrors.push(err117);
+              }
+              errors++;
+            }
+          }
+        }
+        if (data36.consecutiveWeekendGapDays !== undefined) {
+          let data39 = data36.consecutiveWeekendGapDays;
+          if (!(typeof data39 == "number" && !(data39 % 1) && !isNaN(data39) && isFinite(data39))) {
+            const err118 = {
+              instancePath: instancePath + "/planning/consecutiveWeekendGapDays",
+              schemaPath: "#/properties/planning/properties/consecutiveWeekendGapDays/type",
+              keyword: "type",
+              params: { type: "integer" },
+              message: "must be integer",
+            };
+            if (vErrors === null) {
+              vErrors = [err118];
+            } else {
+              vErrors.push(err118);
+            }
+            errors++;
+          }
+          if (typeof data39 == "number" && isFinite(data39)) {
+            if (data39 < 1 || isNaN(data39)) {
+              const err119 = {
+                instancePath: instancePath + "/planning/consecutiveWeekendGapDays",
+                schemaPath: "#/properties/planning/properties/consecutiveWeekendGapDays/minimum",
+                keyword: "minimum",
+                params: { comparison: ">=", limit: 1 },
+                message: "must be >= 1",
+              };
+              if (vErrors === null) {
+                vErrors = [err119];
+              } else {
+                vErrors.push(err119);
+              }
+              errors++;
+            }
+          }
+        }
+        if (data36.lateEarlyDayGap !== undefined) {
+          let data40 = data36.lateEarlyDayGap;
+          if (!(typeof data40 == "number" && !(data40 % 1) && !isNaN(data40) && isFinite(data40))) {
+            const err120 = {
+              instancePath: instancePath + "/planning/lateEarlyDayGap",
+              schemaPath: "#/properties/planning/properties/lateEarlyDayGap/type",
+              keyword: "type",
+              params: { type: "integer" },
+              message: "must be integer",
+            };
+            if (vErrors === null) {
+              vErrors = [err120];
+            } else {
+              vErrors.push(err120);
+            }
+            errors++;
+          }
+          if (typeof data40 == "number" && isFinite(data40)) {
+            if (data40 < 1 || isNaN(data40)) {
+              const err121 = {
+                instancePath: instancePath + "/planning/lateEarlyDayGap",
+                schemaPath: "#/properties/planning/properties/lateEarlyDayGap/minimum",
+                keyword: "minimum",
+                params: { comparison: ">=", limit: 1 },
+                message: "must be >= 1",
+              };
+              if (vErrors === null) {
+                vErrors = [err121];
+              } else {
+                vErrors.push(err121);
+              }
+              errors++;
+            }
+          }
+        }
+        if (data36.sourceIds !== undefined) {
+          if (
+            !validate43(data36.sourceIds, {
+              instancePath: instancePath + "/planning/sourceIds",
+              parentData: data36,
+              parentDataProperty: "sourceIds",
+              rootData,
+              dynamicAnchors,
+            })
+          ) {
+            vErrors = vErrors === null ? validate43.errors : vErrors.concat(validate43.errors);
+            errors = vErrors.length;
+          }
+        }
+      } else {
+        const err122 = {
           instancePath: instancePath + "/planning",
           schemaPath: "#/properties/planning/type",
           keyword: "type",
@@ -14218,15 +14495,15 @@ function validate74(
           message: "must be object",
         };
         if (vErrors === null) {
-          vErrors = [err108];
+          vErrors = [err122];
         } else {
-          vErrors.push(err108);
+          vErrors.push(err122);
         }
         errors++;
       }
     }
   } else {
-    const err109 = {
+    const err123 = {
       instancePath,
       schemaPath: "#/type",
       keyword: "type",
@@ -14234,9 +14511,9 @@ function validate74(
       message: "must be object",
     };
     if (vErrors === null) {
-      vErrors = [err109];
+      vErrors = [err123];
     } else {
-      vErrors.push(err109);
+      vErrors.push(err123);
     }
     errors++;
   }
@@ -14296,7 +14573,7 @@ function validate72(
     }
     if (data.engineContractVersion !== undefined) {
       let data0 = data.engineContractVersion;
-      if (!(data0 === 1 || data0 === 3)) {
+      if (!(data0 === 1 || data0 === 3 || data0 === 4)) {
         const err2 = {
           instancePath: instancePath + "/engineContractVersion",
           schemaPath: "#/allOf/1/properties/engineContractVersion/enum",

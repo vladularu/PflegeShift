@@ -41,6 +41,8 @@ describe("selectAnalysisEntryWindow", () => {
         shift("after-window", "2026-08-29"),
         shift("year-end", "2026-12-31"),
         shift("next-year", "2027-01-01"),
+        shift("long-window-end", "2027-01-31"),
+        shift("after-long-window", "2027-02-01"),
       ],
       "2026-07",
     );
@@ -57,6 +59,8 @@ describe("selectAnalysisEntryWindow", () => {
       "after",
       "after-window",
       "year-end",
+      "next-year",
+      "long-window-end",
     ]);
     expect(result.allowanceShifts.map((entry) => entry.id)).toEqual([
       "two-month-lookback",

@@ -51,7 +51,7 @@ describe("annual report input selection", () => {
     const first = selectAnnualReportInputs(null, 2026, [], []);
     expect(first).toMatchObject({
       rangeStart: "2025-11-01",
-      rangeEnd: "2027-01-28",
+      rangeEnd: "2027-06-30",
     });
     const withAllowanceLookback = selectAnnualReportInputs(
       first,
@@ -62,7 +62,7 @@ describe("annual report input selection", () => {
     const withComplianceTail = selectAnnualReportInputs(
       withAllowanceLookback,
       2026,
-      [withAllowanceLookback.entries[0], appointment("tail", "2027-01-28")],
+      [withAllowanceLookback.entries[0], appointment("tail", "2027-06-30")],
       [],
     );
 

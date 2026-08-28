@@ -152,11 +152,24 @@ describe("generation 1 rule review candidates", () => {
   it("locks statutory ArbZG boundaries apart from labelled product heuristics", () => {
     expect(legalCandidate.packageId).toBe("de-arbzg-care");
     expect(legalCandidate.versionId).toBe("2026-01");
-    expect(legalCandidate.engineContractVersion).toBe(3);
+    expect(legalCandidate.engineContractVersion).toBe(4);
     expect(legalCandidate.rules.workingTime).toMatchObject({
       standardDailyMinutes: 480,
       maxDailyMinutes: 600,
       nightAverageMinutes: 480,
+      standardAverage: {
+        calendarMonths: 6,
+        weeks: 24,
+        assessmentMode: "FORWARD_FROM_EXTENDED_WORKDAY",
+        neutralAbsenceTypes: ["VACATION", "SICK"],
+      },
+      sourceIds: ["arbzg-2024", "eu-2003-88", "pflegeshift-planning-policy-v1"],
+    });
+    expect(byId(legalCandidate.sources, "eu-2003-88")).toMatchObject({
+      url: "https://eur-lex.europa.eu/legal-content/DE/TXT/PDF/?uri=CELEX:32003L0088",
+      documentDate: "2003-11-04",
+      section: "Art. 6 und 16; ABl. L 299 vom 18.11.2003, S. 9–19",
+      sha256: "13ff399696ddd77d9e3e430026056041c1bf29a77b112fcbf3bb359edd67f1f7",
     });
     expect(legalCandidate.rules.breaks).toMatchObject({
       minimumSegmentMinutes: 15,

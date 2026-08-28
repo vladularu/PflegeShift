@@ -19,9 +19,10 @@ import {
   isNightWork,
   qualifyAsNightWorkerIncrementally,
 } from "@/engine/compliance-night-work";
+import { checkWorkingTimeAverageIncrementally } from "@/engine/compliance-working-time-average";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import type { RuleLegalRules } from "@/rules/contracts.generated";
-import { getLegalCalculationWindow } from "@/rules/calculation-windows";
+import { getLegalCalculationEnd, getLegalCalculationWindow } from "@/rules/calculation-windows";
 import {
   bundledRuleResolver,
   requireResolvedPackage,
@@ -311,6 +312,7 @@ function requiredBreakMinutes(netMinutes: number, rules: RuleLegalRules): number
 function checkWorkingTime(
   intervals: readonly Interval[],
   rules: RuleLegalRules,
+  engineContractVersion: number,
   nightWorkerQualified: boolean,
 ): ComplianceIssue[] {
   const issues: ComplianceIssue[] = [];
@@ -335,6 +337,7 @@ function checkWorkingTime(
         ),
       );
     } else if (
+      engineContractVersion < 4 &&
       net > rules.workingTime.standardDailyMinutes &&
       !(containsNightWork && nightWorkerQualified)
     ) {
@@ -576,10 +579,9 @@ export function* calculateMonthlyComplianceSteps(
   const rules = legalPackage.rules;
   const calculationWindow = getLegalCalculationWindow(first.toString(), ruleResolver);
   const baseStart = first.subtract({ days: calculationWindow.lookbackDays });
-  const baseEnd = first
-    .add({ months: 1 })
-    .subtract({ days: 1 })
-    .add({ days: calculationWindow.lookaheadDays });
+  const monthEnd = first.add({ months: 1 }).subtract({ days: 1 });
+  const shortAssessmentEnd = monthEnd.add({ days: calculationWindow.lookaheadDays });
+  const baseEnd = getLegalCalculationEnd(monthEnd, calculationWindow);
   const yearStart = Temporal.PlainDate.from({ year: first.year, month: 1, day: 1 });
   const yearEnd = Temporal.PlainDate.from({ year: first.year, month: 12, day: 31 });
   const start = (
@@ -603,9 +605,12 @@ export function* calculateMonthlyComplianceSteps(
     .map((shift) => toInterval(shift, timeZone))
     .sort(compareIntervalsByRecordedStart);
   const assessmentStart = baseStart.toString();
-  const assessmentEnd = baseEnd.toString();
+  const assessmentEnd = shortAssessmentEnd.toString();
   const assessmentIntervals = intervals.filter(
     (item) => item.shift.date >= assessmentStart && item.shift.date <= assessmentEnd,
+  );
+  const workingTimeAverageIntervals = intervals.filter(
+    (item) => item.shift.date >= first.toString() && item.shift.date <= baseEnd.toString(),
   );
   const nightWorkerQualification = qualifyAsNightWorkerIncrementally(
     intervals,
@@ -629,8 +634,34 @@ export function* calculateMonthlyComplianceSteps(
   yield 2;
   issues.push(...checkOverlaps(assessmentIntervals));
   yield 3;
-  issues.push(...checkWorkingTime(assessmentIntervals, rules, nightWorkerQualified));
+  issues.push(
+    ...checkWorkingTime(
+      assessmentIntervals,
+      rules,
+      legalPackage.engineContractVersion,
+      nightWorkerQualified,
+    ),
+  );
   yield 4;
+  const workingTimeAverage = checkWorkingTimeAverageIncrementally(
+    month,
+    workingTimeAverageIntervals,
+    shifts,
+    options,
+    referenceDate,
+    rules,
+    ruleResolver,
+    legalPackage.engineContractVersion,
+    nightWorkerQualified,
+  );
+  while (true) {
+    const step = workingTimeAverage.next();
+    if (step.done) {
+      issues.push(...step.value);
+      break;
+    }
+    yield step.value;
+  }
   issues.push(
     ...checkNightWorkingTimeAverage(
       month,

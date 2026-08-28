@@ -293,7 +293,7 @@ describe("ArbZG compliance", () => {
     expect(result.issues.some((item) => item.rule === "ARBZG_3_MAX_10H")).toBe(false);
   });
 
-  it("keeps one night shift under section 3 until night-worker status is established", () => {
+  it("accepts one extended night shift when the long section 3 window balances it", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
       [shift("night", "2026-07-01", "21:00", "07:30", 60, "NIGHT")],
@@ -301,31 +301,8 @@ describe("ArbZG compliance", () => {
       { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
     );
 
-    expect(result.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(true);
+    expect(result.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(false);
     expect(result.issues.some((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE")).toBe(false);
-  });
-
-  it("recognizes night work from its actual hours instead of its label", () => {
-    const daytime = calculateMonthlyCompliance(
-      "2026-07",
-      [shift("named-night", "2026-07-01", "08:00", "17:00", 30, "NIGHT")],
-      "Europe/Berlin",
-      { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
-    );
-    const actualNight = calculateMonthlyCompliance(
-      "2026-07",
-      [shift("actual-night", "2026-07-01", "21:00", "07:30", 60, "DAY")],
-      "Europe/Berlin",
-      {
-        federalState: "NW",
-        referenceDate: "2026-08-01",
-        weeklyMinutes: 2_310,
-        regularRotatingNightWork: true,
-      },
-    );
-
-    expect(daytime.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(true);
-    expect(actualNight.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(false);
   });
 
   it("reports the monthly night-work average only when it remains above eight hours", () => {

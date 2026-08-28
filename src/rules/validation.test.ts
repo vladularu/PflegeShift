@@ -143,10 +143,18 @@ describe("rule contract validation", () => {
     expect(issueCodes(validateRulePackage(v1WithRule))).toContain("UNSUPPORTED_OVERTIME_BASE_RULE");
   });
 
-  it("enforces night-worker qualification for legal engine v3", () => {
+  it("enforces night-worker qualification for legal engine v3 and newer", () => {
     type VersionedLegalFixture = typeof legalPackageFixture & {
       engineContractVersion: number;
       rules: typeof legalPackageFixture.rules & {
+        workingTime: typeof legalPackageFixture.rules.workingTime & {
+          standardAverage?: {
+            calendarMonths: number;
+            weeks: number;
+            assessmentMode: "FORWARD_FROM_EXTENDED_WORKDAY";
+            neutralAbsenceTypes: ["VACATION", "SICK"];
+          };
+        };
         nightWork: typeof legalPackageFixture.rules.nightWork & {
           workerQualification?: {
             regularRotatingNightWorkRequiresConfirmation: true;
@@ -173,6 +181,34 @@ describe("rule contract validation", () => {
     v1WithQualification.engineContractVersion = 1;
     expect(issueCodes(validateRulePackage(v1WithQualification))).toContain(
       "UNSUPPORTED_NIGHT_WORKER_QUALIFICATION",
+    );
+
+    const v4Package = clone(v3Package);
+    v4Package.engineContractVersion = 4;
+    v4Package.rules.workingTime.standardAverage = {
+      calendarMonths: 6,
+      weeks: 24,
+      assessmentMode: "FORWARD_FROM_EXTENDED_WORKDAY",
+      neutralAbsenceTypes: ["VACATION", "SICK"],
+    };
+    expect(validateRulePackage(v4Package).ok).toBe(true);
+
+    const v4MissingQualification = clone(v4Package);
+    delete v4MissingQualification.rules.nightWork.workerQualification;
+    expect(issueCodes(validateRulePackage(v4MissingQualification))).toContain(
+      "MISSING_NIGHT_WORKER_QUALIFICATION",
+    );
+
+    const v4MissingAverage = clone(v4Package);
+    delete v4MissingAverage.rules.workingTime.standardAverage;
+    expect(issueCodes(validateRulePackage(v4MissingAverage))).toContain(
+      "MISSING_STANDARD_WORKING_TIME_AVERAGE",
+    );
+
+    const v3WithAverage = clone(v4Package);
+    v3WithAverage.engineContractVersion = 3;
+    expect(issueCodes(validateRulePackage(v3WithAverage))).toContain(
+      "UNSUPPORTED_STANDARD_WORKING_TIME_AVERAGE",
     );
   });
 
