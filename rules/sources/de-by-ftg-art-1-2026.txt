@@ -1,0 +1,50 @@
+Quelle: Bayern.Recht
+URL: https://www.gesetze-bayern.de/Content/Document/BayFTG-1
+Abruf: 2026-08-28
+Dokumentkopf: FTG, Text gilt ab 01.08.2013, Fassung vom 21.05.1980, BayRS 1131-3-I
+Normalisierung: sichtbarer Artikeltext, UTF-8, NFC, geschützte Leerzeichen als U+0020, LF
+
+Gesetz über den Schutz der Sonn- und Feiertage
+(Feiertagsgesetz - FTG)
+Art. 1
+Gesetzliche Feiertage
+
+(1) Gesetzliche Feiertage sind
+
+1.
+
+im ganzen Staatsgebiet
+
+Neujahr,
+
+Heilige Drei Könige (Epiphanias),
+
+Karfreitag,
+
+Ostermontag,
+
+der 1. Mai,
+
+Christi Himmelfahrt,
+
+Pfingstmontag,
+
+Fronleichnam,
+
+der 3. Oktober als Tag der Deutschen Einheit,
+
+Allerheiligen,
+
+Erster Weihnachtstag,
+
+Zweiter Weihnachtstag,
+
+2.
+
+in Gemeinden mit überwiegend katholischer Bevölkerung
+
+Mariä Himmelfahrt.
+
+(2) In der Stadt Augsburg ist außerdem der 8. August (Friedensfest) gesetzlicher Feiertag.
+
+(3) Das Landesamt für Statistik stellt nach dem Ergebnis der letzten Volkszählung fest, in welchen Gemeinden entweder mehr katholische oder mehr evangelische Einwohner ihren Wohnsitz hatten. Ist danach Mariä Himmelfahrt in einer Gemeinde gesetzlicher Feiertag, so macht die Gemeinde dies ortsüblich bekannt.
