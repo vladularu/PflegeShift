@@ -68,13 +68,15 @@ function packagesForYear(year: number, ruleResolver: RuleResolver): readonly Rul
   const cached = resolverCache?.get(year);
   if (cached) return cached;
   const packages = new Set<RuleHolidayPackage>();
-  const end = Temporal.PlainDate.from({ year, month: 12, day: 31 }).add({ days: 1 });
-  for (
-    let cursor = Temporal.PlainDate.from({ year, month: 1, day: 1 });
-    Temporal.PlainDate.compare(cursor, end) < 0;
-    cursor = cursor.add({ days: 1 })
-  ) {
-    packages.add(requireResolvedPackage(ruleResolver.resolveHoliday(cursor.toString())));
+  const end = Temporal.PlainDate.from({ year, month: 12, day: 31 });
+  let cursor = Temporal.PlainDate.from({ year, month: 1, day: 1 });
+  while (Temporal.PlainDate.compare(cursor, end) <= 0) {
+    const rulePackage = requireResolvedPackage(ruleResolver.resolveHoliday(cursor.toString()));
+    packages.add(rulePackage);
+    if (rulePackage.validTo === null) break;
+    const validTo = Temporal.PlainDate.from(rulePackage.validTo);
+    if (Temporal.PlainDate.compare(validTo, end) >= 0) break;
+    cursor = validTo.add({ days: 1 });
   }
   const resolvedPackages = Object.freeze([...packages]);
   const nextCache = resolverCache ?? new Map<number, readonly RuleHolidayPackage[]>();

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { easterSunday, getPublicHolidays } from "@/engine/holidays";
+import { BUNDLED_HOLIDAY_RULES } from "@/rules/bundled-rules";
+import { createRuleResolver } from "@/rules/rule-resolver";
 
 describe("German public holidays", () => {
   it("calculates Gregorian Easter", () => {
@@ -52,5 +54,31 @@ describe("German public holidays", () => {
         getPublicHolidays(2026, state).filter((holiday) => holiday.scope === "NATIONWIDE"),
       ).toHaveLength(9);
     }
+  });
+
+  it("resolves every package boundary inside a calendar year", () => {
+    const firstHalf = structuredClone(BUNDLED_HOLIDAY_RULES[0]);
+    firstHalf.versionId = "first-half";
+    firstHalf.validTo = "2026-06-30";
+    const secondHalf = structuredClone(BUNDLED_HOLIDAY_RULES[0]);
+    secondHalf.versionId = "second-half";
+    secondHalf.validFrom = "2026-07-01";
+    secondHalf.rules.holidays.find((holiday) => holiday.id === "german-unity-day")!.name =
+      "Tag der Deutschen Einheit aus Folgepaket";
+    const resolver = createRuleResolver({
+      tariff: [],
+      legal: [],
+      holiday: [firstHalf, secondHalf],
+    });
+
+    expect(getPublicHolidays(2026, "NW", resolver)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ date: "2026-01-01", name: "Neujahr" }),
+        expect.objectContaining({
+          date: "2026-10-03",
+          name: "Tag der Deutschen Einheit aus Folgepaket",
+        }),
+      ]),
+    );
   });
 });

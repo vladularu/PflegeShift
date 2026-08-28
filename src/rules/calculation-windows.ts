@@ -10,6 +10,8 @@ import {
 export interface LegalCalculationWindow {
   readonly lookbackDays: number;
   readonly lookaheadDays: number;
+  readonly shortAssessmentLookbackDays: number;
+  readonly shortAssessmentLookaheadDays: number;
   readonly lookaheadCalendarMonths: number;
   readonly calendarYearCoverage: boolean;
 }
@@ -39,22 +41,38 @@ export function getLegalCalculationWindow(
 ): LegalCalculationWindow {
   const legalPackage = requireResolvedPackage(ruleResolver.resolveLegal(effectiveDate));
   const rules = legalPackage.rules;
+  const sundayHolidayRest =
+    legalPackage.engineContractVersion >= 5 ? rules.sundayHolidayRest : undefined;
+  const replacementRestReachDays = sundayHolidayRest
+    ? Math.max(
+        sundayHolidayRest.sundayCompensationPeriodDays,
+        sundayHolidayRest.weekdayHolidayCompensationPeriodDays,
+      ) -
+      1 +
+      Math.ceil(sundayHolidayRest.connectedRestMinutes / 1440)
+    : 0;
+  const shortAssessmentLookbackDays =
+    Math.max(
+      rules.planning.consecutiveWorkDaysWarning,
+      rules.planning.consecutiveNightShiftsWarning,
+      rules.planning.consecutiveWeekendGapDays,
+    ) + 1;
+  const shortAssessmentLookaheadDays = Math.max(
+    rules.nightWork.averageWindowDays ?? 0,
+    ...rules.restPeriod.deviations.map((deviation) => deviation.compensationWithinDays),
+  );
   return Object.freeze({
-    lookbackDays:
-      Math.max(
-        rules.planning.consecutiveWorkDaysWarning,
-        rules.planning.consecutiveNightShiftsWarning,
-        rules.planning.consecutiveWeekendGapDays,
-      ) + 1,
-    lookaheadDays: Math.max(
-      rules.nightWork.averageWindowDays ?? 0,
-      ...rules.restPeriod.deviations.map((deviation) => deviation.compensationWithinDays),
-    ),
+    lookbackDays: Math.max(shortAssessmentLookbackDays, replacementRestReachDays),
+    lookaheadDays: Math.max(shortAssessmentLookaheadDays, replacementRestReachDays),
+    shortAssessmentLookbackDays,
+    shortAssessmentLookaheadDays,
     lookaheadCalendarMonths:
       legalPackage.engineContractVersion >= 4
         ? (rules.workingTime.standardAverage?.calendarMonths ?? 0)
         : 0,
     calendarYearCoverage:
-      legalPackage.engineContractVersion >= 3 && rules.nightWork.workerQualification !== undefined,
+      (legalPackage.engineContractVersion >= 3 &&
+        rules.nightWork.workerQualification !== undefined) ||
+      sundayHolidayRest !== undefined,
   });
 }

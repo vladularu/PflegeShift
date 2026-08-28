@@ -70,7 +70,7 @@ test("publisher CLI dry-runs, writes in order, retries idempotently, and protect
       maximumStepId: "s2",
       sourceIds: ["tvoed-vka-2026"],
     };
-    packages[1].engineContractVersion = 4;
+    packages[1].engineContractVersion = 5;
     packages[1].rules.workingTime.standardAverage = {
       calendarMonths: 6,
       weeks: 24,
@@ -80,6 +80,18 @@ test("publisher CLI dry-runs, writes in order, retries idempotently, and protect
     packages[1].rules.nightWork.workerQualification = {
       regularRotatingNightWorkRequiresConfirmation: true,
       annualNightWorkDaysThreshold: 48,
+    };
+    packages[1].rules.sundayHolidayRest = {
+      eligibleSectorIds: ["hospital", "care"],
+      minimumFreeSundaysPerCalendarYear: 15,
+      sundayCompensationPeriodDays: 14,
+      weekdayHolidayCompensationPeriodDays: 56,
+      replacementDayMinutes: 1440,
+      connectedRestMinutes: 660,
+      connectionExceptionMode: "TECHNICAL_OR_OPERATIONAL_REVIEW",
+      evidenceShiftType: "FREE",
+      matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE",
+      sourceIds: ["arbzg-2026"],
     };
     const packagePaths = packages.map(
       (rulePackage) =>

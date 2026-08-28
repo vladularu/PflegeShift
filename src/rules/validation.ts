@@ -404,12 +404,12 @@ function validateLegalPackage(
     );
   }
   const standardAverage = rules.workingTime.standardAverage;
-  if (rulePackage.engineContractVersion === 4 && standardAverage === undefined) {
+  if (rulePackage.engineContractVersion >= 4 && standardAverage === undefined) {
     issues.push(
       issue(
         "MISSING_STANDARD_WORKING_TIME_AVERAGE",
         "/rules/workingTime/standardAverage",
-        "Legal engine contract v4 requires the standard working-time average windows.",
+        "Legal engine contract v4 and newer require the standard working-time average windows.",
       ),
     );
   } else if (rulePackage.engineContractVersion < 4 && standardAverage !== undefined) {
@@ -418,6 +418,24 @@ function validateLegalPackage(
         "UNSUPPORTED_STANDARD_WORKING_TIME_AVERAGE",
         "/rules/workingTime/standardAverage",
         "Legal engine contracts before v4 must not define standard working-time average windows.",
+      ),
+    );
+  }
+  const sundayHolidayRest = rules.sundayHolidayRest;
+  if (rulePackage.engineContractVersion >= 5 && sundayHolidayRest === undefined) {
+    issues.push(
+      issue(
+        "MISSING_SUNDAY_HOLIDAY_REST",
+        "/rules/sundayHolidayRest",
+        "Legal engine contract v5 and newer require Sunday and holiday rest rules.",
+      ),
+    );
+  } else if (rulePackage.engineContractVersion < 5 && sundayHolidayRest !== undefined) {
+    issues.push(
+      issue(
+        "UNSUPPORTED_SUNDAY_HOLIDAY_REST",
+        "/rules/sundayHolidayRest",
+        "Legal engine contracts before v5 must not define Sunday and holiday rest rules.",
       ),
     );
   }
@@ -436,6 +454,9 @@ function validateLegalPackage(
     ["/rules/breaks/sourceIds", rules.breaks.sourceIds],
     ["/rules/nightWork/sourceIds", rules.nightWork.sourceIds],
     ["/rules/restPeriod/sourceIds", rules.restPeriod.sourceIds],
+    ...(sundayHolidayRest === undefined
+      ? []
+      : ([["/rules/sundayHolidayRest/sourceIds", sundayHolidayRest.sourceIds]] as const)),
     ["/rules/planning/sourceIds", rules.planning.sourceIds],
   ] as const;
   for (const [path, references] of sourceBearingRules) {

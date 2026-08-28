@@ -20,6 +20,7 @@ import {
   qualifyAsNightWorkerIncrementally,
 } from "@/engine/compliance-night-work";
 import { checkWorkingTimeAverageIncrementally } from "@/engine/compliance-working-time-average";
+import { checkSundayHolidayRestIncrementally } from "@/engine/compliance-sunday-holiday-rest";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import type { RuleLegalRules } from "@/rules/contracts.generated";
 import { getLegalCalculationEnd, getLegalCalculationWindow } from "@/rules/calculation-windows";
@@ -580,7 +581,12 @@ export function* calculateMonthlyComplianceSteps(
   const calculationWindow = getLegalCalculationWindow(first.toString(), ruleResolver);
   const baseStart = first.subtract({ days: calculationWindow.lookbackDays });
   const monthEnd = first.add({ months: 1 }).subtract({ days: 1 });
-  const shortAssessmentEnd = monthEnd.add({ days: calculationWindow.lookaheadDays });
+  const shortAssessmentStart = first.subtract({
+    days: calculationWindow.shortAssessmentLookbackDays,
+  });
+  const shortAssessmentEnd = monthEnd.add({
+    days: calculationWindow.shortAssessmentLookaheadDays,
+  });
   const baseEnd = getLegalCalculationEnd(monthEnd, calculationWindow);
   const yearStart = Temporal.PlainDate.from({ year: first.year, month: 1, day: 1 });
   const yearEnd = Temporal.PlainDate.from({ year: first.year, month: 12, day: 31 });
@@ -604,13 +610,16 @@ export function* calculateMonthlyComplianceSteps(
     .filter((shift) => isRelevant(shift) && shift.date >= start && shift.date <= end)
     .map((shift) => toInterval(shift, timeZone))
     .sort(compareIntervalsByRecordedStart);
-  const assessmentStart = baseStart.toString();
+  const assessmentStart = shortAssessmentStart.toString();
   const assessmentEnd = shortAssessmentEnd.toString();
   const assessmentIntervals = intervals.filter(
     (item) => item.shift.date >= assessmentStart && item.shift.date <= assessmentEnd,
   );
   const workingTimeAverageIntervals = intervals.filter(
     (item) => item.shift.date >= first.toString() && item.shift.date <= baseEnd.toString(),
+  );
+  const calculationShifts = shifts.filter(
+    (shift) => shift.deletedAt === null && shift.date >= start && shift.date <= end,
   );
   const nightWorkerQualification = qualifyAsNightWorkerIncrementally(
     intervals,
@@ -680,6 +689,26 @@ export function* calculateMonthlyComplianceSteps(
     ...checkRestAndSequence(assessmentIntervals, referenceDate, rules, options.sectorId ?? "care"),
   );
   yield 6;
+  const sundayHolidayRest = checkSundayHolidayRestIncrementally(
+    month,
+    intervals,
+    calculationShifts,
+    options,
+    referenceDate,
+    rules,
+    ruleResolver,
+    legalPackage.engineContractVersion,
+    timeZone,
+  );
+  while (true) {
+    const step = sundayHolidayRest.next();
+    if (step.done) {
+      issues.push(...step.value);
+      break;
+    }
+    yield step.value;
+  }
+  yield 7;
   issues.push(...checkPlanningSeries(assessmentIntervals, rules));
   const monthIssues = issues.filter((item) => item.date.startsWith(`${month}-`));
   return {
