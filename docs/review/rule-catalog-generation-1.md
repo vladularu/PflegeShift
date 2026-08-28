@@ -10,11 +10,11 @@ Regelpakete. Die Pakete sind schema-valide Prüfkandidaten. `DRAFT` bedeutet aus
 Sie dürfen weder in eine Release-Anforderung aufgenommen noch signiert oder ausgeliefert
 werden.
 
-| Paket                    | Gültigkeit            | Inhalt                                                                 |
-| ------------------------ | --------------------- | ---------------------------------------------------------------------- |
-| `tvoed-vka-bt-k/2026-05` | 01.05.2026–31.03.2027 | TVöD-VKA BT-K/BT-B Pflege: Tabelle, Zuschläge, Zulagen und Kombination |
-| `de-arbzg-care/2026-01`  | ab 01.01.2026         | ArbZG-Arbeitszeit, Pausen, Nachtarbeit, Ruhezeit und Pflegeabweichung  |
-| `de-holidays/2026`       | 01.01.2026–31.12.2026 | neun bundesweit und zehn landesweit definierte Feiertagsregeln         |
+| Paket                    | Gültigkeit            | Inhalt                                                                        |
+| ------------------------ | --------------------- | ----------------------------------------------------------------------------- |
+| `tvoed-vka-bt-k/2026-05` | 01.05.2026–31.03.2027 | TVöD-VKA BT-K/BT-B Pflege: Tabelle, Zuschläge, Zulagen und Kombination        |
+| `de-arbzg-care/2026-01`  | ab 01.01.2026         | ArbZG-Arbeitszeit, Pausen, Nachtarbeit, Ruhezeit und Sonn-/Feiertagsausgleich |
+| `de-holidays/2026`       | 01.01.2026–31.12.2026 | neun bundesweit und zehn landesweit definierte Feiertagsregeln                |
 
 Die Paketdateien liegen unter `rules/packages/reviewed/<packageId>/<versionId>.json`.
 Der Verzeichnisname bezeichnet die Review-Pipeline, nicht den bereits erreichten Status.
@@ -71,6 +71,18 @@ Der Projekt-Owner gleicht gegen die hinterlegte amtliche ArbZG-Fassung ab:
 - elf Stunden Ruhezeit;
 - Verkürzung auf zehn Stunden in Krankenhaus/Pflege nur zusammen mit zwölf Stunden
   Ausgleich innerhalb von vier Wochen.
+- Zulässigkeit der Sonn- und Feiertagsbeschäftigung in Krankenhaus und Pflege nach
+  § 10 Abs. 1 Nr. 3, soweit die Arbeit nicht an Werktagen vorgenommen werden kann;
+- mindestens 15 beschäftigungsfreie Sonntage je Kalenderjahr;
+- je gearbeitetem Sonntag ein eigener Ersatzruhetag innerhalb eines den Sonntag
+  einschließenden 14-Tage-Zeitraums, je gearbeitetem Feiertag auf einem Werktag innerhalb
+  eines entsprechenden 56-Tage-Zeitraums;
+- ein Ersatzruhetag wird technisch nur mit einem expliziten Eintrag `FREE` ohne
+  überschneidende Arbeit bestätigt; bei weniger als insgesamt 35 Stunden ununterbrochener
+  Ruhe wird die Verbindung mit § 5 separat zur Prüfung markiert, weil technische oder
+  arbeitsorganisatorische Ausnahmegründe nach § 11 Abs. 4 nicht aus dem Kalender ableitbar sind;
+- keine tariflichen Abweichungen nach § 12 und keine Verlagerung der Sonn- oder
+  Feiertagsruhe in Mehrschichtbetrieben nach § 9 Abs. 2 in diesem Vertragsstand.
 
 Die separat gekennzeichneten Planungswarnungen benötigen eine bewusste Ownerentscheidung,
 keine gesetzliche Freigabe. Insbesondere sind Serien- und Wochenendwarnungen keine
