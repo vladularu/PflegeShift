@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import Database from "better-sqlite3";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -7,11 +9,18 @@ import legalPackageFixture from "../../../rules/examples/legal-package.valid.jso
 import manifestFixture from "../../../rules/examples/manifest.valid.json";
 import tariffPackageFixture from "../../../rules/examples/tariff-package.valid.json";
 import { migrateDatabase } from "@/infrastructure/database/migrations";
+import type { RuleManifest, RulePackage } from "@/rules/contracts.generated";
+import {
+  verifyRuleCatalogArtifacts,
+  type RuleCatalogCryptography,
+  type RuleCatalogVerificationPolicy,
+  type UntrustedRuleCatalogArtifacts,
+  type VerifiedRuleCatalogArtifacts,
+} from "@/rules/rule-catalog-verification";
 import {
   activateRuleCatalog,
   loadActiveRuleCatalog,
   RuleCatalogStorageError,
-  type RuleCatalogArtifacts,
 } from "@/infrastructure/database/rule-catalog-repository";
 
 class TestDatabase {
@@ -42,19 +51,53 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
-function catalogArtifacts(generation: number): RuleCatalogArtifacts {
-  const manifest = clone(manifestFixture);
-  manifest.generation = generation;
-  manifest.publishedAt = `2026-04-${String(19 + generation).padStart(2, "0")}T12:00:00Z`;
+const encoder = new TextEncoder();
+const testCryptography: RuleCatalogCryptography = {
+  sha256: async (bytes) => Uint8Array.from(createHash("sha256").update(bytes).digest()),
+  verifyEd25519: async () => true,
+};
+const testPolicy: RuleCatalogVerificationPolicy = {
+  expectedChannel: "PREVIEW",
+  supportedEngineContractVersions: new Set([1]),
+  trustedPublicKeys: new Map([["test-key-2026", new Uint8Array(32)]]),
+};
 
-  return {
+function packageIdentity(value: Pick<RulePackage, "packageId" | "versionId">): string {
+  return `${value.packageId}\u0000${value.versionId}`;
+}
+
+async function catalogArtifacts(
+  generation: number,
+  publishedAt = `2026-04-${String(19 + generation).padStart(2, "0")}T12:00:00Z`,
+): Promise<VerifiedRuleCatalogArtifacts> {
+  const manifest = clone(manifestFixture) as RuleManifest;
+  manifest.generation = generation;
+  manifest.publishedAt = publishedAt;
+  manifest.signing.keyId = "test-key-2026";
+  const packages = [
+    clone(tariffPackageFixture),
+    clone(legalPackageFixture),
+    clone(holidayPackageFixture),
+  ] as RulePackage[];
+  const packageJson = packages.map((rulePackage) => JSON.stringify(rulePackage));
+  const rawByIdentity = new Map(
+    packages.map((rulePackage, index) => [packageIdentity(rulePackage), packageJson[index]]),
+  );
+  manifest.packages = manifest.packages.map((descriptor) => {
+    const raw = rawByIdentity.get(packageIdentity(descriptor));
+    if (raw === undefined) throw new Error("Missing package test fixture.");
+    return {
+      ...descriptor,
+      sha256: createHash("sha256").update(raw, "utf8").digest("hex"),
+      sizeBytes: encoder.encode(raw).byteLength,
+    };
+  }) as RuleManifest["packages"];
+
+  const artifacts: UntrustedRuleCatalogArtifacts = {
     manifestJson: JSON.stringify(manifest),
-    packageJson: [
-      JSON.stringify(tariffPackageFixture),
-      JSON.stringify(legalPackageFixture),
-      JSON.stringify(holidayPackageFixture),
-    ],
+    packageJson,
   };
+  return verifyRuleCatalogArtifacts(artifacts, testPolicy, testCryptography);
 }
 
 async function expectStorageError(
@@ -89,7 +132,7 @@ describe("rule catalog repository", () => {
   });
 
   it("stores and activates a complete published catalog atomically", async () => {
-    const artifacts = catalogArtifacts(1);
+    const artifacts = await catalogArtifacts(1);
 
     await expect(
       activateRuleCatalog(db, artifacts, new Date("2026-08-28T08:00:00.000Z")),
@@ -113,7 +156,7 @@ describe("rule catalog repository", () => {
   });
 
   it("treats a byte-identical retry of the active generation as idempotent", async () => {
-    const artifacts = catalogArtifacts(1);
+    const artifacts = await catalogArtifacts(1);
     await activateRuleCatalog(db, artifacts, new Date("2026-08-28T08:00:00.000Z"));
 
     await expect(
@@ -125,9 +168,11 @@ describe("rule catalog repository", () => {
   });
 
   it("serializes concurrent activations on the already-keyed connection", async () => {
+    const firstArtifacts = await catalogArtifacts(1);
+    const secondArtifacts = await catalogArtifacts(2);
     const [first, second] = await Promise.all([
-      activateRuleCatalog(db, catalogArtifacts(1), new Date("2026-08-28T08:00:00.000Z")),
-      activateRuleCatalog(db, catalogArtifacts(2), new Date("2026-08-28T09:00:00.000Z")),
+      activateRuleCatalog(db, firstArtifacts, new Date("2026-08-28T08:00:00.000Z")),
+      activateRuleCatalog(db, secondArtifacts, new Date("2026-08-28T09:00:00.000Z")),
     ]);
 
     expect(first).toEqual({
@@ -151,9 +196,11 @@ describe("rule catalog repository", () => {
       BEGIN SELECT RAISE(ABORT, 'simulated first activation failure'); END;
     `);
 
+    const firstArtifacts = await catalogArtifacts(1);
+    const secondArtifacts = await catalogArtifacts(2);
     const [failed, succeeding] = await Promise.allSettled([
-      activateRuleCatalog(db, catalogArtifacts(1)),
-      activateRuleCatalog(db, catalogArtifacts(2)),
+      activateRuleCatalog(db, firstArtifacts),
+      activateRuleCatalog(db, secondArtifacts),
     ]);
 
     expect(failed).toMatchObject({
@@ -167,70 +214,34 @@ describe("rule catalog repository", () => {
     expect((await loadActiveRuleCatalog(db))?.generation).toBe(2);
   });
 
-  it("rejects malformed, unpublished, and incompatible artifacts", async () => {
-    await expectStorageError(
-      activateRuleCatalog(db, { manifestJson: "{", packageJson: [] }),
-      "INVALID_ARTIFACT_JSON",
-    );
-
-    const validArtifacts = catalogArtifacts(1);
-    const unpublishedPackage = clone(tariffPackageFixture) as unknown as Record<string, unknown>;
-    unpublishedPackage.status = "DRAFT";
-    unpublishedPackage.review = {
-      status: "DRAFT",
-      reviewedBy: null,
-      reviewedAt: null,
-      gitCommit: null,
-    };
-    const unpublished: RuleCatalogArtifacts = {
-      ...validArtifacts,
-      packageJson: validArtifacts.packageJson.map((json, index) =>
-        index === 0 ? JSON.stringify(unpublishedPackage) : json,
-      ),
-    };
-    await expectStorageError(activateRuleCatalog(db, unpublished), "INVALID_CATALOG");
-
-    const compatibleArtifacts = catalogArtifacts(1);
-    const incompatiblePackage = clone(tariffPackageFixture) as unknown as {
-      engineContractVersion: number;
-    };
-    incompatiblePackage.engineContractVersion = 2;
-    const incompatible: RuleCatalogArtifacts = {
-      ...compatibleArtifacts,
-      packageJson: compatibleArtifacts.packageJson.map((json, index) =>
-        index === 0 ? JSON.stringify(incompatiblePackage) : json,
-      ),
-    };
-    await expectStorageError(activateRuleCatalog(db, incompatible), "INVALID_CATALOG");
-
+  it("rejects artifacts that did not pass the cryptographic verifier", async () => {
+    const unverified = {
+      manifestJson: "{}",
+      packageJson: [],
+    } as unknown as VerifiedRuleCatalogArtifacts;
+    await expectStorageError(activateRuleCatalog(db, unverified), "UNVERIFIED_ARTIFACTS");
     expect(
       adapter.database.prepare("SELECT COUNT(*) count FROM rule_catalog_generations").get(),
     ).toEqual({ count: 0 });
   });
 
   it("rejects rollback generations and conflicting reuse of a generation", async () => {
-    await activateRuleCatalog(db, catalogArtifacts(1));
-    await activateRuleCatalog(db, catalogArtifacts(2));
+    const firstArtifacts = await catalogArtifacts(1);
+    const secondArtifacts = await catalogArtifacts(2);
+    await activateRuleCatalog(db, firstArtifacts);
+    await activateRuleCatalog(db, secondArtifacts);
 
-    await expectStorageError(activateRuleCatalog(db, catalogArtifacts(1)), "GENERATION_ROLLBACK");
+    await expectStorageError(activateRuleCatalog(db, firstArtifacts), "GENERATION_ROLLBACK");
 
-    const conflict = catalogArtifacts(2);
-    const conflictingManifest = JSON.parse(conflict.manifestJson) as typeof manifestFixture;
-    conflictingManifest.publishedAt = "2026-04-30T12:00:00Z";
-    await expectStorageError(
-      activateRuleCatalog(db, {
-        ...conflict,
-        manifestJson: JSON.stringify(conflictingManifest),
-      }),
-      "GENERATION_CONFLICT",
-    );
+    const conflict = await catalogArtifacts(2, "2026-04-30T12:00:00Z");
+    await expectStorageError(activateRuleCatalog(db, conflict), "GENERATION_CONFLICT");
 
     expect((await loadActiveRuleCatalog(db))?.generation).toBe(2);
   });
 
   it("enforces immutable catalog history and a monotonic active pointer in SQLite", async () => {
-    await activateRuleCatalog(db, catalogArtifacts(1));
-    await activateRuleCatalog(db, catalogArtifacts(2));
+    await activateRuleCatalog(db, await catalogArtifacts(1));
+    await activateRuleCatalog(db, await catalogArtifacts(2));
 
     expect(() =>
       adapter.database
@@ -248,7 +259,7 @@ describe("rule catalog repository", () => {
   });
 
   it("keeps the previous active catalog when a later activation fails", async () => {
-    await activateRuleCatalog(db, catalogArtifacts(1));
+    await activateRuleCatalog(db, await catalogArtifacts(1));
     adapter.database.exec(`
       CREATE TRIGGER reject_generation_two_package
       BEFORE INSERT ON rule_catalog_packages
@@ -256,7 +267,7 @@ describe("rule catalog repository", () => {
       BEGIN SELECT RAISE(ABORT, 'simulated package write failure'); END;
     `);
 
-    await expect(activateRuleCatalog(db, catalogArtifacts(2))).rejects.toThrow(
+    await expect(activateRuleCatalog(db, await catalogArtifacts(2))).rejects.toThrow(
       "simulated package write failure",
     );
 
@@ -274,8 +285,8 @@ describe("rule catalog repository", () => {
   });
 
   it("falls back to the previous valid activation when active storage is corrupt", async () => {
-    await activateRuleCatalog(db, catalogArtifacts(1));
-    await activateRuleCatalog(db, catalogArtifacts(2));
+    await activateRuleCatalog(db, await catalogArtifacts(1));
+    await activateRuleCatalog(db, await catalogArtifacts(2));
     adapter.database.exec(`
       DROP TRIGGER prevent_rule_catalog_package_update;
       DROP TRIGGER prevent_rule_catalog_generation_update;

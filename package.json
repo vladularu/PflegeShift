@@ -36,8 +36,10 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@js-temporal/polyfill": "^0.5.1",
+    "@noble/ed25519": "3.0.0",
     "@react-native-community/datetimepicker": "9.1.0",
     "ajv": "^8.20.0",
+    "canonicalize": "4.0.0",
     "expo": "~57.0.17",
     "expo-constants": "~57.0.15",
     "expo-crypto": "~57.0.2",

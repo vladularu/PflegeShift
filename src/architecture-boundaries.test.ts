@@ -24,6 +24,7 @@ describe("architecture boundaries", () => {
   it.each([
     ["domain", /^(application|composition|features|infrastructure|navigation|theme|ui)\//],
     ["engine", /^(application|composition|features|infrastructure|navigation|theme|ui)\//],
+    ["rules", /^(application|composition|engine|features|infrastructure|navigation|theme|ui)\//],
     ["application", /^(composition|features|infrastructure|navigation|theme|ui)\//],
     ["infrastructure", /^(application|composition|features|navigation|theme|ui)\//],
   ] as const)("keeps %s independent from outer layers", (layer, forbidden) => {
@@ -34,6 +35,12 @@ describe("architecture boundaries", () => {
     );
 
     expect(violations).toEqual([]);
+  });
+
+  it("keeps the rule catalog contract verifier independent from Expo and React Native", () => {
+    const source = readFileSync(join(SOURCE_ROOT, "rules", "rule-catalog-verification.ts"), "utf8");
+
+    expect(source).not.toMatch(/from\s+["'](?:expo(?:-|\/)|react-native)/);
   });
 
   it.each([

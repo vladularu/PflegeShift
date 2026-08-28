@@ -6,12 +6,12 @@ import {
   type ValidatedRuleCatalog,
   type ValidationIssue,
 } from "@/rules/validation";
+import {
+  isVerifiedRuleCatalogArtifacts,
+  type UntrustedRuleCatalogArtifacts,
+  type VerifiedRuleCatalogArtifacts,
+} from "@/rules/rule-catalog-verification";
 import { withImmediateTransaction } from "@/infrastructure/database/transaction";
-
-export interface RuleCatalogArtifacts {
-  readonly manifestJson: string;
-  readonly packageJson: readonly string[];
-}
 
 export type RuleCatalogActivationResult =
   | {
@@ -34,6 +34,7 @@ export interface LoadedRuleCatalog {
 export type RuleCatalogStorageErrorCode =
   | "INVALID_ARTIFACT_JSON"
   | "INVALID_CATALOG"
+  | "UNVERIFIED_ARTIFACTS"
   | "GENERATION_ROLLBACK"
   | "GENERATION_CONFLICT"
   | "CORRUPT_CATALOG_STORAGE";
@@ -102,7 +103,9 @@ function parseArtifact(json: string, label: string): unknown {
   }
 }
 
-function prepareCatalogArtifacts(artifacts: RuleCatalogArtifacts): PreparedCatalogArtifacts {
+function prepareCatalogArtifacts(
+  artifacts: UntrustedRuleCatalogArtifacts,
+): PreparedCatalogArtifacts {
   const manifestValue = parseArtifact(artifacts.manifestJson, "manifest");
   const packageValues = artifacts.packageJson.map((json, index) =>
     parseArtifact(json, `package ${index}`),
@@ -207,9 +210,15 @@ async function loadGeneration(
 
 export async function activateRuleCatalog(
   db: SQLiteDatabase,
-  artifacts: RuleCatalogArtifacts,
+  artifacts: VerifiedRuleCatalogArtifacts,
   activatedAt: Date = new Date(),
 ): Promise<RuleCatalogActivationResult> {
+  if (!isVerifiedRuleCatalogArtifacts(artifacts)) {
+    throw new RuleCatalogStorageError(
+      "UNVERIFIED_ARTIFACTS",
+      "Rule catalog artifacts must pass cryptographic verification before activation.",
+    );
+  }
   const prepared = prepareCatalogArtifacts(artifacts);
   const generation = prepared.catalog.manifest.generation;
   const timestamp = activatedAt.toISOString();
