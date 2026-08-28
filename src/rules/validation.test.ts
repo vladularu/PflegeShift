@@ -1,0 +1,145 @@
+import { describe, expect, it } from "vitest";
+
+import holidayPackageFixture from "../../rules/examples/holiday-package.valid.json";
+import legalPackageFixture from "../../rules/examples/legal-package.valid.json";
+import manifestFixture from "../../rules/examples/manifest.valid.json";
+import tariffPackageFixture from "../../rules/examples/tariff-package.valid.json";
+import {
+  validateManifest,
+  validateRuleCatalog,
+  validateRulePackage,
+  type ValidationResult,
+} from "./validation";
+
+function clone<T>(value: T): T {
+  return structuredClone(value);
+}
+
+function issueCodes(result: ValidationResult<unknown>): string[] {
+  expect(result.ok).toBe(false);
+  return result.ok ? [] : result.issues.map((entry) => entry.code);
+}
+
+describe("rule contract validation", () => {
+  it("accepts the versioned example catalog", () => {
+    expect(validateRulePackage(tariffPackageFixture).ok).toBe(true);
+    expect(validateRulePackage(legalPackageFixture).ok).toBe(true);
+    expect(validateRulePackage(holidayPackageFixture).ok).toBe(true);
+    expect(validateManifest(manifestFixture).ok).toBe(true);
+    expect(
+      validateRuleCatalog(manifestFixture, [
+        tariffPackageFixture,
+        legalPackageFixture,
+        holidayPackageFixture,
+      ]).ok,
+    ).toBe(true);
+  });
+
+  it("rejects executable or otherwise unknown fields", () => {
+    const rulePackage = clone(tariffPackageFixture) as Record<string, unknown>;
+    rulePackage.script = "return user.salary * 2";
+
+    expect(issueCodes(validateRulePackage(rulePackage))).toContain("SCHEMA_ADDITIONALPROPERTIES");
+  });
+
+  it("rejects fractional money values", () => {
+    const rulePackage = clone(tariffPackageFixture);
+    rulePackage.rules.payTables[0].entries[0].monthlyCents = 367500.5;
+
+    expect(issueCodes(validateRulePackage(rulePackage))).toContain("SCHEMA_TYPE");
+  });
+
+  it("rejects non-HTTPS sources and impossible dates", () => {
+    const insecurePackage = clone(legalPackageFixture);
+    insecurePackage.sources[0].url = "http://example.test/rules";
+    expect(issueCodes(validateRulePackage(insecurePackage))).toContain("SCHEMA_PATTERN");
+
+    const impossibleDatePackage = clone(legalPackageFixture);
+    impossibleDatePackage.validFrom = "2026-02-31";
+    expect(issueCodes(validateRulePackage(impossibleDatePackage))).toContain("INVALID_DATE");
+
+    const impossibleTimestampManifest = clone(manifestFixture);
+    impossibleTimestampManifest.publishedAt = "2026-02-31T12:00:00Z";
+    expect(issueCodes(validateManifest(impossibleTimestampManifest))).toContain(
+      "INVALID_TIMESTAMP",
+    );
+  });
+
+  it("requires review evidence for reviewed and published packages", () => {
+    const rulePackage = clone(legalPackageFixture);
+    rulePackage.review.reviewedBy = null as never;
+
+    expect(issueCodes(validateRulePackage(rulePackage))).toContain("SCHEMA_TYPE");
+  });
+
+  it("rejects complete tracks with gaps or overlaps", () => {
+    const gapManifest = clone(manifestFixture);
+    gapManifest.packages[0].validTo = "2026-12-31";
+    gapManifest.packages.splice(1, 0, {
+      ...clone(gapManifest.packages[0]),
+      versionId: "2027-02",
+      validFrom: "2027-02-01",
+      validTo: "2027-03-31",
+      path: "packages/tvoed-vka-bt-k/2027-02.json",
+      sha256: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    });
+    expect(issueCodes(validateManifest(gapManifest))).toContain("INCOMPLETE_TRACK_GAP");
+
+    const overlapManifest = clone(gapManifest);
+    overlapManifest.packages[1].validFrom = "2026-12-15";
+    expect(issueCodes(validateManifest(overlapManifest))).toContain("OVERLAPPING_PACKAGE_RANGE");
+  });
+
+  it("rejects dangling source and combination references", () => {
+    const unknownSourcePackage = clone(tariffPackageFixture);
+    unknownSourcePackage.rules.premiumRules[0].sourceIds = ["missing-source"];
+    expect(issueCodes(validateRulePackage(unknownSourcePackage))).toContain("UNKNOWN_SOURCE_ID");
+
+    const unknownMemberPackage = clone(tariffPackageFixture);
+    unknownMemberPackage.rules.combinationRules[0].memberRuleIds = ["night", "missing-rule"];
+    expect(issueCodes(validateRulePackage(unknownMemberPackage))).toContain(
+      "UNKNOWN_COMBINATION_MEMBER",
+    );
+  });
+
+  it("rejects invalid allowance ranges and work-pattern boundaries", () => {
+    const allowanceOutsidePackage = clone(tariffPackageFixture);
+    allowanceOutsidePackage.rules.allowanceRules[0].validFrom = "2026-04-30";
+    expect(issueCodes(validateRulePackage(allowanceOutsidePackage))).toContain(
+      "ALLOWANCE_OUTSIDE_PACKAGE_RANGE",
+    );
+
+    const invalidBoundaries = clone(tariffPackageFixture);
+    invalidBoundaries.rules.workPatternPolicy.shiftWindowBoundaries.dayEndMinute = 1300;
+    expect(issueCodes(validateRulePackage(invalidBoundaries))).toContain(
+      "INVALID_SHIFT_WINDOW_BOUNDARIES",
+    );
+
+    const impossibleMonthDay = clone(tariffPackageFixture);
+    impossibleMonthDay.rules.premiumRules[0].conditions.monthDays = ["02-31"] as never;
+    expect(issueCodes(validateRulePackage(impossibleMonthDay))).toContain("INVALID_MONTH_DAY");
+  });
+
+  it("enforces holiday scope semantics", () => {
+    const rulePackage = clone(holidayPackageFixture);
+    rulePackage.rules.holidays[0].federalStates = ["BY"];
+
+    expect(issueCodes(validateRulePackage(rulePackage))).toContain("INVALID_HOLIDAY_SCOPE");
+  });
+
+  it("rejects manifest descriptors that differ from their package", () => {
+    const manifest = clone(manifestFixture);
+    manifest.tracks[0].coverageTo = "2027-04-30";
+    manifest.packages[0].validTo = "2027-04-30";
+
+    expect(
+      issueCodes(
+        validateRuleCatalog(manifest, [
+          tariffPackageFixture,
+          legalPackageFixture,
+          holidayPackageFixture,
+        ]),
+      ),
+    ).toContain("DESCRIPTOR_PACKAGE_MISMATCH");
+  });
+});

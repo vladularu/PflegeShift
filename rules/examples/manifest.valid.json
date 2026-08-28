@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "generation": 1,
+  "channel": "PREVIEW",
+  "publishedAt": "2026-04-20T12:00:00Z",
+  "rollbackOfGeneration": null,
+  "tracks": [
+    {
+      "packageId": "tvoed-vka-bt-k",
+      "kind": "TARIFF",
+      "coverageFrom": "2026-05-01",
+      "coverageTo": "2027-03-31",
+      "coverage": "COMPLETE"
+    },
+    {
+      "packageId": "de-arbzg-care",
+      "kind": "LEGAL",
+      "coverageFrom": "2026-01-01",
+      "coverageTo": null,
+      "coverage": "COMPLETE"
+    },
+    {
+      "packageId": "de-holidays",
+      "kind": "HOLIDAY",
+      "coverageFrom": "2026-01-01",
+      "coverageTo": "2026-12-31",
+      "coverage": "COMPLETE"
+    }
+  ],
+  "packages": [
+    {
+      "packageId": "tvoed-vka-bt-k",
+      "versionId": "2026-05",
+      "kind": "TARIFF",
+      "engineContractVersion": 1,
+      "validFrom": "2026-05-01",
+      "validTo": "2027-03-31",
+      "path": "packages/tvoed-vka-bt-k/2026-05.json",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sizeBytes": 4096
+    },
+    {
+      "packageId": "de-arbzg-care",
+      "versionId": "2026-01",
+      "kind": "LEGAL",
+      "engineContractVersion": 1,
+      "validFrom": "2026-01-01",
+      "validTo": null,
+      "path": "packages/de-arbzg-care/2026-01.json",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "sizeBytes": 3072
+    },
+    {
+      "packageId": "de-holidays",
+      "versionId": "2026",
+      "kind": "HOLIDAY",
+      "engineContractVersion": 1,
+      "validFrom": "2026-01-01",
+      "validTo": "2026-12-31",
+      "path": "packages/de-holidays/2026.json",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "sizeBytes": 2048
+    }
+  ],
+  "signing": {
+    "algorithm": "ED25519",
+    "canonicalization": "RFC8785",
+    "keyId": "preview-2026",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  }
+}

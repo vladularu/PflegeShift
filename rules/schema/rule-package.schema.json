@@ -1,0 +1,791 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pflegeshift.app/schemas/rule-package-v1.json",
+  "title": "PflegeShift Rule Package",
+  "description": "A typed, reviewable package of tariff, legal, or public-holiday rules. Executable code is not allowed.",
+  "oneOf": [
+    { "$ref": "#/$defs/tariffPackage" },
+    { "$ref": "#/$defs/legalPackage" },
+    { "$ref": "#/$defs/holidayPackage" }
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$"
+    },
+    "versionIdentifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^[0-9A-Za-z]+(?:[._-][0-9A-Za-z]+)*$"
+    },
+    "isoDate": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\\.[0-9]{1,3})?Z$"
+    },
+    "nullableDate": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/isoDate" }]
+    },
+    "nullableIdentifier": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/identifier" }]
+    },
+    "nullableString": {
+      "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
+    },
+    "sourceIds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "federalState": {
+      "enum": [
+        "BW",
+        "BY",
+        "BE",
+        "BB",
+        "HB",
+        "HH",
+        "HE",
+        "MV",
+        "NI",
+        "NW",
+        "RP",
+        "SL",
+        "SN",
+        "ST",
+        "SH",
+        "TH"
+      ]
+    },
+    "jurisdiction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["country", "federalStates"],
+      "properties": {
+        "country": { "const": "DE" },
+        "federalStates": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/federalState" }
+            }
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "url", "documentDate", "section", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "url": { "type": "string", "pattern": "^https://" },
+        "documentDate": { "$ref": "#/$defs/isoDate" },
+        "section": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewedBy", "reviewedAt", "gitCommit"],
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": { "enum": ["LEGACY_EMBEDDED", "DRAFT"] },
+            "reviewedBy": { "type": "null" },
+            "reviewedAt": { "type": "null" },
+            "gitCommit": { "type": "null" }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": { "enum": ["REVIEWED", "PUBLISHED"] },
+            "reviewedBy": { "type": "string", "minLength": 1, "maxLength": 120 },
+            "reviewedAt": { "$ref": "#/$defs/utcTimestamp" },
+            "gitCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+          }
+        }
+      ],
+      "properties": {
+        "status": {
+          "enum": ["LEGACY_EMBEDDED", "DRAFT", "REVIEWED", "PUBLISHED"]
+        },
+        "reviewedBy": { "$ref": "#/$defs/nullableString" },
+        "reviewedAt": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/utcTimestamp" }]
+        },
+        "gitCommit": {
+          "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{40}$" }]
+        }
+      }
+    },
+    "rounding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["moneyScale", "mode", "stage"],
+      "properties": {
+        "moneyScale": { "const": 2 },
+        "mode": { "const": "HALF_UP" },
+        "stage": { "enum": ["PER_LINE", "AFTER_SUM"] }
+      }
+    },
+    "packageBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "engineContractVersion",
+        "packageId",
+        "versionId",
+        "kind",
+        "label",
+        "status",
+        "validFrom",
+        "validTo",
+        "jurisdiction",
+        "sources",
+        "review",
+        "rounding",
+        "rules"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "engineContractVersion": { "const": 1 },
+        "packageId": { "$ref": "#/$defs/identifier" },
+        "versionId": { "$ref": "#/$defs/versionIdentifier" },
+        "kind": { "enum": ["TARIFF", "LEGAL", "HOLIDAY"] },
+        "label": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "status": {
+          "enum": ["LEGACY_EMBEDDED", "DRAFT", "REVIEWED", "PUBLISHED"]
+        },
+        "validFrom": { "$ref": "#/$defs/isoDate" },
+        "validTo": { "$ref": "#/$defs/nullableDate" },
+        "jurisdiction": { "$ref": "#/$defs/jurisdiction" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/source" }
+        },
+        "review": { "$ref": "#/$defs/review" },
+        "rounding": { "$ref": "#/$defs/rounding" },
+        "rules": {}
+      }
+    },
+    "conditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiresShiftTypes",
+        "excludesShiftTypes",
+        "payGroups",
+        "sectors",
+        "federalStates",
+        "holidayPremiumModes",
+        "allowanceStatuses",
+        "monthDays"
+      ],
+      "properties": {
+        "requiresShiftTypes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "excludesShiftTypes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "payGroups": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/identifier" }
+            }
+          ]
+        },
+        "sectors": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "enum": ["BT_K", "BT_B"] }
+            }
+          ]
+        },
+        "federalStates": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/federalState" }
+            }
+          ]
+        },
+        "holidayPremiumModes": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "enum": ["WITH_TIME_OFF", "WITHOUT_TIME_OFF"] }
+            }
+          ]
+        },
+        "allowanceStatuses": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "SHIFT_MONTHLY",
+                  "SHIFT_HOURLY",
+                  "ALTERNATING_MONTHLY",
+                  "ALTERNATING_HOURLY"
+                ]
+              }
+            }
+          ]
+        },
+        "monthDays": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^(0[1-9]|1[0-2])-([0-2][0-9]|3[01])$"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "timeWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startMinute", "endMinute"],
+      "properties": {
+        "startMinute": { "type": "integer", "minimum": 0, "maximum": 1439 },
+        "endMinute": { "type": "integer", "minimum": 0, "maximum": 1439 }
+      }
+    },
+    "payTableEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["groupId", "stepId", "monthlyCents", "hourlyCents"],
+      "properties": {
+        "groupId": { "$ref": "#/$defs/identifier" },
+        "stepId": { "$ref": "#/$defs/identifier" },
+        "monthlyCents": { "type": "integer", "minimum": 0 },
+        "hourlyCents": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "payTable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "entries", "sourceIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/payTableEntry" }
+        },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "premiumRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "premiumType",
+        "percentageBasisPoints",
+        "rateBasis",
+        "referenceStepId",
+        "timeWindow",
+        "conditions",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "premiumType": {
+          "enum": [
+            "NIGHT",
+            "SUNDAY",
+            "HOLIDAY_WITH_TIME_OFF",
+            "HOLIDAY_WITHOUT_TIME_OFF",
+            "SATURDAY",
+            "PRE_HOLIDAY",
+            "OVERTIME"
+          ]
+        },
+        "percentageBasisPoints": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "rateBasis": { "enum": ["INDIVIDUAL_HOURLY", "TABLE_STEP"] },
+        "referenceStepId": { "$ref": "#/$defs/nullableIdentifier" },
+        "timeWindow": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/timeWindow" }]
+        },
+        "conditions": { "$ref": "#/$defs/conditions" },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "allowanceRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "allowanceType",
+        "amountKind",
+        "amountCents",
+        "prorateByPartTime",
+        "validFrom",
+        "validTo",
+        "conditions",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "allowanceType": { "$ref": "#/$defs/identifier" },
+        "amountKind": { "enum": ["FIXED_MONTHLY", "FIXED_HOURLY"] },
+        "amountCents": { "type": "integer", "minimum": 0 },
+        "prorateByPartTime": { "type": "boolean" },
+        "validFrom": { "$ref": "#/$defs/isoDate" },
+        "validTo": { "$ref": "#/$defs/nullableDate" },
+        "conditions": { "$ref": "#/$defs/conditions" },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "combinationRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "memberRuleIds", "mode", "priorityRuleIds", "sourceIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "memberRuleIds": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "mode": { "enum": ["STACK", "EXCLUSIVE_HIGHEST", "PRIORITY"] },
+        "priorityRuleIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "workPatternRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "metric", "comparator", "threshold", "windowDays", "sourceIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "metric": {
+          "enum": [
+            "CONSECUTIVE_NIGHT_SHIFTS",
+            "WORKED_MINUTES",
+            "NIGHT_MINUTES",
+            "CONSECUTIVE_WORK_DAYS"
+          ]
+        },
+        "comparator": { "enum": ["GT", "GTE", "EQ"] },
+        "threshold": { "type": "integer", "minimum": 0 },
+        "windowDays": {
+          "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 1, "maximum": 366 }]
+        },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "workPatternPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nightWindow",
+        "nightQualificationMinutes",
+        "recurringNightShiftCount",
+        "recurringWindowMonths",
+        "regularChangeCount",
+        "shiftWorkMinimumShifts",
+        "shiftWorkMinimumWindows",
+        "alternatingMinimumShifts",
+        "alternatingMinimumWindows",
+        "assessmentLookbackMonths",
+        "shiftWindowBoundaries",
+        "sourceIds"
+      ],
+      "properties": {
+        "nightWindow": { "$ref": "#/$defs/timeWindow" },
+        "nightQualificationMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1440
+        },
+        "recurringNightShiftCount": { "type": "integer", "minimum": 1 },
+        "recurringWindowMonths": { "type": "integer", "minimum": 1, "maximum": 24 },
+        "regularChangeCount": { "type": "integer", "minimum": 1 },
+        "shiftWorkMinimumShifts": { "type": "integer", "minimum": 1 },
+        "shiftWorkMinimumWindows": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "alternatingMinimumShifts": { "type": "integer", "minimum": 1 },
+        "alternatingMinimumWindows": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "assessmentLookbackMonths": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "shiftWindowBoundaries": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["nightEndMinute", "earlyEndMinute", "dayEndMinute", "nightStartMinute"],
+          "properties": {
+            "nightEndMinute": { "type": "integer", "minimum": 0, "maximum": 1439 },
+            "earlyEndMinute": { "type": "integer", "minimum": 0, "maximum": 1439 },
+            "dayEndMinute": { "type": "integer", "minimum": 0, "maximum": 1439 },
+            "nightStartMinute": { "type": "integer", "minimum": 0, "maximum": 1439 }
+          }
+        },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "tariffRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selector",
+        "payTables",
+        "premiumRules",
+        "allowanceRules",
+        "combinationRules",
+        "workPatternRules",
+        "workPatternPolicy"
+      ],
+      "properties": {
+        "selector": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["agreementId", "specialPartId", "payTableId"],
+          "properties": {
+            "agreementId": { "$ref": "#/$defs/identifier" },
+            "specialPartId": { "$ref": "#/$defs/identifier" },
+            "payTableId": { "$ref": "#/$defs/identifier" }
+          }
+        },
+        "payTables": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/payTable" }
+        },
+        "premiumRules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/premiumRule" }
+        },
+        "allowanceRules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/allowanceRule" }
+        },
+        "combinationRules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/combinationRule" }
+        },
+        "workPatternRules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/workPatternRule" }
+        },
+        "workPatternPolicy": { "$ref": "#/$defs/workPatternPolicy" }
+      }
+    },
+    "tariffPackage": {
+      "allOf": [
+        { "$ref": "#/$defs/packageBase" },
+        {
+          "type": "object",
+          "required": ["kind", "rules"],
+          "properties": {
+            "kind": { "const": "TARIFF" },
+            "rules": { "$ref": "#/$defs/tariffRules" }
+          }
+        }
+      ]
+    },
+    "breakTier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overMinutes", "requiredMinutes"],
+      "properties": {
+        "overMinutes": { "type": "integer", "minimum": 0 },
+        "requiredMinutes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "restDeviation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sectorIds",
+        "minimumMinutes",
+        "compensationMinutes",
+        "compensationWithinDays",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "sectorIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "minimumMinutes": { "type": "integer", "minimum": 0 },
+        "compensationMinutes": { "type": "integer", "minimum": 0 },
+        "compensationWithinDays": { "type": "integer", "minimum": 1, "maximum": 366 },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "legalRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workingTime", "breaks", "nightWork", "restPeriod", "planning"],
+      "properties": {
+        "workingTime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "standardDailyMinutes",
+            "maxDailyMinutes",
+            "nightAverageMinutes",
+            "workWeekLastDay",
+            "absenceWorkdaysPerWeek",
+            "grossPlanningWarningMinutes",
+            "sourceIds"
+          ],
+          "properties": {
+            "standardDailyMinutes": { "type": "integer", "minimum": 1, "maximum": 1440 },
+            "maxDailyMinutes": { "type": "integer", "minimum": 1, "maximum": 1440 },
+            "nightAverageMinutes": { "type": "integer", "minimum": 1, "maximum": 1440 },
+            "workWeekLastDay": { "type": "integer", "minimum": 1, "maximum": 7 },
+            "absenceWorkdaysPerWeek": { "type": "integer", "minimum": 1, "maximum": 7 },
+            "grossPlanningWarningMinutes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2880
+            },
+            "sourceIds": { "$ref": "#/$defs/sourceIds" }
+          }
+        },
+        "breaks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimumSegmentMinutes", "tiers", "sourceIds"],
+          "properties": {
+            "minimumSegmentMinutes": { "type": "integer", "minimum": 1, "maximum": 1440 },
+            "tiers": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/breakTier" }
+            },
+            "sourceIds": { "$ref": "#/$defs/sourceIds" }
+          }
+        },
+        "nightWork": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "startMinute",
+            "endMinute",
+            "qualification",
+            "averageWindowDays",
+            "sourceIds"
+          ],
+          "properties": {
+            "startMinute": { "type": "integer", "minimum": 0, "maximum": 1439 },
+            "endMinute": { "type": "integer", "minimum": 0, "maximum": 1439 },
+            "qualification": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["comparator", "thresholdMinutes"],
+              "properties": {
+                "comparator": { "enum": ["GT", "GTE", "EQ"] },
+                "thresholdMinutes": { "type": "integer", "minimum": 1, "maximum": 1440 }
+              }
+            },
+            "averageWindowDays": {
+              "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 1, "maximum": 366 }]
+            },
+            "sourceIds": { "$ref": "#/$defs/sourceIds" }
+          }
+        },
+        "restPeriod": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["defaultMinutes", "deviations", "sourceIds"],
+          "properties": {
+            "defaultMinutes": { "type": "integer", "minimum": 1, "maximum": 1440 },
+            "deviations": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/restDeviation" }
+            },
+            "sourceIds": { "$ref": "#/$defs/sourceIds" }
+          }
+        },
+        "planning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "consecutiveWorkDaysWarning",
+            "consecutiveNightShiftsWarning",
+            "consecutiveWeekendGapDays",
+            "lateEarlyDayGap",
+            "sourceIds"
+          ],
+          "properties": {
+            "consecutiveWorkDaysWarning": { "type": "integer", "minimum": 1 },
+            "consecutiveNightShiftsWarning": { "type": "integer", "minimum": 1 },
+            "consecutiveWeekendGapDays": { "type": "integer", "minimum": 1 },
+            "lateEarlyDayGap": { "type": "integer", "minimum": 1 },
+            "sourceIds": { "$ref": "#/$defs/sourceIds" }
+          }
+        }
+      }
+    },
+    "legalPackage": {
+      "allOf": [
+        { "$ref": "#/$defs/packageBase" },
+        {
+          "type": "object",
+          "required": ["kind", "rules"],
+          "properties": {
+            "kind": { "const": "LEGAL" },
+            "rules": { "$ref": "#/$defs/legalRules" }
+          }
+        }
+      ]
+    },
+    "holiday": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "scope",
+        "federalStates",
+        "validFrom",
+        "validTo",
+        "calculation",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "scope": { "enum": ["NATIONWIDE", "STATEWIDE"] },
+        "federalStates": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/federalState" }
+            }
+          ]
+        },
+        "validFrom": { "$ref": "#/$defs/isoDate" },
+        "validTo": { "$ref": "#/$defs/isoDate" },
+        "calculation": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type", "month", "day"],
+              "properties": {
+                "type": { "const": "FIXED_DATE" },
+                "month": { "type": "integer", "minimum": 1, "maximum": 12 },
+                "day": { "type": "integer", "minimum": 1, "maximum": 31 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type", "offsetDays"],
+              "properties": {
+                "type": { "const": "EASTER_OFFSET" },
+                "offsetDays": { "type": "integer", "minimum": -100, "maximum": 100 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type"],
+              "properties": { "type": { "const": "REPENTANCE_DAY" } }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type", "date"],
+              "properties": {
+                "type": { "const": "SPECIFIC_DATE" },
+                "date": { "$ref": "#/$defs/isoDate" }
+              }
+            }
+          ]
+        },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "holidayRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["holidays"],
+      "properties": {
+        "holidays": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/holiday" }
+        }
+      }
+    },
+    "holidayPackage": {
+      "allOf": [
+        { "$ref": "#/$defs/packageBase" },
+        {
+          "type": "object",
+          "required": ["kind", "rules"],
+          "properties": {
+            "kind": { "const": "HOLIDAY" },
+            "rules": { "$ref": "#/$defs/holidayRules" }
+          }
+        }
+      ]
+    }
+  }
+}
