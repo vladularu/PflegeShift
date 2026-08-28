@@ -14,7 +14,11 @@ import {
   restPeriods,
   type ComplianceInterval as Interval,
 } from "@/engine/compliance-sequences";
-import { getPublicHolidays } from "@/engine/holidays";
+import {
+  checkNightWorkingTimeAverage,
+  isNightWork,
+  qualifyAsNightWorkerIncrementally,
+} from "@/engine/compliance-night-work";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import type { RuleLegalRules } from "@/rules/contracts.generated";
 import { getLegalCalculationWindow } from "@/rules/calculation-windows";
@@ -37,6 +41,7 @@ export interface ComplianceOptions {
   readonly federalState?: FederalState;
   readonly referenceDate?: string;
   readonly weeklyMinutes?: number;
+  readonly regularRotatingNightWork?: boolean;
   readonly ruleResolver?: RuleResolver;
   readonly sectorId?: string;
 }
@@ -48,6 +53,14 @@ function isRelevant(shift: ShiftEntry): boolean {
     RELEVANT_TYPES.has(shift.type) &&
     shift.startTime !== null &&
     shift.endTime !== null
+  );
+}
+
+function compareIntervalsByRecordedStart(left: Interval, right: Interval): number {
+  return (
+    left.shift.date.localeCompare(right.shift.date) ||
+    (left.shift.startTime ?? "").localeCompare(right.shift.startTime ?? "") ||
+    left.shift.id.localeCompare(right.shift.id)
   );
 }
 
@@ -158,11 +171,6 @@ function hours(minutes: number): string {
   return `${Math.round((minutes / 60) * 100) / 100} h`;
 }
 
-function durationLabel(minutes: number): string {
-  const rounded = Math.max(0, Math.round(minutes));
-  return `${Math.floor(rounded / 60)}:${String(rounded % 60).padStart(2, "0")} h`;
-}
-
 function germanQuantity(value: number, capitalize = false): string {
   const words: Readonly<Record<number, string>> = {
     5: "fünf",
@@ -179,66 +187,6 @@ function dateLabel(date: Temporal.PlainDate): string {
 
 function minutesBetween(left: Temporal.ZonedDateTime, right: Temporal.ZonedDateTime): number {
   return Math.round(Number(right.epochMilliseconds - left.epochMilliseconds) / 60_000);
-}
-
-function zonedMinute(
-  date: Temporal.PlainDate,
-  minuteOfDay: number,
-  timeZone: string,
-): Temporal.ZonedDateTime {
-  const hour = Math.floor(minuteOfDay / 60);
-  const minute = minuteOfDay % 60;
-  return Temporal.ZonedDateTime.from(
-    {
-      timeZone,
-      year: date.year,
-      month: date.month,
-      day: date.day,
-      hour,
-      minute,
-    },
-    { disambiguation: hour < 12 ? "later" : "earlier" },
-  );
-}
-
-function nightWorkMinutes(item: Interval, rules: RuleLegalRules): number {
-  let total = 0;
-  let date = item.start.toPlainDate().subtract({ days: 1 });
-  const lastDate = item.end.toPlainDate();
-  while (Temporal.PlainDate.compare(date, lastDate) <= 0) {
-    const nightStart = zonedMinute(date, rules.nightWork.startMinute, item.start.timeZoneId);
-    const nightEnd = zonedMinute(
-      rules.nightWork.endMinute <= rules.nightWork.startMinute ? date.add({ days: 1 }) : date,
-      rules.nightWork.endMinute,
-      item.start.timeZoneId,
-    );
-    const overlapStart =
-      Temporal.ZonedDateTime.compare(item.start, nightStart) > 0 ? item.start : nightStart;
-    const overlapEnd = Temporal.ZonedDateTime.compare(item.end, nightEnd) < 0 ? item.end : nightEnd;
-    if (Temporal.ZonedDateTime.compare(overlapEnd, overlapStart) > 0) {
-      total += minutesBetween(overlapStart, overlapEnd);
-    }
-    date = date.add({ days: 1 });
-  }
-  return total;
-}
-
-function compareThreshold(
-  value: number,
-  comparator: "GT" | "GTE" | "EQ",
-  threshold: number,
-): boolean {
-  if (comparator === "GT") return value > threshold;
-  if (comparator === "GTE") return value >= threshold;
-  return value === threshold;
-}
-
-function isNightWork(item: Interval, rules: RuleLegalRules): boolean {
-  return compareThreshold(
-    nightWorkMinutes(item, rules),
-    rules.nightWork.qualification.comparator,
-    rules.nightWork.qualification.thresholdMinutes,
-  );
 }
 
 function checkDuplicates(intervals: readonly Interval[]): ComplianceIssue[] {
@@ -363,6 +311,7 @@ function requiredBreakMinutes(netMinutes: number, rules: RuleLegalRules): number
 function checkWorkingTime(
   intervals: readonly Interval[],
   rules: RuleLegalRules,
+  nightWorkerQualified: boolean,
 ): ComplianceIssue[] {
   const issues: ComplianceIssue[] = [];
   for (const items of workGroupsByRecordedDate(intervals)) {
@@ -385,7 +334,10 @@ function checkWorkingTime(
           date,
         ),
       );
-    } else if (net > rules.workingTime.standardDailyMinutes && !containsNightWork) {
+    } else if (
+      net > rules.workingTime.standardDailyMinutes &&
+      !(containsNightWork && nightWorkerQualified)
+    ) {
       issues.push(
         issue(
           "warning",
@@ -470,115 +422,6 @@ function checkWorkingTime(
     }
   }
   return issues;
-}
-
-function publicHolidayDatesForMonth(
-  month: string,
-  federalState: FederalState | undefined,
-  ruleResolver: RuleResolver,
-): ReadonlySet<string> {
-  if (!federalState) return new Set();
-  const year = Number(month.slice(0, 4));
-  return new Set(
-    getPublicHolidays(year, federalState, ruleResolver).map((holiday) => holiday.date),
-  );
-}
-
-function statutoryWorkdaysInMonth(
-  month: string,
-  holidays: ReadonlySet<string>,
-  workWeekLastDay: number,
-): number {
-  const first = Temporal.PlainDate.from(`${month}-01`);
-  const end = first.add({ months: 1 });
-  let count = 0;
-  for (let date = first; Temporal.PlainDate.compare(date, end) < 0; date = date.add({ days: 1 })) {
-    if (date.dayOfWeek <= workWeekLastDay && !holidays.has(date.toString())) count += 1;
-  }
-  return count;
-}
-
-function creditedAbsenceMinutes(
-  month: string,
-  shifts: readonly ShiftEntry[],
-  workedDates: ReadonlySet<string>,
-  holidays: ReadonlySet<string>,
-  weeklyMinutes: number | undefined,
-  absenceWorkdaysPerWeek: number,
-): number {
-  if (!weeklyMinutes || weeklyMinutes <= 0) return 0;
-  const dailyMinutes = Math.round(weeklyMinutes / absenceWorkdaysPerWeek);
-  const creditedDates = new Set<string>();
-  for (const shift of shifts) {
-    if (
-      shift.deletedAt !== null ||
-      !shift.date.startsWith(`${month}-`) ||
-      (shift.type !== "VACATION" && shift.type !== "SICK") ||
-      workedDates.has(shift.date) ||
-      creditedDates.has(shift.date)
-    )
-      continue;
-    const date = Temporal.PlainDate.from(shift.date);
-    if (date.dayOfWeek <= absenceWorkdaysPerWeek && !holidays.has(shift.date)) {
-      creditedDates.add(shift.date);
-    }
-  }
-  return creditedDates.size * dailyMinutes;
-}
-
-function checkNightWorkingTimeAverage(
-  month: string,
-  intervals: readonly Interval[],
-  shifts: readonly ShiftEntry[],
-  options: ComplianceOptions,
-  referenceDate: Temporal.PlainDate,
-  rules: RuleLegalRules,
-  ruleResolver: RuleResolver,
-): ComplianceIssue[] {
-  const monthIntervals = intervals.filter((item) => item.shift.date.startsWith(`${month}-`));
-  const extendedNightGroups = workGroupsByRecordedDate(monthIntervals).filter(
-    (items) =>
-      items.some((item) => isNightWork(item, rules)) &&
-      items.reduce((sum, item) => sum + item.netMinutes, 0) > rules.workingTime.nightAverageMinutes,
-  );
-  if (extendedNightGroups.length === 0) return [];
-
-  const holidays = publicHolidayDatesForMonth(month, options.federalState, ruleResolver);
-  const workdayCount = statutoryWorkdaysInMonth(month, holidays, rules.workingTime.workWeekLastDay);
-  if (workdayCount === 0) return [];
-
-  const workedDates = new Set(monthIntervals.map((item) => item.shift.date));
-  const workedMinutes = monthIntervals.reduce((sum, item) => sum + item.netMinutes, 0);
-  const absenceMinutes = creditedAbsenceMinutes(
-    month,
-    shifts,
-    workedDates,
-    holidays,
-    options.weeklyMinutes,
-    rules.workingTime.absenceWorkdaysPerWeek,
-  );
-  const averageMinutes = (workedMinutes + absenceMinutes) / workdayCount;
-  if (averageMinutes <= rules.workingTime.nightAverageMinutes) return [];
-
-  const monthEnd = Temporal.PlainDate.from(`${month}-01`).add({ months: 1 }).subtract({ days: 1 });
-  const overdue = Temporal.PlainDate.compare(referenceDate, monthEnd) > 0;
-  const related = extendedNightGroups.flatMap((items) => items.map((item) => item.shift));
-  const averageWindow =
-    rules.nightWork.averageWindowDays === null
-      ? "eines Kalendermonats"
-      : rules.nightWork.averageWindowDays === 28
-        ? "eines Kalendermonats oder vier Wochen"
-        : `eines Kalendermonats oder ${rules.nightWork.averageWindowDays} Tagen`;
-  return [
-    issue(
-      overdue ? "critical" : "warning",
-      "LEGAL",
-      "ARBZG_6_NIGHT_AVERAGE",
-      overdue ? "Ausgleich der Nachtarbeitszeit fehlt" : "Ausgleich der Nachtarbeitszeit offen",
-      `Der eingetragene Durchschnitt beträgt ${durationLabel(averageMinutes)} je Werktag bei ${workdayCount} Werktagen. Für Nachtarbeit sind innerhalb ${averageWindow} durchschnittlich höchstens ${durationLabel(rules.workingTime.nightAverageMinutes)} zulässig.`,
-      related,
-    ),
-  ];
 }
 
 function checkRestAndSequence(
@@ -729,14 +572,26 @@ export function* calculateMonthlyComplianceSteps(
     options.referenceDate ?? Temporal.Now.plainDateISO(timeZone).toString(),
   );
   const first = Temporal.PlainDate.from(`${month}-01`);
-  const rules = requireResolvedPackage(ruleResolver.resolveLegal(first.toString())).rules;
+  const legalPackage = requireResolvedPackage(ruleResolver.resolveLegal(first.toString()));
+  const rules = legalPackage.rules;
   const calculationWindow = getLegalCalculationWindow(first.toString(), ruleResolver);
-  const start = first.subtract({ days: calculationWindow.lookbackDays }).toString();
-  const end = first
+  const baseStart = first.subtract({ days: calculationWindow.lookbackDays });
+  const baseEnd = first
     .add({ months: 1 })
     .subtract({ days: 1 })
-    .add({ days: calculationWindow.lookaheadDays })
-    .toString();
+    .add({ days: calculationWindow.lookaheadDays });
+  const yearStart = Temporal.PlainDate.from({ year: first.year, month: 1, day: 1 });
+  const yearEnd = Temporal.PlainDate.from({ year: first.year, month: 12, day: 31 });
+  const start = (
+    calculationWindow.calendarYearCoverage && Temporal.PlainDate.compare(yearStart, baseStart) < 0
+      ? yearStart
+      : baseStart
+  ).toString();
+  const end = (
+    calculationWindow.calendarYearCoverage && Temporal.PlainDate.compare(yearEnd, baseEnd) > 0
+      ? yearEnd
+      : baseEnd
+  ).toString();
   const preparation = prepareComplianceIntervalsIncrementally(shifts, timeZone);
   while (true) {
     const step = preparation.next();
@@ -746,30 +601,55 @@ export function* calculateMonthlyComplianceSteps(
   const intervals = shifts
     .filter((shift) => isRelevant(shift) && shift.date >= start && shift.date <= end)
     .map((shift) => toInterval(shift, timeZone))
-    .sort((left, right) => Temporal.ZonedDateTime.compare(left.start, right.start));
+    .sort(compareIntervalsByRecordedStart);
+  const assessmentStart = baseStart.toString();
+  const assessmentEnd = baseEnd.toString();
+  const assessmentIntervals = intervals.filter(
+    (item) => item.shift.date >= assessmentStart && item.shift.date <= assessmentEnd,
+  );
+  const nightWorkerQualification = qualifyAsNightWorkerIncrementally(
+    intervals,
+    rules,
+    legalPackage.engineContractVersion,
+    first.year,
+    options,
+  );
+  let nightWorkerQualified = false;
+  while (true) {
+    const step = nightWorkerQualification.next();
+    if (step.done) {
+      nightWorkerQualified = step.value;
+      break;
+    }
+    yield step.value;
+  }
   yield 1;
   const issues: ComplianceIssue[] = [];
-  issues.push(...checkDuplicates(intervals));
+  issues.push(...checkDuplicates(assessmentIntervals));
   yield 2;
-  issues.push(...checkOverlaps(intervals));
+  issues.push(...checkOverlaps(assessmentIntervals));
   yield 3;
-  issues.push(...checkWorkingTime(intervals, rules));
+  issues.push(...checkWorkingTime(assessmentIntervals, rules, nightWorkerQualified));
   yield 4;
   issues.push(
     ...checkNightWorkingTimeAverage(
       month,
-      intervals,
+      assessmentIntervals,
       shifts,
       options,
       referenceDate,
       rules,
       ruleResolver,
+      legalPackage.engineContractVersion,
+      nightWorkerQualified,
     ),
   );
   yield 5;
-  issues.push(...checkRestAndSequence(intervals, referenceDate, rules, options.sectorId ?? "care"));
+  issues.push(
+    ...checkRestAndSequence(assessmentIntervals, referenceDate, rules, options.sectorId ?? "care"),
+  );
   yield 6;
-  issues.push(...checkPlanningSeries(intervals, rules));
+  issues.push(...checkPlanningSeries(assessmentIntervals, rules));
   const monthIssues = issues.filter((item) => item.date.startsWith(`${month}-`));
   return {
     month,

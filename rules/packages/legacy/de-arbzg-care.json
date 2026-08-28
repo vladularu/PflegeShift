@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "engineContractVersion": 1,
+  "engineContractVersion": 3,
   "packageId": "de-arbzg-care-legacy",
-  "versionId": "code-fea614c",
+  "versionId": "contract-v3-2026-08",
   "kind": "LEGAL",
-  "label": "ArbZG- und Planungslogik Legacy",
+  "label": "ArbZG- und Planungslogik lokal v3",
   "status": "LEGACY_EMBEDDED",
   "validFrom": "1900-01-01",
   "validTo": null,
@@ -20,6 +20,14 @@
       "documentDate": "2026-08-28",
       "section": "src/engine/compliance.ts vor WP2",
       "sha256": "d848a5077731c7a1dddd9ddc07ed6d1df68b8579f68a03c95a84bf5ed2e3c272"
+    },
+    {
+      "id": "arbzg-2024",
+      "title": "Arbeitszeitgesetz (ArbZG)",
+      "url": "https://www.gesetze-im-internet.de/arbzg/ArbZG.pdf",
+      "documentDate": "2024-10-23",
+      "section": "§§ 2 bis 6; Stand der letzten Änderung durch Art. 52 G vom 23.10.2024",
+      "sha256": "4f02827be6307ad728f4aeb318aff28751422b251973d3350b93e9ec11554e84"
     }
   ],
   "review": {
@@ -41,7 +49,7 @@
       "workWeekLastDay": 6,
       "absenceWorkdaysPerWeek": 5,
       "grossPlanningWarningMinutes": 960,
-      "sourceIds": ["legacy-compliance-code"]
+      "sourceIds": ["arbzg-2024", "legacy-compliance-code"]
     },
     "breaks": {
       "minimumSegmentMinutes": 15,
@@ -55,7 +63,7 @@
           "requiredMinutes": 45
         }
       ],
-      "sourceIds": ["legacy-compliance-code"]
+      "sourceIds": ["arbzg-2024"]
     },
     "nightWork": {
       "startMinute": 1380,
@@ -64,8 +72,12 @@
         "comparator": "GT",
         "thresholdMinutes": 120
       },
+      "workerQualification": {
+        "regularRotatingNightWorkRequiresConfirmation": true,
+        "annualNightWorkDaysThreshold": 48
+      },
       "averageWindowDays": 28,
-      "sourceIds": ["legacy-compliance-code"]
+      "sourceIds": ["arbzg-2024"]
     },
     "restPeriod": {
       "defaultMinutes": 660,
@@ -76,10 +88,10 @@
           "minimumMinutes": 600,
           "compensationMinutes": 720,
           "compensationWithinDays": 28,
-          "sourceIds": ["legacy-compliance-code"]
+          "sourceIds": ["arbzg-2024"]
         }
       ],
-      "sourceIds": ["legacy-compliance-code"]
+      "sourceIds": ["arbzg-2024"]
     },
     "planning": {
       "consecutiveWorkDaysWarning": 7,

@@ -293,7 +293,7 @@ describe("ArbZG compliance", () => {
     expect(result.issues.some((item) => item.rule === "ARBZG_3_MAX_10H")).toBe(false);
   });
 
-  it("does not flag one compensated night shift as an individual over-eight-hour issue", () => {
+  it("keeps one night shift under section 3 until night-worker status is established", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
       [shift("night", "2026-07-01", "21:00", "07:30", 60, "NIGHT")],
@@ -301,7 +301,7 @@ describe("ArbZG compliance", () => {
       { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
     );
 
-    expect(result.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(false);
+    expect(result.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(true);
     expect(result.issues.some((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE")).toBe(false);
   });
 
@@ -316,7 +316,12 @@ describe("ArbZG compliance", () => {
       "2026-07",
       [shift("actual-night", "2026-07-01", "21:00", "07:30", 60, "DAY")],
       "Europe/Berlin",
-      { federalState: "NW", referenceDate: "2026-08-01", weeklyMinutes: 2_310 },
+      {
+        federalState: "NW",
+        referenceDate: "2026-08-01",
+        weeklyMinutes: 2_310,
+        regularRotatingNightWork: true,
+      },
     );
 
     expect(daytime.issues.some((item) => item.rule === "ARBZG_3_OVER_8H")).toBe(true);
@@ -338,11 +343,13 @@ describe("ArbZG compliance", () => {
       federalState: "NW",
       referenceDate: "2026-07-15",
       weeklyMinutes: 2_310,
+      regularRotatingNightWork: true,
     }).issues.find((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE");
     const expired = calculateMonthlyCompliance("2026-07", denseNightMonth, "Europe/Berlin", {
       federalState: "NW",
       referenceDate: "2026-08-01",
       weeklyMinutes: 2_310,
+      regularRotatingNightWork: true,
     }).issues.find((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE");
 
     expect(open).toMatchObject({
@@ -353,6 +360,94 @@ describe("ArbZG compliance", () => {
       severity: "critical",
       title: "Ausgleich der Nachtarbeitszeit fehlt",
     });
+  });
+
+  it("accepts the four-week alternative when the calendar-month average alone is high", () => {
+    const dates = [...Array.from({ length: 19 }, (_, index) => index + 1), 29, 30, 31];
+    const shifts = dates.map((day) =>
+      shift(
+        `night-${day}`,
+        `2026-07-${String(day).padStart(2, "0")}`,
+        "21:00",
+        "08:00",
+        60,
+        "NIGHT",
+      ),
+    );
+
+    const result = calculateMonthlyCompliance("2026-07", shifts, "Europe/Berlin", {
+      federalState: "NW",
+      referenceDate: "2026-09-01",
+      regularRotatingNightWork: true,
+    });
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE")).toBe(false);
+  });
+
+  it("does not invent working time for vacation or sickness under legal contract v3", () => {
+    const nightShifts = Array.from({ length: 21 }, (_, index) =>
+      shift(
+        `night-${index + 1}`,
+        `2026-07-${String(index + 1).padStart(2, "0")}`,
+        "21:00",
+        "08:00",
+        60,
+        "NIGHT",
+      ),
+    );
+    const absences = Array.from({ length: 5 }, (_, index) => ({
+      ...shift(`vacation-${index + 1}`, `2026-07-${String(index + 22).padStart(2, "0")}`),
+      type: "VACATION" as const,
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+    }));
+
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [...nightShifts, ...absences],
+      "Europe/Berlin",
+      {
+        federalState: "NW",
+        referenceDate: "2026-09-01",
+        weeklyMinutes: 2_310,
+        regularRotatingNightWork: true,
+      },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE")).toBe(false);
+  });
+
+  it("establishes night-worker status from 48 recorded night-work days in the year", () => {
+    const januaryNights = Array.from({ length: 17 }, (_, index) =>
+      shift(
+        `january-night-${index + 1}`,
+        `2026-01-${String(index + 1).padStart(2, "0")}`,
+        "21:00",
+        "07:30",
+        60,
+        "NIGHT",
+      ),
+    );
+    const julyNights = Array.from({ length: 31 }, (_, index) =>
+      shift(
+        `july-night-${index + 1}`,
+        `2026-07-${String(index + 1).padStart(2, "0")}`,
+        "21:00",
+        "07:30",
+        60,
+        "NIGHT",
+      ),
+    );
+
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [...januaryNights, ...julyNights],
+      "Europe/Berlin",
+      { federalState: "NW", referenceDate: "2026-09-01" },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_6_NIGHT_AVERAGE")).toBe(true);
   });
 
   it("keeps night duties above ten net hours immediately critical", () => {

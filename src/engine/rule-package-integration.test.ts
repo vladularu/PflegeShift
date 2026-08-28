@@ -171,6 +171,8 @@ describe("rule-package-driven calculation engine", () => {
     const tariff = clone(BUNDLED_TARIFF_RULES[1]);
     tariff.rules.workPatternPolicy.assessmentLookbackMonths = 1;
     const legal = clone(BUNDLED_LEGAL_RULES[0]);
+    legal.engineContractVersion = 1;
+    delete legal.rules.nightWork.workerQualification;
     legal.rules.nightWork.averageWindowDays = 5;
     legal.rules.restPeriod.deviations[0].compensationWithinDays = 5;
     legal.rules.planning.consecutiveWorkDaysWarning = 2;

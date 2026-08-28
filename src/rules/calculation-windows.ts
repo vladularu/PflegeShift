@@ -8,6 +8,7 @@ import {
 export interface LegalCalculationWindow {
   readonly lookbackDays: number;
   readonly lookaheadDays: number;
+  readonly calendarYearCoverage: boolean;
 }
 
 export function getTariffAssessmentLookbackMonths(
@@ -24,7 +25,8 @@ export function getLegalCalculationWindow(
   effectiveDate: string,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): LegalCalculationWindow {
-  const rules = requireResolvedPackage(ruleResolver.resolveLegal(effectiveDate)).rules;
+  const legalPackage = requireResolvedPackage(ruleResolver.resolveLegal(effectiveDate));
+  const rules = legalPackage.rules;
   return Object.freeze({
     lookbackDays:
       Math.max(
@@ -36,5 +38,7 @@ export function getLegalCalculationWindow(
       rules.nightWork.averageWindowDays ?? 0,
       ...rules.restPeriod.deviations.map((deviation) => deviation.compensationWithinDays),
     ),
+    calendarYearCoverage:
+      legalPackage.engineContractVersion === 3 && rules.nightWork.workerQualification !== undefined,
   });
 }

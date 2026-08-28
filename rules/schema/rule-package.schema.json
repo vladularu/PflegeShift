@@ -169,7 +169,7 @@
       ],
       "properties": {
         "schemaVersion": { "const": 1 },
-        "engineContractVersion": { "enum": [1, 2] },
+        "engineContractVersion": { "enum": [1, 2, 3] },
         "packageId": { "$ref": "#/$defs/identifier" },
         "versionId": { "$ref": "#/$defs/versionIdentifier" },
         "kind": { "enum": ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -655,6 +655,22 @@
                 "thresholdMinutes": { "type": "integer", "minimum": 1, "maximum": 1440 }
               }
             },
+            "workerQualification": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "regularRotatingNightWorkRequiresConfirmation",
+                "annualNightWorkDaysThreshold"
+              ],
+              "properties": {
+                "regularRotatingNightWorkRequiresConfirmation": { "const": true },
+                "annualNightWorkDaysThreshold": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 366
+                }
+              }
+            },
             "averageWindowDays": {
               "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 1, "maximum": 366 }]
             },
@@ -701,7 +717,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
-            "engineContractVersion": { "const": 1 },
+            "engineContractVersion": { "enum": [1, 3] },
             "kind": { "const": "LEGAL" },
             "rules": { "$ref": "#/$defs/legalRules" }
           }

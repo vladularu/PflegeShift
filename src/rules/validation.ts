@@ -385,6 +385,24 @@ function validateLegalPackage(
   issues: ValidationIssue[],
 ): void {
   const { rules } = rulePackage;
+  const workerQualification = rules.nightWork.workerQualification;
+  if (rulePackage.engineContractVersion === 3 && workerQualification === undefined) {
+    issues.push(
+      issue(
+        "MISSING_NIGHT_WORKER_QUALIFICATION",
+        "/rules/nightWork/workerQualification",
+        "Legal engine contract v3 requires night-worker qualification rules.",
+      ),
+    );
+  } else if (rulePackage.engineContractVersion === 1 && workerQualification !== undefined) {
+    issues.push(
+      issue(
+        "UNSUPPORTED_NIGHT_WORKER_QUALIFICATION",
+        "/rules/nightWork/workerQualification",
+        "Legal engine contract v1 must not define night-worker qualification rules.",
+      ),
+    );
+  }
   if (rules.workingTime.maxDailyMinutes <= rules.workingTime.standardDailyMinutes) {
     issues.push(
       issue(

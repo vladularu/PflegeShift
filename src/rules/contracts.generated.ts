@@ -37,7 +37,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2;
+  engineContractVersion: 1 | 2 | 3;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -119,7 +119,7 @@ export type RuleReview1 =
 export type RuleSourceIds = [RuleIdentifier, ...RuleIdentifier[]];
 export type RuleNullableIdentifier = null | RuleIdentifier;
 export type RuleLegalPackage = RulePackageBase & {
-  engineContractVersion?: 1;
+  engineContractVersion?: 1 | 3;
   kind: "LEGAL";
   rules: RuleLegalRules;
 };
@@ -131,7 +131,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2;
+  engineContractVersion: 1 | 2 | 3;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -310,6 +310,10 @@ export interface RuleLegalRules {
     qualification: {
       comparator: "GT" | "GTE" | "EQ";
       thresholdMinutes: number;
+    };
+    workerQualification?: {
+      regularRotatingNightWorkRequiresConfirmation: true;
+      annualNightWorkDaysThreshold: number;
     };
     averageWindowDays: null | number;
     sourceIds: RuleSourceIds;
