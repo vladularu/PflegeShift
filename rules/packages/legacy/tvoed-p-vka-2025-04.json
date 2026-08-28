@@ -1,0 +1,924 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 1,
+  "packageId": "tvoed-p-vka-legacy",
+  "versionId": "2025-04",
+  "kind": "TARIFF",
+  "label": "TVöD-P VKA · 01.04.2025–30.04.2026",
+  "status": "LEGACY_EMBEDDED",
+  "validFrom": "2025-04-01",
+  "validTo": "2026-04-30",
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "legacy-tariff-code",
+      "title": "Legacy-Codebestand der TVoeD-P-Tabellen",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/tariff.ts",
+      "documentDate": "2026-08-28",
+      "section": "src/engine/tariff.ts vor WP2",
+      "sha256": "c4957fd9fd399f1cd414af39abdd161377e9a29d753729960b6100d1eea2ba11"
+    },
+    {
+      "id": "legacy-pay-code",
+      "title": "Legacy-Codebestand der Gehalts- und Zuschlagslogik",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "src/engine/pay.ts vor WP2",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    }
+  ],
+  "review": {
+    "status": "LEGACY_EMBEDDED",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "gitCommit": null
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "PER_LINE"
+  },
+  "rules": {
+    "selector": {
+      "agreementId": "tvoed-vka",
+      "specialPartId": "bt-p",
+      "payTableId": "p-2025-04"
+    },
+    "payTables": [
+      {
+        "id": "p-2025-04",
+        "entries": [
+          {
+            "groupId": "p7",
+            "stepId": "s2",
+            "monthlyCents": 341469,
+            "hourlyCents": 2014
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s3",
+            "monthlyCents": 360040,
+            "hourlyCents": 2124
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s4",
+            "monthlyCents": 388943,
+            "hourlyCents": 2294
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s5",
+            "monthlyCents": 403657,
+            "hourlyCents": 2380
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s6",
+            "monthlyCents": 418813,
+            "hourlyCents": 2470
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s2",
+            "monthlyCents": 360040,
+            "hourlyCents": 2124
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s3",
+            "monthlyCents": 375759,
+            "hourlyCents": 2216
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s4",
+            "monthlyCents": 396457,
+            "hourlyCents": 2338
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s5",
+            "monthlyCents": 413222,
+            "hourlyCents": 2437
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s6",
+            "monthlyCents": 436671,
+            "hourlyCents": 2575
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s2",
+            "monthlyCents": 388365,
+            "hourlyCents": 2290
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s3",
+            "monthlyCents": 407043,
+            "hourlyCents": 2401
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s4",
+            "monthlyCents": 419492,
+            "hourlyCents": 2474
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s5",
+            "monthlyCents": 443443,
+            "hourlyCents": 2615
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s6",
+            "monthlyCents": 453543,
+            "hourlyCents": 2675
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s2",
+            "monthlyCents": 407043,
+            "hourlyCents": 2401
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s3",
+            "monthlyCents": 419492,
+            "hourlyCents": 2474
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s4",
+            "monthlyCents": 454807,
+            "hourlyCents": 2682
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s5",
+            "monthlyCents": 471851,
+            "hourlyCents": 2783
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s6",
+            "monthlyCents": 482584,
+            "hourlyCents": 2846
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s2",
+            "monthlyCents": 429933,
+            "hourlyCents": 2535
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s3",
+            "monthlyCents": 443317,
+            "hourlyCents": 2615
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s4",
+            "monthlyCents": 476777,
+            "hourlyCents": 2811
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s5",
+            "monthlyCents": 498997,
+            "hourlyCents": 2943
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s6",
+            "monthlyCents": 509099,
+            "hourlyCents": 3002
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s2",
+            "monthlyCents": 453037,
+            "hourlyCents": 2671
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s3",
+            "monthlyCents": 467180,
+            "hourlyCents": 2755
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s4",
+            "monthlyCents": 502533,
+            "hourlyCents": 2964
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s5",
+            "monthlyCents": 524250,
+            "hourlyCents": 3091
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s6",
+            "monthlyCents": 534351,
+            "hourlyCents": 3151
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s2",
+            "monthlyCents": 476146,
+            "hourlyCents": 2808
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s3",
+            "monthlyCents": 491045,
+            "hourlyCents": 2896
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s4",
+            "monthlyCents": 528290,
+            "hourlyCents": 3116
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s5",
+            "monthlyCents": 555183,
+            "hourlyCents": 3274
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s6",
+            "monthlyCents": 562128,
+            "hourlyCents": 3315
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s2",
+            "monthlyCents": 487697,
+            "hourlyCents": 2876
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s3",
+            "monthlyCents": 502976,
+            "hourlyCents": 2966
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s4",
+            "monthlyCents": 541169,
+            "hourlyCents": 3192
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s5",
+            "monthlyCents": 593062,
+            "hourlyCents": 3497
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s6",
+            "monthlyCents": 602531,
+            "hourlyCents": 3554
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s2",
+            "monthlyCents": 499250,
+            "hourlyCents": 2945
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s3",
+            "monthlyCents": 514906,
+            "hourlyCents": 3037
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s4",
+            "monthlyCents": 554047,
+            "hourlyCents": 3268
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s5",
+            "monthlyCents": 600891,
+            "hourlyCents": 3544
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s6",
+            "monthlyCents": 618780,
+            "hourlyCents": 3649
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s2",
+            "monthlyCents": 509732,
+            "hourlyCents": 3006
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s3",
+            "monthlyCents": 526839,
+            "hourlyCents": 3107
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s4",
+            "monthlyCents": 582078,
+            "hourlyCents": 3433
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s5",
+            "monthlyCents": 646470,
+            "hourlyCents": 3812
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s6",
+            "monthlyCents": 674874,
+            "hourlyCents": 3980
+          }
+        ],
+        "sourceIds": ["legacy-tariff-code"]
+      }
+    ],
+    "premiumRules": [
+      {
+        "id": "night",
+        "label": "Nacht",
+        "premiumType": "NIGHT",
+        "percentageBasisPoints": 2000,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": {
+          "startMinute": 1260,
+          "endMinute": 360
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "sunday",
+        "label": "Sonntag",
+        "premiumType": "SUNDAY",
+        "percentageBasisPoints": 2500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "holiday-with-time-off",
+        "label": "Feiertag mit Freizeitausgleich",
+        "premiumType": "HOLIDAY_WITH_TIME_OFF",
+        "percentageBasisPoints": 3500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": ["WITH_TIME_OFF"],
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "holiday-without-time-off",
+        "label": "Feiertag ohne Freizeitausgleich",
+        "premiumType": "HOLIDAY_WITHOUT_TIME_OFF",
+        "percentageBasisPoints": 13500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": ["WITHOUT_TIME_OFF"],
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "saturday",
+        "label": "Samstag 13–21 Uhr",
+        "premiumType": "SATURDAY",
+        "percentageBasisPoints": 2000,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": {
+          "startMinute": 780,
+          "endMinute": 1260
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "pre-holiday",
+        "label": "24./31. Dezember",
+        "premiumType": "PRE_HOLIDAY",
+        "percentageBasisPoints": 3500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": {
+          "startMinute": 360,
+          "endMinute": 0
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": ["12-24", "12-31"]
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "overtime-p7-p8",
+        "label": "Ueberstunden P7-P8",
+        "premiumType": "OVERTIME",
+        "percentageBasisPoints": 3000,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": ["p7", "p8"],
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "overtime-p9-p16",
+        "label": "Ueberstunden P9-P16",
+        "premiumType": "OVERTIME",
+        "percentageBasisPoints": 1500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      }
+    ],
+    "allowanceRules": [
+      {
+        "id": "shift-monthly-old",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 4000,
+        "prorateByPartTime": true,
+        "validFrom": "2025-04-01",
+        "validTo": "2025-06-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "alternating-monthly-old",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 15500,
+        "prorateByPartTime": true,
+        "validFrom": "2025-04-01",
+        "validTo": "2025-06-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "shift-hourly-old",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 24,
+        "prorateByPartTime": false,
+        "validFrom": "2025-04-01",
+        "validTo": "2025-06-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "alternating-hourly-old",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 93,
+        "prorateByPartTime": false,
+        "validFrom": "2025-04-01",
+        "validTo": "2025-06-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "shift-monthly-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 10000,
+        "prorateByPartTime": true,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "alternating-monthly-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 25000,
+        "prorateByPartTime": true,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "shift-hourly-bt-k-non-bw-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 60,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": [
+            "BY",
+            "BE",
+            "BB",
+            "HB",
+            "HH",
+            "HE",
+            "MV",
+            "NI",
+            "NW",
+            "RP",
+            "SL",
+            "SN",
+            "ST",
+            "SH",
+            "TH"
+          ],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "shift-hourly-other-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 59,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": ["BW"],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "shift-hourly-bt-b-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 59,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "alternating-hourly-bt-k-non-bw-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 149,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": [
+            "BY",
+            "BE",
+            "BB",
+            "HB",
+            "HH",
+            "HE",
+            "MV",
+            "NI",
+            "NW",
+            "RP",
+            "SL",
+            "SN",
+            "ST",
+            "SH",
+            "TH"
+          ],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "alternating-hourly-other-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 147,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": ["BW"],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "alternating-hourly-bt-b-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 147,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "care-monthly",
+        "allowanceType": "care",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 13796,
+        "prorateByPartTime": true,
+        "validFrom": "2025-04-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "tvoed-monthly-bw",
+        "allowanceType": "tvoed",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 3500,
+        "prorateByPartTime": true,
+        "validFrom": "2025-04-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": ["BW"],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      },
+      {
+        "id": "tvoed-monthly-other",
+        "allowanceType": "tvoed",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 2500,
+        "prorateByPartTime": true,
+        "validFrom": "2025-04-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": [
+            "BY",
+            "BE",
+            "BB",
+            "HB",
+            "HH",
+            "HE",
+            "MV",
+            "NI",
+            "NW",
+            "RP",
+            "SL",
+            "SN",
+            "ST",
+            "SH",
+            "TH"
+          ],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["legacy-pay-code"]
+      }
+    ],
+    "combinationRules": [
+      {
+        "id": "calendar-day-priority",
+        "memberRuleIds": [
+          "holiday-without-time-off",
+          "holiday-with-time-off",
+          "pre-holiday",
+          "sunday",
+          "saturday"
+        ],
+        "mode": "PRIORITY",
+        "priorityRuleIds": [
+          "holiday-without-time-off",
+          "holiday-with-time-off",
+          "pre-holiday",
+          "sunday",
+          "saturday"
+        ],
+        "sourceIds": ["legacy-pay-code"]
+      }
+    ],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": {
+        "startMinute": 1260,
+        "endMinute": 360
+      },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["legacy-pay-code"]
+    }
+  }
+}
