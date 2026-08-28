@@ -26,6 +26,18 @@ Every public calculation keeps the bundled resolver as its default and accepts a
 
 The production default is still the immutable `LEGACY_EMBEDDED` catalog. WP2b does not download or persist packages, activate a manifest, verify signatures, contact Supabase, or make the current legacy packages publishable. Those remain separate delivery and governance work.
 
+## Local catalog persistence
+
+WP3a adds the storage half of the future activation flow without making downloaded rules trusted or active in the app runtime:
+
+- SQLite migration 10 creates append-only catalog generations, their raw package JSON, and one active-generation pointer in the existing SQLCipher database.
+- `src/infrastructure/database/rule-catalog-repository.ts` parses the raw artifacts and calls the authoritative `validateRuleCatalog()` function before opening a write transaction.
+- A new generation, all of its packages, and the active pointer are written with `BEGIN IMMEDIATE` on the already-keyed database connection. Concurrent writes are serialized per connection; any failed statement rolls back the complete candidate and leaves the prior pointer unchanged.
+- Generations below the active generation are rejected. Repeating the exact active bytes is idempotent; reusing a generation with different bytes is a conflict.
+- Earlier activated generations remain stored. If the current persisted generation can no longer pass structural and semantic validation, loading scans downward and returns the most recent earlier valid activation as the last-known-good catalog.
+
+The repository stores the original JSON strings so a later verifier can retain the exact downloaded artifacts. WP3a does **not** verify manifest signatures, compare package bytes with descriptor SHA-256 or size, download artifacts, contact Supabase, or inject a stored resolver into calculations. Until those later gates exist, production calculations continue to use `LEGACY_EMBEDDED`, and untrusted network artifacts must not be passed to the activation repository.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.
