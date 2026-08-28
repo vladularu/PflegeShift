@@ -35,7 +35,7 @@ hinterlegt. Normative Werte und Produktentscheidungen werden getrennt behandelt:
 
 ## Tarifprüfung
 
-Der Tarifprüfer bestätigt gegen die beiden hinterlegten VKA-Lesefassungen:
+Der Projekt-Owner gleicht gegen die beiden hinterlegten VKA-Lesefassungen ab:
 
 - genau 50 Tabellenwerte der Anlage E ab 1. Mai 2026;
 - Ableitung des Stundenentgelts nach dem im Paket dokumentierten Divisor
@@ -51,7 +51,7 @@ ersetzen keine Tarifprüfung.
 
 ## ArbZG-Prüfung
 
-Der Rechtsprüfer bestätigt gegen die hinterlegte amtliche ArbZG-Fassung:
+Der Projekt-Owner gleicht gegen die hinterlegte amtliche ArbZG-Fassung ab:
 
 - acht Stunden Regelarbeitszeit und zehn Stunden Höchstgrenze;
 - 30/45 Minuten Pause nach mehr als sechs/neun Stunden sowie 15-Minuten-Segmente;
@@ -61,13 +61,13 @@ Der Rechtsprüfer bestätigt gegen die hinterlegte amtliche ArbZG-Fassung:
 - Verkürzung auf zehn Stunden in Krankenhaus/Pflege nur zusammen mit zwölf Stunden
   Ausgleich innerhalb von vier Wochen.
 
-Die separat gekennzeichneten Planungswarnungen benötigen eine Produktfreigabe, keine
-gesetzliche Freigabe. Insbesondere sind Serien- und Wochenendwarnungen keine selbständigen
-ArbZG-Verstöße.
+Die separat gekennzeichneten Planungswarnungen benötigen eine bewusste Ownerentscheidung,
+keine gesetzliche Freigabe. Insbesondere sind Serien- und Wochenendwarnungen keine
+selbständigen ArbZG-Verstöße.
 
 ## Feiertagsprüfung
 
-Der Rechtsprüfer bestätigt alle 19 Regeln, insbesondere:
+Der Projekt-Owner gleicht alle 19 Regeln mit den hinterlegten Quellen ab, insbesondere:
 
 - die neun bundesweiten Regeln und sämtliche Oster-Offsets;
 - Ländergruppen für Heilige Drei Könige, Frauentag, Fronleichnam, Reformationstag und
@@ -115,28 +115,32 @@ als gesetzlichen Feiertag in Sachsen.
 
 Der Bürgerservice weist darauf hin, dass seine konsolidierte Darstellung keine amtliche
 Fassung ersetzt; rechtlich maßgeblich bleibt die angegebene Fundstelle Amtsblatt 1976,
-Seite 211. Der Rechtsprüfer bestätigt deshalb weiterhin § 2 SFG sowie die in der amtlichen
+Seite 211. Der Owner gleicht deshalb weiterhin § 2 SFG sowie die in der amtlichen
 StVO-Liste belegten länderübergreifenden Regeln gegen das jeweils geltende
-Landesfeiertagsrecht. Auch die übrigen normalisierten Portalnachweise ersetzen weder die
-jeweilige amtliche Verkündung noch die fachliche Rechtsprüfung. Bis zu dieser Bestätigung
-bleibt `de-holidays/2026` zwingend `DRAFT`.
+Landesfeiertagsrecht ab. Auch die übrigen normalisierten Portalnachweise ersetzen weder die
+jeweilige amtliche Verkündung noch eine Rechtsberatung. Bis zum dokumentierten Abschluss
+dieses Abgleichs bleibt `de-holidays/2026` zwingend `DRAFT`.
 
-## Vier-Augen-Freigabe
+## Solo-Owner-Freigabe
 
 1. Die unveränderten DRAFT-Dateien werden in einem eigenen Commit festgeschrieben.
-2. Tarif-, Rechts- und Produktprüfer prüfen genau diesen 40-stelligen Git-Commit.
-3. Beanstandungen erzeugen neue DRAFT-Inhalte und eine erneute Prüfung.
-4. Erst nach vollständiger Zustimmung folgt ein eigener Promotion-Commit. Er ändert nur
-   `status` und `review` auf `REVIEWED` und trägt Prüfer, UTC-Zeit und den geprüften
-   DRAFT-Commit ein.
-5. Erst die REVIEWED-Dateien dürfen in eine Release-Anforderung aufgenommen werden.
-6. Signierung erfolgt separat mit einem privaten Schlüssel aus einem geschützten Secret
+2. Der Projekt-Owner prüft genau diesen 40-stelligen Git-Commit anhand der Tarif-, ArbZG-,
+   Feiertags- und Produktchecklisten dieses Dossiers. Eine zweite Person ist nicht
+   vorgeschrieben.
+3. Beanstandungen erzeugen neue DRAFT-Inhalte und einen erneuten Owner-Abgleich.
+4. Erst nach abgeschlossenem Abgleich folgt ein eigener Promotion-Commit. Er ändert nur
+   `status` und `review` auf `REVIEWED` und trägt eine stabile nicht personenbezogene
+   Owner-ID, den automatisch erfassten UTC-Zeitpunkt und den geprüften DRAFT-Commit ein.
+5. Weder Klarname noch Rollenangabe sind erforderlich. `REVIEWED` dokumentiert den
+   Quellenabgleich durch den Owner und ist keine juristische Zertifizierung.
+6. Erst die REVIEWED-Dateien dürfen in eine Release-Anforderung aufgenommen werden.
+7. Signierung erfolgt separat mit einem privaten Schlüssel aus einem geschützten Secret
    Store. Der private Schlüssel gehört niemals in Repository, App-Bundle, Dossier oder
    Supabase-Tabelle.
 
 ## Technische Abnahme
 
-Vor Übergabe an die Prüfer müssen erfolgreich sein:
+Vor der Owner-Freigabe müssen erfolgreich sein:
 
 ```text
 npm.cmd run rules:validate

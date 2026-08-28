@@ -85,11 +85,19 @@ export type RuleFederalState =
   | "TH";
 export type RuleReview = {
   status: "LEGACY_EMBEDDED" | "DRAFT" | "REVIEWED" | "PUBLISHED";
-  reviewedBy: RuleNullableString;
+  /**
+   * Stable non-personal reviewer identifier. The solo project owner may self-review; a legal name, separate role, or second reviewer is not required.
+   */
+  reviewedBy: null | string;
+  /**
+   * UTC timestamp recorded when the documented owner review is completed.
+   */
   reviewedAt: null | RuleUtcTimestamp;
+  /**
+   * Exact 40-character Git commit containing the rule content that was reviewed.
+   */
   gitCommit: null | string;
 } & RuleReview1;
-export type RuleNullableString = null | string;
 export type RuleUtcTimestamp = string;
 export type RuleReview1 =
   | {

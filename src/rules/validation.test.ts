@@ -72,6 +72,14 @@ describe("rule contract validation", () => {
     expect(issueCodes(validateRulePackage(rulePackage))).toContain("SCHEMA_TYPE");
   });
 
+  it("accepts a solo owner review without a legal name, role, or second reviewer", () => {
+    const rulePackage = clone(legalPackageFixture);
+    rulePackage.review.reviewedBy = "project-owner";
+
+    expect(validateRulePackage(rulePackage).ok).toBe(true);
+    expect(rulePackage.review).not.toHaveProperty("role");
+  });
+
   it("rejects complete tracks with gaps or overlaps", () => {
     const gapManifest = clone(manifestFixture);
     gapManifest.packages[0].validTo = "2026-12-31";
