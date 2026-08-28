@@ -8,6 +8,7 @@ import type {
 } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
 import { calculateDailyWorkCredit } from "@/engine/daily-summary";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 function category(): { minutes: number; entryCount: number } {
   return { minutes: 0, entryCount: 0 };
@@ -20,10 +21,13 @@ function freezeCategory(value: MonthlySummaryCategory): MonthlySummaryCategory {
 export function calculateMonthlyTargetMinutes(
   month: string,
   profile: Pick<UserProfile, "federalState" | "weeklyMinutes">,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): number {
   const yearMonth = Temporal.PlainYearMonth.from(month);
   const holidayDates = new Set(
-    getPublicHolidays(yearMonth.year, profile.federalState).map((holiday) => holiday.date),
+    getPublicHolidays(yearMonth.year, profile.federalState, ruleResolver).map(
+      (holiday) => holiday.date,
+    ),
   );
   let workingDays = 0;
 
@@ -41,6 +45,7 @@ export function calculateMonthlySummary(
   month: string,
   entries: readonly ShiftEntry[],
   profile: Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlySummary {
   const work = category();
   const training = category();
@@ -66,7 +71,7 @@ export function calculateMonthlySummary(
 
   let overlapMinutes = 0;
   for (const [date, dayEntries] of entriesByDate) {
-    const day = calculateDailyWorkCredit(date, dayEntries, profile);
+    const day = calculateDailyWorkCredit(date, dayEntries, profile, ruleResolver);
     work.minutes += day.workMinutes;
     training.minutes += day.trainingMinutes;
     vacation.minutes += day.vacationMinutes;
@@ -75,7 +80,7 @@ export function calculateMonthlySummary(
   }
 
   const actualMinutes = work.minutes + training.minutes + vacation.minutes + sick.minutes;
-  const targetMinutes = calculateMonthlyTargetMinutes(month, profile);
+  const targetMinutes = calculateMonthlyTargetMinutes(month, profile, ruleResolver);
 
   return Object.freeze({
     month,

@@ -12,8 +12,9 @@ import {
   type AnnualReport,
 } from "@/features/analysis/annual-report";
 import { useLocalReferenceDate } from "@/features/analysis/use-local-reference-date";
-import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 import { recordDiagnostic } from "@/infrastructure/diagnostics";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
+import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 
 interface AnnualReportState {
   readonly entries: readonly CalendarEntry[];
@@ -21,6 +22,7 @@ interface AnnualReportState {
   readonly profile: UserProfile;
   readonly referenceDate: string;
   readonly report: AnnualReport | null;
+  readonly ruleResolver: RuleResolver;
   readonly tariffDecisions: readonly MonthlyTariffDecision[];
   readonly workPatternSettings: TvoedWorkPatternSettings;
   readonly year: number;
@@ -36,6 +38,7 @@ export function useDeferredAnnualReport({
   enabled,
   entries,
   profile,
+  ruleResolver = bundledRuleResolver,
   tariffDecisions,
   workPatternSettings,
   year,
@@ -43,6 +46,7 @@ export function useDeferredAnnualReport({
   readonly enabled: boolean;
   readonly entries: readonly CalendarEntry[];
   readonly profile: UserProfile | null;
+  readonly ruleResolver?: RuleResolver;
   readonly tariffDecisions: readonly MonthlyTariffDecision[];
   readonly workPatternSettings: TvoedWorkPatternSettings;
   readonly year: number;
@@ -59,6 +63,7 @@ export function useDeferredAnnualReport({
     state.entries === entries &&
     state.profile === profile &&
     state.referenceDate === referenceDate &&
+    state.ruleResolver === ruleResolver &&
     state.tariffDecisions === tariffDecisions &&
     state.workPatternSettings === workPatternSettings &&
     state.year === year;
@@ -76,6 +81,7 @@ export function useDeferredAnnualReport({
       workPatternSettings,
       cache.current,
       referenceDate,
+      ruleResolver,
     );
     const advance = () => {
       try {
@@ -88,6 +94,7 @@ export function useDeferredAnnualReport({
             profile,
             referenceDate,
             report: step.value,
+            ruleResolver,
             tariffDecisions,
             workPatternSettings,
             year,
@@ -104,6 +111,7 @@ export function useDeferredAnnualReport({
             profile,
             referenceDate,
             report: null,
+            ruleResolver,
             tariffDecisions,
             workPatternSettings,
             year,
@@ -123,6 +131,7 @@ export function useDeferredAnnualReport({
     profile,
     referenceDate,
     retryRevision,
+    ruleResolver,
     tariffDecisions,
     workPatternSettings,
     year,

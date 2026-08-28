@@ -7,6 +7,7 @@ import {
   usePflegeShiftStatus,
   usePflegeShiftTariff,
 } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { currentMonth, formatDateTitle, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { formatMinutes } from "@/engine/working-time";
@@ -35,6 +36,7 @@ export function PremiumDetailsScreen() {
   const { profile } = usePflegeShiftProfile();
   const { entries } = usePflegeShiftEntries();
   const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
+  const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const parsedMonth = parseMonthRouteParam(params.month);
   const month =
     parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);
@@ -54,7 +56,7 @@ export function PremiumDetailsScreen() {
   }
   if (!ready || profile === null) return <LoadingView />;
 
-  const { allowanceShifts, monthShifts } = selectAnalysisEntryWindow(entries, month);
+  const { allowanceShifts, monthShifts } = selectAnalysisEntryWindow(entries, month, ruleResolver);
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = calculateMonthlyPayEstimate(
     month,
@@ -63,6 +65,7 @@ export function PremiumDetailsScreen() {
     decision,
     allowanceShifts,
     workPatternSettings,
+    ruleResolver,
   );
   const shiftsById = new Map(monthShifts.map((shift) => [shift.id, shift]));
   const premiumShifts = pay.shiftBreakdowns.filter((item) => item.premiumLines.length > 0);

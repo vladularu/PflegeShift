@@ -6,6 +6,7 @@ import {
   type UserProfile,
 } from "@/domain/types";
 import { calculateDailyWorkCredit } from "@/engine/daily-summary";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">;
 
@@ -25,6 +26,7 @@ export function buildMonthlyShiftTypeAnalysis(
   month: string,
   entries: readonly CalendarEntry[],
   profile: ProfileForTime,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyShiftTypeAnalysis {
   const counts: Partial<Record<ShiftType, number>> = {};
   const minutes: Partial<Record<ShiftType, number>> = {};
@@ -41,7 +43,7 @@ export function buildMonthlyShiftTypeAnalysis(
   }
 
   for (const [date, dateShifts] of shiftsByDate) {
-    const daily = calculateDailyWorkCredit(date, dateShifts, profile);
+    const daily = calculateDailyWorkCredit(date, dateShifts, profile, ruleResolver);
     for (const type of SHIFT_TYPES) {
       const creditedMinutes = daily.minutesByType[type] ?? 0;
       if (creditedMinutes > 0) minutes[type] = (minutes[type] ?? 0) + creditedMinutes;

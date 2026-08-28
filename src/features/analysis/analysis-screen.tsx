@@ -12,6 +12,7 @@ import {
   usePflegeShiftTariff,
   usePflegeShiftTestData,
 } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type {
   ComplianceIssue,
   ComplianceSeverity,
@@ -70,6 +71,7 @@ export function AnalysisScreen({
   const { entries } = usePflegeShiftEntries();
   const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
   const { testMonths } = usePflegeShiftTestData();
+  const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
   const [year, setYear] = useState(() => Number(activeMonthCoordinator.getMonth().slice(0, 4)));
@@ -100,13 +102,17 @@ export function AnalysisScreen({
     }, [activeMonthCoordinator]),
   );
 
-  const entryWindow = useMemo(() => selectAnalysisEntryWindow(entries, month), [entries, month]);
+  const entryWindow = useMemo(
+    () => selectAnalysisEntryWindow(entries, month, ruleResolver),
+    [entries, month, ruleResolver],
+  );
   const { monthEntries, monthShifts, complianceShifts, allowanceShifts } = entryWindow;
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const monthlyCompliance = useDeferredMonthlyCompliance({
     enabled: isFocused,
     month,
     profile,
+    ruleResolver,
     shifts: complianceShifts,
   });
   const compliance = monthlyCompliance.result;
@@ -120,23 +126,28 @@ export function AnalysisScreen({
             decision,
             allowanceShifts,
             workPatternSettings,
+            ruleResolver,
           )
         : null,
-    [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
+    [allowanceShifts, decision, month, monthShifts, profile, ruleResolver, workPatternSettings],
   );
   const summary = useMemo(
-    () => (profile ? calculateMonthlySummary(month, monthShifts, profile) : null),
-    [month, monthShifts, profile],
+    () => (profile ? calculateMonthlySummary(month, monthShifts, profile, ruleResolver) : null),
+    [month, monthShifts, profile, ruleResolver],
   );
   const shiftTypeAnalysis = useMemo(
-    () => (profile === null ? null : buildMonthlyShiftTypeAnalysis(month, monthEntries, profile)),
-    [month, monthEntries, profile],
+    () =>
+      profile === null
+        ? null
+        : buildMonthlyShiftTypeAnalysis(month, monthEntries, profile, ruleResolver),
+    [month, monthEntries, profile, ruleResolver],
   );
-  const annualInputs = useAnnualReportInputs(year, entries, tariffDecisions);
+  const annualInputs = useAnnualReportInputs(year, entries, tariffDecisions, ruleResolver);
   const annualReport = useDeferredAnnualReport({
     enabled: isFocused && period === "YEAR",
     entries: annualInputs.entries,
     profile,
+    ruleResolver,
     tariffDecisions: annualInputs.tariffDecisions,
     workPatternSettings,
     year,

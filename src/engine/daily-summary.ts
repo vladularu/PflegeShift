@@ -3,6 +3,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import type { ShiftEntry, ShiftType, UserProfile } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
 import { calculateTimedShiftBounds } from "@/engine/working-time";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">;
 
@@ -24,26 +25,36 @@ export interface DailyWorkCredit {
   readonly minutesByType: Readonly<Partial<Record<ShiftType, number>>>;
 }
 
-const HOLIDAY_DATE_CACHE = new Map<string, ReadonlySet<string>>();
+const HOLIDAY_DATE_CACHE = new WeakMap<RuleResolver, Map<string, ReadonlySet<string>>>();
 
 function holidayDates(
   year: number,
   federalState: UserProfile["federalState"],
+  ruleResolver: RuleResolver,
 ): ReadonlySet<string> {
   const key = `${federalState}-${year}`;
-  const cached = HOLIDAY_DATE_CACHE.get(key);
+  const resolverCache = HOLIDAY_DATE_CACHE.get(ruleResolver);
+  const cached = resolverCache?.get(key);
   if (cached) return cached;
-  const dates = new Set(getPublicHolidays(year, federalState).map((holiday) => holiday.date));
-  HOLIDAY_DATE_CACHE.set(key, dates);
+  const dates = new Set(
+    getPublicHolidays(year, federalState, ruleResolver).map((holiday) => holiday.date),
+  );
+  const nextCache = resolverCache ?? new Map<string, ReadonlySet<string>>();
+  nextCache.set(key, dates);
+  if (!resolverCache) HOLIDAY_DATE_CACHE.set(ruleResolver, nextCache);
   return dates;
 }
 
 export function calculateDailyTargetMinutes(
   date: string,
   profile: Pick<UserProfile, "federalState" | "weeklyMinutes">,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): number {
   const plainDate = Temporal.PlainDate.from(date);
-  if (plainDate.dayOfWeek > 5 || holidayDates(plainDate.year, profile.federalState).has(date)) {
+  if (
+    plainDate.dayOfWeek > 5 ||
+    holidayDates(plainDate.year, profile.federalState, ruleResolver).has(date)
+  ) {
     return 0;
   }
   return Math.round(profile.weeklyMinutes / 5);
@@ -135,6 +146,7 @@ export function calculateDailyWorkCredit(
   date: string,
   entries: readonly ShiftEntry[],
   profile: ProfileForTime,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): DailyWorkCredit {
   const active = entries.filter((entry) => entry.deletedAt === null && entry.date === date);
   const workEntries = active.filter(
@@ -143,7 +155,7 @@ export function calculateDailyWorkCredit(
   const trainingEntries = active.filter((entry) => entry.type === "TRAINING");
   const work = creditTimedEntries(workEntries, profile.timeZone);
   const training = creditTimedEntries(trainingEntries, profile.timeZone, work.coverage);
-  const targetMinutes = calculateDailyTargetMinutes(date, profile);
+  const targetMinutes = calculateDailyTargetMinutes(date, profile, ruleResolver);
   const timedMinutes = work.minutes + training.minutes;
   const absenceMinutes = active.some((entry) => entry.type === "VACATION" || entry.type === "SICK")
     ? Math.max(0, targetMinutes - timedMinutes)

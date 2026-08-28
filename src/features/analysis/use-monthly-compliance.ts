@@ -3,14 +3,16 @@ import { useCallback, useEffect, useState } from "react";
 import type { MonthlyComplianceResult, ShiftEntry, UserProfile } from "@/domain/types";
 import { calculateMonthlyComplianceSteps } from "@/engine/compliance";
 import { useLocalReferenceDate } from "@/features/analysis/use-local-reference-date";
-import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 import { recordDiagnostic } from "@/infrastructure/diagnostics";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
+import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 
 interface MonthlyComplianceState {
   readonly error: string | null;
   readonly month: string;
   readonly profile: UserProfile;
   readonly referenceDate: string;
+  readonly ruleResolver: RuleResolver;
   readonly result: MonthlyComplianceResult | null;
   readonly shifts: readonly ShiftEntry[];
 }
@@ -25,11 +27,13 @@ export function useDeferredMonthlyCompliance({
   enabled,
   month,
   profile,
+  ruleResolver = bundledRuleResolver,
   shifts,
 }: {
   readonly enabled: boolean;
   readonly month: string;
   readonly profile: UserProfile | null;
+  readonly ruleResolver?: RuleResolver;
   readonly shifts: readonly ShiftEntry[];
 }): DeferredMonthlyComplianceResult {
   const [retryRevision, setRetryRevision] = useState(0);
@@ -42,6 +46,7 @@ export function useDeferredMonthlyCompliance({
     state.month === month &&
     state.profile === profile &&
     state.referenceDate === referenceDate &&
+    state.ruleResolver === ruleResolver &&
     state.shifts === shifts;
   const completedRequest = matchesRequest && state.result !== null && state.error === null;
 
@@ -53,6 +58,7 @@ export function useDeferredMonthlyCompliance({
       federalState: profile.federalState,
       weeklyMinutes: profile.weeklyMinutes,
       referenceDate,
+      ruleResolver,
     });
     const advance = () => {
       try {
@@ -64,6 +70,7 @@ export function useDeferredMonthlyCompliance({
             month,
             profile,
             referenceDate,
+            ruleResolver,
             result: step.value,
             shifts,
           });
@@ -78,6 +85,7 @@ export function useDeferredMonthlyCompliance({
             month,
             profile,
             referenceDate,
+            ruleResolver,
             result: null,
             shifts,
           });
@@ -89,7 +97,16 @@ export function useDeferredMonthlyCompliance({
       active = false;
       cancelScheduledWork();
     };
-  }, [completedRequest, enabled, month, profile, referenceDate, retryRevision, shifts]);
+  }, [
+    completedRequest,
+    enabled,
+    month,
+    profile,
+    referenceDate,
+    retryRevision,
+    ruleResolver,
+    shifts,
+  ]);
 
   return {
     error: matchesRequest ? state.error : null,
