@@ -42,16 +42,19 @@ export type RuleCatalogStorageErrorCode =
 export class RuleCatalogStorageError extends Error {
   readonly code: RuleCatalogStorageErrorCode;
   readonly issues: readonly ValidationIssue[];
+  readonly activeGeneration: number | null;
 
   constructor(
     code: RuleCatalogStorageErrorCode,
     message: string,
     issues: readonly ValidationIssue[] = [],
+    activeGeneration: number | null = null,
   ) {
     super(message);
     this.name = "RuleCatalogStorageError";
     this.code = code;
     this.issues = issues;
+    this.activeGeneration = activeGeneration;
   }
 }
 
@@ -308,7 +311,10 @@ export async function activateRuleCatalog(
   return activationResult;
 }
 
-export async function loadActiveRuleCatalog(db: SQLiteDatabase): Promise<LoadedRuleCatalog | null> {
+export async function loadActiveRuleCatalog(
+  db: SQLiteDatabase,
+  acceptsCatalog: (catalog: ValidatedRuleCatalog) => boolean = () => true,
+): Promise<LoadedRuleCatalog | null> {
   const state = await db.getFirstAsync<StateRow>(
     "SELECT active_generation FROM rule_catalog_state WHERE id='active'",
   );
@@ -323,7 +329,7 @@ export async function loadActiveRuleCatalog(db: SQLiteDatabase): Promise<LoadedR
   );
   for (const generationRow of generations) {
     const catalog = await loadGeneration(db, generationRow);
-    if (catalog !== null) {
+    if (catalog !== null && acceptsCatalog(catalog)) {
       return {
         activeGeneration: state.active_generation,
         generation: generationRow.generation,
@@ -336,6 +342,8 @@ export async function loadActiveRuleCatalog(db: SQLiteDatabase): Promise<LoadedR
 
   throw new RuleCatalogStorageError(
     "CORRUPT_CATALOG_STORAGE",
-    `No valid stored catalog is available for active generation ${state.active_generation}.`,
+    `No valid compatible stored catalog is available for active generation ${state.active_generation}.`,
+    [],
+    state.active_generation,
   );
 }

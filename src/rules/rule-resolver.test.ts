@@ -1,7 +1,10 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 
+import holidayPackageFixture from "../../rules/examples/holiday-package.valid.json";
+import legalPackageFixture from "../../rules/examples/legal-package.valid.json";
 import manifestFixture from "../../rules/examples/manifest.valid.json";
+import tariffPackageFixture from "../../rules/examples/tariff-package.valid.json";
 import { FEDERAL_STATES, PAY_GROUPS, PAY_LEVELS, type TariffProfile } from "../domain/types";
 import { easterSunday, getPublicHolidays } from "../engine/holidays";
 import {
@@ -17,8 +20,11 @@ import {
 import type { RuleManifest } from "./contracts.generated";
 import {
   bundledRuleResolver,
+  createRuleResolverFromCatalog,
   createRuleResolver,
+  isRuleCatalogRuntimeCompatible,
   requireResolvedPackage,
+  RuleCatalogCompatibilityError,
   RuleResolutionError,
 } from "./rule-resolver";
 import { validateRuleCatalog, validateRulePackage } from "./validation";
@@ -188,6 +194,51 @@ describe("bundled legacy rule resolver", () => {
     });
     expect(() => requireResolvedPackage(bundledRuleResolver.resolveTariff("2027-04-01"))).toThrow(
       RuleResolutionError,
+    );
+  });
+
+  it("selects runtime package identities from the validated manifest tracks", () => {
+    const validation = validateRuleCatalog(manifestFixture, [
+      tariffPackageFixture,
+      legalPackageFixture,
+      holidayPackageFixture,
+    ]);
+    if (!validation.ok) throw new Error("Expected the catalog fixture to be valid.");
+
+    expect(isRuleCatalogRuntimeCompatible(validation.value)).toBe(true);
+    const resolver = createRuleResolverFromCatalog(validation.value);
+    expect(requireResolvedPackage(resolver.resolveTariff("2026-05-01"))).toMatchObject({
+      packageId: "tvoed-vka-bt-k",
+      versionId: "2026-05",
+    });
+    expect(requireResolvedPackage(resolver.resolveLegal("2026-07-01"))).toMatchObject({
+      packageId: "de-arbzg-care",
+      versionId: "2026-01",
+    });
+    expect(requireResolvedPackage(resolver.resolveHoliday("2026-07-01"))).toMatchObject({
+      packageId: "de-holidays",
+      versionId: "2026",
+    });
+  });
+
+  it("rejects catalog topologies that engine contract v1 cannot select unambiguously", () => {
+    const validation = validateRuleCatalog(manifestFixture, [
+      tariffPackageFixture,
+      legalPackageFixture,
+      holidayPackageFixture,
+    ]);
+    if (!validation.ok) throw new Error("Expected the catalog fixture to be valid.");
+    const incompatible = {
+      ...validation.value,
+      manifest: {
+        ...validation.value.manifest,
+        tracks: validation.value.manifest.tracks.filter((track) => track.kind !== "LEGAL"),
+      },
+    } as typeof validation.value;
+
+    expect(isRuleCatalogRuntimeCompatible(incompatible)).toBe(false);
+    expect(() => createRuleResolverFromCatalog(incompatible)).toThrow(
+      RuleCatalogCompatibilityError,
     );
   });
 

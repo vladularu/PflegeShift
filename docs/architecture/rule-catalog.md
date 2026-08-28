@@ -50,6 +50,18 @@ WP3b adds the fail-closed trust boundary in front of WP3a storage. Raw manifest 
 
 Trusted public keys are not secrets and are supplied by the app composition layer. WP3b deliberately does not add a production key, fetch a manifest, contact Supabase, select update intervals, or inject the stored catalog into calculations. Any verification or activation failure leaves the current SQLCipher generation untouched and production calculations on `LEGACY_EMBEDDED`.
 
+## Runtime catalog selection
+
+WP3c-a establishes one immutable resolver snapshot before calculation consumers mount:
+
+- The composition root loads the active generation from the existing keyed SQLCipher connection and accepts only catalogs that engine contract v1 can select unambiguously: exactly one tariff, one legal, and one holiday track.
+- Resolver package identities come from those signed manifest tracks. They are not aliases of the bundled legacy package IDs.
+- A structurally invalid or runtime-incompatible active generation is skipped as a unit. The repository scans earlier immutable generations and returns the newest valid compatible generation as last-known-good.
+- If no catalog has ever been activated, the runtime selects the singleton `LEGACY_EMBEDDED` resolver. If an active pointer exists but no stored generation remains valid and compatible, the runtime also fails closed to that legacy resolver and records a technical diagnostic.
+- Runtime diagnosis exposes the active pointer generation, selected generation, manifest key ID, and fallback reason. It contains no shift, salary, or personal data.
+
+The snapshot never combines packages from different generations: its resolver is created once from one validated catalog object, then deeply stable for the provider lifetime. WP3c-a does not contact a network, add Supabase, add production keys, download catalogs, or switch individual calculation consumers; centralized propagation and resolver-aware consumer caches are the separate WP3c-b scope.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.

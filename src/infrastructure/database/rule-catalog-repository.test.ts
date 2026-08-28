@@ -309,4 +309,25 @@ describe("rule catalog repository", () => {
       .run();
     await expectStorageError(loadActiveRuleCatalog(db), "CORRUPT_CATALOG_STORAGE");
   });
+
+  it("falls back to the previous activation when the active catalog is runtime-incompatible", async () => {
+    await activateRuleCatalog(db, await catalogArtifacts(1));
+    await activateRuleCatalog(db, await catalogArtifacts(2));
+
+    const recovered = await loadActiveRuleCatalog(
+      db,
+      (catalog) => catalog.manifest.generation === 1,
+    );
+    expect(recovered).toMatchObject({
+      activeGeneration: 2,
+      generation: 1,
+      recoveredFromGeneration: 2,
+    });
+
+    const error = await expectStorageError(
+      loadActiveRuleCatalog(db, () => false),
+      "CORRUPT_CATALOG_STORAGE",
+    );
+    expect(error.activeGeneration).toBe(2);
+  });
 });

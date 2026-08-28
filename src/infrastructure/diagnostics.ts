@@ -1,5 +1,12 @@
 export type DiagnosticSource =
-  "app" | "database" | "dev-tools" | "notifications" | "preferences" | "provider" | "reporting";
+  | "app"
+  | "database"
+  | "dev-tools"
+  | "notifications"
+  | "preferences"
+  | "provider"
+  | "reporting"
+  | "rule-catalog";
 
 export interface DiagnosticEvent {
   readonly code: string;

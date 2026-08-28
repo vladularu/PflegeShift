@@ -3,9 +3,11 @@ import { Temporal } from "@js-temporal/polyfill";
 import type {
   RuleHolidayPackage,
   RuleLegalPackage,
+  RuleManifest,
   RulePackage,
   RuleTariffPackage,
 } from "./contracts.generated";
+import type { ValidatedRuleCatalog } from "./validation";
 import {
   BUNDLED_HOLIDAY_RULES,
   BUNDLED_LEGAL_RULES,
@@ -34,6 +36,12 @@ export interface RuleResolverCatalog {
   readonly holiday: readonly RuleHolidayPackage[];
 }
 
+export interface RuleResolverPackageIds {
+  readonly tariff: string;
+  readonly legal: string;
+  readonly holiday: string;
+}
+
 export interface RuleResolver {
   readonly resolveTariff: (effectiveDate: string) => RuleResolution<RuleTariffPackage>;
   readonly resolveLegal: (effectiveDate: string) => RuleResolution<RuleLegalPackage>;
@@ -50,11 +58,35 @@ export class RuleResolutionError extends Error {
   }
 }
 
+export class RuleCatalogCompatibilityError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RuleCatalogCompatibilityError";
+  }
+}
+
 export const BUNDLED_RULE_CATALOG: RuleResolverCatalog = Object.freeze({
   tariff: BUNDLED_TARIFF_RULES,
   legal: BUNDLED_LEGAL_RULES,
   holiday: BUNDLED_HOLIDAY_RULES,
 });
+
+function packageIdsFromTracks(tracks: RuleManifest["tracks"]): RuleResolverPackageIds | null {
+  const packageIdFor = (kind: RulePackage["kind"]): string | null => {
+    const matches = tracks.filter((track) => track.kind === kind);
+    return matches.length === 1 ? matches[0].packageId : null;
+  };
+  const tariff = packageIdFor("TARIFF");
+  const legal = packageIdFor("LEGAL");
+  const holiday = packageIdFor("HOLIDAY");
+  return tariff !== null && legal !== null && holiday !== null
+    ? Object.freeze({ tariff, legal, holiday })
+    : null;
+}
+
+export function isRuleCatalogRuntimeCompatible(catalog: ValidatedRuleCatalog): boolean {
+  return packageIdsFromTracks(catalog.manifest.tracks) !== null;
+}
 
 function isValidDate(value: string): boolean {
   try {
@@ -109,15 +141,39 @@ function resolvePackage<T extends RulePackage>(
 
 export function createRuleResolver(
   catalog: RuleResolverCatalog = BUNDLED_RULE_CATALOG,
+  packageIds: RuleResolverPackageIds = LEGACY_RULE_PACKAGE_IDS,
 ): RuleResolver {
   return Object.freeze({
     resolveTariff: (effectiveDate: string) =>
-      resolvePackage(catalog.tariff, "TARIFF", LEGACY_RULE_PACKAGE_IDS.tariff, effectiveDate),
+      resolvePackage(catalog.tariff, "TARIFF", packageIds.tariff, effectiveDate),
     resolveLegal: (effectiveDate: string) =>
-      resolvePackage(catalog.legal, "LEGAL", LEGACY_RULE_PACKAGE_IDS.legal, effectiveDate),
+      resolvePackage(catalog.legal, "LEGAL", packageIds.legal, effectiveDate),
     resolveHoliday: (effectiveDate: string) =>
-      resolvePackage(catalog.holiday, "HOLIDAY", LEGACY_RULE_PACKAGE_IDS.holiday, effectiveDate),
+      resolvePackage(catalog.holiday, "HOLIDAY", packageIds.holiday, effectiveDate),
   });
+}
+
+export function createRuleResolverFromCatalog(catalog: ValidatedRuleCatalog): RuleResolver {
+  const packageIds = packageIdsFromTracks(catalog.manifest.tracks);
+  if (packageIds === null) {
+    throw new RuleCatalogCompatibilityError(
+      "Engine contract v1 requires exactly one tariff, legal, and holiday track.",
+    );
+  }
+  return createRuleResolver(
+    {
+      tariff: catalog.packages.filter(
+        (rulePackage): rulePackage is RuleTariffPackage => rulePackage.kind === "TARIFF",
+      ),
+      legal: catalog.packages.filter(
+        (rulePackage): rulePackage is RuleLegalPackage => rulePackage.kind === "LEGAL",
+      ),
+      holiday: catalog.packages.filter(
+        (rulePackage): rulePackage is RuleHolidayPackage => rulePackage.kind === "HOLIDAY",
+      ),
+    },
+    packageIds,
+  );
 }
 
 export const bundledRuleResolver = createRuleResolver();
