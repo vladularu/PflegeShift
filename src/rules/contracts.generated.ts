@@ -359,5 +359,30 @@ export interface RuleHoliday {
   sourceIds: RuleSourceIds;
 }
 
+export type PublicationUtcTimestamp = string;
+export type PublicationIdentifier = string;
+
+/**
+ * Administrative input for producing one signed, immutable rule-catalog generation.
+ */
+export interface PflegeShiftRuleCatalogPublicationRequest {
+  schemaVersion: 1;
+  generation: number;
+  channel: "PREVIEW" | "PRODUCTION";
+  publishedAt: PublicationUtcTimestamp;
+  rollbackOfGeneration: null | number;
+  /**
+   * @minItems 1
+   */
+  packageSources: [string, ...string[]];
+  signing: PublicationSigning;
+}
+export interface PublicationSigning {
+  algorithm: "ED25519";
+  canonicalization: "RFC8785";
+  keyId: PublicationIdentifier;
+}
+
 export type RuleManifest = PflegeShiftRuleManifest;
 export type RulePackage = PflegeShiftRulePackage;
+export type RuleCatalogPublicationRequest = PflegeShiftRuleCatalogPublicationRequest;

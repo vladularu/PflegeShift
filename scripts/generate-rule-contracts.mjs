@@ -10,6 +10,10 @@ import prettier from "prettier";
 const workspaceRoot = process.cwd();
 const manifestSchemaPath = path.join(workspaceRoot, "rules/schema/manifest.schema.json");
 const packageSchemaPath = path.join(workspaceRoot, "rules/schema/rule-package.schema.json");
+const publicationRequestSchemaPath = path.join(
+  workspaceRoot,
+  "rules/schema/publication-request.schema.json",
+);
 const outputPath = path.join(workspaceRoot, "src/rules/contracts.generated.ts");
 const validatorsOutputPath = path.join(workspaceRoot, "src/rules/schema-validators.generated.js");
 
@@ -43,11 +47,13 @@ function namespaceDefinitions(schema, prefix) {
 }
 
 async function generateContracts() {
-  const [manifestSchema, rawPackageSchema] = await Promise.all([
+  const [manifestSchema, rawPackageSchema, rawPublicationRequestSchema] = await Promise.all([
     readJson(manifestSchemaPath),
     readJson(packageSchemaPath),
+    readJson(publicationRequestSchemaPath),
   ]);
   const packageSchema = namespaceDefinitions(rawPackageSchema, "Rule");
+  const publicationRequestSchema = namespaceDefinitions(rawPublicationRequestSchema, "Publication");
   const options = {
     bannerComment: "",
     additionalProperties: false,
@@ -55,9 +61,10 @@ async function generateContracts() {
     style: { singleQuote: true, semi: true },
     unreachableDefinitions: false,
   };
-  const [manifestTypes, packageTypes] = await Promise.all([
+  const [manifestTypes, packageTypes, publicationRequestTypes] = await Promise.all([
     compile(manifestSchema, "RuleManifest", options),
     compile(packageSchema, "RulePackage", options),
+    compile(publicationRequestSchema, "RuleCatalogPublicationRequest", options),
   ]);
   const typesSource = [
     "// Generated from rules/schema/*.schema.json by npm run rules:generate.",
@@ -67,8 +74,11 @@ async function generateContracts() {
     "",
     packageTypes.trim(),
     "",
+    publicationRequestTypes.trim(),
+    "",
     "export type RuleManifest = PflegeShiftRuleManifest;",
     "export type RulePackage = PflegeShiftRulePackage;",
+    "export type RuleCatalogPublicationRequest = PflegeShiftRuleCatalogPublicationRequest;",
     "",
   ].join("\n");
 
@@ -80,6 +90,7 @@ async function generateContracts() {
   });
   ajv.addSchema(manifestSchema, "RuleManifest");
   ajv.addSchema(rawPackageSchema, "RulePackage");
+  ajv.addSchema(rawPublicationRequestSchema, "RuleCatalogPublicationRequest");
   const validatorsSource = [
     "/* eslint-disable */",
     "// Generated from rules/schema/*.schema.json by npm run rules:generate.",
@@ -87,6 +98,7 @@ async function generateContracts() {
     standaloneCode(ajv, {
       validateManifestSchema: "RuleManifest",
       validateRulePackageSchema: "RulePackage",
+      validateRuleCatalogPublicationRequestSchema: "RuleCatalogPublicationRequest",
     }),
   ].join("\n");
   const prettierConfig = (await prettier.resolveConfig(outputPath)) ?? {};
