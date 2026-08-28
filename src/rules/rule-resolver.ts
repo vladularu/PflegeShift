@@ -157,7 +157,7 @@ export function createRuleResolverFromCatalog(catalog: ValidatedRuleCatalog): Ru
   const packageIds = packageIdsFromTracks(catalog.manifest.tracks);
   if (packageIds === null) {
     throw new RuleCatalogCompatibilityError(
-      "Engine contract v1 requires exactly one tariff, legal, and holiday track.",
+      "The rule resolver requires exactly one tariff, legal, and holiday track.",
     );
   }
   return createRuleResolver(

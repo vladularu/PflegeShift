@@ -89,7 +89,7 @@
         "packageId": { "$ref": "#/$defs/identifier" },
         "versionId": { "$ref": "#/$defs/versionIdentifier" },
         "kind": { "$ref": "#/$defs/kind" },
-        "engineContractVersion": { "const": 1 },
+        "engineContractVersion": { "enum": [1, 2] },
         "validFrom": { "$ref": "#/$defs/isoDate" },
         "validTo": {
           "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/isoDate" }]

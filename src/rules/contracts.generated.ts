@@ -37,7 +37,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1;
+  engineContractVersion: 1 | 2;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -59,6 +59,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
+  engineContractVersion?: 1 | 2;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -118,17 +119,19 @@ export type RuleReview1 =
 export type RuleSourceIds = [RuleIdentifier, ...RuleIdentifier[]];
 export type RuleNullableIdentifier = null | RuleIdentifier;
 export type RuleLegalPackage = RulePackageBase & {
+  engineContractVersion?: 1;
   kind: "LEGAL";
   rules: RuleLegalRules;
 };
 export type RuleHolidayPackage = RulePackageBase & {
+  engineContractVersion?: 1;
   kind: "HOLIDAY";
   rules: RuleHolidayRules;
 };
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1;
+  engineContractVersion: 1 | 2;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -172,6 +175,7 @@ export interface RuleTariffRules {
    * @minItems 1
    */
   payTables: [RulePayTable, ...RulePayTable[]];
+  overtimeBaseRule?: RuleOvertimeBaseRule;
   premiumRules: RulePremiumRule[];
   allowanceRules: RuleAllowanceRule[];
   combinationRules: RuleCombinationRule[];
@@ -191,6 +195,10 @@ export interface RulePayTableEntry {
   stepId: RuleIdentifier;
   monthlyCents: number;
   hourlyCents: number;
+}
+export interface RuleOvertimeBaseRule {
+  maximumStepId: RuleIdentifier;
+  sourceIds: RuleSourceIds;
 }
 export interface RulePremiumRule {
   id: RuleIdentifier;

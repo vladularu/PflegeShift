@@ -204,7 +204,7 @@ async function main() {
   const cryptography = nodeCryptography();
   const verificationPolicy = Object.freeze({
     expectedChannel: "PREVIEW",
-    supportedEngineContractVersions: new Set([1]),
+    supportedEngineContractVersions: new Set([1, 2]),
     trustedPublicKeys,
   });
   const manifest = await verifyRuleManifest(manifestJson, verificationPolicy, cryptography);

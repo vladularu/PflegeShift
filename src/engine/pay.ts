@@ -15,6 +15,7 @@ import {
   getHourlyTableAmountForStep,
   getIndividualHourlyRate,
   getMonthlyTableAmount,
+  getOvertimeBaseHourlyRate,
   getTariffRulePackage,
   getTariffVersion,
 } from "@/engine/tariff";
@@ -357,7 +358,6 @@ function calculateShiftPremiumBreakdownUncached(
     rulePackage,
     ruleResolver,
   );
-
   const premiumKey = (rule: RulePremiumRule): string => {
     switch (rule.premiumType) {
       case "HOLIDAY_WITH_TIME_OFF":
@@ -388,7 +388,6 @@ function calculateShiftPremiumBreakdownUncached(
       ),
     )
     .filter((line): line is PremiumLine => line !== null);
-
   const netMinutes = calculateTimedShiftMinutes(shift, profile.timeZone);
   const overtimeMinutes = Math.min(shift.overtimeMinutes, netMinutes);
   const overtimeRules = rulePackage.rules.premiumRules.filter(
@@ -403,7 +402,8 @@ function calculateShiftPremiumBreakdownUncached(
   }
   const overtimeRule = overtimeRules[0];
   const overtimeRate = hourlyRateFor(overtimeRule);
-  const overtimeBaseAmount = roundMoney((overtimeMinutes / 60) * individualRate);
+  const overtimeBaseRate = getOvertimeBaseHourlyRate(rulePackage, tariff, individualRate);
+  const overtimeBaseAmount = roundMoney((overtimeMinutes / 60) * overtimeBaseRate);
   const overtimePremiumAmount = roundMoney(
     (overtimeMinutes / 60) * overtimeRate * (overtimeRule.percentageBasisPoints / 10_000),
   );

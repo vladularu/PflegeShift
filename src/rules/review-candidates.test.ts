@@ -67,6 +67,7 @@ describe("generation 1 rule review candidates", () => {
   it("locks the TVoeD-VKA table, premium and allowance boundaries", () => {
     expect(tariffCandidate.packageId).toBe("tvoed-vka-bt-k");
     expect(tariffCandidate.versionId).toBe("2026-05");
+    expect(tariffCandidate.engineContractVersion).toBe(2);
     expect(tariffCandidate.validFrom).toBe("2026-05-01");
     expect(tariffCandidate.validTo).toBe("2027-03-31");
     expect(tariffCandidate.rules.selector).toEqual({
@@ -100,6 +101,10 @@ describe("generation 1 rule review candidates", () => {
     });
 
     expect(tariffCandidate.rules.premiumRules).toHaveLength(8);
+    expect(tariffCandidate.rules.overtimeBaseRule).toEqual({
+      maximumStepId: "s4",
+      sourceIds: ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"],
+    });
     expect(byId(tariffCandidate.rules.premiumRules, "night")).toMatchObject({
       percentageBasisPoints: 2000,
       referenceStepId: "s3",
@@ -121,13 +126,13 @@ describe("generation 1 rule review candidates", () => {
       timeWindow: { startMinute: 360, endMinute: 0 },
       conditions: { monthDays: ["12-24", "12-31"] },
     });
-    expect(byId(tariffCandidate.rules.premiumRules, "overtime-p7-p8")).toMatchObject({
+    expect(byId(tariffCandidate.rules.premiumRules, "overtime-p7-p11")).toMatchObject({
       percentageBasisPoints: 3000,
-      conditions: { payGroups: ["p7", "p8"] },
+      conditions: { payGroups: ["p7", "p8", "p9", "p10", "p11"] },
     });
-    expect(byId(tariffCandidate.rules.premiumRules, "overtime-p9-p16")).toMatchObject({
+    expect(byId(tariffCandidate.rules.premiumRules, "overtime-p12-p16")).toMatchObject({
       percentageBasisPoints: 1500,
-      conditions: { payGroups: ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"] },
+      conditions: { payGroups: ["p12", "p13", "p14", "p15", "p16"] },
     });
 
     expect(tariffCandidate.rules.allowanceRules).toHaveLength(11);

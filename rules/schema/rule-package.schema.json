@@ -169,7 +169,7 @@
       ],
       "properties": {
         "schemaVersion": { "const": 1 },
-        "engineContractVersion": { "const": 1 },
+        "engineContractVersion": { "enum": [1, 2] },
         "packageId": { "$ref": "#/$defs/identifier" },
         "versionId": { "$ref": "#/$defs/versionIdentifier" },
         "kind": { "enum": ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -323,6 +323,15 @@
           "minItems": 1,
           "items": { "$ref": "#/$defs/payTableEntry" }
         },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "overtimeBaseRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maximumStepId", "sourceIds"],
+      "properties": {
+        "maximumStepId": { "$ref": "#/$defs/identifier" },
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
@@ -511,6 +520,7 @@
           "minItems": 1,
           "items": { "$ref": "#/$defs/payTable" }
         },
+        "overtimeBaseRule": { "$ref": "#/$defs/overtimeBaseRule" },
         "premiumRules": {
           "type": "array",
           "items": { "$ref": "#/$defs/premiumRule" }
@@ -537,6 +547,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
+            "engineContractVersion": { "enum": [1, 2] },
             "kind": { "const": "TARIFF" },
             "rules": { "$ref": "#/$defs/tariffRules" }
           }
@@ -690,6 +701,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
+            "engineContractVersion": { "const": 1 },
             "kind": { "const": "LEGAL" },
             "rules": { "$ref": "#/$defs/legalRules" }
           }
@@ -786,6 +798,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
+            "engineContractVersion": { "const": 1 },
             "kind": { "const": "HOLIDAY" },
             "rules": { "$ref": "#/$defs/holidayRules" }
           }
