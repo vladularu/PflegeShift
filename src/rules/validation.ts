@@ -170,6 +170,54 @@ function validateTariffPackage(
     for (const entry of table.entries) knownStepIds.add(entry.stepId);
   }
 
+  const overtimeBaseRule = rules.overtimeBaseRule;
+  if (rulePackage.engineContractVersion === 2 && overtimeBaseRule === undefined) {
+    issues.push(
+      issue(
+        "MISSING_OVERTIME_BASE_RULE",
+        "/rules/overtimeBaseRule",
+        "Tariff engine contract v2 requires an overtime base rule.",
+      ),
+    );
+  } else if (rulePackage.engineContractVersion === 1 && overtimeBaseRule !== undefined) {
+    issues.push(
+      issue(
+        "UNSUPPORTED_OVERTIME_BASE_RULE",
+        "/rules/overtimeBaseRule",
+        "Tariff engine contract v1 must not define an overtime base rule.",
+      ),
+    );
+  }
+  if (overtimeBaseRule !== undefined) {
+    validateSourceReferences(
+      overtimeBaseRule.sourceIds,
+      sourceIds,
+      "/rules/overtimeBaseRule/sourceIds",
+      issues,
+    );
+    if (selectedTable) {
+      const missingGroups = [
+        ...new Set(selectedTable.entries.map((entry) => entry.groupId)),
+      ].filter(
+        (groupId) =>
+          !selectedTable.entries.some(
+            (entry) => entry.groupId === groupId && entry.stepId === overtimeBaseRule.maximumStepId,
+          ),
+      );
+      if (missingGroups.length > 0) {
+        issues.push(
+          issue(
+            "UNKNOWN_OVERTIME_BASE_STEP",
+            "/rules/overtimeBaseRule/maximumStepId",
+            `Maximum overtime step ${overtimeBaseRule.maximumStepId} is missing for pay groups: ${missingGroups.join(
+              ", ",
+            )}.`,
+          ),
+        );
+      }
+    }
+  }
+
   const premiumIds = rules.premiumRules.map((rule) => rule.id);
   const allowanceIds = rules.allowanceRules.map((rule) => rule.id);
   const combinationIds = rules.combinationRules.map((rule) => rule.id);

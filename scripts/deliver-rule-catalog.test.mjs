@@ -357,6 +357,11 @@ async function writeSignedCliFixture() {
     fixture("legal-package.valid.json"),
     fixture("holiday-package.valid.json"),
   ]);
+  packages[0].engineContractVersion = 2;
+  packages[0].rules.overtimeBaseRule = {
+    maximumStepId: "s2",
+    sourceIds: ["tvoed-vka-2026"],
+  };
   const packageJson = packages.map((value) => `${JSON.stringify(value, null, 2)}\n`);
   const manifest = await fixture("manifest.valid.json");
   manifest.packages = packages.map((rulePackage, index) => ({

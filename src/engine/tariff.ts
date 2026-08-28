@@ -136,6 +136,22 @@ export function getHourlyTableAmountForStep(
   return rulePackage ? tableAmount(rulePackage, profile.payGroup, stepId, "hourlyCents") : null;
 }
 
+export function getOvertimeBaseHourlyRate(
+  rulePackage: RuleTariffPackage,
+  profile: TariffProfile,
+  individualRate: number,
+): number {
+  const maximumStepId = rulePackage.rules.overtimeBaseRule?.maximumStepId;
+  if (maximumStepId === undefined) return individualRate;
+  const maximumRate = tableAmount(rulePackage, profile.payGroup, maximumStepId, "hourlyCents");
+  if (maximumRate === null) {
+    throw new Error(
+      `Tariff package ${rulePackage.packageId}/${rulePackage.versionId} has no capped hourly rate for ${profile.payGroup}/${maximumStepId}.`,
+    );
+  }
+  return Math.min(individualRate, maximumRate);
+}
+
 export function getPremiumHourlyRate(
   profile: TariffProfile,
   date: string,

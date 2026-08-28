@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "engineContractVersion": 1,
+  "engineContractVersion": 2,
   "packageId": "tvoed-vka-bt-k",
   "versionId": "2026-05",
   "kind": "TARIFF",
@@ -363,6 +363,10 @@
         "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       }
     ],
+    "overtimeBaseRule": {
+      "maximumStepId": "s4",
+      "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+    },
     "premiumRules": [
       {
         "id": "night",
@@ -494,8 +498,8 @@
         "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
-        "id": "overtime-p7-p8",
-        "label": "Ueberstunden P7-P8",
+        "id": "overtime-p7-p11",
+        "label": "Ueberstunden P7-P11",
         "premiumType": "OVERTIME",
         "percentageBasisPoints": 3000,
         "rateBasis": "TABLE_STEP",
@@ -504,7 +508,7 @@
         "conditions": {
           "requiresShiftTypes": [],
           "excludesShiftTypes": [],
-          "payGroups": ["p7", "p8"],
+          "payGroups": ["p7", "p8", "p9", "p10", "p11"],
           "sectors": null,
           "federalStates": null,
           "holidayPremiumModes": null,
@@ -514,8 +518,8 @@
         "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
-        "id": "overtime-p9-p16",
-        "label": "Ueberstunden P9-P16",
+        "id": "overtime-p12-p16",
+        "label": "Ueberstunden P12-P16",
         "premiumType": "OVERTIME",
         "percentageBasisPoints": 1500,
         "rateBasis": "TABLE_STEP",
@@ -524,7 +528,7 @@
         "conditions": {
           "requiresShiftTypes": [],
           "excludesShiftTypes": [],
-          "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+          "payGroups": ["p12", "p13", "p14", "p15", "p16"],
           "sectors": null,
           "federalStates": null,
           "holidayPremiumModes": null,

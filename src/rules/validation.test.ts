@@ -110,6 +110,39 @@ describe("rule contract validation", () => {
     );
   });
 
+  it("enforces the tariff overtime-base contract for engine v2", () => {
+    type VersionedTariffFixture = typeof tariffPackageFixture & {
+      engineContractVersion: number;
+      rules: typeof tariffPackageFixture.rules & {
+        overtimeBaseRule?: { maximumStepId: string; sourceIds: string[] };
+      };
+    };
+    const v2Package = clone(tariffPackageFixture) as VersionedTariffFixture;
+    v2Package.engineContractVersion = 2;
+    v2Package.rules.overtimeBaseRule = {
+      maximumStepId: "s2",
+      sourceIds: ["tvoed-vka-2026"],
+    };
+    expect(validateRulePackage(v2Package).ok).toBe(true);
+    const v2Manifest = clone(manifestFixture);
+    v2Manifest.packages[0].engineContractVersion = 2;
+    expect(
+      validateRuleCatalog(v2Manifest, [v2Package, legalPackageFixture, holidayPackageFixture]).ok,
+    ).toBe(true);
+
+    const missingRule = clone(v2Package);
+    delete missingRule.rules.overtimeBaseRule;
+    expect(issueCodes(validateRulePackage(missingRule))).toContain("MISSING_OVERTIME_BASE_RULE");
+
+    const missingStep = clone(v2Package);
+    missingStep.rules.overtimeBaseRule!.maximumStepId = "s4";
+    expect(issueCodes(validateRulePackage(missingStep))).toContain("UNKNOWN_OVERTIME_BASE_STEP");
+
+    const v1WithRule = clone(v2Package);
+    v1WithRule.engineContractVersion = 1;
+    expect(issueCodes(validateRulePackage(v1WithRule))).toContain("UNSUPPORTED_OVERTIME_BASE_RULE");
+  });
+
   it("rejects invalid allowance ranges and work-pattern boundaries", () => {
     const allowanceOutsidePackage = clone(tariffPackageFixture);
     allowanceOutsidePackage.rules.allowanceRules[0].validFrom = "2026-04-30";

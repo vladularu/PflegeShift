@@ -6,6 +6,12 @@ import {
   calculateMonthlyPayEstimate,
   calculateShiftPremiumBreakdown,
 } from "@/engine/pay";
+import {
+  BUNDLED_HOLIDAY_RULES,
+  BUNDLED_LEGAL_RULES,
+  BUNDLED_TARIFF_RULES,
+} from "@/rules/bundled-rules";
+import { createRuleResolver } from "@/rules/rule-resolver";
 
 const profile: UserProfile = {
   federalState: "NW",
@@ -65,6 +71,75 @@ describe("TVöD-P pay engine", () => {
     expect(result.premiumLines.map((line) => line.key)).toEqual(["night", "sunday"]);
     expect(result.overtimeBaseAmount).toBe(24.03);
     expect(result.overtimePremiumAmount).toBe(6.83);
+  });
+
+  it("uses 30 percent through P11 and 15 percent from P12 for overtime", () => {
+    const overtimeShift = shift({
+      date: "2026-07-06",
+      type: "DAY",
+      startTime: "08:00",
+      endTime: "16:00",
+      breakMinutes: 0,
+    });
+    const overtimeFor = (payGroup: "P11" | "P12") =>
+      calculateShiftPremiumBreakdown(overtimeShift, {
+        ...profile,
+        tariff: { ...profile.tariff!, payGroup, payLevel: 4 },
+      });
+
+    expect(overtimeFor("P11")).toMatchObject({
+      overtimeBaseAmount: 28.9,
+      overtimePremiumAmount: 8.06,
+    });
+    expect(overtimeFor("P12")).toMatchObject({
+      overtimeBaseAmount: 30.47,
+      overtimePremiumAmount: 4.25,
+    });
+  });
+
+  it("caps actual overtime work at the configured step-four hourly rate", () => {
+    const result = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-07-06",
+        type: "DAY",
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 0,
+      }),
+      {
+        ...profile,
+        tariff: { ...profile.tariff!, payGroup: "P16", payLevel: 6 },
+      },
+    );
+
+    expect(result.overtimeBaseAmount).toBe(35.29);
+    expect(result.overtimePremiumAmount).toBe(4.79);
+  });
+
+  it("reads the overtime base cap from the resolved tariff package", () => {
+    const tariffPackages = BUNDLED_TARIFF_RULES.map((rulePackage) => structuredClone(rulePackage));
+    tariffPackages[1].rules.overtimeBaseRule!.maximumStepId = "s3";
+    const resolver = createRuleResolver({
+      tariff: tariffPackages,
+      legal: BUNDLED_LEGAL_RULES,
+      holiday: BUNDLED_HOLIDAY_RULES,
+    });
+    const result = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-07-06",
+        type: "DAY",
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 0,
+      }),
+      {
+        ...profile,
+        tariff: { ...profile.tariff!, payGroup: "P16", payLevel: 6 },
+      },
+      resolver,
+    );
+
+    expect(result.overtimeBaseAmount).toBe(31.94);
   });
 
   it("uses the selected holiday compensation percentage", () => {

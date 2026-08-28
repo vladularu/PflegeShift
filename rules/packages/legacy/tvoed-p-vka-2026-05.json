@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "engineContractVersion": 1,
+  "engineContractVersion": 2,
   "packageId": "tvoed-p-vka-legacy",
   "versionId": "2026-05",
   "kind": "TARIFF",
@@ -28,6 +28,22 @@
       "documentDate": "2026-08-28",
       "section": "src/engine/pay.ts vor WP2",
       "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "vka-tvoed-hospitals-2026",
+      "title": "VKA Lesefassung TVöD Krankenhäuser einschließlich BT-K",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf",
+      "documentDate": "2026-05-19",
+      "section": "TVöD-AT § 8 und Protokollerklärung zu Absatz 1 Satz 1",
+      "sha256": "00e831fefffb833b689c1355c58e87cf25bdd6c585ab4693f41a187604b0ef6e"
+    },
+    {
+      "id": "vka-tvoed-care-2026",
+      "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
+      "documentDate": "2026-05-19",
+      "section": "TVöD-AT § 8 und Protokollerklärung zu Absatz 1 Satz 1",
+      "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
     }
   ],
   "review": {
@@ -355,6 +371,10 @@
         "sourceIds": ["legacy-tariff-code"]
       }
     ],
+    "overtimeBaseRule": {
+      "maximumStepId": "s4",
+      "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+    },
     "premiumRules": [
       {
         "id": "night",
@@ -486,8 +506,8 @@
         "sourceIds": ["legacy-pay-code"]
       },
       {
-        "id": "overtime-p7-p8",
-        "label": "Ueberstunden P7-P8",
+        "id": "overtime-p7-p11",
+        "label": "Ueberstunden P7-P11",
         "premiumType": "OVERTIME",
         "percentageBasisPoints": 3000,
         "rateBasis": "TABLE_STEP",
@@ -496,18 +516,18 @@
         "conditions": {
           "requiresShiftTypes": [],
           "excludesShiftTypes": [],
-          "payGroups": ["p7", "p8"],
+          "payGroups": ["p7", "p8", "p9", "p10", "p11"],
           "sectors": null,
           "federalStates": null,
           "holidayPremiumModes": null,
           "allowanceStatuses": null,
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
-        "id": "overtime-p9-p16",
-        "label": "Ueberstunden P9-P16",
+        "id": "overtime-p12-p16",
+        "label": "Ueberstunden P12-P16",
         "premiumType": "OVERTIME",
         "percentageBasisPoints": 1500,
         "rateBasis": "TABLE_STEP",
@@ -516,14 +536,14 @@
         "conditions": {
           "requiresShiftTypes": [],
           "excludesShiftTypes": [],
-          "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+          "payGroups": ["p12", "p13", "p14", "p15", "p16"],
           "sectors": null,
           "federalStates": null,
           "holidayPremiumModes": null,
           "allowanceStatuses": null,
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       }
     ],
     "allowanceRules": [

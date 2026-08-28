@@ -65,6 +65,11 @@ test("publisher CLI dry-runs, writes in order, retries idempotently, and protect
       fixture("legal-package.valid.json"),
       fixture("holiday-package.valid.json"),
     ]);
+    packages[0].engineContractVersion = 2;
+    packages[0].rules.overtimeBaseRule = {
+      maximumStepId: "s2",
+      sourceIds: ["tvoed-vka-2026"],
+    };
     const packagePaths = packages.map(
       (rulePackage) =>
         `rules/packages/reviewed/${rulePackage.packageId}/${rulePackage.versionId}.json`,
