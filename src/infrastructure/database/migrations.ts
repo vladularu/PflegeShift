@@ -194,6 +194,65 @@ CREATE INDEX IF NOT EXISTS idx_scheduled_entry_notifications_entry
   ON scheduled_entry_notifications(entry_kind, entry_id);
 `;
 
+const MIGRATION_10 = `
+CREATE TABLE IF NOT EXISTS rule_catalog_generations (
+  generation INTEGER PRIMARY KEY NOT NULL CHECK (generation >= 1),
+  manifest_json TEXT NOT NULL CHECK (length(manifest_json) > 0),
+  activated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS rule_catalog_packages (
+  generation INTEGER NOT NULL,
+  package_id TEXT NOT NULL CHECK (length(package_id) > 0),
+  version_id TEXT NOT NULL CHECK (length(version_id) > 0),
+  kind TEXT NOT NULL CHECK (kind IN ('TARIFF','LEGAL','HOLIDAY')),
+  payload_json TEXT NOT NULL CHECK (length(payload_json) > 0),
+  PRIMARY KEY (generation, package_id, version_id),
+  FOREIGN KEY (generation) REFERENCES rule_catalog_generations(generation)
+    ON UPDATE RESTRICT ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS rule_catalog_state (
+  id TEXT PRIMARY KEY NOT NULL CHECK (id = 'active'),
+  active_generation INTEGER NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (active_generation) REFERENCES rule_catalog_generations(generation)
+    ON UPDATE RESTRICT ON DELETE RESTRICT
+);
+
+CREATE TRIGGER IF NOT EXISTS prevent_rule_catalog_generation_update
+BEFORE UPDATE ON rule_catalog_generations
+BEGIN SELECT RAISE(ABORT, 'rule catalog generations are immutable'); END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_rule_catalog_generation_delete
+BEFORE DELETE ON rule_catalog_generations
+BEGIN SELECT RAISE(ABORT, 'rule catalog generations are immutable'); END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_rule_catalog_package_update
+BEFORE UPDATE ON rule_catalog_packages
+BEGIN SELECT RAISE(ABORT, 'rule catalog packages are immutable'); END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_rule_catalog_package_delete
+BEFORE DELETE ON rule_catalog_packages
+BEGIN SELECT RAISE(ABORT, 'rule catalog packages are immutable'); END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_rule_catalog_package_late_insert
+BEFORE INSERT ON rule_catalog_packages
+WHEN EXISTS (
+  SELECT 1 FROM rule_catalog_state WHERE active_generation >= NEW.generation
+)
+BEGIN SELECT RAISE(ABORT, 'active rule catalog generations are sealed'); END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_rule_catalog_state_rollback
+BEFORE UPDATE OF active_generation ON rule_catalog_state
+WHEN NEW.active_generation <= OLD.active_generation
+BEGIN SELECT RAISE(ABORT, 'active rule catalog generation must increase'); END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_rule_catalog_state_delete
+BEFORE DELETE ON rule_catalog_state
+BEGIN SELECT RAISE(ABORT, 'active rule catalog state cannot be deleted'); END;
+`;
+
 async function addColumnIfMissing(
   db: SQLiteDatabase,
   table: string,
@@ -364,5 +423,13 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
       "INTEGER NOT NULL DEFAULT 0 CHECK (alarm_enabled IN (0,1))",
     );
     await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 9, now);
+  }
+
+  const migration10 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=10",
+  );
+  if (migration10 === null) {
+    await db.execAsync(MIGRATION_10);
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 10, now);
   }
 }
