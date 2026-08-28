@@ -1,6 +1,12 @@
 import { Temporal } from "@js-temporal/polyfill";
 
 import type { FederalState } from "@/domain/types";
+import type { RuleHoliday, RuleHolidayPackage } from "@/rules/contracts.generated";
+import {
+  bundledRuleResolver,
+  requireResolvedPackage,
+  type RuleResolver,
+} from "@/rules/rule-resolver";
 
 export interface PublicHoliday {
   readonly date: string;
@@ -8,11 +14,11 @@ export interface PublicHoliday {
   readonly scope: "NATIONWIDE" | "STATEWIDE";
 }
 
-const EPIPHANY = new Set<FederalState>(["BW", "BY", "ST"]);
-const CORPUS_CHRISTI = new Set<FederalState>(["BW", "BY", "HE", "NW", "RP", "SL"]);
-const REFORMATION = new Set<FederalState>(["BB", "MV", "SN", "ST", "TH"]);
-const REFORMATION_SINCE_2018 = new Set<FederalState>(["HB", "HH", "NI", "SH"]);
-const ALL_SAINTS = new Set<FederalState>(["BW", "BY", "NW", "RP", "SL"]);
+const HOLIDAY_CACHE = new WeakMap<RuleResolver, Map<string, readonly PublicHoliday[]>>();
+const HOLIDAY_PACKAGE_CACHE = new WeakMap<
+  RuleResolver,
+  Map<number, readonly RuleHolidayPackage[]>
+>();
 
 function date(year: number, month: number, day: number): string {
   return new Temporal.PlainDate(year, month, day).toString();
@@ -36,92 +42,112 @@ export function easterSunday(year: number): string {
   return date(year, month, day);
 }
 
-function shift(value: string, days: number): string {
-  return Temporal.PlainDate.from(value).add({ days }).toString();
-}
-
 function repentanceDay(year: number): string {
   const november23 = Temporal.PlainDate.from(date(year, 11, 23));
   const daysBack = november23.dayOfWeek > 3 ? november23.dayOfWeek - 3 : november23.dayOfWeek + 4;
   return november23.subtract({ days: daysBack }).toString();
 }
 
+function holidayDate(rule: RuleHoliday, year: number): string {
+  switch (rule.calculation.type) {
+    case "FIXED_DATE":
+      return date(year, rule.calculation.month, rule.calculation.day);
+    case "EASTER_OFFSET":
+      return Temporal.PlainDate.from(easterSunday(year))
+        .add({ days: rule.calculation.offsetDays })
+        .toString();
+    case "REPENTANCE_DAY":
+      return repentanceDay(year);
+    case "SPECIFIC_DATE":
+      return rule.calculation.date;
+  }
+}
+
+function packagesForYear(year: number, ruleResolver: RuleResolver): readonly RuleHolidayPackage[] {
+  const resolverCache = HOLIDAY_PACKAGE_CACHE.get(ruleResolver);
+  const cached = resolverCache?.get(year);
+  if (cached) return cached;
+  const packages = new Set<RuleHolidayPackage>();
+  const end = Temporal.PlainDate.from({ year, month: 12, day: 31 }).add({ days: 1 });
+  for (
+    let cursor = Temporal.PlainDate.from({ year, month: 1, day: 1 });
+    Temporal.PlainDate.compare(cursor, end) < 0;
+    cursor = cursor.add({ days: 1 })
+  ) {
+    packages.add(requireResolvedPackage(ruleResolver.resolveHoliday(cursor.toString())));
+  }
+  const resolvedPackages = Object.freeze([...packages]);
+  const nextCache = resolverCache ?? new Map<number, readonly RuleHolidayPackage[]>();
+  nextCache.set(year, resolvedPackages);
+  if (!resolverCache) HOLIDAY_PACKAGE_CACHE.set(ruleResolver, nextCache);
+  return resolvedPackages;
+}
+
+function isRuleActiveForState(
+  rule: RuleHoliday,
+  holidayDateValue: string,
+  federalState: FederalState,
+): boolean {
+  return (
+    rule.validFrom <= holidayDateValue &&
+    holidayDateValue <= rule.validTo &&
+    (rule.scope === "NATIONWIDE" || rule.federalStates?.includes(federalState) === true)
+  );
+}
+
 export function getPublicHolidays(
   year: number,
   federalState: FederalState,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): readonly PublicHoliday[] {
-  const easter = easterSunday(year);
-  const result: PublicHoliday[] = [
-    { date: date(year, 1, 1), name: "Neujahr", scope: "NATIONWIDE" },
-    { date: shift(easter, -2), name: "Karfreitag", scope: "NATIONWIDE" },
-    { date: shift(easter, 1), name: "Ostermontag", scope: "NATIONWIDE" },
-    { date: date(year, 5, 1), name: "Tag der Arbeit", scope: "NATIONWIDE" },
-    { date: shift(easter, 39), name: "Christi Himmelfahrt", scope: "NATIONWIDE" },
-    { date: shift(easter, 50), name: "Pfingstmontag", scope: "NATIONWIDE" },
-    { date: date(year, 10, 3), name: "Tag der Deutschen Einheit", scope: "NATIONWIDE" },
-    { date: date(year, 12, 25), name: "1. Weihnachtstag", scope: "NATIONWIDE" },
-    { date: date(year, 12, 26), name: "2. Weihnachtstag", scope: "NATIONWIDE" },
-  ];
+  const key = `${federalState}-${year}`;
+  const resolverCache = HOLIDAY_CACHE.get(ruleResolver);
+  const cached = resolverCache?.get(key);
+  if (cached) return cached;
 
-  if (EPIPHANY.has(federalState)) {
-    result.push({ date: date(year, 1, 6), name: "Heilige Drei Könige", scope: "STATEWIDE" });
-  }
-  if ((federalState === "BE" && year >= 2019) || (federalState === "MV" && year >= 2023)) {
-    result.push({ date: date(year, 3, 8), name: "Internationaler Frauentag", scope: "STATEWIDE" });
-  }
-  if (federalState === "BB") {
-    result.push(
-      { date: easter, name: "Ostersonntag", scope: "STATEWIDE" },
-      { date: shift(easter, 49), name: "Pfingstsonntag", scope: "STATEWIDE" },
-    );
-  }
-  if (CORPUS_CHRISTI.has(federalState)) {
-    result.push({ date: shift(easter, 60), name: "Fronleichnam", scope: "STATEWIDE" });
-  }
-  if (federalState === "SL") {
-    result.push({ date: date(year, 8, 15), name: "Mariä Himmelfahrt", scope: "STATEWIDE" });
-  }
-  if (federalState === "TH" && year >= 2019) {
-    result.push({ date: date(year, 9, 20), name: "Weltkindertag", scope: "STATEWIDE" });
-  }
-  if (
-    year === 2017 ||
-    REFORMATION.has(federalState) ||
-    (year >= 2018 && REFORMATION_SINCE_2018.has(federalState))
-  ) {
-    result.push({
-      date: date(year, 10, 31),
-      name: "Reformationstag",
-      scope: year === 2017 ? "NATIONWIDE" : "STATEWIDE",
-    });
-  }
-  if (ALL_SAINTS.has(federalState)) {
-    result.push({ date: date(year, 11, 1), name: "Allerheiligen", scope: "STATEWIDE" });
-  }
-  if (federalState === "SN") {
-    result.push({ date: repentanceDay(year), name: "Buß- und Bettag", scope: "STATEWIDE" });
-  }
-  if (federalState === "BE" && (year === 2020 || year === 2025)) {
-    result.push({ date: date(year, 5, 8), name: "Tag der Befreiung", scope: "STATEWIDE" });
-  }
-  if (federalState === "BE" && year === 2028) {
-    result.push({
-      date: date(year, 6, 17),
-      name: "75. Jahrestag des Volksaufstands vom 17. Juni 1953",
-      scope: "STATEWIDE",
-    });
+  const result: PublicHoliday[] = [];
+  for (const rulePackage of packagesForYear(year, ruleResolver)) {
+    for (const rule of rulePackage.rules.holidays) {
+      const holidayDateValue = holidayDate(rule, year);
+      if (!holidayDateValue.startsWith(`${year}-`)) continue;
+      if (!isRuleActiveForState(rule, holidayDateValue, federalState)) continue;
+      const activePackage = requireResolvedPackage(ruleResolver.resolveHoliday(holidayDateValue));
+      if (
+        activePackage.packageId !== rulePackage.packageId ||
+        activePackage.versionId !== rulePackage.versionId
+      ) {
+        continue;
+      }
+      result.push({
+        date: holidayDateValue,
+        name: rule.name,
+        scope: rule.scope,
+      });
+    }
   }
 
-  return Object.freeze(result.sort((left, right) => left.date.localeCompare(right.date)));
+  const holidays = Object.freeze(
+    result.sort(
+      (left, right) =>
+        left.date.localeCompare(right.date) ||
+        left.name.localeCompare(right.name) ||
+        left.scope.localeCompare(right.scope),
+    ),
+  );
+  const nextCache = resolverCache ?? new Map<string, readonly PublicHoliday[]>();
+  nextCache.set(key, holidays);
+  if (!resolverCache) HOLIDAY_CACHE.set(ruleResolver, nextCache);
+  return holidays;
 }
 
 export function holidayMapForMonth(
   month: string,
   federalState: FederalState,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): ReadonlyMap<string, PublicHoliday> {
   const year = Number(month.slice(0, 4));
   return new Map(
-    getPublicHolidays(year, federalState)
+    getPublicHolidays(year, federalState, ruleResolver)
       .filter((holiday) => holiday.date.startsWith(`${month}-`))
       .map((holiday) => [holiday.date, holiday]),
   );

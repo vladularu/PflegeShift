@@ -13,6 +13,19 @@ The authoritative machine-readable contracts are:
 
 WP1 does not change the existing calculation engine, persist rule packages, contact Supabase, or verify a cryptographic signature. Those integrations follow only after the contract and later parity tests are accepted.
 
+## Local runtime integration
+
+WP2b makes the calculation engine a consumer of this contract without adding a network dependency:
+
+- `src/engine/tariff.ts` resolves pay-table entries and validity boundaries from a `RuleTariffPackage`.
+- `src/engine/pay.ts` resolves premium windows, percentages, table references, combination priority, allowances, and work-pattern thresholds from the same tariff package.
+- `src/engine/holidays.ts` derives each state holiday from the holiday package that is active on the holiday date.
+- `src/engine/compliance.ts` resolves working-time, break, night-work, rest-period, and planning thresholds from a legal package.
+
+Every public calculation keeps the bundled resolver as its default and accepts an injected `RuleResolver` at the engine boundary. That makes a later verified on-device catalog replaceable without changing UI consumers or sending calculation inputs to a server. Resolver-specific caches prevent values from one catalog being reused after another catalog is activated.
+
+The production default is still the immutable `LEGACY_EMBEDDED` catalog. WP2b does not download or persist packages, activate a manifest, verify signatures, contact Supabase, or make the current legacy packages publishable. Those remain separate delivery and governance work.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.

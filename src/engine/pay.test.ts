@@ -95,6 +95,21 @@ describe("TVöD-P pay engine", () => {
     );
   });
 
+  it("applies calendar-day package conditions after an overnight boundary", () => {
+    const result = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-12-23",
+        startTime: "23:00",
+        endTime: "07:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      }),
+      profile,
+    );
+
+    expect(result.premiumLines.find((line) => line.key === "preholiday")?.minutes).toBe(60);
+  });
+
   it("keeps actual premium minutes across daylight-saving transitions", () => {
     const spring = calculateShiftPremiumBreakdown(
       shift({
