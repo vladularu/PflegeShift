@@ -11,6 +11,7 @@ import {
   usePflegeShiftTariff,
   usePflegeShiftTestData,
 } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
@@ -48,6 +49,7 @@ export function SalaryScreen() {
   const { entries } = usePflegeShiftEntries();
   const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
   const { testMonths } = usePflegeShiftTestData();
+  const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
@@ -66,7 +68,10 @@ export function SalaryScreen() {
     }, [activeMonthCoordinator]),
   );
 
-  const entryWindow = useMemo(() => selectAnalysisEntryWindow(entries, month), [entries, month]);
+  const entryWindow = useMemo(
+    () => selectAnalysisEntryWindow(entries, month, ruleResolver),
+    [entries, month, ruleResolver],
+  );
   const { monthShifts, allowanceShifts } = entryWindow;
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
   const pay = useMemo(
@@ -79,9 +84,10 @@ export function SalaryScreen() {
             decision,
             allowanceShifts,
             workPatternSettings,
+            ruleResolver,
           )
         : null,
-    [allowanceShifts, decision, month, monthShifts, profile, workPatternSettings],
+    [allowanceShifts, decision, month, monthShifts, profile, ruleResolver, workPatternSettings],
   );
 
   if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;

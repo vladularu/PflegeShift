@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { ShiftEntry } from "@/domain/types";
 import { calculateDailyWorkCredit } from "@/engine/daily-summary";
+import {
+  BUNDLED_HOLIDAY_RULES,
+  BUNDLED_LEGAL_RULES,
+  BUNDLED_TARIFF_RULES,
+} from "@/rules/bundled-rules";
+import { createRuleResolver } from "@/rules/rule-resolver";
 
 const profile = {
   federalState: "NW" as const,
@@ -117,6 +123,31 @@ describe("daily work credit", () => {
         profile,
       ).actualMinutes,
     ).toBe(0);
+  });
+
+  it("isolates holiday target caches by resolver identity", () => {
+    const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
+    const withoutNewYear = {
+      ...holidayPackage,
+      rules: {
+        ...holidayPackage.rules,
+        holidays: holidayPackage.rules.holidays.filter(
+          (holiday) => holiday.id !== "new-year",
+        ) as typeof holidayPackage.rules.holidays,
+      },
+    };
+    const alternateResolver = createRuleResolver({
+      tariff: BUNDLED_TARIFF_RULES,
+      legal: BUNDLED_LEGAL_RULES,
+      holiday: [withoutNewYear],
+    });
+    const vacation = [shift("vacation", "2026-01-01", "VACATION", null, null)];
+
+    expect(calculateDailyWorkCredit("2026-01-01", vacation, profile).actualMinutes).toBe(0);
+    expect(
+      calculateDailyWorkCredit("2026-01-01", vacation, profile, alternateResolver).actualMinutes,
+    ).toBe(462);
+    expect(calculateDailyWorkCredit("2026-01-01", vacation, profile).actualMinutes).toBe(0);
   });
 
   it("assigns absence credit to the effective absence type", () => {

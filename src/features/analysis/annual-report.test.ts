@@ -14,6 +14,7 @@ import {
   createAnnualReportComputationCache,
   type AnnualReportComputationCache,
 } from "@/features/analysis/annual-report";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 const profile: UserProfile = {
   federalState: "NW",
@@ -77,12 +78,80 @@ function appointment(id: string, date: string): Appointment {
   };
 }
 
+function alternateRuleResolver(): RuleResolver {
+  return Object.freeze({
+    resolveTariff: (effectiveDate: string) => {
+      const resolved = bundledRuleResolver.resolveTariff(effectiveDate);
+      if (!resolved.ok) return resolved;
+      return {
+        ok: true as const,
+        value: {
+          ...resolved.value,
+          rules: {
+            ...resolved.value.rules,
+            payTables: resolved.value.rules.payTables.map((table) => ({
+              ...table,
+              entries: table.entries.map((entry) => ({
+                ...entry,
+                monthlyCents: entry.monthlyCents + 10_000,
+              })),
+            })) as typeof resolved.value.rules.payTables,
+          },
+        },
+      };
+    },
+    resolveLegal: (effectiveDate: string) => {
+      const resolved = bundledRuleResolver.resolveLegal(effectiveDate);
+      if (!resolved.ok) return resolved;
+      return {
+        ok: true as const,
+        value: {
+          ...resolved.value,
+          rules: {
+            ...resolved.value.rules,
+            workingTime: {
+              ...resolved.value.rules.workingTime,
+              maxDailyMinutes: 1_440,
+            },
+          },
+        },
+      };
+    },
+    resolveHoliday: (effectiveDate: string) => {
+      const resolved = bundledRuleResolver.resolveHoliday(effectiveDate);
+      if (!resolved.ok) return resolved;
+      return {
+        ok: true as const,
+        value: {
+          ...resolved.value,
+          rules: {
+            ...resolved.value.rules,
+            holidays: resolved.value.rules.holidays.filter(
+              (holiday) => holiday.id !== "new-year",
+            ) as typeof resolved.value.rules.holidays,
+          },
+        },
+      };
+    },
+  });
+}
+
 function drainAnnualReport(
   entries: readonly CalendarEntry[],
   cache: AnnualReportComputationCache,
   referenceDate = "2026-08-04",
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): { readonly report: ReturnType<typeof buildAnnualReport>; readonly yields: number } {
-  const steps = buildAnnualReportSteps(2026, entries, profile, [], undefined, cache, referenceDate);
+  const steps = buildAnnualReportSteps(
+    2026,
+    entries,
+    profile,
+    [],
+    undefined,
+    cache,
+    referenceDate,
+    ruleResolver,
+  );
   let yields = 0;
   while (true) {
     const step = steps.next();
@@ -192,5 +261,26 @@ describe("buildAnnualReport", () => {
     expect(open.report.warningCount).toBeGreaterThan(0);
     expect(expired.report.criticalCount).toBeGreaterThan(open.report.criticalCount);
     expect(expired.yields).toBeGreaterThan(12);
+  });
+
+  it("isolates every annual calculation cache by resolver identity", () => {
+    const cache = createAnnualReportComputationCache();
+    const entries = [
+      shift("new-year-vacation", "2026-01-01", "VACATION"),
+      shift("long", "2026-01-02", "DAY", {
+        startTime: "06:00",
+        endTime: "18:30",
+        breakMinutes: 30,
+      }),
+    ];
+    const legacy = drainAnnualReport(entries, cache);
+    const alternate = drainAnnualReport(entries, cache, "2026-08-04", alternateRuleResolver());
+
+    expect(alternate.report.targetMinutes).toBeGreaterThan(legacy.report.targetMinutes);
+    expect(alternate.report.estimatedGrossAmount).toBeGreaterThan(
+      legacy.report.estimatedGrossAmount,
+    );
+    expect(alternate.report.criticalCount).toBeLessThan(legacy.report.criticalCount);
+    expect(alternate.yields).toBeGreaterThan(12);
   });
 });

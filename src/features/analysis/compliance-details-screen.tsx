@@ -6,6 +6,7 @@ import {
   usePflegeShiftProfile,
   usePflegeShiftStatus,
 } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
 import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-layout";
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
@@ -22,14 +23,19 @@ export function ComplianceDetailsScreen() {
   const { error, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
   const { entries } = usePflegeShiftEntries();
+  const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const parsedMonth = parseMonthRouteParam(params.month);
   const month =
     parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);
-  const window = useMemo(() => selectAnalysisEntryWindow(entries, month), [entries, month]);
+  const window = useMemo(
+    () => selectAnalysisEntryWindow(entries, month, ruleResolver),
+    [entries, month, ruleResolver],
+  );
   const monthlyCompliance = useDeferredMonthlyCompliance({
     enabled: true,
     month,
     profile,
+    ruleResolver,
     shifts: window.complianceShifts,
   });
   const compliance = monthlyCompliance.result;

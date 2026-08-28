@@ -34,6 +34,12 @@ jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftStatus: () => ({ error: null, ready: true, reload: jest.fn() }),
 }));
 
+jest.mock("@/application/rule-catalog-runtime-provider", () => {
+  const { bundledRuleResolver } =
+    jest.requireActual<typeof import("@/rules/rule-resolver")>("@/rules/rule-resolver");
+  return { useRuleCatalogRuntime: () => ({ resolver: bundledRuleResolver }) };
+});
+
 jest.mock("@/features/analysis/use-monthly-compliance", () => ({
   useDeferredMonthlyCompliance: () => ({
     error: null,

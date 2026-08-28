@@ -16,6 +16,7 @@ import {
   type AnalysisEntryWindow,
 } from "@/features/analysis/analysis-data";
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
+import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 export interface AnnualMonthReport {
   readonly month: string;
@@ -98,11 +99,11 @@ interface CachedAnnualMonth {
 }
 
 export interface AnnualReportComputationCache {
-  readonly months: Map<string, CachedAnnualMonth>;
+  readonly byResolver: WeakMap<RuleResolver, Map<string, CachedAnnualMonth>>;
 }
 
 export function createAnnualReportComputationCache(): AnnualReportComputationCache {
-  return { months: new Map() };
+  return { byResolver: new WeakMap() };
 }
 
 function sameItems<T>(left: readonly T[], right: readonly T[]): boolean {
@@ -111,17 +112,20 @@ function sameItems<T>(left: readonly T[], right: readonly T[]): boolean {
 
 function monthCache(
   cache: AnnualReportComputationCache | undefined,
+  ruleResolver: RuleResolver,
   month: string,
 ): CachedAnnualMonth {
   if (!cache) return {};
-  const existing = cache.months.get(month);
+  const months = cache.byResolver.get(ruleResolver) ?? new Map<string, CachedAnnualMonth>();
+  const existing = months.get(month);
   if (existing) return existing;
-  if (!cache.months.has(month) && cache.months.size >= 36) {
-    const oldest = cache.months.keys().next().value;
-    if (oldest !== undefined) cache.months.delete(oldest);
+  if (!months.has(month) && months.size >= 36) {
+    const oldest = months.keys().next().value;
+    if (oldest !== undefined) months.delete(oldest);
   }
   const created: CachedAnnualMonth = {};
-  cache.months.set(month, created);
+  months.set(month, created);
+  if (!cache.byResolver.has(ruleResolver)) cache.byResolver.set(ruleResolver, months);
   return created;
 }
 
@@ -132,6 +136,7 @@ function* calculateAnnualMonthContribution(
   decision: MonthlyTariffDecision | null,
   workPatternSettings: TvoedWorkPatternSettings | undefined,
   referenceDate: string,
+  ruleResolver: RuleResolver,
   cached: CachedAnnualMonth,
 ): Generator<number, AnnualMonthContribution, void> {
   let summary =
@@ -141,7 +146,7 @@ function* calculateAnnualMonthContribution(
       ? cached.summary.value
       : null;
   if (summary === null) {
-    summary = calculateMonthlySummary(month, window.monthShifts, profile);
+    summary = calculateMonthlySummary(month, window.monthShifts, profile, ruleResolver);
     cached.summary = { shifts: window.monthShifts, profile, value: summary };
     yield 1;
   }
@@ -161,6 +166,7 @@ function* calculateAnnualMonthContribution(
       {
         federalState: profile.federalState,
         referenceDate,
+        ruleResolver,
         weeklyMinutes: profile.weeklyMinutes,
       },
     );
@@ -197,6 +203,7 @@ function* calculateAnnualMonthContribution(
       decision,
       window.allowanceShifts,
       workPatternSettings,
+      ruleResolver,
     );
     cached.pay = {
       monthShifts: window.monthShifts,
@@ -253,6 +260,7 @@ export function* buildAnnualReportSteps(
   workPatternSettings?: TvoedWorkPatternSettings,
   cache?: AnnualReportComputationCache,
   referenceDate = Temporal.Now.plainDateISO(profile.timeZone).toString(),
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): Generator<number, AnnualReport, void> {
   if (!Number.isInteger(year) || year < 1900 || year > 4099) {
     throw new Error("Ungültiges Berichtsjahr.");
@@ -277,7 +285,11 @@ export function* buildAnnualReportSteps(
   let criticalCount = 0;
   let warningCount = 0;
   const windows = Array.from({ length: 12 }, (_, monthIndex) =>
-    selectAnalysisEntryWindow(entries, `${year}-${String(monthIndex + 1).padStart(2, "0")}`),
+    selectAnalysisEntryWindow(
+      entries,
+      `${year}-${String(monthIndex + 1).padStart(2, "0")}`,
+      ruleResolver,
+    ),
   );
   const decisionsByMonth = new Map(tariffDecisions.map((item) => [item.month, item]));
 
@@ -292,7 +304,8 @@ export function* buildAnnualReportSteps(
       decision,
       workPatternSettings,
       referenceDate,
-      monthCache(cache, month),
+      ruleResolver,
+      monthCache(cache, ruleResolver, month),
     );
     let contribution: AnnualMonthContribution;
     while (true) {
@@ -361,6 +374,7 @@ export function buildAnnualReport(
   profile: UserProfile,
   tariffDecisions: readonly MonthlyTariffDecision[],
   workPatternSettings?: TvoedWorkPatternSettings,
+  ruleResolver: RuleResolver = bundledRuleResolver,
 ): AnnualReport {
   const steps = buildAnnualReportSteps(
     year,
@@ -368,6 +382,9 @@ export function buildAnnualReport(
     profile,
     tariffDecisions,
     workPatternSettings,
+    undefined,
+    undefined,
+    ruleResolver,
   );
   while (true) {
     const step = steps.next();
