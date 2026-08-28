@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "engineContractVersion": 4,
+  "engineContractVersion": 5,
   "packageId": "de-arbzg-care-legacy",
-  "versionId": "contract-v4-2026-08",
+  "versionId": "contract-v5-2026-08",
   "kind": "LEGAL",
   "label": "ArbZG- und Planungslogik lokal v4",
   "status": "LEGACY_EMBEDDED",
@@ -26,7 +26,7 @@
       "title": "Arbeitszeitgesetz (ArbZG)",
       "url": "https://www.gesetze-im-internet.de/arbzg/ArbZG.pdf",
       "documentDate": "2024-10-23",
-      "section": "§§ 2 bis 6; Stand der letzten Änderung durch Art. 52 G vom 23.10.2024",
+      "section": "§§ 2 bis 6 und 9 bis 12; Stand der letzten Änderung durch Art. 52 G vom 23.10.2024",
       "sha256": "4f02827be6307ad728f4aeb318aff28751422b251973d3350b93e9ec11554e84"
     },
     {
@@ -105,6 +105,18 @@
           "sourceIds": ["arbzg-2024"]
         }
       ],
+      "sourceIds": ["arbzg-2024"]
+    },
+    "sundayHolidayRest": {
+      "eligibleSectorIds": ["hospital", "care"],
+      "minimumFreeSundaysPerCalendarYear": 15,
+      "sundayCompensationPeriodDays": 14,
+      "weekdayHolidayCompensationPeriodDays": 56,
+      "replacementDayMinutes": 1440,
+      "connectedRestMinutes": 660,
+      "connectionExceptionMode": "TECHNICAL_OR_OPERATIONAL_REVIEW",
+      "evidenceShiftType": "FREE",
+      "matchingMode": "ONE_TO_ONE_EARLIEST_DEADLINE",
       "sourceIds": ["arbzg-2024"]
     },
     "planning": {

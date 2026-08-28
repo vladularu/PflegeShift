@@ -80,7 +80,7 @@ const schema31 = {
         packageId: { $ref: "#/$defs/identifier" },
         versionId: { $ref: "#/$defs/versionIdentifier" },
         kind: { $ref: "#/$defs/kind" },
-        engineContractVersion: { enum: [1, 2, 3, 4] },
+        engineContractVersion: { enum: [1, 2, 3, 4, 5] },
         validFrom: { $ref: "#/$defs/isoDate" },
         validTo: { oneOf: [{ type: "null" }, { $ref: "#/$defs/isoDate" }] },
         path: {
@@ -521,7 +521,7 @@ const schema38 = {
     packageId: { $ref: "#/$defs/identifier" },
     versionId: { $ref: "#/$defs/versionIdentifier" },
     kind: { $ref: "#/$defs/kind" },
-    engineContractVersion: { enum: [1, 2, 3, 4] },
+    engineContractVersion: { enum: [1, 2, 3, 4, 5] },
     validFrom: { $ref: "#/$defs/isoDate" },
     validTo: { oneOf: [{ type: "null" }, { $ref: "#/$defs/isoDate" }] },
     path: {
@@ -858,7 +858,7 @@ function validate23(
     }
     if (data.engineContractVersion !== undefined) {
       let data3 = data.engineContractVersion;
-      if (!(data3 === 1 || data3 === 2 || data3 === 3 || data3 === 4)) {
+      if (!(data3 === 1 || data3 === 2 || data3 === 3 || data3 === 4 || data3 === 5)) {
         const err19 = {
           instancePath: instancePath + "/engineContractVersion",
           schemaPath: "#/properties/engineContractVersion/enum",
@@ -2124,7 +2124,7 @@ const schema46 = {
       ],
       properties: {
         schemaVersion: { const: 1 },
-        engineContractVersion: { enum: [1, 2, 3, 4] },
+        engineContractVersion: { enum: [1, 2, 3, 4, 5] },
         packageId: { $ref: "#/$defs/identifier" },
         versionId: { $ref: "#/$defs/versionIdentifier" },
         kind: { enum: ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -2497,6 +2497,39 @@ const schema46 = {
         sourceIds: { $ref: "#/$defs/sourceIds" },
       },
     },
+    sundayHolidayRest: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "eligibleSectorIds",
+        "minimumFreeSundaysPerCalendarYear",
+        "sundayCompensationPeriodDays",
+        "weekdayHolidayCompensationPeriodDays",
+        "replacementDayMinutes",
+        "connectedRestMinutes",
+        "connectionExceptionMode",
+        "evidenceShiftType",
+        "matchingMode",
+        "sourceIds",
+      ],
+      properties: {
+        eligibleSectorIds: {
+          type: "array",
+          minItems: 1,
+          uniqueItems: true,
+          items: { $ref: "#/$defs/identifier" },
+        },
+        minimumFreeSundaysPerCalendarYear: { type: "integer", minimum: 1, maximum: 53 },
+        sundayCompensationPeriodDays: { type: "integer", minimum: 1, maximum: 366 },
+        weekdayHolidayCompensationPeriodDays: { type: "integer", minimum: 1, maximum: 366 },
+        replacementDayMinutes: { const: 1440 },
+        connectedRestMinutes: { type: "integer", minimum: 1, maximum: 1440 },
+        connectionExceptionMode: { const: "TECHNICAL_OR_OPERATIONAL_REVIEW" },
+        evidenceShiftType: { const: "FREE" },
+        matchingMode: { const: "ONE_TO_ONE_EARLIEST_DEADLINE" },
+        sourceIds: { $ref: "#/$defs/sourceIds" },
+      },
+    },
     legalRules: {
       type: "object",
       additionalProperties: false,
@@ -2589,6 +2622,7 @@ const schema46 = {
             sourceIds: { $ref: "#/$defs/sourceIds" },
           },
         },
+        sundayHolidayRest: { $ref: "#/$defs/sundayHolidayRest" },
         planning: {
           type: "object",
           additionalProperties: false,
@@ -2616,7 +2650,7 @@ const schema46 = {
           type: "object",
           required: ["kind", "rules"],
           properties: {
-            engineContractVersion: { enum: [1, 3, 4] },
+            engineContractVersion: { enum: [1, 3, 4, 5] },
             kind: { const: "LEGAL" },
             rules: { $ref: "#/$defs/legalRules" },
           },
@@ -2748,7 +2782,7 @@ const schema48 = {
   ],
   properties: {
     schemaVersion: { const: 1 },
-    engineContractVersion: { enum: [1, 2, 3, 4] },
+    engineContractVersion: { enum: [1, 2, 3, 4, 5] },
     packageId: { $ref: "#/$defs/identifier" },
     versionId: { $ref: "#/$defs/versionIdentifier" },
     kind: { enum: ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -4638,7 +4672,7 @@ function validate29(
     }
     if (data.engineContractVersion !== undefined) {
       let data1 = data.engineContractVersion;
-      if (!(data1 === 1 || data1 === 2 || data1 === 3 || data1 === 4)) {
+      if (!(data1 === 1 || data1 === 2 || data1 === 3 || data1 === 4 || data1 === 5)) {
         const err16 = {
           instancePath: instancePath + "/engineContractVersion",
           schemaPath: "#/properties/engineContractVersion/enum",
@@ -11624,7 +11658,7 @@ const schema99 = {
       type: "object",
       required: ["kind", "rules"],
       properties: {
-        engineContractVersion: { enum: [1, 3, 4] },
+        engineContractVersion: { enum: [1, 3, 4, 5] },
         kind: { const: "LEGAL" },
         rules: { $ref: "#/$defs/legalRules" },
       },
@@ -11723,6 +11757,7 @@ const schema100 = {
         sourceIds: { $ref: "#/$defs/sourceIds" },
       },
     },
+    sundayHolidayRest: { $ref: "#/$defs/sundayHolidayRest" },
     planning: {
       type: "object",
       additionalProperties: false,
@@ -12250,6 +12285,649 @@ function validate78(
   return errors === 0;
 }
 validate78.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
+const schema105 = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "eligibleSectorIds",
+    "minimumFreeSundaysPerCalendarYear",
+    "sundayCompensationPeriodDays",
+    "weekdayHolidayCompensationPeriodDays",
+    "replacementDayMinutes",
+    "connectedRestMinutes",
+    "connectionExceptionMode",
+    "evidenceShiftType",
+    "matchingMode",
+    "sourceIds",
+  ],
+  properties: {
+    eligibleSectorIds: {
+      type: "array",
+      minItems: 1,
+      uniqueItems: true,
+      items: { $ref: "#/$defs/identifier" },
+    },
+    minimumFreeSundaysPerCalendarYear: { type: "integer", minimum: 1, maximum: 53 },
+    sundayCompensationPeriodDays: { type: "integer", minimum: 1, maximum: 366 },
+    weekdayHolidayCompensationPeriodDays: { type: "integer", minimum: 1, maximum: 366 },
+    replacementDayMinutes: { const: 1440 },
+    connectedRestMinutes: { type: "integer", minimum: 1, maximum: 1440 },
+    connectionExceptionMode: { const: "TECHNICAL_OR_OPERATIONAL_REVIEW" },
+    evidenceShiftType: { const: "FREE" },
+    matchingMode: { const: "ONE_TO_ONE_EARLIEST_DEADLINE" },
+    sourceIds: { $ref: "#/$defs/sourceIds" },
+  },
+};
+function validate82(
+  data,
+  { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
+) {
+  let vErrors = null;
+  let errors = 0;
+  const evaluated0 = validate82.evaluated;
+  if (evaluated0.dynamicProps) {
+    evaluated0.props = undefined;
+  }
+  if (evaluated0.dynamicItems) {
+    evaluated0.items = undefined;
+  }
+  if (data && typeof data == "object" && !Array.isArray(data)) {
+    if (data.eligibleSectorIds === undefined) {
+      const err0 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "eligibleSectorIds" },
+        message: "must have required property '" + "eligibleSectorIds" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err0];
+      } else {
+        vErrors.push(err0);
+      }
+      errors++;
+    }
+    if (data.minimumFreeSundaysPerCalendarYear === undefined) {
+      const err1 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "minimumFreeSundaysPerCalendarYear" },
+        message: "must have required property '" + "minimumFreeSundaysPerCalendarYear" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err1];
+      } else {
+        vErrors.push(err1);
+      }
+      errors++;
+    }
+    if (data.sundayCompensationPeriodDays === undefined) {
+      const err2 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "sundayCompensationPeriodDays" },
+        message: "must have required property '" + "sundayCompensationPeriodDays" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err2];
+      } else {
+        vErrors.push(err2);
+      }
+      errors++;
+    }
+    if (data.weekdayHolidayCompensationPeriodDays === undefined) {
+      const err3 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "weekdayHolidayCompensationPeriodDays" },
+        message: "must have required property '" + "weekdayHolidayCompensationPeriodDays" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err3];
+      } else {
+        vErrors.push(err3);
+      }
+      errors++;
+    }
+    if (data.replacementDayMinutes === undefined) {
+      const err4 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "replacementDayMinutes" },
+        message: "must have required property '" + "replacementDayMinutes" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err4];
+      } else {
+        vErrors.push(err4);
+      }
+      errors++;
+    }
+    if (data.connectedRestMinutes === undefined) {
+      const err5 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "connectedRestMinutes" },
+        message: "must have required property '" + "connectedRestMinutes" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err5];
+      } else {
+        vErrors.push(err5);
+      }
+      errors++;
+    }
+    if (data.connectionExceptionMode === undefined) {
+      const err6 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "connectionExceptionMode" },
+        message: "must have required property '" + "connectionExceptionMode" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err6];
+      } else {
+        vErrors.push(err6);
+      }
+      errors++;
+    }
+    if (data.evidenceShiftType === undefined) {
+      const err7 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "evidenceShiftType" },
+        message: "must have required property '" + "evidenceShiftType" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err7];
+      } else {
+        vErrors.push(err7);
+      }
+      errors++;
+    }
+    if (data.matchingMode === undefined) {
+      const err8 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "matchingMode" },
+        message: "must have required property '" + "matchingMode" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err8];
+      } else {
+        vErrors.push(err8);
+      }
+      errors++;
+    }
+    if (data.sourceIds === undefined) {
+      const err9 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "sourceIds" },
+        message: "must have required property '" + "sourceIds" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err9];
+      } else {
+        vErrors.push(err9);
+      }
+      errors++;
+    }
+    for (const key0 in data) {
+      if (!func3.call(schema105.properties, key0)) {
+        const err10 = {
+          instancePath,
+          schemaPath: "#/additionalProperties",
+          keyword: "additionalProperties",
+          params: { additionalProperty: key0 },
+          message: "must NOT have additional properties",
+        };
+        if (vErrors === null) {
+          vErrors = [err10];
+        } else {
+          vErrors.push(err10);
+        }
+        errors++;
+      }
+    }
+    if (data.eligibleSectorIds !== undefined) {
+      let data0 = data.eligibleSectorIds;
+      if (Array.isArray(data0)) {
+        if (data0.length < 1) {
+          const err11 = {
+            instancePath: instancePath + "/eligibleSectorIds",
+            schemaPath: "#/properties/eligibleSectorIds/minItems",
+            keyword: "minItems",
+            params: { limit: 1 },
+            message: "must NOT have fewer than 1 items",
+          };
+          if (vErrors === null) {
+            vErrors = [err11];
+          } else {
+            vErrors.push(err11);
+          }
+          errors++;
+        }
+        const len0 = data0.length;
+        for (let i0 = 0; i0 < len0; i0++) {
+          let data1 = data0[i0];
+          if (typeof data1 === "string") {
+            if (func1(data1) > 100) {
+              const err12 = {
+                instancePath: instancePath + "/eligibleSectorIds/" + i0,
+                schemaPath: "#/$defs/identifier/maxLength",
+                keyword: "maxLength",
+                params: { limit: 100 },
+                message: "must NOT have more than 100 characters",
+              };
+              if (vErrors === null) {
+                vErrors = [err12];
+              } else {
+                vErrors.push(err12);
+              }
+              errors++;
+            }
+            if (func1(data1) < 1) {
+              const err13 = {
+                instancePath: instancePath + "/eligibleSectorIds/" + i0,
+                schemaPath: "#/$defs/identifier/minLength",
+                keyword: "minLength",
+                params: { limit: 1 },
+                message: "must NOT have fewer than 1 characters",
+              };
+              if (vErrors === null) {
+                vErrors = [err13];
+              } else {
+                vErrors.push(err13);
+              }
+              errors++;
+            }
+            if (!pattern5.test(data1)) {
+              const err14 = {
+                instancePath: instancePath + "/eligibleSectorIds/" + i0,
+                schemaPath: "#/$defs/identifier/pattern",
+                keyword: "pattern",
+                params: { pattern: "^[a-z0-9]+(?:[.-][a-z0-9]+)*$" },
+                message: 'must match pattern "' + "^[a-z0-9]+(?:[.-][a-z0-9]+)*$" + '"',
+              };
+              if (vErrors === null) {
+                vErrors = [err14];
+              } else {
+                vErrors.push(err14);
+              }
+              errors++;
+            }
+          } else {
+            const err15 = {
+              instancePath: instancePath + "/eligibleSectorIds/" + i0,
+              schemaPath: "#/$defs/identifier/type",
+              keyword: "type",
+              params: { type: "string" },
+              message: "must be string",
+            };
+            if (vErrors === null) {
+              vErrors = [err15];
+            } else {
+              vErrors.push(err15);
+            }
+            errors++;
+          }
+        }
+        let i1 = data0.length;
+        let j0;
+        if (i1 > 1) {
+          outer0: for (; i1--;) {
+            for (j0 = i1; j0--;) {
+              if (func0(data0[i1], data0[j0])) {
+                const err16 = {
+                  instancePath: instancePath + "/eligibleSectorIds",
+                  schemaPath: "#/properties/eligibleSectorIds/uniqueItems",
+                  keyword: "uniqueItems",
+                  params: { i: i1, j: j0 },
+                  message:
+                    "must NOT have duplicate items (items ## " +
+                    j0 +
+                    " and " +
+                    i1 +
+                    " are identical)",
+                };
+                if (vErrors === null) {
+                  vErrors = [err16];
+                } else {
+                  vErrors.push(err16);
+                }
+                errors++;
+                break outer0;
+              }
+            }
+          }
+        }
+      } else {
+        const err17 = {
+          instancePath: instancePath + "/eligibleSectorIds",
+          schemaPath: "#/properties/eligibleSectorIds/type",
+          keyword: "type",
+          params: { type: "array" },
+          message: "must be array",
+        };
+        if (vErrors === null) {
+          vErrors = [err17];
+        } else {
+          vErrors.push(err17);
+        }
+        errors++;
+      }
+    }
+    if (data.minimumFreeSundaysPerCalendarYear !== undefined) {
+      let data2 = data.minimumFreeSundaysPerCalendarYear;
+      if (!(typeof data2 == "number" && !(data2 % 1) && !isNaN(data2) && isFinite(data2))) {
+        const err18 = {
+          instancePath: instancePath + "/minimumFreeSundaysPerCalendarYear",
+          schemaPath: "#/properties/minimumFreeSundaysPerCalendarYear/type",
+          keyword: "type",
+          params: { type: "integer" },
+          message: "must be integer",
+        };
+        if (vErrors === null) {
+          vErrors = [err18];
+        } else {
+          vErrors.push(err18);
+        }
+        errors++;
+      }
+      if (typeof data2 == "number" && isFinite(data2)) {
+        if (data2 > 53 || isNaN(data2)) {
+          const err19 = {
+            instancePath: instancePath + "/minimumFreeSundaysPerCalendarYear",
+            schemaPath: "#/properties/minimumFreeSundaysPerCalendarYear/maximum",
+            keyword: "maximum",
+            params: { comparison: "<=", limit: 53 },
+            message: "must be <= 53",
+          };
+          if (vErrors === null) {
+            vErrors = [err19];
+          } else {
+            vErrors.push(err19);
+          }
+          errors++;
+        }
+        if (data2 < 1 || isNaN(data2)) {
+          const err20 = {
+            instancePath: instancePath + "/minimumFreeSundaysPerCalendarYear",
+            schemaPath: "#/properties/minimumFreeSundaysPerCalendarYear/minimum",
+            keyword: "minimum",
+            params: { comparison: ">=", limit: 1 },
+            message: "must be >= 1",
+          };
+          if (vErrors === null) {
+            vErrors = [err20];
+          } else {
+            vErrors.push(err20);
+          }
+          errors++;
+        }
+      }
+    }
+    if (data.sundayCompensationPeriodDays !== undefined) {
+      let data3 = data.sundayCompensationPeriodDays;
+      if (!(typeof data3 == "number" && !(data3 % 1) && !isNaN(data3) && isFinite(data3))) {
+        const err21 = {
+          instancePath: instancePath + "/sundayCompensationPeriodDays",
+          schemaPath: "#/properties/sundayCompensationPeriodDays/type",
+          keyword: "type",
+          params: { type: "integer" },
+          message: "must be integer",
+        };
+        if (vErrors === null) {
+          vErrors = [err21];
+        } else {
+          vErrors.push(err21);
+        }
+        errors++;
+      }
+      if (typeof data3 == "number" && isFinite(data3)) {
+        if (data3 > 366 || isNaN(data3)) {
+          const err22 = {
+            instancePath: instancePath + "/sundayCompensationPeriodDays",
+            schemaPath: "#/properties/sundayCompensationPeriodDays/maximum",
+            keyword: "maximum",
+            params: { comparison: "<=", limit: 366 },
+            message: "must be <= 366",
+          };
+          if (vErrors === null) {
+            vErrors = [err22];
+          } else {
+            vErrors.push(err22);
+          }
+          errors++;
+        }
+        if (data3 < 1 || isNaN(data3)) {
+          const err23 = {
+            instancePath: instancePath + "/sundayCompensationPeriodDays",
+            schemaPath: "#/properties/sundayCompensationPeriodDays/minimum",
+            keyword: "minimum",
+            params: { comparison: ">=", limit: 1 },
+            message: "must be >= 1",
+          };
+          if (vErrors === null) {
+            vErrors = [err23];
+          } else {
+            vErrors.push(err23);
+          }
+          errors++;
+        }
+      }
+    }
+    if (data.weekdayHolidayCompensationPeriodDays !== undefined) {
+      let data4 = data.weekdayHolidayCompensationPeriodDays;
+      if (!(typeof data4 == "number" && !(data4 % 1) && !isNaN(data4) && isFinite(data4))) {
+        const err24 = {
+          instancePath: instancePath + "/weekdayHolidayCompensationPeriodDays",
+          schemaPath: "#/properties/weekdayHolidayCompensationPeriodDays/type",
+          keyword: "type",
+          params: { type: "integer" },
+          message: "must be integer",
+        };
+        if (vErrors === null) {
+          vErrors = [err24];
+        } else {
+          vErrors.push(err24);
+        }
+        errors++;
+      }
+      if (typeof data4 == "number" && isFinite(data4)) {
+        if (data4 > 366 || isNaN(data4)) {
+          const err25 = {
+            instancePath: instancePath + "/weekdayHolidayCompensationPeriodDays",
+            schemaPath: "#/properties/weekdayHolidayCompensationPeriodDays/maximum",
+            keyword: "maximum",
+            params: { comparison: "<=", limit: 366 },
+            message: "must be <= 366",
+          };
+          if (vErrors === null) {
+            vErrors = [err25];
+          } else {
+            vErrors.push(err25);
+          }
+          errors++;
+        }
+        if (data4 < 1 || isNaN(data4)) {
+          const err26 = {
+            instancePath: instancePath + "/weekdayHolidayCompensationPeriodDays",
+            schemaPath: "#/properties/weekdayHolidayCompensationPeriodDays/minimum",
+            keyword: "minimum",
+            params: { comparison: ">=", limit: 1 },
+            message: "must be >= 1",
+          };
+          if (vErrors === null) {
+            vErrors = [err26];
+          } else {
+            vErrors.push(err26);
+          }
+          errors++;
+        }
+      }
+    }
+    if (data.replacementDayMinutes !== undefined) {
+      if (1440 !== data.replacementDayMinutes) {
+        const err27 = {
+          instancePath: instancePath + "/replacementDayMinutes",
+          schemaPath: "#/properties/replacementDayMinutes/const",
+          keyword: "const",
+          params: { allowedValue: 1440 },
+          message: "must be equal to constant",
+        };
+        if (vErrors === null) {
+          vErrors = [err27];
+        } else {
+          vErrors.push(err27);
+        }
+        errors++;
+      }
+    }
+    if (data.connectedRestMinutes !== undefined) {
+      let data6 = data.connectedRestMinutes;
+      if (!(typeof data6 == "number" && !(data6 % 1) && !isNaN(data6) && isFinite(data6))) {
+        const err28 = {
+          instancePath: instancePath + "/connectedRestMinutes",
+          schemaPath: "#/properties/connectedRestMinutes/type",
+          keyword: "type",
+          params: { type: "integer" },
+          message: "must be integer",
+        };
+        if (vErrors === null) {
+          vErrors = [err28];
+        } else {
+          vErrors.push(err28);
+        }
+        errors++;
+      }
+      if (typeof data6 == "number" && isFinite(data6)) {
+        if (data6 > 1440 || isNaN(data6)) {
+          const err29 = {
+            instancePath: instancePath + "/connectedRestMinutes",
+            schemaPath: "#/properties/connectedRestMinutes/maximum",
+            keyword: "maximum",
+            params: { comparison: "<=", limit: 1440 },
+            message: "must be <= 1440",
+          };
+          if (vErrors === null) {
+            vErrors = [err29];
+          } else {
+            vErrors.push(err29);
+          }
+          errors++;
+        }
+        if (data6 < 1 || isNaN(data6)) {
+          const err30 = {
+            instancePath: instancePath + "/connectedRestMinutes",
+            schemaPath: "#/properties/connectedRestMinutes/minimum",
+            keyword: "minimum",
+            params: { comparison: ">=", limit: 1 },
+            message: "must be >= 1",
+          };
+          if (vErrors === null) {
+            vErrors = [err30];
+          } else {
+            vErrors.push(err30);
+          }
+          errors++;
+        }
+      }
+    }
+    if (data.connectionExceptionMode !== undefined) {
+      if ("TECHNICAL_OR_OPERATIONAL_REVIEW" !== data.connectionExceptionMode) {
+        const err31 = {
+          instancePath: instancePath + "/connectionExceptionMode",
+          schemaPath: "#/properties/connectionExceptionMode/const",
+          keyword: "const",
+          params: { allowedValue: "TECHNICAL_OR_OPERATIONAL_REVIEW" },
+          message: "must be equal to constant",
+        };
+        if (vErrors === null) {
+          vErrors = [err31];
+        } else {
+          vErrors.push(err31);
+        }
+        errors++;
+      }
+    }
+    if (data.evidenceShiftType !== undefined) {
+      if ("FREE" !== data.evidenceShiftType) {
+        const err32 = {
+          instancePath: instancePath + "/evidenceShiftType",
+          schemaPath: "#/properties/evidenceShiftType/const",
+          keyword: "const",
+          params: { allowedValue: "FREE" },
+          message: "must be equal to constant",
+        };
+        if (vErrors === null) {
+          vErrors = [err32];
+        } else {
+          vErrors.push(err32);
+        }
+        errors++;
+      }
+    }
+    if (data.matchingMode !== undefined) {
+      if ("ONE_TO_ONE_EARLIEST_DEADLINE" !== data.matchingMode) {
+        const err33 = {
+          instancePath: instancePath + "/matchingMode",
+          schemaPath: "#/properties/matchingMode/const",
+          keyword: "const",
+          params: { allowedValue: "ONE_TO_ONE_EARLIEST_DEADLINE" },
+          message: "must be equal to constant",
+        };
+        if (vErrors === null) {
+          vErrors = [err33];
+        } else {
+          vErrors.push(err33);
+        }
+        errors++;
+      }
+    }
+    if (data.sourceIds !== undefined) {
+      if (
+        !validate43(data.sourceIds, {
+          instancePath: instancePath + "/sourceIds",
+          parentData: data,
+          parentDataProperty: "sourceIds",
+          rootData,
+          dynamicAnchors,
+        })
+      ) {
+        vErrors = vErrors === null ? validate43.errors : vErrors.concat(validate43.errors);
+        errors = vErrors.length;
+      }
+    }
+  } else {
+    const err34 = {
+      instancePath,
+      schemaPath: "#/type",
+      keyword: "type",
+      params: { type: "object" },
+      message: "must be object",
+    };
+    if (vErrors === null) {
+      vErrors = [err34];
+    } else {
+      vErrors.push(err34);
+    }
+    errors++;
+  }
+  validate82.errors = vErrors;
+  return errors === 0;
+}
+validate82.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
 function validate74(
   data,
   { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
@@ -12345,6 +13023,7 @@ function validate74(
         key0 === "breaks" ||
         key0 === "nightWork" ||
         key0 === "restPeriod" ||
+        key0 === "sundayHolidayRest" ||
         key0 === "planning"
       )) {
         const err5 = {
@@ -14230,10 +14909,24 @@ function validate74(
         errors++;
       }
     }
+    if (data.sundayHolidayRest !== undefined) {
+      if (
+        !validate82(data.sundayHolidayRest, {
+          instancePath: instancePath + "/sundayHolidayRest",
+          parentData: data,
+          parentDataProperty: "sundayHolidayRest",
+          rootData,
+          dynamicAnchors,
+        })
+      ) {
+        vErrors = vErrors === null ? validate82.errors : vErrors.concat(validate82.errors);
+        errors = vErrors.length;
+      }
+    }
     if (data.planning !== undefined) {
-      let data36 = data.planning;
-      if (data36 && typeof data36 == "object" && !Array.isArray(data36)) {
-        if (data36.consecutiveWorkDaysWarning === undefined) {
+      let data37 = data.planning;
+      if (data37 && typeof data37 == "object" && !Array.isArray(data37)) {
+        if (data37.consecutiveWorkDaysWarning === undefined) {
           const err108 = {
             instancePath: instancePath + "/planning",
             schemaPath: "#/properties/planning/required",
@@ -14248,7 +14941,7 @@ function validate74(
           }
           errors++;
         }
-        if (data36.consecutiveNightShiftsWarning === undefined) {
+        if (data37.consecutiveNightShiftsWarning === undefined) {
           const err109 = {
             instancePath: instancePath + "/planning",
             schemaPath: "#/properties/planning/required",
@@ -14263,7 +14956,7 @@ function validate74(
           }
           errors++;
         }
-        if (data36.consecutiveWeekendGapDays === undefined) {
+        if (data37.consecutiveWeekendGapDays === undefined) {
           const err110 = {
             instancePath: instancePath + "/planning",
             schemaPath: "#/properties/planning/required",
@@ -14278,7 +14971,7 @@ function validate74(
           }
           errors++;
         }
-        if (data36.lateEarlyDayGap === undefined) {
+        if (data37.lateEarlyDayGap === undefined) {
           const err111 = {
             instancePath: instancePath + "/planning",
             schemaPath: "#/properties/planning/required",
@@ -14293,7 +14986,7 @@ function validate74(
           }
           errors++;
         }
-        if (data36.sourceIds === undefined) {
+        if (data37.sourceIds === undefined) {
           const err112 = {
             instancePath: instancePath + "/planning",
             schemaPath: "#/properties/planning/required",
@@ -14308,7 +15001,7 @@ function validate74(
           }
           errors++;
         }
-        for (const key9 in data36) {
+        for (const key9 in data37) {
           if (!(
             key9 === "consecutiveWorkDaysWarning" ||
             key9 === "consecutiveNightShiftsWarning" ||
@@ -14331,9 +15024,9 @@ function validate74(
             errors++;
           }
         }
-        if (data36.consecutiveWorkDaysWarning !== undefined) {
-          let data37 = data36.consecutiveWorkDaysWarning;
-          if (!(typeof data37 == "number" && !(data37 % 1) && !isNaN(data37) && isFinite(data37))) {
+        if (data37.consecutiveWorkDaysWarning !== undefined) {
+          let data38 = data37.consecutiveWorkDaysWarning;
+          if (!(typeof data38 == "number" && !(data38 % 1) && !isNaN(data38) && isFinite(data38))) {
             const err114 = {
               instancePath: instancePath + "/planning/consecutiveWorkDaysWarning",
               schemaPath: "#/properties/planning/properties/consecutiveWorkDaysWarning/type",
@@ -14348,8 +15041,8 @@ function validate74(
             }
             errors++;
           }
-          if (typeof data37 == "number" && isFinite(data37)) {
-            if (data37 < 1 || isNaN(data37)) {
+          if (typeof data38 == "number" && isFinite(data38)) {
+            if (data38 < 1 || isNaN(data38)) {
               const err115 = {
                 instancePath: instancePath + "/planning/consecutiveWorkDaysWarning",
                 schemaPath: "#/properties/planning/properties/consecutiveWorkDaysWarning/minimum",
@@ -14366,9 +15059,9 @@ function validate74(
             }
           }
         }
-        if (data36.consecutiveNightShiftsWarning !== undefined) {
-          let data38 = data36.consecutiveNightShiftsWarning;
-          if (!(typeof data38 == "number" && !(data38 % 1) && !isNaN(data38) && isFinite(data38))) {
+        if (data37.consecutiveNightShiftsWarning !== undefined) {
+          let data39 = data37.consecutiveNightShiftsWarning;
+          if (!(typeof data39 == "number" && !(data39 % 1) && !isNaN(data39) && isFinite(data39))) {
             const err116 = {
               instancePath: instancePath + "/planning/consecutiveNightShiftsWarning",
               schemaPath: "#/properties/planning/properties/consecutiveNightShiftsWarning/type",
@@ -14383,8 +15076,8 @@ function validate74(
             }
             errors++;
           }
-          if (typeof data38 == "number" && isFinite(data38)) {
-            if (data38 < 1 || isNaN(data38)) {
+          if (typeof data39 == "number" && isFinite(data39)) {
+            if (data39 < 1 || isNaN(data39)) {
               const err117 = {
                 instancePath: instancePath + "/planning/consecutiveNightShiftsWarning",
                 schemaPath:
@@ -14402,9 +15095,9 @@ function validate74(
             }
           }
         }
-        if (data36.consecutiveWeekendGapDays !== undefined) {
-          let data39 = data36.consecutiveWeekendGapDays;
-          if (!(typeof data39 == "number" && !(data39 % 1) && !isNaN(data39) && isFinite(data39))) {
+        if (data37.consecutiveWeekendGapDays !== undefined) {
+          let data40 = data37.consecutiveWeekendGapDays;
+          if (!(typeof data40 == "number" && !(data40 % 1) && !isNaN(data40) && isFinite(data40))) {
             const err118 = {
               instancePath: instancePath + "/planning/consecutiveWeekendGapDays",
               schemaPath: "#/properties/planning/properties/consecutiveWeekendGapDays/type",
@@ -14419,8 +15112,8 @@ function validate74(
             }
             errors++;
           }
-          if (typeof data39 == "number" && isFinite(data39)) {
-            if (data39 < 1 || isNaN(data39)) {
+          if (typeof data40 == "number" && isFinite(data40)) {
+            if (data40 < 1 || isNaN(data40)) {
               const err119 = {
                 instancePath: instancePath + "/planning/consecutiveWeekendGapDays",
                 schemaPath: "#/properties/planning/properties/consecutiveWeekendGapDays/minimum",
@@ -14437,9 +15130,9 @@ function validate74(
             }
           }
         }
-        if (data36.lateEarlyDayGap !== undefined) {
-          let data40 = data36.lateEarlyDayGap;
-          if (!(typeof data40 == "number" && !(data40 % 1) && !isNaN(data40) && isFinite(data40))) {
+        if (data37.lateEarlyDayGap !== undefined) {
+          let data41 = data37.lateEarlyDayGap;
+          if (!(typeof data41 == "number" && !(data41 % 1) && !isNaN(data41) && isFinite(data41))) {
             const err120 = {
               instancePath: instancePath + "/planning/lateEarlyDayGap",
               schemaPath: "#/properties/planning/properties/lateEarlyDayGap/type",
@@ -14454,8 +15147,8 @@ function validate74(
             }
             errors++;
           }
-          if (typeof data40 == "number" && isFinite(data40)) {
-            if (data40 < 1 || isNaN(data40)) {
+          if (typeof data41 == "number" && isFinite(data41)) {
+            if (data41 < 1 || isNaN(data41)) {
               const err121 = {
                 instancePath: instancePath + "/planning/lateEarlyDayGap",
                 schemaPath: "#/properties/planning/properties/lateEarlyDayGap/minimum",
@@ -14472,11 +15165,11 @@ function validate74(
             }
           }
         }
-        if (data36.sourceIds !== undefined) {
+        if (data37.sourceIds !== undefined) {
           if (
-            !validate43(data36.sourceIds, {
+            !validate43(data37.sourceIds, {
               instancePath: instancePath + "/planning/sourceIds",
-              parentData: data36,
+              parentData: data37,
               parentDataProperty: "sourceIds",
               rootData,
               dynamicAnchors,
@@ -14573,7 +15266,7 @@ function validate72(
     }
     if (data.engineContractVersion !== undefined) {
       let data0 = data.engineContractVersion;
-      if (!(data0 === 1 || data0 === 3 || data0 === 4)) {
+      if (!(data0 === 1 || data0 === 3 || data0 === 4 || data0 === 5)) {
         const err2 = {
           instancePath: instancePath + "/engineContractVersion",
           schemaPath: "#/allOf/1/properties/engineContractVersion/enum",
@@ -14639,7 +15332,7 @@ function validate72(
   return errors === 0;
 }
 validate72.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
-const schema105 = {
+const schema107 = {
   allOf: [
     { $ref: "#/$defs/packageBase" },
     {
@@ -14653,13 +15346,13 @@ const schema105 = {
     },
   ],
 };
-const schema106 = {
+const schema108 = {
   type: "object",
   additionalProperties: false,
   required: ["holidays"],
   properties: { holidays: { type: "array", minItems: 1, items: { $ref: "#/$defs/holiday" } } },
 };
-const schema107 = {
+const schema109 = {
   type: "object",
   additionalProperties: false,
   required: [
@@ -14722,13 +15415,13 @@ const schema107 = {
     sourceIds: { $ref: "#/$defs/sourceIds" },
   },
 };
-function validate88(
+function validate91(
   data,
   { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
 ) {
   let vErrors = null;
   let errors = 0;
-  const evaluated0 = validate88.evaluated;
+  const evaluated0 = validate91.evaluated;
   if (evaluated0.dynamicProps) {
     evaluated0.props = undefined;
   }
@@ -15002,7 +15695,7 @@ function validate88(
           instancePath: instancePath + "/scope",
           schemaPath: "#/properties/scope/enum",
           keyword: "enum",
-          params: { allowedValues: schema107.properties.scope.enum },
+          params: { allowedValues: schema109.properties.scope.enum },
           message: "must be equal to one of the allowed values",
         };
         if (vErrors === null) {
@@ -15854,17 +16547,17 @@ function validate88(
     }
     errors++;
   }
-  validate88.errors = vErrors;
+  validate91.errors = vErrors;
   return errors === 0;
 }
-validate88.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
-function validate87(
+validate91.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
+function validate90(
   data,
   { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
 ) {
   let vErrors = null;
   let errors = 0;
-  const evaluated0 = validate87.evaluated;
+  const evaluated0 = validate90.evaluated;
   if (evaluated0.dynamicProps) {
     evaluated0.props = undefined;
   }
@@ -15925,7 +16618,7 @@ function validate87(
         const len0 = data0.length;
         for (let i0 = 0; i0 < len0; i0++) {
           if (
-            !validate88(data0[i0], {
+            !validate91(data0[i0], {
               instancePath: instancePath + "/holidays/" + i0,
               parentData: data0,
               parentDataProperty: i0,
@@ -15933,7 +16626,7 @@ function validate87(
               dynamicAnchors,
             })
           ) {
-            vErrors = vErrors === null ? validate88.errors : vErrors.concat(validate88.errors);
+            vErrors = vErrors === null ? validate91.errors : vErrors.concat(validate91.errors);
             errors = vErrors.length;
           }
         }
@@ -15968,17 +16661,17 @@ function validate87(
     }
     errors++;
   }
-  validate87.errors = vErrors;
+  validate90.errors = vErrors;
   return errors === 0;
 }
-validate87.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
-function validate85(
+validate90.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
+function validate88(
   data,
   { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
 ) {
   let vErrors = null;
   let errors = 0;
-  const evaluated0 = validate85.evaluated;
+  const evaluated0 = validate88.evaluated;
   if (evaluated0.dynamicProps) {
     evaluated0.props = undefined;
   }
@@ -16058,7 +16751,7 @@ function validate85(
     }
     if (data.rules !== undefined) {
       if (
-        !validate87(data.rules, {
+        !validate90(data.rules, {
           instancePath: instancePath + "/rules",
           parentData: data,
           parentDataProperty: "rules",
@@ -16066,7 +16759,7 @@ function validate85(
           dynamicAnchors,
         })
       ) {
-        vErrors = vErrors === null ? validate87.errors : vErrors.concat(validate87.errors);
+        vErrors = vErrors === null ? validate90.errors : vErrors.concat(validate90.errors);
         errors = vErrors.length;
       }
     }
@@ -16085,10 +16778,10 @@ function validate85(
     }
     errors++;
   }
-  validate85.errors = vErrors;
+  validate88.errors = vErrors;
   return errors === 0;
 }
-validate85.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
+validate88.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
 function validate27(
   data,
   { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
@@ -16139,9 +16832,9 @@ function validate27(
     }
     const _errs3 = errors;
     if (
-      !validate85(data, { instancePath, parentData, parentDataProperty, rootData, dynamicAnchors })
+      !validate88(data, { instancePath, parentData, parentDataProperty, rootData, dynamicAnchors })
     ) {
-      vErrors = vErrors === null ? validate85.errors : vErrors.concat(validate85.errors);
+      vErrors = vErrors === null ? validate88.errors : vErrors.concat(validate88.errors);
       errors = vErrors.length;
     }
     var _valid0 = _errs3 === errors;
@@ -16187,8 +16880,8 @@ function validate27(
   return errors === 0;
 }
 validate27.evaluated = { dynamicProps: true, dynamicItems: false };
-export const validateRuleCatalogPublicationRequestSchema = validate93;
-const schema113 = {
+export const validateRuleCatalogPublicationRequestSchema = validate96;
+const schema115 = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: "https://pflegeshift.app/schemas/rule-catalog-publication-request-v1.json",
   title: "PflegeShift Rule Catalog Publication Request",
@@ -16247,13 +16940,13 @@ const schema113 = {
     },
   },
 };
-const schema114 = {
+const schema116 = {
   type: "string",
   pattern:
     "^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\\.[0-9]{1,3})?Z$",
 };
-const pattern56 = new RegExp("^rules/packages/reviewed/[a-z0-9.-]+/[0-9A-Za-z._-]+\\.json$", "u");
-const schema115 = {
+const pattern57 = new RegExp("^rules/packages/reviewed/[a-z0-9.-]+/[0-9A-Za-z._-]+\\.json$", "u");
+const schema117 = {
   type: "object",
   additionalProperties: false,
   required: ["algorithm", "canonicalization", "keyId"],
@@ -16263,19 +16956,19 @@ const schema115 = {
     keyId: { $ref: "#/$defs/identifier" },
   },
 };
-const schema116 = {
+const schema118 = {
   type: "string",
   minLength: 1,
   maxLength: 100,
   pattern: "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
 };
-function validate94(
+function validate97(
   data,
   { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
 ) {
   let vErrors = null;
   let errors = 0;
-  const evaluated0 = validate94.evaluated;
+  const evaluated0 = validate97.evaluated;
   if (evaluated0.dynamicProps) {
     evaluated0.props = undefined;
   }
@@ -16458,18 +17151,18 @@ function validate94(
     }
     errors++;
   }
-  validate94.errors = vErrors;
+  validate97.errors = vErrors;
   return errors === 0;
 }
-validate94.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
-function validate93(
+validate97.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
+function validate96(
   data,
   { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
 ) {
   /*# sourceURL="https://pflegeshift.app/schemas/rule-catalog-publication-request-v1.json" */ let vErrors =
     null;
   let errors = 0;
-  const evaluated0 = validate93.evaluated;
+  const evaluated0 = validate96.evaluated;
   if (evaluated0.dynamicProps) {
     evaluated0.props = undefined;
   }
@@ -16666,7 +17359,7 @@ function validate93(
           instancePath: instancePath + "/channel",
           schemaPath: "#/properties/channel/enum",
           keyword: "enum",
-          params: { allowedValues: schema113.properties.channel.enum },
+          params: { allowedValues: schema115.properties.channel.enum },
           message: "must be equal to one of the allowed values",
         };
         if (vErrors === null) {
@@ -16863,7 +17556,7 @@ function validate93(
               }
               errors++;
             }
-            if (!pattern56.test(data6)) {
+            if (!pattern57.test(data6)) {
               const err21 = {
                 instancePath: instancePath + "/packageSources/" + i0,
                 schemaPath: "#/properties/packageSources/items/pattern",
@@ -16949,7 +17642,7 @@ function validate93(
     }
     if (data.signing !== undefined) {
       if (
-        !validate94(data.signing, {
+        !validate97(data.signing, {
           instancePath: instancePath + "/signing",
           parentData: data,
           parentDataProperty: "signing",
@@ -16957,7 +17650,7 @@ function validate93(
           dynamicAnchors,
         })
       ) {
-        vErrors = vErrors === null ? validate94.errors : vErrors.concat(validate94.errors);
+        vErrors = vErrors === null ? validate97.errors : vErrors.concat(validate97.errors);
         errors = vErrors.length;
       }
     }
@@ -16976,7 +17669,7 @@ function validate93(
     }
     errors++;
   }
-  validate93.errors = vErrors;
+  validate96.errors = vErrors;
   return errors === 0;
 }
-validate93.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
+validate96.evaluated = { props: true, dynamicProps: false, dynamicItems: false };

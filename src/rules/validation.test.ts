@@ -147,6 +147,18 @@ describe("rule contract validation", () => {
     type VersionedLegalFixture = typeof legalPackageFixture & {
       engineContractVersion: number;
       rules: typeof legalPackageFixture.rules & {
+        sundayHolidayRest?: {
+          eligibleSectorIds: string[];
+          minimumFreeSundaysPerCalendarYear: number;
+          sundayCompensationPeriodDays: number;
+          weekdayHolidayCompensationPeriodDays: number;
+          replacementDayMinutes: number;
+          connectedRestMinutes: number;
+          connectionExceptionMode: "TECHNICAL_OR_OPERATIONAL_REVIEW";
+          evidenceShiftType: "FREE";
+          matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE";
+          sourceIds: string[];
+        };
         workingTime: typeof legalPackageFixture.rules.workingTime & {
           standardAverage?: {
             calendarMonths: number;
@@ -209,6 +221,34 @@ describe("rule contract validation", () => {
     v3WithAverage.engineContractVersion = 3;
     expect(issueCodes(validateRulePackage(v3WithAverage))).toContain(
       "UNSUPPORTED_STANDARD_WORKING_TIME_AVERAGE",
+    );
+
+    const v5Package = clone(v4Package);
+    v5Package.engineContractVersion = 5;
+    v5Package.rules.sundayHolidayRest = {
+      eligibleSectorIds: ["hospital", "care"],
+      minimumFreeSundaysPerCalendarYear: 15,
+      sundayCompensationPeriodDays: 14,
+      weekdayHolidayCompensationPeriodDays: 56,
+      replacementDayMinutes: 1440,
+      connectedRestMinutes: 660,
+      connectionExceptionMode: "TECHNICAL_OR_OPERATIONAL_REVIEW",
+      evidenceShiftType: "FREE",
+      matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE",
+      sourceIds: ["arbzg-2026"],
+    };
+    expect(validateRulePackage(v5Package).ok).toBe(true);
+
+    const v5MissingSundayHolidayRest = clone(v5Package);
+    delete v5MissingSundayHolidayRest.rules.sundayHolidayRest;
+    expect(issueCodes(validateRulePackage(v5MissingSundayHolidayRest))).toContain(
+      "MISSING_SUNDAY_HOLIDAY_REST",
+    );
+
+    const v4WithSundayHolidayRest = clone(v5Package);
+    v4WithSundayHolidayRest.engineContractVersion = 4;
+    expect(issueCodes(validateRulePackage(v4WithSundayHolidayRest))).toContain(
+      "UNSUPPORTED_SUNDAY_HOLIDAY_REST",
     );
   });
 

@@ -152,7 +152,7 @@ describe("generation 1 rule review candidates", () => {
   it("locks statutory ArbZG boundaries apart from labelled product heuristics", () => {
     expect(legalCandidate.packageId).toBe("de-arbzg-care");
     expect(legalCandidate.versionId).toBe("2026-01");
-    expect(legalCandidate.engineContractVersion).toBe(4);
+    expect(legalCandidate.engineContractVersion).toBe(5);
     expect(legalCandidate.rules.workingTime).toMatchObject({
       standardDailyMinutes: 480,
       maxDailyMinutes: 600,
@@ -199,6 +199,18 @@ describe("generation 1 rule review candidates", () => {
           compensationWithinDays: 28,
         },
       ],
+    });
+    expect(legalCandidate.rules.sundayHolidayRest).toEqual({
+      eligibleSectorIds: ["hospital", "care"],
+      minimumFreeSundaysPerCalendarYear: 15,
+      sundayCompensationPeriodDays: 14,
+      weekdayHolidayCompensationPeriodDays: 56,
+      replacementDayMinutes: 1440,
+      connectedRestMinutes: 660,
+      connectionExceptionMode: "TECHNICAL_OR_OPERATIONAL_REVIEW",
+      evidenceShiftType: "FREE",
+      matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE",
+      sourceIds: ["arbzg-2024"],
     });
     expect(legalCandidate.rules.planning).toMatchObject({
       consecutiveWorkDaysWarning: 7,

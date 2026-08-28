@@ -37,7 +37,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -119,7 +119,7 @@ export type RuleReview1 =
 export type RuleSourceIds = [RuleIdentifier, ...RuleIdentifier[]];
 export type RuleNullableIdentifier = null | RuleIdentifier;
 export type RuleLegalPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 3 | 4;
+  engineContractVersion?: 1 | 3 | 4 | 5;
   kind: "LEGAL";
   rules: RuleLegalRules;
 };
@@ -131,7 +131,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -329,6 +329,7 @@ export interface RuleLegalRules {
     deviations: RuleRestDeviation[];
     sourceIds: RuleSourceIds;
   };
+  sundayHolidayRest?: RuleSundayHolidayRest;
   planning: {
     consecutiveWorkDaysWarning: number;
     consecutiveNightShiftsWarning: number;
@@ -350,6 +351,21 @@ export interface RuleRestDeviation {
   minimumMinutes: number;
   compensationMinutes: number;
   compensationWithinDays: number;
+  sourceIds: RuleSourceIds;
+}
+export interface RuleSundayHolidayRest {
+  /**
+   * @minItems 1
+   */
+  eligibleSectorIds: [RuleIdentifier, ...RuleIdentifier[]];
+  minimumFreeSundaysPerCalendarYear: number;
+  sundayCompensationPeriodDays: number;
+  weekdayHolidayCompensationPeriodDays: number;
+  replacementDayMinutes: 1440;
+  connectedRestMinutes: number;
+  connectionExceptionMode: "TECHNICAL_OR_OPERATIONAL_REVIEW";
+  evidenceShiftType: "FREE";
+  matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE";
   sourceIds: RuleSourceIds;
 }
 export interface RuleHolidayRules {
