@@ -24,8 +24,13 @@ export type RuleCatalogSyncResult =
   | { readonly status: "UP_TO_DATE"; readonly generation: number }
   | RuleCatalogSyncActivationResult;
 
+export interface SynchronizeRuleCatalogOptions {
+  readonly force?: boolean;
+}
+
 export type SynchronizeRuleCatalog = (
   activeGeneration: number | null,
+  options?: SynchronizeRuleCatalogOptions,
 ) => Promise<RuleCatalogSyncResult>;
 
 export type RuleCatalogSyncErrorCode = "VERSIONED_MANIFEST_MISMATCH" | "REMOTE_GENERATION_ROLLBACK";

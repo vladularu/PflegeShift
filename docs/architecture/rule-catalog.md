@@ -109,6 +109,10 @@ loop. With 100,000 active installations this configuration permits at most one n
 `current.json` check per installation per 24-hour success window; package downloads happen only
 when the signed generation differs from the active on-device generation.
 
+The Preview Testlabor can explicitly claim one immediate check through the same signature
+verification, atomic activation, and mounted-runtime reconciliation path. This does not enable
+remote catalog delivery in production.
+
 The client accepts HTTP 200 from the exact requested HTTPS URL, exact `application/json`, valid
 UTF-8, and no more than 524,288 bytes per artifact. It verifies `current.json` before using any
 signed package path, requires byte equality with `manifests/<generation>.json`, rejects remote

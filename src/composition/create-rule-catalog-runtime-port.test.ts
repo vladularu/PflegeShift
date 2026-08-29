@@ -69,6 +69,9 @@ describe("createRuleCatalogRuntimePort", () => {
     const port = createRuleCatalogRuntimePort({} as SQLiteDatabase, { config: config(false) });
 
     await expect(port.synchronizeCatalog(null)).resolves.toEqual({ status: "DISABLED" });
+    await expect(port.synchronizeCatalog(null, { force: true })).resolves.toEqual({
+      status: "DISABLED",
+    });
     expect(httpMocks.createRuleCatalogHttpClient).not.toHaveBeenCalled();
     expect(syncMocks.synchronizePreviewRuleCatalog).not.toHaveBeenCalled();
   });
@@ -134,6 +137,16 @@ describe("createRuleCatalogRuntimePort", () => {
       previewConfig.verificationPolicy,
     );
     expect(catalogMocks.activateRuleCatalog).toHaveBeenCalledWith(database, {});
+
+    await port.synchronizeCatalog(1, { force: true });
+    const forcedDependencies = syncMocks.synchronizePreviewRuleCatalog.mock.calls[1][1];
+    await forcedDependencies.claimCheck();
+    expect(stateMocks.claimPreviewRuleCatalogCheck).toHaveBeenLastCalledWith(
+      database,
+      currentTime,
+      previewConfig.failureRetryMilliseconds,
+      true,
+    );
   });
 
   it("pins the public Generation-1 key and contracts only in PREVIEW configuration", () => {

@@ -1,4 +1,11 @@
-import React, { createContext, useEffect, useState, type PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type PropsWithChildren,
+} from "react";
 
 import {
   loadRuleCatalogRuntime,
@@ -17,7 +24,11 @@ interface RuleCatalogRuntimeProviderProps extends PropsWithChildren {
   readonly recordDiagnostic: (code: string, error: unknown) => void;
 }
 
-const RuleCatalogRuntimeContext = createContext<RuleCatalogRuntimeSnapshot | null>(null);
+export interface RuleCatalogRuntimeContextValue extends RuleCatalogRuntimeSnapshot {
+  readonly synchronizeNow: () => Promise<RuleCatalogSyncResult>;
+}
+
+const RuleCatalogRuntimeContext = createContext<RuleCatalogRuntimeContextValue | null>(null);
 
 export function RuleCatalogRuntimeProvider({
   children,
@@ -26,10 +37,13 @@ export function RuleCatalogRuntimeProvider({
   recordDiagnostic,
 }: RuleCatalogRuntimeProviderProps) {
   const [runtime, setRuntime] = useState<RuleCatalogRuntimeSnapshot | null>(null);
+  const selectRuntime = useCallback((next: RuleCatalogRuntimeSnapshot | null) => {
+    setRuntime(next);
+  }, []);
 
   useEffect(() => {
     let active = true;
-    setRuntime(null);
+    selectRuntime(null);
     void loadRuleCatalogRuntime(loadStoredCatalog).then(async (result) => {
       if (!active) return;
       if (result.loadError !== null) {
@@ -40,7 +54,7 @@ export function RuleCatalogRuntimeProvider({
           new Error("The active rule catalog generation was invalid or runtime-incompatible."),
         );
       }
-      setRuntime(result.runtime);
+      selectRuntime(result.runtime);
       let syncResult: RuleCatalogSyncResult;
       try {
         syncResult = await synchronizeCatalog(result.runtime.diagnosis.activeGeneration);
@@ -59,7 +73,7 @@ export function RuleCatalogRuntimeProvider({
         if (refresh.status === "FAILED") {
           recordDiagnostic("RULE_CATALOG_REFRESH_FAILED", refresh.refreshError);
         } else if (refresh.status === "REPLACED") {
-          setRuntime(refresh.runtime);
+          selectRuntime(refresh.runtime);
         }
       } catch (error) {
         if (active) recordDiagnostic("RULE_CATALOG_REFRESH_FAILED", error);
@@ -68,13 +82,45 @@ export function RuleCatalogRuntimeProvider({
     return () => {
       active = false;
     };
-  }, [loadStoredCatalog, recordDiagnostic, synchronizeCatalog]);
+  }, [loadStoredCatalog, recordDiagnostic, selectRuntime, synchronizeCatalog]);
 
-  if (runtime === null) return null;
-  return <RuleCatalogRuntimeContext value={runtime}>{children}</RuleCatalogRuntimeContext>;
+  const synchronizeNow = useCallback(async () => {
+    const current = runtime;
+    if (current === null) throw new Error("Der Regelkatalog ist noch nicht bereit.");
+
+    let syncResult: RuleCatalogSyncResult;
+    try {
+      syncResult = await synchronizeCatalog(current.diagnosis.activeGeneration, { force: true });
+    } catch (error) {
+      recordDiagnostic("RULE_CATALOG_MANUAL_SYNC_FAILED", error);
+      throw error;
+    }
+
+    let refresh;
+    try {
+      refresh = await reconcileRuleCatalogRuntimeAfterSync(current, syncResult, loadStoredCatalog);
+    } catch (error) {
+      recordDiagnostic("RULE_CATALOG_MANUAL_REFRESH_FAILED", error);
+      throw error;
+    }
+    if (refresh.status === "FAILED") {
+      recordDiagnostic("RULE_CATALOG_MANUAL_REFRESH_FAILED", refresh.refreshError);
+      throw refresh.refreshError;
+    }
+    if (refresh.status === "REPLACED") selectRuntime(refresh.runtime);
+    return syncResult;
+  }, [loadStoredCatalog, recordDiagnostic, runtime, selectRuntime, synchronizeCatalog]);
+
+  const contextValue = useMemo<RuleCatalogRuntimeContextValue | null>(
+    () => (runtime === null ? null : Object.freeze({ ...runtime, synchronizeNow })),
+    [runtime, synchronizeNow],
+  );
+
+  if (contextValue === null) return null;
+  return <RuleCatalogRuntimeContext value={contextValue}>{children}</RuleCatalogRuntimeContext>;
 }
 
-export function useRuleCatalogRuntime(): RuleCatalogRuntimeSnapshot {
+export function useRuleCatalogRuntime(): RuleCatalogRuntimeContextValue {
   const runtime = React.use(RuleCatalogRuntimeContext);
   if (runtime === null) {
     throw new Error("useRuleCatalogRuntime muss im RuleCatalogRuntimeProvider verwendet werden.");

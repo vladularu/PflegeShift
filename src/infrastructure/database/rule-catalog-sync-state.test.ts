@@ -72,6 +72,16 @@ describe("rule catalog sync state", () => {
     ).resolves.toBe(true);
   });
 
+  it("allows one explicit Preview check to replace a future success schedule", async () => {
+    const now = new Date("2026-08-29T10:00:00.000Z");
+    await claimPreviewRuleCatalogCheck(db, now, hour);
+    await completePreviewRuleCatalogCheck(db, 1, now, day);
+
+    const forcedAt = new Date(now.getTime() + hour);
+    await expect(claimPreviewRuleCatalogCheck(db, forcedAt, hour, true)).resolves.toBe(true);
+    await expect(claimPreviewRuleCatalogCheck(db, forcedAt, hour)).resolves.toBe(false);
+  });
+
   it("fails open for corrupt or implausibly future local scheduling metadata", async () => {
     await db.runAsync(
       "INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)",
