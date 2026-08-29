@@ -59,8 +59,8 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
         text: "Ist-Zeit entspricht der Dienstzeit abzüglich Pause. Für eine vollständige ArbZG-Prüfung müssen Arbeitszeiten aus allen Arbeitsverhältnissen erfasst sein.",
       },
       {
-        title: "Pausennachweis",
-        text: "Ein Dienst speichert derzeit die gesamte Pausendauer, aber nicht Lage und einzelne Pausenabschnitte. Die App kann deshalb die gesetzliche Platzierung der Pause nicht abschließend nachweisen.",
+        title: "Pausendauer",
+        text: "Für die einfache Dienst- und Monatsberechnung speichert PflegeShift bewusst nur die gesamte Pausendauer. Pausenbeginn und einzelne Abschnitte müssen nicht nachgetragen werden.",
       },
       {
         title: "Feiertage und Zuschläge",

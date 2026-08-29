@@ -64,18 +64,5 @@ export function checkEvidenceCompleteness(
       ),
     );
   }
-  const firstBreakShift = monthIntervals.find((item) => item.shift.breakMinutes > 0)?.shift;
-  if (firstBreakShift) {
-    issues.push(
-      issue(
-        "info",
-        "LEGAL",
-        "ARBZG_4_BREAK_PLACEMENT_UNVERIFIED",
-        "Pausenlage nicht dokumentiert",
-        "Erfasst ist nur die Pausendauer. Lage und einzelne Abschnitte der Ruhepause sind damit nicht nachweisbar und müssen bei Bedarf separat geprüft werden.",
-        [firstBreakShift],
-      ),
-    );
-  }
   return issues;
 }

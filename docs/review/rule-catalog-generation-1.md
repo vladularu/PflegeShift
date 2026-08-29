@@ -63,8 +63,9 @@ Der Projekt-Owner gleicht gegen die hinterlegte amtliche ArbZG-Fassung ab:
 - Urlaub und Krankheit ohne tatsächliche Arbeit bleiben in diesem Durchschnitt neutral
   und dürfen Mehrarbeit nicht als Nulltage ausgleichen; ausdrücklich erfasste freie Tage
   bleiben mögliche Ausgleichstage;
-- 30/45 Minuten Pause nach mehr als sechs/neun Stunden sowie 15-Minuten-Segmente; die App
-  kennt weiterhin nur die Gesamtdauer und kennzeichnet die nicht nachweisbare Pausenlage;
+- 30/45 Minuten Pause nach mehr als sechs/neun Stunden sowie mindestens 15 Minuten je
+  Teilpause; die App verwendet bewusst nur die eingetragene Gesamtdauer, verlangt weder
+  Pausenzeitpunkte noch einzelne Abschnitte und erzeugt dafür keine eigene Monatsmeldung;
 - Nachtzeit 23:00–06:00 und Nachtarbeit bei mehr als zwei Stunden in diesem Zeitraum;
 - Nachtarbeitnehmerstatus getrennt davon: ausdrücklich bestätigte regelmäßige
   Nachtarbeit in Wechselschicht oder mindestens 48 erfasste Nachtarbeitstage im
@@ -82,10 +83,13 @@ Der Projekt-Owner gleicht gegen die hinterlegte amtliche ArbZG-Fassung ab:
 - je gearbeitetem Sonntag ein eigener Ersatzruhetag innerhalb eines den Sonntag
   einschließenden 14-Tage-Zeitraums, je gearbeitetem Feiertag auf einem Werktag innerhalb
   eines entsprechenden 56-Tage-Zeitraums;
-- ein Ersatzruhetag wird technisch nur mit einem expliziten Eintrag `FREE` ohne
-  überschneidende Arbeit bestätigt; bei weniger als insgesamt 35 Stunden ununterbrochener
-  Ruhe wird die Verbindung mit § 5 separat zur Prüfung markiert, weil technische oder
-  arbeitsorganisatorische Ausnahmegründe nach § 11 Abs. 4 nicht aus dem Kalender ableitbar sind;
+- ein ohnehin arbeitsfreier Werktag kann nach der Rechtsprechung des BAG als Ersatzruhetag
+  dienen; die App wertet deshalb innerhalb des vollständig geladenen Prüfbereichs auch einen
+  Werktag ohne Arbeitseintrag als frei. Ein expliziter Eintrag `FREE` bleibt optional;
+  eingetragene Abwesenheiten werden nicht automatisch als Ersatzruhetag umgedeutet. Bei
+  weniger als insgesamt 35 Stunden ununterbrochener Ruhe wird die Verbindung mit § 5 separat
+  zur Prüfung markiert, weil technische oder arbeitsorganisatorische Ausnahmegründe nach
+  § 11 Abs. 4 nicht aus dem Kalender ableitbar sind;
 - keine tariflichen Abweichungen nach § 12 und keine Verlagerung der Sonn- oder
   Feiertagsruhe in Mehrschichtbetrieben nach § 9 Abs. 2 in diesem Vertragsstand.
 - die App verlangt eigenständige Angaben zur Zulässigkeit nach § 10, zum regelmäßigen
@@ -171,9 +175,11 @@ Owner-Abgleich bleibt `de-holidays/2026` zwingend `DRAFT`.
   Ausgleichsfenster nicht an der früheren Monatsgrenze abgeschnitten werden.
 - Ein fehlendes Feiertagspaket unterdrückt Sonntagsprüfungen nicht mehr; die App meldet die
   fehlende Katalogabdeckung separat.
-- Die App kann tatsächliche Pausenlage, betriebliche §-10-Voraussetzungen, tarifliche
-  Überstundenanordnung und nicht erfasste Fremdarbeitszeiten nicht selbst beweisen. Dafür
-  bleiben ausdrückliche Nutzerangaben beziehungsweise Hinweise bestehen.
+- Die App prüft die Pause bewusst nur anhand der eingetragenen Gesamtdauer. Pausenzeitpunkte
+  und einzelne Abschnitte werden nicht verlangt und erzeugen keine eigene Monatsmeldung.
+- Betriebliche §-10-Voraussetzungen, tarifliche Überstundenanordnung und nicht erfasste
+  Fremdarbeitszeiten kann die App nicht selbst beweisen. Dafür bleiben ausdrückliche
+  Nutzerangaben beziehungsweise Hinweise bestehen.
 
 ## Solo-Owner-Freigabe
 

@@ -690,6 +690,8 @@ export function* calculateMonthlyComplianceSteps(
     ruleResolver,
     legalPackage.engineContractVersion,
     timeZone,
+    start,
+    end,
   );
   while (true) {
     const step = sundayHolidayRest.next();

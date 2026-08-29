@@ -34,7 +34,7 @@ interface RestObligation {
 
 interface ReplacementCandidate {
   readonly date: Temporal.PlainDate;
-  readonly evidence: ShiftEntry;
+  readonly evidence: readonly ShiftEntry[];
   readonly observedRestMinutes: null | number;
 }
 
@@ -163,14 +163,24 @@ function observedRestAroundCalendarDay(
 
 function replacementCandidate(
   date: Temporal.PlainDate,
-  evidence: ShiftEntry,
+  entriesByDate: ReadonlyMap<string, readonly ShiftEntry[]>,
   intervals: readonly Interval[],
   workDates: ReadonlyMap<string, readonly Interval[]>,
   holidayDates: ReadonlySet<string>,
+  evidenceShiftType: ShiftEntry["type"],
   timeZone: string,
 ): ReplacementCandidate | null {
   const value = date.toString();
   if (date.dayOfWeek === 7 || holidayDates.has(value) || workDates.has(value)) return null;
+  const entries = entriesByDate.get(value) ?? [];
+  if (
+    entries.some(
+      (entry) =>
+        entry.type !== evidenceShiftType || entry.startTime !== null || entry.endTime !== null,
+    )
+  ) {
+    return null;
+  }
 
   const start = dayStart(date, timeZone);
   const end = dayStart(date.add({ days: 1 }), timeZone);
@@ -191,10 +201,32 @@ function replacementCandidate(
 
   return {
     date,
-    evidence,
+    evidence: entries,
     observedRestMinutes:
       previousEnd === null || nextStart === null ? null : minutesBetween(previousEnd, nextStart),
   };
+}
+
+function replacementCandidateDates(
+  obligations: readonly RestObligation[],
+  coverageStart: Temporal.PlainDate,
+  coverageEnd: Temporal.PlainDate,
+): readonly Temporal.PlainDate[] {
+  const dates = new Map<string, Temporal.PlainDate>();
+  for (const obligation of obligations) {
+    let date =
+      Temporal.PlainDate.compare(obligation.windowStart, coverageStart) < 0
+        ? coverageStart
+        : obligation.windowStart;
+    const end =
+      Temporal.PlainDate.compare(obligation.windowEnd, coverageEnd) > 0
+        ? coverageEnd
+        : obligation.windowEnd;
+    for (; Temporal.PlainDate.compare(date, end) <= 0; date = date.add({ days: 1 })) {
+      if (date.dayOfWeek !== 7) dates.set(date.toString(), date);
+    }
+  }
+  return [...dates.values()].sort(Temporal.PlainDate.compare);
 }
 
 function replacementObligations(
@@ -230,25 +262,47 @@ function replacementObligations(
 function matchObligations(
   obligations: readonly RestObligation[],
   candidates: readonly ReplacementCandidate[],
+  requiredRestMinutes: number,
 ): { readonly unmatched: readonly RestObligation[]; readonly matched: readonly ObligationMatch[] } {
-  const unmatched = new Set(obligations);
+  const unmatched: RestObligation[] = [];
+  const available = new Set(candidates);
   const matched: ObligationMatch[] = [];
-  for (const candidate of candidates) {
-    const match = obligations.find(
-      (obligation) =>
-        unmatched.has(obligation) &&
-        Temporal.PlainDate.compare(candidate.date, obligation.windowStart) >= 0 &&
-        Temporal.PlainDate.compare(candidate.date, obligation.windowEnd) <= 0,
-    );
-    if (match) {
-      unmatched.delete(match);
-      matched.push({ obligation: match, candidate });
+  for (const obligation of obligations) {
+    const candidate = candidates
+      .filter(
+        (item) =>
+          available.has(item) &&
+          Temporal.PlainDate.compare(item.date, obligation.windowStart) >= 0 &&
+          Temporal.PlainDate.compare(item.date, obligation.windowEnd) <= 0,
+      )
+      .sort((left, right) => {
+        const leftQuality =
+          left.observedRestMinutes === null
+            ? 2
+            : left.observedRestMinutes >= requiredRestMinutes
+              ? 0
+              : 1;
+        const rightQuality =
+          right.observedRestMinutes === null
+            ? 2
+            : right.observedRestMinutes >= requiredRestMinutes
+              ? 0
+              : 1;
+        return (
+          leftQuality - rightQuality ||
+          Math.abs(obligation.date.until(left.date).days) -
+            Math.abs(obligation.date.until(right.date).days) ||
+          Temporal.PlainDate.compare(left.date, right.date)
+        );
+      })[0];
+    if (candidate === undefined) {
+      unmatched.push(obligation);
+    } else {
+      available.delete(candidate);
+      matched.push({ obligation, candidate });
     }
   }
-  return {
-    unmatched: obligations.filter((obligation) => unmatched.has(obligation)),
-    matched,
-  };
+  return { unmatched, matched };
 }
 
 function freeSundayIssues(
@@ -296,6 +350,8 @@ export function* checkSundayHolidayRestIncrementally(
   ruleResolver: RuleResolver,
   engineContractVersion: number,
   timeZone: string,
+  coverageStartValue: string,
+  coverageEndValue: string,
 ): Generator<number, readonly ComplianceIssue[], void> {
   const restRules = rules.sundayHolidayRest;
   const sectorId = options.sectorId ?? "care";
@@ -338,34 +394,12 @@ export function* checkSundayHolidayRestIncrementally(
   }
   const holidayDates = holidayCoverage.dates;
   const requiredRestMinutes = restRules.replacementDayMinutes + restRules.connectedRestMinutes;
-  const evidenceByDate = new Map<string, ShiftEntry>();
+  const entriesByDate = new Map<string, ShiftEntry[]>();
   for (const shift of shifts) {
-    if (
-      shift.deletedAt === null &&
-      shift.type === restRules.evidenceShiftType &&
-      shift.startTime === null &&
-      shift.endTime === null &&
-      !evidenceByDate.has(shift.date)
-    ) {
-      evidenceByDate.set(shift.date, shift);
-    }
-  }
-  const candidates: ReplacementCandidate[] = [];
-  let processedCandidates = 0;
-  for (const [date, evidence] of [...evidenceByDate.entries()].sort(([left], [right]) =>
-    left.localeCompare(right),
-  )) {
-    const candidate = replacementCandidate(
-      Temporal.PlainDate.from(date),
-      evidence,
-      intervals,
-      workDates,
-      holidayDates,
-      timeZone,
-    );
-    if (candidate !== null) candidates.push(candidate);
-    processedCandidates += 1;
-    if (processedCandidates % 8 === 0) yield processedCandidates;
+    if (shift.deletedAt !== null) continue;
+    const entries = entriesByDate.get(shift.date) ?? [];
+    entries.push(shift);
+    entriesByDate.set(shift.date, entries);
   }
   const obligations = replacementObligations(
     workDates,
@@ -373,7 +407,28 @@ export function* checkSundayHolidayRestIncrementally(
     restRules.sundayCompensationPeriodDays,
     restRules.weekdayHolidayCompensationPeriodDays,
   );
-  const matches = matchObligations(obligations, candidates);
+  const candidateDates = replacementCandidateDates(
+    obligations,
+    Temporal.PlainDate.from(coverageStartValue),
+    Temporal.PlainDate.from(coverageEndValue),
+  );
+  const candidates: ReplacementCandidate[] = [];
+  let processedCandidates = 0;
+  for (const date of candidateDates) {
+    const candidate = replacementCandidate(
+      date,
+      entriesByDate,
+      intervals,
+      workDates,
+      holidayDates,
+      restRules.evidenceShiftType,
+      timeZone,
+    );
+    if (candidate !== null) candidates.push(candidate);
+    processedCandidates += 1;
+    if (processedCandidates % 8 === 0) yield processedCandidates;
+  }
+  const matches = matchObligations(obligations, candidates, requiredRestMinutes);
   const issues: ComplianceIssue[] = [];
   if (holidayCoverage.missingYears.size > 0) {
     issues.push(
@@ -419,7 +474,7 @@ export function* checkSundayHolidayRestIncrementally(
           : sunday
             ? "Ersatzruhetag für Sonntagsarbeit offen"
             : "Ersatzruhetag für Feiertagsarbeit offen",
-        `Für die Beschäftigung am ${dateLabel(obligation.date)} ist innerhalb eines den Beschäftigungstag einschließenden Zeitraums von ${periodLabel} ein eigener als „Frei“ dokumentierter, arbeitsfreier Ersatzruhetag erforderlich. Der mögliche Zuordnungsbereich reicht vom ${dateLabel(obligation.windowStart)} bis ${dateLabel(obligation.windowEnd)}.`,
+        `Für die Beschäftigung am ${dateLabel(obligation.date)} ist innerhalb eines den Beschäftigungstag einschließenden Zeitraums von ${periodLabel} ein arbeitsfreier Werktag als Ersatzruhetag erforderlich. Tage ohne Arbeitseintrag werden als arbeitsfrei gewertet. Der mögliche Zuordnungsbereich reicht vom ${dateLabel(obligation.windowStart)} bis ${dateLabel(obligation.windowEnd)}.`,
         obligation.related,
         obligation.date.toString(),
       );
@@ -441,7 +496,7 @@ export function* checkSundayHolidayRestIncrementally(
         match.candidate.observedRestMinutes === null
           ? `Für den Ersatzruhetag am ${dateLabel(match.candidate.date)} reicht der geladene Zeitraum nicht aus, um die Verbindung mit der §-5-Ruhezeit nachzuweisen.`
           : `Der Ersatzruhetag am ${dateLabel(match.candidate.date)} ist mit ${match.candidate.observedRestMinutes / 60} Stunden erfasster zusammenhängender Ruhe kürzer als die regulären ${requiredRestMinutes / 60} Stunden aus Ersatzruhetag und §-5-Ruhezeit. Prüfen, ob technische oder arbeitsorganisatorische Gründe nach § 11 Abs. 4 ArbZG entgegenstehen.`,
-        [...match.obligation.related, match.candidate.evidence],
+        [...match.obligation.related, ...match.candidate.evidence],
         match.obligation.date.toString(),
       ),
     );

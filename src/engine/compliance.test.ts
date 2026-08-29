@@ -63,8 +63,10 @@ describe("ArbZG compliance", () => {
         "ARBZG_DATA_ALL_EMPLOYMENT",
         "ARBZG_6_NIGHT_STATUS_UNKNOWN",
         "HOLIDAY_REGION_UNKNOWN",
-        "ARBZG_4_BREAK_PLACEMENT_UNVERIFIED",
       ]),
+    );
+    expect(result.issues.some((item) => item.rule === "ARBZG_4_BREAK_PLACEMENT_UNVERIFIED")).toBe(
+      false,
     );
   });
 

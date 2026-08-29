@@ -42,6 +42,34 @@ function free(id: string, date: string): ShiftEntry {
   };
 }
 
+function absence(id: string, date: string): ShiftEntry {
+  return {
+    ...free(id, date),
+    title: "Urlaub",
+    type: "VACATION",
+  };
+}
+
+function blockUnenteredWeekdays(
+  startValue: string,
+  endValue: string,
+  excludedDates: readonly string[] = [],
+): ShiftEntry[] {
+  const excluded = new Set(excludedDates);
+  const entries: ShiftEntry[] = [];
+  for (
+    let date = Temporal.PlainDate.from(startValue);
+    Temporal.PlainDate.compare(date, endValue) <= 0;
+    date = date.add({ days: 1 })
+  ) {
+    const value = date.toString();
+    if (date.dayOfWeek !== 7 && !excluded.has(value)) {
+      entries.push(absence(`absence-${value}`, value));
+    }
+  }
+  return entries;
+}
+
 function rulesForContract(version: 4 | 5) {
   const legal = JSON.parse(JSON.stringify(BUNDLED_LEGAL_RULES[0])) as RuleLegalPackage;
   if (version === 4) {
@@ -101,6 +129,7 @@ describe("ArbZG Sunday and public-holiday rest", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
       [
+        ...blockUnenteredWeekdays("2026-06-22", "2026-07-18", ["2026-07-05", "2026-07-06"]),
         shift("sunday", "2026-07-05"),
         free("replacement", "2026-07-06"),
         shift("next", "2026-07-07", "06:00", "14:00"),
@@ -112,10 +141,27 @@ describe("ArbZG Sunday and public-holiday rest", () => {
     expect(result.issues.some((item) => item.rule === "ARBZG_11_SUNDAY_REST")).toBe(false);
   });
 
+  it("accepts an unentered weekday as the replacement rest day", () => {
+    const result = calculateMonthlyCompliance(
+      "2026-07",
+      [
+        ...blockUnenteredWeekdays("2026-06-22", "2026-07-18", ["2026-07-05", "2026-07-06"]),
+        shift("sunday", "2026-07-05"),
+        shift("next", "2026-07-07", "06:00", "14:00"),
+      ],
+      "Europe/Berlin",
+      { federalState: "NW", referenceDate: "2026-07-31" },
+    );
+
+    expect(result.issues.some((item) => item.rule === "ARBZG_11_SUNDAY_REST")).toBe(false);
+    expect(result.issues.some((item) => item.rule === "ARBZG_11_REST_CONNECTION")).toBe(false);
+  });
+
   it("separately warns when a FREE day has less than the regular 35-hour connection", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
       [
+        ...blockUnenteredWeekdays("2026-06-22", "2026-07-18", ["2026-07-05", "2026-07-06"]),
         shift("sunday", "2026-07-05", "12:00", "20:00"),
         free("replacement", "2026-07-06"),
         shift("next", "2026-07-07", "06:00", "14:00"),
@@ -137,7 +183,10 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("detects Sunday work from an overnight Saturday shift", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
-      [shift("overnight", "2026-07-04", "22:00", "06:00")],
+      [
+        ...blockUnenteredWeekdays("2026-06-22", "2026-07-18", ["2026-07-04"]),
+        shift("overnight", "2026-07-04", "22:00", "06:00"),
+      ],
       "Europe/Berlin",
       { federalState: "NW", referenceDate: "2026-07-31" },
     );
@@ -154,7 +203,11 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("accepts a replacement rest day before the worked Sunday", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
-      [free("replacement", "2026-06-29"), shift("sunday", "2026-07-05")],
+      [
+        ...blockUnenteredWeekdays("2026-06-22", "2026-07-18", ["2026-06-29", "2026-07-05"]),
+        free("replacement", "2026-06-29"),
+        shift("sunday", "2026-07-05"),
+      ],
       "Europe/Berlin",
       { federalState: "NW", referenceDate: "2026-07-31" },
     );
@@ -165,7 +218,11 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("warns when the loaded range cannot prove the connected rest around a matched day", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
-      [shift("sunday", "2026-07-05"), free("replacement", "2026-07-06")],
+      [
+        ...blockUnenteredWeekdays("2026-06-22", "2026-07-18", ["2026-07-05", "2026-07-06"]),
+        shift("sunday", "2026-07-05"),
+        free("replacement", "2026-07-06"),
+      ],
       "Europe/Berlin",
       {
         federalState: "NW",
@@ -183,7 +240,11 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("accepts the last possible day of the inclusive Sunday matching window", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
-      [shift("sunday", "2026-07-05"), free("replacement", "2026-07-18")],
+      [
+        ...blockUnenteredWeekdays("2026-06-22", "2026-07-18", ["2026-07-05", "2026-07-18"]),
+        shift("sunday", "2026-07-05"),
+        free("replacement", "2026-07-18"),
+      ],
       "Europe/Berlin",
       { federalState: "NW", referenceDate: "2026-07-31" },
     );
@@ -195,6 +256,11 @@ describe("ArbZG Sunday and public-holiday rest", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
       [
+        ...blockUnenteredWeekdays("2026-06-22", "2026-07-25", [
+          "2026-07-05",
+          "2026-07-12",
+          "2026-07-13",
+        ]),
         shift("sunday-1", "2026-07-05"),
         shift("sunday-2", "2026-07-12"),
         free("replacement", "2026-07-13"),
@@ -209,7 +275,10 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("checks work on a weekday public holiday with the eight-week period", () => {
     const result = calculateMonthlyCompliance(
       "2026-10",
-      [shift("holiday", "2026-10-03")],
+      [
+        ...blockUnenteredWeekdays("2026-08-09", "2026-11-27", ["2026-10-03"]),
+        shift("holiday", "2026-10-03"),
+      ],
       "Europe/Berlin",
       { federalState: "NW", referenceDate: "2026-12-01" },
     );
@@ -226,13 +295,21 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("uses the inclusive 56-day holiday period without an off-by-one", () => {
     const atBoundary = calculateMonthlyCompliance(
       "2026-10",
-      [shift("holiday", "2026-10-03"), free("replacement", "2026-11-27")],
+      [
+        ...blockUnenteredWeekdays("2026-08-09", "2026-11-27", ["2026-10-03", "2026-11-27"]),
+        shift("holiday", "2026-10-03"),
+        free("replacement", "2026-11-27"),
+      ],
       "Europe/Berlin",
       { federalState: "NW", referenceDate: "2026-12-01" },
     );
     const outsideBoundary = calculateMonthlyCompliance(
       "2026-10",
-      [shift("holiday", "2026-10-03"), free("replacement", "2026-11-28")],
+      [
+        ...blockUnenteredWeekdays("2026-08-09", "2026-11-27", ["2026-10-03"]),
+        shift("holiday", "2026-10-03"),
+        free("replacement", "2026-11-28"),
+      ],
       "Europe/Berlin",
       { federalState: "NW", referenceDate: "2026-12-01" },
     );
@@ -246,7 +323,11 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("does not use a public holiday itself as a replacement day", () => {
     const result = calculateMonthlyCompliance(
       "2026-09",
-      [shift("sunday", "2026-09-27"), free("holiday-free", "2026-10-03")],
+      [
+        ...blockUnenteredWeekdays("2026-09-14", "2026-10-10", ["2026-10-03"]),
+        shift("sunday", "2026-09-27"),
+        free("holiday-free", "2026-10-03"),
+      ],
       "Europe/Berlin",
       { federalState: "NW", referenceDate: "2026-10-31" },
     );
@@ -259,7 +340,7 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("creates only the Sunday obligation when a state holiday falls on Sunday", () => {
     const result = calculateMonthlyCompliance(
       "2026-04",
-      [shift("easter-sunday", "2026-04-05")],
+      [...blockUnenteredWeekdays("2026-03-23", "2026-04-18"), shift("easter-sunday", "2026-04-05")],
       "Europe/Berlin",
       { federalState: "BB", referenceDate: "2026-04-30" },
     );
@@ -293,7 +374,7 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("does not guess holiday-specific compliance without a federal state", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
-      [shift("sunday", "2026-07-05")],
+      [...blockUnenteredWeekdays("2026-06-22", "2026-07-18"), shift("sunday", "2026-07-05")],
       "Europe/Berlin",
       { referenceDate: "2026-07-31" },
     );
@@ -319,7 +400,7 @@ describe("ArbZG Sunday and public-holiday rest", () => {
   it("keeps Sunday checks active and reports missing holiday coverage", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",
-      [shift("sunday", "2026-07-05")],
+      [...blockUnenteredWeekdays("2026-06-22", "2026-07-18"), shift("sunday", "2026-07-05")],
       "Europe/Berlin",
       {
         federalState: "NW",
