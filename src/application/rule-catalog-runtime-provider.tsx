@@ -5,7 +5,11 @@ import {
   type LoadStoredRuleCatalog,
   type RuleCatalogRuntimeSnapshot,
 } from "@/application/rule-catalog-runtime";
-import type { SynchronizeRuleCatalog } from "@/application/rule-catalog-sync";
+import { reconcileRuleCatalogRuntimeAfterSync } from "@/application/rule-catalog-runtime-refresh";
+import type {
+  RuleCatalogSyncResult,
+  SynchronizeRuleCatalog,
+} from "@/application/rule-catalog-sync";
 
 interface RuleCatalogRuntimeProviderProps extends PropsWithChildren {
   readonly loadStoredCatalog: LoadStoredRuleCatalog;
@@ -26,7 +30,7 @@ export function RuleCatalogRuntimeProvider({
   useEffect(() => {
     let active = true;
     setRuntime(null);
-    void loadRuleCatalogRuntime(loadStoredCatalog).then((result) => {
+    void loadRuleCatalogRuntime(loadStoredCatalog).then(async (result) => {
       if (!active) return;
       if (result.loadError !== null) {
         recordDiagnostic("RULE_CATALOG_LOAD_FAILED", result.loadError);
@@ -37,9 +41,29 @@ export function RuleCatalogRuntimeProvider({
         );
       }
       setRuntime(result.runtime);
-      void synchronizeCatalog(result.runtime.diagnosis.activeGeneration).catch((error: unknown) => {
+      let syncResult: RuleCatalogSyncResult;
+      try {
+        syncResult = await synchronizeCatalog(result.runtime.diagnosis.activeGeneration);
+      } catch (error) {
         if (active) recordDiagnostic("RULE_CATALOG_SYNC_FAILED", error);
-      });
+        return;
+      }
+      if (!active) return;
+      try {
+        const refresh = await reconcileRuleCatalogRuntimeAfterSync(
+          result.runtime,
+          syncResult,
+          loadStoredCatalog,
+        );
+        if (!active) return;
+        if (refresh.status === "FAILED") {
+          recordDiagnostic("RULE_CATALOG_REFRESH_FAILED", refresh.refreshError);
+        } else if (refresh.status === "REPLACED") {
+          setRuntime(refresh.runtime);
+        }
+      } catch (error) {
+        if (active) recordDiagnostic("RULE_CATALOG_REFRESH_FAILED", error);
+      }
     });
     return () => {
       active = false;
