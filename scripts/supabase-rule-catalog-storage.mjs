@@ -182,6 +182,25 @@ async function responseJson(response, label) {
   }
 }
 
+async function isMissingObjectResponse(response) {
+  if (response.status === 404) return true;
+  if (response.status !== 400) return false;
+
+  let errorBody;
+  try {
+    errorBody = await response.json();
+  } catch {
+    return false;
+  }
+  return (
+    errorBody !== null &&
+    typeof errorBody === "object" &&
+    Reflect.get(errorBody, "statusCode") === "404" &&
+    Reflect.get(errorBody, "error") === "not_found" &&
+    Reflect.get(errorBody, "code") === "NoSuchKey"
+  );
+}
+
 export function createSupabaseRuleCatalogStorage({
   supabaseUrl,
   secretKey,
@@ -258,7 +277,7 @@ export function createSupabaseRuleCatalogStorage({
     const response = await request(
       `/object/${encodeURIComponent(bucket)}/${encodePath(objectPath)}`,
     );
-    if (response.status === 404) return null;
+    if (await isMissingObjectResponse(response)) return null;
     if (!response.ok) {
       fail("REMOTE_REJECTED", `Supabase rejected an object read with HTTP ${response.status}.`);
     }

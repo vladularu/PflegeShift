@@ -116,7 +116,15 @@ function createFakeSupabase({ bucketExists = false, bucketOverride = {} } = {}) 
       if (method === "GET") {
         const stored = objects.get(objectPath);
         return stored === undefined
-          ? new Response("", { status: 404 })
+          ? Response.json(
+              {
+                statusCode: "404",
+                error: "not_found",
+                message: "Object not found",
+                code: "NoSuchKey",
+              },
+              { status: 400 },
+            )
           : new Response(stored, {
               status: 200,
               headers: { "content-length": String(stored.byteLength) },
@@ -333,6 +341,29 @@ test("delivery fails closed when bucket restrictions drift", async () => {
   await assert.rejects(storageFor(fake).ensureBucket(), (error) => {
     assert.ok(error instanceof RuleCatalogDeliveryError);
     assert.equal(error.code, "BUCKET_CONFIGURATION_MISMATCH");
+    return true;
+  });
+});
+
+test("storage rejects an unrelated HTTP 400 instead of treating it as a missing object", async () => {
+  const storage = createSupabaseRuleCatalogStorage({
+    supabaseUrl: "http://127.0.0.1",
+    secretKey,
+    fetchImplementation: async () =>
+      Response.json(
+        {
+          statusCode: "400",
+          error: "bad_request",
+          message: "Invalid object request",
+          code: "BadRequest",
+        },
+        { status: 400 },
+      ),
+  });
+
+  await assert.rejects(storage.readObject("preview/current.json"), (error) => {
+    assert.ok(error instanceof RuleCatalogDeliveryError);
+    assert.equal(error.code, "REMOTE_REJECTED");
     return true;
   });
 });
