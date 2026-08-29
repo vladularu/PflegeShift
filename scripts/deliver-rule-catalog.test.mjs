@@ -362,7 +362,7 @@ async function writeSignedCliFixture() {
     maximumStepId: "s2",
     sourceIds: ["tvoed-vka-2026"],
   };
-  packages[1].engineContractVersion = 5;
+  packages[1].engineContractVersion = 6;
   packages[1].rules.workingTime.standardAverage = {
     calendarMonths: 6,
     weeks: 24,
@@ -385,6 +385,7 @@ async function writeSignedCliFixture() {
     matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE",
     sourceIds: ["arbzg-2026"],
   };
+  packages[1].rules.restPeriod.deviations[0].compensationWithinCalendarMonths = 1;
   const packageJson = packages.map((value) => `${JSON.stringify(value, null, 2)}\n`);
   const manifest = await fixture("manifest.valid.json");
   manifest.packages = packages.map((rulePackage, index) => ({
