@@ -85,16 +85,25 @@ function byId<T extends { id: string }>(entries: T[], id: string): T {
 }
 
 describe("generation 1 rule review candidates", () => {
-  it("keeps every candidate schema-valid and explicitly unreviewed", () => {
+  it("keeps every candidate schema-valid and review-consistent", () => {
     for (const candidate of candidates) {
       expect(validateRulePackage(candidate).ok).toBe(true);
-      expect(candidate.status).toBe("DRAFT");
-      expect(candidate.review).toEqual({
-        status: "DRAFT",
-        reviewedBy: null,
-        reviewedAt: null,
-        gitCommit: null,
-      });
+      expect(["DRAFT", "REVIEWED"]).toContain(candidate.status);
+      if (candidate.status === "DRAFT") {
+        expect(candidate.review).toEqual({
+          status: "DRAFT",
+          reviewedBy: null,
+          reviewedAt: null,
+          gitCommit: null,
+        });
+      } else {
+        expect(candidate.review).toEqual({
+          status: "REVIEWED",
+          reviewedBy: "project-owner",
+          reviewedAt: "2026-08-29T00:58:25Z",
+          gitCommit: "8aa225f44eca461b1d10231850ae5f620c60a8cd",
+        });
+      }
 
       for (const source of candidate.sources) {
         expect(source.url).toMatch(/^https:\/\//);
