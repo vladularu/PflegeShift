@@ -1,9 +1,11 @@
 import * as ed25519 from "@noble/ed25519";
 import { CryptoDigestAlgorithm, digest } from "expo-crypto";
 
+import type { RuleManifest } from "@/rules/contracts.generated";
 import {
   RuleCatalogVerificationError,
   verifyRuleCatalogArtifacts,
+  verifyRuleManifest,
   type RuleCatalogCryptography,
   type RuleCatalogVerificationPolicy,
   type UntrustedRuleCatalogArtifacts,
@@ -31,6 +33,13 @@ const expoRuleCatalogCryptography: RuleCatalogCryptography = {
     return ed25519.verifyAsync(signature, message, publicKey, { zip215: false });
   },
 };
+
+export function verifyRuleManifestOnDevice(
+  manifestJson: string,
+  policy: RuleCatalogVerificationPolicy,
+): Promise<RuleManifest> {
+  return verifyRuleManifest(manifestJson, policy, expoRuleCatalogCryptography);
+}
 
 export function verifyRuleCatalogArtifactsOnDevice(
   artifacts: UntrustedRuleCatalogArtifacts,

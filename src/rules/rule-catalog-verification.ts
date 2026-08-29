@@ -1,5 +1,10 @@
 import type { RuleManifest } from "./contracts.generated";
-import { validateManifest, validateRuleCatalog, type ValidationIssue } from "./validation";
+import {
+  validateManifest,
+  validateRuleCatalog,
+  type ValidatedRuleCatalog,
+  type ValidationIssue,
+} from "./validation";
 
 const MAX_RULE_ARTIFACT_BYTES = 524_288;
 const verifiedRuleCatalogArtifacts: unique symbol = Symbol("verifiedRuleCatalogArtifacts");
@@ -92,6 +97,7 @@ export interface RuleCatalogVerificationPolicy {
   readonly expectedChannel: RuleManifest["channel"];
   readonly supportedEngineContractVersions: ReadonlySet<number>;
   readonly trustedPublicKeys: ReadonlyMap<string, Uint8Array>;
+  readonly acceptsCatalog?: (catalog: ValidatedRuleCatalog) => boolean;
 }
 
 export interface RuleCatalogCryptography {
@@ -115,6 +121,7 @@ export type RuleCatalogVerificationErrorCode =
   | "PACKAGE_SIZE_MISMATCH"
   | "PACKAGE_HASH_MISMATCH"
   | "INVALID_CATALOG"
+  | "RUNTIME_INCOMPATIBLE"
   | "UNSUPPORTED_ENGINE_CONTRACT"
   | "CRYPTO_UNAVAILABLE";
 
@@ -390,6 +397,12 @@ export async function verifyRuleCatalogArtifacts(
       "INVALID_CATALOG",
       "The verified artifacts do not satisfy the rule catalog contract.",
       catalogValidation.issues,
+    );
+  }
+  if (policy.acceptsCatalog !== undefined && !policy.acceptsCatalog(catalogValidation.value)) {
+    throw new RuleCatalogVerificationError(
+      "RUNTIME_INCOMPATIBLE",
+      "The verified catalog cannot be selected unambiguously by this app version.",
     );
   }
   return verifiedArtifacts(artifacts);

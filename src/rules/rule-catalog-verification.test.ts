@@ -250,6 +250,18 @@ describe("rule catalog verification", () => {
     );
   });
 
+  it("rejects a signed catalog that the current runtime cannot select unambiguously", async () => {
+    const { artifacts, policy } = buildArtifacts();
+
+    await expectVerificationError(
+      verifyRuleCatalogArtifacts(artifacts, {
+        ...policy,
+        acceptsCatalog: () => false,
+      }),
+      "RUNTIME_INCOMPATIBLE",
+    );
+  });
+
   it("bounds raw artifacts and rejects malformed trusted key material", async () => {
     const { artifacts, policy } = buildArtifacts();
 
