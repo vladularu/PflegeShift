@@ -18,12 +18,17 @@ import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 const profile: UserProfile = {
   federalState: "NW",
+  holidayRegion: "NONE",
   weeklyMinutes: 2_310,
   timeZone: "Europe/Berlin",
+  regularRotatingNightWork: false,
+  sundayHolidayWorkEligible: true,
+  allEmploymentWorkRecorded: true,
   tariff: {
     payGroup: "P8",
     payLevel: 4,
     sector: "BT_K",
+    tariffRegion: "OTHER",
     fullTimeWeeklyMinutes: 2_310,
   },
   createdAt: "2026-01-01T00:00:00.000Z",

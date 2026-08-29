@@ -56,7 +56,11 @@ export function useDeferredMonthlyCompliance({
     let cancelScheduledWork = () => {};
     const steps = calculateMonthlyComplianceSteps(month, shifts, profile.timeZone, {
       federalState: profile.federalState,
+      holidayRegion: profile.holidayRegion,
       weeklyMinutes: profile.weeklyMinutes,
+      regularRotatingNightWork: profile.regularRotatingNightWork,
+      sundayHolidayWorkEligible: profile.sundayHolidayWorkEligible,
+      allEmploymentWorkRecorded: profile.allEmploymentWorkRecorded,
       referenceDate,
       ruleResolver,
     });

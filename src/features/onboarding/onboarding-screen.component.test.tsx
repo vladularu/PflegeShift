@@ -45,6 +45,7 @@ describe("OnboardingScreen", () => {
     await waitFor(() => {
       expect(mockUpdateProfile).toHaveBeenCalledWith({
         federalState: "NW",
+        holidayRegion: "NONE",
         weeklyMinutes: 2_400,
         timeZone: "Europe/Berlin",
       });

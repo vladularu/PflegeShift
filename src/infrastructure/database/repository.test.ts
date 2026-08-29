@@ -71,7 +71,7 @@ describe("SQLite repository", () => {
     expect(templates).toHaveLength(7);
     expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("star");
     expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({
-      count: 10,
+      count: 11,
     });
     expect(testDb.database.pragma("secure_delete", { simple: true })).toBe(1);
   });
@@ -153,6 +153,7 @@ describe("SQLite repository", () => {
         payGroup: "P8",
         payLevel: 4,
         sector: "BT_K",
+        tariffRegion: "OTHER",
         fullTimeWeeklyMinutes: 2_310,
       },
     });

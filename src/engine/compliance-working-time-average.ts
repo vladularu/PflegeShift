@@ -1,6 +1,12 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-import type { ComplianceIssue, ComplianceSeverity, FederalState, ShiftEntry } from "@/domain/types";
+import type {
+  ComplianceIssue,
+  ComplianceSeverity,
+  FederalState,
+  HolidayRegion,
+  ShiftEntry,
+} from "@/domain/types";
 import type { ComplianceInterval as Interval } from "@/engine/compliance-sequences";
 import { getPublicHolidays } from "@/engine/holidays";
 import { isNightWork } from "@/engine/compliance-night-work";
@@ -9,6 +15,7 @@ import { RuleResolutionError, type RuleResolver } from "@/rules/rule-resolver";
 
 export interface WorkingTimeAverageOptions {
   readonly federalState?: FederalState;
+  readonly holidayRegion?: HolidayRegion;
 }
 
 interface WindowAverage {
@@ -69,13 +76,19 @@ function knownHolidayDates(
   start: Temporal.PlainDate,
   end: Temporal.PlainDate,
   federalState: FederalState | undefined,
+  holidayRegion: HolidayRegion | undefined,
   ruleResolver: RuleResolver,
 ): ReadonlySet<string> {
   if (!federalState) return new Set();
   const holidays = new Set<string>();
   for (let year = start.year; year <= end.year; year += 1) {
     try {
-      for (const holiday of getPublicHolidays(year, federalState, ruleResolver)) {
+      for (const holiday of getPublicHolidays(
+        year,
+        federalState,
+        ruleResolver,
+        holidayRegion ?? "NONE",
+      )) {
         if (holiday.date >= start.toString() && holiday.date <= end.toString()) {
           holidays.add(holiday.date);
         }
@@ -169,7 +182,13 @@ export function* checkWorkingTimeAverageIncrementally(
   const lastWeekEnd = lastCandidateDate.add({ weeks: averageRules.weeks }).subtract({ days: 1 });
   const lastDate =
     Temporal.PlainDate.compare(lastCalendarEnd, lastWeekEnd) >= 0 ? lastCalendarEnd : lastWeekEnd;
-  const holidays = knownHolidayDates(firstDate, lastDate, options.federalState, ruleResolver);
+  const holidays = knownHolidayDates(
+    firstDate,
+    lastDate,
+    options.federalState,
+    options.holidayRegion,
+    ruleResolver,
+  );
   yield (checkpoint += 1);
 
   const dateIndexes = new Map<string, number>();

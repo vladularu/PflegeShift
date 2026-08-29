@@ -1,0 +1,22 @@
+Quelle: RECHT.NRW.DE
+URL: https://recht.nrw.de/lrgv/gesetz/01012000-bekanntmachung-der-neufassung-des-gesetzes-ueber-die-sonn-und-feiertage/
+Abruf: 2026-08-29
+Dokumentkopf: Feiertagsgesetz NW in der Fassung der Bekanntmachung vom 23.04.1989, Paragraph 2 zuletzt geaendert am 20.12.1994
+Normalisierung: sichtbarer Paragraphentext, UTF-8, NFC, geschuetzte Leerzeichen als U+0020, LF
+
+Gesetz ueber die Sonn- und Feiertage
+Paragraph 2 Feiertage
+
+(1) Feiertage sind:
+
+1. der Neujahrstag,
+2. der Karfreitag,
+3. der Ostermontag,
+4. der 1. Mai als Tag des Bekenntnisses zu Freiheit und Frieden, sozialer Gerechtigkeit, Voelkerversoehnung und Menschenwuerde,
+5. der Christi-Himmelfahrts-Tag,
+6. der Pfingstmontag,
+7. der Fronleichnamstag (Donnerstag nach dem Sonntag Trinitatis),
+8. der 3. Oktober als Tag der Deutschen Einheit,
+9. der Allerheiligentag (1. November),
+10. der 1. Weihnachtstag,
+11. der 2. Weihnachtstag.

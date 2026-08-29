@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "engineContractVersion": 1,
+  "engineContractVersion": 2,
   "packageId": "de-holidays",
   "versionId": "2026",
   "kind": "HOLIDAY",
@@ -92,6 +92,70 @@
       "documentDate": "2019-03-26",
       "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-th-thuerfgtg-2-2026.txt",
       "sha256": "9dc073ccf167b8f748ee42cad546c53100b172166139a612e2d5b25a5b88ee36"
+    },
+    {
+      "id": "de-hb-feiertg-2-2026",
+      "title": "Transparenzportal Bremen – § 2 Feiertagsgesetz",
+      "url": "https://www.transparenz.bremen.de/metainformationen/gesetz-ueber-die-sonn-gedenk-und-feiertage-vom-12-november-1954-296390?template=20_gp_ifg_meta_detail_d",
+      "documentDate": "2025-09-02",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-hb-feiertg-2-2026.txt",
+      "sha256": "281c937f92181a7eb4cc245d2c1a3e5639b88336a8409c2ae14d66c8042bcba6"
+    },
+    {
+      "id": "de-hh-feiertg-1-2026",
+      "title": "Landesrecht Hamburg – § 1 Feiertagsgesetz",
+      "url": "https://www.landesrecht-hamburg.de/bsha/document/jlr-FeiertGHArahmen",
+      "documentDate": "2021-02-17",
+      "section": "§ 1; UTF-8/LF-Review-Snapshot rules/sources/de-hh-feiertg-1-2026.txt",
+      "sha256": "161f840654299c2b0d7de00ad074fc2c21317b58852764cd8e6f8e08d045f93f"
+    },
+    {
+      "id": "de-he-holidays-2026",
+      "title": "Hessen Innen – gesetzliche Feiertage 2026",
+      "url": "https://innen.hessen.de/Buerger-Staat/Feiertage",
+      "documentDate": "2026-08-29",
+      "section": "Feiertage in Hessen im Jahr 2026; UTF-8/LF-Review-Snapshot rules/sources/de-he-holidays-2026.txt",
+      "sha256": "58dbd23b04cd4e1b08b9f0c3f2e8d2edfbc4ba30a9ba3d75f1e3d7ecbb668077"
+    },
+    {
+      "id": "de-mv-ftg-2-2026",
+      "title": "Landesrecht Mecklenburg-Vorpommern – § 2 FTG M-V",
+      "url": "https://www.landesrecht-mv.de/bsmv/document/jlr-FTGMVrahmen",
+      "documentDate": "2022-07-07",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-mv-ftg-2-2026.txt",
+      "sha256": "3ab802f7ca83a6a2d0efbfe9f42a36274834128117c1ffc4f1276d5702d49ecc"
+    },
+    {
+      "id": "de-ni-nfeiertagsg-2-2026",
+      "title": "NI-VORIS – § 2 Niedersächsisches Feiertagsgesetz",
+      "url": "https://voris.wolterskluwer-online.de/browse/document/b724111b-6c20-3862-b111-589842acacba",
+      "documentDate": "2018-06-22",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-ni-nfeiertagsg-2-2026.txt",
+      "sha256": "0be2c47a1791bd7d8285be2f409644022cdc6cee72a7ddb6e785ca844c24e71d"
+    },
+    {
+      "id": "de-nw-feiertg-2-2026",
+      "title": "RECHT.NRW.DE – § 2 Feiertagsgesetz NW",
+      "url": "https://recht.nrw.de/lrgv/gesetz/01012000-bekanntmachung-der-neufassung-des-gesetzes-ueber-die-sonn-und-feiertage/",
+      "documentDate": "1994-12-20",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-nw-feiertg-2-2026.txt",
+      "sha256": "402fd4095ed04c4947f4c8d8f9adc3184976ac5345d110a0962ee7f5f1fa0573"
+    },
+    {
+      "id": "de-rp-holidays-2026",
+      "title": "Innenministerium Rheinland-Pfalz – gesetzliche Feiertage 2026",
+      "url": "https://mdi.rlp.de/themen/buerger-und-staat/verfassung-und-verwaltung/sonn-und-feiertagsrecht",
+      "documentDate": "2026-08-29",
+      "section": "Gesetzliche Feiertage in Rheinland-Pfalz 2026; UTF-8/LF-Review-Snapshot rules/sources/de-rp-holidays-2026.txt",
+      "sha256": "eee33b53ac51d77e07d58c56ce614480a532e115ec659ed26bb59a561a6e0e35"
+    },
+    {
+      "id": "de-sh-sftg-2-2018",
+      "title": "GVOBl. Schleswig-Holstein – Reformationstag",
+      "url": "https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/IV/Service/GVOBl/GVOBl/2018/gvobl_6_2018.pdf",
+      "documentDate": "2018-03-21",
+      "section": "Art. 1 Nr. 1; UTF-8/LF-Review-Snapshot rules/sources/de-sh-sftg-2-2018.txt",
+      "sha256": "4e2b43bd057506376565d81f0aaaa2404eb95f66de8a837f7e601b053059202a"
     }
   ],
   "review": {
@@ -119,7 +183,8 @@
           "month": 1,
           "day": 1
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "good-friday",
@@ -132,7 +197,8 @@
           "type": "EASTER_OFFSET",
           "offsetDays": -2
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "easter-monday",
@@ -145,7 +211,8 @@
           "type": "EASTER_OFFSET",
           "offsetDays": 1
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "labour-day",
@@ -159,7 +226,8 @@
           "month": 5,
           "day": 1
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "ascension-day",
@@ -172,7 +240,8 @@
           "type": "EASTER_OFFSET",
           "offsetDays": 39
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "whit-monday",
@@ -185,7 +254,8 @@
           "type": "EASTER_OFFSET",
           "offsetDays": 50
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "german-unity-day",
@@ -199,7 +269,8 @@
           "month": 10,
           "day": 3
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "christmas-day",
@@ -213,7 +284,8 @@
           "month": 12,
           "day": 25
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "boxing-day",
@@ -227,7 +299,8 @@
           "month": 12,
           "day": 26
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
       },
       {
         "id": "epiphany",
@@ -241,7 +314,8 @@
           "month": 1,
           "day": 6
         },
-        "sourceIds": ["de-bw-holidays-2026", "de-by-holidays-2026", "de-st-holidays-2026"]
+        "sourceIds": ["de-bw-holidays-2026", "de-by-holidays-2026", "de-st-holidays-2026"],
+        "regionIds": null
       },
       {
         "id": "womens-day",
@@ -255,7 +329,8 @@
           "month": 3,
           "day": 8
         },
-        "sourceIds": ["de-be-holidays-2026", "de-mv-womens-day-2022"]
+        "sourceIds": ["de-be-holidays-2026", "de-mv-womens-day-2022"],
+        "regionIds": null
       },
       {
         "id": "easter-sunday-bb",
@@ -268,7 +343,8 @@
           "type": "EASTER_OFFSET",
           "offsetDays": 0
         },
-        "sourceIds": ["de-bb-holidays-2026"]
+        "sourceIds": ["de-bb-holidays-2026"],
+        "regionIds": null
       },
       {
         "id": "whit-sunday-bb",
@@ -281,7 +357,8 @@
           "type": "EASTER_OFFSET",
           "offsetDays": 49
         },
-        "sourceIds": ["de-bb-holidays-2026"]
+        "sourceIds": ["de-bb-holidays-2026"],
+        "regionIds": null
       },
       {
         "id": "corpus-christi",
@@ -294,7 +371,15 @@
           "type": "EASTER_OFFSET",
           "offsetDays": 60
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": [
+          "de-bw-holidays-2026",
+          "de-by-holidays-2026",
+          "de-he-holidays-2026",
+          "de-nw-feiertg-2-2026",
+          "de-rp-holidays-2026",
+          "de-sl-sfg-2-2026"
+        ],
+        "regionIds": null
       },
       {
         "id": "assumption-day-sl",
@@ -308,7 +393,8 @@
           "month": 8,
           "day": 15
         },
-        "sourceIds": ["de-sl-sfg-2-2026"]
+        "sourceIds": ["de-sl-sfg-2-2026"],
+        "regionIds": null
       },
       {
         "id": "world-childrens-day-th",
@@ -322,7 +408,8 @@
           "month": 9,
           "day": 20
         },
-        "sourceIds": ["de-th-holidays-2026"]
+        "sourceIds": ["de-th-holidays-2026"],
+        "regionIds": null
       },
       {
         "id": "reformation-day",
@@ -336,7 +423,18 @@
           "month": 10,
           "day": 31
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": [
+          "de-bb-holidays-2026",
+          "de-hb-feiertg-2-2026",
+          "de-hh-feiertg-1-2026",
+          "de-mv-ftg-2-2026",
+          "de-ni-nfeiertagsg-2-2026",
+          "de-sn-holidays-2026",
+          "de-st-holidays-2026",
+          "de-sh-sftg-2-2018",
+          "de-th-holidays-2026"
+        ],
+        "regionIds": null
       },
       {
         "id": "all-saints-day",
@@ -350,7 +448,14 @@
           "month": 11,
           "day": 1
         },
-        "sourceIds": ["de-stvo-30-2026"]
+        "sourceIds": [
+          "de-bw-holidays-2026",
+          "de-by-holidays-2026",
+          "de-nw-feiertg-2-2026",
+          "de-rp-holidays-2026",
+          "de-sl-sfg-2-2026"
+        ],
+        "regionIds": null
       },
       {
         "id": "repentance-day-sn",
@@ -362,7 +467,66 @@
         "calculation": {
           "type": "REPENTANCE_DAY"
         },
+        "sourceIds": ["de-sn-holidays-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "assumption-day-by-regional",
+        "name": "Mariä Himmelfahrt",
+        "scope": "REGIONAL",
+        "federalStates": ["BY"],
+        "regionIds": ["by.maria-himmelfahrt", "by.augsburg"],
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 8,
+          "day": 15
+        },
+        "sourceIds": ["de-by-holidays-2026"]
+      },
+      {
+        "id": "augsburg-peace-festival",
+        "name": "Augsburger Friedensfest",
+        "scope": "REGIONAL",
+        "federalStates": ["BY"],
+        "regionIds": ["by.augsburg"],
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 8,
+          "day": 8
+        },
+        "sourceIds": ["de-by-holidays-2026"]
+      },
+      {
+        "id": "corpus-christi-sn-regional",
+        "name": "Fronleichnam",
+        "scope": "REGIONAL",
+        "federalStates": ["SN"],
+        "regionIds": ["sn.fronleichnam"],
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 60
+        },
         "sourceIds": ["de-sn-holidays-2026"]
+      },
+      {
+        "id": "corpus-christi-th-regional",
+        "name": "Fronleichnam",
+        "scope": "REGIONAL",
+        "federalStates": ["TH"],
+        "regionIds": ["th.fronleichnam"],
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 60
+        },
+        "sourceIds": ["de-th-holidays-2026"]
       }
     ]
   }

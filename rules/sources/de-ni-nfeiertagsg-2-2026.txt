@@ -1,0 +1,23 @@
+Quelle: Niedersaechsisches Vorschrifteninformationssystem NI-VORIS
+URL: https://voris.wolterskluwer-online.de/browse/document/b724111b-6c20-3862-b111-589842acacba
+Abruf: 2026-08-29
+Dokumentkopf: NFeiertagsG, Fassung der Bekanntmachung vom 07.03.1995, zuletzt geaendert am 22.06.2018, aktuelle Fassung ab 29.06.2018
+Normalisierung: sichtbarer Paragraphentext, UTF-8, NFC, geschuetzte Leerzeichen als U+0020, LF
+
+Niedersaechsisches Gesetz ueber die Feiertage
+Paragraph 2
+
+(1) Staatlich anerkannte Feiertage sind:
+
+a) Neujahrstag,
+b) Karfreitag,
+c) Ostermontag,
+d) der 1. Mai,
+e) Himmelfahrtstag,
+f) Pfingstmontag,
+g) der 3. Oktober, als Tag der Deutschen Einheit,
+h) der 31. Oktober, als Reformationstag,
+i) 1. Weihnachtstag,
+j) 2. Weihnachtstag.
+
+(2) Diese Tage sind Fest-, allgemeine oder gesetzliche Feiertage im Sinne bundes- oder landesrechtlicher Vorschriften.

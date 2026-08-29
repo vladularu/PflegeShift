@@ -1,0 +1,24 @@
+Quelle: Transparenzportal Bremen
+URL: https://www.transparenz.bremen.de/metainformationen/gesetz-ueber-die-sonn-gedenk-und-feiertage-vom-12-november-1954-296390?template=20_gp_ifg_meta_detail_d
+Abruf: 2026-08-29
+Dokumentkopf: SaBremR 113-c-1, aktuelle Gesamtausgabe, letzte beruecksichtigte Aenderung vom 02.09.2025
+Normalisierung: sichtbarer Paragraphentext, UTF-8, NFC, geschuetzte Leerzeichen als U+0020, LF
+
+Gesetz ueber die Sonn-, Gedenk- und Feiertage
+Vom 12. November 1954
+Paragraph 2
+
+(1) Staatlich anerkannte Feiertage sind:
+
+a) der Neujahrstag,
+b) der Karfreitag,
+c) der Ostermontag,
+d) der 1. Mai,
+e) der Himmelfahrtstag,
+f) der Pfingstmontag,
+g) der 3. Oktober - Tag der deutschen Einheit -,
+h) der 1. Weihnachtstag,
+i) der 2. Weihnachtstag,
+j) der Reformationstag.
+
+(2) Diese Tage sind Festtage, allgemeine oder gesetzliche Feiertage und allgemeine oeffentliche Ruhetage im Sinne bundes- oder landesrechtlicher Vorschriften.

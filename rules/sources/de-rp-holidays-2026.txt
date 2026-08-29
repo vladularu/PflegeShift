@@ -1,0 +1,19 @@
+Quelle: Ministerium des Innern und fuer Sport des Landes Rheinland-Pfalz
+URL: https://mdi.rlp.de/themen/buerger-und-staat/verfassung-und-verwaltung/sonn-und-feiertagsrecht
+Abruf: 2026-08-29
+Dokumentstand: Gesetzliche Feiertage in Rheinland-Pfalz 2026 und 2027
+Normalisierung: sichtbare Feiertagsliste 2026, UTF-8, NFC, geschuetzte Leerzeichen als U+0020, LF
+
+Gesetzliche Feiertage in Rheinland-Pfalz 2026
+
+01. Januar 2026: Neujahr
+03. April 2026: Karfreitag
+06. April 2026: Ostermontag
+01. Mai 2026: Tag der Arbeit
+14. Mai 2026: Christi Himmelfahrt
+25. Mai 2026: Pfingstmontag
+04. Juni 2026: Fronleichnam
+03. Oktober 2026: Tag der Deutschen Einheit
+01. November 2026: Allerheiligen
+25. Dezember 2026: 1. Weihnachtstag
+26. Dezember 2026: 2. Weihnachtstag

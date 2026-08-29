@@ -62,9 +62,12 @@ export function DayDetailsScreen() {
   const holiday = useMemo(
     () =>
       profile
-        ? getPublicHolidays(Number(date.slice(0, 4)), profile.federalState, ruleResolver).find(
-            (item) => item.date === date,
-          )
+        ? getPublicHolidays(
+            Number(date.slice(0, 4)),
+            profile.federalState,
+            ruleResolver,
+            profile.holidayRegion,
+          ).find((item) => item.date === date)
         : null,
     [date, profile, ruleResolver],
   );

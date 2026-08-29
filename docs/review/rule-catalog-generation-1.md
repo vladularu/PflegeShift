@@ -1,6 +1,6 @@
 # Regelkatalog Generation 1 – Prüfdossier
 
-Stand: 28. August 2026
+Stand: 29. August 2026
 Status: `DRAFT` – nicht zur Veröffentlichung freigegeben
 
 ## Gegenstand
@@ -14,7 +14,7 @@ werden.
 | ------------------------ | --------------------- | ----------------------------------------------------------------------------- |
 | `tvoed-vka-bt-k/2026-05` | 01.05.2026–31.03.2027 | TVöD-VKA BT-K/BT-B Pflege: Tabelle, Zuschläge, Zulagen und Kombination        |
 | `de-arbzg-care/2026-01`  | ab 01.01.2026         | ArbZG-Arbeitszeit, Pausen, Nachtarbeit, Ruhezeit und Sonn-/Feiertagsausgleich |
-| `de-holidays/2026`       | 01.01.2026–31.12.2026 | neun bundesweit und zehn landesweit definierte Feiertagsregeln                |
+| `de-holidays/2026`       | 01.01.2026–31.12.2026 | neun bundesweite, zehn landesweite und vier regionale Feiertagsregeln         |
 
 Die Paketdateien liegen unter `rules/packages/reviewed/<packageId>/<versionId>.json`.
 Der Verzeichnisname bezeichnet die Review-Pipeline, nicht den bereits erreichten Status.
@@ -38,13 +38,16 @@ hinterlegt. Normative Werte und Produktentscheidungen werden getrennt behandelt:
 Der Projekt-Owner gleicht gegen die beiden hinterlegten VKA-Lesefassungen ab:
 
 - genau 50 Tabellenwerte der Anlage E ab 1. Mai 2026;
-- Ableitung des Stundenentgelts nach dem im Paket dokumentierten Divisor
-  `4,348 × 39`, Rundung `HALF_UP` auf Cent;
+- Ableitung des Stundenentgelts nach `Monatsentgelt ÷ (4,348 × Wochenstunden)`,
+  Rundung `HALF_UP` auf Cent; dabei 38,5 Stunden für BT-K außerhalb KAV Baden-Württemberg
+  und 39 Stunden für BT-K im KAV Baden-Württemberg sowie BT-B;
 - acht Zuschlagsregeln einschließlich Zeitfenstern, Bemessungsstufe und Ausschlüssen;
 - elf Zulagenregeln einschließlich BT-K/BT-B-, Länder- und Teilzeitbedingungen;
 - Priorität und Mitglieder der Kombinationsregel;
-- sachliche Reichweite des Paketnamens BT-K/BT-B gegenüber dem technischen Selector
-  `specialPartId: bt-k`.
+- sachliche Reichweite des Paketnamens gegenüber dem technischen Selector mit den beiden
+  besonderen Teilen `bt-k` und `bt-b`;
+- eine eingegebene Mehrarbeitsdauer wird erst nach separater Bestätigung als tarifliche
+  Überstunde vergütet.
 
 Die Regressionstests fixieren Anzahl, Eckwerte, Berechnung und kritische Grenzfälle. Sie
 ersetzen keine Tarifprüfung.
@@ -60,7 +63,9 @@ Der Projekt-Owner gleicht gegen die hinterlegte amtliche ArbZG-Fassung ab:
 - Urlaub und Krankheit ohne tatsächliche Arbeit bleiben in diesem Durchschnitt neutral
   und dürfen Mehrarbeit nicht als Nulltage ausgleichen; ausdrücklich erfasste freie Tage
   bleiben mögliche Ausgleichstage;
-- 30/45 Minuten Pause nach mehr als sechs/neun Stunden sowie 15-Minuten-Segmente;
+- 30/45 Minuten Pause nach mehr als sechs/neun Stunden sowie mindestens 15 Minuten je
+  Teilpause; die App verwendet bewusst nur die eingetragene Gesamtdauer, verlangt weder
+  Pausenzeitpunkte noch einzelne Abschnitte und erzeugt dafür keine eigene Monatsmeldung;
 - Nachtzeit 23:00–06:00 und Nachtarbeit bei mehr als zwei Stunden in diesem Zeitraum;
 - Nachtarbeitnehmerstatus getrennt davon: ausdrücklich bestätigte regelmäßige
   Nachtarbeit in Wechselschicht oder mindestens 48 erfasste Nachtarbeitstage im
@@ -70,19 +75,26 @@ Der Projekt-Owner gleicht gegen die hinterlegte amtliche ArbZG-Fassung ab:
 - keine pauschale Anrechnung von Urlaub oder Krankheit als fiktive Arbeitszeit;
 - elf Stunden Ruhezeit;
 - Verkürzung auf zehn Stunden in Krankenhaus/Pflege nur zusammen mit zwölf Stunden
-  Ausgleich innerhalb von vier Wochen.
+  Ausgleich innerhalb eines Kalendermonats oder innerhalb von vier Wochen; die spätere
+  der beiden zulässigen Fristen bleibt offen;
 - Zulässigkeit der Sonn- und Feiertagsbeschäftigung in Krankenhaus und Pflege nach
   § 10 Abs. 1 Nr. 3, soweit die Arbeit nicht an Werktagen vorgenommen werden kann;
 - mindestens 15 beschäftigungsfreie Sonntage je Kalenderjahr;
 - je gearbeitetem Sonntag ein eigener Ersatzruhetag innerhalb eines den Sonntag
   einschließenden 14-Tage-Zeitraums, je gearbeitetem Feiertag auf einem Werktag innerhalb
   eines entsprechenden 56-Tage-Zeitraums;
-- ein Ersatzruhetag wird technisch nur mit einem expliziten Eintrag `FREE` ohne
-  überschneidende Arbeit bestätigt; bei weniger als insgesamt 35 Stunden ununterbrochener
-  Ruhe wird die Verbindung mit § 5 separat zur Prüfung markiert, weil technische oder
-  arbeitsorganisatorische Ausnahmegründe nach § 11 Abs. 4 nicht aus dem Kalender ableitbar sind;
+- ein ohnehin arbeitsfreier Werktag kann nach der Rechtsprechung des BAG als Ersatzruhetag
+  dienen; die App wertet deshalb innerhalb des vollständig geladenen Prüfbereichs auch einen
+  Werktag ohne Arbeitseintrag als frei. Ein expliziter Eintrag `FREE` bleibt optional;
+  eingetragene Abwesenheiten werden nicht automatisch als Ersatzruhetag umgedeutet. Bei
+  weniger als insgesamt 35 Stunden ununterbrochener Ruhe wird die Verbindung mit § 5 separat
+  zur Prüfung markiert, weil technische oder arbeitsorganisatorische Ausnahmegründe nach
+  § 11 Abs. 4 nicht aus dem Kalender ableitbar sind;
 - keine tariflichen Abweichungen nach § 12 und keine Verlagerung der Sonn- oder
   Feiertagsruhe in Mehrschichtbetrieben nach § 9 Abs. 2 in diesem Vertragsstand.
+- die App verlangt eigenständige Angaben zur Zulässigkeit nach § 10, zum regelmäßigen
+  Nacht-/Wechselschichtstatus und dazu, ob Arbeitszeiten aller Arbeitsverhältnisse erfasst
+  sind; unbekannte Angaben erzeugen sichtbare, fail-closed Hinweise.
 
 Die separat gekennzeichneten Planungswarnungen benötigen eine bewusste Ownerentscheidung,
 keine gesetzliche Freigabe. Insbesondere sind Serien- und Wochenendwarnungen keine
@@ -90,32 +102,43 @@ selbständigen ArbZG-Verstöße.
 
 ## Feiertagsprüfung
 
-Der Projekt-Owner gleicht alle 19 Regeln mit den hinterlegten Quellen ab, insbesondere:
+Der Projekt-Owner gleicht alle 23 Regeln mit den hinterlegten Quellen ab, insbesondere:
 
 - die neun bundesweiten Regeln und sämtliche Oster-Offsets;
 - Ländergruppen für Heilige Drei Könige, Frauentag, Fronleichnam, Reformationstag und
   Allerheiligen;
 - Ostersonntag und Pfingstsonntag ausschließlich Brandenburg;
 - Weltkindertag ausschließlich Thüringen und Buß- und Bettag ausschließlich Sachsen;
-- Mariä Himmelfahrt im Paket ausschließlich Saarland.
+- Mariä Himmelfahrt landesweit im Saarland sowie als ausdrücklich gewählte Regionalregel
+  in Bayern;
+- Augsburger Friedensfest sowie die ausgewählten Fronleichnamsregionen in Sachsen und
+  Thüringen.
 
-Kommunale Feiertage und die gemeindeabhängige bayerische Regel zu Mariä Himmelfahrt sind
-bewusst nicht enthalten. Sie benötigen ein separates Ortsmodell und dürfen nicht pauschal
-für Bayern aktiviert werden.
+Regionale Regeln werden nicht aus dem Bundesland erraten. Sie gelten nur nach expliziter
+Auswahl des Arbeitsorts; `UNKNOWN` bleibt in Bayern, Sachsen und Thüringen sichtbar und
+verhindert eine unbemerkte Vollständigkeitsannahme.
 
 ### Reproduzierbare Landesnachweise und verbleibende Rechtsprüfung
 
-Vier amtliche Länderportale liefern ihre aktuelle Darstellung dynamisch oder mit
+Mehrere amtliche Länderportale liefern ihre aktuelle Darstellung dynamisch oder mit
 nicht reproduzierbaren Antwortbytes aus. Für die Review-Grundlage wurden deshalb nur die
-sichtbaren einschlägigen Normtexte am 28. August 2026 nach UTF-8/LF normalisiert und mit
+sichtbaren einschlägigen Normtexte am 28. oder 29. August 2026 nach UTF-8/LF normalisiert und mit
 Provenienz, Dokumentkopf sowie Abrufdatum unter `rules/sources/` festgeschrieben:
 
-| Land      | Amtlicher Nachweis                                             | Snapshot                     |
-| --------- | -------------------------------------------------------------- | ---------------------------- |
-| Bayern    | Bayern.Recht, Art. 1 FTG, Text gilt ab 1. August 2013          | `de-by-ftg-art-1-2026.txt`   |
-| Saarland  | Bürgerservice Rechtsinformation Saarland, § 2 SFG              | `de-sl-sfg-2-2026.txt`       |
-| Sachsen   | REVOSax, § 1 SächsSFG, Fassung gültig ab 7. Mai 2025           | `de-sn-saechssfg-1-2026.txt` |
-| Thüringen | Landesrecht Thüringen, § 2 ThürFGtG, Fassung vom 26. März 2019 | `de-th-thuerfgtg-2-2026.txt` |
+| Land                   | Amtlicher Nachweis                                | Snapshot                       |
+| ---------------------- | ------------------------------------------------- | ------------------------------ |
+| Bayern                 | Bayern.Recht, Art. 1 FTG                          | `de-by-ftg-art-1-2026.txt`     |
+| Bremen                 | Transparenzportal Bremen, § 2 Feiertagsgesetz     | `de-hb-feiertg-2-2026.txt`     |
+| Hamburg                | Landesrecht Hamburg, § 1 Feiertagsgesetz          | `de-hh-feiertg-1-2026.txt`     |
+| Hessen                 | Hessen Innen, gesetzliche Feiertage 2026          | `de-he-holidays-2026.txt`      |
+| Mecklenburg-Vorpommern | Landesrecht Mecklenburg-Vorpommern, § 2 FTG M-V   | `de-mv-ftg-2-2026.txt`         |
+| Niedersachsen          | NI-VORIS, § 2 NFeiertagsG                         | `de-ni-nfeiertagsg-2-2026.txt` |
+| Nordrhein-Westfalen    | RECHT.NRW.DE, § 2 Feiertagsgesetz NW              | `de-nw-feiertg-2-2026.txt`     |
+| Rheinland-Pfalz        | Innenministerium, gesetzliche Feiertage 2026      | `de-rp-holidays-2026.txt`      |
+| Saarland               | Bürgerservice Rechtsinformation Saarland, § 2 SFG | `de-sl-sfg-2-2026.txt`         |
+| Sachsen                | REVOSax, § 1 SächsSFG                             | `de-sn-saechssfg-1-2026.txt`   |
+| Schleswig-Holstein     | GVOBl., Einführung des Reformationstags           | `de-sh-sftg-2-2018.txt`        |
+| Thüringen              | Landesrecht Thüringen, § 2 ThürFGtG               | `de-th-thuerfgtg-2-2026.txt`   |
 
 Die im Paket hinterlegten SHA-256-Werte werden im Regressionstest aus den tatsächlichen
 Snapshot-Bytes neu berechnet. Damit bleibt exakt prüfbar, auf welcher Textgrundlage der
@@ -136,13 +159,27 @@ in Gemeinden mit überwiegend katholischer Bevölkerung gilt; diese Regel bleibt
 bewusst außerhalb des landesweiten Pakets. REVOSax belegt den Buß- und Bettag ausdrücklich
 als gesetzlichen Feiertag in Sachsen.
 
-Der Bürgerservice weist darauf hin, dass seine konsolidierte Darstellung keine amtliche
-Fassung ersetzt; rechtlich maßgeblich bleibt die angegebene Fundstelle Amtsblatt 1976,
-Seite 211. Der Owner gleicht deshalb weiterhin § 2 SFG sowie die in der amtlichen
-StVO-Liste belegten länderübergreifenden Regeln gegen das jeweils geltende
-Landesfeiertagsrecht ab. Auch die übrigen normalisierten Portalnachweise ersetzen weder die
-jeweilige amtliche Verkündung noch eine Rechtsberatung. Bis zum dokumentierten Abschluss
-dieses Abgleichs bleibt `de-holidays/2026` zwingend `DRAFT`.
+Die StVO dient nur noch als amtlicher Vergleichsnachweis für die neun bundesweiten Regeln.
+Fronleichnam, Reformationstag und Allerheiligen verweisen jeweils auf direkte amtliche
+Nachweise sämtlicher betroffener Länder; keine Länderzuordnung dieser drei Regeln hängt
+allein an der StVO. Konsolidierte Portaltexte und normalisierte Snapshots ersetzen weder
+die jeweilige amtliche Verkündung noch eine Rechtsberatung. Bis zum dokumentierten
+Owner-Abgleich bleibt `de-holidays/2026` zwingend `DRAFT`.
+
+## Produktintegration und bekannte Grenzen
+
+- Das Profil speichert Tarifregion, Feiertagsregion, Nacht-/Wechselschichtstatus,
+  §-10-Zulässigkeit und die Vollständigkeit aller Arbeitsverhältnisse verschlüsselt lokal.
+- Der Feiertags-Cache ist nach Bundesland, Regionalauswahl, Jahr und Resolver isoliert.
+- Jahresauswertungen laden das vollständige Vorjahr, Zieljahr und Folgejahr, damit
+  Ausgleichsfenster nicht an der früheren Monatsgrenze abgeschnitten werden.
+- Ein fehlendes Feiertagspaket unterdrückt Sonntagsprüfungen nicht mehr; die App meldet die
+  fehlende Katalogabdeckung separat.
+- Die App prüft die Pause bewusst nur anhand der eingetragenen Gesamtdauer. Pausenzeitpunkte
+  und einzelne Abschnitte werden nicht verlangt und erzeugen keine eigene Monatsmeldung.
+- Betriebliche §-10-Voraussetzungen, tarifliche Überstundenanordnung und nicht erfasste
+  Fremdarbeitszeiten kann die App nicht selbst beweisen. Dafür bleiben ausdrückliche
+  Nutzerangaben beziehungsweise Hinweise bestehen.
 
 ## Solo-Owner-Freigabe
 

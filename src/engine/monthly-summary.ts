@@ -20,14 +20,18 @@ function freezeCategory(value: MonthlySummaryCategory): MonthlySummaryCategory {
 
 export function calculateMonthlyTargetMinutes(
   month: string,
-  profile: Pick<UserProfile, "federalState" | "weeklyMinutes">,
+  profile: Pick<UserProfile, "federalState" | "weeklyMinutes"> &
+    Partial<Pick<UserProfile, "holidayRegion">>,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): number {
   const yearMonth = Temporal.PlainYearMonth.from(month);
   const holidayDates = new Set(
-    getPublicHolidays(yearMonth.year, profile.federalState, ruleResolver).map(
-      (holiday) => holiday.date,
-    ),
+    getPublicHolidays(
+      yearMonth.year,
+      profile.federalState,
+      ruleResolver,
+      profile.holidayRegion ?? "NONE",
+    ).map((holiday) => holiday.date),
   );
   let workingDays = 0;
 
@@ -44,7 +48,8 @@ export function calculateMonthlyTargetMinutes(
 export function calculateMonthlySummary(
   month: string,
   entries: readonly ShiftEntry[],
-  profile: Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone">,
+  profile: Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone"> &
+    Partial<Pick<UserProfile, "holidayRegion">>,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlySummary {
   const work = category();

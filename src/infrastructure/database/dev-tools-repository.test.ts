@@ -372,7 +372,7 @@ describe("test lab repository", () => {
       .prepare("SELECT payload FROM dev_test_backups WHERE month='2026-08'")
       .get() as { payload: string };
     expect(JSON.parse(firstBackup.payload)).toMatchObject({
-      version: 2,
+      version: 3,
       month: "2026-08",
       counts: { appointments: 1, decisions: 0 },
     });

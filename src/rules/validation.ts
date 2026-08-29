@@ -167,16 +167,36 @@ function validateTariffPackage(
       "group and step combination",
       issues,
     );
-    for (const entry of table.entries) knownStepIds.add(entry.stepId);
+    for (const [entryIndex, entry] of table.entries.entries()) {
+      knownStepIds.add(entry.stepId);
+      if (rulePackage.engineContractVersion >= 3 && entry.hourlyCents !== undefined) {
+        issues.push(
+          issue(
+            "UNEXPECTED_FIXED_HOURLY_RATE",
+            `/rules/payTables/${tableIndex}/entries/${entryIndex}/hourlyCents`,
+            "Tariff engine contract v3 derives hourly rates from monthly pay and weekly working time.",
+          ),
+        );
+      }
+      if (rulePackage.engineContractVersion < 3 && entry.hourlyCents === undefined) {
+        issues.push(
+          issue(
+            "MISSING_FIXED_HOURLY_RATE",
+            `/rules/payTables/${tableIndex}/entries/${entryIndex}/hourlyCents`,
+            "Tariff engine contracts before v3 require a fixed hourly rate.",
+          ),
+        );
+      }
+    }
   }
 
   const overtimeBaseRule = rules.overtimeBaseRule;
-  if (rulePackage.engineContractVersion === 2 && overtimeBaseRule === undefined) {
+  if (rulePackage.engineContractVersion >= 2 && overtimeBaseRule === undefined) {
     issues.push(
       issue(
         "MISSING_OVERTIME_BASE_RULE",
         "/rules/overtimeBaseRule",
-        "Tariff engine contract v2 requires an overtime base rule.",
+        "Tariff engine contracts v2 and newer require an overtime base rule.",
       ),
     );
   } else if (rulePackage.engineContractVersion === 1 && overtimeBaseRule !== undefined) {
@@ -216,6 +236,78 @@ function validateTariffPackage(
         );
       }
     }
+  }
+
+  const weeklyWorkingTimeRules = rules.weeklyWorkingTimeRules;
+  const hourlyCalculation = rules.hourlyCalculation;
+  if (rulePackage.engineContractVersion >= 3) {
+    if (weeklyWorkingTimeRules === undefined) {
+      issues.push(
+        issue(
+          "MISSING_WEEKLY_WORKING_TIME_RULES",
+          "/rules/weeklyWorkingTimeRules",
+          "Tariff engine contract v3 requires sector and tariff-region working-time rules.",
+        ),
+      );
+    }
+    if (hourlyCalculation === undefined) {
+      issues.push(
+        issue(
+          "MISSING_HOURLY_CALCULATION",
+          "/rules/hourlyCalculation",
+          "Tariff engine contract v3 requires the contractual hourly-rate formula.",
+        ),
+      );
+    }
+  } else if (weeklyWorkingTimeRules !== undefined || hourlyCalculation !== undefined) {
+    issues.push(
+      issue(
+        "UNSUPPORTED_TARIFF_V3_RULES",
+        "/rules",
+        "Tariff contracts before v3 must not define v3 working-time or hourly-rate rules.",
+      ),
+    );
+  }
+
+  if (weeklyWorkingTimeRules !== undefined) {
+    reportDuplicates(
+      weeklyWorkingTimeRules.map((rule) => rule.id),
+      "/rules/weeklyWorkingTimeRules",
+      "weekly working-time rule id",
+      issues,
+    );
+    for (const [index, rule] of weeklyWorkingTimeRules.entries()) {
+      validateSourceReferences(
+        rule.sourceIds,
+        sourceIds,
+        `/rules/weeklyWorkingTimeRules/${index}/sourceIds`,
+        issues,
+      );
+    }
+    for (const sector of ["BT_K", "BT_B"] as const) {
+      for (const tariffRegion of ["KAV_BW", "OTHER"] as const) {
+        const matches = weeklyWorkingTimeRules.filter(
+          (rule) => rule.sectors.includes(sector) && rule.tariffRegions.includes(tariffRegion),
+        );
+        if (matches.length !== 1) {
+          issues.push(
+            issue(
+              "AMBIGUOUS_WEEKLY_WORKING_TIME",
+              "/rules/weeklyWorkingTimeRules",
+              `Expected exactly one weekly working-time rule for ${sector}/${tariffRegion}, found ${matches.length}.`,
+            ),
+          );
+        }
+      }
+    }
+  }
+  if (hourlyCalculation !== undefined) {
+    validateSourceReferences(
+      hourlyCalculation.sourceIds,
+      sourceIds,
+      "/rules/hourlyCalculation/sourceIds",
+      issues,
+    );
   }
 
   const premiumIds = rules.premiumRules.map((rule) => rule.id);
@@ -506,6 +598,30 @@ function validateLegalPackage(
         ),
       );
     }
+    if (
+      rulePackage.engineContractVersion >= 6 &&
+      deviation.compensationWithinCalendarMonths === undefined
+    ) {
+      issues.push(
+        issue(
+          "MISSING_CALENDAR_MONTH_COMPENSATION",
+          `${path}/compensationWithinCalendarMonths`,
+          "Legal engine contract v6 requires the calendar-month compensation alternative.",
+        ),
+      );
+    }
+    if (
+      rulePackage.engineContractVersion < 6 &&
+      deviation.compensationWithinCalendarMonths !== undefined
+    ) {
+      issues.push(
+        issue(
+          "UNSUPPORTED_CALENDAR_MONTH_COMPENSATION",
+          `${path}/compensationWithinCalendarMonths`,
+          "Legal engine contracts before v6 must not define calendar-month compensation.",
+        ),
+      );
+    }
   }
 }
 
@@ -527,21 +643,39 @@ function validateHolidayPackage(
     validateRange(holiday.validFrom, holiday.validTo, path, issues);
     validateSourceReferences(holiday.sourceIds, sourceIds, `${path}/sourceIds`, issues);
 
-    if (holiday.scope === "NATIONWIDE" && holiday.federalStates !== null) {
+    if (
+      holiday.scope === "NATIONWIDE" &&
+      (holiday.federalStates !== null || holiday.regionIds != null)
+    ) {
       issues.push(
         issue(
           "INVALID_HOLIDAY_SCOPE",
           `${path}/federalStates`,
-          "NATIONWIDE holidays must use federalStates: null.",
+          "NATIONWIDE holidays must use federalStates and regionIds: null.",
         ),
       );
     }
-    if (holiday.scope === "STATEWIDE" && holiday.federalStates === null) {
+    if (
+      holiday.scope === "STATEWIDE" &&
+      (holiday.federalStates === null || holiday.regionIds != null)
+    ) {
       issues.push(
         issue(
           "INVALID_HOLIDAY_SCOPE",
           `${path}/federalStates`,
-          "STATEWIDE holidays require at least one federal state.",
+          "STATEWIDE holidays require federal states and must not define regionIds.",
+        ),
+      );
+    }
+    if (
+      holiday.scope === "REGIONAL" &&
+      (holiday.federalStates === null || holiday.regionIds == null)
+    ) {
+      issues.push(
+        issue(
+          "INVALID_HOLIDAY_SCOPE",
+          `${path}/regionIds`,
+          "REGIONAL holidays require at least one federal state and one region id.",
         ),
       );
     }

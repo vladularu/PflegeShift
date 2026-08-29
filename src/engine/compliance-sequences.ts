@@ -27,6 +27,19 @@ function minutesBetween(left: Temporal.ZonedDateTime, right: Temporal.ZonedDateT
   return Math.round(Number(right.epochMilliseconds - left.epochMilliseconds) / 60_000);
 }
 
+function compensationDeadline(
+  start: Temporal.ZonedDateTime,
+  deviation: RuleRestDeviation,
+): Temporal.ZonedDateTime {
+  const dayDeadline = start.add({ days: deviation.compensationWithinDays });
+  const monthDeadline = start.add({
+    months: deviation.compensationWithinCalendarMonths ?? 0,
+  });
+  return Temporal.ZonedDateTime.compare(dayDeadline, monthDeadline) >= 0
+    ? dayDeadline
+    : monthDeadline;
+}
+
 function workdayBoundaries(intervals: readonly ComplianceInterval[]): WorkdayBoundary[] {
   const byDate = new Map<string, ComplianceInterval[]>();
   for (const item of intervals) {
@@ -75,7 +88,7 @@ export function compensatedShortRestIndexes(
       continue;
     }
 
-    const deadline = shortened.next.start.add({ days: deviation.compensationWithinDays });
+    const deadline = compensationDeadline(shortened.next.start, deviation);
     for (
       let candidateIndex = shortIndex + 1;
       candidateIndex < periods.length;

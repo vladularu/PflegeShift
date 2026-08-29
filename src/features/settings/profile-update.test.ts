@@ -7,6 +7,7 @@ const draft: TariffProfile = {
   payGroup: "P8",
   payLevel: 4,
   sector: "BT_K",
+  tariffRegion: "OTHER",
   fullTimeWeeklyMinutes: 2_310,
 };
 

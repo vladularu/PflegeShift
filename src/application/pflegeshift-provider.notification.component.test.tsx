@@ -146,7 +146,7 @@ describe("PflegeShiftProvider notification feedback", () => {
       ).toBeTruthy(),
     );
     expect(repository.saveShift).toHaveBeenCalledWith(mockSavedShift);
-    expect(repository.listCalendarEntries).toHaveBeenCalledWith("2025-11-01", "2027-01-31");
+    expect(repository.listCalendarEntries).toHaveBeenCalledWith("2025-01-01", "2027-12-31");
     expect(notifications.syncEntry).toHaveBeenCalledWith(mockSavedShift, "Europe/Berlin");
     expect(diagnostics.record).toHaveBeenCalledWith(
       "notifications",

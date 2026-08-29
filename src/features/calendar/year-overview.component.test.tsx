@@ -7,8 +7,12 @@ import { YearOverview } from "@/features/calendar/year-overview";
 
 const PROFILE: UserProfile = {
   federalState: "NW",
+  holidayRegion: "NONE",
   weeklyMinutes: 2_400,
   timeZone: "Europe/Berlin",
+  regularRotatingNightWork: false,
+  sundayHolidayWorkEligible: true,
+  allEmploymentWorkRecorded: true,
   tariff: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",

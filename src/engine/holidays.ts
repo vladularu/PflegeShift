@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-import type { FederalState } from "@/domain/types";
+import type { FederalState, HolidayRegion } from "@/domain/types";
 import type { RuleHoliday, RuleHolidayPackage } from "@/rules/contracts.generated";
 import {
   bundledRuleResolver,
@@ -11,7 +11,7 @@ import {
 export interface PublicHoliday {
   readonly date: string;
   readonly name: string;
-  readonly scope: "NATIONWIDE" | "STATEWIDE";
+  readonly scope: "NATIONWIDE" | "STATEWIDE" | "REGIONAL";
 }
 
 const HOLIDAY_CACHE = new WeakMap<RuleResolver, Map<string, readonly PublicHoliday[]>>();
@@ -89,11 +89,24 @@ function isRuleActiveForState(
   rule: RuleHoliday,
   holidayDateValue: string,
   federalState: FederalState,
+  holidayRegion: HolidayRegion,
 ): boolean {
+  const regionId: Record<HolidayRegion, string | null> = {
+    UNKNOWN: null,
+    NONE: null,
+    BY_MARIA_HIMMELFAHRT: "by.maria-himmelfahrt",
+    BY_AUGSBURG: "by.augsburg",
+    SN_FRONLEICHNAM: "sn.fronleichnam",
+    TH_FRONLEICHNAM: "th.fronleichnam",
+  };
   return (
     rule.validFrom <= holidayDateValue &&
     holidayDateValue <= rule.validTo &&
-    (rule.scope === "NATIONWIDE" || rule.federalStates?.includes(federalState) === true)
+    (rule.scope === "NATIONWIDE" ||
+      (rule.federalStates?.includes(federalState) === true &&
+        (rule.scope === "STATEWIDE" ||
+          (regionId[holidayRegion] !== null &&
+            rule.regionIds?.includes(regionId[holidayRegion]!) === true))))
   );
 }
 
@@ -101,8 +114,9 @@ export function getPublicHolidays(
   year: number,
   federalState: FederalState,
   ruleResolver: RuleResolver = bundledRuleResolver,
+  holidayRegion: HolidayRegion = "NONE",
 ): readonly PublicHoliday[] {
-  const key = `${federalState}-${year}`;
+  const key = `${federalState}-${holidayRegion}-${year}`;
   const resolverCache = HOLIDAY_CACHE.get(ruleResolver);
   const cached = resolverCache?.get(key);
   if (cached) return cached;
@@ -112,7 +126,7 @@ export function getPublicHolidays(
     for (const rule of rulePackage.rules.holidays) {
       const holidayDateValue = holidayDate(rule, year);
       if (!holidayDateValue.startsWith(`${year}-`)) continue;
-      if (!isRuleActiveForState(rule, holidayDateValue, federalState)) continue;
+      if (!isRuleActiveForState(rule, holidayDateValue, federalState, holidayRegion)) continue;
       const activePackage = requireResolvedPackage(ruleResolver.resolveHoliday(holidayDateValue));
       if (
         activePackage.packageId !== rulePackage.packageId ||
@@ -146,10 +160,11 @@ export function holidayMapForMonth(
   month: string,
   federalState: FederalState,
   ruleResolver: RuleResolver = bundledRuleResolver,
+  holidayRegion: HolidayRegion = "NONE",
 ): ReadonlyMap<string, PublicHoliday> {
   const year = Number(month.slice(0, 4));
   return new Map(
-    getPublicHolidays(year, federalState, ruleResolver)
+    getPublicHolidays(year, federalState, ruleResolver, holidayRegion)
       .filter((holiday) => holiday.date.startsWith(`${month}-`))
       .map((holiday) => [holiday.date, holiday]),
   );

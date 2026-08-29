@@ -37,7 +37,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -59,7 +59,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2;
+  engineContractVersion?: 1 | 2 | 3;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -119,19 +119,19 @@ export type RuleReview1 =
 export type RuleSourceIds = [RuleIdentifier, ...RuleIdentifier[]];
 export type RuleNullableIdentifier = null | RuleIdentifier;
 export type RuleLegalPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 3 | 4 | 5;
+  engineContractVersion?: 1 | 3 | 4 | 5 | 6;
   kind: "LEGAL";
   rules: RuleLegalRules;
 };
 export type RuleHolidayPackage = RulePackageBase & {
-  engineContractVersion?: 1;
+  engineContractVersion?: 1 | 2;
   kind: "HOLIDAY";
   rules: RuleHolidayRules;
 };
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -166,16 +166,30 @@ export interface RuleRounding {
   stage: "PER_LINE" | "AFTER_SUM";
 }
 export interface RuleTariffRules {
-  selector: {
-    agreementId: RuleIdentifier;
-    specialPartId: RuleIdentifier;
-    payTableId: RuleIdentifier;
-  };
+  selector:
+    | {
+        agreementId: RuleIdentifier;
+        specialPartId: RuleIdentifier;
+        payTableId: RuleIdentifier;
+      }
+    | {
+        agreementId: RuleIdentifier;
+        /**
+         * @minItems 1
+         */
+        specialPartIds: [RuleIdentifier, ...RuleIdentifier[]];
+        payTableId: RuleIdentifier;
+      };
   /**
    * @minItems 1
    */
   payTables: [RulePayTable, ...RulePayTable[]];
   overtimeBaseRule?: RuleOvertimeBaseRule;
+  /**
+   * @minItems 1
+   */
+  weeklyWorkingTimeRules?: [RuleWeeklyWorkingTimeRule, ...RuleWeeklyWorkingTimeRule[]];
+  hourlyCalculation?: RuleHourlyCalculation;
   premiumRules: RulePremiumRule[];
   allowanceRules: RuleAllowanceRule[];
   combinationRules: RuleCombinationRule[];
@@ -194,10 +208,28 @@ export interface RulePayTableEntry {
   groupId: RuleIdentifier;
   stepId: RuleIdentifier;
   monthlyCents: number;
-  hourlyCents: number;
+  hourlyCents?: number;
 }
 export interface RuleOvertimeBaseRule {
   maximumStepId: RuleIdentifier;
+  sourceIds: RuleSourceIds;
+}
+export interface RuleWeeklyWorkingTimeRule {
+  id: RuleIdentifier;
+  /**
+   * @minItems 1
+   */
+  sectors: ["BT_K" | "BT_B", ...("BT_K" | "BT_B")[]];
+  /**
+   * @minItems 1
+   */
+  tariffRegions: ["KAV_BW" | "OTHER", ...("KAV_BW" | "OTHER")[]];
+  fullTimeWeeklyMinutes: number;
+  sourceIds: RuleSourceIds;
+}
+export interface RuleHourlyCalculation {
+  monthlyFactorThousandths: 4348;
+  rounding: "HALF_UP";
   sourceIds: RuleSourceIds;
 }
 export interface RulePremiumRule {
@@ -228,6 +260,7 @@ export interface RuleConditions {
   payGroups: null | [RuleIdentifier, ...RuleIdentifier[]];
   sectors: null | ["BT_K" | "BT_B", ...("BT_K" | "BT_B")[]];
   federalStates: null | [RuleFederalState, ...RuleFederalState[]];
+  tariffRegions?: null | ["KAV_BW" | "OTHER", ...("KAV_BW" | "OTHER")[]];
   holidayPremiumModes:
     null | ["WITH_TIME_OFF" | "WITHOUT_TIME_OFF", ...("WITH_TIME_OFF" | "WITHOUT_TIME_OFF")[]];
   allowanceStatuses:
@@ -351,6 +384,7 @@ export interface RuleRestDeviation {
   minimumMinutes: number;
   compensationMinutes: number;
   compensationWithinDays: number;
+  compensationWithinCalendarMonths?: number;
   sourceIds: RuleSourceIds;
 }
 export interface RuleSundayHolidayRest {
@@ -377,8 +411,9 @@ export interface RuleHolidayRules {
 export interface RuleHoliday {
   id: RuleIdentifier;
   name: string;
-  scope: "NATIONWIDE" | "STATEWIDE";
+  scope: "NATIONWIDE" | "STATEWIDE" | "REGIONAL";
   federalStates: null | [RuleFederalState, ...RuleFederalState[]];
+  regionIds?: null | [RuleIdentifier, ...RuleIdentifier[]];
   validFrom: RuleIsoDate;
   validTo: RuleIsoDate;
   calculation:

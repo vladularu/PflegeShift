@@ -3,12 +3,14 @@ import { useCallback, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-import { SHIFT_TYPE_LABELS, type EntryNotification, type ShiftType } from "@/domain/types";
+import { SHIFT_TYPE_LABELS } from "@/domain/types";
 import { EntryEditOverlayFrame } from "@/features/day-editor/entry-edit-overlay-frame";
 import { shouldDismissEntryEditOverlay } from "@/features/day-editor/entry-edit-overlay-pattern";
 import { notificationLabel } from "@/features/day-editor/entry-options";
 import { DAY_EDITOR_SHIFT_TYPES } from "@/features/day-editor/day-editor-layout";
 import { ShiftNotificationOverlay } from "@/features/day-editor/shift-notification-overlay";
+import type { ShiftEditOverlayProps } from "@/features/day-editor/shift-edit-overlay.types";
+import { ShiftOvertimeFields } from "@/features/day-editor/shift-overtime-fields";
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 import { MOTION } from "@/theme/motion";
 import { usePalette } from "@/theme/palette";
@@ -145,47 +147,22 @@ export function ShiftEditOverlay({
   onNoteChange,
   onNotificationChange,
   onNotificationPress,
+  onOvertimeMinutesChange,
   onRequestClose,
   onShiftTypeChange,
   onStartTimeChange,
+  onTariffOvertimeConfirmedChange,
+  overtimeInputRef,
+  overtimeMinutes,
   shiftColor,
   shiftIsTimed,
   shiftSymbol,
   shiftTitle,
   shiftType,
   startTime,
+  tariffOvertimeConfirmed,
   endTime,
-}: {
-  readonly alarmEnabled: boolean;
-  readonly breakMinutes: string;
-  readonly busy: boolean;
-  readonly date: string;
-  readonly durationMinutes: number | null;
-  readonly error: string | null;
-  readonly locationName: string | null;
-  readonly note: string;
-  readonly notification: EntryNotification | null;
-  readonly onAlarmPress: () => void;
-  readonly onBreakMinutesChange: (value: number) => void;
-  readonly onBreakPress: () => void;
-  readonly onDelete?: (() => void) | undefined;
-  readonly onDismiss: () => void;
-  readonly onEndTimeChange: (value: string) => void;
-  readonly onLocationPress: () => void;
-  readonly onNoteChange: (value: string) => void;
-  readonly onNotificationChange: (value: EntryNotification | null) => void;
-  readonly onNotificationPress: () => void;
-  readonly onRequestClose: () => Promise<boolean>;
-  readonly onShiftTypeChange: (value: ShiftType) => void;
-  readonly onStartTimeChange: (value: string) => void;
-  readonly shiftColor: string;
-  readonly shiftIsTimed: boolean;
-  readonly shiftSymbol: string;
-  readonly shiftTitle: string;
-  readonly shiftType: ShiftType;
-  readonly startTime: string;
-  readonly endTime: string;
-}) {
+}: ShiftEditOverlayProps) {
   const palette = usePalette();
   const [popup, setPopup] = useState<Popup>(null);
   const [notificationVisible, setNotificationVisible] = useState(false);
@@ -225,6 +202,13 @@ export function ShiftEditOverlay({
                 <TimeRow label="Beginn" onChange={onStartTimeChange} value={startTime} />
                 <TimeRow label="Ende" onChange={onEndTimeChange} value={endTime} />
                 <PauseRow onPress={openPausePicker} value={breakMinutes} />
+                <ShiftOvertimeFields
+                  confirmed={tariffOvertimeConfirmed}
+                  inputRef={overtimeInputRef}
+                  onConfirmedChange={onTariffOvertimeConfirmedChange}
+                  onMinutesChange={onOvertimeMinutesChange}
+                  overtimeMinutes={overtimeMinutes}
+                />
               </>
             ) : (
               <ValueRow label="Dauer" value="Ganztägig" />

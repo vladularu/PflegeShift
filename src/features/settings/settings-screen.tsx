@@ -9,7 +9,7 @@ import {
   usePflegeShiftStatus,
   usePflegeShiftTariff,
 } from "@/application/pflegeshift-provider";
-import { FEDERAL_STATE_LABELS } from "@/domain/types";
+import { FEDERAL_STATE_LABELS, TARIFF_REGION_LABELS } from "@/domain/types";
 import { currentMonth } from "@/engine/calendar";
 import {
   isDeveloperModeEnabled,
@@ -70,8 +70,9 @@ export function SettingsScreen() {
   }
 
   const tariffLabel = profile.tariff
-    ? `${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel} · ${profile.tariff.sector === "BT_K" ? "BT-K" : "BT-B"}`
+    ? `${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel} · ${profile.tariff.sector === "BT_K" ? "BT-K" : "BT-B"} · ${TARIFF_REGION_LABELS[profile.tariff.tariffRegion]}`
     : "Nicht eingerichtet";
+  const workModelLabel = `${FEDERAL_STATE_LABELS[profile.federalState]} · ${(profile.weeklyMinutes / 60).toLocaleString("de-DE")} Std./Woche${profile.holidayRegion === "UNKNOWN" ? " · Feiertagsregion offen" : ""}`;
   const visibleCalendarContentCount = [
     calendarPreferences.showShifts,
     calendarPreferences.showAppointments,
@@ -104,7 +105,7 @@ export function SettingsScreen() {
             <RowButton
               leading={<SettingsIcon name="time-outline" />}
               onPress={() => router.push(settingsEditorRoute("WORK"))}
-              subtitle={`${FEDERAL_STATE_LABELS[profile.federalState]} · ${(profile.weeklyMinutes / 60).toLocaleString("de-DE")} Std./Woche`}
+              subtitle={workModelLabel}
               title="Arbeitszeitmodell"
             />
             <CardSeparator />

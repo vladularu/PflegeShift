@@ -169,7 +169,7 @@
       ],
       "properties": {
         "schemaVersion": { "const": 1 },
-        "engineContractVersion": { "enum": [1, 2, 3, 4, 5] },
+        "engineContractVersion": { "enum": [1, 2, 3, 4, 5, 6] },
         "packageId": { "$ref": "#/$defs/identifier" },
         "versionId": { "$ref": "#/$defs/versionIdentifier" },
         "kind": { "enum": ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -247,6 +247,17 @@
             }
           ]
         },
+        "tariffRegions": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "enum": ["KAV_BW", "OTHER"] }
+            }
+          ]
+        },
         "holidayPremiumModes": {
           "oneOf": [
             { "type": "null" },
@@ -304,7 +315,7 @@
     "payTableEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["groupId", "stepId", "monthlyCents", "hourlyCents"],
+      "required": ["groupId", "stepId", "monthlyCents"],
       "properties": {
         "groupId": { "$ref": "#/$defs/identifier" },
         "stepId": { "$ref": "#/$defs/identifier" },
@@ -492,6 +503,38 @@
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
+    "weeklyWorkingTimeRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sectors", "tariffRegions", "fullTimeWeeklyMinutes", "sourceIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "sectors": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["BT_K", "BT_B"] }
+        },
+        "tariffRegions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["KAV_BW", "OTHER"] }
+        },
+        "fullTimeWeeklyMinutes": { "type": "integer", "minimum": 60, "maximum": 4800 },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
+    "hourlyCalculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["monthlyFactorThousandths", "rounding", "sourceIds"],
+      "properties": {
+        "monthlyFactorThousandths": { "const": 4348 },
+        "rounding": { "const": "HALF_UP" },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
     "tariffRules": {
       "type": "object",
       "additionalProperties": false,
@@ -506,14 +549,33 @@
       ],
       "properties": {
         "selector": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["agreementId", "specialPartId", "payTableId"],
-          "properties": {
-            "agreementId": { "$ref": "#/$defs/identifier" },
-            "specialPartId": { "$ref": "#/$defs/identifier" },
-            "payTableId": { "$ref": "#/$defs/identifier" }
-          }
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["agreementId", "specialPartId", "payTableId"],
+              "properties": {
+                "agreementId": { "$ref": "#/$defs/identifier" },
+                "specialPartId": { "$ref": "#/$defs/identifier" },
+                "payTableId": { "$ref": "#/$defs/identifier" }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["agreementId", "specialPartIds", "payTableId"],
+              "properties": {
+                "agreementId": { "$ref": "#/$defs/identifier" },
+                "specialPartIds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "$ref": "#/$defs/identifier" }
+                },
+                "payTableId": { "$ref": "#/$defs/identifier" }
+              }
+            }
+          ]
         },
         "payTables": {
           "type": "array",
@@ -521,6 +583,12 @@
           "items": { "$ref": "#/$defs/payTable" }
         },
         "overtimeBaseRule": { "$ref": "#/$defs/overtimeBaseRule" },
+        "weeklyWorkingTimeRules": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/weeklyWorkingTimeRule" }
+        },
+        "hourlyCalculation": { "$ref": "#/$defs/hourlyCalculation" },
         "premiumRules": {
           "type": "array",
           "items": { "$ref": "#/$defs/premiumRule" }
@@ -547,7 +615,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
-            "engineContractVersion": { "enum": [1, 2] },
+            "engineContractVersion": { "enum": [1, 2, 3] },
             "kind": { "const": "TARIFF" },
             "rules": { "$ref": "#/$defs/tariffRules" }
           }
@@ -585,6 +653,11 @@
         "minimumMinutes": { "type": "integer", "minimum": 0 },
         "compensationMinutes": { "type": "integer", "minimum": 0 },
         "compensationWithinDays": { "type": "integer", "minimum": 1, "maximum": 366 },
+        "compensationWithinCalendarMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
@@ -780,7 +853,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
-            "engineContractVersion": { "enum": [1, 3, 4, 5] },
+            "engineContractVersion": { "enum": [1, 3, 4, 5, 6] },
             "kind": { "const": "LEGAL" },
             "rules": { "$ref": "#/$defs/legalRules" }
           }
@@ -803,7 +876,7 @@
       "properties": {
         "id": { "$ref": "#/$defs/identifier" },
         "name": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "scope": { "enum": ["NATIONWIDE", "STATEWIDE"] },
+        "scope": { "enum": ["NATIONWIDE", "STATEWIDE", "REGIONAL"] },
         "federalStates": {
           "oneOf": [
             { "type": "null" },
@@ -812,6 +885,17 @@
               "minItems": 1,
               "uniqueItems": true,
               "items": { "$ref": "#/$defs/federalState" }
+            }
+          ]
+        },
+        "regionIds": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/identifier" }
             }
           ]
         },
@@ -877,7 +961,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
-            "engineContractVersion": { "const": 1 },
+            "engineContractVersion": { "enum": [1, 2] },
             "kind": { "const": "HOLIDAY" },
             "rules": { "$ref": "#/$defs/holidayRules" }
           }

@@ -6,18 +6,31 @@ import { usePflegeShiftProfile, usePflegeShiftStatus } from "@/application/pfleg
 import {
   FEDERAL_STATES,
   FEDERAL_STATE_LABELS,
+  HOLIDAY_REGION_LABELS,
   PAY_GROUPS,
   PAY_LEVELS,
+  TARIFF_REGION_LABELS,
   type FederalState,
+  type HolidayRegion,
   type PayGroup,
   type PayLevel,
+  type TariffRegion,
   type TariffSector,
   type UserProfile,
 } from "@/domain/types";
+import {
+  defaultHolidayRegion,
+  holidayRegionsForState,
+  tariffFullTimeWeeklyMinutes,
+} from "@/domain/employment-profile";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { parseWeeklyHours } from "@/features/onboarding/onboarding-screen";
 import { resolveTariffUpdate } from "@/features/settings/profile-update";
-import { settingsFormValues } from "@/features/settings/settings-form-values";
+import {
+  evidenceBoolean,
+  settingsFormValues,
+  type EvidenceFormValue,
+} from "@/features/settings/settings-form-values";
 import { parseEnumRouteParam, type RouteParam } from "@/navigation/route-params";
 import { DropdownField, Field } from "@/ui/form-controls";
 import { FormScreen, FormSection, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
@@ -67,30 +80,41 @@ function SettingsEditorForm({
   const { updateProfile } = usePflegeShiftProfile();
   const initialValues = settingsFormValues(profile);
   const [federalState, setFederalState] = useState<FederalState>(initialValues.federalState);
+  const [holidayRegion, setHolidayRegion] = useState<HolidayRegion>(initialValues.holidayRegion);
   const [weeklyHours, setWeeklyHours] = useState(initialValues.weeklyHours);
+  const [regularRotatingNightWork, setRegularRotatingNightWork] = useState<EvidenceFormValue>(
+    initialValues.regularRotatingNightWork,
+  );
+  const [sundayHolidayWorkEligible, setSundayHolidayWorkEligible] = useState<EvidenceFormValue>(
+    initialValues.sundayHolidayWorkEligible,
+  );
+  const [allEmploymentWorkRecorded, setAllEmploymentWorkRecorded] = useState<EvidenceFormValue>(
+    initialValues.allEmploymentWorkRecorded,
+  );
   const [payGroup, setPayGroup] = useState<PayGroup>(initialValues.payGroup);
   const [payLevel, setPayLevel] = useState<PayLevel>(initialValues.payLevel);
   const [sector, setSector] = useState<TariffSector>(initialValues.sector);
-  const [fullTimeHours, setFullTimeHours] = useState(initialValues.fullTimeHours);
+  const [tariffRegion, setTariffRegion] = useState<TariffRegion>(initialValues.tariffRegion);
   const [weeklyHoursError, setWeeklyHoursError] = useState<string | null>(null);
-  const [fullTimeHoursError, setFullTimeHoursError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const weeklyHoursRef = useRef<TextInput>(null);
-  const fullTimeHoursRef = useRef<TextInput>(null);
+  const fullTimeWeeklyMinutes = tariffFullTimeWeeklyMinutes(sector, tariffRegion);
+  const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
+  const evidenceOptions = [
+    { value: "UNKNOWN" as const, label: "Noch nicht bestätigt" },
+    { value: "YES" as const, label: "Ja" },
+    { value: "NO" as const, label: "Nein" },
+  ];
 
   async function submit() {
-    const fieldError =
-      section === "WORK"
-        ? weeklyHoursFieldError(weeklyHours)
-        : weeklyHoursFieldError(fullTimeHours);
-    setWeeklyHoursError(section === "WORK" ? fieldError : null);
-    setFullTimeHoursError(section === "TARIFF" ? fieldError : null);
+    const fieldError = section === "WORK" ? weeklyHoursFieldError(weeklyHours) : null;
+    setWeeklyHoursError(fieldError);
     if (fieldError) {
       setError(fieldError);
       setMessage(null);
-      focusInvalidField(section === "WORK" ? weeklyHoursRef : fullTimeHoursRef, fieldError);
+      focusInvalidField(weeklyHoursRef, fieldError);
       return;
     }
     try {
@@ -99,13 +123,18 @@ function SettingsEditorForm({
       setMessage(null);
       await updateProfile({
         federalState,
+        holidayRegion,
         weeklyMinutes: parseWeeklyHours(weeklyHours),
         timeZone: profile.timeZone,
+        regularRotatingNightWork: evidenceBoolean(regularRotatingNightWork),
+        sundayHolidayWorkEligible: evidenceBoolean(sundayHolidayWorkEligible),
+        allEmploymentWorkRecorded: evidenceBoolean(allEmploymentWorkRecorded),
         tariff: resolveTariffUpdate(section, profile.tariff, {
           payGroup,
           payLevel,
           sector,
-          fullTimeWeeklyMinutes: parseWeeklyHours(fullTimeHours),
+          tariffRegion,
+          fullTimeWeeklyMinutes,
         }),
       });
       setMessage("Einstellungen gespeichert.");
@@ -139,12 +168,24 @@ function SettingsEditorForm({
         >
           <DropdownField
             label="Bundesland"
-            onChange={setFederalState}
+            onChange={(value) => {
+              setFederalState(value);
+              setHolidayRegion(defaultHolidayRegion(value));
+            }}
             options={FEDERAL_STATES.map((state) => ({
               value: state,
               label: FEDERAL_STATE_LABELS[state],
             }))}
             value={federalState}
+          />
+          <DropdownField
+            label="Regionale Feiertage am Arbeitsort"
+            onChange={setHolidayRegion}
+            options={holidayRegionsForState(federalState).map((region) => ({
+              value: region,
+              label: HOLIDAY_REGION_LABELS[region],
+            }))}
+            value={holidayRegion}
           />
           <Field
             error={weeklyHoursError}
@@ -157,6 +198,24 @@ function SettingsEditorForm({
             }}
             returnKeyType="done"
             value={weeklyHours}
+          />
+          <DropdownField
+            label="Regelmäßige Nacht- oder Wechselschichtarbeit"
+            onChange={setRegularRotatingNightWork}
+            options={evidenceOptions}
+            value={regularRotatingNightWork}
+          />
+          <DropdownField
+            label="Sonn- und Feiertagsarbeit nach § 10 ArbZG zulässig"
+            onChange={setSundayHolidayWorkEligible}
+            options={evidenceOptions}
+            value={sundayHolidayWorkEligible}
+          />
+          <DropdownField
+            label="Arbeitszeit aus allen Arbeitsverhältnissen erfasst"
+            onChange={setAllEmploymentWorkRecorded}
+            options={evidenceOptions}
+            value={allEmploymentWorkRecorded}
           />
         </FormSection>
       ) : (
@@ -171,6 +230,15 @@ function SettingsEditorForm({
             value={sector}
           />
           <DropdownField
+            label="Tarifgebiet"
+            onChange={setTariffRegion}
+            options={(["KAV_BW", "OTHER"] as const).map((region) => ({
+              value: region,
+              label: TARIFF_REGION_LABELS[region],
+            }))}
+            value={tariffRegion}
+          />
+          <DropdownField
             label="Entgeltgruppe"
             onChange={setPayGroup}
             options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
@@ -182,18 +250,7 @@ function SettingsEditorForm({
             options={PAY_LEVELS.map((level) => ({ value: level, label: `Stufe ${level}` }))}
             value={payLevel}
           />
-          <Field
-            error={fullTimeHoursError}
-            inputRef={fullTimeHoursRef}
-            keyboardType="decimal-pad"
-            label="Tarifliche Vollzeit pro Woche"
-            onChangeText={(value) => {
-              setFullTimeHours(value);
-              if (fullTimeHoursError) setFullTimeHoursError(null);
-            }}
-            returnKeyType="done"
-            value={fullTimeHours}
-          />
+          <Field editable={false} label="Tarifliche Vollzeit pro Woche" value={fullTimeHours} />
         </FormSection>
       )}
 

@@ -69,6 +69,29 @@ export type PayGroup = (typeof PAY_GROUPS)[number];
 export const PAY_LEVELS = [2, 3, 4, 5, 6] as const;
 export type PayLevel = (typeof PAY_LEVELS)[number];
 export type TariffSector = "BT_K" | "BT_B";
+export const TARIFF_REGIONS = ["KAV_BW", "OTHER"] as const;
+export type TariffRegion = (typeof TARIFF_REGIONS)[number];
+export const TARIFF_REGION_LABELS: Readonly<Record<TariffRegion, string>> = {
+  KAV_BW: "KAV Baden-Württemberg",
+  OTHER: "Übrige VKA-Tarifgebiete",
+};
+export const HOLIDAY_REGIONS = [
+  "UNKNOWN",
+  "NONE",
+  "BY_MARIA_HIMMELFAHRT",
+  "BY_AUGSBURG",
+  "SN_FRONLEICHNAM",
+  "TH_FRONLEICHNAM",
+] as const;
+export type HolidayRegion = (typeof HOLIDAY_REGIONS)[number];
+export const HOLIDAY_REGION_LABELS: Readonly<Record<HolidayRegion, string>> = {
+  UNKNOWN: "Bitte auswählen",
+  NONE: "Keine regionale Sonderregel",
+  BY_MARIA_HIMMELFAHRT: "Mariä Himmelfahrt gilt am Arbeitsort",
+  BY_AUGSBURG: "Stadt Augsburg",
+  SN_FRONLEICHNAM: "Sächsische Fronleichnamsregion",
+  TH_FRONLEICHNAM: "Thüringer Fronleichnamsregion",
+};
 export type HolidayPremiumMode = "WITH_TIME_OFF" | "WITHOUT_TIME_OFF";
 export const ALLOWANCE_STATUSES = [
   "NONE",
@@ -83,6 +106,7 @@ export interface TariffProfile {
   readonly payGroup: PayGroup;
   readonly payLevel: PayLevel;
   readonly sector: TariffSector;
+  readonly tariffRegion: TariffRegion;
   readonly fullTimeWeeklyMinutes: number;
 }
 
@@ -100,8 +124,12 @@ export const SHIFT_TYPE_LABELS: Readonly<Record<ShiftType, string>> = {
 
 export interface UserProfile {
   readonly federalState: FederalState;
+  readonly holidayRegion: HolidayRegion;
   readonly weeklyMinutes: number;
   readonly timeZone: string;
+  readonly regularRotatingNightWork: boolean | null;
+  readonly sundayHolidayWorkEligible: boolean | null;
+  readonly allEmploymentWorkRecorded: boolean | null;
   readonly tariff: TariffProfile | null;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -176,6 +204,7 @@ export interface ShiftEntry {
   readonly alarmEnabled?: boolean;
   readonly location?: EntryLocation | null;
   readonly overtimeMinutes: number;
+  readonly tariffOvertimeConfirmed?: boolean;
   readonly holidayPremiumMode: HolidayPremiumMode;
   readonly revision: number;
   readonly createdAt: string;
@@ -269,6 +298,7 @@ export interface SaveShiftInput {
   readonly alarmEnabled?: boolean;
   readonly location?: EntryLocation | null;
   readonly overtimeMinutes?: number;
+  readonly tariffOvertimeConfirmed?: boolean;
   readonly holidayPremiumMode?: HolidayPremiumMode;
 }
 
@@ -288,8 +318,12 @@ export interface SaveMonthlyTariffDecisionInput {
 
 export interface SaveProfileInput {
   readonly federalState: FederalState;
+  readonly holidayRegion?: HolidayRegion;
   readonly weeklyMinutes: number;
   readonly timeZone: string;
+  readonly regularRotatingNightWork?: boolean | null;
+  readonly sundayHolidayWorkEligible?: boolean | null;
+  readonly allEmploymentWorkRecorded?: boolean | null;
   readonly tariff?: TariffProfile | null;
 }
 

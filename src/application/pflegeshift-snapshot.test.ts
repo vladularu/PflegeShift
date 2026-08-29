@@ -15,12 +15,12 @@ const workPatternSettings = {
 describe("PflegeShift snapshot loading", () => {
   it("uses the bounded annual analysis and adjacent-calendar window", () => {
     expect(entryRangeForActiveMonth("2026-08")).toEqual({
-      startDate: "2025-11-01",
-      endDate: "2027-01-31",
+      startDate: "2025-01-01",
+      endDate: "2027-12-31",
     });
     expect(entryRangeForActiveMonth("2027-01")).toEqual({
-      startDate: "2026-11-01",
-      endDate: "2028-01-31",
+      startDate: "2026-01-01",
+      endDate: "2028-12-31",
     });
   });
 
@@ -41,6 +41,6 @@ describe("PflegeShift snapshot loading", () => {
       tariffDecisions: [],
       workPatternSettings,
     });
-    expect(repository.listCalendarEntries).toHaveBeenCalledWith("2025-11-01", "2027-01-31");
+    expect(repository.listCalendarEntries).toHaveBeenCalledWith("2025-01-01", "2027-12-31");
   });
 });
