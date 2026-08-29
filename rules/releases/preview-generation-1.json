@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "generation": 1,
+  "channel": "PREVIEW",
+  "publishedAt": "2026-08-29T01:14:58Z",
+  "rollbackOfGeneration": null,
+  "packageSources": [
+    "rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json",
+    "rules/packages/reviewed/de-arbzg-care/2026-01.json",
+    "rules/packages/reviewed/de-holidays/2026.json"
+  ],
+  "signing": {
+    "algorithm": "ED25519",
+    "canonicalization": "RFC8785",
+    "keyId": "preview-2026"
+  }
+}

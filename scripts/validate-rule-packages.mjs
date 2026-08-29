@@ -76,6 +76,25 @@ if (inputPaths.length < 2) {
         console.log("Validated the rule catalog publication request contract fixture.");
       }
 
+      const releaseDirectory = path.join(workspaceRoot, "rules/releases");
+      const releaseFiles = await findJsonFiles(releaseDirectory);
+      for (const releasePath of releaseFiles) {
+        const relativePath = workspaceRelativePath(releasePath);
+        const publicationRequest = await readJson(releasePath);
+        const publicationRequestResult = validateRuleCatalogPublicationRequest(publicationRequest);
+        if (!publicationRequestResult.ok) {
+          for (const validationIssue of publicationRequestResult.issues) {
+            console.error(
+              `${relativePath} ${validationIssue.code} ${validationIssue.path}: ${validationIssue.message}`,
+            );
+          }
+          process.exitCode = 1;
+        }
+      }
+      if (releaseFiles.length > 0 && process.exitCode !== 1) {
+        console.log(`Validated ${releaseFiles.length} rule catalog publication requests.`);
+      }
+
       const legacyDirectory = path.join(workspaceRoot, "rules/packages/legacy");
       let legacyFiles = [];
       try {
