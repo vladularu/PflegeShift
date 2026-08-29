@@ -5,7 +5,7 @@
   "versionId": "2026",
   "kind": "HOLIDAY",
   "label": "Deutsche Feiertage 2026 · Prüfkandidat",
-  "status": "DRAFT",
+  "status": "REVIEWED",
   "validFrom": "2026-01-01",
   "validTo": "2026-12-31",
   "jurisdiction": {
@@ -159,10 +159,10 @@
     }
   ],
   "review": {
-    "status": "DRAFT",
-    "reviewedBy": null,
-    "reviewedAt": null,
-    "gitCommit": null
+    "status": "REVIEWED",
+    "reviewedBy": "project-owner",
+    "reviewedAt": "2026-08-29T00:58:25Z",
+    "gitCommit": "8aa225f44eca461b1d10231850ae5f620c60a8cd"
   },
   "rounding": {
     "moneyScale": 2,
