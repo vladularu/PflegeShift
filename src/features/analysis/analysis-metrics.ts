@@ -5,7 +5,7 @@ import {
   type ShiftType,
   type UserProfile,
 } from "@/domain/types";
-import { calculateDailyWorkCredit } from "@/engine/daily-summary";
+import { calculateDailyWorkCredit, calculateTimedDailyWorkCredit } from "@/engine/daily-summary";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 type ProfileForTime = Pick<UserProfile, "federalState" | "weeklyMinutes" | "timeZone"> &
@@ -29,6 +29,29 @@ export function buildMonthlyShiftTypeAnalysis(
   profile: ProfileForTime,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyShiftTypeAnalysis {
+  return buildMonthlyShiftTypeAnalysisWithCredit(month, entries, (date, shifts) =>
+    calculateDailyWorkCredit(date, shifts, profile, ruleResolver),
+  );
+}
+
+export function buildMonthlyTimedShiftTypeAnalysis(
+  month: string,
+  entries: readonly CalendarEntry[],
+  profile: Pick<ProfileForTime, "timeZone">,
+): MonthlyShiftTypeAnalysis {
+  return buildMonthlyShiftTypeAnalysisWithCredit(month, entries, (date, shifts) =>
+    calculateTimedDailyWorkCredit(date, shifts, profile),
+  );
+}
+
+function buildMonthlyShiftTypeAnalysisWithCredit(
+  month: string,
+  entries: readonly CalendarEntry[],
+  calculateCredit: (
+    date: string,
+    shifts: readonly ShiftEntry[],
+  ) => { readonly minutesByType: Readonly<Partial<Record<ShiftType, number>>> },
+): MonthlyShiftTypeAnalysis {
   const counts: Partial<Record<ShiftType, number>> = {};
   const minutes: Partial<Record<ShiftType, number>> = {};
   const shiftsByDate = new Map<string, ShiftEntry[]>();
@@ -44,7 +67,7 @@ export function buildMonthlyShiftTypeAnalysis(
   }
 
   for (const [date, dateShifts] of shiftsByDate) {
-    const daily = calculateDailyWorkCredit(date, dateShifts, profile, ruleResolver);
+    const daily = calculateCredit(date, dateShifts);
     for (const type of SHIFT_TYPES) {
       const creditedMinutes = daily.minutesByType[type] ?? 0;
       if (creditedMinutes > 0) minutes[type] = (minutes[type] ?? 0) + creditedMinutes;

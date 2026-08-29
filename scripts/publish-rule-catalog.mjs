@@ -236,7 +236,7 @@ async function verifyExistingManifest(manifestJson, request, trustedKeys, verifi
     manifestJson,
     {
       expectedChannel: request.channel,
-      supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6]),
+      supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6, 7]),
       trustedPublicKeys: trustedKeys,
     },
     verifier,
@@ -414,7 +414,7 @@ async function main() {
       { manifestJson: publication.manifestJson, packageJson: publication.packageJson },
       {
         expectedChannel: request.channel,
-        supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6]),
+        supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6, 7]),
         trustedPublicKeys: new Map([[request.signing.keyId, nodeCryptography.publicKey]]),
       },
       nodeCryptography.verifier,

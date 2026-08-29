@@ -37,7 +37,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -124,14 +124,14 @@ export type RuleLegalPackage = RulePackageBase & {
   rules: RuleLegalRules;
 };
 export type RuleHolidayPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2;
+  engineContractVersion?: 1 | 2 | 7;
   kind: "HOLIDAY";
   rules: RuleHolidayRules;
 };
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -415,7 +415,7 @@ export interface RuleHoliday {
   federalStates: null | [RuleFederalState, ...RuleFederalState[]];
   regionIds?: null | [RuleIdentifier, ...RuleIdentifier[]];
   validFrom: RuleIsoDate;
-  validTo: RuleIsoDate;
+  validTo: RuleNullableDate;
   calculation:
     | {
         type: "FIXED_DATE";

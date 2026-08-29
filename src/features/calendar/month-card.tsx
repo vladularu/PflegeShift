@@ -32,9 +32,9 @@ import {
   calendarMonthEntriesEqual,
   calendarSelectionTouchesMonth,
 } from "@/features/calendar/calendar-rendering";
+import { useCalendarHolidayResolution } from "@/features/calendar/calendar-holidays";
 import { holidayShortLabel } from "@/features/calendar/holiday-label";
 import { stampDayAccessibilityHint } from "@/features/calendar/stamp-accessibility";
-import { holidayMapForMonth } from "@/engine/holidays";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { calendarChipPalette } from "@/theme/color-contrast";
 import { MOTION } from "@/theme/motion";
@@ -539,13 +539,12 @@ export const MonthCard = memo(function MonthCard({
     });
   }, [internalStampProgress, stampMode, stampTransitionProgress]);
   const grid = useMemo(() => createMonthGrid(month), [month]);
-  const holidays = useMemo(
-    () =>
-      showHolidays
-        ? holidayMapForMonth(month, profile.federalState, ruleResolver, profile.holidayRegion)
-        : new Map(),
-    [month, profile.federalState, profile.holidayRegion, ruleResolver, showHolidays],
-  );
+  const holidays = useCalendarHolidayResolution(
+    month,
+    profile,
+    ruleResolver,
+    showHolidays,
+  ).holidays;
   const currentDate = today(profile.timeZone);
   const weekCount = grid.length / 7;
   const contentWidth = Math.min(width, 760);

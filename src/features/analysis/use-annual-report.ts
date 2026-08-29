@@ -6,22 +6,21 @@ import type {
   TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
-import {
-  buildAnnualReportSteps,
-  createAnnualReportComputationCache,
-  type AnnualReport,
-} from "@/features/analysis/annual-report";
+import { buildAnnualAvailableReportSteps } from "@/features/analysis/annual-core-report";
+import type { AnnualReport } from "@/features/analysis/annual-report";
+import type { RuleComputationFailure } from "@/features/analysis/rule-computation";
 import { useLocalReferenceDate } from "@/features/analysis/use-local-reference-date";
-import { recordDiagnostic } from "@/infrastructure/diagnostics";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 
 interface AnnualReportState {
   readonly entries: readonly CalendarEntry[];
   readonly error: string | null;
+  readonly fatalError: Error | null;
   readonly profile: UserProfile;
   readonly referenceDate: string;
   readonly report: AnnualReport | null;
+  readonly ruleFailure: RuleComputationFailure | null;
   readonly ruleResolver: RuleResolver;
   readonly tariffDecisions: readonly MonthlyTariffDecision[];
   readonly workPatternSettings: TvoedWorkPatternSettings;
@@ -30,7 +29,9 @@ interface AnnualReportState {
 
 interface DeferredAnnualReportResult {
   readonly error: string | null;
+  readonly fatalError: Error | null;
   readonly report: AnnualReport | null;
+  readonly ruleFailure: RuleComputationFailure | null;
   readonly retry: () => void;
 }
 
@@ -53,7 +54,7 @@ export function useDeferredAnnualReport({
 }): DeferredAnnualReportResult {
   const [retryRevision, setRetryRevision] = useState(0);
   const [state, setState] = useState<AnnualReportState | null>(null);
-  const cache = useRef(createAnnualReportComputationCache());
+  const requestRevision = useRef(0);
   const retry = useCallback(() => setRetryRevision((value) => value + 1), []);
   const referenceDate = useLocalReferenceDate(profile?.timeZone ?? "Europe/Berlin");
 
@@ -73,27 +74,30 @@ export function useDeferredAnnualReport({
     if (!enabled || profile === null || completedRequest) return;
     let active = true;
     let cancelScheduledWork = () => {};
-    const steps = buildAnnualReportSteps(
+    requestRevision.current += 1;
+    const currentRequest = requestRevision.current;
+    const steps = buildAnnualAvailableReportSteps(
       year,
       entries,
       profile,
       tariffDecisions,
       workPatternSettings,
-      cache.current,
       referenceDate,
       ruleResolver,
     );
     const advance = () => {
       try {
         const step = steps.next();
-        if (!active) return;
+        if (!active || requestRevision.current !== currentRequest) return;
         if (step.done) {
           setState({
             entries,
             error: null,
+            fatalError: null,
             profile,
             referenceDate,
             report: step.value,
+            ruleFailure: null,
             ruleResolver,
             tariffDecisions,
             workPatternSettings,
@@ -103,14 +107,19 @@ export function useDeferredAnnualReport({
           cancelScheduledWork = scheduleIdleWork(advance);
         }
       } catch (reportError) {
-        recordDiagnostic("reporting", "ANNUAL_REPORT_FAILED", reportError);
+        const fatalError =
+          reportError instanceof Error
+            ? reportError
+            : new Error("Annual report computation failed.");
         if (active) {
           setState({
             entries,
-            error: "Die Jahresauswertung konnte nicht berechnet werden.",
+            error: null,
+            fatalError,
             profile,
             referenceDate,
             report: null,
+            ruleFailure: null,
             ruleResolver,
             tariffDecisions,
             workPatternSettings,
@@ -139,7 +148,9 @@ export function useDeferredAnnualReport({
 
   return {
     error: matchesRequest ? state.error : null,
+    fatalError: matchesRequest ? state.fatalError : null,
     report: matchesRequest ? state.report : null,
+    ruleFailure: matchesRequest ? state.ruleFailure : null,
     retry,
   };
 }

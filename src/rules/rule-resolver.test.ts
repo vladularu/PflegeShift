@@ -158,7 +158,7 @@ describe("bundled legacy rule resolver", () => {
           .filter(
             (holiday) =>
               holiday.validFrom <= `${year}-12-31` &&
-              holiday.validTo >= `${year}-01-01` &&
+              (holiday.validTo === null || holiday.validTo >= `${year}-01-01`) &&
               (holiday.scope === "NATIONWIDE" || holiday.federalStates?.includes(federalState)),
           )
           .map((holiday) => ({
@@ -168,7 +168,11 @@ describe("bundled legacy rule resolver", () => {
             validFrom: holiday.validFrom,
             validTo: holiday.validTo,
           }))
-          .filter((holiday) => holiday.validFrom <= holiday.date && holiday.date <= holiday.validTo)
+          .filter(
+            (holiday) =>
+              holiday.validFrom <= holiday.date &&
+              (holiday.validTo === null || holiday.date <= holiday.validTo),
+          )
           .map(({ date, name, scope }) => ({ date, name, scope }))
           .sort((left, right) => left.date.localeCompare(right.date));
 

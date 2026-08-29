@@ -7,6 +7,7 @@ import type {
   ShiftEntry,
   ShiftPremiumBreakdown,
   TvoedWorkPatternSettings,
+  TvoedAssessment,
   UserProfile,
 } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
@@ -38,6 +39,12 @@ import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 const HOLIDAY_DATE_CACHE = new WeakMap<RuleResolver, Map<string, ReadonlySet<string>>>();
 
 export { assessTvoedPattern, DEFAULT_TVOED_WORK_PATTERN_SETTINGS };
+
+export interface MonthlyTvoedAssessmentResult {
+  readonly assessment: TvoedAssessment | null;
+  readonly available: boolean;
+  readonly tariffLabel: string | null;
+}
 
 interface PremiumMinuteBuckets {
   readonly byRuleId: Map<string, number>;
@@ -448,28 +455,16 @@ export function calculateMonthlyPayEstimate(
   const first = Temporal.PlainDate.from(`${month}-01`);
   const dateKey = first.toString();
   const rulePackage = getTariffRulePackage(dateKey, ruleResolver);
-  const assessmentStart = first
-    .subtract({
-      months: getTariffAssessmentLookbackMonths(dateKey, ruleResolver),
-    })
-    .toString();
-  const assessmentEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
-  const relevantAssessmentShifts =
-    monthShifts.length === 0
-      ? []
-      : assessmentShifts.filter(
-          (shift) =>
-            shift.deletedAt === null &&
-            shift.date >= assessmentStart &&
-            shift.date <= assessmentEnd &&
-            isWorkShift(shift),
-        );
-  const assessment = assessTvoedPattern(
-    relevantAssessmentShifts,
+  const assessmentResult = calculateMonthlyTvoedAssessment(
+    month,
+    monthShifts,
+    assessmentShifts,
     workPatternSettings,
     ruleResolver,
-    dateKey,
   );
+  const assessment =
+    assessmentResult.assessment ??
+    assessTvoedPattern([], workPatternSettings, ruleResolver, dateKey);
   const version = getTariffVersion(dateKey, ruleResolver);
   const tariff = profile.tariff;
   if (version === null || tariff === null || rulePackage === null) {
@@ -550,5 +545,43 @@ export function calculateMonthlyPayEstimate(
     ),
     assessment,
     confirmedAllowance,
+  };
+}
+
+export function calculateMonthlyTvoedAssessment(
+  month: string,
+  monthShifts: readonly ShiftEntry[],
+  assessmentShifts: readonly ShiftEntry[],
+  workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
+  ruleResolver: RuleResolver = bundledRuleResolver,
+): MonthlyTvoedAssessmentResult {
+  const first = Temporal.PlainDate.from(`${month}-01`);
+  const dateKey = first.toString();
+  const rulePackage = getTariffRulePackage(dateKey, ruleResolver);
+  const version = getTariffVersion(dateKey, ruleResolver);
+  if (rulePackage === null || version === null) {
+    return { assessment: null, available: false, tariffLabel: version?.label ?? null };
+  }
+  const currentWorkShifts = monthShifts.filter(
+    (shift) => shift.deletedAt === null && shift.date.startsWith(`${month}-`) && isWorkShift(shift),
+  );
+  const assessmentStart = first
+    .subtract({ months: getTariffAssessmentLookbackMonths(dateKey, ruleResolver) })
+    .toString();
+  const assessmentEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
+  const relevantShifts =
+    currentWorkShifts.length === 0
+      ? []
+      : assessmentShifts.filter(
+          (shift) =>
+            shift.deletedAt === null &&
+            shift.date >= assessmentStart &&
+            shift.date <= assessmentEnd &&
+            isWorkShift(shift),
+        );
+  return {
+    assessment: assessTvoedPattern(relevantShifts, workPatternSettings, ruleResolver, dateKey),
+    available: true,
+    tariffLabel: version.label,
   };
 }

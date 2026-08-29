@@ -115,6 +115,16 @@ Use `--previous-manifest`, `--rollback-manifest`, and repeatable
 `--trusted-public-key <keyId=base64url>` only when the verified state or signing key is located
 elsewhere. Public keys are not secret; the private seed remains environment-only.
 
+### Signing-key rotation
+
+A replacement signing key is activated in the app before a manifest signed by that key becomes
+`current.json`. During the transition the Preview verifier trusts the previous and replacement
+public keys, while the new private seed remains only in the operator's password manager and process
+environment. The previous private seed is not required: the publisher can verify the downloaded
+Generation-1 `current.json` through `--previous-manifest` when the previous public key is supplied
+with `--trusted-public-key`. Publisher and delivery receive both public keys until the predecessor
+generation no longer participates in continuity or rollback verification.
+
 ## WP4b Preview delivery
 
 WP4b adds a backend-only Supabase Storage adapter and deliberately remains separate from the app

@@ -631,6 +631,15 @@ function validateHolidayPackage(
   issues: ValidationIssue[],
 ): void {
   const { holidays } = rulePackage.rules;
+  if (rulePackage.validTo === null && rulePackage.engineContractVersion < 7) {
+    issues.push(
+      issue(
+        "UNSUPPORTED_OPEN_HOLIDAY_PACKAGE_RANGE",
+        "/validTo",
+        "Open-ended holiday packages require holiday engine contract v7 or later.",
+      ),
+    );
+  }
   reportDuplicates(
     holidays.map((holiday) => holiday.id),
     "/rules/holidays",
@@ -642,6 +651,16 @@ function validateHolidayPackage(
     const path = `/rules/holidays/${index}`;
     validateRange(holiday.validFrom, holiday.validTo, path, issues);
     validateSourceReferences(holiday.sourceIds, sourceIds, `${path}/sourceIds`, issues);
+
+    if (holiday.validTo === null && rulePackage.engineContractVersion < 7) {
+      issues.push(
+        issue(
+          "UNSUPPORTED_OPEN_HOLIDAY_RANGE",
+          `${path}/validTo`,
+          "Open-ended holiday rules require holiday engine contract v7 or later.",
+        ),
+      );
+    }
 
     if (
       holiday.scope === "NATIONWIDE" &&
@@ -681,7 +700,8 @@ function validateHolidayPackage(
     }
     if (
       holiday.validFrom < rulePackage.validFrom ||
-      (rulePackage.validTo !== null && holiday.validTo > rulePackage.validTo)
+      (rulePackage.validTo !== null &&
+        (holiday.validTo === null || holiday.validTo > rulePackage.validTo))
     ) {
       issues.push(
         issue(
@@ -693,6 +713,19 @@ function validateHolidayPackage(
     }
 
     const calculation = holiday.calculation;
+    if (
+      rulePackage.validTo === null &&
+      calculation.type !== "SPECIFIC_DATE" &&
+      holiday.validTo !== null
+    ) {
+      issues.push(
+        issue(
+          "FINITE_RECURRING_HOLIDAY_IN_OPEN_PACKAGE",
+          `${path}/validTo`,
+          "Recurring holidays in an open-ended package must also be open-ended.",
+        ),
+      );
+    }
     if (calculation.type === "FIXED_DATE") {
       const sample = `2000-${String(calculation.month).padStart(2, "0")}-${String(
         calculation.day,
@@ -709,7 +742,19 @@ function validateHolidayPackage(
     }
     if (calculation.type === "SPECIFIC_DATE") {
       validateDate(calculation.date, `${path}/calculation/date`, issues);
-      if (calculation.date < holiday.validFrom || calculation.date > holiday.validTo) {
+      if (holiday.validTo === null) {
+        issues.push(
+          issue(
+            "OPEN_ENDED_SPECIFIC_HOLIDAY",
+            `${path}/validTo`,
+            "A specific holiday date must have a finite validity end.",
+          ),
+        );
+      }
+      if (
+        calculation.date < holiday.validFrom ||
+        (holiday.validTo !== null && calculation.date > holiday.validTo)
+      ) {
         issues.push(
           issue(
             "SPECIFIC_HOLIDAY_OUTSIDE_RANGE",

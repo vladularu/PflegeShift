@@ -38,11 +38,17 @@ export function LoadingView({ label = "PflegeShift wird vorbereitet …" }: { la
 
 export function LoadFailureView({
   actionLabel = "Erneut versuchen",
+  diagnosticCode,
   message,
   onRetry,
   title = "Daten konnten nicht geladen werden",
 }: {
   readonly actionLabel?: string;
+  readonly diagnosticCode?:
+    | "APP_RENDER_FAILED"
+    | "INVALID_EFFECTIVE_DATE"
+    | "RULE_PACKAGE_AMBIGUOUS"
+    | "RULE_PACKAGE_NOT_FOUND";
   readonly message: string;
   readonly onRetry: () => void;
   readonly title?: string;
@@ -75,6 +81,15 @@ export function LoadFailureView({
       >
         {message}
       </Text>
+      {diagnosticCode ? (
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.caption }}
+        >
+          Diagnosecode: {diagnosticCode}
+        </Text>
+      ) : null}
       <Pressable
         accessibilityRole="button"
         onPress={onRetry}

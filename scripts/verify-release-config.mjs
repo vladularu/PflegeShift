@@ -79,9 +79,10 @@ expect(
   easConfig.build?.preview?.env?.APP_VARIANT === "internal",
   "Preview-Builds benötigen eine isolierte App-Identität.",
 );
+expect(easConfig.build?.preview?.channel === "preview", "Preview muss den Preview-Kanal nutzen.");
 expect(
-  easConfig.build?.preview?.env?.EXPO_PUBLIC_ENABLE_DEV_TOOLS === "1",
-  "Nur Preview-Builds dürfen das Testlabor aktivieren.",
+  easConfig.build?.preview?.environment === "preview",
+  "Preview-Builds müssen die EAS-Umgebung preview verwenden.",
 );
 expect(
   easConfig.build?.preview?.autoIncrement === true,
@@ -100,8 +101,22 @@ expect(
   "Produktions-Builds müssen die Produktionsidentität erzwingen.",
 );
 expect(
-  easConfig.build?.production?.env?.EXPO_PUBLIC_ENABLE_DEV_TOOLS === "0",
-  "Produktions-Builds müssen das Testlabor deaktivieren.",
+  easConfig.build?.production?.channel === "production",
+  "Produktions-Builds müssen den Produktionskanal nutzen.",
+);
+expect(
+  easConfig.build?.production?.environment === "production",
+  "Produktions-Builds müssen die EAS-Umgebung production verwenden.",
+);
+expect(
+  easConfig.build?.["e2e-test"]?.channel === "e2e-test",
+  "E2E-Builds müssen vom Preview-Kanal isoliert bleiben.",
+);
+expect(
+  Object.values(easConfig.build ?? {}).every(
+    (profile) => profile?.env?.EXPO_PUBLIC_ENABLE_DEV_TOOLS === undefined,
+  ),
+  "Die Testlabor-Freigabe darf nicht über eine öffentliche Umgebungsvariable erfolgen.",
 );
 expect(
   easConfig.build?.production?.android?.buildType === "app-bundle",

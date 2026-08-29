@@ -8,8 +8,7 @@
       "distribution": "internal",
       "withoutCredentials": true,
       "env": {
-        "APP_VARIANT": "internal",
-        "EXPO_PUBLIC_ENABLE_DEV_TOOLS": "0"
+        "APP_VARIANT": "internal"
       },
       "android": {
         "buildType": "apk"
@@ -22,9 +21,9 @@
     "preview": {
       "distribution": "internal",
       "autoIncrement": true,
+      "environment": "preview",
       "env": {
-        "APP_VARIANT": "internal",
-        "EXPO_PUBLIC_ENABLE_DEV_TOOLS": "1"
+        "APP_VARIANT": "internal"
       },
       "android": {
         "buildType": "apk"
@@ -36,9 +35,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "environment": "production",
       "env": {
-        "APP_VARIANT": "production",
-        "EXPO_PUBLIC_ENABLE_DEV_TOOLS": "0"
+        "APP_VARIANT": "production"
       },
       "android": {
         "buildType": "app-bundle"

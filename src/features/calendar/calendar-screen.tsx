@@ -27,11 +27,11 @@ import {
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type { CalendarEntry } from "@/domain/types";
 import { addMonths, createMonthGrid, currentMonth, today } from "@/engine/calendar";
-import { holidayMapForMonth } from "@/engine/holidays";
 import { expandCalendarEntries } from "@/engine/recurrence";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
+import * as CalendarHolidays from "@/features/calendar/calendar-holidays";
 import type { CalendarAnchorRect } from "@/features/calendar/calendar-layout";
 import { clampDateToMonth } from "@/features/calendar/calendar-metrics";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
@@ -69,8 +69,7 @@ import { planningModeFeedback, selectionFeedback } from "@/ui/haptics";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
-const MONTHS_BEFORE = 24;
-const MONTHS_AFTER = 36;
+const [MONTHS_BEFORE, MONTHS_AFTER] = [24, 36] as const;
 
 interface QuickPopupState {
   readonly date: string;
@@ -91,7 +90,6 @@ export function CalendarScreen() {
   const { entries, removeEntry, upsertShift } = usePflegeShiftEntries();
   const { testMonths } = usePflegeShiftTestData();
   const { resolver: ruleResolver } = useRuleCatalogRuntime();
-  const profileReady = profile !== null;
   const timeZone = profile?.timeZone ?? "Europe/Berlin";
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
@@ -145,7 +143,7 @@ export function CalendarScreen() {
     setQuickPopup(null);
     settledMonth.current = targetMonth;
     setMonthAnchor(targetMonth);
-  }, [activeMonthCoordinator, profileReady, targetMonth, timeZone]);
+  }, [activeMonthCoordinator, targetMonth, timeZone]);
   useEffect(() => {
     if (preferences.viewMode !== "MONTH") {
       setPlannerMode(false);
@@ -179,14 +177,15 @@ export function CalendarScreen() {
   const { entriesByDate, visibleEntries } = entryIndex;
   const quickActions = useMemo(() => buildQuickEntryActions(templates), [templates]);
   const quickPlannerActions = useMemo(() => quickEntryServiceActions(quickActions), [quickActions]);
+  const visibleHolidayResolution = CalendarHolidays.useCalendarHolidayResolution(
+    visibleMonth,
+    profile,
+    ruleResolver,
+    preferences.viewMode === "MONTH" && preferences.showHolidays,
+  );
   const quickPopupHolidayName = useMemo(() => {
     if (profile === null || quickPopup === null) return undefined;
-    return holidayMapForMonth(
-      quickPopup.date.slice(0, 7),
-      profile.federalState,
-      ruleResolver,
-      profile.holidayRegion,
-    ).get(quickPopup.date)?.name;
+    return CalendarHolidays.holidayNameForDate(quickPopup.date, profile, ruleResolver);
   }, [profile, quickPopup, ruleResolver]);
 
   const saveStampAction = useQuickStampAction({
@@ -554,6 +553,7 @@ export function CalendarScreen() {
           </PrimaryButton>
         </View>
       ) : null}
+      <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
       {preferences.viewMode === "MONTH" ? (
         <Animated.View
           entering={FadeIn.duration(MOTION.duration.deliberate)
