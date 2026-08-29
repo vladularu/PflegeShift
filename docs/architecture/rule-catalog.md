@@ -117,9 +117,22 @@ authoritative verifier. Only its runtime-marked verified artifacts can reach the
 SQLCipher activation transaction. A failure records a technical diagnostic and leaves the prior
 catalog and resolver untouched.
 
-WP5a deliberately does not replace the resolver snapshot while consumers are mounted. A newly
-activated generation is selected on the next provider initialization. Live resolver propagation
-and generation-aware cache replacement are WP5b.
+WP5b keeps the current resolver snapshot mounted while synchronization and the subsequent local
+reload are pending. A synchronization result that reports a generation triggers a reload only when
+that generation is not already the complete selected runtime. The provider accepts the reloaded
+snapshot only when it comes from stored catalog data, the active and selected generations are
+identical, no last-known-good fallback is involved, and the selected generation is at least the
+generation reported by synchronization. It then replaces the React context once with the complete
+new snapshot; individual tracks are never switched independently.
+
+Resolver identity is the cache-generation boundary. Tariff materialization, pay calculations,
+holiday lookup, daily targets, annual reports, and memoized calculation consumers already isolate
+their results by resolver or include the resolver in their React dependencies. Replacing the one
+runtime snapshot therefore makes every calculation path move to fresh caches together while old
+in-flight renders finish against their immutable previous resolver. If synchronization, reload, or
+snapshot consistency fails, the mounted resolver remains unchanged and a privacy-safe technical
+diagnostic is recorded. The Preview-only channel and trust restrictions from WP5a remain unchanged;
+WP5b does not enable production downloads.
 
 ## Contract boundaries
 
