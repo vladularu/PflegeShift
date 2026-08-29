@@ -298,7 +298,7 @@ export function createSupabaseRuleCatalogStorage({
       {
         method: "POST",
         headers: {
-          "content-type": "application/json; charset=utf-8",
+          "content-type": "application/json",
           "cache-control": artifact.cacheControl,
           "x-upsert": String(upsert),
         },

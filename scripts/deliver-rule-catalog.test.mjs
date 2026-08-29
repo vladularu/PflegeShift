@@ -131,6 +131,7 @@ function createFakeSupabase({ bucketExists = false, bucketOverride = {} } = {}) 
             });
       }
       if (method === "POST") {
+        assert.equal(headers.get("content-type"), "application/json");
         const upsert = headers.get("x-upsert") === "true";
         if (objects.has(objectPath) && !upsert) {
           return Response.json({ message: "Asset Already Exists" }, { status: 400 });
