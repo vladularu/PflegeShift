@@ -5,9 +5,11 @@ import {
   type LoadStoredRuleCatalog,
   type RuleCatalogRuntimeSnapshot,
 } from "@/application/rule-catalog-runtime";
+import type { SynchronizeRuleCatalog } from "@/application/rule-catalog-sync";
 
 interface RuleCatalogRuntimeProviderProps extends PropsWithChildren {
   readonly loadStoredCatalog: LoadStoredRuleCatalog;
+  readonly synchronizeCatalog: SynchronizeRuleCatalog;
   readonly recordDiagnostic: (code: string, error: unknown) => void;
 }
 
@@ -16,6 +18,7 @@ const RuleCatalogRuntimeContext = createContext<RuleCatalogRuntimeSnapshot | nul
 export function RuleCatalogRuntimeProvider({
   children,
   loadStoredCatalog,
+  synchronizeCatalog,
   recordDiagnostic,
 }: RuleCatalogRuntimeProviderProps) {
   const [runtime, setRuntime] = useState<RuleCatalogRuntimeSnapshot | null>(null);
@@ -34,11 +37,14 @@ export function RuleCatalogRuntimeProvider({
         );
       }
       setRuntime(result.runtime);
+      void synchronizeCatalog(result.runtime.diagnosis.activeGeneration).catch((error: unknown) => {
+        if (active) recordDiagnostic("RULE_CATALOG_SYNC_FAILED", error);
+      });
     });
     return () => {
       active = false;
     };
-  }, [loadStoredCatalog, recordDiagnostic]);
+  }, [loadStoredCatalog, recordDiagnostic, synchronizeCatalog]);
 
   if (runtime === null) return null;
   return <RuleCatalogRuntimeContext value={runtime}>{children}</RuleCatalogRuntimeContext>;

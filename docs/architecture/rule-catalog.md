@@ -93,6 +93,34 @@ acknowledgement fail closed. The Supabase secret remains environment-only in the
 process; no secret or network client enters the Expo app. Production delivery, client downloads,
 polling, and SQLCipher activation remain later work.
 
+## Preview catalog synchronization
+
+WP5a connects only an installed app whose Expo Updates channel is exactly `preview` to the public
+Preview delivery path. Production, `e2e-test`, Expo Go, and development sessions therefore create
+no catalog HTTP client. The Preview channel pins the public Supabase object root and the public
+Ed25519 key `preview-2026`; neither value grants write access and no Supabase secret enters the app.
+
+Startup remains local-first. The provider selects the stored SQLCipher catalog or the embedded
+legacy resolver before starting synchronization in the background. A successful check suppresses
+another remote check for 24 hours. A started check provisionally suppresses duplicate or failed
+attempts for one hour, so repeated mounts and network outages cannot create an unbounded request
+loop. With 100,000 active installations this configuration permits at most one normal
+`current.json` check per installation per 24-hour success window; package downloads happen only
+when the signed generation differs from the active on-device generation.
+
+The client accepts HTTP 200 from the exact requested HTTPS URL, exact `application/json`, valid
+UTF-8, and no more than 524,288 bytes per artifact. It verifies `current.json` before using any
+signed package path, requires byte equality with `manifests/<generation>.json`, rejects remote
+rollback, and downloads packages in signed manifest order. Signature, channel, key, engine
+contract, package size, SHA-256, schema, and semantic validation then run through the existing
+authoritative verifier. Only its runtime-marked verified artifacts can reach the existing atomic
+SQLCipher activation transaction. A failure records a technical diagnostic and leaves the prior
+catalog and resolver untouched.
+
+WP5a deliberately does not replace the resolver snapshot while consumers are mounted. A newly
+activated generation is selected on the next provider initialization. Live resolver propagation
+and generation-aware cache replacement are WP5b.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.

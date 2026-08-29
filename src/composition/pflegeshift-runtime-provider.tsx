@@ -6,7 +6,6 @@ import { RuleCatalogRuntimeProvider } from "@/application/rule-catalog-runtime-p
 import { createPflegeShiftPorts } from "@/composition/create-pflegeshift-ports";
 import { createRuleCatalogRuntimePort } from "@/composition/create-rule-catalog-runtime-port";
 import { useActiveMonth } from "@/navigation/active-month";
-
 export function PflegeShiftRuntimeProvider({ children }: PropsWithChildren) {
   const db = useSQLiteContext();
   const activeMonth = useActiveMonth();
@@ -16,6 +15,7 @@ export function PflegeShiftRuntimeProvider({ children }: PropsWithChildren) {
   return (
     <RuleCatalogRuntimeProvider
       loadStoredCatalog={ruleCatalog.loadStoredCatalog}
+      synchronizeCatalog={ruleCatalog.synchronizeCatalog}
       recordDiagnostic={ruleCatalog.recordDiagnostic}
     >
       <PflegeShiftProvider activeMonth={activeMonth} ports={ports}>
