@@ -70,7 +70,7 @@ test("publisher CLI dry-runs, writes in order, retries idempotently, and protect
       maximumStepId: "s2",
       sourceIds: ["tvoed-vka-2026"],
     };
-    packages[1].engineContractVersion = 5;
+    packages[1].engineContractVersion = 6;
     packages[1].rules.workingTime.standardAverage = {
       calendarMonths: 6,
       weeks: 24,
@@ -93,6 +93,7 @@ test("publisher CLI dry-runs, writes in order, retries idempotently, and protect
       matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE",
       sourceIds: ["arbzg-2026"],
     };
+    packages[1].rules.restPeriod.deviations[0].compensationWithinCalendarMonths = 1;
     const packagePaths = packages.map(
       (rulePackage) =>
         `rules/packages/reviewed/${rulePackage.packageId}/${rulePackage.versionId}.json`,

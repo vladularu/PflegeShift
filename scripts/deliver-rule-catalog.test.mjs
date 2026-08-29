@@ -116,13 +116,22 @@ function createFakeSupabase({ bucketExists = false, bucketOverride = {} } = {}) 
       if (method === "GET") {
         const stored = objects.get(objectPath);
         return stored === undefined
-          ? new Response("", { status: 404 })
+          ? Response.json(
+              {
+                statusCode: "404",
+                error: "not_found",
+                message: "Object not found",
+                code: "NoSuchKey",
+              },
+              { status: 400 },
+            )
           : new Response(stored, {
               status: 200,
               headers: { "content-length": String(stored.byteLength) },
             });
       }
       if (method === "POST") {
+        assert.equal(headers.get("content-type"), "application/json");
         const upsert = headers.get("x-upsert") === "true";
         if (objects.has(objectPath) && !upsert) {
           return Response.json({ message: "Asset Already Exists" }, { status: 400 });
@@ -337,6 +346,29 @@ test("delivery fails closed when bucket restrictions drift", async () => {
   });
 });
 
+test("storage rejects an unrelated HTTP 400 instead of treating it as a missing object", async () => {
+  const storage = createSupabaseRuleCatalogStorage({
+    supabaseUrl: "http://127.0.0.1",
+    secretKey,
+    fetchImplementation: async () =>
+      Response.json(
+        {
+          statusCode: "400",
+          error: "bad_request",
+          message: "Invalid object request",
+          code: "BadRequest",
+        },
+        { status: 400 },
+      ),
+  });
+
+  await assert.rejects(storage.readObject("preview/current.json"), (error) => {
+    assert.ok(error instanceof RuleCatalogDeliveryError);
+    assert.equal(error.code, "REMOTE_REJECTED");
+    return true;
+  });
+});
+
 async function fixture(fileName) {
   return JSON.parse(
     await fs.readFile(path.join(repositoryRoot, "rules", "examples", fileName), "utf8"),
@@ -362,7 +394,7 @@ async function writeSignedCliFixture() {
     maximumStepId: "s2",
     sourceIds: ["tvoed-vka-2026"],
   };
-  packages[1].engineContractVersion = 5;
+  packages[1].engineContractVersion = 6;
   packages[1].rules.workingTime.standardAverage = {
     calendarMonths: 6,
     weeks: 24,
@@ -385,6 +417,7 @@ async function writeSignedCliFixture() {
     matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE",
     sourceIds: ["arbzg-2026"],
   };
+  packages[1].rules.restPeriod.deviations[0].compensationWithinCalendarMonths = 1;
   const packageJson = packages.map((value) => `${JSON.stringify(value, null, 2)}\n`);
   const manifest = await fixture("manifest.valid.json");
   manifest.packages = packages.map((rulePackage, index) => ({
