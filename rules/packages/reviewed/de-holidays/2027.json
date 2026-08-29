@@ -5,7 +5,7 @@
   "versionId": "2027",
   "kind": "HOLIDAY",
   "label": "Gesetzliche Feiertage Deutschland ab 2027",
-  "status": "DRAFT",
+  "status": "REVIEWED",
   "validFrom": "2027-01-01",
   "validTo": null,
   "jurisdiction": {
@@ -159,10 +159,10 @@
     }
   ],
   "review": {
-    "status": "DRAFT",
-    "reviewedBy": null,
-    "reviewedAt": null,
-    "gitCommit": null
+    "status": "REVIEWED",
+    "reviewedBy": "project-owner",
+    "reviewedAt": "2026-08-29T22:25:55Z",
+    "gitCommit": "7b4a0061a547811c1ad0750fc6e3c8a6ed7a0428"
   },
   "rounding": {
     "moneyScale": 2,
