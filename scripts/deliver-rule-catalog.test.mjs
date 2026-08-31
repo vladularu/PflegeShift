@@ -375,14 +375,13 @@ async function fixture(fileName) {
   );
 }
 
-async function writeSignedCliFixture() {
+async function writeSignedCliFixture(publicationRoot) {
   ed25519.hashes.sha512 = (message) =>
     Uint8Array.from(createHash("sha512").update(message).digest());
   const privateKey = Uint8Array.from({ length: 32 }, (_, index) => index);
   const publicKey = ed25519.getPublicKey(privateKey);
-  const root = await fs.mkdtemp(
-    path.join(repositoryRoot, "dist", "rule-catalog", "delivery-test-"),
-  );
+  await fs.mkdir(publicationRoot, { recursive: true });
+  const root = await fs.mkdtemp(path.join(publicationRoot, "delivery-test-"));
   const channelRoot = path.join(root, "preview");
   const packages = await Promise.all([
     fixture("tariff-package.valid.json"),
@@ -453,36 +452,73 @@ async function writeSignedCliFixture() {
 }
 
 test("delivery CLI verifies a signed local publication without network access", async () => {
-  await fs.mkdir(path.join(repositoryRoot, "dist", "rule-catalog"), { recursive: true });
-  const fixtureRoot = await writeSignedCliFixture();
+  const publicationRoots = [
+    path.join(repositoryRoot, "dist", "rule-catalog"),
+    path.join(repositoryRoot, "artifacts", "rule-catalog-operator"),
+  ];
+  const fixtureRoots = [];
   try {
-    const result = await execFileAsync(
-      process.execPath,
-      [
-        "--import",
-        tsxImport,
-        deliveryCliPath,
-        "--manifest",
-        fixtureRoot.manifestPath,
-        "--trusted-public-key",
-        fixtureRoot.trustedKey,
-        "--dry-run",
-      ],
-      {
-        cwd: repositoryRoot,
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          SUPABASE_URL: "not-used-in-dry-run",
-          SUPABASE_SECRET_KEY: "must-not-be-needed-in-dry-run",
+    for (const publicationRoot of publicationRoots) {
+      const fixtureRoot = await writeSignedCliFixture(publicationRoot);
+      fixtureRoots.push(fixtureRoot);
+      const result = await execFileAsync(
+        process.execPath,
+        [
+          "--import",
+          tsxImport,
+          deliveryCliPath,
+          "--manifest",
+          fixtureRoot.manifestPath,
+          "--trusted-public-key",
+          fixtureRoot.trustedKey,
+          "--dry-run",
+        ],
+        {
+          cwd: repositoryRoot,
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            SUPABASE_URL: "not-used-in-dry-run",
+            SUPABASE_SECRET_KEY: "must-not-be-needed-in-dry-run",
+          },
         },
+      );
+      assert.match(result.stdout, /Validated local PREVIEW generation 1 for delivery/);
+      assert.match(result.stdout, /Network writes: none \(dry-run\)/);
+      assert.equal(result.stdout.includes("must-not-be-needed-in-dry-run"), false);
+      assert.equal(result.stderr, "");
+    }
+
+    await assert.rejects(
+      execFileAsync(
+        process.execPath,
+        [
+          "--import",
+          tsxImport,
+          deliveryCliPath,
+          "--manifest",
+          path.join(
+            repositoryRoot,
+            "artifacts",
+            "rule-catalog-operator-neighbor",
+            "preview",
+            "manifests",
+            "1.json",
+          ),
+          "--trusted-public-key",
+          fixtureRoots[0].trustedKey,
+          "--dry-run",
+        ],
+        { cwd: repositoryRoot, encoding: "utf8" },
+      ),
+      (error) => {
+        assert.match(error.stderr, /approved local rule-catalog roots/);
+        return true;
       },
     );
-    assert.match(result.stdout, /Validated local PREVIEW generation 1 for delivery/);
-    assert.match(result.stdout, /Network writes: none \(dry-run\)/);
-    assert.equal(result.stdout.includes("must-not-be-needed-in-dry-run"), false);
-    assert.equal(result.stderr, "");
   } finally {
-    await fs.rm(fixtureRoot.root, { recursive: true, force: true });
+    await Promise.all(
+      fixtureRoots.map((fixtureRoot) => fs.rm(fixtureRoot.root, { recursive: true, force: true })),
+    );
   }
 });

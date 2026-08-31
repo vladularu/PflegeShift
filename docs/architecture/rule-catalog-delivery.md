@@ -79,10 +79,13 @@ trust boundary accepts the exact emitted bytes.
 
 ## Storage layout and write order
 
-The local output mirrors the future Supabase Storage object layout:
+Publisher and delivery accept exactly two local roots. `dist/rule-catalog` remains the disposable
+low-level default. `artifacts/rule-catalog-operator` is the ignored, durable operator staging root;
+Expo exports may replace `dist` but do not replace this operator state. Similarly named sibling
+paths are rejected. Both roots use the same Supabase Storage object layout:
 
 ```text
-dist/rule-catalog/
+<approved-root>/
   preview/
     packages/<packageId>/<versionId>.json
     manifests/<generation>.json
@@ -128,8 +131,8 @@ generation no longer participates in continuity or rollback verification.
 ## WP4b Preview delivery
 
 WP4b adds a backend-only Supabase Storage adapter and deliberately remains separate from the app
-runtime. It accepts one already published local manifest below
-`dist/rule-catalog/.../preview/manifests/<generation>.json`, loads the package paths from that
+runtime. It accepts one already published local manifest below either approved root at
+`<approved-root>/.../preview/manifests/<generation>.json`, loads the package paths from that
 manifest, and verifies the signature, byte size, SHA-256, schema, semantic catalog contract, and
 engine compatibility again before any network request.
 

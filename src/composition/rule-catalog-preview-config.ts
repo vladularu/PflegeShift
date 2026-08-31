@@ -1,26 +1,9 @@
 import { channel as updateChannel } from "expo-updates";
 
+import { PREVIEW_RULE_CATALOG_TRUST } from "@/composition/rule-catalog-preview-trust";
+import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "@/rules/rule-catalog-engine-support";
 import type { RuleCatalogVerificationPolicy } from "@/rules/rule-catalog-verification";
 import { isRuleCatalogRuntimeCompatible } from "@/rules/rule-resolver";
-
-const PREVIEW_BASE_URL =
-  "https://okcxmmekwyuuiqthmydo.supabase.co/storage/v1/object/public/rule-catalog/preview";
-const PREVIEW_KEY_ID = "preview-2026";
-const PREVIEW_PUBLIC_KEY = Object.freeze([
-  23, 51, 245, 81, 88, 150, 83, 204, 65, 85, 65, 47, 145, 96, 44, 208, 182, 0, 112, 233, 156, 127,
-  221, 227, 56, 215, 81, 71, 154, 146, 246, 59,
-]);
-const PREVIEW_ROTATION_KEY_ID = "preview-2026-r2";
-const PREVIEW_ROTATION_PUBLIC_KEY = Object.freeze([
-  193, 247, 8, 29, 120, 239, 53, 58, 10, 15, 59, 154, 26, 48, 218, 192, 203, 148, 12, 50, 39, 145,
-  254, 254, 42, 217, 3, 200, 244, 244, 240, 17,
-]);
-const PREVIEW_R3_KEY_ID = "preview-2026-r3";
-const PREVIEW_R3_PUBLIC_KEY = Object.freeze([
-  192, 246, 25, 13, 196, 21, 140, 223, 56, 179, 155, 40, 135, 2, 163, 245, 53, 84, 97, 69, 203, 237,
-  144, 212, 14, 174, 87, 39, 209, 101, 224, 193,
-]);
-const SUPPORTED_ENGINE_CONTRACT_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 
 export const PREVIEW_RULE_CATALOG_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1_000;
 export const PREVIEW_RULE_CATALOG_FAILURE_RETRY_MS = 60 * 60 * 1_000;
@@ -38,15 +21,16 @@ export function createPreviewRuleCatalogConfig(
 ): PreviewRuleCatalogConfig {
   return Object.freeze({
     enabled: configuredChannel === "preview",
-    baseUrl: PREVIEW_BASE_URL,
+    baseUrl: PREVIEW_RULE_CATALOG_TRUST.baseUrl,
     verificationPolicy: Object.freeze({
-      expectedChannel: "PREVIEW",
-      supportedEngineContractVersions: new Set(SUPPORTED_ENGINE_CONTRACT_VERSIONS),
-      trustedPublicKeys: new Map([
-        [PREVIEW_KEY_ID, Uint8Array.from(PREVIEW_PUBLIC_KEY)],
-        [PREVIEW_ROTATION_KEY_ID, Uint8Array.from(PREVIEW_ROTATION_PUBLIC_KEY)],
-        [PREVIEW_R3_KEY_ID, Uint8Array.from(PREVIEW_R3_PUBLIC_KEY)],
-      ]),
+      expectedChannel: PREVIEW_RULE_CATALOG_TRUST.channel,
+      supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
+      trustedPublicKeys: new Map(
+        PREVIEW_RULE_CATALOG_TRUST.trustedPublicKeys.map(({ keyId, publicKey }) => [
+          keyId,
+          Uint8Array.from(publicKey),
+        ]),
+      ),
       acceptsCatalog: isRuleCatalogRuntimeCompatible,
     }),
     checkIntervalMilliseconds: PREVIEW_RULE_CATALOG_CHECK_INTERVAL_MS,

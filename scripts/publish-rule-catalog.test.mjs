@@ -159,6 +159,30 @@ test("publisher CLI dry-runs, writes in order, retries idempotently, and protect
       await fs.access(path.join(channelRoot, "packages", packageId, fileName));
     }
 
+    const operatorPublished = await runPublisher(workspace, [
+      "--output-dir",
+      "artifacts/rule-catalog-operator",
+    ]);
+    assert.match(operatorPublished.stdout, /Published PREVIEW generation 1/);
+    const operatorChannelRoot = path.join(
+      workspace,
+      "artifacts",
+      "rule-catalog-operator",
+      "preview",
+    );
+    assert.equal(
+      await fs.readFile(path.join(operatorChannelRoot, "current.json"), "utf8"),
+      await fs.readFile(path.join(operatorChannelRoot, "manifests", "1.json"), "utf8"),
+    );
+    await assert.rejects(
+      runPublisher(workspace, ["--output-dir", "artifacts/rule-catalog-operator-neighbor"]),
+      (error) => {
+        assert.match(error.stderr, /approved local rule-catalog roots/);
+        assert.equal(error.stderr.includes(signingKey), false);
+        return true;
+      },
+    );
+
     const retried = await runPublisher(workspace);
     assert.match(retried.stdout, /Result: idempotent retry/);
     assert.equal(retried.stdout.includes(signingKey), false);

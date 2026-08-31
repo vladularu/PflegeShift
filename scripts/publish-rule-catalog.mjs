@@ -16,10 +16,15 @@ import {
   verifyRuleCatalogArtifacts,
   verifyRuleManifest,
 } from "../src/rules/rule-catalog-verification.ts";
+import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "../src/rules/rule-catalog-engine-support.ts";
 import { validateRuleCatalogPublicationRequest } from "../src/rules/validation.ts";
+import { RULE_CATALOG_LOCAL_PUBLICATION_ROOTS } from "./rule-catalog-publication-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const workspaceRoot = path.resolve(process.cwd());
+const allowedPublicationRoots = RULE_CATALOG_LOCAL_PUBLICATION_ROOTS.map((relativeRoot) =>
+  path.resolve(workspaceRoot, ...relativeRoot.split("/")),
+);
 const maximumInputBytes = 524_288;
 const signingKeyEnvironmentName = "RULE_CATALOG_SIGNING_KEY_BASE64URL";
 
@@ -28,7 +33,7 @@ function usage() {
     "Usage: npm run rules:publish -- --request <rules/releases/*.json> [options]",
     "",
     "Options:",
-    "  --output-dir <dist/rule-catalog[/...]>  Local publication root",
+    "  --output-dir <approved local root>      dist/rule-catalog or artifacts/rule-catalog-operator",
     "  --previous-manifest <path>              Verified current manifest override",
     "  --rollback-manifest <path>              Verified rollback target manifest",
     "  --trusted-public-key <keyId=base64url>  Previous signing key; repeatable",
@@ -103,10 +108,9 @@ function resolveRequestPath(requestPath) {
 }
 
 function resolveOutputDirectory(outputDirectory) {
-  const allowedRoot = path.join(workspaceRoot, "dist", "rule-catalog");
   const resolved = resolveInsideWorkspace(outputDirectory, "The output directory");
-  if (!isInside(allowedRoot, resolved)) {
-    throw new Error("The output directory must stay below dist/rule-catalog/.");
+  if (!allowedPublicationRoots.some((allowedRoot) => isInside(allowedRoot, resolved))) {
+    throw new Error("The output directory must stay below the approved local rule-catalog roots.");
   }
   return resolved;
 }
@@ -236,7 +240,7 @@ async function verifyExistingManifest(manifestJson, request, trustedKeys, verifi
     manifestJson,
     {
       expectedChannel: request.channel,
-      supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6, 7]),
+      supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
       trustedPublicKeys: trustedKeys,
     },
     verifier,
@@ -414,7 +418,7 @@ async function main() {
       { manifestJson: publication.manifestJson, packageJson: publication.packageJson },
       {
         expectedChannel: request.channel,
-        supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6, 7]),
+        supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
         trustedPublicKeys: new Map([[request.signing.keyId, nodeCryptography.publicKey]]),
       },
       nodeCryptography.verifier,
