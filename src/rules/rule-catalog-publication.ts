@@ -69,6 +69,7 @@ export type RuleCatalogPublicationErrorCode =
   | "MISSING_PREVIOUS_MANIFEST"
   | "GENERATION_CONFLICT"
   | "PUBLICATION_TIME_CONFLICT"
+  | "TRACK_COVERAGE_REGRESSION"
   | "ROLLBACK_TARGET_MISMATCH";
 
 export class RuleCatalogPublicationError extends Error {
@@ -365,6 +366,41 @@ function assertGenerationTransition(
   return false;
 }
 
+function trackIdentity(track: Track): string {
+  return `${track.kind}\u0000${track.packageId}`;
+}
+
+function formatCoverage(track: Track): string {
+  return `${track.coverageFrom} through ${track.coverageTo ?? "open-ended"}`;
+}
+
+function assertTrackCoverageContinuity(
+  manifest: RuleManifest,
+  previousManifest: RuleManifest | null,
+): void {
+  if (previousManifest === null || manifest.rollbackOfGeneration !== null) return;
+
+  const nextTracks = new Map(manifest.tracks.map((track) => [trackIdentity(track), track]));
+  for (const previousTrack of previousManifest.tracks) {
+    const nextTrack = nextTracks.get(trackIdentity(previousTrack));
+    const startsLater =
+      nextTrack === undefined || nextTrack.coverageFrom > previousTrack.coverageFrom;
+    const endsEarlier =
+      nextTrack === undefined ||
+      (previousTrack.coverageTo === null
+        ? nextTrack.coverageTo !== null
+        : nextTrack.coverageTo !== null && nextTrack.coverageTo < previousTrack.coverageTo);
+
+    if (startsLater || endsEarlier) {
+      const nextCoverage = nextTrack === undefined ? "missing" : formatCoverage(nextTrack);
+      throw new RuleCatalogPublicationError(
+        "TRACK_COVERAGE_REGRESSION",
+        `Normal generation ${manifest.generation} reduces ${previousTrack.kind}:${previousTrack.packageId} coverage from ${formatCoverage(previousTrack)} to ${nextCoverage}. Retain the published coverage or create a verified rollback.`,
+      );
+    }
+  }
+}
+
 function assertRollbackTarget(manifest: RuleManifest, rollbackManifest: RuleManifest | null): void {
   if (manifest.rollbackOfGeneration === null) {
     if (rollbackManifest !== null) {
@@ -482,6 +518,7 @@ export async function createRuleCatalogPublication(
     manifest,
     input.verifiedPreviousManifest ?? null,
   );
+  assertTrackCoverageContinuity(manifest, input.verifiedPreviousManifest ?? null);
   assertRollbackTarget(manifest, input.verifiedRollbackManifest ?? null);
 
   const packageArtifacts = publishedArtifacts.map((artifact): RuleCatalogPublicationArtifact => ({

@@ -78,7 +78,10 @@ derives canonical `PUBLISHED` package bytes, hashes, sizes, complete tracks, and
 manifest generation, then signs with an environment-only Ed25519 seed. The exact output is
 self-checked through the same verifier used by the app. Immutable packages and the versioned
 manifest are staged before `current.json`; same-generation changes and immutable-path changes
-fail closed.
+fail closed. A normal following generation must also retain every previously published track and
+may only preserve or extend its date coverage. Removing a track, moving its start forward, or
+moving its end backward fails with `TRACK_COVERAGE_REGRESSION`. Only an explicit rollback that
+exactly reproduces its verified target generation may restore narrower historical coverage.
 
 The complete source, generation, rollback, filesystem layout, and operator contract is defined
 in `docs/architecture/rule-catalog-delivery.md`. WP4a still performs no network request, creates
@@ -112,6 +115,11 @@ when the signed generation differs from the active on-device generation.
 The Preview Testlabor can explicitly claim one immediate check through the same signature
 verification, atomic activation, and mounted-runtime reconciliation path. This does not enable
 remote catalog delivery in production.
+
+Preview Generation 3 repairs the holiday-track discontinuity introduced by Generation 2. Its
+source set retains the finite 2026 package and adds the open-ended recurring package beginning on
+2027-01-01. The resulting single `de-holidays` track therefore covers 2026-01-01 through an
+open-ended future without a gap; tariff and legal package selections remain unchanged.
 
 The client accepts HTTP 200 from the exact requested HTTPS URL, exact `application/json`, valid
 UTF-8, and no more than 524,288 bytes per artifact. It verifies `current.json` before using any

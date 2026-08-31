@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import holidayCandidateValue from "../../rules/packages/reviewed/de-holidays/2026.json";
 import generationOneRequestValue from "../../rules/releases/preview-generation-1.json";
+import generationThreeRequestValue from "../../rules/releases/preview-generation-3.json";
 import type { RuleHolidayPackage } from "./contracts.generated";
 import { validateRulePackage } from "./validation";
 
@@ -186,5 +187,20 @@ describe("open-ended holiday catalog contract", () => {
     expect(generationOneRequestValue.packageSources).not.toContain(
       "rules/packages/reviewed/de-holidays/2027.json",
     );
+  });
+
+  it("defines Generation 3 as one continuous holiday track from 2026 onward", () => {
+    expect(generationThreeRequestValue).toMatchObject({
+      generation: 3,
+      channel: "PREVIEW",
+      rollbackOfGeneration: null,
+      signing: { keyId: "preview-2026-r2" },
+    });
+    expect(generationThreeRequestValue.packageSources).toEqual([
+      "rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json",
+      "rules/packages/reviewed/de-arbzg-care/2026-01.json",
+      "rules/packages/reviewed/de-holidays/2026.json",
+      "rules/packages/reviewed/de-holidays/2027.json",
+    ]);
   });
 });

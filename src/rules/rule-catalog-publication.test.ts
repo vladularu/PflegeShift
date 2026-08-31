@@ -7,6 +7,10 @@ import { describe, expect, it } from "vitest";
 import holidayPackageFixture from "../../rules/examples/holiday-package.valid.json";
 import legalPackageFixture from "../../rules/examples/legal-package.valid.json";
 import tariffPackageFixture from "../../rules/examples/tariff-package.valid.json";
+import historicalHolidayPackage from "../../rules/packages/reviewed/de-holidays/2026.json";
+import futureHolidayPackage from "../../rules/packages/reviewed/de-holidays/2027.json";
+import generationTwoRequest from "../../rules/releases/preview-generation-2.json";
+import generationThreeRequest from "../../rules/releases/preview-generation-3.json";
 import type { RuleCatalogPublicationRequest, RulePackage } from "./contracts.generated";
 import {
   createRuleCatalogPublication,
@@ -290,6 +294,126 @@ describe("rule catalog publication", () => {
       }),
       "MISSING_PREVIOUS_MANIFEST",
     );
+  });
+
+  it("rejects a normal generation that drops previously published track coverage", async () => {
+    const historicalSources = [
+      reviewedSource(tariffPackageFixture),
+      reviewedSource(legalPackageFixture),
+      reviewedSource(historicalHolidayPackage),
+    ];
+    const first = await createRuleCatalogPublication({
+      request: request(historicalSources),
+      sources: historicalSources,
+      signer: testSigner,
+    });
+    const futureOnlySources = [
+      reviewedSource(tariffPackageFixture),
+      reviewedSource(legalPackageFixture),
+      reviewedSource(futureHolidayPackage),
+    ];
+
+    await expectPublicationError(
+      createRuleCatalogPublication({
+        request: request(futureOnlySources, {
+          generation: 2,
+          publishedAt: "2026-08-28T13:00:00Z",
+        }),
+        sources: futureOnlySources,
+        signer: testSigner,
+        verifiedPreviousManifest: first.manifest,
+      }),
+      "TRACK_COVERAGE_REGRESSION",
+    );
+  });
+
+  it("publishes Generation 3 as a continuous extension of the verified Generation 2", async () => {
+    const futureOnlySources = [
+      reviewedSource(tariffPackageFixture),
+      reviewedSource(legalPackageFixture),
+      reviewedSource(futureHolidayPackage),
+    ];
+    const first = await createRuleCatalogPublication({
+      request: request(futureOnlySources),
+      sources: futureOnlySources,
+      signer: testSigner,
+    });
+    const second = await createRuleCatalogPublication({
+      request: generationTwoRequest,
+      sources: futureOnlySources,
+      signer: testSigner,
+      verifiedPreviousManifest: first.manifest,
+    });
+    const continuousSources = [
+      reviewedSource(tariffPackageFixture),
+      reviewedSource(legalPackageFixture),
+      reviewedSource(historicalHolidayPackage),
+      reviewedSource(futureHolidayPackage),
+    ];
+
+    const third = await createRuleCatalogPublication({
+      request: generationThreeRequest,
+      sources: continuousSources,
+      signer: testSigner,
+      verifiedPreviousManifest: second.manifest,
+    });
+
+    expect(third.manifest.generation).toBe(3);
+    expect(third.manifest.tracks).toContainEqual({
+      packageId: "de-holidays",
+      kind: "HOLIDAY",
+      coverageFrom: "2026-01-01",
+      coverageTo: null,
+      coverage: "COMPLETE",
+    });
+    expect(
+      third.manifest.packages
+        .filter((descriptor) => descriptor.packageId === "de-holidays")
+        .map((descriptor) => descriptor.versionId),
+    ).toEqual(["2026", "2027"]);
+  });
+
+  it("allows an explicit verified rollback to restore narrower historical coverage", async () => {
+    const historicalSources = [
+      reviewedSource(tariffPackageFixture),
+      reviewedSource(legalPackageFixture),
+      reviewedSource(historicalHolidayPackage),
+    ];
+    const first = await createRuleCatalogPublication({
+      request: request(historicalSources),
+      sources: historicalSources,
+      signer: testSigner,
+    });
+    const continuousSources = [
+      reviewedSource(tariffPackageFixture),
+      reviewedSource(legalPackageFixture),
+      reviewedSource(historicalHolidayPackage),
+      reviewedSource(futureHolidayPackage),
+    ];
+    const second = await createRuleCatalogPublication({
+      request: request(continuousSources, {
+        generation: 2,
+        publishedAt: "2026-08-28T13:00:00Z",
+      }),
+      sources: continuousSources,
+      signer: testSigner,
+      verifiedPreviousManifest: first.manifest,
+    });
+
+    const rollback = await createRuleCatalogPublication({
+      request: request(historicalSources, {
+        generation: 3,
+        publishedAt: "2026-08-28T14:00:00Z",
+        rollbackOfGeneration: 1,
+      }),
+      sources: historicalSources,
+      signer: testSigner,
+      verifiedPreviousManifest: second.manifest,
+      verifiedRollbackManifest: first.manifest,
+    });
+
+    expect(rollback.manifest.rollbackOfGeneration).toBe(1);
+    expect(rollback.manifest.tracks).toEqual(first.manifest.tracks);
   });
 
   it("rejects publication requests that escape the reviewed package namespace", async () => {
