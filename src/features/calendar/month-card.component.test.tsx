@@ -198,6 +198,26 @@ describe("MonthCard", () => {
     expect(screen.getByTestId("calendar-day-current-2027-01-01")).toBeTruthy();
   });
 
+  it("reuses unchanged day cells across parent accessibility rerenders", async () => {
+    const entriesByDate = new Map<string, readonly ShiftEntry[]>();
+    const onSelectDate = jest.fn();
+    const sharedProps = {
+      bottomReserve: 80,
+      entriesByDate,
+      month: "2026-08",
+      onSelectDate,
+      pageHeight: 700,
+      profile: PROFILE,
+      selectedDate: null,
+    } as const;
+    const screen = await render(<MonthCard {...sharedProps} accessibilityVisible />);
+
+    await screen.rerender(<MonthCard {...sharedProps} accessibilityVisible={false} />);
+    await screen.rerender(<MonthCard {...sharedProps} accessibilityVisible={false} />);
+
+    expect(screen.toJSON()).toBeTruthy();
+  });
+
   it("places the ISO week number inside the Monday cell instead of a separate grid column", async () => {
     const screen = await render(
       <MonthCard
