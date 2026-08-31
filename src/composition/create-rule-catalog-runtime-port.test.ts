@@ -149,7 +149,7 @@ describe("createRuleCatalogRuntimePort", () => {
     );
   });
 
-  it("pins the public Generation-1 key and contracts only in PREVIEW configuration", () => {
+  it("pins the complete public key rotation ring only in PREVIEW configuration", () => {
     const preview = createPreviewRuleCatalogConfig("preview");
     const production = createPreviewRuleCatalogConfig("production");
 
@@ -174,9 +174,16 @@ describe("createRuleCatalogRuntimePort", () => {
       193, 247, 8, 29, 120, 239, 53, 58, 10, 15, 59, 154, 26, 48, 218, 192, 203, 148, 12, 50, 39,
       145, 254, 254, 42, 217, 3, 200, 244, 244, 240, 17,
     ]);
+    expect(
+      Array.from(preview.verificationPolicy.trustedPublicKeys.get("preview-2026-r3") ?? []),
+    ).toEqual([
+      192, 246, 25, 13, 196, 21, 140, 223, 56, 179, 155, 40, 135, 2, 163, 245, 53, 84, 97, 69, 203,
+      237, 144, 212, 14, 174, 87, 39, 209, 101, 224, 193,
+    ]);
     expect([...preview.verificationPolicy.trustedPublicKeys.keys()]).toEqual([
       "preview-2026",
       "preview-2026-r2",
+      "preview-2026-r3",
     ]);
   });
 });
