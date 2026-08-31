@@ -6,6 +6,8 @@ import {
   createPreviewRuleCatalogConfig,
   type PreviewRuleCatalogConfig,
 } from "@/composition/rule-catalog-preview-config";
+import { PREVIEW_RULE_CATALOG_TRUST } from "@/composition/rule-catalog-preview-trust";
+import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "@/rules/rule-catalog-engine-support";
 
 const catalogMocks = vi.hoisted(() => ({
   loadActiveRuleCatalog: vi.fn(),
@@ -37,7 +39,7 @@ function config(enabled: boolean): PreviewRuleCatalogConfig {
     baseUrl: "https://example.supabase.co/rules/preview",
     verificationPolicy: {
       expectedChannel: "PREVIEW",
-      supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6, 7]),
+      supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
       trustedPublicKeys: new Map([["preview-2026", new Uint8Array(32)]]),
     },
     checkIntervalMilliseconds: 86_400_000,
@@ -153,14 +155,15 @@ describe("createRuleCatalogRuntimePort", () => {
     const preview = createPreviewRuleCatalogConfig("preview");
     const production = createPreviewRuleCatalogConfig("production");
 
+    expect(Object.isFrozen(PREVIEW_RULE_CATALOG_TRUST)).toBe(true);
+    expect(Object.isFrozen(PREVIEW_RULE_CATALOG_TRUST.trustedPublicKeys)).toBe(true);
+    expect(Object.isFrozen(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS)).toBe(true);
     expect(preview.enabled).toBe(true);
     expect(production.enabled).toBe(false);
     expect(createPreviewRuleCatalogConfig().enabled).toBe(false);
-    expect(preview.baseUrl).toBe(
-      "https://okcxmmekwyuuiqthmydo.supabase.co/storage/v1/object/public/rule-catalog/preview",
-    );
+    expect(preview.baseUrl).toBe(PREVIEW_RULE_CATALOG_TRUST.baseUrl);
     expect([...preview.verificationPolicy.supportedEngineContractVersions]).toEqual([
-      1, 2, 3, 4, 5, 6, 7,
+      ...RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS,
     ]);
     expect(
       Array.from(preview.verificationPolicy.trustedPublicKeys.get("preview-2026") ?? []),
@@ -185,5 +188,14 @@ describe("createRuleCatalogRuntimePort", () => {
       "preview-2026-r2",
       "preview-2026-r3",
     ]);
+    expect([...preview.verificationPolicy.trustedPublicKeys.keys()]).toEqual(
+      PREVIEW_RULE_CATALOG_TRUST.trustedPublicKeys.map(({ keyId }) => keyId),
+    );
+    for (const { keyId, publicKey } of PREVIEW_RULE_CATALOG_TRUST.trustedPublicKeys) {
+      expect(Array.from(preview.verificationPolicy.trustedPublicKeys.get(keyId) ?? [])).toEqual(
+        publicKey,
+      );
+      expect(Object.isFrozen(publicKey)).toBe(true);
+    }
   });
 });

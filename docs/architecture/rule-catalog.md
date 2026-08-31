@@ -105,6 +105,10 @@ public Ed25519 keys `preview-2026` and `preview-2026-r2` during the controlled G
 rotation. Before Generation 3, the replacement public key `preview-2026-r3` is added to the same
 Preview-only trust ring and distributed to installed Preview clients before any manifest uses it.
 None of these public values grants write access, and no Supabase secret enters the app.
+`src/composition/rule-catalog-preview-trust.ts` is the platform-neutral source for that public URL
+and key ring. Supported engine versions live separately in
+`src/rules/rule-catalog-engine-support.ts`, so app composition and administrative tooling cannot
+drift independently.
 
 Startup remains local-first. The provider selects the stored SQLCipher catalog or the embedded
 legacy resolver before starting synchronization in the background. A successful check suppresses

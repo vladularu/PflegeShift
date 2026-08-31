@@ -10,21 +10,25 @@ import {
   verifyRuleCatalogArtifacts,
   verifyRuleManifest,
 } from "../src/rules/rule-catalog-verification.ts";
+import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "../src/rules/rule-catalog-engine-support.ts";
 import {
   createSupabaseRuleCatalogStorage,
   deliverPreviewRuleCatalog,
   RuleCatalogDeliveryError,
   ruleCatalogDeliveryConstants,
 } from "./supabase-rule-catalog-storage.mjs";
+import { RULE_CATALOG_LOCAL_PUBLICATION_ROOTS } from "./rule-catalog-publication-paths.mjs";
 
 const workspaceRoot = path.resolve(process.cwd());
-const allowedPublicationRoot = path.join(workspaceRoot, "dist", "rule-catalog");
+const allowedPublicationRoots = RULE_CATALOG_LOCAL_PUBLICATION_ROOTS.map((relativeRoot) =>
+  path.resolve(workspaceRoot, ...relativeRoot.split("/")),
+);
 const secretKeyEnvironmentName = "SUPABASE_SECRET_KEY";
 const supabaseUrlEnvironmentName = "SUPABASE_URL";
 
 function usage() {
   return [
-    "Usage: npm run rules:deliver -- --manifest <dist/rule-catalog/.../preview/manifests/N.json> [options]",
+    "Usage: npm run rules:deliver -- --manifest <approved-root/.../preview/manifests/N.json> [options]",
     "",
     "Options:",
     "  --trusted-public-key <keyId=base64url>  Trusted PREVIEW public key; repeatable",
@@ -87,8 +91,8 @@ function repoRelativePath(absolutePath) {
 
 function resolveManifestPath(inputPath) {
   const resolved = path.resolve(workspaceRoot, inputPath);
-  if (!isInside(allowedPublicationRoot, resolved)) {
-    throw new Error("The manifest must stay below dist/rule-catalog/.");
+  if (!allowedPublicationRoots.some((allowedRoot) => isInside(allowedRoot, resolved))) {
+    throw new Error("The manifest must stay below the approved local rule-catalog roots.");
   }
   if (path.basename(path.dirname(resolved)) !== "manifests") {
     throw new Error("The manifest must be inside a manifests directory.");
@@ -204,7 +208,7 @@ async function main() {
   const cryptography = nodeCryptography();
   const verificationPolicy = Object.freeze({
     expectedChannel: "PREVIEW",
-    supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6, 7]),
+    supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
     trustedPublicKeys,
   });
   const manifest = await verifyRuleManifest(manifestJson, verificationPolicy, cryptography);

@@ -79,10 +79,13 @@ trust boundary accepts the exact emitted bytes.
 
 ## Storage layout and write order
 
-The local output mirrors the future Supabase Storage object layout:
+Publisher and delivery accept exactly two local roots. `dist/rule-catalog` remains the disposable
+low-level default. `artifacts/rule-catalog-operator` is the ignored, durable operator staging root;
+Expo exports may replace `dist` but do not replace this operator state. Similarly named sibling
+paths are rejected. Both roots use the same Supabase Storage object layout:
 
 ```text
-dist/rule-catalog/
+<approved-root>/
   preview/
     packages/<packageId>/<versionId>.json
     manifests/<generation>.json
@@ -99,7 +102,7 @@ different payload at the same path is a hard conflict. `current.json` is replace
 immutable writes succeed. WP4b will map the same ordered artifact list and cache policy to the
 Supabase Storage API.
 
-## Operator command
+## Low-level publisher command
 
 The request and reviewed sources must be committed before either command is run:
 
@@ -128,8 +131,8 @@ generation no longer participates in continuity or rollback verification.
 ## WP4b Preview delivery
 
 WP4b adds a backend-only Supabase Storage adapter and deliberately remains separate from the app
-runtime. It accepts one already published local manifest below
-`dist/rule-catalog/.../preview/manifests/<generation>.json`, loads the package paths from that
+runtime. It accepts one already published local manifest below either approved root at
+`<approved-root>/.../preview/manifests/<generation>.json`, loads the package paths from that
 manifest, and verifies the signature, byte size, SHA-256, schema, semantic catalog contract, and
 engine compatibility again before any network request.
 
@@ -176,7 +179,7 @@ Immutable objects use `public, max-age=31536000, immutable`. The stable pointer 
 `public, max-age=0, must-revalidate`. This keeps package and versioned-manifest URLs cacheable
 without allowing a mutable package path.
 
-### Operator commands
+### Low-level delivery commands
 
 Verify the complete signed local publication without contacting Supabase:
 
@@ -198,3 +201,56 @@ Remove-Item Env:SUPABASE_URL
 Omit `--create-bucket` after provisioning. A real remote delivery remains a separately approved
 publication action. WP4b does not configure a production bucket or key, download into the app,
 schedule update checks, or activate a catalog in SQLCipher.
+
+## Versioned Preview operator (WP5g-2)
+
+The committed operator separates preparation, activation, and public verification. Its public URL,
+trusted Preview keys, engine-contract versions, and stable local root come from the same
+version-controlled sources as the app, publisher, and delivery adapter. Generation-specific scripts
+below `dist` are not operational inputs and may be deleted by Expo exports.
+
+### 1. Prepare: public reads and local writes only
+
+Prepare downloads public `current.json` without cache, writes that predecessor atomically below
+`artifacts/rule-catalog-operator/state`, signs into the durable operator root, runs the publisher
+first as a dry-run and then locally, and finishes with a delivery dry-run. It cannot write to
+Supabase and never accepts a Supabase secret.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/prepare-preview-rule-catalog.ps1 -Request rules/releases/preview-generation-<N>.json
+```
+
+The wrapper first looks for the current user's DPAPI-protected seed at
+`%LOCALAPPDATA%\PflegeShift\secrets\rule-catalog-<keyId>.dpapi`. If it is absent, the wrapper asks
+for the 43-character base64url seed through a masked prompt. The seed exists only in the child
+process environment and is removed in every success or failure path.
+
+### 2. Activate: the only remote write
+
+Activation requires the prepared generation number. It repeats the complete local delivery
+preflight before prompting for the dedicated `rule_catalog_preview` `sb_secret_...` key. The
+Supabase project URL is derived from the central public Preview URL; it is not entered manually.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/activate-preview-rule-catalog.ps1 -Generation <N>
+```
+
+`-CreateBucket` is reserved for initial provisioning. A successful Delivery is never described as
+aborted merely because the public CDN has not acknowledged it yet. In that case the command reports
+`PUBLIC_VERIFICATION_PENDING`, performs no automatic rollback, and directs the operator to the
+separate read-only Verify step.
+
+### 3. Verify: public reads only
+
+Verify requires no secret. It downloads `current.json`, the immutable generation manifest, and all
+referenced packages with cache bypass. It requires the two public manifests and the prepared local
+manifest to be byte-identical, then verifies the signature, package identities, byte sizes, SHA-256
+hashes, schemas, semantics, and engine compatibility.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/verify-preview-rule-catalog.ps1 -Generation <N>
+```
+
+The underlying npm commands are available for automation as `rules:preview:prepare`,
+`rules:preview:activate`, and `rules:preview:verify`. Their secret inputs remain environment-only;
+the PowerShell wrappers are the normal interactive entry points.
