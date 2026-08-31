@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   assertDevToolsAvailable,
@@ -6,19 +6,24 @@ import {
   shouldLoadDevToolState,
 } from "@/infrastructure/dev-tools-policy";
 
+vi.mock("expo-updates", () => ({ channel: null }));
+
 describe("developer tools build policy", () => {
-  it("allows only explicit development and test builds", () => {
-    expect(isDevToolsBuild("development", undefined)).toBe(true);
-    expect(isDevToolsBuild("test", undefined)).toBe(true);
-    expect(isDevToolsBuild("production", undefined)).toBe(false);
-    expect(isDevToolsBuild(undefined, undefined)).toBe(false);
-    expect(isDevToolsBuild("preview", "0")).toBe(false);
-    expect(isDevToolsBuild("production", "1")).toBe(true);
+  it("allows development, test, and preview-channel builds", () => {
+    expect(isDevToolsBuild("development", null)).toBe(true);
+    expect(isDevToolsBuild("test", null)).toBe(true);
+    expect(isDevToolsBuild("production", "preview")).toBe(true);
+    expect(isDevToolsBuild("production", "production")).toBe(false);
+    expect(isDevToolsBuild("production", "e2e-test")).toBe(false);
+    expect(isDevToolsBuild("production", null)).toBe(false);
+    expect(isDevToolsBuild(undefined, null)).toBe(false);
   });
 
-  it("fails closed outside development and tests", () => {
-    expect(() => assertDevToolsAvailable("production", "0")).toThrow("Entwicklungs-Builds");
-    expect(() => assertDevToolsAvailable("preview", undefined)).toThrow("Entwicklungs-Builds");
+  it("fails closed outside development, tests, and preview", () => {
+    expect(() => assertDevToolsAvailable("production", "preview")).not.toThrow();
+    expect(() => assertDevToolsAvailable("production", "production")).toThrow("Preview-Builds");
+    expect(() => assertDevToolsAvailable("production", "e2e-test")).toThrow("Preview-Builds");
+    expect(() => assertDevToolsAvailable("production", null)).toThrow("Preview-Builds");
   });
 
   it("never loads developer database state in production", () => {

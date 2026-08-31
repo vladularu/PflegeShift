@@ -5,6 +5,10 @@ import {
   selectAnnualReportInputs,
   type AnnualReportInputs,
 } from "@/features/analysis/annual-report-inputs";
+import {
+  captureRuleComputation,
+  type RuleComputationResult,
+} from "@/features/analysis/rule-computation";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 export function useAnnualReportInputs(
@@ -12,15 +16,23 @@ export function useAnnualReportInputs(
   entries: readonly CalendarEntry[],
   tariffDecisions: readonly MonthlyTariffDecision[],
   ruleResolver: RuleResolver = bundledRuleResolver,
-): AnnualReportInputs {
+  enabled = true,
+  retryRevision = 0,
+): RuleComputationResult<AnnualReportInputs> | null {
   const [committed, setCommitted] = useState<AnnualReportInputs | null>(null);
-  const selected = useMemo(
-    () => selectAnnualReportInputs(committed, year, entries, tariffDecisions, ruleResolver),
-    [committed, entries, ruleResolver, tariffDecisions, year],
-  );
+  const selected = useMemo(() => {
+    void retryRevision;
+    return enabled
+      ? captureRuleComputation(() =>
+          selectAnnualReportInputs(committed, year, entries, tariffDecisions, ruleResolver),
+        )
+      : null;
+  }, [committed, enabled, entries, retryRevision, ruleResolver, tariffDecisions, year]);
 
   useEffect(() => {
-    setCommitted((current) => (current === selected ? current : selected));
+    if (selected?.ok) {
+      setCommitted((current) => (current === selected.value ? current : selected.value));
+    }
   }, [selected]);
 
   return selected;

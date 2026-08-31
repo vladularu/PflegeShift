@@ -1,0 +1,533 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 7,
+  "packageId": "de-holidays",
+  "versionId": "2027",
+  "kind": "HOLIDAY",
+  "label": "Gesetzliche Feiertage Deutschland ab 2027",
+  "status": "REVIEWED",
+  "validFrom": "2027-01-01",
+  "validTo": null,
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "de-stvo-30-2026",
+      "title": "Straßenverkehrs-Ordnung (StVO)",
+      "url": "https://www.gesetze-im-internet.de/stvo_2013/StVO.pdf",
+      "documentDate": "2026-08-28",
+      "section": "§ 30 Abs. 4; bundesweite Feiertage und Länderzuordnung",
+      "sha256": "0173e104e503f6abfdd5b081aa6b0bb5ea816ce1c1613f50f3dfecdf9ec68559"
+    },
+    {
+      "id": "de-bw-holidays-2026",
+      "title": "Innenministerium Baden-Württemberg: Feiertage",
+      "url": "https://im.baden-wuerttemberg.de/de/service/feiertage/",
+      "documentDate": "2026-08-28",
+      "section": "Gesetzliche Feiertage; Erscheinungsfest am 6. Januar",
+      "sha256": "677536a4ced557bdb834313754483d7843c9030b84af1547ee2083b678f30ce6"
+    },
+    {
+      "id": "de-by-holidays-2026",
+      "title": "Bayern.Recht – Art. 1 Feiertagsgesetz (FTG)",
+      "url": "https://www.gesetze-bayern.de/Content/Document/BayFTG-1",
+      "documentDate": "2013-08-01",
+      "section": "Art. 1; UTF-8/LF-Review-Snapshot rules/sources/de-by-ftg-art-1-2026.txt",
+      "sha256": "f2f3399db3e6b45da553406a9b9ad7cc37ee12fb9fe3901cf4e49ad97ac0561a"
+    },
+    {
+      "id": "de-be-holidays-2026",
+      "title": "Senatsverwaltung Berlin: Sonn- und Feiertagsrecht",
+      "url": "https://www.berlin.de/sen/inneres/buerger-und-staat/verfassungs-und-verwaltungsrecht/artikel.1435639.php",
+      "documentDate": "2026-08-28",
+      "section": "Gesetzliche Feiertage in Berlin; Frauentag am 8. März",
+      "sha256": "c5bf1a5a6643cd2ff5fee9fcc2d1459d8d85a4c8cfd2c669607d28f7c4865252"
+    },
+    {
+      "id": "de-bb-holidays-2026",
+      "title": "Brandenburgisches Feiertagsgesetz (FTG)",
+      "url": "https://bravors.brandenburg.de/gesetze/ftg_2015",
+      "documentDate": "2015-04-30",
+      "section": "§ 2 Abs. 1; Ostersonntag und Pfingstsonntag",
+      "sha256": "b57d55da25053188717a6c5f7f9a985b34b1e35f6213c31cea2c0f342aee0c3e"
+    },
+    {
+      "id": "de-mv-womens-day-2022",
+      "title": "Viertes Gesetz zur Änderung des Feiertagsgesetzes Mecklenburg-Vorpommern",
+      "url": "https://www.regierung-mv.de/static/Regierungsportal/Justizministerium/Inhalte/Rechtliches/GVOBI.M-V/GVOBl.%20Nr.%2031%20v.%2012.7.2022.pdf",
+      "documentDate": "2022-07-12",
+      "section": "Art. 1 Nr. 1; Frauentag am 8. März",
+      "sha256": "f31453b9c7515cfbc73cf840d146471da684875f2e605c10c794194e0ec763c3"
+    },
+    {
+      "id": "de-sl-sfg-2-2026",
+      "title": "Bürgerservice Rechtsinformation Saarland – § 2 SFG",
+      "url": "https://recht.saarland.de/bssl/document/jlr-NNLSL0000A2D6NN00000000007",
+      "documentDate": "2010-11-18",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-sl-sfg-2-2026.txt",
+      "sha256": "0dd5d25001588bcc86b1123ef6fb9bde085f58c2723f352e0fd7f5c1765f2bde"
+    },
+    {
+      "id": "de-sn-holidays-2026",
+      "title": "REVOSax – § 1 Sächsisches Sonn- und Feiertagsgesetz (SächsSFG)",
+      "url": "https://www.revosax.sachsen.de/vorschrift/3997-SaechsSFG",
+      "documentDate": "2025-04-23",
+      "section": "§ 1; UTF-8/LF-Review-Snapshot rules/sources/de-sn-saechssfg-1-2026.txt",
+      "sha256": "96ea9cccf5a6e0e761fe056f317f0124e0f25ed362ccdfcaf76c1ef0077e3d7e"
+    },
+    {
+      "id": "de-st-holidays-2026",
+      "title": "Statistisches Landesamt Sachsen-Anhalt: Arbeitstage und Feiertage 2026",
+      "url": "https://statistik.sachsen-anhalt.de/news/news-details/zahl-der-woche-253",
+      "documentDate": "2026-01-08",
+      "section": "Heilige Drei Könige und Reformationstag als gesetzliche Feiertage",
+      "sha256": "67011f220af0247ef662ece7f2d98502732e79c1b738272b7fc9e22ffdb23f01"
+    },
+    {
+      "id": "de-th-holidays-2026",
+      "title": "Landesrecht Thüringen – § 2 Thüringer Feier- und Gedenktagsgesetz",
+      "url": "https://landesrecht.thueringen.de/perma?d=jlr-NNLTH00003E03NN00000000006",
+      "documentDate": "2019-03-26",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-th-thuerfgtg-2-2026.txt",
+      "sha256": "9dc073ccf167b8f748ee42cad546c53100b172166139a612e2d5b25a5b88ee36"
+    },
+    {
+      "id": "de-hb-feiertg-2-2026",
+      "title": "Transparenzportal Bremen – § 2 Feiertagsgesetz",
+      "url": "https://www.transparenz.bremen.de/metainformationen/gesetz-ueber-die-sonn-gedenk-und-feiertage-vom-12-november-1954-296390?template=20_gp_ifg_meta_detail_d",
+      "documentDate": "2025-09-02",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-hb-feiertg-2-2026.txt",
+      "sha256": "281c937f92181a7eb4cc245d2c1a3e5639b88336a8409c2ae14d66c8042bcba6"
+    },
+    {
+      "id": "de-hh-feiertg-1-2026",
+      "title": "Landesrecht Hamburg – § 1 Feiertagsgesetz",
+      "url": "https://www.landesrecht-hamburg.de/bsha/document/jlr-FeiertGHArahmen",
+      "documentDate": "2021-02-17",
+      "section": "§ 1; UTF-8/LF-Review-Snapshot rules/sources/de-hh-feiertg-1-2026.txt",
+      "sha256": "161f840654299c2b0d7de00ad074fc2c21317b58852764cd8e6f8e08d045f93f"
+    },
+    {
+      "id": "de-he-holidays-2026",
+      "title": "Hessen Innen – gesetzliche Feiertage 2026",
+      "url": "https://innen.hessen.de/Buerger-Staat/Feiertage",
+      "documentDate": "2026-08-29",
+      "section": "Feiertage in Hessen im Jahr 2026; UTF-8/LF-Review-Snapshot rules/sources/de-he-holidays-2026.txt",
+      "sha256": "58dbd23b04cd4e1b08b9f0c3f2e8d2edfbc4ba30a9ba3d75f1e3d7ecbb668077"
+    },
+    {
+      "id": "de-mv-ftg-2-2026",
+      "title": "Landesrecht Mecklenburg-Vorpommern – § 2 FTG M-V",
+      "url": "https://www.landesrecht-mv.de/bsmv/document/jlr-FTGMVrahmen",
+      "documentDate": "2022-07-07",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-mv-ftg-2-2026.txt",
+      "sha256": "3ab802f7ca83a6a2d0efbfe9f42a36274834128117c1ffc4f1276d5702d49ecc"
+    },
+    {
+      "id": "de-ni-nfeiertagsg-2-2026",
+      "title": "NI-VORIS – § 2 Niedersächsisches Feiertagsgesetz",
+      "url": "https://voris.wolterskluwer-online.de/browse/document/b724111b-6c20-3862-b111-589842acacba",
+      "documentDate": "2018-06-22",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-ni-nfeiertagsg-2-2026.txt",
+      "sha256": "0be2c47a1791bd7d8285be2f409644022cdc6cee72a7ddb6e785ca844c24e71d"
+    },
+    {
+      "id": "de-nw-feiertg-2-2026",
+      "title": "RECHT.NRW.DE – § 2 Feiertagsgesetz NW",
+      "url": "https://recht.nrw.de/lrgv/gesetz/01012000-bekanntmachung-der-neufassung-des-gesetzes-ueber-die-sonn-und-feiertage/",
+      "documentDate": "1994-12-20",
+      "section": "§ 2; UTF-8/LF-Review-Snapshot rules/sources/de-nw-feiertg-2-2026.txt",
+      "sha256": "402fd4095ed04c4947f4c8d8f9adc3184976ac5345d110a0962ee7f5f1fa0573"
+    },
+    {
+      "id": "de-rp-holidays-2026",
+      "title": "Innenministerium Rheinland-Pfalz – gesetzliche Feiertage 2026",
+      "url": "https://mdi.rlp.de/themen/buerger-und-staat/verfassung-und-verwaltung/sonn-und-feiertagsrecht",
+      "documentDate": "2026-08-29",
+      "section": "Gesetzliche Feiertage in Rheinland-Pfalz 2026; UTF-8/LF-Review-Snapshot rules/sources/de-rp-holidays-2026.txt",
+      "sha256": "eee33b53ac51d77e07d58c56ce614480a532e115ec659ed26bb59a561a6e0e35"
+    },
+    {
+      "id": "de-sh-sftg-2-2018",
+      "title": "GVOBl. Schleswig-Holstein – Reformationstag",
+      "url": "https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/IV/Service/GVOBl/GVOBl/2018/gvobl_6_2018.pdf",
+      "documentDate": "2018-03-21",
+      "section": "Art. 1 Nr. 1; UTF-8/LF-Review-Snapshot rules/sources/de-sh-sftg-2-2018.txt",
+      "sha256": "4e2b43bd057506376565d81f0aaaa2404eb95f66de8a837f7e601b053059202a"
+    }
+  ],
+  "review": {
+    "status": "REVIEWED",
+    "reviewedBy": "project-owner",
+    "reviewedAt": "2026-08-29T22:25:55Z",
+    "gitCommit": "7b4a0061a547811c1ad0750fc6e3c8a6ed7a0428"
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "AFTER_SUM"
+  },
+  "rules": {
+    "holidays": [
+      {
+        "id": "new-year",
+        "name": "Neujahr",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 1,
+          "day": 1
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "good-friday",
+        "name": "Karfreitag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": -2
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "easter-monday",
+        "name": "Ostermontag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 1
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "labour-day",
+        "name": "Tag der Arbeit",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 5,
+          "day": 1
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "ascension-day",
+        "name": "Christi Himmelfahrt",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 39
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "whit-monday",
+        "name": "Pfingstmontag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 50
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "german-unity-day",
+        "name": "Tag der Deutschen Einheit",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 10,
+          "day": 3
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "christmas-day",
+        "name": "1. Weihnachtstag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 12,
+          "day": 25
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "boxing-day",
+        "name": "2. Weihnachtstag",
+        "scope": "NATIONWIDE",
+        "federalStates": null,
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 12,
+          "day": 26
+        },
+        "sourceIds": ["de-stvo-30-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "epiphany",
+        "name": "Heilige Drei Könige",
+        "scope": "STATEWIDE",
+        "federalStates": ["BW", "BY", "ST"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 1,
+          "day": 6
+        },
+        "sourceIds": ["de-bw-holidays-2026", "de-by-holidays-2026", "de-st-holidays-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "womens-day",
+        "name": "Internationaler Frauentag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BE", "MV"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 3,
+          "day": 8
+        },
+        "sourceIds": ["de-be-holidays-2026", "de-mv-womens-day-2022"],
+        "regionIds": null
+      },
+      {
+        "id": "easter-sunday-bb",
+        "name": "Ostersonntag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BB"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 0
+        },
+        "sourceIds": ["de-bb-holidays-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "whit-sunday-bb",
+        "name": "Pfingstsonntag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BB"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 49
+        },
+        "sourceIds": ["de-bb-holidays-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "corpus-christi",
+        "name": "Fronleichnam",
+        "scope": "STATEWIDE",
+        "federalStates": ["BW", "BY", "HE", "NW", "RP", "SL"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 60
+        },
+        "sourceIds": [
+          "de-bw-holidays-2026",
+          "de-by-holidays-2026",
+          "de-he-holidays-2026",
+          "de-nw-feiertg-2-2026",
+          "de-rp-holidays-2026",
+          "de-sl-sfg-2-2026"
+        ],
+        "regionIds": null
+      },
+      {
+        "id": "assumption-day-sl",
+        "name": "Mariä Himmelfahrt",
+        "scope": "STATEWIDE",
+        "federalStates": ["SL"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 8,
+          "day": 15
+        },
+        "sourceIds": ["de-sl-sfg-2-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "world-childrens-day-th",
+        "name": "Weltkindertag",
+        "scope": "STATEWIDE",
+        "federalStates": ["TH"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 9,
+          "day": 20
+        },
+        "sourceIds": ["de-th-holidays-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "reformation-day",
+        "name": "Reformationstag",
+        "scope": "STATEWIDE",
+        "federalStates": ["BB", "HB", "HH", "MV", "NI", "SN", "ST", "SH", "TH"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 10,
+          "day": 31
+        },
+        "sourceIds": [
+          "de-bb-holidays-2026",
+          "de-hb-feiertg-2-2026",
+          "de-hh-feiertg-1-2026",
+          "de-mv-ftg-2-2026",
+          "de-ni-nfeiertagsg-2-2026",
+          "de-sn-holidays-2026",
+          "de-st-holidays-2026",
+          "de-sh-sftg-2-2018",
+          "de-th-holidays-2026"
+        ],
+        "regionIds": null
+      },
+      {
+        "id": "all-saints-day",
+        "name": "Allerheiligen",
+        "scope": "STATEWIDE",
+        "federalStates": ["BW", "BY", "NW", "RP", "SL"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 11,
+          "day": 1
+        },
+        "sourceIds": [
+          "de-bw-holidays-2026",
+          "de-by-holidays-2026",
+          "de-nw-feiertg-2-2026",
+          "de-rp-holidays-2026",
+          "de-sl-sfg-2-2026"
+        ],
+        "regionIds": null
+      },
+      {
+        "id": "repentance-day-sn",
+        "name": "Buß- und Bettag",
+        "scope": "STATEWIDE",
+        "federalStates": ["SN"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "REPENTANCE_DAY"
+        },
+        "sourceIds": ["de-sn-holidays-2026"],
+        "regionIds": null
+      },
+      {
+        "id": "assumption-day-by-regional",
+        "name": "Mariä Himmelfahrt",
+        "scope": "REGIONAL",
+        "federalStates": ["BY"],
+        "regionIds": ["by.maria-himmelfahrt", "by.augsburg"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 8,
+          "day": 15
+        },
+        "sourceIds": ["de-by-holidays-2026"]
+      },
+      {
+        "id": "augsburg-peace-festival",
+        "name": "Augsburger Friedensfest",
+        "scope": "REGIONAL",
+        "federalStates": ["BY"],
+        "regionIds": ["by.augsburg"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "FIXED_DATE",
+          "month": 8,
+          "day": 8
+        },
+        "sourceIds": ["de-by-holidays-2026"]
+      },
+      {
+        "id": "corpus-christi-sn-regional",
+        "name": "Fronleichnam",
+        "scope": "REGIONAL",
+        "federalStates": ["SN"],
+        "regionIds": ["sn.fronleichnam"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 60
+        },
+        "sourceIds": ["de-sn-holidays-2026"]
+      },
+      {
+        "id": "corpus-christi-th-regional",
+        "name": "Fronleichnam",
+        "scope": "REGIONAL",
+        "federalStates": ["TH"],
+        "regionIds": ["th.fronleichnam"],
+        "validFrom": "2027-01-01",
+        "validTo": null,
+        "calculation": {
+          "type": "EASTER_OFFSET",
+          "offsetDays": 60
+        },
+        "sourceIds": ["de-th-holidays-2026"]
+      }
+    ]
+  }
+}

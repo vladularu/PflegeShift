@@ -195,6 +195,30 @@ describe("analysis overview cards", () => {
     expect(onOpenAllowance).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps salary setup and missing-rule states actionable", async () => {
+    const onSetup = jest.fn();
+    const sharedProps = {
+      expanded: true,
+      onOpenAllowance: jest.fn(),
+      onSetup,
+      onToggle: jest.fn(),
+    } as const;
+    const screen = await render(
+      <SalarySummaryCard {...sharedProps} pay={null} tariffReady={false} />,
+    );
+
+    const setupButton = screen.getByRole("button", { name: "Tarifprofil einrichten" });
+    expect(setupButton).toBeTruthy();
+    await fireEvent.press(setupButton);
+    expect(onSetup).toHaveBeenCalledTimes(1);
+
+    await screen.rerender(<SalarySummaryCard {...sharedProps} pay={null} tariffReady />);
+
+    expect(
+      screen.getByText(/Für die Gehaltsberechnung fehlt ein geprüfter Tarifstand/),
+    ).toBeTruthy();
+  });
+
   it("uses the same compact page header for the annual view", async () => {
     const onOpenMonth = jest.fn();
     const screen = await render(

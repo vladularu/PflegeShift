@@ -16,13 +16,20 @@ import {
   type TvoedAssignment,
   type TvoedWorkPatternSettings,
   type TvoedWorkplaceCoverage,
-  type UserProfile,
 } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
-import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
+import { calculateMonthlyTvoedAssessment } from "@/engine/pay";
+import {
+  selectAllowanceShifts,
+  selectMonthlyAnalysisEntries,
+} from "@/features/analysis/analysis-data";
+import { AnalysisCoverageNote } from "@/features/analysis/analysis-coverage-note";
 import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-layout";
+import {
+  captureRuleComputation,
+  RuleComputationNotice,
+} from "@/features/analysis/rule-computation";
 import { TariffQuestion } from "@/features/analysis/tariff-question";
 import { resolveEditorSession } from "@/features/editor-session";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
@@ -70,23 +77,16 @@ export function TariffAssessmentScreen() {
   const session = resolveEditorSession(ready && profile !== null, month, () => workPatternSettings);
   if (session === null || profile === null) return <LoadingView />;
   return (
-    <TariffAssessmentForm
-      key={session.key}
-      initialSettings={session.initialValue}
-      month={month}
-      profile={profile}
-    />
+    <TariffAssessmentForm key={session.key} initialSettings={session.initialValue} month={month} />
   );
 }
 
 function TariffAssessmentForm({
   initialSettings,
   month,
-  profile,
 }: {
   readonly initialSettings: TvoedWorkPatternSettings;
   readonly month: string;
-  readonly profile: UserProfile;
 }) {
   const palette = usePalette();
   const { resolver: ruleResolver } = useRuleCatalogRuntime();
@@ -100,36 +100,62 @@ function TariffAssessmentForm({
   const [showOverride, setShowOverride] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ruleRetryRevision, setRuleRetryRevision] = useState(0);
 
-  const window = useMemo(
-    () => selectAnalysisEntryWindow(entries, month, ruleResolver),
-    [entries, month, ruleResolver],
-  );
   const decision = tariffDecisions.find((item) => item.month === month) ?? null;
-  const pay = useMemo(
-    () =>
-      calculateMonthlyPayEstimate(
+  const calculation = useMemo(() => {
+    void ruleRetryRevision;
+    return captureRuleComputation(() => {
+      const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
+      const allowanceShifts = selectAllowanceShifts(entries, month, ruleResolver);
+      return calculateMonthlyTvoedAssessment(
         month,
-        window.monthShifts,
-        profile,
-        decision,
-        window.allowanceShifts,
+        monthlyEntries.monthShifts,
+        allowanceShifts,
         { workplaceCoverage: coverage, assignment, updatedAt: workPatternSettings.updatedAt },
         ruleResolver,
-      ),
-    [
-      assignment,
-      coverage,
-      decision,
-      month,
-      profile,
-      ruleResolver,
-      window,
-      workPatternSettings.updatedAt,
-    ],
-  );
+      );
+    });
+  }, [
+    assignment,
+    coverage,
+    entries,
+    month,
+    ruleResolver,
+    ruleRetryRevision,
+    workPatternSettings.updatedAt,
+  ]);
 
-  const assessment = pay.assessment;
+  if (!calculation.ok) {
+    return (
+      <ReportScrollView>
+        <AnalysisDetailSummaryCard
+          caption="Deine Angaben bleiben erhalten."
+          period={formatMonthTitle(month)}
+          title="Nicht verfügbar"
+        />
+        <RuleComputationNotice
+          failure={calculation}
+          onRetry={() => setRuleRetryRevision((value) => value + 1)}
+          title="Tarifprüfung nicht verfügbar"
+        />
+      </ReportScrollView>
+    );
+  }
+  const assessmentResult = calculation.value;
+  if (!assessmentResult.available || assessmentResult.assessment === null) {
+    return (
+      <ReportScrollView>
+        <AnalysisDetailSummaryCard
+          caption="Deine Angaben bleiben erhalten."
+          period={formatMonthTitle(month)}
+          title="Nicht verfügbar"
+        />
+        <AnalysisCoverageNote message="Die Tarifprüfung ist für diesen Monat ohne gültigen Tarifstand deaktiviert." />
+      </ReportScrollView>
+    );
+  }
+  const assessment = assessmentResult.assessment;
   const resultTitle = decision
     ? ALLOWANCE_LABELS[decision.allowanceStatus]
     : assessment.suggestedAllowance !== "NONE"

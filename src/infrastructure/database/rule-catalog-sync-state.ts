@@ -62,6 +62,7 @@ export async function claimPreviewRuleCatalogCheck(
   db: SQLiteDatabase,
   now: Date,
   failureRetryMilliseconds: number,
+  force = false,
 ): Promise<boolean> {
   if (!Number.isSafeInteger(failureRetryMilliseconds) || failureRetryMilliseconds <= 0) {
     throw new Error("The rule catalog failure retry interval must be positive.");
@@ -76,7 +77,7 @@ export async function claimPreviewRuleCatalogCheck(
     const nextCheck = state === null ? null : Date.parse(state.nextCheckAt);
     const implausiblyFuture =
       nextCheck !== null && nextCheck > now.getTime() + MAXIMUM_REASONABLE_SCHEDULE_DELAY_MS;
-    if (nextCheck !== null && nextCheck > now.getTime() && !implausiblyFuture) return;
+    if (!force && nextCheck !== null && nextCheck > now.getTime() && !implausiblyFuture) return;
 
     const retryAt = new Date(now.getTime() + failureRetryMilliseconds);
     await writeState(transaction, stateJson(retryAt, state?.lastSuccessfulGeneration ?? null), now);

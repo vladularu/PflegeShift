@@ -40,8 +40,7 @@ async function transaction(db: SQLiteDatabase, task: (tx: SQLiteDatabase) => Pro
 }
 
 export async function isDeveloperModeEnabled(db: SQLiteDatabase): Promise<boolean> {
-  if (!isDevToolsBuild(process.env.NODE_ENV, process.env.EXPO_PUBLIC_ENABLE_DEV_TOOLS))
-    return false;
+  if (!isDevToolsBuild(process.env.NODE_ENV)) return false;
   const row = await db.getFirstAsync<{ value: string }>(
     "SELECT value FROM app_preferences WHERE key='developer_mode'",
   );

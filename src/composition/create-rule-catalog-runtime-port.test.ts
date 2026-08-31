@@ -37,7 +37,7 @@ function config(enabled: boolean): PreviewRuleCatalogConfig {
     baseUrl: "https://example.supabase.co/rules/preview",
     verificationPolicy: {
       expectedChannel: "PREVIEW",
-      supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6]),
+      supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6, 7]),
       trustedPublicKeys: new Map([["preview-2026", new Uint8Array(32)]]),
     },
     checkIntervalMilliseconds: 86_400_000,
@@ -69,6 +69,9 @@ describe("createRuleCatalogRuntimePort", () => {
     const port = createRuleCatalogRuntimePort({} as SQLiteDatabase, { config: config(false) });
 
     await expect(port.synchronizeCatalog(null)).resolves.toEqual({ status: "DISABLED" });
+    await expect(port.synchronizeCatalog(null, { force: true })).resolves.toEqual({
+      status: "DISABLED",
+    });
     expect(httpMocks.createRuleCatalogHttpClient).not.toHaveBeenCalled();
     expect(syncMocks.synchronizePreviewRuleCatalog).not.toHaveBeenCalled();
   });
@@ -134,6 +137,16 @@ describe("createRuleCatalogRuntimePort", () => {
       previewConfig.verificationPolicy,
     );
     expect(catalogMocks.activateRuleCatalog).toHaveBeenCalledWith(database, {});
+
+    await port.synchronizeCatalog(1, { force: true });
+    const forcedDependencies = syncMocks.synchronizePreviewRuleCatalog.mock.calls[1][1];
+    await forcedDependencies.claimCheck();
+    expect(stateMocks.claimPreviewRuleCatalogCheck).toHaveBeenLastCalledWith(
+      database,
+      currentTime,
+      previewConfig.failureRetryMilliseconds,
+      true,
+    );
   });
 
   it("pins the public Generation-1 key and contracts only in PREVIEW configuration", () => {
@@ -147,13 +160,23 @@ describe("createRuleCatalogRuntimePort", () => {
       "https://okcxmmekwyuuiqthmydo.supabase.co/storage/v1/object/public/rule-catalog/preview",
     );
     expect([...preview.verificationPolicy.supportedEngineContractVersions]).toEqual([
-      1, 2, 3, 4, 5, 6,
+      1, 2, 3, 4, 5, 6, 7,
     ]);
     expect(
       Array.from(preview.verificationPolicy.trustedPublicKeys.get("preview-2026") ?? []),
     ).toEqual([
       23, 51, 245, 81, 88, 150, 83, 204, 65, 85, 65, 47, 145, 96, 44, 208, 182, 0, 112, 233, 156,
       127, 221, 227, 56, 215, 81, 71, 154, 146, 246, 59,
+    ]);
+    expect(
+      Array.from(preview.verificationPolicy.trustedPublicKeys.get("preview-2026-r2") ?? []),
+    ).toEqual([
+      193, 247, 8, 29, 120, 239, 53, 58, 10, 15, 59, 154, 26, 48, 218, 192, 203, 148, 12, 50, 39,
+      145, 254, 254, 42, 217, 3, 200, 244, 244, 240, 17,
+    ]);
+    expect([...preview.verificationPolicy.trustedPublicKeys.keys()]).toEqual([
+      "preview-2026",
+      "preview-2026-r2",
     ]);
   });
 });

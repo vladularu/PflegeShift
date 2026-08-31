@@ -47,16 +47,26 @@ describe("useAnnualReportInputs", () => {
       },
     );
     const first = screen.result.current;
+    expect(first?.ok).toBe(true);
+    if (first === null || !first.ok) throw new Error("Expected annual report inputs.");
 
     await screen.rerender({
       entries: [relevant, appointment("outside", "2030-01-01")],
     });
-    expect(screen.result.current).toBe(first);
+    expect(screen.result.current?.ok).toBe(true);
+    if (screen.result.current === null || !screen.result.current.ok) {
+      throw new Error("Expected annual report inputs.");
+    }
+    expect(screen.result.current.value).toBe(first.value);
 
     await screen.rerender({
       entries: [relevant, appointment("inside", "2026-09-01")],
     });
-    expect(screen.result.current).not.toBe(first);
-    expect(screen.result.current.entries).toHaveLength(2);
+    expect(screen.result.current?.ok).toBe(true);
+    if (screen.result.current === null || !screen.result.current.ok) {
+      throw new Error("Expected annual report inputs.");
+    }
+    expect(screen.result.current.value).not.toBe(first.value);
+    expect(screen.result.current.value.entries).toHaveLength(2);
   });
 });

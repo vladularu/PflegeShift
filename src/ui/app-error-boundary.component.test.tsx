@@ -27,6 +27,7 @@ describe("AppErrorBoundary", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "PflegeShift konnte nicht angezeigt werden",
     );
+    expect(screen.getByText("Diagnosecode: APP_RENDER_FAILED")).toBeTruthy();
     expect(listDiagnosticEvents()).toEqual([
       expect.objectContaining({ code: "APP_RENDER_FAILED", errorClass: "Error" }),
     ]);
@@ -35,5 +36,6 @@ describe("AppErrorBoundary", () => {
     shouldThrow = false;
     await fireEvent.press(screen.getByRole("button", { name: "Erneut versuchen" }));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(screen.queryByText("Diagnosecode: APP_RENDER_FAILED")).toBeNull();
   });
 });

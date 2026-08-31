@@ -21,9 +21,9 @@ import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 export interface AnnualMonthReport {
   readonly month: string;
   readonly entryCount: number;
-  readonly targetMinutes: number;
+  readonly targetMinutes: number | null;
   readonly actualMinutes: number;
-  readonly balanceMinutes: number;
+  readonly balanceMinutes: number | null;
   readonly estimatedGrossAmount: number | null;
   readonly premiumAmount: number;
   readonly criticalCount: number;
@@ -33,9 +33,9 @@ export interface AnnualMonthReport {
 export interface AnnualReport {
   readonly year: number;
   readonly months: readonly AnnualMonthReport[];
-  readonly targetMinutes: number;
+  readonly targetMinutes: number | null;
   readonly actualMinutes: number;
-  readonly balanceMinutes: number;
+  readonly balanceMinutes: number | null;
   readonly workMinutes: number;
   readonly trainingMinutes: number;
   readonly vacationDays: number;
@@ -51,6 +51,8 @@ export interface AnnualReport {
   readonly criticalCount: number;
   readonly warningCount: number;
   readonly distribution: ReadonlyMap<ShiftType, number>;
+  readonly worktimeCoverageComplete: boolean;
+  readonly complianceCoverageComplete: boolean;
 }
 
 function roundMoney(value: number): number {
@@ -325,7 +327,7 @@ export function* buildAnnualReportSteps(
       distribution.set(type, (distribution.get(type) ?? 0) + count);
     }
 
-    targetMinutes += contribution.report.targetMinutes;
+    targetMinutes += contribution.report.targetMinutes ?? 0;
     actualMinutes += contribution.report.actualMinutes;
     workMinutes += contribution.workMinutes;
     trainingMinutes += contribution.trainingMinutes;
@@ -369,6 +371,8 @@ export function* buildAnnualReportSteps(
     criticalCount,
     warningCount,
     distribution,
+    worktimeCoverageComplete: true,
+    complianceCoverageComplete: true,
   });
 }
 

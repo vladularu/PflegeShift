@@ -6,6 +6,12 @@ import { Pressable as MockPressable, Text as MockText, View as MockView } from "
 
 import { addMonths, today } from "@/engine/calendar";
 import { CalendarScreen } from "@/features/calendar/calendar-screen";
+import {
+  BUNDLED_HOLIDAY_RULES,
+  BUNDLED_LEGAL_RULES,
+  BUNDLED_TARIFF_RULES,
+} from "@/rules/bundled-rules";
+import { bundledRuleResolver, createRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 const mockPreferences = {
   error: null,
@@ -24,6 +30,7 @@ const mockPreferences = {
 let mockActiveMonth = "2026-08";
 let mockTodayRequestRevision = 0;
 let mockCompletedTodayRequestRevision = 0;
+let mockRuleResolver: RuleResolver = bundledRuleResolver;
 
 const mockActiveMonthCoordinator = {
   completeTodayRequest: jest.fn((revision: number) => {
@@ -55,6 +62,7 @@ jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftProfile: () => ({
     profile: {
       federalState: "HE",
+      holidayRegion: "NONE",
       timeZone: "Europe/Berlin",
     },
   }),
@@ -64,9 +72,7 @@ jest.mock("@/application/pflegeshift-provider", () => ({
 }));
 
 jest.mock("@/application/rule-catalog-runtime-provider", () => {
-  const { bundledRuleResolver } =
-    jest.requireActual<typeof import("@/rules/rule-resolver")>("@/rules/rule-resolver");
-  return { useRuleCatalogRuntime: () => ({ resolver: bundledRuleResolver }) };
+  return { useRuleCatalogRuntime: () => ({ resolver: mockRuleResolver }) };
 });
 
 jest.mock("@/features/calendar/calendar-preferences", () => ({
@@ -146,6 +152,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     mockActiveMonth = "2026-08";
     mockTodayRequestRevision = 0;
     mockCompletedTodayRequestRevision = 0;
+    mockRuleResolver = bundledRuleResolver;
     jest.mocked(router.push).mockClear();
     mockActiveMonthCoordinator.completeTodayRequest.mockClear();
     mockActiveMonthCoordinator.setMonth.mockClear();
@@ -154,6 +161,23 @@ describe("CalendarScreen quick-entry navigation", () => {
       callback(0);
       return 1;
     });
+  });
+
+  it("warns when December's visible grid reaches beyond holiday coverage", async () => {
+    const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
+    mockActiveMonth = "2026-12";
+    mockRuleResolver = createRuleResolver({
+      tariff: BUNDLED_TARIFF_RULES,
+      legal: BUNDLED_LEGAL_RULES,
+      holiday: [{ ...holidayPackage, validTo: "2026-12-31" }],
+    });
+
+    const screen = await render(<CalendarScreen />);
+
+    expect(
+      screen.getByText("Feiertagsregeln für diesen Zeitraum noch nicht verfügbar."),
+    ).toBeTruthy();
+    expect(screen.queryByText("PflegeShift konnte nicht angezeigt werden")).toBeNull();
   });
 
   it("keeps the compact popup mounted beneath the root shift screen", async () => {

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 import { usePflegeShiftProfile, usePflegeShiftStatus } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type { TestBackupSummary, TestRange, TestRunPreview, TestScenario } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
@@ -54,6 +55,7 @@ function DevToolsContent() {
   const palette = usePalette();
   const { error: loadError, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
+  const { diagnosis: ruleCatalogDiagnosis, synchronizeNow } = useRuleCatalogRuntime();
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [startMonth, setStartMonth] = useState(currentMonth);
   const [range, setRange] = useState<TestRange>(1);
@@ -61,6 +63,8 @@ function DevToolsContent() {
   const [preview, setPreview] = useState<TestRunPreview | null>(null);
   const [backups, setBackups] = useState<readonly TestBackupSummary[]>([]);
   const [busy, setBusy] = useState(false);
+  const [catalogBusy, setCatalogBusy] = useState(false);
+  const [catalogMessage, setCatalogMessage] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [screenError, setScreenError] = useState<string | null>(null);
   const [retryRevision, setRetryRevision] = useState(0);
@@ -176,6 +180,36 @@ function DevToolsContent() {
     setMessage(null);
   }
 
+  async function refreshRuleCatalog() {
+    try {
+      setCatalogBusy(true);
+      setCatalogMessage(null);
+      const result = await synchronizeNow();
+      if (result.status === "DISABLED") {
+        setCatalogMessage("Die Sofortprüfung ist nur im Preview-Build verfügbar.");
+      } else if (result.status === "THROTTLED") {
+        setCatalogMessage("Eine Katalogprüfung läuft bereits.");
+      } else {
+        setCatalogMessage(
+          result.status === "ACTIVATED"
+            ? `Generation ${result.generation} wurde aktiviert.`
+            : `Generation ${result.generation} ist aktuell.`,
+        );
+        successFeedback();
+      }
+    } catch (error) {
+      Alert.alert(
+        "Katalogprüfung fehlgeschlagen",
+        userFacingErrorMessage(
+          error,
+          "Der Regelkatalog konnte nicht geprüft werden. Die bisherigen Regeln bleiben aktiv.",
+        ),
+      );
+    } finally {
+      setCatalogBusy(false);
+    }
+  }
+
   function confirmGenerate() {
     if (!preview) return;
     const planned = preview.plannedShiftCount + preview.plannedAppointmentCount;
@@ -287,6 +321,14 @@ function DevToolsContent() {
           Komplette Monate in wenigen Sekunden prüfen.
         </Text>
       </View>
+
+      <RuleCatalogRefreshCard
+        busy={catalogBusy}
+        disabled={busy}
+        generation={ruleCatalogDiagnosis.selectedGeneration}
+        message={catalogMessage}
+        onRefresh={() => void refreshRuleCatalog()}
+      />
 
       <View
         style={{
@@ -401,7 +443,7 @@ function DevToolsContent() {
           {message}
         </Text>
       ) : null}
-      <PrimaryButton disabled={busy || preview === null} onPress={confirmGenerate}>
+      <PrimaryButton disabled={busy || catalogBusy || preview === null} onPress={confirmGenerate}>
         {busy ? "Bitte warten …" : "Testdaten erzeugen"}
       </PrimaryButton>
 
@@ -479,14 +521,60 @@ function DevToolsContent() {
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityState={{ disabled: busy }}
-        disabled={busy}
+        accessibilityState={{ disabled: busy || catalogBusy }}
+        disabled={busy || catalogBusy}
         onPress={deactivate}
         style={{ alignItems: "center", padding: 14 }}
       >
         <Text style={{ color: palette.danger, fontWeight: "600" }}>Testlabor deaktivieren</Text>
       </Pressable>
     </ScrollView>
+  );
+}
+
+export function RuleCatalogRefreshCard({
+  busy,
+  disabled = false,
+  generation,
+  message,
+  onRefresh,
+}: {
+  readonly busy: boolean;
+  readonly disabled?: boolean;
+  readonly generation: number | null;
+  readonly message: string | null;
+  readonly onRefresh: () => void;
+}) {
+  const palette = usePalette();
+  return (
+    <View
+      accessibilityLabel="Preview-Regelkatalog"
+      style={{ gap: 12, borderRadius: 18, backgroundColor: palette.surface, padding: 16 }}
+    >
+      <View style={{ gap: 3 }}>
+        <Text style={{ color: palette.text, fontSize: 17, fontWeight: "700" }}>Regelkatalog</Text>
+        <Text style={{ color: palette.primary, fontSize: 14, fontWeight: "700" }}>
+          {generation === null ? "Eingebettete Regeln" : `Generation ${generation}`}
+        </Text>
+      </View>
+      <Text style={{ color: palette.textMuted, fontSize: 13, lineHeight: 19 }}>
+        Prüft sofort auf neue, signierte Regeln. Bei einem Fehler bleiben die bisherigen Regeln
+        aktiv.
+      </Text>
+      {message ? (
+        <Text accessibilityLiveRegion="polite" style={{ color: palette.primary, fontSize: 13 }}>
+          {message}
+        </Text>
+      ) : null}
+      <PrimaryButton
+        busy={busy}
+        busyLabel="Regelkatalog wird geprüft"
+        disabled={disabled}
+        onPress={onRefresh}
+      >
+        Jetzt prüfen
+      </PrimaryButton>
+    </View>
   );
 }
 

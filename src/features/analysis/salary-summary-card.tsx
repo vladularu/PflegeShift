@@ -3,15 +3,18 @@ import { Pressable, Text, View } from "react-native";
 
 import type { MonthlyPayEstimate } from "@/domain/types";
 import { ExpandableHighlightCard } from "@/features/analysis/expandable-highlight-card";
+import {
+  formatEuro,
+  SalaryRuleUnavailableContent,
+  salarySummaryPresentation,
+} from "@/features/analysis/salary-summary-state";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SPACING } from "@/theme/tokens";
 import { CardSeparator } from "@/ui/design-system";
+import type { RuleResolutionFailure } from "@/rules/rule-resolver";
 
-export function formatEuro(value: number | null): string {
-  if (value === null) return "–";
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
-}
+export { formatEuro };
 
 interface SalaryDetailRow {
   readonly key: string;
@@ -22,13 +25,15 @@ interface SalaryDetailRow {
 
 export function SalarySummaryCard({
   pay,
+  ruleFailure,
   tariffReady,
   expanded,
   onToggle,
   onSetup,
   onOpenAllowance,
 }: {
-  readonly pay: MonthlyPayEstimate;
+  readonly pay: MonthlyPayEstimate | null;
+  readonly ruleFailure?: RuleResolutionFailure | null;
   readonly tariffReady: boolean;
   readonly expanded: boolean;
   readonly onToggle: () => void;
@@ -36,19 +41,9 @@ export function SalarySummaryCard({
   readonly onOpenAllowance: () => void;
 }) {
   const palette = usePalette();
-  const value = !tariffReady
-    ? "Einrichten"
-    : !pay.available
-      ? "Nicht verfügbar"
-      : formatEuro(pay.estimatedGrossAmount);
-  const summary = !tariffReady
-    ? "Tarifprofil fehlt"
-    : !pay.available
-      ? "Für diesen Monat liegt kein unterstützter Tarifstand vor"
-      : `Brutto-Schätzung · ${pay.tariffLabel}`;
-  const visibleSummary = tariffReady && pay.available ? undefined : summary;
+  const { value, visibleSummary } = salarySummaryPresentation(pay, tariffReady, ruleFailure);
   const rows: readonly SalaryDetailRow[] =
-    !tariffReady || !pay.available
+    !tariffReady || pay === null || !pay.available
       ? []
       : [
           { key: "base", label: "Grundentgelt", value: formatEuro(pay.personalBaseAmount) },
@@ -121,6 +116,8 @@ export function SalarySummaryCard({
           </Text>
           <Ionicons color={palette.textMuted} name="chevron-forward" size={18} />
         </Pressable>
+      ) : pay === null ? (
+        <SalaryRuleUnavailableContent ruleFailure={ruleFailure} />
       ) : !pay.available ? (
         <View style={{ padding: SPACING.lg }}>
           <Text

@@ -36,6 +36,8 @@ const report: AnnualReport = {
   criticalCount: 1,
   warningCount: 2,
   distribution: new Map<ShiftType, number>([["EARLY", 90]]),
+  worktimeCoverageComplete: true,
+  complianceCoverageComplete: true,
 };
 
 describe("annual report view", () => {
@@ -69,5 +71,36 @@ describe("annual report view", () => {
     expect(screen.getByText("Berücksichtigte Monate")).toBeTruthy();
     expect(screen.getByText("7 von 12")).toBeTruthy();
     expect(screen.getByText("28.700,00 €")).toBeTruthy();
+  });
+
+  it("keeps the year navigable and labels unavailable rule-bound sections", async () => {
+    const partialReport: AnnualReport = {
+      ...report,
+      targetMinutes: null,
+      balanceMinutes: null,
+      availablePayMonthCount: 0,
+      estimatedGrossAmount: 0,
+      worktimeCoverageComplete: false,
+      complianceCoverageComplete: false,
+    };
+    const screen = await render(
+      <AnnualReportScreen
+        onBackToMonth={jest.fn()}
+        onMoveYear={jest.fn()}
+        onSelectMonth={jest.fn()}
+        report={partialReport}
+        testMonths={[]}
+      />,
+    );
+
+    expect(screen.getByTestId("analysis-year-toolbar")).toBeTruthy();
+    expect(screen.getByLabelText("Soll: Nicht verfügbar")).toBeTruthy();
+    expect(screen.getByLabelText("Saldo: Nicht verfügbar")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Gehalt, Nicht verfügbar/ })).toBeTruthy();
+    expect(screen.getAllByText(/vollständige Regelstände/)).not.toHaveLength(0);
+    expect(screen.queryByText("In keinem Monat wurden Auffälligkeiten erkannt.")).toBeNull();
+    await fireEvent.press(screen.getByRole("button", { name: /Gehalt, Nicht verfügbar/ }));
+    expect(screen.getByText(/keine Beträge ausgewiesen/)).toBeTruthy();
+    expect(screen.queryByText("0,00 €")).toBeNull();
   });
 });

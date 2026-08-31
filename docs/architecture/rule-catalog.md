@@ -78,7 +78,10 @@ derives canonical `PUBLISHED` package bytes, hashes, sizes, complete tracks, and
 manifest generation, then signs with an environment-only Ed25519 seed. The exact output is
 self-checked through the same verifier used by the app. Immutable packages and the versioned
 manifest are staged before `current.json`; same-generation changes and immutable-path changes
-fail closed.
+fail closed. A normal following generation must also retain every previously published track and
+may only preserve or extend its date coverage. Removing a track, moving its start forward, or
+moving its end backward fails with `TRACK_COVERAGE_REGRESSION`. Only an explicit rollback that
+exactly reproduces its verified target generation may restore narrower historical coverage.
 
 The complete source, generation, rollback, filesystem layout, and operator contract is defined
 in `docs/architecture/rule-catalog-delivery.md`. WP4a still performs no network request, creates
@@ -97,8 +100,9 @@ polling, and SQLCipher activation remain later work.
 
 WP5a connects only an installed app whose Expo Updates channel is exactly `preview` to the public
 Preview delivery path. Production, `e2e-test`, Expo Go, and development sessions therefore create
-no catalog HTTP client. The Preview channel pins the public Supabase object root and the public
-Ed25519 key `preview-2026`; neither value grants write access and no Supabase secret enters the app.
+no catalog HTTP client. The Preview channel pins the public Supabase object root and trusts the
+public Ed25519 keys `preview-2026` and `preview-2026-r2` during the controlled Generation-2 key
+rotation; neither value grants write access and no Supabase secret enters the app.
 
 Startup remains local-first. The provider selects the stored SQLCipher catalog or the embedded
 legacy resolver before starting synchronization in the background. A successful check suppresses
@@ -107,6 +111,15 @@ attempts for one hour, so repeated mounts and network outages cannot create an u
 loop. With 100,000 active installations this configuration permits at most one normal
 `current.json` check per installation per 24-hour success window; package downloads happen only
 when the signed generation differs from the active on-device generation.
+
+The Preview Testlabor can explicitly claim one immediate check through the same signature
+verification, atomic activation, and mounted-runtime reconciliation path. This does not enable
+remote catalog delivery in production.
+
+Preview Generation 3 repairs the holiday-track discontinuity introduced by Generation 2. Its
+source set retains the finite 2026 package and adds the open-ended recurring package beginning on
+2027-01-01. The resulting single `de-holidays` track therefore covers 2026-01-01 through an
+open-ended future without a gap; tariff and legal package selections remain unchanged.
 
 The client accepts HTTP 200 from the exact requested HTTPS URL, exact `application/json`, valid
 UTF-8, and no more than 524,288 bytes per artifact. It verifies `current.json` before using any
@@ -157,7 +170,7 @@ Only `PUBLISHED` packages may be part of a validated catalog. `DRAFT` and `REVIE
 
 ## Version and compatibility rules
 
-`schemaVersion` describes the data shape. `engineContractVersion` describes behavior the calculation engine must understand. Both start at `1`. Engine contract v2 adds the tariff `overtimeBaseRule`: the individual hourly rate for actual overtime work is limited by the configured maximum table step. Tariff engine contract v3 replaces embedded hourly table amounts with the documented monthly-factor formula and resolves full-time weekly minutes by special part and tariff region. Legal engine contract v3 separates night work from night-worker status, requires either explicit confirmation of regular rotating night work or at least 48 recorded night-work days in the calendar year, evaluates the calendar-month and configured rolling average windows, and does not infer worked minutes from vacation or sickness entries. Legal engine contract v4 adds the §-3 average for extended standard working days: starting with each day over eight and up to ten net hours, the engine evaluates both the following six-calendar-month period and the following 24-week period. One compliant alternative is sufficient. Paid vacation and sickness days without actual work are removed from the statutory-workday denominator so that they remain neutral and cannot compensate excess working time. Legal engine contract v5 adds § 11 ArbZG for the care and hospital sectors: work is detected by its actual local-time overlap with a Sunday or a weekday public holiday; each occurrence needs its own explicitly recorded `FREE` replacement day within a period that includes the workday. The replacement day must be free of recorded work. A block shorter than the configured 35 hours triggers a separate review warning because § 11(4) permits technical or operational reasons to prevent the normal connection with the §-5 rest; it does not cause the replacement day itself to be discarded. The engine also checks the configured annual minimum of free Sundays. Legal engine contract v6 models the one-calendar-month alternative alongside the 28-day compensation period for shortened care-sector rest. Holiday engine contract v2 adds explicitly selected regional scopes and region IDs; unknown regional applicability remains visible instead of being guessed.
+`schemaVersion` describes the data shape. `engineContractVersion` describes behavior the calculation engine must understand. Both start at `1`. Engine contract v2 adds the tariff `overtimeBaseRule`: the individual hourly rate for actual overtime work is limited by the configured maximum table step. Tariff engine contract v3 replaces embedded hourly table amounts with the documented monthly-factor formula and resolves full-time weekly minutes by special part and tariff region. Legal engine contract v3 separates night work from night-worker status, requires either explicit confirmation of regular rotating night work or at least 48 recorded night-work days in the calendar year, evaluates the calendar-month and configured rolling average windows, and does not infer worked minutes from vacation or sickness entries. Legal engine contract v4 adds the §-3 average for extended standard working days: starting with each day over eight and up to ten net hours, the engine evaluates both the following six-calendar-month period and the following 24-week period. One compliant alternative is sufficient. Paid vacation and sickness days without actual work are removed from the statutory-workday denominator so that they remain neutral and cannot compensate excess working time. Legal engine contract v5 adds § 11 ArbZG for the care and hospital sectors: work is detected by its actual local-time overlap with a Sunday or a weekday public holiday; each occurrence needs its own explicitly recorded `FREE` replacement day within a period that includes the workday. The replacement day must be free of recorded work. A block shorter than the configured 35 hours triggers a separate review warning because § 11(4) permits technical or operational reasons to prevent the normal connection with the §-5 rest; it does not cause the replacement day itself to be discarded. The engine also checks the configured annual minimum of free Sundays. Legal engine contract v6 models the one-calendar-month alternative alongside the 28-day compensation period for shortened care-sector rest. Holiday engine contract v2 adds explicitly selected regional scopes and region IDs; unknown regional applicability remains visible instead of being guessed. Holiday engine contract v7 adds open-ended recurring holiday rules. The distinct version ensures older app releases reject this behavior fail-closed.
 
 The v5 matching window is inclusive and may lie before or after the worked Sunday or weekday public holiday. Candidate `FREE` days are assigned one-to-one in earliest-deadline order, so one day cannot compensate multiple obligations. A federal state is mandatory for the complete v5 assessment because a weekday candidate may itself be a state-specific public holiday. Missing holiday-package coverage is reported explicitly while independently calculable Sunday obligations remain active. The current package models the statutory baseline only. Tariff deviations under § 12 ArbZG and operational shifts of the Sunday/holiday-rest period under § 9(2) are separate future contracts.
 

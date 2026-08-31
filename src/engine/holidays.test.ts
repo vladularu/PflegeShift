@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import holidayCandidateValue from "../../rules/packages/reviewed/de-holidays/2026.json";
-import { easterSunday, getPublicHolidays } from "@/engine/holidays";
+import {
+  easterSunday,
+  getPublicHolidays,
+  holidayMapForMonth,
+  resolveHolidayMapForMonth,
+  resolveHolidayMapForMonths,
+} from "@/engine/holidays";
 import { BUNDLED_HOLIDAY_RULES } from "@/rules/bundled-rules";
 import type { RuleHolidayPackage } from "@/rules/contracts.generated";
 import { createRuleResolver } from "@/rules/rule-resolver";
@@ -82,6 +88,46 @@ describe("German public holidays", () => {
         }),
       ]),
     );
+  });
+
+  it("reports missing display coverage without weakening strict holiday calculations", () => {
+    const holidayPackage = structuredClone(BUNDLED_HOLIDAY_RULES[0]);
+    holidayPackage.validTo = "2026-12-31";
+    const resolver = createRuleResolver({ tariff: [], legal: [], holiday: [holidayPackage] });
+
+    expect(resolveHolidayMapForMonth("2026-12", "NW", resolver)).toMatchObject({
+      status: "AVAILABLE",
+      failure: null,
+    });
+    expect(resolveHolidayMapForMonth("2027-01", "NW", resolver)).toMatchObject({
+      status: "UNAVAILABLE",
+      failure: { code: "RULE_PACKAGE_NOT_FOUND", effectiveDate: "2027-01-01" },
+    });
+    const gridResolution = resolveHolidayMapForMonths(["2026-12", "2027-01"], "NW", resolver);
+    expect(gridResolution).toMatchObject({
+      status: "UNAVAILABLE",
+      failure: { code: "RULE_PACKAGE_NOT_FOUND", effectiveDate: "2027-01-01" },
+    });
+    expect(gridResolution.holidays.get("2026-12-25")?.name).toBe("1. Weihnachtstag");
+
+    const calendarYearPackage = structuredClone(holidayPackage);
+    calendarYearPackage.validFrom = "2026-01-01";
+    const calendarYearResolver = createRuleResolver({
+      tariff: [],
+      legal: [],
+      holiday: [calendarYearPackage],
+    });
+    const januaryGridResolution = resolveHolidayMapForMonths(
+      ["2025-12", "2026-01"],
+      "NW",
+      calendarYearResolver,
+    );
+    expect(januaryGridResolution).toMatchObject({
+      status: "UNAVAILABLE",
+      failure: { code: "RULE_PACKAGE_NOT_FOUND", effectiveDate: "2025-01-01" },
+    });
+    expect(januaryGridResolution.holidays.get("2026-01-01")?.name).toBe("Neujahr");
+    expect(() => holidayMapForMonth("2027-01", "NW", resolver)).toThrow("No HOLIDAY package");
   });
 
   it("isolates regional holidays by the confirmed workplace region", () => {

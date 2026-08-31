@@ -5,6 +5,8 @@ import type { RuleHoliday, RuleHolidayPackage } from "@/rules/contracts.generate
 import {
   bundledRuleResolver,
   requireResolvedPackage,
+  RuleResolutionError,
+  type RuleResolutionFailure,
   type RuleResolver,
 } from "@/rules/rule-resolver";
 
@@ -13,6 +15,18 @@ export interface PublicHoliday {
   readonly name: string;
   readonly scope: "NATIONWIDE" | "STATEWIDE" | "REGIONAL";
 }
+
+export type HolidayMonthResolution =
+  | {
+      readonly status: "AVAILABLE";
+      readonly holidays: ReadonlyMap<string, PublicHoliday>;
+      readonly failure: null;
+    }
+  | {
+      readonly status: "UNAVAILABLE";
+      readonly holidays: ReadonlyMap<string, PublicHoliday>;
+      readonly failure: RuleResolutionFailure;
+    };
 
 const HOLIDAY_CACHE = new WeakMap<RuleResolver, Map<string, readonly PublicHoliday[]>>();
 const HOLIDAY_PACKAGE_CACHE = new WeakMap<
@@ -101,7 +115,7 @@ function isRuleActiveForState(
   };
   return (
     rule.validFrom <= holidayDateValue &&
-    holidayDateValue <= rule.validTo &&
+    (rule.validTo === null || holidayDateValue <= rule.validTo) &&
     (rule.scope === "NATIONWIDE" ||
       (rule.federalStates?.includes(federalState) === true &&
         (rule.scope === "STATEWIDE" ||
@@ -168,4 +182,44 @@ export function holidayMapForMonth(
       .filter((holiday) => holiday.date.startsWith(`${month}-`))
       .map((holiday) => [holiday.date, holiday]),
   );
+}
+
+export function resolveHolidayMapForMonth(
+  month: string,
+  federalState: FederalState,
+  ruleResolver: RuleResolver = bundledRuleResolver,
+  holidayRegion: HolidayRegion = "NONE",
+): HolidayMonthResolution {
+  try {
+    return {
+      status: "AVAILABLE",
+      holidays: holidayMapForMonth(month, federalState, ruleResolver, holidayRegion),
+      failure: null,
+    };
+  } catch (error) {
+    if (!(error instanceof RuleResolutionError) || error.failure.kind !== "HOLIDAY") throw error;
+    return {
+      status: "UNAVAILABLE",
+      holidays: new Map(),
+      failure: error.failure,
+    };
+  }
+}
+
+export function resolveHolidayMapForMonths(
+  months: readonly string[],
+  federalState: FederalState,
+  ruleResolver: RuleResolver = bundledRuleResolver,
+  holidayRegion: HolidayRegion = "NONE",
+): HolidayMonthResolution {
+  const holidays = new Map<string, PublicHoliday>();
+  let failure: RuleResolutionFailure | null = null;
+  for (const month of new Set(months)) {
+    const resolution = resolveHolidayMapForMonth(month, federalState, ruleResolver, holidayRegion);
+    for (const [date, holiday] of resolution.holidays) holidays.set(date, holiday);
+    if (resolution.status === "UNAVAILABLE" && failure === null) failure = resolution.failure;
+  }
+  return failure === null
+    ? { status: "AVAILABLE", holidays, failure: null }
+    : { status: "UNAVAILABLE", holidays, failure };
 }

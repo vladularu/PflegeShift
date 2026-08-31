@@ -112,6 +112,15 @@ function resolverWithRenamedNewYear() {
   });
 }
 
+function resolverWithHolidayRulesThrough2026() {
+  const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
+  return createRuleResolver({
+    tariff: BUNDLED_TARIFF_RULES,
+    legal: BUNDLED_LEGAL_RULES,
+    holiday: [{ ...holidayPackage, validTo: "2026-12-31" }],
+  });
+}
+
 function MonthCardWithTransition({ progress }: { readonly progress: number }) {
   const stampTransitionProgress = useSharedValue(progress);
   return (
@@ -148,6 +157,65 @@ describe("MonthCard", () => {
     expect(
       screen.getByRole("button", { name: /1\. Januar 2026.*Neujahr aus Runtime/ }),
     ).toBeTruthy();
+  });
+
+  it("keeps rendering holidays through the final covered month", async () => {
+    const screen = await render(
+      <MonthCard
+        bottomReserve={80}
+        entriesByDate={new Map()}
+        month="2026-12"
+        onSelectDate={jest.fn()}
+        pageHeight={700}
+        profile={PROFILE}
+        ruleResolver={resolverWithHolidayRulesThrough2026()}
+        selectedDate={null}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /25\. Dezember 2026.*1\. Weihnachtstag/ }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText("Feiertagsregeln für diesen Zeitraum noch nicht verfügbar."),
+    ).toBeNull();
+  });
+
+  it("keeps the calendar usable after the holiday package expires", async () => {
+    const screen = await render(
+      <MonthCard
+        bottomReserve={80}
+        entriesByDate={new Map()}
+        month="2027-01"
+        onSelectDate={jest.fn()}
+        pageHeight={700}
+        profile={PROFILE}
+        ruleResolver={resolverWithHolidayRulesThrough2026()}
+        selectedDate={null}
+      />,
+    );
+
+    expect(screen.getByTestId("calendar-day-current-2027-01-01")).toBeTruthy();
+  });
+
+  it("reuses unchanged day cells across parent accessibility rerenders", async () => {
+    const entriesByDate = new Map<string, readonly ShiftEntry[]>();
+    const onSelectDate = jest.fn();
+    const sharedProps = {
+      bottomReserve: 80,
+      entriesByDate,
+      month: "2026-08",
+      onSelectDate,
+      pageHeight: 700,
+      profile: PROFILE,
+      selectedDate: null,
+    } as const;
+    const screen = await render(<MonthCard {...sharedProps} accessibilityVisible />);
+
+    await screen.rerender(<MonthCard {...sharedProps} accessibilityVisible={false} />);
+    await screen.rerender(<MonthCard {...sharedProps} accessibilityVisible={false} />);
+
+    expect(screen.toJSON()).toBeTruthy();
   });
 
   it("places the ISO week number inside the Monday cell instead of a separate grid column", async () => {

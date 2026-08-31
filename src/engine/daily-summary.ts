@@ -26,6 +26,15 @@ export interface DailyWorkCredit {
   readonly minutesByType: Readonly<Partial<Record<ShiftType, number>>>;
 }
 
+export interface TimedDailyWorkCredit {
+  readonly date: string;
+  readonly actualMinutes: number;
+  readonly workMinutes: number;
+  readonly trainingMinutes: number;
+  readonly overlapMinutes: number;
+  readonly minutesByType: Readonly<Partial<Record<ShiftType, number>>>;
+}
+
 const HOLIDAY_DATE_CACHE = new WeakMap<RuleResolver, Map<string, ReadonlySet<string>>>();
 
 function holidayDates(
@@ -159,24 +168,17 @@ export function calculateDailyWorkCredit(
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): DailyWorkCredit {
   const active = entries.filter((entry) => entry.deletedAt === null && entry.date === date);
-  const workEntries = active.filter(
-    (entry) => !["TRAINING", "VACATION", "SICK", "FREE"].includes(entry.type),
-  );
-  const trainingEntries = active.filter((entry) => entry.type === "TRAINING");
-  const work = creditTimedEntries(workEntries, profile.timeZone);
-  const training = creditTimedEntries(trainingEntries, profile.timeZone, work.coverage);
+  const timed = calculateTimedDailyWorkCredit(date, active, profile);
   const targetMinutes = calculateDailyTargetMinutes(date, profile, ruleResolver);
-  const timedMinutes = work.minutes + training.minutes;
   const absenceMinutes = active.some((entry) => entry.type === "VACATION" || entry.type === "SICK")
-    ? Math.max(0, targetMinutes - timedMinutes)
+    ? Math.max(0, targetMinutes - timed.actualMinutes)
     : 0;
   const sickMinutes = active.some((entry) => entry.type === "SICK") ? absenceMinutes : 0;
   const vacationMinutes =
     sickMinutes === 0 && active.some((entry) => entry.type === "VACATION") ? absenceMinutes : 0;
-  const actualMinutes = timedMinutes + absenceMinutes;
+  const actualMinutes = timed.actualMinutes + absenceMinutes;
   const minutesByType: Partial<Record<ShiftType, number>> = {
-    ...work.minutesByType,
-    ...training.minutesByType,
+    ...timed.minutesByType,
   };
   if (sickMinutes > 0) minutesByType.SICK = sickMinutes;
   if (vacationMinutes > 0) minutesByType.VACATION = vacationMinutes;
@@ -186,10 +188,38 @@ export function calculateDailyWorkCredit(
     targetMinutes,
     actualMinutes,
     balanceMinutes: actualMinutes - targetMinutes,
-    workMinutes: work.minutes,
-    trainingMinutes: training.minutes,
+    workMinutes: timed.workMinutes,
+    trainingMinutes: timed.trainingMinutes,
     vacationMinutes,
     sickMinutes,
+    overlapMinutes: timed.overlapMinutes,
+    minutesByType: Object.freeze(minutesByType),
+  });
+}
+
+export function calculateTimedDailyWorkCredit(
+  date: string,
+  entries: readonly ShiftEntry[],
+  profile: Pick<ProfileForTime, "timeZone">,
+): TimedDailyWorkCredit {
+  const active = entries.filter((entry) => entry.deletedAt === null && entry.date === date);
+  const workEntries = active.filter(
+    (entry) => !["TRAINING", "VACATION", "SICK", "FREE"].includes(entry.type),
+  );
+  const trainingEntries = active.filter((entry) => entry.type === "TRAINING");
+  const work = creditTimedEntries(workEntries, profile.timeZone);
+  const training = creditTimedEntries(trainingEntries, profile.timeZone, work.coverage);
+  const timedMinutes = work.minutes + training.minutes;
+  const minutesByType: Partial<Record<ShiftType, number>> = {
+    ...work.minutesByType,
+    ...training.minutesByType,
+  };
+
+  return Object.freeze({
+    date,
+    actualMinutes: timedMinutes,
+    workMinutes: work.minutes,
+    trainingMinutes: training.minutes,
     overlapMinutes: work.overlapMinutes + training.overlapMinutes,
     minutesByType: Object.freeze(minutesByType),
   });

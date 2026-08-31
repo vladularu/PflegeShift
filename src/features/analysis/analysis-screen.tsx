@@ -19,11 +19,10 @@ import type {
   MonthlyComplianceResult,
   ShiftEntry,
 } from "@/domain/types";
-import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
-import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
-import { buildMonthlyShiftTypeAnalysis } from "@/features/analysis/analysis-metrics";
+import { calculateMonthlyAnalysis } from "@/features/analysis/monthly-analysis";
+import { AnnualReportRuleFailure } from "@/features/analysis/annual-report-failure";
+import { AnalysisCoverageNote } from "@/features/analysis/analysis-coverage-note";
 import {
   AnalysisMonthHeader,
   ExpandableHighlightCard,
@@ -56,6 +55,8 @@ import {
 } from "@/ui/report-layout";
 
 export type AnalysisExpandedCard = "CHECK" | "PAY";
+
+const EMPTY_SHIFTS: readonly ShiftEntry[] = Object.freeze([]);
 
 export function AnalysisScreen({
   initialExpandedCard = null,
@@ -102,79 +103,57 @@ export function AnalysisScreen({
     }, [activeMonthCoordinator]),
   );
 
-  const entryWindow = useMemo(
-    () => selectAnalysisEntryWindow(entries, month, ruleResolver),
-    [entries, month, ruleResolver],
-  );
-  const { monthEntries, monthShifts, complianceShifts, allowanceShifts } = entryWindow;
-  const decision = tariffDecisions.find((item) => item.month === month) ?? null;
+  const monthlyCalculation = useMemo(() => {
+    if (period !== "MONTH" || !ready || error !== null || profile === null) return null;
+    return calculateMonthlyAnalysis(
+      month,
+      entries,
+      profile,
+      tariffDecisions,
+      workPatternSettings,
+      ruleResolver,
+    );
+  }, [
+    entries,
+    error,
+    month,
+    period,
+    profile,
+    ready,
+    ruleResolver,
+    tariffDecisions,
+    workPatternSettings,
+  ]);
+  const monthlyData = monthlyCalculation;
   const monthlyCompliance = useDeferredMonthlyCompliance({
-    enabled: isFocused,
+    enabled:
+      isFocused && period === "MONTH" && monthlyData !== null && monthlyData.complianceShifts.ok,
     month,
     profile,
     ruleResolver,
-    shifts: complianceShifts,
+    shifts:
+      monthlyData?.complianceShifts.ok === true ? monthlyData.complianceShifts.value : EMPTY_SHIFTS,
   });
   const compliance = monthlyCompliance.result;
-  const pay = useMemo(
-    () =>
-      profile
-        ? calculateMonthlyPayEstimate(
-            month,
-            monthShifts,
-            profile,
-            decision,
-            allowanceShifts,
-            workPatternSettings,
-            ruleResolver,
-          )
-        : null,
-    [allowanceShifts, decision, month, monthShifts, profile, ruleResolver, workPatternSettings],
+  const annualInputs = useAnnualReportInputs(
+    year,
+    entries,
+    tariffDecisions,
+    ruleResolver,
+    period === "YEAR",
   );
-  const summary = useMemo(
-    () => (profile ? calculateMonthlySummary(month, monthShifts, profile, ruleResolver) : null),
-    [month, monthShifts, profile, ruleResolver],
-  );
-  const shiftTypeAnalysis = useMemo(
-    () =>
-      profile === null
-        ? null
-        : buildMonthlyShiftTypeAnalysis(month, monthEntries, profile, ruleResolver),
-    [month, monthEntries, profile, ruleResolver],
-  );
-  const annualInputs = useAnnualReportInputs(year, entries, tariffDecisions, ruleResolver);
   const annualReport = useDeferredAnnualReport({
-    enabled: isFocused && period === "YEAR",
-    entries: annualInputs.entries,
+    enabled: isFocused && period === "YEAR" && annualInputs !== null,
+    entries: annualInputs?.ok ? annualInputs.value.entries : entries,
     profile,
     ruleResolver,
-    tariffDecisions: annualInputs.tariffDecisions,
+    tariffDecisions: annualInputs?.ok ? annualInputs.value.tariffDecisions : tariffDecisions,
     workPatternSettings,
     year,
   });
 
   if (ready && error) {
     return <LoadFailureView message={error} onRetry={() => void reload()} />;
-  }
-  if (monthlyCompliance.error) {
-    return (
-      <LoadFailureView
-        message={monthlyCompliance.error}
-        onRetry={monthlyCompliance.retry}
-        title="Arbeitszeitprüfung fehlgeschlagen"
-      />
-    );
-  }
-
-  if (
-    !ready ||
-    profile === null ||
-    compliance === null ||
-    pay === null ||
-    summary === null ||
-    shiftTypeAnalysis === null
-  ) {
-    return <LoadingView />;
   }
 
   function changePeriod(nextPeriod: AnalysisPeriod) {
@@ -191,6 +170,18 @@ export function AnalysisScreen({
   }
 
   if (period === "YEAR") {
+    if (annualReport.fatalError !== null) throw annualReport.fatalError;
+    if (annualReport.ruleFailure !== null) {
+      return (
+        <AnnualReportRuleFailure
+          failure={annualReport.ruleFailure}
+          onBackToMonth={() => changePeriod("MONTH")}
+          onMoveYear={moveYear}
+          onRetry={annualReport.retry}
+          year={year}
+        />
+      );
+    }
     if (annualReport.error) {
       return (
         <LoadFailureView
@@ -212,6 +203,29 @@ export function AnalysisScreen({
       />
     );
   }
+
+  if (monthlyCompliance.error) {
+    return (
+      <LoadFailureView
+        message={monthlyCompliance.error}
+        onRetry={monthlyCompliance.retry}
+        title="Arbeitszeitprüfung fehlgeschlagen"
+      />
+    );
+  }
+
+  if (
+    !ready ||
+    profile === null ||
+    monthlyData === null ||
+    (monthlyData.complianceShifts.ok && compliance === null)
+  ) {
+    return <LoadingView />;
+  }
+
+  const { complianceShifts, pay, shiftTypeAnalysis, summary } = monthlyData;
+  const actualMinutes = summary.ok ? summary.value.actualMinutes : shiftTypeAnalysis.totalMinutes;
+  const balanceMinutes = summary.ok ? summary.value.balanceMinutes : null;
 
   function moveMonth(delta: number) {
     const nextMonth = Temporal.PlainDate.from(`${month}-01`)
@@ -253,28 +267,45 @@ export function AnalysisScreen({
           <ReportPeriodContent>
             {testMonths.includes(month) ? <ReportTestBadge /> : null}
 
-            <AssessmentSummaryCard
-              compliance={compliance}
-              expanded={expandedCard === "CHECK"}
-              onToggle={() => toggleExpandedCard("CHECK")}
-              shifts={complianceShifts}
-            />
+            {complianceShifts.ok && compliance !== null ? (
+              <AssessmentSummaryCard
+                compliance={compliance}
+                expanded={expandedCard === "CHECK"}
+                onToggle={() => toggleExpandedCard("CHECK")}
+                shifts={complianceShifts.value}
+              />
+            ) : (
+              <AnalysisCoverageNote message="Die Arbeitszeitprüfung benötigt gültige ArbZG- und Feiertagsstände. Erfasste Zeiten und Schichten bleiben sichtbar." />
+            )}
 
             <SalarySummaryCard
               expanded={expandedCard === "PAY"}
               onOpenAllowance={() => router.push(tariffAssessmentRoute(month))}
               onSetup={() => router.push("/more")}
               onToggle={() => toggleExpandedCard("PAY")}
-              pay={pay}
+              pay={pay.ok ? pay.value : null}
+              ruleFailure={pay.ok ? null : pay.failure}
               tariffReady={profile.tariff !== null}
             />
 
             <WorktimeCard
-              actual={formatMinutes(summary.actualMinutes)}
-              balance={formatSignedMinutes(summary.balanceMinutes)}
-              balanceAccent={summary.balanceMinutes < 0 ? palette.danger : palette.success}
-              target={formatMinutes(summary.targetMinutes)}
+              actual={formatMinutes(actualMinutes)}
+              balance={
+                balanceMinutes === null ? "Nicht verfügbar" : formatSignedMinutes(balanceMinutes)
+              }
+              balanceAccent={
+                balanceMinutes === null
+                  ? palette.textMuted
+                  : balanceMinutes < 0
+                    ? palette.danger
+                    : palette.success
+              }
+              target={summary.ok ? formatMinutes(summary.value.targetMinutes) : "Nicht verfügbar"}
             />
+
+            {!summary.ok ? (
+              <AnalysisCoverageNote message="Soll, Saldo und Abwesenheitsgutschriften benötigen einen gültigen Feiertagsstand. Angezeigt werden erfasste Arbeits- und Fortbildungszeiten." />
+            ) : null}
 
             {shiftTypeAnalysis.totalCount === 0 ? (
               <SurfaceCard>
@@ -288,7 +319,9 @@ export function AnalysisScreen({
             ) : (
               <>
                 <ShiftTypeCountCard analysis={shiftTypeAnalysis} />
-                <ShiftTypeHoursCard analysis={shiftTypeAnalysis} />
+                {summary.ok || shiftTypeAnalysis.totalMinutes > 0 ? (
+                  <ShiftTypeHoursCard analysis={shiftTypeAnalysis} />
+                ) : null}
               </>
             )}
 

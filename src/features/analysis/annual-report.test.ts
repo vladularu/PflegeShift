@@ -281,7 +281,9 @@ describe("buildAnnualReport", () => {
     const legacy = drainAnnualReport(entries, cache);
     const alternate = drainAnnualReport(entries, cache, "2026-08-04", alternateRuleResolver());
 
-    expect(alternate.report.targetMinutes).toBeGreaterThan(legacy.report.targetMinutes);
+    expect(alternate.report.targetMinutes).not.toBeNull();
+    expect(legacy.report.targetMinutes).not.toBeNull();
+    expect(alternate.report.targetMinutes!).toBeGreaterThan(legacy.report.targetMinutes!);
     expect(alternate.report.estimatedGrossAmount).toBeGreaterThan(
       legacy.report.estimatedGrossAmount,
     );

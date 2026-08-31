@@ -7,6 +7,7 @@ import { SHIFT_TYPE_LABELS, type ShiftType } from "@/domain/types";
 import { formatMonthTitle } from "@/engine/calendar";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { buildAnnualDistributionSections } from "@/features/analysis/annual-distribution";
+import { AnalysisCoverageNote } from "@/features/analysis/analysis-coverage-note";
 import type { AnnualReport } from "@/features/analysis/annual-report";
 import {
   AnalysisYearHeader,
@@ -60,12 +61,16 @@ export function AnnualReportScreen({
         <ReportPeriodContent>
           {testMonthCount > 0 ? <AnnualTestBadge count={testMonthCount} /> : null}
 
-          <AnnualCheckCard
-            expanded={expandedCard === "CHECK"}
-            onSelectMonth={(month) => onSelectMonth(month, "CHECK")}
-            onToggle={() => toggleExpandedCard("CHECK")}
-            report={report}
-          />
+          {report.complianceCoverageComplete ? (
+            <AnnualCheckCard
+              expanded={expandedCard === "CHECK"}
+              onSelectMonth={(month) => onSelectMonth(month, "CHECK")}
+              onToggle={() => toggleExpandedCard("CHECK")}
+              report={report}
+            />
+          ) : (
+            <AnalysisCoverageNote message="Die Jahresprüfung benötigt vollständige Regelstände. Erfasste Zeiten und Schichten bleiben sichtbar." />
+          )}
 
           <AnnualSalaryCard
             expanded={expandedCard === "PAY"}
@@ -75,10 +80,28 @@ export function AnnualReportScreen({
 
           <WorktimeCard
             actual={formatMinutes(report.actualMinutes)}
-            balance={formatSignedMinutes(report.balanceMinutes)}
-            balanceAccent={report.balanceMinutes < 0 ? palette.danger : palette.success}
-            target={formatMinutes(report.targetMinutes)}
+            balance={
+              report.balanceMinutes === null
+                ? "Nicht verfügbar"
+                : formatSignedMinutes(report.balanceMinutes)
+            }
+            balanceAccent={
+              report.balanceMinutes === null
+                ? palette.textMuted
+                : report.balanceMinutes < 0
+                  ? palette.danger
+                  : palette.success
+            }
+            target={
+              report.targetMinutes === null
+                ? "Nicht verfügbar"
+                : formatMinutes(report.targetMinutes)
+            }
           />
+
+          {!report.worktimeCoverageComplete ? (
+            <AnalysisCoverageNote message="Soll, Saldo und Abwesenheitsgutschriften sind ohne vollständigen Feiertagsstand nicht verfügbar. Angezeigt werden sicher berechenbare Arbeits- und Fortbildungszeiten." />
+          ) : null}
 
           <MonthlyBars report={report} testMonths={testMonths} onSelectMonth={onSelectMonth} />
 
@@ -248,42 +271,54 @@ function AnnualSalaryCard({
       title="Gehalt"
       value={available ? formatEuro(report.estimatedGrossAmount) : "Nicht verfügbar"}
     >
-      <View style={{ paddingHorizontal: SPACING.lg }}>
-        {rows.map((row, index) => (
-          <View key={row.label}>
-            {index > 0 ? <CardSeparator inset={0} /> : null}
-            <View
-              style={{
-                minHeight: 56,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: SPACING.md,
-                paddingVertical: SPACING.sm,
-              }}
-            >
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                selectable
-                style={{ minWidth: 0, flex: 1, color: palette.textMuted, ...TYPOGRAPHY.label }}
-              >
-                {row.label}
-              </Text>
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                selectable
+      {available ? (
+        <View style={{ paddingHorizontal: SPACING.lg }}>
+          {rows.map((row, index) => (
+            <View key={row.label}>
+              {index > 0 ? <CardSeparator inset={0} /> : null}
+              <View
                 style={{
-                  color: palette.text,
-                  ...TYPOGRAPHY.bodyStrong,
-                  fontVariant: ["tabular-nums"],
+                  minHeight: 56,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: SPACING.md,
+                  paddingVertical: SPACING.sm,
                 }}
               >
-                {row.value}
-              </Text>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{ minWidth: 0, flex: 1, color: palette.textMuted, ...TYPOGRAPHY.label }}
+                >
+                  {row.label}
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  selectable
+                  style={{
+                    color: palette.text,
+                    ...TYPOGRAPHY.bodyStrong,
+                    fontVariant: ["tabular-nums"],
+                  }}
+                >
+                  {row.value}
+                </Text>
+              </View>
             </View>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      ) : (
+        <View style={{ padding: SPACING.lg }}>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            selectable
+            style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
+          >
+            Ohne gültigen Tarifstand werden keine Beträge ausgewiesen.
+          </Text>
+        </View>
+      )}
     </ExpandableHighlightCard>
   );
 }
@@ -300,7 +335,7 @@ function MonthlyBars({
   const palette = usePalette();
   const maximum = Math.max(
     1,
-    ...report.months.map((item) => Math.max(item.actualMinutes, item.targetMinutes)),
+    ...report.months.map((item) => Math.max(item.actualMinutes, item.targetMinutes ?? 0)),
   );
   return (
     <SurfaceCard>

@@ -14,7 +14,14 @@ import {
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
+import {
+  selectAllowanceShifts,
+  selectMonthlyAnalysisEntries,
+} from "@/features/analysis/analysis-data";
+import {
+  captureRuleComputation,
+  RuleComputationNotice,
+} from "@/features/analysis/rule-computation";
 import { premiumDetailsRoute, settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
@@ -51,6 +58,7 @@ export function SalaryScreen() {
   const { testMonths } = usePflegeShiftTestData();
   const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
+  const [ruleRetryRevision, setRuleRetryRevision] = useState(0);
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
 
@@ -68,30 +76,59 @@ export function SalaryScreen() {
     }, [activeMonthCoordinator]),
   );
 
-  const entryWindow = useMemo(
-    () => selectAnalysisEntryWindow(entries, month, ruleResolver),
-    [entries, month, ruleResolver],
-  );
-  const { monthShifts, allowanceShifts } = entryWindow;
-  const decision = tariffDecisions.find((item) => item.month === month) ?? null;
-  const pay = useMemo(
-    () =>
-      profile
-        ? calculateMonthlyPayEstimate(
-            month,
-            monthShifts,
-            profile,
-            decision,
-            allowanceShifts,
-            workPatternSettings,
-            ruleResolver,
-          )
-        : null,
-    [allowanceShifts, decision, month, monthShifts, profile, ruleResolver, workPatternSettings],
-  );
+  const calculation = useMemo(() => {
+    void ruleRetryRevision;
+    if (!ready || error !== null || profile === null) return null;
+    return captureRuleComputation(() => {
+      const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
+      const allowanceShifts = selectAllowanceShifts(entries, month, ruleResolver);
+      const decision = tariffDecisions.find((item) => item.month === month) ?? null;
+      return {
+        monthShifts: monthlyEntries.monthShifts,
+        pay: calculateMonthlyPayEstimate(
+          month,
+          monthlyEntries.monthShifts,
+          profile,
+          decision,
+          allowanceShifts,
+          workPatternSettings,
+          ruleResolver,
+        ),
+      };
+    });
+  }, [
+    entries,
+    error,
+    month,
+    profile,
+    ready,
+    ruleResolver,
+    ruleRetryRevision,
+    tariffDecisions,
+    workPatternSettings,
+  ]);
 
   if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
-  if (!ready || profile === null || pay === null) return <LoadingView />;
+  if (calculation !== null && !calculation.ok) {
+    return (
+      <ReportScrollView>
+        <MonthNavigator
+          label={formatMonthTitle(month)}
+          onNext={() => moveMonth(1)}
+          onPrevious={() => moveMonth(-1)}
+        />
+        <ReportPeriodContent>
+          <RuleComputationNotice
+            failure={calculation}
+            onRetry={() => setRuleRetryRevision((value) => value + 1)}
+            title="Gehalt nicht verfügbar"
+          />
+        </ReportPeriodContent>
+      </ReportScrollView>
+    );
+  }
+  if (!ready || profile === null || calculation === null) return <LoadingView />;
+  const { monthShifts, pay } = calculation.value;
 
   function moveMonth(delta: number) {
     const nextMonth = Temporal.PlainDate.from(`${month}-01`)

@@ -49,23 +49,27 @@ export function buildRuleCatalogRuntimePort(
         fetchImplementation: options.fetchImplementation,
       })
     : null;
+  const synchronizeCatalog: SynchronizeRuleCatalog = (activeGeneration, syncOptions = {}) => {
+    if (remote === null) return Promise.resolve(Object.freeze({ status: "DISABLED" }));
+    return synchronizePreviewRuleCatalog(activeGeneration, {
+      remote,
+      claimCheck: () =>
+        syncOptions.force === true
+          ? claimPreviewRuleCatalogCheck(db, now(), config.failureRetryMilliseconds, true)
+          : claimPreviewRuleCatalogCheck(db, now(), config.failureRetryMilliseconds),
+      completeCheck: (generation) =>
+        completePreviewRuleCatalogCheck(db, generation, now(), config.checkIntervalMilliseconds),
+      verifyManifest: (manifestJson) =>
+        verifyRuleManifestOnDevice(manifestJson, config.verificationPolicy),
+      verifyArtifacts: (artifacts) =>
+        verifyRuleCatalogArtifactsOnDevice(artifacts, config.verificationPolicy),
+      activate: (artifacts) => activateRuleCatalog(db, artifacts),
+    });
+  };
 
   return Object.freeze({
     loadStoredCatalog: () => loadActiveRuleCatalog(db, isRuleCatalogRuntimeCompatible),
-    synchronizeCatalog: (activeGeneration: number | null) => {
-      if (remote === null) return Promise.resolve(Object.freeze({ status: "DISABLED" }));
-      return synchronizePreviewRuleCatalog(activeGeneration, {
-        remote,
-        claimCheck: () => claimPreviewRuleCatalogCheck(db, now(), config.failureRetryMilliseconds),
-        completeCheck: (generation) =>
-          completePreviewRuleCatalogCheck(db, generation, now(), config.checkIntervalMilliseconds),
-        verifyManifest: (manifestJson) =>
-          verifyRuleManifestOnDevice(manifestJson, config.verificationPolicy),
-        verifyArtifacts: (artifacts) =>
-          verifyRuleCatalogArtifactsOnDevice(artifacts, config.verificationPolicy),
-        activate: (artifacts) => activateRuleCatalog(db, artifacts),
-      });
-    },
+    synchronizeCatalog,
     recordDiagnostic: (code: string, error: unknown) =>
       recordDiagnostic("rule-catalog", code, error),
   });

@@ -32,6 +32,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     if (this.state.failed) {
       return (
         <LoadFailureView
+          diagnosticCode="APP_RENDER_FAILED"
           message={APP_RENDER_FAILURE_MESSAGE}
           onRetry={this.retry}
           title={this.props.title ?? "PflegeShift konnte nicht angezeigt werden"}
