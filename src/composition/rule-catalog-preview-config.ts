@@ -15,6 +15,11 @@ const PREVIEW_ROTATION_PUBLIC_KEY = Object.freeze([
   193, 247, 8, 29, 120, 239, 53, 58, 10, 15, 59, 154, 26, 48, 218, 192, 203, 148, 12, 50, 39, 145,
   254, 254, 42, 217, 3, 200, 244, 244, 240, 17,
 ]);
+const PREVIEW_R3_KEY_ID = "preview-2026-r3";
+const PREVIEW_R3_PUBLIC_KEY = Object.freeze([
+  192, 246, 25, 13, 196, 21, 140, 223, 56, 179, 155, 40, 135, 2, 163, 245, 53, 84, 97, 69, 203, 237,
+  144, 212, 14, 174, 87, 39, 209, 101, 224, 193,
+]);
 const SUPPORTED_ENGINE_CONTRACT_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 
 export const PREVIEW_RULE_CATALOG_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1_000;
@@ -40,6 +45,7 @@ export function createPreviewRuleCatalogConfig(
       trustedPublicKeys: new Map([
         [PREVIEW_KEY_ID, Uint8Array.from(PREVIEW_PUBLIC_KEY)],
         [PREVIEW_ROTATION_KEY_ID, Uint8Array.from(PREVIEW_ROTATION_PUBLIC_KEY)],
+        [PREVIEW_R3_KEY_ID, Uint8Array.from(PREVIEW_R3_PUBLIC_KEY)],
       ]),
       acceptsCatalog: isRuleCatalogRuntimeCompatible,
     }),

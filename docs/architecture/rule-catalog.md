@@ -102,7 +102,9 @@ WP5a connects only an installed app whose Expo Updates channel is exactly `previ
 Preview delivery path. Production, `e2e-test`, Expo Go, and development sessions therefore create
 no catalog HTTP client. The Preview channel pins the public Supabase object root and trusts the
 public Ed25519 keys `preview-2026` and `preview-2026-r2` during the controlled Generation-2 key
-rotation; neither value grants write access and no Supabase secret enters the app.
+rotation. Before Generation 3, the replacement public key `preview-2026-r3` is added to the same
+Preview-only trust ring and distributed to installed Preview clients before any manifest uses it.
+None of these public values grants write access, and no Supabase secret enters the app.
 
 Startup remains local-first. The provider selects the stored SQLCipher catalog or the embedded
 legacy resolver before starting synchronization in the background. A successful check suppresses
@@ -119,7 +121,8 @@ remote catalog delivery in production.
 Preview Generation 3 repairs the holiday-track discontinuity introduced by Generation 2. Its
 source set retains the finite 2026 package and adds the open-ended recurring package beginning on
 2027-01-01. The resulting single `de-holidays` track therefore covers 2026-01-01 through an
-open-ended future without a gap; tariff and legal package selections remain unchanged.
+open-ended future without a gap; tariff and legal package selections remain unchanged. It is
+signed only with `preview-2026-r3`, after that public key has passed Preview device acceptance.
 
 The client accepts HTTP 200 from the exact requested HTTPS URL, exact `application/json`, valid
 UTF-8, and no more than 524,288 bytes per artifact. It verifies `current.json` before using any

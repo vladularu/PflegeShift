@@ -13,6 +13,6 @@
   "signing": {
     "algorithm": "ED25519",
     "canonicalization": "RFC8785",
-    "keyId": "preview-2026-r2"
+    "keyId": "preview-2026-r3"
   }
 }

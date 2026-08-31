@@ -194,7 +194,7 @@ describe("open-ended holiday catalog contract", () => {
       generation: 3,
       channel: "PREVIEW",
       rollbackOfGeneration: null,
-      signing: { keyId: "preview-2026-r2" },
+      signing: { keyId: "preview-2026-r3" },
     });
     expect(generationThreeRequestValue.packageSources).toEqual([
       "rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json",
