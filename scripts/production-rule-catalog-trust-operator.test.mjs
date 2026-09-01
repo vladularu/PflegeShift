@@ -40,11 +40,13 @@ async function committedConfig() {
   return JSON.parse(await fs.readFile(contractPath, "utf8"));
 }
 
-function markerResult(stdout) {
-  const marker = "PRODUCTION_TRUST_RESULT ";
-  const line = stdout.split(/\r?\n/u).find((candidate) => candidate.startsWith(marker));
-  assert.notEqual(line, undefined);
-  return JSON.parse(line.slice(marker.length));
+function preCandidateConfig(config) {
+  const result = structuredClone(config);
+  result.status = "DISABLED";
+  result.infrastructure.supabaseProjectUrl = null;
+  result.trust.trustedPublicKeys = [];
+  result.remote.publicBaseUrl = null;
+  return result;
 }
 
 test("operator accepts only secret-free preflight and public-key derivation", () => {
@@ -58,8 +60,8 @@ test("operator accepts only secret-free preflight and public-key derivation", ()
   }
 });
 
-test("committed disabled contract is ready before any seed is read", async () => {
-  const config = await committedConfig();
+test("pre-candidate contract is ready before any seed is read", async () => {
+  const config = preCandidateConfig(await committedConfig());
   assert.deepEqual(preflightProductionTrustPreparation(config), {
     status: "READY_TO_PREPARE",
     issues: [],
@@ -78,7 +80,7 @@ test("committed disabled contract is ready before any seed is read", async () =>
 });
 
 test("derive returns only a canonical Production public key and removes the seed", async () => {
-  const config = await committedConfig();
+  const config = preCandidateConfig(await committedConfig());
   const encodedSeed = Buffer.alloc(32, 7).toString("base64url");
   const environment = { [signingSeedEnvironmentName]: encodedSeed };
   const result = runProductionTrustOperator({ command: "DERIVE", config, environment });
@@ -98,7 +100,7 @@ test("derive returns only a canonical Production public key and removes the seed
 });
 
 test("derive rejects invalid seed input without reflecting it", async () => {
-  const config = await committedConfig();
+  const config = preCandidateConfig(await committedConfig());
   const environment = { [signingSeedEnvironmentName]: "invalid-secret-value" };
   assert.throws(
     () => runProductionTrustOperator({ command: "DERIVE", config, environment }),
@@ -111,9 +113,17 @@ test("derive rejects invalid seed input without reflecting it", async () => {
   assert.equal(environment[signingSeedEnvironmentName], undefined);
 });
 
-test("blocked preflight prevents environment access", async () => {
+test("committed Candidate blocks preparation before environment access", async () => {
   const config = await committedConfig();
-  config.status = "CANDIDATE";
+  assert.deepEqual(
+    preflightProductionTrustPreparation(config).issues.map(({ code }) => code),
+    [
+      "PRODUCTION_NOT_DISABLED",
+      "PROJECT_ALREADY_CONFIGURED",
+      "REMOTE_ALREADY_CONFIGURED",
+      "TRUST_ALREADY_CONFIGURED",
+    ],
+  );
   const environment = new Proxy(
     {},
     {
@@ -141,38 +151,38 @@ test("Production public-key validation rejects every Preview trust key", () => {
   );
 });
 
-test("CLI preflight never reads or prints a supplied seed", async () => {
+test("CLI preflight fails closed after Candidate recording without printing a seed", async () => {
   const sentinelSeed = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-  const { stdout, stderr } = await execFileAsync(
-    process.execPath,
-    ["--import", tsxImport, operatorPath, "preflight"],
-    {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["--import", tsxImport, operatorPath, "preflight"], {
       cwd: repositoryRoot,
       encoding: "utf8",
       env: { ...process.env, [signingSeedEnvironmentName]: sentinelSeed },
+    }),
+    (error) => {
+      assert.match(error.stderr, /PREFLIGHT_BLOCKED/u);
+      assert.equal(error.stdout.includes(sentinelSeed), false);
+      assert.equal(error.stderr.includes(sentinelSeed), false);
+      return true;
     },
   );
-  assert.equal(stderr, "");
-  assert.equal(stdout.includes(sentinelSeed), false);
-  assert.equal(markerResult(stdout).status, "READY_TO_PREPARE");
 });
 
-test("CLI derive prints public material but never the supplied seed", async () => {
+test("CLI derive refuses the committed Candidate without printing the supplied seed", async () => {
   const encodedSeed = Buffer.alloc(32, 11).toString("base64url");
-  const { stdout, stderr } = await execFileAsync(
-    process.execPath,
-    ["--import", tsxImport, operatorPath, "derive"],
-    {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["--import", tsxImport, operatorPath, "derive"], {
       cwd: repositoryRoot,
       encoding: "utf8",
       env: { ...process.env, [signingSeedEnvironmentName]: encodedSeed },
+    }),
+    (error) => {
+      assert.match(error.stderr, /PREFLIGHT_BLOCKED/u);
+      assert.equal(error.stdout.includes(encodedSeed), false);
+      assert.equal(error.stderr.includes(encodedSeed), false);
+      return true;
     },
   );
-  assert.equal(stderr, "");
-  assert.equal(stdout.includes(encodedSeed), false);
-  const result = markerResult(stdout);
-  assert.equal(result.status, "PUBLIC_KEY_DERIVED");
-  assert.match(result.publicKeyBase64Url, /^[A-Za-z0-9_-]{43}$/u);
 });
 
 test("operator source has no network, signing, delivery, or filesystem-write primitive", async () => {

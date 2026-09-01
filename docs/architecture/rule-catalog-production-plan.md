@@ -1,21 +1,21 @@
 # Production rule-catalog channel plan
 
-## Current state after WP6a-3a
+## Current state after WP6a-3b
 
-The Production rule-catalog channel is intentionally disabled. The app's `production` EAS channel
-exists for application delivery, but it has no rule-catalog endpoint or trusted Production key.
-The administrative delivery contract also has no Production remote profile. Consequently, neither
-an installed Production app nor an operator command can download or upload a Production catalog.
+The Production rule-catalog client and administrative delivery channel remain intentionally
+disabled. The public Candidate now records the verified dedicated Production project, its derived
+public object URL, and the initial public signing key `production-2026-r1`. The app still has no
+Production trust distribution or remote catalog profile, so neither an installed Production app
+nor an operator command can download or upload a Production catalog.
 
 Two version-controlled files are authoritative for the future public, non-secret configuration:
 
 - `rules/schema/production-channel-config.schema.json` defines the closed contract;
 - `rules/config/production-channel.json` is the only committed Production candidate.
 
-The committed instance has status `DISABLED`, null project and public URLs, and an empty trust ring.
-It contains only the future region, names, storage policy, intervals, and the name of the secret
-environment variable. A Supabase secret or Ed25519 private signing seed is never valid contract
-content.
+The committed instance has status `CANDIDATE`. It contains only public infrastructure identity,
+storage policy, intervals, and public verification material. A Supabase secret or Ed25519 private
+signing seed is never valid contract content.
 
 WP6a-2c adds a versioned, write-disabled provisioning operator and a solo-owner acceptance
 checklist. The operator derives its plan from the same Production channel contract and exposes only
@@ -75,10 +75,9 @@ file. It checks:
    reuse;
 5. continued absence of a Production remote profile in the delivery contract.
 
-The checked-in state must currently return `BLOCKED` with `PRODUCTION_DISABLED`,
-`INFRASTRUCTURE_NOT_CONFIGURED`, `REMOTE_NOT_CONFIGURED`, and `TRUST_NOT_CONFIGURED`. A complete
-synthetic candidate can return `READY_FOR_APPROVAL`, but that status performs and authorizes no
-activation.
+The checked-in Candidate must return `READY_FOR_APPROVAL`. That status performs and authorizes no
+trust distribution, signing, delivery, or activation. The earlier provisioning-plan and
+trust-preparation operators now fail closed because their pre-candidate phase is complete.
 
 ## Ordered future gates
 
@@ -163,3 +162,16 @@ is recorded may verify an existing DPAPI file but cannot replace it.
 WP6a-3a does not run the wrapper, create a Production seed, change
 `rules/config/production-channel.json`, distribute public trust to the app, enable either Production
 remote profile, sign a catalog, write to Supabase, or activate a client.
+
+## WP6a-3b Production signing trust Candidate
+
+WP6a-3b ran the versioned wrapper only after its secret-free `READY_TO_PREPARE` preflight. Windows
+generated a new 32-byte seed and stored it only as a DPAPI `CurrentUser` blob outside the
+repository. A second run derived the same public key and proved both the blob bytes and file
+timestamp remained unchanged.
+
+The Candidate records only the public key ID and canonical public Ed25519 key, together with the
+previously verified dedicated Production project and derived public object URL. The private seed
+was not printed, copied, committed, uploaded, or placed in a command argument. Production client
+trust, delivery remotes, catalog signing, Supabase writes, and activation remain outside this work
+package.

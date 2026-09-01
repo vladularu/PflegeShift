@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "channel": "PRODUCTION",
-  "status": "DISABLED",
+  "status": "CANDIDATE",
   "infrastructure": {
     "isolationMode": "DEDICATED_SUPABASE_PROJECT",
-    "supabaseProjectUrl": null,
+    "supabaseProjectUrl": "https://ajccsftbgsvfmuwirjux.supabase.co",
     "region": "eu-central-1",
     "bucketName": "rule-catalog-production",
     "objectRoot": "production",
@@ -19,10 +19,15 @@
   "trust": {
     "algorithm": "ED25519",
     "canonicalization": "RFC8785",
-    "trustedPublicKeys": []
+    "trustedPublicKeys": [
+      {
+        "keyId": "production-2026-r1",
+        "publicKeyBase64Url": "_DS5kpcn7Gu_S-iuwyYpVkThTF5z_-SV8_AmblCI4aE"
+      }
+    ]
   },
   "remote": {
-    "publicBaseUrl": null,
+    "publicBaseUrl": "https://ajccsftbgsvfmuwirjux.supabase.co/storage/v1/object/public/rule-catalog-production/production",
     "checkIntervalMilliseconds": 86400000,
     "failureRetryMilliseconds": 3600000
   }

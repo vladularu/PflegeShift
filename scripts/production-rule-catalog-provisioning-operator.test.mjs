@@ -30,6 +30,15 @@ async function committedConfig() {
   return JSON.parse(await fs.readFile(contractPath, "utf8"));
 }
 
+function preCandidateConfig(config) {
+  const result = structuredClone(config);
+  result.status = "DISABLED";
+  result.infrastructure.supabaseProjectUrl = null;
+  result.trust.trustedPublicKeys = [];
+  result.remote.publicBaseUrl = null;
+  return result;
+}
+
 test("operator accepts only the three write-disabled commands", () => {
   assert.equal(parseProductionProvisioningCommand(["preflight"]), "PREFLIGHT");
   assert.equal(parseProductionProvisioningCommand(["plan"]), "PLAN");
@@ -49,18 +58,23 @@ test("operator accepts only the three write-disabled commands", () => {
   }
 });
 
-test("committed disabled contract is ready only for local provisioning planning", async () => {
+test("committed Candidate is ready for approval and closed to provisioning planning", async () => {
   const config = await committedConfig();
 
-  assert.deepEqual(preflightProductionProvisioningPlan(config), {
-    status: "PLAN_READY",
-    issues: [],
-  });
-  assert.equal(preflightProductionRuleCatalogConfig(config).status, "BLOCKED");
+  assert.deepEqual(
+    preflightProductionProvisioningPlan(config).issues.map(({ code }) => code),
+    [
+      "PRODUCTION_NOT_DISABLED",
+      "PROJECT_ALREADY_CONFIGURED",
+      "REMOTE_ALREADY_CONFIGURED",
+      "TRUST_ALREADY_CONFIGURED",
+    ],
+  );
+  assert.equal(preflightProductionRuleCatalogConfig(config).status, "READY_FOR_APPROVAL");
 });
 
 test("plan is derived from the authoritative contract and exposes no write capability", async () => {
-  const config = await committedConfig();
+  const config = preCandidateConfig(await committedConfig());
   const result = runProductionProvisioningOperator({ command: "PLAN", config });
 
   assert.deepEqual(result, {
@@ -104,7 +118,7 @@ test("plan is derived from the authoritative contract and exposes no write capab
 });
 
 test("checklist distinguishes local proof from every future remote acceptance item", async () => {
-  const config = await committedConfig();
+  const config = preCandidateConfig(await committedConfig());
   const result = runProductionProvisioningOperator({ command: "CHECKLIST", config });
 
   assert.equal(result.status, "NOT_STARTED");
@@ -134,14 +148,6 @@ test("checklist distinguishes local proof from every future remote acceptance it
 
 test("operator blocks once live Production values or trust appear", async () => {
   const config = await committedConfig();
-  config.status = "CANDIDATE";
-  config.infrastructure.supabaseProjectUrl = "https://abcdefghijklmnopqrst.supabase.co";
-  config.remote.publicBaseUrl =
-    "https://abcdefghijklmnopqrst.supabase.co/storage/v1/object/public/rule-catalog-production/production";
-  config.trust.trustedPublicKeys.push({
-    keyId: "production-2026-r1",
-    publicKeyBase64Url: Buffer.alloc(32, 9).toString("base64url"),
-  });
 
   assert.deepEqual(
     preflightProductionProvisioningPlan(config).issues.map(({ code }) => code),
@@ -158,28 +164,24 @@ test("operator blocks once live Production values or trust appear", async () => 
   );
 });
 
-test("CLI prints deterministic local JSON and never reads a supplied secret", async () => {
+test("CLI fails closed for the committed Candidate and never reads a supplied secret", async () => {
   const sentinelSecret = "sb_secret_must_not_be_read_or_printed";
-  const { stdout, stderr } = await execFileAsync(
-    process.execPath,
-    ["--import", tsxImport, operatorPath, "plan"],
-    {
+  await assert.rejects(
+    execFileAsync(process.execPath, ["--import", tsxImport, operatorPath, "plan"], {
       cwd: repositoryRoot,
       encoding: "utf8",
       env: {
         ...process.env,
         SUPABASE_PRODUCTION_SECRET_KEY: sentinelSecret,
       },
+    }),
+    (error) => {
+      assert.match(error.stderr, /PLAN_BLOCKED/u);
+      assert.equal(error.stdout.includes(sentinelSecret), false);
+      assert.equal(error.stderr.includes(sentinelSecret), false);
+      return true;
     },
   );
-
-  assert.equal(stderr, "");
-  assert.equal(stdout.includes(sentinelSecret), false);
-  const result = JSON.parse(stdout);
-  assert.equal(result.status, "PLAN_READY");
-  assert.equal(result.capabilities.networkAccess, false);
-  assert.equal(result.capabilities.projectCreation, false);
-  assert.equal(result.capabilities.bucketCreation, false);
 });
 
 test("CLI rejects mutating commands and source contains no remote or write primitive", async () => {
