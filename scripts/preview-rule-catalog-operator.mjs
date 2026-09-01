@@ -340,9 +340,34 @@ async function preflightImmutableLocalObject(workspaceRoot, relativePath, conten
   return true;
 }
 
+export function resolveNpmInvocation(
+  argumentsList,
+  {
+    platform = process.platform,
+    npmExecPath = process.env.npm_execpath,
+    nodeExecutable = process.execPath,
+  } = {},
+) {
+  if (platform !== "win32") {
+    return { executable: "npm", argumentsList };
+  }
+  if (typeof npmExecPath !== "string" || !path.win32.isAbsolute(npmExecPath)) {
+    throw new PreviewRuleCatalogOperatorError(
+      "NPM_EXECUTABLE_UNAVAILABLE",
+      "The absolute npm CLI path is required to start nested npm commands safely on Windows.",
+    );
+  }
+  return {
+    executable: nodeExecutable,
+    argumentsList: [npmExecPath, ...argumentsList],
+  };
+}
+
 async function defaultRunNpm(argumentsList, { workspaceRoot, environment }) {
-  const executable = process.platform === "win32" ? "npm.cmd" : "npm";
-  const { stdout, stderr } = await execFileAsync(executable, argumentsList, {
+  const invocation = resolveNpmInvocation(argumentsList, {
+    npmExecPath: environment.npm_execpath,
+  });
+  const { stdout, stderr } = await execFileAsync(invocation.executable, invocation.argumentsList, {
     cwd: workspaceRoot,
     encoding: "utf8",
     env: environment,

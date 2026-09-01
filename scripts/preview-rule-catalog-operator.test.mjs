@@ -11,6 +11,7 @@ import {
   preparePreviewRuleCatalog,
   previewTrustedPublicKeyArguments,
   recoverPreviewRuleCatalog,
+  resolveNpmInvocation,
   verifyPublishedPreviewRuleCatalog,
 } from "./preview-rule-catalog-operator.mjs";
 
@@ -125,6 +126,37 @@ test("operator argument parsing keeps Recover, Prepare, Activate, and Verify exp
       parsePreviewOperatorArguments("recover", ["--generation", "4", "--secret", "not-accepted"]),
     /Recover accepts only --generation/,
   );
+});
+
+test("nested npm commands use the npm CLI through Node on Windows", () => {
+  const argumentsList = ["run", "rules:publish", "--", "--dry-run"];
+  assert.deepEqual(
+    resolveNpmInvocation(argumentsList, {
+      platform: "win32",
+      npmExecPath: "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      nodeExecutable: "C:\\Program Files\\nodejs\\node.exe",
+    }),
+    {
+      executable: "C:\\Program Files\\nodejs\\node.exe",
+      argumentsList: [
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+        ...argumentsList,
+      ],
+    },
+  );
+  assert.deepEqual(resolveNpmInvocation(argumentsList, { platform: "linux" }), {
+    executable: "npm",
+    argumentsList,
+  });
+});
+
+test("nested npm commands fail closed without an absolute npm CLI path on Windows", () => {
+  for (const npmExecPath of [null, "npm-cli.js"]) {
+    assert.throws(
+      () => resolveNpmInvocation([], { platform: "win32", npmExecPath }),
+      (error) => error?.code === "NPM_EXECUTABLE_UNAVAILABLE",
+    );
+  }
 });
 
 test("trusted-key CLI arguments are derived from the app Preview trust source", () => {
