@@ -28,6 +28,7 @@
     "rules:validate": "node --import tsx scripts/validate-rule-packages.mjs",
     "rules:publish": "node --import tsx scripts/publish-rule-catalog.mjs",
     "rules:deliver": "node --import tsx scripts/deliver-rule-catalog.mjs",
+    "rules:preview:recover": "node --import tsx scripts/preview-rule-catalog-operator.mjs recover",
     "rules:preview:prepare": "node --import tsx scripts/preview-rule-catalog-operator.mjs prepare",
     "rules:preview:activate": "node --import tsx scripts/preview-rule-catalog-operator.mjs activate",
     "rules:preview:verify": "node --import tsx scripts/preview-rule-catalog-operator.mjs verify",

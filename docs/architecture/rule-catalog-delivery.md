@@ -209,6 +209,24 @@ trusted Preview keys, engine-contract versions, and stable local root come from 
 version-controlled sources as the app, publisher, and delivery adapter. Generation-specific scripts
 below `dist` are not operational inputs and may be deleted by Expo exports.
 
+### Recover: public reads and local writes only
+
+Recover reconstructs only the explicitly expected, currently public Preview generation. It
+downloads `current.json`, requires byte equality with the immutable generation manifest, downloads
+all referenced packages, and verifies the signature, channel, generation, engine compatibility,
+paths, byte sizes, SHA-256 hashes, schemas, and semantic catalog contract before creating any local
+state. It preflights every local immutable package and manifest first: identical bytes are reused,
+while any conflict fails before another object or the local current pointer is written. Missing
+immutable objects are then written in signed package order, followed by the versioned manifest and
+`current.json` last.
+
+Recover never accepts a signing seed or Supabase secret and cannot write to Supabase. It restores
+only the public, non-secret operator artifacts; it does not recover a lost private signing seed.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/recover-preview-rule-catalog.ps1 -Generation <N>
+```
+
 ### 1. Prepare: public reads and local writes only
 
 Prepare downloads public `current.json` without cache, writes that predecessor atomically below
@@ -261,6 +279,6 @@ hashes, schemas, semantics, and engine compatibility.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/verify-preview-rule-catalog.ps1 -Generation <N>
 ```
 
-The underlying npm commands are available for automation as `rules:preview:prepare`,
-`rules:preview:activate`, and `rules:preview:verify`. Their secret inputs remain environment-only;
-the PowerShell wrappers are the normal interactive entry points.
+The underlying npm commands are available for automation as `rules:preview:recover`,
+`rules:preview:prepare`, `rules:preview:activate`, and `rules:preview:verify`. Their secret inputs
+remain environment-only; the PowerShell wrappers are the normal interactive entry points.

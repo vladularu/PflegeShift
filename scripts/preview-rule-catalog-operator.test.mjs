@@ -10,6 +10,7 @@ import {
   parsePreviewOperatorArguments,
   preparePreviewRuleCatalog,
   previewTrustedPublicKeyArguments,
+  recoverPreviewRuleCatalog,
   verifyPublishedPreviewRuleCatalog,
 } from "./preview-rule-catalog-operator.mjs";
 
@@ -67,7 +68,25 @@ function rollbackManifest(generation = 2) {
   })}\n`;
 }
 
-test("operator argument parsing keeps Prepare, Activate, and Verify explicit", () => {
+function recoveryManifest(
+  generation = 4,
+  packages = [
+    {
+      packageId: "de-holidays",
+      versionId: "2027",
+      path: "packages/de-holidays/2027.json",
+    },
+  ],
+) {
+  return `${JSON.stringify({
+    generation,
+    channel: "PREVIEW",
+    signing: { keyId: "preview-2026-r3" },
+    packages,
+  })}\n`;
+}
+
+test("operator argument parsing keeps Recover, Prepare, Activate, and Verify explicit", () => {
   assert.deepEqual(
     parsePreviewOperatorArguments("prepare", ["--request", "rules/releases/x.json"]),
     {
@@ -92,11 +111,20 @@ test("operator argument parsing keeps Prepare, Activate, and Verify explicit", (
     command: "verify",
     generation: 4,
   });
+  assert.deepEqual(parsePreviewOperatorArguments("recover", ["--generation", "4"]), {
+    command: "recover",
+    generation: 4,
+  });
   assert.throws(
     () => parsePreviewOperatorArguments("activate", ["--generation", "0"]),
     /positive integer/,
   );
   assert.throws(() => parsePreviewOperatorArguments("prepare", []), /--request is required/);
+  assert.throws(
+    () =>
+      parsePreviewOperatorArguments("recover", ["--generation", "4", "--secret", "not-accepted"]),
+    /Recover accepts only --generation/,
+  );
 });
 
 test("trusted-key CLI arguments are derived from the app Preview trust source", () => {
@@ -139,6 +167,304 @@ test("public fetch treats only the real Supabase NoSuchKey response as a missing
       return true;
     },
   );
+});
+
+test("Recover verifies and restores the current public catalog with current.json written last", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const manifestJson = recoveryManifest();
+  const packageJson = '{"packageId":"de-holidays","versionId":"2027"}\n';
+  const fetched = [];
+  let verifiedArtifacts;
+  try {
+    const result = await recoverPreviewRuleCatalog({
+      generation: 4,
+      workspaceRoot,
+      fetchPublicArtifact: async (relativePath) => {
+        fetched.push(relativePath);
+        if (relativePath === "current.json" || relativePath === "manifests/4.json") {
+          return manifestJson;
+        }
+        if (relativePath === "packages/de-holidays/2027.json") return packageJson;
+        throw new Error(`Unexpected public path ${relativePath}`);
+      },
+      verifyManifestJson: async (value) => JSON.parse(value),
+      verifyCatalogArtifacts: async (artifacts) => {
+        verifiedArtifacts = artifacts;
+      },
+      log: () => {},
+    });
+
+    assert.deepEqual(fetched, [
+      "current.json",
+      "manifests/4.json",
+      "packages/de-holidays/2027.json",
+    ]);
+    assert.deepEqual(verifiedArtifacts, { manifestJson, packageJson: [packageJson] });
+    assert.deepEqual(result, {
+      generation: 4,
+      keyId: "preview-2026-r3",
+      packageCount: 1,
+      createdImmutableObjects: 2,
+      reusedImmutableObjects: 0,
+    });
+    assert.equal(
+      await fs.readFile(
+        path.join(
+          workspaceRoot,
+          "artifacts",
+          "rule-catalog-operator",
+          "preview",
+          "packages",
+          "de-holidays",
+          "2027.json",
+        ),
+        "utf8",
+      ),
+      packageJson,
+    );
+    assert.equal(
+      await fs.readFile(
+        path.join(
+          workspaceRoot,
+          "artifacts",
+          "rule-catalog-operator",
+          "preview",
+          "manifests",
+          "4.json",
+        ),
+        "utf8",
+      ),
+      manifestJson,
+    );
+    assert.equal(
+      await fs.readFile(
+        path.join(workspaceRoot, "artifacts", "rule-catalog-operator", "preview", "current.json"),
+        "utf8",
+      ),
+      manifestJson,
+    );
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Recover retries idempotently when every immutable local object is byte-identical", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const manifestJson = recoveryManifest();
+  const packageJson = '{"packageId":"de-holidays","versionId":"2027"}\n';
+  const recover = () =>
+    recoverPreviewRuleCatalog({
+      generation: 4,
+      workspaceRoot,
+      fetchPublicArtifact: async (relativePath) =>
+        relativePath === "packages/de-holidays/2027.json" ? packageJson : manifestJson,
+      verifyManifestJson: async (value) => JSON.parse(value),
+      verifyCatalogArtifacts: async () => {},
+      log: () => {},
+    });
+  try {
+    await recover();
+    const retried = await recover();
+    assert.equal(retried.createdImmutableObjects, 0);
+    assert.equal(retried.reusedImmutableObjects, 2);
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Recover rejects a public current/versioned mismatch before creating local state", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  try {
+    await assert.rejects(
+      recoverPreviewRuleCatalog({
+        generation: 4,
+        workspaceRoot,
+        fetchPublicArtifact: async (relativePath) =>
+          relativePath === "current.json" ? recoveryManifest() : `${recoveryManifest()} `,
+        verifyManifestJson: async (value) => JSON.parse(value),
+        verifyCatalogArtifacts: async () => {},
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "PUBLIC_MANIFEST_MISMATCH");
+        return true;
+      },
+    );
+    assert.equal(
+      await fs
+        .access(path.join(workspaceRoot, "artifacts", "rule-catalog-operator"))
+        .then(() => true)
+        .catch(() => false),
+      false,
+    );
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Recover rejects a verified public manifest with a different generation identity", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const manifestJson = recoveryManifest(3);
+  try {
+    await assert.rejects(
+      recoverPreviewRuleCatalog({
+        generation: 4,
+        workspaceRoot,
+        fetchPublicArtifact: async () => manifestJson,
+        verifyManifestJson: async (value) => JSON.parse(value),
+        verifyCatalogArtifacts: async () => {},
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "PUBLIC_MANIFEST_IDENTITY_MISMATCH");
+        return true;
+      },
+    );
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Recover fails before package downloads when the public manifest signature is invalid", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const manifestJson = recoveryManifest();
+  const fetched = [];
+  try {
+    await assert.rejects(
+      recoverPreviewRuleCatalog({
+        generation: 4,
+        workspaceRoot,
+        fetchPublicArtifact: async (relativePath) => {
+          fetched.push(relativePath);
+          return manifestJson;
+        },
+        verifyManifestJson: async () => {
+          throw new Error("untrusted signature");
+        },
+        verifyCatalogArtifacts: async () => {},
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "RECOVERY_VERIFICATION_FAILED");
+        assert.equal(error.cause?.message, "untrusted signature");
+        return true;
+      },
+    );
+    assert.deepEqual(fetched, ["current.json", "manifests/4.json"]);
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Recover fails before local writes when complete catalog verification fails", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const manifestJson = recoveryManifest();
+  try {
+    await assert.rejects(
+      recoverPreviewRuleCatalog({
+        generation: 4,
+        workspaceRoot,
+        fetchPublicArtifact: async (relativePath) =>
+          relativePath === "packages/de-holidays/2027.json" ? '{"corrupt":true}\n' : manifestJson,
+        verifyManifestJson: async (value) => JSON.parse(value),
+        verifyCatalogArtifacts: async () => {
+          throw new Error("package hash mismatch");
+        },
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "RECOVERY_VERIFICATION_FAILED");
+        assert.equal(error.cause?.message, "package hash mismatch");
+        return true;
+      },
+    );
+    assert.equal(
+      await fs
+        .access(path.join(workspaceRoot, "artifacts", "rule-catalog-operator"))
+        .then(() => true)
+        .catch(() => false),
+      false,
+    );
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Recover preflights every immutable object before writing and rejects conflicts", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const packages = [
+    {
+      packageId: "de-holidays",
+      versionId: "2026",
+      path: "packages/de-holidays/2026.json",
+    },
+    {
+      packageId: "de-holidays",
+      versionId: "2027",
+      path: "packages/de-holidays/2027.json",
+    },
+  ];
+  const manifestJson = recoveryManifest(4, packages);
+  const conflictingPath = path.join(
+    workspaceRoot,
+    "artifacts",
+    "rule-catalog-operator",
+    "preview",
+    "packages",
+    "de-holidays",
+    "2027.json",
+  );
+  try {
+    await fs.mkdir(path.dirname(conflictingPath), { recursive: true });
+    await fs.writeFile(conflictingPath, '{"different":true}\n', "utf8");
+    await assert.rejects(
+      recoverPreviewRuleCatalog({
+        generation: 4,
+        workspaceRoot,
+        fetchPublicArtifact: async (relativePath) => {
+          if (relativePath === "current.json" || relativePath === "manifests/4.json") {
+            return manifestJson;
+          }
+          return `${JSON.stringify({ relativePath })}\n`;
+        },
+        verifyManifestJson: async (value) => JSON.parse(value),
+        verifyCatalogArtifacts: async () => {},
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "LOCAL_IMMUTABLE_CONFLICT");
+        return true;
+      },
+    );
+    assert.equal(
+      await fs
+        .access(
+          path.join(
+            workspaceRoot,
+            "artifacts",
+            "rule-catalog-operator",
+            "preview",
+            "packages",
+            "de-holidays",
+            "2026.json",
+          ),
+        )
+        .then(() => true)
+        .catch(() => false),
+      false,
+    );
+    assert.equal(
+      await fs
+        .access(
+          path.join(workspaceRoot, "artifacts", "rule-catalog-operator", "preview", "current.json"),
+        )
+        .then(() => true)
+        .catch(() => false),
+      false,
+    );
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
 });
 
 test("Prepare performs only public reads, local publication, and a delivery dry-run", async () => {

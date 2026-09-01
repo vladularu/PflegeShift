@@ -35,10 +35,12 @@ export class PreviewRuleCatalogOperatorError extends Error {
 function usage() {
   return [
     "Usage:",
+    "  npm run rules:preview:recover -- --generation <positive integer>",
     "  npm run rules:preview:prepare -- --request rules/releases/<request>.json",
     "  npm run rules:preview:activate -- --generation <positive integer> [--create-bucket]",
     "  npm run rules:preview:verify -- --generation <positive integer>",
     "",
+    "Recover performs public reads and local writes only and never accepts a secret.",
     "Prepare performs public reads and local writes only.",
     "Activate is the only command that writes to Supabase.",
     "Verify performs public reads only and never accepts a secret.",
@@ -82,6 +84,16 @@ function parseNamedOptions(argv, allowedFlags) {
 }
 
 export function parsePreviewOperatorArguments(command, argv) {
+  if (command === "recover") {
+    const { values, flags } = parseNamedOptions(argv, new Set());
+    if (flags.size > 0 || [...values.keys()].some((key) => key !== "--generation")) {
+      throw new Error(`Recover accepts only --generation.\n\n${usage()}`);
+    }
+    return {
+      command,
+      generation: parsePositiveInteger(values.get("--generation"), "--generation"),
+    };
+  }
   if (command === "prepare") {
     const { values, flags } = parseNamedOptions(argv, new Set());
     if (flags.size > 0 || [...values.keys()].some((key) => key !== "--request")) {
@@ -191,6 +203,15 @@ function operatorManifestPath(generation) {
   return `${RULE_CATALOG_OPERATOR_ROOT}/preview/manifests/${generation}.json`;
 }
 
+function operatorCurrentManifestPath() {
+  return `${RULE_CATALOG_OPERATOR_ROOT}/preview/current.json`;
+}
+
+function operatorPackagePath(packagePath) {
+  assertSafePublicArtifactPath(packagePath);
+  return `${RULE_CATALOG_OPERATOR_ROOT}/preview/${packagePath}`;
+}
+
 function operatorPreviousManifestPath(generation) {
   return `${RULE_CATALOG_OPERATOR_ROOT}/state/previous-for-generation-${generation}.json`;
 }
@@ -295,6 +316,28 @@ async function readBoundedUtf8(filePath, label) {
       `${label} is not valid UTF-8.`,
     );
   }
+}
+
+async function preflightImmutableLocalObject(workspaceRoot, relativePath, contents) {
+  const filePath = path.resolve(workspaceRoot, ...relativePath.split("/"));
+  let existing;
+  try {
+    existing = await readBoundedUtf8(filePath, `Local immutable object ${relativePath}`);
+  } catch (error) {
+    if (error?.code === "ENOENT") return false;
+    throw new PreviewRuleCatalogOperatorError(
+      "LOCAL_IMMUTABLE_CONFLICT",
+      `Local immutable object ${relativePath} is unreadable or invalid.`,
+      { cause: error },
+    );
+  }
+  if (existing !== contents) {
+    throw new PreviewRuleCatalogOperatorError(
+      "LOCAL_IMMUTABLE_CONFLICT",
+      `Local immutable object ${relativePath} differs from the verified public bytes.`,
+    );
+  }
+  return true;
 }
 
 async function defaultRunNpm(argumentsList, { workspaceRoot, environment }) {
@@ -442,6 +485,97 @@ async function prepareVerifiedRollbackTarget({
   const rollbackPath = operatorRollbackManifestPath(request.generation, rollbackGeneration);
   await writeTextAtomically(workspaceRoot, rollbackPath, manifestJson);
   return ["--rollback-manifest", rollbackPath];
+}
+
+export async function recoverPreviewRuleCatalog({
+  generation,
+  workspaceRoot = process.cwd(),
+  fetchPublicArtifact = fetchPublicPreviewArtifact,
+  verifyManifestJson = verifyPreviewManifestJson,
+  verifyCatalogArtifacts = verifyPreviewCatalogArtifacts,
+  log = console.log,
+}) {
+  parsePositiveInteger(String(generation), "generation");
+  const manifestJson = await fetchPublicArtifact("current.json");
+  const versionedManifestJson = await fetchPublicArtifact(`manifests/${generation}.json`);
+  if (manifestJson !== versionedManifestJson) {
+    throw new PreviewRuleCatalogOperatorError(
+      "PUBLIC_MANIFEST_MISMATCH",
+      `Public current.json is not byte-identical to PREVIEW generation ${generation}.`,
+    );
+  }
+
+  let manifest;
+  try {
+    manifest = await verifyManifestJson(manifestJson);
+  } catch (error) {
+    throw new PreviewRuleCatalogOperatorError(
+      "RECOVERY_VERIFICATION_FAILED",
+      `Public PREVIEW generation ${generation} failed manifest verification.`,
+      { cause: error },
+    );
+  }
+  if (
+    manifest.generation !== generation ||
+    manifest.channel !== PREVIEW_RULE_CATALOG_TRUST.channel ||
+    !Array.isArray(manifest.packages)
+  ) {
+    throw new PreviewRuleCatalogOperatorError(
+      "PUBLIC_MANIFEST_IDENTITY_MISMATCH",
+      `The verified public current manifest is not PREVIEW generation ${generation}.`,
+    );
+  }
+
+  let packageJson;
+  try {
+    packageJson = await Promise.all(
+      manifest.packages.map(({ path: packagePath }) => {
+        assertSafePublicArtifactPath(packagePath);
+        return fetchPublicArtifact(packagePath);
+      }),
+    );
+    await verifyCatalogArtifacts({ manifestJson, packageJson });
+  } catch (error) {
+    throw new PreviewRuleCatalogOperatorError(
+      "RECOVERY_VERIFICATION_FAILED",
+      `Public PREVIEW generation ${generation} failed complete catalog verification.`,
+      { cause: error },
+    );
+  }
+
+  const immutableObjects = [
+    ...manifest.packages.map((descriptor, index) => ({
+      relativePath: operatorPackagePath(descriptor.path),
+      contents: packageJson[index],
+    })),
+    { relativePath: operatorManifestPath(generation), contents: manifestJson },
+  ];
+  const reuse = [];
+  for (const object of immutableObjects) {
+    reuse.push(
+      await preflightImmutableLocalObject(workspaceRoot, object.relativePath, object.contents),
+    );
+  }
+  for (let index = 0; index < immutableObjects.length; index += 1) {
+    if (!reuse[index]) {
+      const object = immutableObjects[index];
+      await writeTextAtomically(workspaceRoot, object.relativePath, object.contents);
+    }
+  }
+  await writeTextAtomically(workspaceRoot, operatorCurrentManifestPath(), manifestJson);
+
+  const reusedImmutableObjects = reuse.filter(Boolean).length;
+  const result = Object.freeze({
+    generation,
+    keyId: manifest.signing.keyId,
+    packageCount: packageJson.length,
+    createdImmutableObjects: immutableObjects.length - reusedImmutableObjects,
+    reusedImmutableObjects,
+  });
+  log(
+    `RECOVERED: public PREVIEW generation ${generation} restored the local operator state (${result.createdImmutableObjects} immutable objects created, ${reusedImmutableObjects} reused).`,
+  );
+  return result;
 }
 
 function publicSupabaseProjectUrl() {
@@ -687,7 +821,8 @@ async function main() {
     return;
   }
   const options = parsePreviewOperatorArguments(process.argv[2], process.argv.slice(3));
-  if (options.command === "prepare") await preparePreviewRuleCatalog(options);
+  if (options.command === "recover") await recoverPreviewRuleCatalog(options);
+  else if (options.command === "prepare") await preparePreviewRuleCatalog(options);
   else if (options.command === "activate") await activatePreviewRuleCatalog(options);
   else await verifyPublishedPreviewRuleCatalog(options);
 }
