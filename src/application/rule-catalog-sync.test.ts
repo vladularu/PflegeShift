@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   RuleCatalogSyncError,
-  synchronizePreviewRuleCatalog,
+  synchronizeRuleCatalog,
   type RuleCatalogSyncDependencies,
 } from "@/application/rule-catalog-sync";
 import type { RuleManifest } from "@/rules/contracts.generated";
@@ -42,11 +42,11 @@ function dependencies(overrides: Partial<RuleCatalogSyncDependencies> = {}) {
   return value;
 }
 
-describe("preview rule catalog synchronization", () => {
+describe("rule catalog synchronization", () => {
   it("downloads signed package paths in manifest order, verifies, and activates atomically", async () => {
     const ports = dependencies();
 
-    await expect(synchronizePreviewRuleCatalog(1, ports)).resolves.toEqual({
+    await expect(synchronizeRuleCatalog(1, ports)).resolves.toEqual({
       status: "ACTIVATED",
       generation: 2,
       previousGeneration: 1,
@@ -71,7 +71,7 @@ describe("preview rule catalog synchronization", () => {
   it("does no network work while the persistent check gate is closed", async () => {
     const ports = dependencies({ claimCheck: vi.fn().mockResolvedValue(false) });
 
-    await expect(synchronizePreviewRuleCatalog(null, ports)).resolves.toEqual({
+    await expect(synchronizeRuleCatalog(null, ports)).resolves.toEqual({
       status: "THROTTLED",
     });
     expect(ports.remote.fetchCurrentManifest).not.toHaveBeenCalled();
@@ -80,7 +80,7 @@ describe("preview rule catalog synchronization", () => {
   it("verifies current against its immutable manifest and skips packages when up to date", async () => {
     const ports = dependencies();
 
-    await expect(synchronizePreviewRuleCatalog(2, ports)).resolves.toEqual({
+    await expect(synchronizeRuleCatalog(2, ports)).resolves.toEqual({
       status: "UP_TO_DATE",
       generation: 2,
     });
@@ -100,7 +100,7 @@ describe("preview rule catalog synchronization", () => {
       },
     });
 
-    await expect(synchronizePreviewRuleCatalog(null, ports)).rejects.toMatchObject({
+    await expect(synchronizeRuleCatalog(null, ports)).rejects.toMatchObject({
       name: "RuleCatalogSyncError",
       code: "VERSIONED_MANIFEST_MISMATCH",
     });
@@ -111,10 +111,8 @@ describe("preview rule catalog synchronization", () => {
   it("rejects remote rollback before package download", async () => {
     const ports = dependencies();
 
-    await expect(synchronizePreviewRuleCatalog(3, ports)).rejects.toBeInstanceOf(
-      RuleCatalogSyncError,
-    );
-    await expect(synchronizePreviewRuleCatalog(3, dependencies())).rejects.toMatchObject({
+    await expect(synchronizeRuleCatalog(3, ports)).rejects.toBeInstanceOf(RuleCatalogSyncError);
+    await expect(synchronizeRuleCatalog(3, dependencies())).rejects.toMatchObject({
       code: "REMOTE_GENERATION_ROLLBACK",
     });
     expect(ports.remote.fetchPackage).not.toHaveBeenCalled();
@@ -127,7 +125,7 @@ describe("preview rule catalog synchronization", () => {
       verifyArtifacts: vi.fn().mockRejectedValue(verificationError),
     });
 
-    await expect(synchronizePreviewRuleCatalog(null, ports)).rejects.toBe(verificationError);
+    await expect(synchronizeRuleCatalog(null, ports)).rejects.toBe(verificationError);
     expect(ports.activate).not.toHaveBeenCalled();
     expect(ports.completeCheck).not.toHaveBeenCalled();
   });

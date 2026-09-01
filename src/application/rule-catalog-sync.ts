@@ -58,7 +58,7 @@ export interface RuleCatalogSyncDependencies {
   ) => Promise<RuleCatalogSyncActivationResult>;
 }
 
-export async function synchronizePreviewRuleCatalog(
+export async function synchronizeRuleCatalog(
   activeGeneration: number | null,
   dependencies: RuleCatalogSyncDependencies,
 ): Promise<RuleCatalogSyncResult> {

@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRuleCatalogRuntimePort } from "@/composition/create-rule-catalog-runtime-port";
 import {
-  createPreviewRuleCatalogConfig,
-  type PreviewRuleCatalogConfig,
-} from "@/composition/rule-catalog-preview-config";
+  createRuleCatalogChannelConfig,
+  type RuleCatalogChannelConfig,
+} from "@/composition/rule-catalog-channel-config";
 import { PREVIEW_RULE_CATALOG_TRUST } from "@/composition/rule-catalog-preview-trust";
 import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "@/rules/rule-catalog-engine-support";
+import type { ValidatedRuleCatalog } from "@/rules/validation";
 
 const catalogMocks = vi.hoisted(() => ({
   loadActiveRuleCatalog: vi.fn(),
@@ -20,10 +21,10 @@ const cryptoMocks = vi.hoisted(() => ({
   verifyRuleCatalogArtifactsOnDevice: vi.fn(),
 }));
 const stateMocks = vi.hoisted(() => ({
-  claimPreviewRuleCatalogCheck: vi.fn(),
-  completePreviewRuleCatalogCheck: vi.fn(),
+  claimRuleCatalogCheck: vi.fn(),
+  completeRuleCatalogCheck: vi.fn(),
 }));
-const syncMocks = vi.hoisted(() => ({ synchronizePreviewRuleCatalog: vi.fn() }));
+const syncMocks = vi.hoisted(() => ({ synchronizeRuleCatalog: vi.fn() }));
 
 vi.mock("expo-updates", () => ({ channel: null }));
 vi.mock("@/infrastructure/database/rule-catalog-repository", () => catalogMocks);
@@ -33,33 +34,56 @@ vi.mock("@/infrastructure/rule-catalog-cryptography", () => cryptoMocks);
 vi.mock("@/infrastructure/database/rule-catalog-sync-state", () => stateMocks);
 vi.mock("@/application/rule-catalog-sync", () => syncMocks);
 
-function config(enabled: boolean): PreviewRuleCatalogConfig {
+function previewConfig(): RuleCatalogChannelConfig {
   return {
-    enabled,
-    baseUrl: "https://example.supabase.co/rules/preview",
-    verificationPolicy: {
-      expectedChannel: "PREVIEW",
-      supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
-      trustedPublicKeys: new Map([["preview-2026", new Uint8Array(32)]]),
+    catalogChannel: "PREVIEW",
+    remote: {
+      channel: "PREVIEW",
+      baseUrl: "https://example.supabase.co/rules/preview",
+      verificationPolicy: {
+        expectedChannel: "PREVIEW",
+        supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
+        trustedPublicKeys: new Map([["preview-2026", new Uint8Array(32)]]),
+      },
+      checkIntervalMilliseconds: 86_400_000,
+      failureRetryMilliseconds: 3_600_000,
     },
-    checkIntervalMilliseconds: 86_400_000,
-    failureRetryMilliseconds: 3_600_000,
+    acceptsStoredCatalog: vi.fn(() => true),
   };
+}
+
+function catalog(channel: "PREVIEW" | "PRODUCTION", keyId: string): ValidatedRuleCatalog {
+  return {
+    manifest: {
+      channel,
+      signing: { keyId },
+      tracks: [
+        { kind: "TARIFF", packageId: "tariff" },
+        { kind: "LEGAL", packageId: "legal" },
+        { kind: "HOLIDAY", packageId: "holiday" },
+      ],
+    },
+  } as unknown as ValidatedRuleCatalog;
 }
 
 describe("createRuleCatalogRuntimePort", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("binds compatible catalog loading and scoped diagnostics to the active database", async () => {
+  it("loads only stored catalogs accepted by the active channel contract", async () => {
     const database = {} as SQLiteDatabase;
     catalogMocks.loadActiveRuleCatalog.mockResolvedValue(null);
-    const port = createRuleCatalogRuntimePort(database, { config: config(false) });
+    const config = createRuleCatalogChannelConfig("preview");
+    const port = createRuleCatalogRuntimePort(database, { config });
     const error = new Error("catalog unavailable");
 
     await expect(port.loadStoredCatalog()).resolves.toBeNull();
     port.recordDiagnostic("RULE_CATALOG_LOAD_FAILED", error);
 
     expect(catalogMocks.loadActiveRuleCatalog).toHaveBeenCalledWith(database, expect.any(Function));
+    const acceptsCatalog = catalogMocks.loadActiveRuleCatalog.mock.calls[0][1];
+    expect(acceptsCatalog(catalog("PREVIEW", "preview-2026"))).toBe(true);
+    expect(acceptsCatalog(catalog("PREVIEW", "preview-unknown"))).toBe(false);
+    expect(acceptsCatalog(catalog("PRODUCTION", "preview-2026"))).toBe(false);
     expect(diagnosticsMocks.recordDiagnostic).toHaveBeenCalledWith(
       "rule-catalog",
       "RULE_CATALOG_LOAD_FAILED",
@@ -67,18 +91,26 @@ describe("createRuleCatalogRuntimePort", () => {
     );
   });
 
-  it("keeps network synchronization explicitly disabled outside the internal build", async () => {
-    const port = createRuleCatalogRuntimePort({} as SQLiteDatabase, { config: config(false) });
+  it("keeps Production and unknown update channels remote-disabled", async () => {
+    for (const config of [
+      createRuleCatalogChannelConfig("production"),
+      createRuleCatalogChannelConfig("e2e-test"),
+      createRuleCatalogChannelConfig(null),
+    ]) {
+      const port = createRuleCatalogRuntimePort({} as SQLiteDatabase, { config });
 
-    await expect(port.synchronizeCatalog(null)).resolves.toEqual({ status: "DISABLED" });
-    await expect(port.synchronizeCatalog(null, { force: true })).resolves.toEqual({
-      status: "DISABLED",
-    });
+      await expect(port.synchronizeCatalog(null)).resolves.toEqual({ status: "DISABLED" });
+      await expect(port.synchronizeCatalog(null, { force: true })).resolves.toEqual({
+        status: "DISABLED",
+      });
+      expect(config.acceptsStoredCatalog(catalog("PREVIEW", "preview-2026"))).toBe(false);
+      expect(config.acceptsStoredCatalog(catalog("PRODUCTION", "production-2026-r1"))).toBe(false);
+    }
     expect(httpMocks.createRuleCatalogHttpClient).not.toHaveBeenCalled();
-    expect(syncMocks.synchronizePreviewRuleCatalog).not.toHaveBeenCalled();
+    expect(syncMocks.synchronizeRuleCatalog).not.toHaveBeenCalled();
   });
 
-  it("wires preview download, trust, scheduling, and verified activation", async () => {
+  it("wires Preview download, trust, channel scheduling, and verified activation", async () => {
     const database = {} as SQLiteDatabase;
     const remote = {
       fetchCurrentManifest: vi.fn(),
@@ -88,13 +120,14 @@ describe("createRuleCatalogRuntimePort", () => {
     const currentTime = new Date("2026-08-29T10:00:00.000Z");
     const fetchImplementation = vi.fn() as unknown as typeof fetch;
     httpMocks.createRuleCatalogHttpClient.mockReturnValue(remote);
-    syncMocks.synchronizePreviewRuleCatalog.mockResolvedValue({
+    syncMocks.synchronizeRuleCatalog.mockResolvedValue({
       status: "UP_TO_DATE",
       generation: 1,
     });
-    const previewConfig = config(true);
+    const config = previewConfig();
+    const remoteConfig = config.remote!;
     const port = createRuleCatalogRuntimePort(database, {
-      config: previewConfig,
+      config,
       fetchImplementation,
       now: () => currentTime,
     });
@@ -104,97 +137,100 @@ describe("createRuleCatalogRuntimePort", () => {
       generation: 1,
     });
     expect(httpMocks.createRuleCatalogHttpClient).toHaveBeenCalledWith({
-      baseUrl: previewConfig.baseUrl,
+      baseUrl: remoteConfig.baseUrl,
       fetchImplementation,
     });
-    expect(syncMocks.synchronizePreviewRuleCatalog).toHaveBeenCalledWith(
+    expect(syncMocks.synchronizeRuleCatalog).toHaveBeenCalledWith(
       1,
       expect.objectContaining({ remote }),
     );
 
-    const dependencies = syncMocks.synchronizePreviewRuleCatalog.mock.calls[0][1];
+    const dependencies = syncMocks.synchronizeRuleCatalog.mock.calls[0][1];
     await dependencies.claimCheck();
     await dependencies.completeCheck(1);
     await dependencies.verifyManifest("manifest");
     await dependencies.verifyArtifacts({ manifestJson: "manifest", packageJson: [] });
     await dependencies.activate({});
 
-    expect(stateMocks.claimPreviewRuleCatalogCheck).toHaveBeenCalledWith(
+    expect(stateMocks.claimRuleCatalogCheck).toHaveBeenCalledWith(
       database,
+      "PREVIEW",
       currentTime,
-      previewConfig.failureRetryMilliseconds,
+      remoteConfig.failureRetryMilliseconds,
     );
-    expect(stateMocks.completePreviewRuleCatalogCheck).toHaveBeenCalledWith(
+    expect(stateMocks.completeRuleCatalogCheck).toHaveBeenCalledWith(
       database,
+      "PREVIEW",
       1,
       currentTime,
-      previewConfig.checkIntervalMilliseconds,
+      remoteConfig.checkIntervalMilliseconds,
     );
     expect(cryptoMocks.verifyRuleManifestOnDevice).toHaveBeenCalledWith(
       "manifest",
-      previewConfig.verificationPolicy,
+      remoteConfig.verificationPolicy,
     );
     expect(cryptoMocks.verifyRuleCatalogArtifactsOnDevice).toHaveBeenCalledWith(
       { manifestJson: "manifest", packageJson: [] },
-      previewConfig.verificationPolicy,
+      remoteConfig.verificationPolicy,
     );
     expect(catalogMocks.activateRuleCatalog).toHaveBeenCalledWith(database, {});
 
     await port.synchronizeCatalog(1, { force: true });
-    const forcedDependencies = syncMocks.synchronizePreviewRuleCatalog.mock.calls[1][1];
+    const forcedDependencies = syncMocks.synchronizeRuleCatalog.mock.calls[1][1];
     await forcedDependencies.claimCheck();
-    expect(stateMocks.claimPreviewRuleCatalogCheck).toHaveBeenLastCalledWith(
+    expect(stateMocks.claimRuleCatalogCheck).toHaveBeenLastCalledWith(
       database,
+      "PREVIEW",
       currentTime,
-      previewConfig.failureRetryMilliseconds,
+      remoteConfig.failureRetryMilliseconds,
       true,
     );
   });
 
-  it("pins the complete public key rotation ring only in PREVIEW configuration", () => {
-    const preview = createPreviewRuleCatalogConfig("preview");
-    const production = createPreviewRuleCatalogConfig("production");
+  it("pins Preview trust while leaving Production explicitly unconfigured", () => {
+    const preview = createRuleCatalogChannelConfig("preview");
+    const production = createRuleCatalogChannelConfig("production");
+    const disabled = createRuleCatalogChannelConfig();
+    const previewRemote = preview.remote!;
 
     expect(Object.isFrozen(PREVIEW_RULE_CATALOG_TRUST)).toBe(true);
     expect(Object.isFrozen(PREVIEW_RULE_CATALOG_TRUST.trustedPublicKeys)).toBe(true);
     expect(Object.isFrozen(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS)).toBe(true);
-    expect(preview.enabled).toBe(true);
-    expect(production.enabled).toBe(false);
-    expect(createPreviewRuleCatalogConfig().enabled).toBe(false);
-    expect(preview.baseUrl).toBe(PREVIEW_RULE_CATALOG_TRUST.baseUrl);
-    expect([...preview.verificationPolicy.supportedEngineContractVersions]).toEqual([
+    expect(preview.catalogChannel).toBe("PREVIEW");
+    expect(previewRemote.channel).toBe("PREVIEW");
+    expect(production.catalogChannel).toBe("PRODUCTION");
+    expect(production.remote).toBeNull();
+    expect(disabled.catalogChannel).toBeNull();
+    expect(disabled.remote).toBeNull();
+    expect(previewRemote.baseUrl).toBe(PREVIEW_RULE_CATALOG_TRUST.baseUrl);
+    expect([...previewRemote.verificationPolicy.supportedEngineContractVersions]).toEqual([
       ...RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS,
     ]);
     expect(
-      Array.from(preview.verificationPolicy.trustedPublicKeys.get("preview-2026") ?? []),
+      Array.from(previewRemote.verificationPolicy.trustedPublicKeys.get("preview-2026") ?? []),
     ).toEqual([
       23, 51, 245, 81, 88, 150, 83, 204, 65, 85, 65, 47, 145, 96, 44, 208, 182, 0, 112, 233, 156,
       127, 221, 227, 56, 215, 81, 71, 154, 146, 246, 59,
     ]);
     expect(
-      Array.from(preview.verificationPolicy.trustedPublicKeys.get("preview-2026-r2") ?? []),
+      Array.from(previewRemote.verificationPolicy.trustedPublicKeys.get("preview-2026-r2") ?? []),
     ).toEqual([
       193, 247, 8, 29, 120, 239, 53, 58, 10, 15, 59, 154, 26, 48, 218, 192, 203, 148, 12, 50, 39,
       145, 254, 254, 42, 217, 3, 200, 244, 244, 240, 17,
     ]);
     expect(
-      Array.from(preview.verificationPolicy.trustedPublicKeys.get("preview-2026-r3") ?? []),
+      Array.from(previewRemote.verificationPolicy.trustedPublicKeys.get("preview-2026-r3") ?? []),
     ).toEqual([
       192, 246, 25, 13, 196, 21, 140, 223, 56, 179, 155, 40, 135, 2, 163, 245, 53, 84, 97, 69, 203,
       237, 144, 212, 14, 174, 87, 39, 209, 101, 224, 193,
     ]);
-    expect([...preview.verificationPolicy.trustedPublicKeys.keys()]).toEqual([
-      "preview-2026",
-      "preview-2026-r2",
-      "preview-2026-r3",
-    ]);
-    expect([...preview.verificationPolicy.trustedPublicKeys.keys()]).toEqual(
+    expect([...previewRemote.verificationPolicy.trustedPublicKeys.keys()]).toEqual(
       PREVIEW_RULE_CATALOG_TRUST.trustedPublicKeys.map(({ keyId }) => keyId),
     );
     for (const { keyId, publicKey } of PREVIEW_RULE_CATALOG_TRUST.trustedPublicKeys) {
-      expect(Array.from(preview.verificationPolicy.trustedPublicKeys.get(keyId) ?? [])).toEqual(
-        publicKey,
-      );
+      expect(
+        Array.from(previewRemote.verificationPolicy.trustedPublicKeys.get(keyId) ?? []),
+      ).toEqual(publicKey);
       expect(Object.isFrozen(publicKey)).toBe(true);
     }
   });

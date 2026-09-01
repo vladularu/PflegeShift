@@ -1,8 +1,8 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
 import { withImmediateTransaction } from "@/infrastructure/database/transaction";
+import type { RuleManifest } from "@/rules/contracts.generated";
 
-const PREVIEW_STATE_KEY = "rule_catalog_sync_preview";
 const MAXIMUM_REASONABLE_SCHEDULE_DELAY_MS = 7 * 24 * 60 * 60 * 1_000;
 
 interface SyncStateValue {
@@ -48,18 +48,28 @@ function stateJson(nextCheckAt: Date, generation: number | null): string {
   });
 }
 
-async function writeState(db: SQLiteDatabase, value: string, updatedAt: Date): Promise<void> {
+export function ruleCatalogSyncStateKey(channel: RuleManifest["channel"]): string {
+  return `rule_catalog_sync_${channel.toLowerCase()}`;
+}
+
+async function writeState(
+  db: SQLiteDatabase,
+  stateKey: string,
+  value: string,
+  updatedAt: Date,
+): Promise<void> {
   await db.runAsync(
     `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
      ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
-    PREVIEW_STATE_KEY,
+    stateKey,
     value,
     updatedAt.toISOString(),
   );
 }
 
-export async function claimPreviewRuleCatalogCheck(
+export async function claimRuleCatalogCheck(
   db: SQLiteDatabase,
+  channel: RuleManifest["channel"],
   now: Date,
   failureRetryMilliseconds: number,
   force = false,
@@ -67,11 +77,12 @@ export async function claimPreviewRuleCatalogCheck(
   if (!Number.isSafeInteger(failureRetryMilliseconds) || failureRetryMilliseconds <= 0) {
     throw new Error("The rule catalog failure retry interval must be positive.");
   }
+  const stateKey = ruleCatalogSyncStateKey(channel);
   let claimed = false;
   await withImmediateTransaction(db, async (transaction) => {
     const row = await transaction.getFirstAsync<PreferenceRow>(
       "SELECT value FROM app_preferences WHERE key=?",
-      PREVIEW_STATE_KEY,
+      stateKey,
     );
     const state = parseState(row?.value);
     const nextCheck = state === null ? null : Date.parse(state.nextCheckAt);
@@ -80,14 +91,20 @@ export async function claimPreviewRuleCatalogCheck(
     if (!force && nextCheck !== null && nextCheck > now.getTime() && !implausiblyFuture) return;
 
     const retryAt = new Date(now.getTime() + failureRetryMilliseconds);
-    await writeState(transaction, stateJson(retryAt, state?.lastSuccessfulGeneration ?? null), now);
+    await writeState(
+      transaction,
+      stateKey,
+      stateJson(retryAt, state?.lastSuccessfulGeneration ?? null),
+      now,
+    );
     claimed = true;
   });
   return claimed;
 }
 
-export async function completePreviewRuleCatalogCheck(
+export async function completeRuleCatalogCheck(
   db: SQLiteDatabase,
+  channel: RuleManifest["channel"],
   generation: number,
   now: Date,
   checkIntervalMilliseconds: number,
@@ -98,9 +115,11 @@ export async function completePreviewRuleCatalogCheck(
   if (!Number.isSafeInteger(checkIntervalMilliseconds) || checkIntervalMilliseconds <= 0) {
     throw new Error("The rule catalog check interval must be positive.");
   }
+  const stateKey = ruleCatalogSyncStateKey(channel);
   await withImmediateTransaction(db, (transaction) =>
     writeState(
       transaction,
+      stateKey,
       stateJson(new Date(now.getTime() + checkIntervalMilliseconds), generation),
       now,
     ),
