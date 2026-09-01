@@ -1,6 +1,6 @@
 # Production rule-catalog channel plan
 
-## Current state after WP6a-2b
+## Current state after WP6a-2c
 
 The Production rule-catalog channel is intentionally disabled. The app's `production` EAS channel
 exists for application delivery, but it has no rule-catalog endpoint or trusted Production key.
@@ -16,6 +16,12 @@ The committed instance has status `DISABLED`, null project and public URLs, and 
 It contains only the future region, names, storage policy, intervals, and the name of the secret
 environment variable. A Supabase secret or Ed25519 private signing seed is never valid contract
 content.
+
+WP6a-2c adds a versioned, write-disabled provisioning operator and a solo-owner acceptance
+checklist. The operator derives its plan from the same Production channel contract and exposes only
+`preflight`, `plan`, and `checklist`. It has no network, secret-read, local-write, project-creation,
+bucket-creation, signing, delivery, or activation capability. The checklist is maintained in
+`docs/operations/rule-catalog-production-provisioning-checklist.md`.
 
 ## Fixed isolation contract
 
@@ -99,3 +105,27 @@ and keeps Production calculations on the embedded fallback catalog.
   synthetic candidate as ready for later approval.
 - Preview delivery and the Preview operator remain unchanged.
 - No Supabase, EAS, signing, bucket, upload, or device action occurs.
+
+## WP6a-2c local operator
+
+The following commands are safe before any infrastructure approval:
+
+```powershell
+npm.cmd run rules:production:provisioning -- preflight
+npm.cmd run rules:production:provisioning -- plan
+npm.cmd run rules:production:provisioning -- checklist
+```
+
+The local planning preflight returns `PLAN_READY` only while the committed Production contract is
+schema-valid, `DISABLED`, free of project and remote URLs, free of Production trust, and still has
+no delivery remote profile. Once any live value appears, this planning-only operator fails closed;
+the later live verification workflow owns that state.
+
+The JSON plan records the exact dedicated project region and bucket policy plus a capability matrix
+whose remote and mutation fields are all false. The checklist distinguishes the two current local
+proofs from every later remote acceptance item. It deliberately requests no reviewer name, role,
+signature, or manual timestamp for the solo-owner project.
+
+WP6a-2c does not create a Supabase project or bucket, inspect live infrastructure, read a secret,
+configure public trust, change either channel remote profile, sign or upload a catalog, publish an
+EAS update, or require device acceptance.
