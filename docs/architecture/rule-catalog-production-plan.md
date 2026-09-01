@@ -1,6 +1,6 @@
 # Production rule-catalog channel plan
 
-## Current state after WP6a-2c
+## Current state after WP6a-3a
 
 The Production rule-catalog channel is intentionally disabled. The app's `production` EAS channel
 exists for application delivery, but it has no rule-catalog endpoint or trusted Production key.
@@ -22,6 +22,14 @@ checklist. The operator derives its plan from the same Production channel contra
 `preflight`, `plan`, and `checklist`. It has no network, secret-read, local-write, project-creation,
 bucket-creation, signing, delivery, or activation capability. The checklist is maintained in
 `docs/operations/rule-catalog-production-provisioning-checklist.md`.
+
+WP6a-3a adds a separate Production trust-preparation operator without generating or persisting a
+real key. Its secret-free `preflight` proves the committed pre-candidate contract is still disabled,
+isolated, empty of Production trust, and remote-disabled before a later secret action. Its `derive`
+command accepts a 32-byte seed only through the process environment, removes that input
+immediately, derives only the public Ed25519 key, and rejects every public key already trusted by
+Preview. The Node operator has no network, filesystem-write, signing, delivery, or activation
+capability.
 
 ## Fixed isolation contract
 
@@ -129,3 +137,29 @@ signature, or manual timestamp for the solo-owner project.
 WP6a-2c does not create a Supabase project or bucket, inspect live infrastructure, read a secret,
 configure public trust, change either channel remote profile, sign or upload a catalog, publish an
 EAS update, or require device acceptance.
+
+## WP6a-3a Production trust preparation
+
+The versioned commands are:
+
+```powershell
+npm.cmd run rules:production:trust -- preflight
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/prepare-production-rule-catalog-trust.ps1
+```
+
+Only `preflight` is run during WP6a-3a. The PowerShell wrapper is implemented and statically tested
+but remains an explicit later secret-generation boundary. When separately authorized, it uses the
+fixed initial key id `production-2026-r1`, stores the seed only as a DPAPI `CurrentUser` blob at
+`%LOCALAPPDATA%\PflegeShift\secrets\rule-catalog-production-2026-r1.dpapi`, and never overwrites an
+existing file. A new seed is protected and unprotected in memory, and both the original and
+round-tripped seed must derive the same public key before the protected file is created with
+`FileMode.CreateNew`.
+
+The wrapper prints only the public key result. The private seed is never a command-line argument,
+clipboard value, repository file, artifact, or log field. It clears the child-process environment
+and mutable byte arrays in every success and failure path. Re-running before the Candidate contract
+is recorded may verify an existing DPAPI file but cannot replace it.
+
+WP6a-3a does not run the wrapper, create a Production seed, change
+`rules/config/production-channel.json`, distribute public trust to the app, enable either Production
+remote profile, sign a catalog, write to Supabase, or activate a client.
