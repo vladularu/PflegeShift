@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "channel": "PRODUCTION",
+  "status": "DISABLED",
+  "infrastructure": {
+    "isolationMode": "DEDICATED_SUPABASE_PROJECT",
+    "supabaseProjectUrl": null,
+    "region": "eu-central-1",
+    "bucketName": "rule-catalog-production",
+    "objectRoot": "production",
+    "deliverySecretEnvironmentName": "SUPABASE_PRODUCTION_SECRET_KEY",
+    "storagePolicy": {
+      "publicRead": true,
+      "administrativeWriteOnly": true,
+      "allowedMimeTypes": ["application/json"],
+      "maximumObjectBytes": 524288
+    }
+  },
+  "trust": {
+    "algorithm": "ED25519",
+    "canonicalization": "RFC8785",
+    "trustedPublicKeys": []
+  },
+  "remote": {
+    "publicBaseUrl": null,
+    "checkIntervalMilliseconds": 86400000,
+    "failureRetryMilliseconds": 3600000
+  }
+}

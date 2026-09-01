@@ -314,3 +314,18 @@ enable a Production request. A Preview-configured Storage adapter rejects every
 WP6a-2a does not add or infer a Production Supabase URL, bucket, secret, signing key, public trust
 ring, operator command, or EAS setting. The versioned Preview operator and its activation flow are
 unchanged.
+
+## WP6a-2b Production contract preflight
+
+The future Production infrastructure and public trust inputs are described only by the generated
+contract sourced from `rules/schema/production-channel-config.schema.json`. The committed
+`rules/config/production-channel.json` remains disabled and deliberately omits every live URL and
+public key. It names the future dedicated project boundary, Frankfurt region,
+`rule-catalog-production` bucket, `production` object root, exact storage policy, and the
+`SUPABASE_PRODUCTION_SECRET_KEY` environment variable without containing that variable's value.
+
+`npm.cmd run rules:production:preflight` is a local, read-only readiness check. The current expected
+result is `BLOCKED`; this proves Production is not accidentally deployable. It performs no public
+fetch, administrative request, bucket lookup, credential read, signing operation, local write, or
+activation. The complete later gate order is documented in
+`docs/architecture/rule-catalog-production-plan.md`.
