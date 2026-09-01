@@ -1,12 +1,13 @@
 # Production rule-catalog channel plan
 
-## Current state after WP6a-3b
+## Current state after WP6a-4a
 
 The Production rule-catalog client and administrative delivery channel remain intentionally
 disabled. The public Candidate now records the verified dedicated Production project, its derived
-public object URL, and the initial public signing key `production-2026-r1`. The app still has no
-Production trust distribution or remote catalog profile, so neither an installed Production app
-nor an operator command can download or upload a Production catalog.
+public object URL, and the initial public signing key `production-2026-r1`. The same public key is
+now distributed in the versioned app source through a trust-only profile. Production still has no
+remote catalog profile and accepts no stored remote generation, so neither the app nor an operator
+can download, upload, or activate a Production catalog.
 
 Two version-controlled files are authoritative for the future public, non-secret configuration:
 
@@ -30,6 +31,12 @@ command accepts a 32-byte seed only through the process environment, removes tha
 immediately, derives only the public Ed25519 key, and rejects every public key already trusted by
 Preview. The Node operator has no network, filesystem-write, signing, delivery, or activation
 capability.
+
+WP6a-4a separates the app verification policy from its optional remote profile. Preview retains its
+existing trust and endpoint. Production receives only the approved public Ed25519 key while its
+remote remains `null`; development, test, and unknown channels retain neither trust nor networking.
+The Production preflight compares key ID and all 32 public-key bytes between the authoritative
+Candidate and the app profile, and fails closed on any drift.
 
 ## Fixed isolation contract
 
@@ -91,7 +98,8 @@ Each gate is a separate work package and authorization boundary:
    password manager/DPAPI operator store, derive only its public key, and update the candidate
    contract. No Preview seed or key may be reused.
 4. **Trust distribution:** add the approved Production public key to the app while Production
-   catalog networking remains disabled; pass CI and the required release/device gates.
+   catalog networking and stored-generation selection remain disabled; pass CI and the required
+   release/device gates.
 5. **Generation 1 preparation:** promote reviewed packages into a signed local Production
    generation and pass publisher, delivery dry-run, rollback, and continuity checks.
 6. **Controlled delivery:** separately enable the Production operator, upload immutable objects,
@@ -175,3 +183,23 @@ previously verified dedicated Production project and derived public object URL. 
 was not printed, copied, committed, uploaded, or placed in a command argument. Production client
 trust, delivery remotes, catalog signing, Supabase writes, and activation remain outside this work
 package.
+
+## WP6a-4a Production app trust
+
+The immutable `PRODUCTION_RULE_CATALOG_TRUST` contains only channel identity, key ID, and the
+32-byte public Ed25519 key. It deliberately contains no Supabase URL, bucket, credential name,
+secret, signing seed, retry interval, or activation flag. The client channel contract exposes this
+verification policy independently from `remote`.
+
+For a Production build, `remote` remains `null`, forced and automatic synchronization both return
+`DISABLED`, no HTTP client or synchronization state is created, and stored Production generations
+remain rejected. Calculations therefore continue with `LEGACY_EMBEDDED`. Preview continues to use
+its existing endpoint and trust ring; development, `e2e-test`, missing, and unknown channels have
+neither trust nor networking.
+
+`npm.cmd run rules:production:preflight` additionally rejects any mismatch between the committed
+Candidate and the app-distributed Production trust. Focused runtime tests prove that even an
+incomplete configuration containing a remote URL without verification trust fails closed before an
+HTTP client is constructed. WP6a-4a does not sign or publish a Production catalog, write Supabase,
+enable either Production remote, accept a stored Production generation, publish an EAS update, or
+activate a client.

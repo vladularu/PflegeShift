@@ -157,10 +157,12 @@ WP5b does not enable production downloads.
 ## Channel-neutral client boundary (WP6a-1)
 
 The runtime port now selects one closed catalog profile from the `expo-updates` build channel.
-`preview` retains its existing public endpoint and complete Preview trust ring. `production` records
-the local `PRODUCTION` identity but deliberately has no remote endpoint, verification keys, or
-network synchronization until the later Production trust package is approved. Development,
-`e2e-test`, missing, and unknown channels have neither a catalog identity nor a remote profile.
+`preview` retains its existing public endpoint and complete Preview trust ring. After WP6a-4a,
+`production` records the local `PRODUCTION` identity and approved public signing key while its remote
+profile remains `null`. Verification trust and remote transport are independent configuration
+boundaries, so distributing a public key cannot construct an HTTP client or enable synchronization.
+Development, `e2e-test`, missing, and unknown channels have neither a catalog identity, trust, nor a
+remote profile.
 
 Stored catalogs pass through the active profile before the resolver can load them. Preview accepts
 only a runtime-compatible `PREVIEW` manifest whose signing key ID remains in the configured Preview
@@ -170,8 +172,11 @@ metadata is keyed independently as `rule_catalog_sync_preview` or
 generation observations. The shared synchronizer contains no channel choice of its own; endpoint,
 trust, state key, and activation dependencies all come from the selected profile.
 
-WP6a-1 does not add a Production URL or public key, contact a Production backend, create a bucket,
-publish a Production manifest, change EAS configuration, or alter the embedded fallback catalog.
+The Production preflight now proves that key ID and all 32 public-key bytes in the app profile match
+the authoritative Candidate. Production automatic and forced synchronization both return
+`DISABLED`, and calculations remain on the embedded fallback catalog. WP6a-4a does not enable a
+Production URL, accept stored Production generations, contact a Production backend, publish a
+Production manifest, change EAS configuration, or alter the embedded fallback catalog.
 
 ## Channel-neutral delivery and storage core (WP6a-2a)
 
