@@ -27,6 +27,12 @@ function Invoke-NpmChecked {
 
 Push-Location $Workspace
 try {
+  Write-Host "Preflight PREVIEW generation $Generation"
+  Write-Host "This step validates only prepared local artifacts and never accepts a secret."
+  Invoke-NpmChecked -CommandArguments @(
+    "run", "rules:preview:preflight", "--", "--generation", $Generation.ToString()
+  )
+
   Write-Host "Activate PREVIEW generation $Generation"
   Write-Host "This is the only operator step that writes to Supabase."
   Write-Host "Enter only the dedicated rule_catalog_preview key with sb_secret_ prefix."

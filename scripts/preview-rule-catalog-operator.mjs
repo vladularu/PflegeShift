@@ -37,11 +37,13 @@ function usage() {
     "Usage:",
     "  npm run rules:preview:recover -- --generation <positive integer>",
     "  npm run rules:preview:prepare -- --request rules/releases/<request>.json",
+    "  npm run rules:preview:preflight -- --generation <positive integer>",
     "  npm run rules:preview:activate -- --generation <positive integer> [--create-bucket]",
     "  npm run rules:preview:verify -- --generation <positive integer>",
     "",
     "Recover performs public reads and local writes only and never accepts a secret.",
     "Prepare performs public reads and local writes only.",
+    "Preflight verifies prepared local artifacts and never accepts a secret.",
     "Activate is the only command that writes to Supabase.",
     "Verify performs public reads only and never accepts a secret.",
   ].join("\n");
@@ -102,6 +104,16 @@ export function parsePreviewOperatorArguments(command, argv) {
     const requestPath = values.get("--request");
     if (requestPath === undefined) throw new Error(`--request is required.\n\n${usage()}`);
     return { command, requestPath };
+  }
+  if (command === "preflight") {
+    const { values, flags } = parseNamedOptions(argv, new Set());
+    if (flags.size > 0 || [...values.keys()].some((key) => key !== "--generation")) {
+      throw new Error(`Preflight accepts only --generation.\n\n${usage()}`);
+    }
+    return {
+      command,
+      generation: parsePositiveInteger(values.get("--generation"), "--generation"),
+    };
   }
   if (command === "activate") {
     const { values, flags } = parseNamedOptions(argv, new Set(["--create-bucket"]));
@@ -607,6 +619,17 @@ function publicSupabaseProjectUrl() {
   return new URL(PREVIEW_RULE_CATALOG_TRUST.baseUrl).origin;
 }
 
+function previewDeliveryArguments(generation) {
+  return [
+    "run",
+    "rules:deliver",
+    "--",
+    "--manifest",
+    operatorManifestPath(generation),
+    ...previewTrustedPublicKeyArguments(),
+  ];
+}
+
 export async function preparePreviewRuleCatalog({
   requestPath,
   workspaceRoot = process.cwd(),
@@ -766,6 +789,26 @@ function waitMilliseconds(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+export async function preflightPreviewRuleCatalogActivation({
+  generation,
+  workspaceRoot = process.cwd(),
+  environment = process.env,
+  runNpm = defaultRunNpm,
+  log = console.log,
+}) {
+  parsePositiveInteger(String(generation), "generation");
+  const manifestPath = operatorManifestPath(generation);
+  const deliveryArguments = previewDeliveryArguments(generation);
+  const cleanEnvironment = sanitizeEnvironment(environment);
+  log(`Preflight PREVIEW generation ${generation}: local delivery validation`);
+  await runNpm([...deliveryArguments, "--dry-run"], {
+    workspaceRoot,
+    environment: cleanEnvironment,
+  });
+  log(`PREFLIGHTED: generation ${generation} is locally valid at ${manifestPath}.`);
+  return Object.freeze({ generation, manifestPath });
+}
+
 export async function activatePreviewRuleCatalog({
   generation,
   createBucket = false,
@@ -781,30 +824,23 @@ export async function activatePreviewRuleCatalog({
   let secretKey = environment[secretKeyEnvironmentName];
   delete environment[secretKeyEnvironmentName];
   delete environment[supabaseUrlEnvironmentName];
-  if (secretKey === undefined || !secretKey.startsWith("sb_secret_") || secretKey.length < 20) {
-    throw new PreviewRuleCatalogOperatorError(
-      "SUPABASE_SECRET_REQUIRED",
-      `${secretKeyEnvironmentName} must contain the dedicated sb_secret_ Preview delivery key.`,
-    );
-  }
 
   try {
-    const manifestPath = operatorManifestPath(generation);
-    const trustedArguments = previewTrustedPublicKeyArguments();
-    const deliveryArguments = [
-      "run",
-      "rules:deliver",
-      "--",
-      "--manifest",
-      manifestPath,
-      ...trustedArguments,
-    ];
+    const deliveryArguments = previewDeliveryArguments(generation);
     const cleanEnvironment = sanitizeEnvironment(environment);
-    log(`Activate PREVIEW generation ${generation}: local preflight`);
-    await runNpm([...deliveryArguments, "--dry-run"], {
+    await preflightPreviewRuleCatalogActivation({
+      generation,
       workspaceRoot,
-      environment: cleanEnvironment,
+      environment,
+      runNpm,
+      log,
     });
+    if (secretKey === undefined || !secretKey.startsWith("sb_secret_") || secretKey.length < 20) {
+      throw new PreviewRuleCatalogOperatorError(
+        "SUPABASE_SECRET_REQUIRED",
+        `${secretKeyEnvironmentName} must contain the dedicated sb_secret_ Preview delivery key.`,
+      );
+    }
 
     log(`Activate PREVIEW generation ${generation}: authorized Supabase delivery`);
     await runNpm(createBucket ? [...deliveryArguments, "--create-bucket"] : deliveryArguments, {
@@ -848,6 +884,7 @@ async function main() {
   const options = parsePreviewOperatorArguments(process.argv[2], process.argv.slice(3));
   if (options.command === "recover") await recoverPreviewRuleCatalog(options);
   else if (options.command === "prepare") await preparePreviewRuleCatalog(options);
+  else if (options.command === "preflight") await preflightPreviewRuleCatalogActivation(options);
   else if (options.command === "activate") await activatePreviewRuleCatalog(options);
   else await verifyPublishedPreviewRuleCatalog(options);
 }

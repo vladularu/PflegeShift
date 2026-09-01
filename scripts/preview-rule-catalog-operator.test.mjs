@@ -8,6 +8,7 @@ import {
   activatePreviewRuleCatalog,
   fetchPublicPreviewArtifact,
   parsePreviewOperatorArguments,
+  preflightPreviewRuleCatalogActivation,
   preparePreviewRuleCatalog,
   previewTrustedPublicKeyArguments,
   recoverPreviewRuleCatalog,
@@ -87,7 +88,7 @@ function recoveryManifest(
   })}\n`;
 }
 
-test("operator argument parsing keeps Recover, Prepare, Activate, and Verify explicit", () => {
+test("operator argument parsing keeps Recover, Prepare, Preflight, Activate, and Verify explicit", () => {
   assert.deepEqual(
     parsePreviewOperatorArguments("prepare", ["--request", "rules/releases/x.json"]),
     {
@@ -99,6 +100,10 @@ test("operator argument parsing keeps Recover, Prepare, Activate, and Verify exp
     command: "activate",
     generation: 4,
     createBucket: false,
+  });
+  assert.deepEqual(parsePreviewOperatorArguments("preflight", ["--generation", "4"]), {
+    command: "preflight",
+    generation: 4,
   });
   assert.deepEqual(
     parsePreviewOperatorArguments("activate", ["--generation", "1", "--create-bucket"]),
@@ -125,6 +130,11 @@ test("operator argument parsing keeps Recover, Prepare, Activate, and Verify exp
     () =>
       parsePreviewOperatorArguments("recover", ["--generation", "4", "--secret", "not-accepted"]),
     /Recover accepts only --generation/,
+  );
+  assert.throws(
+    () =>
+      parsePreviewOperatorArguments("preflight", ["--generation", "4", "--secret", "not-accepted"]),
+    /Preflight accepts only --generation/,
   );
 });
 
@@ -765,6 +775,55 @@ test("Prepare fails closed when rollback package verification fails", async () =
   } finally {
     await fs.rm(workspaceRoot, { recursive: true, force: true });
   }
+});
+
+test("Preflight performs one local delivery dry-run without forwarding secrets", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const environment = {
+    RULE_CATALOG_SIGNING_KEY_BASE64URL: signingSeed,
+    SUPABASE_SECRET_KEY: supabaseSecret,
+    SUPABASE_URL: "https://example.supabase.co",
+    SAFE_VALUE: "retained",
+  };
+  const commands = [];
+  try {
+    const result = await preflightPreviewRuleCatalogActivation({
+      generation: 4,
+      workspaceRoot,
+      environment,
+      runNpm: async (argumentsList, options) => {
+        commands.push({ argumentsList, environment: options.environment });
+      },
+      log: () => {},
+    });
+
+    assert.deepEqual(result, {
+      generation: 4,
+      manifestPath: "artifacts/rule-catalog-operator/preview/manifests/4.json",
+    });
+    assert.equal(commands.length, 1);
+    assert.equal(commands[0].argumentsList.includes("--dry-run"), true);
+    assert.equal(commands[0].environment.RULE_CATALOG_SIGNING_KEY_BASE64URL, undefined);
+    assert.equal(commands[0].environment.SUPABASE_SECRET_KEY, undefined);
+    assert.equal(commands[0].environment.SUPABASE_URL, undefined);
+    assert.equal(commands[0].environment.SAFE_VALUE, "retained");
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("interactive Activate wrapper completes Preflight before the masked secret prompt", async () => {
+  const wrapper = await fs.readFile(
+    new URL("./operators/activate-preview-rule-catalog.ps1", import.meta.url),
+    "utf8",
+  );
+  const preflightIndex = wrapper.indexOf("rules:preview:preflight");
+  const promptIndex = wrapper.indexOf('Read-Host "Supabase key rule_catalog_preview"');
+  const activateIndex = wrapper.indexOf("rules:preview:activate");
+
+  assert.ok(preflightIndex >= 0);
+  assert.ok(promptIndex > preflightIndex);
+  assert.ok(activateIndex > promptIndex);
 });
 
 test("Activate separates local preflight from the one authorized remote write", async () => {

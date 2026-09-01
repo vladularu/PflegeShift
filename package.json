@@ -30,6 +30,7 @@
     "rules:deliver": "node --import tsx scripts/deliver-rule-catalog.mjs",
     "rules:preview:recover": "node --import tsx scripts/preview-rule-catalog-operator.mjs recover",
     "rules:preview:prepare": "node --import tsx scripts/preview-rule-catalog-operator.mjs prepare",
+    "rules:preview:preflight": "node --import tsx scripts/preview-rule-catalog-operator.mjs preflight",
     "rules:preview:activate": "node --import tsx scripts/preview-rule-catalog-operator.mjs activate",
     "rules:preview:verify": "node --import tsx scripts/preview-rule-catalog-operator.mjs verify",
     "rules:check": "node scripts/generate-rule-contracts.mjs --check && npm run rules:validate",
