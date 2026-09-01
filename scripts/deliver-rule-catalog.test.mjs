@@ -13,8 +13,12 @@ import * as ed25519 from "@noble/ed25519";
 
 import { canonicalizeRuleManifestForSignature } from "../src/rules/rule-catalog-verification.ts";
 import {
+  RULE_CATALOG_DELIVERY_CHANNELS,
+  ruleCatalogDeliveryChannel,
+} from "./rule-catalog-delivery-channels.mjs";
+import {
   createSupabaseRuleCatalogStorage,
-  deliverPreviewRuleCatalog,
+  deliverRuleCatalog,
   RuleCatalogDeliveryError,
   ruleCatalogDeliveryConstants,
 } from "./supabase-rule-catalog-storage.mjs";
@@ -26,28 +30,52 @@ const require = createRequire(import.meta.url);
 const tsxImport = pathToFileURL(require.resolve("tsx")).href;
 const secretKey = "sb_secret_delivery_test_key_123456789";
 
+test("delivery channel contract keeps only Preview remotely enabled", () => {
+  const preview = ruleCatalogDeliveryChannel("PREVIEW");
+  const production = ruleCatalogDeliveryChannel("PRODUCTION");
+
+  assert.deepEqual(preview, {
+    channel: "PREVIEW",
+    pathSegment: "preview",
+    keyIdPrefix: "preview-",
+    remote: { bucket: "rule-catalog" },
+  });
+  assert.deepEqual(production, {
+    channel: "PRODUCTION",
+    pathSegment: "production",
+    keyIdPrefix: "production-",
+    remote: null,
+  });
+  assert.equal(ruleCatalogDeliveryChannel("UNKNOWN"), null);
+  assert.equal(Object.isFrozen(RULE_CATALOG_DELIVERY_CHANNELS), true);
+  assert.equal(Object.isFrozen(preview), true);
+  assert.equal(Object.isFrozen(preview.remote), true);
+  assert.equal(Object.isFrozen(production), true);
+});
+
 function artifactSet(manifest, packageContents = ['{"package":1}\n']) {
+  const channelRoot = manifest.channel.toLowerCase();
   const manifestJson = `${JSON.stringify(manifest, null, 2)}\n`;
   return {
     manifest,
     manifestJson,
     artifacts: [
       ...manifest.packages.map((descriptor, index) => ({
-        objectPath: `preview/${descriptor.path}`,
+        objectPath: `${channelRoot}/${descriptor.path}`,
         contents: packageContents[index],
         immutable: true,
         role: "PACKAGE",
         cacheControl: ruleCatalogDeliveryConstants.immutableCacheControl,
       })),
       {
-        objectPath: `preview/manifests/${manifest.generation}.json`,
+        objectPath: `${channelRoot}/manifests/${manifest.generation}.json`,
         contents: manifestJson,
         immutable: true,
         role: "VERSIONED_MANIFEST",
         cacheControl: ruleCatalogDeliveryConstants.immutableCacheControl,
       },
       {
-        objectPath: "preview/current.json",
+        objectPath: `${channelRoot}/current.json`,
         contents: manifestJson,
         immutable: false,
         role: "CURRENT_MANIFEST",
@@ -57,10 +85,10 @@ function artifactSet(manifest, packageContents = ['{"package":1}\n']) {
   };
 }
 
-function testManifest(generation = 1, publishedAt = "2026-08-28T13:00:00Z") {
+function testManifest(generation = 1, publishedAt = "2026-08-28T13:00:00Z", channel = "PREVIEW") {
   return {
     generation,
-    channel: "PREVIEW",
+    channel,
     publishedAt,
     packages: [
       {
@@ -148,6 +176,7 @@ function createFakeSupabase({ bucketExists = false, bucketOverride = {} } = {}) 
 
 function storageFor(fake) {
   return createSupabaseRuleCatalogStorage({
+    channel: "PREVIEW",
     supabaseUrl: "http://127.0.0.1",
     secretKey,
     fetchImplementation: fake.fetchImplementation,
@@ -159,7 +188,7 @@ test("delivery creates the locked bucket, uploads immutable artifacts first, and
   const storage = storageFor(fake);
   const publication = artifactSet(testManifest());
 
-  const delivered = await deliverPreviewRuleCatalog({
+  const delivered = await deliverRuleCatalog({
     storage,
     publication,
     verifyRemoteManifest: async (json) => JSON.parse(json),
@@ -201,7 +230,7 @@ test("delivery creates the locked bucket, uploads immutable artifacts first, and
   );
 
   const requestCount = fake.requests.length;
-  const retried = await deliverPreviewRuleCatalog({
+  const retried = await deliverRuleCatalog({
     storage,
     publication,
     verifyRemoteManifest: async (json) => JSON.parse(json),
@@ -222,7 +251,7 @@ test("delivery rejects immutable conflicts before replacing current.json", async
   const fake = createFakeSupabase({ bucketExists: true });
   const storage = storageFor(fake);
   const publication = artifactSet(testManifest());
-  await deliverPreviewRuleCatalog({
+  await deliverRuleCatalog({
     storage,
     publication,
     verifyRemoteManifest: async (json) => JSON.parse(json),
@@ -236,7 +265,7 @@ test("delivery rejects immutable conflicts before replacing current.json", async
   ).length;
 
   await assert.rejects(
-    deliverPreviewRuleCatalog({
+    deliverRuleCatalog({
       storage,
       publication,
       verifyRemoteManifest: async (json) => JSON.parse(json),
@@ -259,7 +288,7 @@ test("delivery rejects remote generation gaps before uploading", async () => {
   const fake = createFakeSupabase({ bucketExists: true });
   const storage = storageFor(fake);
   const generationOne = artifactSet(testManifest());
-  await deliverPreviewRuleCatalog({
+  await deliverRuleCatalog({
     storage,
     publication: generationOne,
     verifyRemoteManifest: async (json) => JSON.parse(json),
@@ -268,7 +297,7 @@ test("delivery rejects remote generation gaps before uploading", async () => {
   const generationThree = artifactSet(testManifest(3, "2026-08-28T15:00:00Z"));
 
   await assert.rejects(
-    deliverPreviewRuleCatalog({
+    deliverRuleCatalog({
       storage,
       publication: generationThree,
       verifyRemoteManifest: async (json) => JSON.parse(json),
@@ -288,7 +317,7 @@ test("delivery rejects remote generation gaps before uploading", async () => {
 test("delivery rejects an untrusted remote pointer before uploading", async () => {
   const fake = createFakeSupabase({ bucketExists: true });
   const storage = storageFor(fake);
-  await deliverPreviewRuleCatalog({
+  await deliverRuleCatalog({
     storage,
     publication: artifactSet(testManifest()),
     verifyRemoteManifest: async (json) => JSON.parse(json),
@@ -296,7 +325,7 @@ test("delivery rejects an untrusted remote pointer before uploading", async () =
   const writesBeforeRejection = fake.requests.filter((request) => request.method === "POST").length;
 
   await assert.rejects(
-    deliverPreviewRuleCatalog({
+    deliverRuleCatalog({
       storage,
       publication: artifactSet(testManifest(2, "2026-08-28T14:00:00Z")),
       verifyRemoteManifest: async () => {
@@ -318,20 +347,42 @@ test("delivery rejects an untrusted remote pointer before uploading", async () =
 
 test("delivery rejects the production channel before contacting Supabase", async () => {
   const fake = createFakeSupabase({ bucketExists: true });
-  const productionManifest = { ...testManifest(), channel: "PRODUCTION" };
+  const productionManifest = testManifest(1, "2026-08-28T13:00:00Z", "PRODUCTION");
   await assert.rejects(
-    deliverPreviewRuleCatalog({
+    deliverRuleCatalog({
       storage: storageFor(fake),
       publication: artifactSet(productionManifest),
       verifyRemoteManifest: async (json) => JSON.parse(json),
     }),
     (error) => {
       assert.ok(error instanceof RuleCatalogDeliveryError);
-      assert.equal(error.code, "CHANNEL_NOT_ALLOWED");
+      assert.equal(error.code, "CHANNEL_REMOTE_DISABLED");
       return true;
     },
   );
   assert.equal(fake.requests.length, 0);
+});
+
+test("delivery rejects a channel-mismatched storage port before touching it", async () => {
+  let storageTouched = false;
+  await assert.rejects(
+    deliverRuleCatalog({
+      storage: {
+        channel: "PRODUCTION",
+        ensureBucket: async () => {
+          storageTouched = true;
+        },
+      },
+      publication: artifactSet(testManifest()),
+      verifyRemoteManifest: async (json) => JSON.parse(json),
+    }),
+    (error) => {
+      assert.ok(error instanceof RuleCatalogDeliveryError);
+      assert.equal(error.code, "CHANNEL_MISMATCH");
+      return true;
+    },
+  );
+  assert.equal(storageTouched, false);
 });
 
 test("delivery fails closed when bucket restrictions drift", async () => {
@@ -348,6 +399,7 @@ test("delivery fails closed when bucket restrictions drift", async () => {
 
 test("storage rejects an unrelated HTTP 400 instead of treating it as a missing object", async () => {
   const storage = createSupabaseRuleCatalogStorage({
+    channel: "PREVIEW",
     supabaseUrl: "http://127.0.0.1",
     secretKey,
     fetchImplementation: async () =>
@@ -369,20 +421,55 @@ test("storage rejects an unrelated HTTP 400 instead of treating it as a missing 
   });
 });
 
+test("storage isolates channel object paths before any request", async () => {
+  const fake = createFakeSupabase({ bucketExists: true });
+  const storage = storageFor(fake);
+
+  await assert.rejects(storage.readObject("production/current.json"), (error) => {
+    assert.ok(error instanceof RuleCatalogDeliveryError);
+    assert.equal(error.code, "INVALID_ARTIFACT_SET");
+    return true;
+  });
+  assert.equal(fake.requests.length, 0);
+});
+
+test("storage cannot be configured for Production while its remote profile is disabled", () => {
+  let contacted = false;
+  assert.throws(
+    () =>
+      createSupabaseRuleCatalogStorage({
+        channel: "PRODUCTION",
+        supabaseUrl: "http://127.0.0.1",
+        secretKey,
+        fetchImplementation: async () => {
+          contacted = true;
+          return new Response("", { status: 500 });
+        },
+      }),
+    (error) => {
+      assert.ok(error instanceof RuleCatalogDeliveryError);
+      assert.equal(error.code, "CHANNEL_REMOTE_DISABLED");
+      return true;
+    },
+  );
+  assert.equal(contacted, false);
+});
+
 async function fixture(fileName) {
   return JSON.parse(
     await fs.readFile(path.join(repositoryRoot, "rules", "examples", fileName), "utf8"),
   );
 }
 
-async function writeSignedCliFixture(publicationRoot) {
+async function writeSignedCliFixture(publicationRoot, channel = "PREVIEW") {
   ed25519.hashes.sha512 = (message) =>
     Uint8Array.from(createHash("sha512").update(message).digest());
   const privateKey = Uint8Array.from({ length: 32 }, (_, index) => index);
   const publicKey = ed25519.getPublicKey(privateKey);
   await fs.mkdir(publicationRoot, { recursive: true });
   const root = await fs.mkdtemp(path.join(publicationRoot, "delivery-test-"));
-  const channelRoot = path.join(root, "preview");
+  const channelDirectory = channel.toLowerCase();
+  const channelRoot = path.join(root, channelDirectory);
   const packages = await Promise.all([
     fixture("tariff-package.valid.json"),
     fixture("legal-package.valid.json"),
@@ -419,6 +506,7 @@ async function writeSignedCliFixture(publicationRoot) {
   packages[1].rules.restPeriod.deviations[0].compensationWithinCalendarMonths = 1;
   const packageJson = packages.map((value) => `${JSON.stringify(value, null, 2)}\n`);
   const manifest = await fixture("manifest.valid.json");
+  manifest.channel = channel;
   manifest.packages = packages.map((rulePackage, index) => ({
     packageId: rulePackage.packageId,
     versionId: rulePackage.versionId,
@@ -430,7 +518,7 @@ async function writeSignedCliFixture(publicationRoot) {
     sha256: createHash("sha256").update(packageJson[index], "utf8").digest("hex"),
     sizeBytes: Buffer.byteLength(packageJson[index], "utf8"),
   }));
-  manifest.signing.keyId = "preview-delivery-test";
+  manifest.signing.keyId = `${channelDirectory}-delivery-test`;
   manifest.signing.signature = "";
   manifest.signing.signature = Buffer.from(
     ed25519.sign(canonicalizeRuleManifestForSignature(manifest), privateKey),
@@ -447,7 +535,7 @@ async function writeSignedCliFixture(publicationRoot) {
   return {
     root,
     manifestPath,
-    trustedKey: `preview-delivery-test=${Buffer.from(publicKey).toString("base64url")}`,
+    trustedKey: `${channelDirectory}-delivery-test=${Buffer.from(publicKey).toString("base64url")}`,
   };
 }
 
@@ -520,5 +608,61 @@ test("delivery CLI verifies a signed local publication without network access", 
     await Promise.all(
       fixtureRoots.map((fixtureRoot) => fs.rm(fixtureRoot.root, { recursive: true, force: true })),
     );
+  }
+});
+
+test("delivery CLI validates Production locally but blocks remote delivery before credentials or network", async () => {
+  const fixtureRoot = await writeSignedCliFixture(
+    path.join(repositoryRoot, "dist", "rule-catalog"),
+    "PRODUCTION",
+  );
+  try {
+    const dryRun = await execFileAsync(
+      process.execPath,
+      [
+        "--import",
+        tsxImport,
+        deliveryCliPath,
+        "--manifest",
+        fixtureRoot.manifestPath,
+        "--trusted-public-key",
+        fixtureRoot.trustedKey,
+        "--dry-run",
+      ],
+      { cwd: repositoryRoot, encoding: "utf8" },
+    );
+    assert.match(dryRun.stdout, /Validated local PRODUCTION generation 1 for delivery/);
+    assert.match(dryRun.stdout, /Network writes: none \(dry-run\)/);
+
+    await assert.rejects(
+      execFileAsync(
+        process.execPath,
+        [
+          "--import",
+          tsxImport,
+          deliveryCliPath,
+          "--manifest",
+          fixtureRoot.manifestPath,
+          "--trusted-public-key",
+          fixtureRoot.trustedKey,
+        ],
+        {
+          cwd: repositoryRoot,
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            SUPABASE_URL: "http://127.0.0.1",
+            SUPABASE_SECRET_KEY: secretKey,
+          },
+        },
+      ),
+      (error) => {
+        assert.match(error.stderr, /CHANNEL_REMOTE_DISABLED/);
+        assert.equal(error.stderr.includes(secretKey), false);
+        return true;
+      },
+    );
+  } finally {
+    await fs.rm(fixtureRoot.root, { recursive: true, force: true });
   }
 });

@@ -12,11 +12,13 @@ import {
 } from "../src/rules/rule-catalog-verification.ts";
 import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "../src/rules/rule-catalog-engine-support.ts";
 import {
+  assertRuleCatalogRemoteDeliveryEnabled,
   createSupabaseRuleCatalogStorage,
-  deliverPreviewRuleCatalog,
+  deliverRuleCatalog,
   RuleCatalogDeliveryError,
   ruleCatalogDeliveryConstants,
 } from "./supabase-rule-catalog-storage.mjs";
+import { ruleCatalogDeliveryChannelFromPathSegment } from "./rule-catalog-delivery-channels.mjs";
 import { RULE_CATALOG_LOCAL_PUBLICATION_ROOTS } from "./rule-catalog-publication-paths.mjs";
 
 const workspaceRoot = path.resolve(process.cwd());
@@ -28,10 +30,10 @@ const supabaseUrlEnvironmentName = "SUPABASE_URL";
 
 function usage() {
   return [
-    "Usage: npm run rules:deliver -- --manifest <approved-root/.../preview/manifests/N.json> [options]",
+    "Usage: npm run rules:deliver -- --manifest <approved-root>/<preview|production>/manifests/N.json> [options]",
     "",
     "Options:",
-    "  --trusted-public-key <keyId=base64url>  Trusted PREVIEW public key; repeatable",
+    "  --trusted-public-key <keyId=base64url>  Trusted channel public key; repeatable",
     "  --create-bucket                         Create the locked-down bucket if absent",
     "  --dry-run                               Verify local artifacts without network access",
     "",
@@ -98,14 +100,20 @@ function resolveManifestPath(inputPath) {
     throw new Error("The manifest must be inside a manifests directory.");
   }
   const channelRoot = path.dirname(path.dirname(resolved));
-  if (path.basename(channelRoot) !== "preview") {
-    throw new Error("WP4b accepts only a local preview publication directory.");
+  const channelConfig = ruleCatalogDeliveryChannelFromPathSegment(path.basename(channelRoot));
+  if (channelConfig === null) {
+    throw new Error("The local publication directory must be preview or production.");
   }
   const generationMatch = /^([1-9][0-9]*)\.json$/.exec(path.basename(resolved));
   if (generationMatch === null) {
     throw new Error("The manifest filename must be its positive generation number.");
   }
-  return { resolved, channelRoot, fileGeneration: Number(generationMatch[1]) };
+  return {
+    resolved,
+    channelRoot,
+    channelConfig,
+    fileGeneration: Number(generationMatch[1]),
+  };
 }
 
 async function readBoundedUtf8(filePath, label) {
@@ -133,15 +141,18 @@ function decodeBase64Url32(value, label) {
   return decoded;
 }
 
-function trustedPublicKeyMap(entries) {
+function trustedPublicKeyMap(entries, channelConfig) {
   const result = new Map();
   for (const entry of entries) {
     const separator = entry.indexOf("=");
     if (separator <= 0) throw new Error("--trusted-public-key must use keyId=base64url.");
     const keyId = entry.slice(0, separator);
     const encodedKey = entry.slice(separator + 1);
-    if (!/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/.test(keyId) || !keyId.startsWith("preview-")) {
-      throw new Error(`Invalid PREVIEW public key id: ${keyId}.`);
+    if (
+      !/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/.test(keyId) ||
+      !keyId.startsWith(channelConfig.keyIdPrefix)
+    ) {
+      throw new Error(`Invalid ${channelConfig.channel} public key id: ${keyId}.`);
     }
     const publicKey = decodeBase64Url32(encodedKey, `Public key ${keyId}`);
     const existing = result.get(keyId);
@@ -172,11 +183,12 @@ function packagePath(channelRoot, relativePath) {
   return resolved;
 }
 
-function publicationArtifacts(manifest, manifestJson, packageJson) {
+function publicationArtifacts(channelConfig, manifest, manifestJson, packageJson) {
+  const objectRoot = channelConfig.pathSegment;
   return Object.freeze([
     ...manifest.packages.map((descriptor, index) =>
       Object.freeze({
-        objectPath: `preview/${descriptor.path}`,
+        objectPath: `${objectRoot}/${descriptor.path}`,
         contents: packageJson[index],
         immutable: true,
         role: "PACKAGE",
@@ -184,14 +196,14 @@ function publicationArtifacts(manifest, manifestJson, packageJson) {
       }),
     ),
     Object.freeze({
-      objectPath: `preview/manifests/${manifest.generation}.json`,
+      objectPath: `${objectRoot}/manifests/${manifest.generation}.json`,
       contents: manifestJson,
       immutable: true,
       role: "VERSIONED_MANIFEST",
       cacheControl: ruleCatalogDeliveryConstants.immutableCacheControl,
     }),
     Object.freeze({
-      objectPath: "preview/current.json",
+      objectPath: `${objectRoot}/current.json`,
       contents: manifestJson,
       immutable: false,
       role: "CURRENT_MANIFEST",
@@ -204,10 +216,13 @@ async function main() {
   const options = parseArguments(process.argv.slice(2));
   const manifestLocation = resolveManifestPath(options.manifestPath);
   const manifestJson = await readBoundedUtf8(manifestLocation.resolved, "The local manifest");
-  const trustedPublicKeys = trustedPublicKeyMap(options.trustedPublicKeys);
+  const trustedPublicKeys = trustedPublicKeyMap(
+    options.trustedPublicKeys,
+    manifestLocation.channelConfig,
+  );
   const cryptography = nodeCryptography();
   const verificationPolicy = Object.freeze({
-    expectedChannel: "PREVIEW",
+    expectedChannel: manifestLocation.channelConfig.channel,
     supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
     trustedPublicKeys,
   });
@@ -227,13 +242,18 @@ async function main() {
   const publication = Object.freeze({
     manifest,
     manifestJson,
-    artifacts: publicationArtifacts(manifest, manifestJson, packageJson),
+    artifacts: publicationArtifacts(
+      manifestLocation.channelConfig,
+      manifest,
+      manifestJson,
+      packageJson,
+    ),
   });
 
   if (options.dryRun) {
     console.log(
       [
-        `Validated local PREVIEW generation ${manifest.generation} for delivery.`,
+        `Validated local ${manifest.channel} generation ${manifest.generation} for delivery.`,
         `Key: ${manifest.signing.keyId}`,
         `Packages: ${packageJson.length}`,
         `Local manifest: ${repoRelativePath(manifestLocation.resolved)}`,
@@ -243,6 +263,7 @@ async function main() {
     return;
   }
 
+  assertRuleCatalogRemoteDeliveryEnabled(manifest.channel);
   const supabaseUrl = process.env[supabaseUrlEnvironmentName];
   const secretKey = process.env[secretKeyEnvironmentName];
   delete process.env[secretKeyEnvironmentName];
@@ -254,8 +275,12 @@ async function main() {
       `${secretKeyEnvironmentName} is required and must not be stored in the repository.`,
     );
   }
-  const storage = createSupabaseRuleCatalogStorage({ supabaseUrl, secretKey });
-  const result = await deliverPreviewRuleCatalog({
+  const storage = createSupabaseRuleCatalogStorage({
+    channel: manifest.channel,
+    supabaseUrl,
+    secretKey,
+  });
+  const result = await deliverRuleCatalog({
     storage,
     publication,
     verifyRemoteManifest: (remoteManifestJson) =>
@@ -265,7 +290,7 @@ async function main() {
 
   console.log(
     [
-      `Delivered PREVIEW generation ${manifest.generation}.`,
+      `Delivered ${manifest.channel} generation ${manifest.generation}.`,
       `Key: ${manifest.signing.keyId}`,
       `Bucket: ${storage.bucket}`,
       `Immutable objects: ${result.created} created, ${result.reused} reused`,

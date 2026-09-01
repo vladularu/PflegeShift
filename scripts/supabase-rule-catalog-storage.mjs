@@ -1,3 +1,5 @@
+import { ruleCatalogDeliveryChannel } from "./rule-catalog-delivery-channels.mjs";
+
 const MAXIMUM_ARTIFACT_BYTES = 524_288;
 const EXPECTED_BUCKET = Object.freeze({
   public: true,
@@ -65,10 +67,33 @@ function encodePath(value) {
   return value.split("/").map(encodeURIComponent).join("/");
 }
 
-function assertObjectPath(value) {
+function requireDeliveryChannel(channel) {
+  const config = ruleCatalogDeliveryChannel(channel);
+  if (config === null) {
+    fail("CHANNEL_NOT_ALLOWED", "The rule catalog delivery channel is unsupported.");
+  }
+  return config;
+}
+
+export function assertRuleCatalogRemoteDeliveryEnabled(channel) {
+  const config = requireDeliveryChannel(channel);
+  if (config.remote === null) {
+    fail(
+      "CHANNEL_REMOTE_DISABLED",
+      `Remote delivery for ${config.channel} rule catalogs is not enabled.`,
+    );
+  }
+  return config;
+}
+
+function assertObjectPath(value, channelConfig) {
+  const prefix = `${channelConfig.pathSegment}/`;
+  const relativePath =
+    typeof value === "string" && value.startsWith(prefix) ? value.slice(prefix.length) : null;
   if (
-    !/^preview\/(?:packages\/[a-z0-9.-]+\/[0-9A-Za-z._-]+\.json|manifests\/[1-9][0-9]*\.json|current\.json)$/.test(
-      value,
+    relativePath === null ||
+    !/^(?:packages\/[a-z0-9.-]+\/[0-9A-Za-z._-]+\.json|manifests\/[1-9][0-9]*\.json|current\.json)$/.test(
+      relativePath,
     )
   ) {
     fail("INVALID_ARTIFACT_SET", "The delivery contains an unsafe or unsupported object path.");
@@ -104,13 +129,12 @@ function assertArtifactSize(contents, label) {
 }
 
 function expectedArtifactSet(publication) {
-  if (publication.manifest.channel !== "PREVIEW") {
-    fail("CHANNEL_NOT_ALLOWED", "WP4b delivers only PREVIEW rule catalogs.");
-  }
+  const channelConfig = assertRuleCatalogRemoteDeliveryEnabled(publication.manifest.channel);
+  const objectRoot = channelConfig.pathSegment;
   const expectedPackagePaths = publication.manifest.packages.map(
-    (descriptor) => `preview/${descriptor.path}`,
+    (descriptor) => `${objectRoot}/${descriptor.path}`,
   );
-  const expectedManifestPath = `preview/manifests/${publication.manifest.generation}.json`;
+  const expectedManifestPath = `${objectRoot}/manifests/${publication.manifest.generation}.json`;
   const artifacts = [...publication.artifacts];
   if (artifacts.length !== expectedPackagePaths.length + 2) {
     fail("INVALID_ARTIFACT_SET", "The delivery artifact count does not match the manifest.");
@@ -140,7 +164,7 @@ function expectedArtifactSet(publication) {
     fail("INVALID_ARTIFACT_SET", "The versioned manifest artifact is invalid.");
   }
   if (
-    currentManifest?.objectPath !== "preview/current.json" ||
+    currentManifest?.objectPath !== `${objectRoot}/current.json` ||
     currentManifest.role !== "CURRENT_MANIFEST" ||
     currentManifest.immutable !== false ||
     currentManifest.contents !== publication.manifestJson ||
@@ -149,7 +173,7 @@ function expectedArtifactSet(publication) {
     fail("INVALID_ARTIFACT_SET", "The current manifest artifact is invalid.");
   }
   for (const artifact of artifacts) {
-    assertObjectPath(artifact.objectPath);
+    assertObjectPath(artifact.objectPath, channelConfig);
     assertArtifactSize(artifact.contents, artifact.objectPath);
   }
   return artifacts;
@@ -202,12 +226,15 @@ async function isMissingObjectResponse(response) {
 }
 
 export function createSupabaseRuleCatalogStorage({
+  channel,
   supabaseUrl,
   secretKey,
-  bucket = "rule-catalog",
+  bucket: configuredBucket,
   fetchImplementation = globalThis.fetch,
   requestTimeoutMilliseconds = 20_000,
 }) {
+  const channelConfig = assertRuleCatalogRemoteDeliveryEnabled(channel);
+  const bucket = configuredBucket ?? channelConfig.remote.bucket;
   const origin = normalizeSupabaseUrl(supabaseUrl);
   assertSecretKey(secretKey);
   assertBucketName(bucket);
@@ -273,7 +300,7 @@ export function createSupabaseRuleCatalogStorage({
   }
 
   async function readObject(objectPath) {
-    assertObjectPath(objectPath);
+    assertObjectPath(objectPath, channelConfig);
     const response = await request(
       `/object/${encodeURIComponent(bucket)}/${encodePath(objectPath)}`,
     );
@@ -341,13 +368,23 @@ export function createSupabaseRuleCatalogStorage({
     }
   }
 
-  return Object.freeze({ bucket, ensureBucket, readObject, writeImmutable, replaceCurrent });
+  return Object.freeze({
+    channel: channelConfig.channel,
+    bucket,
+    ensureBucket,
+    readObject,
+    writeImmutable,
+    replaceCurrent,
+  });
 }
 
-function assertGenerationTransition(nextManifest, previousManifest) {
+function assertGenerationTransition(nextManifest, previousManifest, channelConfig) {
   if (previousManifest === null) {
     if (nextManifest.generation !== 1) {
-      fail("REMOTE_GENERATION_CONFLICT", "The first remote PREVIEW generation must be 1.");
+      fail(
+        "REMOTE_GENERATION_CONFLICT",
+        `The first remote ${channelConfig.channel} generation must be 1.`,
+      );
     }
     return false;
   }
@@ -355,7 +392,7 @@ function assertGenerationTransition(nextManifest, previousManifest) {
   if (nextManifest.generation !== previousManifest.generation + 1) {
     fail(
       "REMOTE_GENERATION_CONFLICT",
-      "The remote PREVIEW generation must advance by exactly one.",
+      `The remote ${channelConfig.channel} generation must advance by exactly one.`,
     );
   }
   if (Date.parse(nextManifest.publishedAt) <= Date.parse(previousManifest.publishedAt)) {
@@ -364,26 +401,37 @@ function assertGenerationTransition(nextManifest, previousManifest) {
   return false;
 }
 
-export async function deliverPreviewRuleCatalog({
+export async function deliverRuleCatalog({
   storage,
   publication,
   verifyRemoteManifest,
   createBucket = false,
 }) {
+  const channelConfig = assertRuleCatalogRemoteDeliveryEnabled(publication.manifest.channel);
+  if (storage?.channel !== channelConfig.channel) {
+    fail(
+      "CHANNEL_MISMATCH",
+      `The Storage port does not belong to the ${channelConfig.channel} delivery channel.`,
+    );
+  }
+  const currentObjectPath = `${channelConfig.pathSegment}/current.json`;
   const artifacts = expectedArtifactSet(publication);
   await storage.ensureBucket({ createIfMissing: createBucket });
 
-  const remoteCurrentBytes = await storage.readObject("preview/current.json");
+  const remoteCurrentBytes = await storage.readObject(currentObjectPath);
   let previousManifest = null;
   if (remoteCurrentBytes !== null) {
     const remoteCurrentJson = decodeUtf8(remoteCurrentBytes, "Remote current.json");
     try {
       previousManifest = await verifyRemoteManifest(remoteCurrentJson);
     } catch {
-      fail("INVALID_REMOTE_STATE", "Remote current.json is not a trusted PREVIEW manifest.");
+      fail(
+        "INVALID_REMOTE_STATE",
+        `Remote current.json is not a trusted ${channelConfig.channel} manifest.`,
+      );
     }
     const remoteVersioned = await storage.readObject(
-      `preview/manifests/${previousManifest.generation}.json`,
+      `${channelConfig.pathSegment}/manifests/${previousManifest.generation}.json`,
     );
     if (remoteVersioned === null || !equalBytes(remoteVersioned, remoteCurrentBytes)) {
       fail(
@@ -393,7 +441,11 @@ export async function deliverPreviewRuleCatalog({
     }
   }
 
-  const idempotent = assertGenerationTransition(publication.manifest, previousManifest);
+  const idempotent = assertGenerationTransition(
+    publication.manifest,
+    previousManifest,
+    channelConfig,
+  );
   if (
     idempotent &&
     remoteCurrentBytes !== null &&

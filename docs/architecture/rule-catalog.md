@@ -173,6 +173,24 @@ trust, state key, and activation dependencies all come from the selected profile
 WP6a-1 does not add a Production URL or public key, contact a Production backend, create a bucket,
 publish a Production manifest, change EAS configuration, or alter the embedded fallback catalog.
 
+## Channel-neutral delivery and storage core (WP6a-2a)
+
+The administrative delivery boundary now resolves `PREVIEW` and `PRODUCTION` through one frozen,
+version-controlled channel contract. That contract owns the local and remote path segment, signing
+key ID prefix, and optional remote profile. Preview retains the existing `preview/...` namespace
+and `rule-catalog` bucket. Production defines only its local `production/...` namespace and
+`production-` key prefix; its remote profile is deliberately `null`.
+
+Both the delivery orchestrator and the Supabase Storage adapter require an enabled remote profile
+before they can inspect a bucket or issue a request. Production therefore supports complete local
+signature, schema, semantic, engine-contract, package-byte, and path validation through
+`--dry-run`, but a non-dry-run exits with `CHANNEL_REMOTE_DISABLED` before credentials are read or
+Storage is constructed. The Storage adapter also accepts object paths only below the selected
+channel segment, preventing Preview credentials from reading or writing `production/...` paths.
+
+WP6a-2a does not configure a Production project, bucket, URL, secret, trust key, operator, upload,
+public pointer, client download, EAS channel, or catalog activation.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.
