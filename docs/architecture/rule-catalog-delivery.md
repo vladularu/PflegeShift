@@ -342,3 +342,18 @@ The planning preflight is intentionally separate from delivery readiness. It ret
 only because Production is still unconfigured and write-disabled, while
 `rules:production:preflight` continues to return `BLOCKED`. The operator does not change Preview,
 create infrastructure, or enable the existing Production delivery profile.
+
+## WP6a-3a Production trust-prepare operator
+
+`scripts/production-rule-catalog-trust-operator.mjs` adds only two local commands. `preflight`
+requires the same schema-valid, disabled, URL-free, trust-free contract as the provisioning plan and
+does not inspect a process secret. `derive` first repeats that preflight, then consumes
+`RULE_CATALOG_SIGNING_KEY_BASE64URL`, removes it from the child environment, derives the public
+Ed25519 key for fixed key id `production-2026-r1`, and rejects Preview public-key reuse. Both
+commands remain free of network, filesystem-write, signing, delivery, and activation capabilities.
+
+The interactive Windows wrapper
+`scripts/operators/prepare-production-rule-catalog-trust.ps1` is the later approved entry point for
+seed generation and DPAPI `CurrentUser` storage. It is committed and statically checked in WP6a-3a
+but not executed. Production delivery remains `remote: null`, the Production app client remains
+`remote: null`, and the committed Production candidate remains `DISABLED` with no trusted key.

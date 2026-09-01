@@ -7,6 +7,9 @@ project and its empty Storage bucket. WP6a-2c performs none of those remote acti
 read a credential, call Supabase, create a project or bucket, generate a signing key, upload an
 object, enable delivery, or activate the app client.
 
+WP6a-3a adds the versioned trust-preparation code only. It does not execute its DPAPI wrapper or
+create a real Production seed. Seed generation remains a separate explicit approval boundary.
+
 The only authoritative input is `rules/config/production-channel.json`. Run the versioned local
 operator from the repository root:
 
@@ -62,6 +65,18 @@ evidence named below. The operator prints the same item IDs and current statuses
 | `production-object-root-empty`         | Empty listing for `production/` before first delivery           | `NOT_STARTED` |
 | `public-read-negative-check`           | Unauthenticated missing-object response without a credential    | `NOT_STARTED` |
 | `production-config-candidate-reviewed` | Later diff contains only public project and derived remote URLs | `NOT_STARTED` |
+
+## Trust-preparation code gate
+
+Before any Production seed is generated, retain these local proofs:
+
+| ID                                    | Required evidence                                                       | Current state |
+| ------------------------------------- | ----------------------------------------------------------------------- | ------------- |
+| `trust-operator-preflight`            | Secret-free command returns `READY_TO_PREPARE`                          | `PASS`        |
+| `trust-operator-no-remote-capability` | Tests prove no network, Supabase, signing, delivery, or activation path | `PASS`        |
+| `trust-wrapper-dpapi-contract`        | Static checks cover `CurrentUser`, round-trip, `CreateNew`, and cleanup | `PASS`        |
+| `production-signing-seed-created`     | Separately approved real run creates the DPAPI-protected initial seed   | `NOT_STARTED` |
+| `production-public-key-recorded`      | Only the derived public key is recorded in the Candidate contract       | `NOT_STARTED` |
 
 ## Stop conditions
 
