@@ -212,6 +212,13 @@ activation plan is recorded in `docs/architecture/rule-catalog-production-plan.m
 not create or inspect a Supabase project or bucket, generate a signing key, change Preview, enable
 Production delivery/client profiles, publish an EAS update, or activate a catalog.
 
+WP6a-2c adds a local provisioning-plan operator without extending that authority. It reads the
+same disabled contract and offers only `preflight`, `plan`, and `checklist`. Its `PLAN_READY` result
+means only that the repository is safe to prepare for a later, separately approved infrastructure
+write; it is not Production delivery readiness. The normal Production preflight remains `BLOCKED`.
+The exact resource boundary, evidence items, and stop conditions are versioned in
+`docs/operations/rule-catalog-production-provisioning-checklist.md`.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.

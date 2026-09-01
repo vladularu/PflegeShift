@@ -329,3 +329,16 @@ result is `BLOCKED`; this proves Production is not accidentally deployable. It p
 fetch, administrative request, bucket lookup, credential read, signing operation, local write, or
 activation. The complete later gate order is documented in
 `docs/architecture/rule-catalog-production-plan.md`.
+
+## WP6a-2c write-disabled provisioning operator
+
+`scripts/production-rule-catalog-provisioning-operator.mjs` converts the committed disabled
+Production contract into a deterministic local plan and technical acceptance checklist. It accepts
+only `preflight`, `plan`, and `checklist`; no mutation command or remote adapter exists. Its focused
+tests also enforce the absence of network, process-secret, filesystem-write, and child-process
+primitives in the operator source.
+
+The planning preflight is intentionally separate from delivery readiness. It returns `PLAN_READY`
+only because Production is still unconfigured and write-disabled, while
+`rules:production:preflight` continues to return `BLOCKED`. The operator does not change Preview,
+create infrastructure, or enable the existing Production delivery profile.
