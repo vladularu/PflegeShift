@@ -22,7 +22,7 @@ async function temporaryWorkspace() {
   return workspaceRoot;
 }
 
-async function writeRequest(workspaceRoot, generation = 4) {
+async function writeRequest(workspaceRoot, { generation = 4, rollbackOfGeneration = null } = {}) {
   const relativePath = `rules/releases/preview-generation-${generation}.json`;
   await fs.writeFile(
     path.join(workspaceRoot, ...relativePath.split("/")),
@@ -32,7 +32,7 @@ async function writeRequest(workspaceRoot, generation = 4) {
         generation,
         channel: "PREVIEW",
         publishedAt: "2026-09-01T08:00:00Z",
-        rollbackOfGeneration: null,
+        rollbackOfGeneration,
         packageSources: ["rules/packages/reviewed/example/2026-01.json"],
         signing: {
           algorithm: "ED25519",
@@ -50,6 +50,21 @@ async function writeRequest(workspaceRoot, generation = 4) {
 
 function remoteManifest(generation = 3) {
   return `${JSON.stringify({ generation, channel: "PREVIEW", packages: [] })}\n`;
+}
+
+function rollbackManifest(generation = 2) {
+  return `${JSON.stringify({
+    generation,
+    channel: "PREVIEW",
+    signing: { keyId: "preview-2026-r2" },
+    packages: [
+      {
+        packageId: "de-holidays",
+        versionId: "2026",
+        path: "packages/de-holidays/2026.json",
+      },
+    ],
+  })}\n`;
 }
 
 test("operator argument parsing keeps Prepare, Activate, and Verify explicit", () => {
@@ -171,6 +186,10 @@ test("Prepare performs only public reads, local publication, and a delivery dry-
       false,
     );
     assert.equal(
+      commands.some(({ argumentsList }) => argumentsList.includes("--rollback-manifest")),
+      false,
+    );
+    assert.equal(
       await fs.readFile(
         path.join(
           workspaceRoot,
@@ -183,6 +202,208 @@ test("Prepare performs only public reads, local publication, and a delivery dry-
       ),
       remoteManifest(),
     );
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Prepare derives and fully verifies its rollback target from the publication request", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const requestPath = await writeRequest(workspaceRoot, { rollbackOfGeneration: 2 });
+  const environment = {
+    RULE_CATALOG_SIGNING_KEY_BASE64URL: signingSeed,
+    SUPABASE_SECRET_KEY: supabaseSecret,
+    SUPABASE_URL: "https://secret-project.example",
+  };
+  const currentJson = remoteManifest(3);
+  const targetJson = rollbackManifest(2);
+  const targetPackageJson = '{"packageId":"de-holidays","versionId":"2026"}\n';
+  const fetched = [];
+  const commands = [];
+  let verifiedArtifacts;
+  try {
+    const result = await preparePreviewRuleCatalog({
+      requestPath,
+      workspaceRoot,
+      environment,
+      fetchPublicArtifact: async (relativePath, options) => {
+        fetched.push({ relativePath, options });
+        if (relativePath === "current.json") return currentJson;
+        if (relativePath === "manifests/2.json") return targetJson;
+        if (relativePath === "packages/de-holidays/2026.json") return targetPackageJson;
+        throw new Error(`Unexpected public path ${relativePath}`);
+      },
+      verifyManifestJson: async (value) => JSON.parse(value),
+      verifyCatalogArtifacts: async (artifacts) => {
+        verifiedArtifacts = artifacts;
+      },
+      runNpm: async (argumentsList, options) => {
+        commands.push({ argumentsList, environment: options.environment });
+      },
+      log: () => {},
+    });
+
+    assert.equal(result.generation, 4);
+    assert.deepEqual(
+      fetched.map(({ relativePath }) => relativePath),
+      ["current.json", "manifests/2.json", "packages/de-holidays/2026.json"],
+    );
+    assert.deepEqual(fetched[1].options, { allowMissing: true });
+    assert.deepEqual(verifiedArtifacts, {
+      manifestJson: targetJson,
+      packageJson: [targetPackageJson],
+    });
+    const rollbackPath =
+      "artifacts/rule-catalog-operator/state/rollback-target-2-for-generation-4.json";
+    assert.equal(
+      await fs.readFile(path.join(workspaceRoot, ...rollbackPath.split("/")), "utf8"),
+      targetJson,
+    );
+    for (const command of commands.slice(0, 2)) {
+      const rollbackArgumentIndex = command.argumentsList.indexOf("--rollback-manifest");
+      assert.notEqual(rollbackArgumentIndex, -1);
+      assert.equal(command.argumentsList[rollbackArgumentIndex + 1], rollbackPath);
+    }
+    assert.equal(commands[2].argumentsList.includes("--rollback-manifest"), false);
+    for (const command of commands) {
+      assert.equal(command.environment.SUPABASE_SECRET_KEY, undefined);
+      assert.equal(command.environment.SUPABASE_URL, undefined);
+    }
+    assert.equal(environment.RULE_CATALOG_SIGNING_KEY_BASE64URL, undefined);
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Prepare rejects a missing public rollback target before running the publisher", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const requestPath = await writeRequest(workspaceRoot, { rollbackOfGeneration: 2 });
+  const environment = { RULE_CATALOG_SIGNING_KEY_BASE64URL: signingSeed };
+  let commandCount = 0;
+  try {
+    await assert.rejects(
+      preparePreviewRuleCatalog({
+        requestPath,
+        workspaceRoot,
+        environment,
+        fetchPublicArtifact: async (relativePath) =>
+          relativePath === "current.json" ? remoteManifest(3) : null,
+        runNpm: async () => {
+          commandCount += 1;
+        },
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "ROLLBACK_TARGET_MISSING");
+        return true;
+      },
+    );
+    assert.equal(commandCount, 0);
+    assert.equal(environment.RULE_CATALOG_SIGNING_KEY_BASE64URL, undefined);
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Prepare rejects a rollback manifest whose verified identity differs from the request", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const requestPath = await writeRequest(workspaceRoot, { rollbackOfGeneration: 2 });
+  const environment = { RULE_CATALOG_SIGNING_KEY_BASE64URL: signingSeed };
+  let commandCount = 0;
+  try {
+    await assert.rejects(
+      preparePreviewRuleCatalog({
+        requestPath,
+        workspaceRoot,
+        environment,
+        fetchPublicArtifact: async (relativePath) =>
+          relativePath === "current.json" ? remoteManifest(3) : rollbackManifest(1),
+        verifyManifestJson: async (value) => JSON.parse(value),
+        runNpm: async () => {
+          commandCount += 1;
+        },
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "ROLLBACK_TARGET_IDENTITY_MISMATCH");
+        return true;
+      },
+    );
+    assert.equal(commandCount, 0);
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Prepare fails closed when the rollback manifest signature cannot be verified", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const requestPath = await writeRequest(workspaceRoot, { rollbackOfGeneration: 2 });
+  const environment = { RULE_CATALOG_SIGNING_KEY_BASE64URL: signingSeed };
+  const fetched = [];
+  let commandCount = 0;
+  try {
+    await assert.rejects(
+      preparePreviewRuleCatalog({
+        requestPath,
+        workspaceRoot,
+        environment,
+        fetchPublicArtifact: async (relativePath) => {
+          fetched.push(relativePath);
+          return relativePath === "current.json" ? remoteManifest(3) : rollbackManifest(2);
+        },
+        verifyManifestJson: async () => {
+          throw new Error("untrusted signature");
+        },
+        runNpm: async () => {
+          commandCount += 1;
+        },
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "ROLLBACK_TARGET_VERIFICATION_FAILED");
+        assert.equal(error.cause?.message, "untrusted signature");
+        return true;
+      },
+    );
+    assert.deepEqual(fetched, ["current.json", "manifests/2.json"]);
+    assert.equal(commandCount, 0);
+  } finally {
+    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("Prepare fails closed when rollback package verification fails", async () => {
+  const workspaceRoot = await temporaryWorkspace();
+  const requestPath = await writeRequest(workspaceRoot, { rollbackOfGeneration: 2 });
+  const environment = { RULE_CATALOG_SIGNING_KEY_BASE64URL: signingSeed };
+  let commandCount = 0;
+  try {
+    await assert.rejects(
+      preparePreviewRuleCatalog({
+        requestPath,
+        workspaceRoot,
+        environment,
+        fetchPublicArtifact: async (relativePath) => {
+          if (relativePath === "current.json") return remoteManifest(3);
+          if (relativePath === "manifests/2.json") return rollbackManifest(2);
+          return '{"corrupt":true}\n';
+        },
+        verifyManifestJson: async (value) => JSON.parse(value),
+        verifyCatalogArtifacts: async () => {
+          throw new Error("package hash mismatch");
+        },
+        runNpm: async () => {
+          commandCount += 1;
+        },
+        log: () => {},
+      }),
+      (error) => {
+        assert.equal(error.code, "ROLLBACK_TARGET_VERIFICATION_FAILED");
+        assert.equal(error.cause?.message, "package hash mismatch");
+        return true;
+      },
+    );
+    assert.equal(commandCount, 0);
   } finally {
     await fs.rm(workspaceRoot, { recursive: true, force: true });
   }

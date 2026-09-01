@@ -216,6 +216,16 @@ Prepare downloads public `current.json` without cache, writes that predecessor a
 first as a dry-run and then locally, and finishes with a delivery dry-run. It cannot write to
 Supabase and never accepts a Supabase secret.
 
+For a request whose canonical `rollbackOfGeneration` field is non-null, Prepare derives the
+rollback target only from that request; there is no second operator argument that could drift from
+it. Before invoking the publisher, Prepare downloads the target's immutable public manifest and
+every referenced package, verifies the signature, channel, generation, engine compatibility,
+paths, byte sizes, SHA-256 hashes, schemas, and semantic catalog contract, and then stores the exact
+target manifest atomically below the operator state directory. A missing, untrusted, incomplete,
+or identity-mismatched target fails before either publisher invocation. The existing publisher
+still performs the final exact track and package-descriptor comparison through
+`--rollback-manifest`.
+
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/prepare-preview-rule-catalog.ps1 -Request rules/releases/preview-generation-<N>.json
 ```

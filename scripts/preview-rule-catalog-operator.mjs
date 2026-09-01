@@ -195,6 +195,10 @@ function operatorPreviousManifestPath(generation) {
   return `${RULE_CATALOG_OPERATOR_ROOT}/state/previous-for-generation-${generation}.json`;
 }
 
+function operatorRollbackManifestPath(generation, rollbackGeneration) {
+  return `${RULE_CATALOG_OPERATOR_ROOT}/state/rollback-target-${rollbackGeneration}-for-generation-${generation}.json`;
+}
+
 function sanitizeEnvironment(environment) {
   const clean = { ...environment };
   delete clean[signingKeyEnvironmentName];
@@ -377,6 +381,69 @@ export async function fetchPublicPreviewArtifact(
   }
 }
 
+async function prepareVerifiedRollbackTarget({
+  request,
+  workspaceRoot,
+  fetchPublicArtifact,
+  verifyManifestJson,
+  verifyCatalogArtifacts,
+}) {
+  const rollbackGeneration = request.rollbackOfGeneration;
+  if (rollbackGeneration === null) return [];
+
+  const manifestJson = await fetchPublicArtifact(`manifests/${rollbackGeneration}.json`, {
+    allowMissing: true,
+  });
+  if (manifestJson === null) {
+    throw new PreviewRuleCatalogOperatorError(
+      "ROLLBACK_TARGET_MISSING",
+      `Public PREVIEW generation ${rollbackGeneration} is unavailable as a rollback target.`,
+    );
+  }
+
+  let manifest;
+  try {
+    manifest = await verifyManifestJson(manifestJson);
+  } catch (error) {
+    throw new PreviewRuleCatalogOperatorError(
+      "ROLLBACK_TARGET_VERIFICATION_FAILED",
+      `Public PREVIEW generation ${rollbackGeneration} failed manifest verification.`,
+      { cause: error },
+    );
+  }
+  if (
+    manifest.channel !== PREVIEW_RULE_CATALOG_TRUST.channel ||
+    manifest.generation !== rollbackGeneration ||
+    !Array.isArray(manifest.packages)
+  ) {
+    throw new PreviewRuleCatalogOperatorError(
+      "ROLLBACK_TARGET_IDENTITY_MISMATCH",
+      `The verified rollback target is not PREVIEW generation ${rollbackGeneration}.`,
+    );
+  }
+
+  let packageJson;
+  try {
+    packageJson = await Promise.all(
+      manifest.packages.map(({ path: packagePath }) => {
+        assertSafePublicArtifactPath(packagePath);
+        return fetchPublicArtifact(packagePath);
+      }),
+    );
+    await verifyCatalogArtifacts({ manifestJson, packageJson });
+  } catch (error) {
+    throw new PreviewRuleCatalogOperatorError(
+      "ROLLBACK_TARGET_VERIFICATION_FAILED",
+      `Public PREVIEW generation ${rollbackGeneration} failed complete catalog verification.`,
+      { cause: error },
+    );
+  }
+
+  const rollbackPath = operatorRollbackManifestPath(request.generation, rollbackGeneration);
+  await writeTextAtomically(workspaceRoot, rollbackPath, manifestJson);
+  return ["--rollback-manifest", rollbackPath];
+}
+
 function publicSupabaseProjectUrl() {
   return new URL(PREVIEW_RULE_CATALOG_TRUST.baseUrl).origin;
 }
@@ -386,6 +453,8 @@ export async function preparePreviewRuleCatalog({
   workspaceRoot = process.cwd(),
   environment = process.env,
   fetchPublicArtifact = fetchPublicPreviewArtifact,
+  verifyManifestJson = verifyPreviewManifestJson,
+  verifyCatalogArtifacts = verifyPreviewCatalogArtifacts,
   runNpm = defaultRunNpm,
   log = console.log,
 }) {
@@ -435,6 +504,14 @@ export async function preparePreviewRuleCatalog({
       previousArguments = ["--previous-manifest", previousPath];
     }
 
+    const rollbackArguments = await prepareVerifiedRollbackTarget({
+      request,
+      workspaceRoot,
+      fetchPublicArtifact,
+      verifyManifestJson,
+      verifyCatalogArtifacts,
+    });
+
     const trustedArguments = previewTrustedPublicKeyArguments();
     const publishArguments = [
       "run",
@@ -445,6 +522,7 @@ export async function preparePreviewRuleCatalog({
       "--output-dir",
       RULE_CATALOG_OPERATOR_ROOT,
       ...previousArguments,
+      ...rollbackArguments,
       ...trustedArguments,
     ];
     const cleanEnvironment = sanitizeEnvironment(environment);
