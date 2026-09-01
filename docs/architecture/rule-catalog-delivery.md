@@ -255,9 +255,13 @@ process environment and is removed in every success or failure path.
 
 ### 2. Activate: the only remote write
 
-Activation requires the prepared generation number. It repeats the complete local delivery
-preflight before prompting for the dedicated `rule_catalog_preview` `sb_secret_...` key. The
-Supabase project URL is derived from the central public Preview URL; it is not entered manually.
+Activation requires the prepared generation number. The wrapper first invokes the versioned,
+secret-free `rules:preview:preflight` command. It verifies the complete prepared local publication
+through the central Preview trust configuration and stops before the prompt on any failure. Only
+after that preflight succeeds does the wrapper prompt for the dedicated `rule_catalog_preview`
+`sb_secret_...` key. Activate repeats the same local preflight as a second guard before its one
+authorized remote delivery. The Supabase project URL is derived from the central public Preview
+URL; it is not entered manually.
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/activate-preview-rule-catalog.ps1 -Generation <N>
@@ -280,5 +284,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/operators/verify
 ```
 
 The underlying npm commands are available for automation as `rules:preview:recover`,
-`rules:preview:prepare`, `rules:preview:activate`, and `rules:preview:verify`. Their secret inputs
-remain environment-only; the PowerShell wrappers are the normal interactive entry points.
+`rules:preview:prepare`, `rules:preview:preflight`, `rules:preview:activate`, and
+`rules:preview:verify`. Preflight never accepts a secret. Other secret inputs remain
+environment-only; the PowerShell wrappers are the normal interactive entry points.
