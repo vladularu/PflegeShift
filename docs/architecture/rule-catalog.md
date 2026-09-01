@@ -154,6 +154,25 @@ snapshot consistency fails, the mounted resolver remains unchanged and a privacy
 diagnostic is recorded. The Preview-only channel and trust restrictions from WP5a remain unchanged;
 WP5b does not enable production downloads.
 
+## Channel-neutral client boundary (WP6a-1)
+
+The runtime port now selects one closed catalog profile from the `expo-updates` build channel.
+`preview` retains its existing public endpoint and complete Preview trust ring. `production` records
+the local `PRODUCTION` identity but deliberately has no remote endpoint, verification keys, or
+network synchronization until the later Production trust package is approved. Development,
+`e2e-test`, missing, and unknown channels have neither a catalog identity nor a remote profile.
+
+Stored catalogs pass through the active profile before the resolver can load them. Preview accepts
+only a runtime-compatible `PREVIEW` manifest whose signing key ID remains in the configured Preview
+trust ring. Production and disabled profiles accept no stored remote generation yet. Scheduling
+metadata is keyed independently as `rule_catalog_sync_preview` or
+`rule_catalog_sync_production`, so a later Production client cannot inherit Preview throttling or
+generation observations. The shared synchronizer contains no channel choice of its own; endpoint,
+trust, state key, and activation dependencies all come from the selected profile.
+
+WP6a-1 does not add a Production URL or public key, contact a Production backend, create a bucket,
+publish a Production manifest, change EAS configuration, or alter the embedded fallback catalog.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.

@@ -4,8 +4,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { migrateDatabase } from "@/infrastructure/database/migrations";
 import {
-  claimPreviewRuleCatalogCheck,
-  completePreviewRuleCatalogCheck,
+  claimRuleCatalogCheck,
+  completeRuleCatalogCheck,
+  ruleCatalogSyncStateKey,
 } from "@/infrastructure/database/rule-catalog-sync-state";
 
 class TestDatabase {
@@ -30,6 +31,7 @@ class TestDatabase {
 }
 
 describe("rule catalog sync state", () => {
+  const preview = "PREVIEW" as const;
   const hour = 60 * 60 * 1_000;
   const day = 24 * hour;
   let adapter: TestDatabase;
@@ -46,51 +48,62 @@ describe("rule catalog sync state", () => {
   it("claims one check atomically and applies a bounded failure retry", async () => {
     const now = new Date("2026-08-29T10:00:00.000Z");
     const claims = await Promise.all([
-      claimPreviewRuleCatalogCheck(db, now, hour),
-      claimPreviewRuleCatalogCheck(db, now, hour),
+      claimRuleCatalogCheck(db, preview, now, hour),
+      claimRuleCatalogCheck(db, preview, now, hour),
     ]);
 
     expect(claims.sort()).toEqual([false, true]);
     await expect(
-      claimPreviewRuleCatalogCheck(db, new Date(now.getTime() + hour - 1), hour),
+      claimRuleCatalogCheck(db, preview, new Date(now.getTime() + hour - 1), hour),
     ).resolves.toBe(false);
     await expect(
-      claimPreviewRuleCatalogCheck(db, new Date(now.getTime() + hour), hour),
+      claimRuleCatalogCheck(db, preview, new Date(now.getTime() + hour), hour),
     ).resolves.toBe(true);
   });
 
   it("uses the longer success interval after a trusted generation check", async () => {
     const now = new Date("2026-08-29T10:00:00.000Z");
-    await claimPreviewRuleCatalogCheck(db, now, hour);
-    await completePreviewRuleCatalogCheck(db, 1, now, day);
+    await claimRuleCatalogCheck(db, preview, now, hour);
+    await completeRuleCatalogCheck(db, preview, 1, now, day);
 
     await expect(
-      claimPreviewRuleCatalogCheck(db, new Date(now.getTime() + day - 1), hour),
+      claimRuleCatalogCheck(db, preview, new Date(now.getTime() + day - 1), hour),
     ).resolves.toBe(false);
     await expect(
-      claimPreviewRuleCatalogCheck(db, new Date(now.getTime() + day), hour),
+      claimRuleCatalogCheck(db, preview, new Date(now.getTime() + day), hour),
     ).resolves.toBe(true);
   });
 
-  it("allows one explicit Preview check to replace a future success schedule", async () => {
+  it("allows one explicit channel check to replace a future success schedule", async () => {
     const now = new Date("2026-08-29T10:00:00.000Z");
-    await claimPreviewRuleCatalogCheck(db, now, hour);
-    await completePreviewRuleCatalogCheck(db, 1, now, day);
+    await claimRuleCatalogCheck(db, preview, now, hour);
+    await completeRuleCatalogCheck(db, preview, 1, now, day);
 
     const forcedAt = new Date(now.getTime() + hour);
-    await expect(claimPreviewRuleCatalogCheck(db, forcedAt, hour, true)).resolves.toBe(true);
-    await expect(claimPreviewRuleCatalogCheck(db, forcedAt, hour)).resolves.toBe(false);
+    await expect(claimRuleCatalogCheck(db, preview, forcedAt, hour, true)).resolves.toBe(true);
+    await expect(claimRuleCatalogCheck(db, preview, forcedAt, hour)).resolves.toBe(false);
+  });
+
+  it("isolates Preview and Production scheduling metadata", async () => {
+    const now = new Date("2026-08-29T10:00:00.000Z");
+    await claimRuleCatalogCheck(db, "PREVIEW", now, hour);
+    await completeRuleCatalogCheck(db, "PREVIEW", 4, now, day);
+
+    await expect(claimRuleCatalogCheck(db, "PREVIEW", now, hour)).resolves.toBe(false);
+    await expect(claimRuleCatalogCheck(db, "PRODUCTION", now, hour)).resolves.toBe(true);
+    expect(ruleCatalogSyncStateKey("PREVIEW")).toBe("rule_catalog_sync_preview");
+    expect(ruleCatalogSyncStateKey("PRODUCTION")).toBe("rule_catalog_sync_production");
   });
 
   it("fails open for corrupt or implausibly future local scheduling metadata", async () => {
     await db.runAsync(
       "INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)",
-      "rule_catalog_sync_preview",
+      ruleCatalogSyncStateKey(preview),
       "not-json",
       "2026-08-29T10:00:00.000Z",
     );
     const now = new Date("2026-08-29T10:00:00.000Z");
-    await expect(claimPreviewRuleCatalogCheck(db, now, hour)).resolves.toBe(true);
+    await expect(claimRuleCatalogCheck(db, preview, now, hour)).resolves.toBe(true);
 
     await db.runAsync(
       "UPDATE app_preferences SET value=? WHERE key='rule_catalog_sync_preview'",
@@ -99,11 +112,11 @@ describe("rule catalog sync state", () => {
         lastSuccessfulGeneration: 1,
       }),
     );
-    await expect(claimPreviewRuleCatalogCheck(db, now, hour)).resolves.toBe(true);
+    await expect(claimRuleCatalogCheck(db, preview, now, hour)).resolves.toBe(true);
   });
 
   it("rejects an invalid successful generation", async () => {
-    await expect(completePreviewRuleCatalogCheck(db, 0, new Date(), day)).rejects.toThrow(
+    await expect(completeRuleCatalogCheck(db, preview, 0, new Date(), day)).rejects.toThrow(
       "positive generation",
     );
   });
