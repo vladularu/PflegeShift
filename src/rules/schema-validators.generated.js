@@ -19159,3 +19159,1282 @@ function validate103(
   return errors === 0;
 }
 validate103.evaluated = { props: true, dynamicProps: false, dynamicItems: false };
+export const validateProductionRuleCatalogChannelConfigSchema = validate106;
+const schema125 = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pflegeshift.app/schemas/production-rule-catalog-channel-config-v1.json",
+  title: "PflegeShift Production Rule Catalog Channel Config",
+  description:
+    "Public, non-secret configuration candidate for a strictly isolated Production rule-catalog channel.",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "channel", "status", "infrastructure", "trust", "remote"],
+  properties: {
+    schemaVersion: { const: 1 },
+    channel: { const: "PRODUCTION" },
+    status: { enum: ["DISABLED", "CANDIDATE"] },
+    infrastructure: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "isolationMode",
+        "supabaseProjectUrl",
+        "region",
+        "bucketName",
+        "objectRoot",
+        "deliverySecretEnvironmentName",
+        "storagePolicy",
+      ],
+      properties: {
+        isolationMode: { const: "DEDICATED_SUPABASE_PROJECT" },
+        supabaseProjectUrl: {
+          type: ["string", "null"],
+          pattern: "^https://[a-z0-9]{20}\\.supabase\\.co$",
+        },
+        region: { const: "eu-central-1" },
+        bucketName: { const: "rule-catalog-production" },
+        objectRoot: { const: "production" },
+        deliverySecretEnvironmentName: { const: "SUPABASE_PRODUCTION_SECRET_KEY" },
+        storagePolicy: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "publicRead",
+            "administrativeWriteOnly",
+            "allowedMimeTypes",
+            "maximumObjectBytes",
+          ],
+          properties: {
+            publicRead: { const: true },
+            administrativeWriteOnly: { const: true },
+            allowedMimeTypes: { const: ["application/json"] },
+            maximumObjectBytes: { const: 524288 },
+          },
+        },
+      },
+    },
+    trust: {
+      type: "object",
+      additionalProperties: false,
+      required: ["algorithm", "canonicalization", "trustedPublicKeys"],
+      properties: {
+        algorithm: { const: "ED25519" },
+        canonicalization: { const: "RFC8785" },
+        trustedPublicKeys: {
+          type: "array",
+          maxItems: 8,
+          uniqueItems: true,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["keyId", "publicKeyBase64Url"],
+            properties: {
+              keyId: {
+                type: "string",
+                minLength: 12,
+                maxLength: 100,
+                pattern: "^production-[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+              },
+              publicKeyBase64Url: { type: "string", pattern: "^[A-Za-z0-9_-]{43}$" },
+            },
+          },
+        },
+      },
+    },
+    remote: {
+      type: "object",
+      additionalProperties: false,
+      required: ["publicBaseUrl", "checkIntervalMilliseconds", "failureRetryMilliseconds"],
+      properties: {
+        publicBaseUrl: {
+          type: ["string", "null"],
+          pattern:
+            "^https://[a-z0-9]{20}\\.supabase\\.co/storage/v1/object/public/rule-catalog-production/production$",
+        },
+        checkIntervalMilliseconds: { const: 86400000 },
+        failureRetryMilliseconds: { const: 3600000 },
+      },
+    },
+  },
+};
+const pattern63 = new RegExp("^https://[a-z0-9]{20}\\.supabase\\.co$", "u");
+const pattern64 = new RegExp("^production-[a-z0-9]+(?:[.-][a-z0-9]+)*$", "u");
+const pattern65 = new RegExp("^[A-Za-z0-9_-]{43}$", "u");
+const pattern66 = new RegExp(
+  "^https://[a-z0-9]{20}\\.supabase\\.co/storage/v1/object/public/rule-catalog-production/production$",
+  "u",
+);
+function validate106(
+  data,
+  { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
+) {
+  /*# sourceURL="https://pflegeshift.app/schemas/production-rule-catalog-channel-config-v1.json" */ let vErrors =
+    null;
+  let errors = 0;
+  const evaluated0 = validate106.evaluated;
+  if (evaluated0.dynamicProps) {
+    evaluated0.props = undefined;
+  }
+  if (evaluated0.dynamicItems) {
+    evaluated0.items = undefined;
+  }
+  if (data && typeof data == "object" && !Array.isArray(data)) {
+    if (data.schemaVersion === undefined) {
+      const err0 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "schemaVersion" },
+        message: "must have required property '" + "schemaVersion" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err0];
+      } else {
+        vErrors.push(err0);
+      }
+      errors++;
+    }
+    if (data.channel === undefined) {
+      const err1 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "channel" },
+        message: "must have required property '" + "channel" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err1];
+      } else {
+        vErrors.push(err1);
+      }
+      errors++;
+    }
+    if (data.status === undefined) {
+      const err2 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "status" },
+        message: "must have required property '" + "status" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err2];
+      } else {
+        vErrors.push(err2);
+      }
+      errors++;
+    }
+    if (data.infrastructure === undefined) {
+      const err3 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "infrastructure" },
+        message: "must have required property '" + "infrastructure" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err3];
+      } else {
+        vErrors.push(err3);
+      }
+      errors++;
+    }
+    if (data.trust === undefined) {
+      const err4 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "trust" },
+        message: "must have required property '" + "trust" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err4];
+      } else {
+        vErrors.push(err4);
+      }
+      errors++;
+    }
+    if (data.remote === undefined) {
+      const err5 = {
+        instancePath,
+        schemaPath: "#/required",
+        keyword: "required",
+        params: { missingProperty: "remote" },
+        message: "must have required property '" + "remote" + "'",
+      };
+      if (vErrors === null) {
+        vErrors = [err5];
+      } else {
+        vErrors.push(err5);
+      }
+      errors++;
+    }
+    for (const key0 in data) {
+      if (!(
+        key0 === "schemaVersion" ||
+        key0 === "channel" ||
+        key0 === "status" ||
+        key0 === "infrastructure" ||
+        key0 === "trust" ||
+        key0 === "remote"
+      )) {
+        const err6 = {
+          instancePath,
+          schemaPath: "#/additionalProperties",
+          keyword: "additionalProperties",
+          params: { additionalProperty: key0 },
+          message: "must NOT have additional properties",
+        };
+        if (vErrors === null) {
+          vErrors = [err6];
+        } else {
+          vErrors.push(err6);
+        }
+        errors++;
+      }
+    }
+    if (data.schemaVersion !== undefined) {
+      if (1 !== data.schemaVersion) {
+        const err7 = {
+          instancePath: instancePath + "/schemaVersion",
+          schemaPath: "#/properties/schemaVersion/const",
+          keyword: "const",
+          params: { allowedValue: 1 },
+          message: "must be equal to constant",
+        };
+        if (vErrors === null) {
+          vErrors = [err7];
+        } else {
+          vErrors.push(err7);
+        }
+        errors++;
+      }
+    }
+    if (data.channel !== undefined) {
+      if ("PRODUCTION" !== data.channel) {
+        const err8 = {
+          instancePath: instancePath + "/channel",
+          schemaPath: "#/properties/channel/const",
+          keyword: "const",
+          params: { allowedValue: "PRODUCTION" },
+          message: "must be equal to constant",
+        };
+        if (vErrors === null) {
+          vErrors = [err8];
+        } else {
+          vErrors.push(err8);
+        }
+        errors++;
+      }
+    }
+    if (data.status !== undefined) {
+      let data2 = data.status;
+      if (!(data2 === "DISABLED" || data2 === "CANDIDATE")) {
+        const err9 = {
+          instancePath: instancePath + "/status",
+          schemaPath: "#/properties/status/enum",
+          keyword: "enum",
+          params: { allowedValues: schema125.properties.status.enum },
+          message: "must be equal to one of the allowed values",
+        };
+        if (vErrors === null) {
+          vErrors = [err9];
+        } else {
+          vErrors.push(err9);
+        }
+        errors++;
+      }
+    }
+    if (data.infrastructure !== undefined) {
+      let data3 = data.infrastructure;
+      if (data3 && typeof data3 == "object" && !Array.isArray(data3)) {
+        if (data3.isolationMode === undefined) {
+          const err10 = {
+            instancePath: instancePath + "/infrastructure",
+            schemaPath: "#/properties/infrastructure/required",
+            keyword: "required",
+            params: { missingProperty: "isolationMode" },
+            message: "must have required property '" + "isolationMode" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err10];
+          } else {
+            vErrors.push(err10);
+          }
+          errors++;
+        }
+        if (data3.supabaseProjectUrl === undefined) {
+          const err11 = {
+            instancePath: instancePath + "/infrastructure",
+            schemaPath: "#/properties/infrastructure/required",
+            keyword: "required",
+            params: { missingProperty: "supabaseProjectUrl" },
+            message: "must have required property '" + "supabaseProjectUrl" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err11];
+          } else {
+            vErrors.push(err11);
+          }
+          errors++;
+        }
+        if (data3.region === undefined) {
+          const err12 = {
+            instancePath: instancePath + "/infrastructure",
+            schemaPath: "#/properties/infrastructure/required",
+            keyword: "required",
+            params: { missingProperty: "region" },
+            message: "must have required property '" + "region" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err12];
+          } else {
+            vErrors.push(err12);
+          }
+          errors++;
+        }
+        if (data3.bucketName === undefined) {
+          const err13 = {
+            instancePath: instancePath + "/infrastructure",
+            schemaPath: "#/properties/infrastructure/required",
+            keyword: "required",
+            params: { missingProperty: "bucketName" },
+            message: "must have required property '" + "bucketName" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err13];
+          } else {
+            vErrors.push(err13);
+          }
+          errors++;
+        }
+        if (data3.objectRoot === undefined) {
+          const err14 = {
+            instancePath: instancePath + "/infrastructure",
+            schemaPath: "#/properties/infrastructure/required",
+            keyword: "required",
+            params: { missingProperty: "objectRoot" },
+            message: "must have required property '" + "objectRoot" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err14];
+          } else {
+            vErrors.push(err14);
+          }
+          errors++;
+        }
+        if (data3.deliverySecretEnvironmentName === undefined) {
+          const err15 = {
+            instancePath: instancePath + "/infrastructure",
+            schemaPath: "#/properties/infrastructure/required",
+            keyword: "required",
+            params: { missingProperty: "deliverySecretEnvironmentName" },
+            message: "must have required property '" + "deliverySecretEnvironmentName" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err15];
+          } else {
+            vErrors.push(err15);
+          }
+          errors++;
+        }
+        if (data3.storagePolicy === undefined) {
+          const err16 = {
+            instancePath: instancePath + "/infrastructure",
+            schemaPath: "#/properties/infrastructure/required",
+            keyword: "required",
+            params: { missingProperty: "storagePolicy" },
+            message: "must have required property '" + "storagePolicy" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err16];
+          } else {
+            vErrors.push(err16);
+          }
+          errors++;
+        }
+        for (const key1 in data3) {
+          if (!(
+            key1 === "isolationMode" ||
+            key1 === "supabaseProjectUrl" ||
+            key1 === "region" ||
+            key1 === "bucketName" ||
+            key1 === "objectRoot" ||
+            key1 === "deliverySecretEnvironmentName" ||
+            key1 === "storagePolicy"
+          )) {
+            const err17 = {
+              instancePath: instancePath + "/infrastructure",
+              schemaPath: "#/properties/infrastructure/additionalProperties",
+              keyword: "additionalProperties",
+              params: { additionalProperty: key1 },
+              message: "must NOT have additional properties",
+            };
+            if (vErrors === null) {
+              vErrors = [err17];
+            } else {
+              vErrors.push(err17);
+            }
+            errors++;
+          }
+        }
+        if (data3.isolationMode !== undefined) {
+          if ("DEDICATED_SUPABASE_PROJECT" !== data3.isolationMode) {
+            const err18 = {
+              instancePath: instancePath + "/infrastructure/isolationMode",
+              schemaPath: "#/properties/infrastructure/properties/isolationMode/const",
+              keyword: "const",
+              params: { allowedValue: "DEDICATED_SUPABASE_PROJECT" },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err18];
+            } else {
+              vErrors.push(err18);
+            }
+            errors++;
+          }
+        }
+        if (data3.supabaseProjectUrl !== undefined) {
+          let data5 = data3.supabaseProjectUrl;
+          if (typeof data5 !== "string" && data5 !== null) {
+            const err19 = {
+              instancePath: instancePath + "/infrastructure/supabaseProjectUrl",
+              schemaPath: "#/properties/infrastructure/properties/supabaseProjectUrl/type",
+              keyword: "type",
+              params: {
+                type: schema125.properties.infrastructure.properties.supabaseProjectUrl.type,
+              },
+              message: "must be string,null",
+            };
+            if (vErrors === null) {
+              vErrors = [err19];
+            } else {
+              vErrors.push(err19);
+            }
+            errors++;
+          }
+          if (typeof data5 === "string") {
+            if (!pattern63.test(data5)) {
+              const err20 = {
+                instancePath: instancePath + "/infrastructure/supabaseProjectUrl",
+                schemaPath: "#/properties/infrastructure/properties/supabaseProjectUrl/pattern",
+                keyword: "pattern",
+                params: { pattern: "^https://[a-z0-9]{20}\\.supabase\\.co$" },
+                message: 'must match pattern "' + "^https://[a-z0-9]{20}\\.supabase\\.co$" + '"',
+              };
+              if (vErrors === null) {
+                vErrors = [err20];
+              } else {
+                vErrors.push(err20);
+              }
+              errors++;
+            }
+          }
+        }
+        if (data3.region !== undefined) {
+          if ("eu-central-1" !== data3.region) {
+            const err21 = {
+              instancePath: instancePath + "/infrastructure/region",
+              schemaPath: "#/properties/infrastructure/properties/region/const",
+              keyword: "const",
+              params: { allowedValue: "eu-central-1" },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err21];
+            } else {
+              vErrors.push(err21);
+            }
+            errors++;
+          }
+        }
+        if (data3.bucketName !== undefined) {
+          if ("rule-catalog-production" !== data3.bucketName) {
+            const err22 = {
+              instancePath: instancePath + "/infrastructure/bucketName",
+              schemaPath: "#/properties/infrastructure/properties/bucketName/const",
+              keyword: "const",
+              params: { allowedValue: "rule-catalog-production" },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err22];
+            } else {
+              vErrors.push(err22);
+            }
+            errors++;
+          }
+        }
+        if (data3.objectRoot !== undefined) {
+          if ("production" !== data3.objectRoot) {
+            const err23 = {
+              instancePath: instancePath + "/infrastructure/objectRoot",
+              schemaPath: "#/properties/infrastructure/properties/objectRoot/const",
+              keyword: "const",
+              params: { allowedValue: "production" },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err23];
+            } else {
+              vErrors.push(err23);
+            }
+            errors++;
+          }
+        }
+        if (data3.deliverySecretEnvironmentName !== undefined) {
+          if ("SUPABASE_PRODUCTION_SECRET_KEY" !== data3.deliverySecretEnvironmentName) {
+            const err24 = {
+              instancePath: instancePath + "/infrastructure/deliverySecretEnvironmentName",
+              schemaPath:
+                "#/properties/infrastructure/properties/deliverySecretEnvironmentName/const",
+              keyword: "const",
+              params: { allowedValue: "SUPABASE_PRODUCTION_SECRET_KEY" },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err24];
+            } else {
+              vErrors.push(err24);
+            }
+            errors++;
+          }
+        }
+        if (data3.storagePolicy !== undefined) {
+          let data10 = data3.storagePolicy;
+          if (data10 && typeof data10 == "object" && !Array.isArray(data10)) {
+            if (data10.publicRead === undefined) {
+              const err25 = {
+                instancePath: instancePath + "/infrastructure/storagePolicy",
+                schemaPath: "#/properties/infrastructure/properties/storagePolicy/required",
+                keyword: "required",
+                params: { missingProperty: "publicRead" },
+                message: "must have required property '" + "publicRead" + "'",
+              };
+              if (vErrors === null) {
+                vErrors = [err25];
+              } else {
+                vErrors.push(err25);
+              }
+              errors++;
+            }
+            if (data10.administrativeWriteOnly === undefined) {
+              const err26 = {
+                instancePath: instancePath + "/infrastructure/storagePolicy",
+                schemaPath: "#/properties/infrastructure/properties/storagePolicy/required",
+                keyword: "required",
+                params: { missingProperty: "administrativeWriteOnly" },
+                message: "must have required property '" + "administrativeWriteOnly" + "'",
+              };
+              if (vErrors === null) {
+                vErrors = [err26];
+              } else {
+                vErrors.push(err26);
+              }
+              errors++;
+            }
+            if (data10.allowedMimeTypes === undefined) {
+              const err27 = {
+                instancePath: instancePath + "/infrastructure/storagePolicy",
+                schemaPath: "#/properties/infrastructure/properties/storagePolicy/required",
+                keyword: "required",
+                params: { missingProperty: "allowedMimeTypes" },
+                message: "must have required property '" + "allowedMimeTypes" + "'",
+              };
+              if (vErrors === null) {
+                vErrors = [err27];
+              } else {
+                vErrors.push(err27);
+              }
+              errors++;
+            }
+            if (data10.maximumObjectBytes === undefined) {
+              const err28 = {
+                instancePath: instancePath + "/infrastructure/storagePolicy",
+                schemaPath: "#/properties/infrastructure/properties/storagePolicy/required",
+                keyword: "required",
+                params: { missingProperty: "maximumObjectBytes" },
+                message: "must have required property '" + "maximumObjectBytes" + "'",
+              };
+              if (vErrors === null) {
+                vErrors = [err28];
+              } else {
+                vErrors.push(err28);
+              }
+              errors++;
+            }
+            for (const key2 in data10) {
+              if (!(
+                key2 === "publicRead" ||
+                key2 === "administrativeWriteOnly" ||
+                key2 === "allowedMimeTypes" ||
+                key2 === "maximumObjectBytes"
+              )) {
+                const err29 = {
+                  instancePath: instancePath + "/infrastructure/storagePolicy",
+                  schemaPath:
+                    "#/properties/infrastructure/properties/storagePolicy/additionalProperties",
+                  keyword: "additionalProperties",
+                  params: { additionalProperty: key2 },
+                  message: "must NOT have additional properties",
+                };
+                if (vErrors === null) {
+                  vErrors = [err29];
+                } else {
+                  vErrors.push(err29);
+                }
+                errors++;
+              }
+            }
+            if (data10.publicRead !== undefined) {
+              if (true !== data10.publicRead) {
+                const err30 = {
+                  instancePath: instancePath + "/infrastructure/storagePolicy/publicRead",
+                  schemaPath:
+                    "#/properties/infrastructure/properties/storagePolicy/properties/publicRead/const",
+                  keyword: "const",
+                  params: { allowedValue: true },
+                  message: "must be equal to constant",
+                };
+                if (vErrors === null) {
+                  vErrors = [err30];
+                } else {
+                  vErrors.push(err30);
+                }
+                errors++;
+              }
+            }
+            if (data10.administrativeWriteOnly !== undefined) {
+              if (true !== data10.administrativeWriteOnly) {
+                const err31 = {
+                  instancePath:
+                    instancePath + "/infrastructure/storagePolicy/administrativeWriteOnly",
+                  schemaPath:
+                    "#/properties/infrastructure/properties/storagePolicy/properties/administrativeWriteOnly/const",
+                  keyword: "const",
+                  params: { allowedValue: true },
+                  message: "must be equal to constant",
+                };
+                if (vErrors === null) {
+                  vErrors = [err31];
+                } else {
+                  vErrors.push(err31);
+                }
+                errors++;
+              }
+            }
+            if (data10.allowedMimeTypes !== undefined) {
+              if (
+                !func0(
+                  data10.allowedMimeTypes,
+                  schema125.properties.infrastructure.properties.storagePolicy.properties
+                    .allowedMimeTypes.const,
+                )
+              ) {
+                const err32 = {
+                  instancePath: instancePath + "/infrastructure/storagePolicy/allowedMimeTypes",
+                  schemaPath:
+                    "#/properties/infrastructure/properties/storagePolicy/properties/allowedMimeTypes/const",
+                  keyword: "const",
+                  params: {
+                    allowedValue:
+                      schema125.properties.infrastructure.properties.storagePolicy.properties
+                        .allowedMimeTypes.const,
+                  },
+                  message: "must be equal to constant",
+                };
+                if (vErrors === null) {
+                  vErrors = [err32];
+                } else {
+                  vErrors.push(err32);
+                }
+                errors++;
+              }
+            }
+            if (data10.maximumObjectBytes !== undefined) {
+              if (524288 !== data10.maximumObjectBytes) {
+                const err33 = {
+                  instancePath: instancePath + "/infrastructure/storagePolicy/maximumObjectBytes",
+                  schemaPath:
+                    "#/properties/infrastructure/properties/storagePolicy/properties/maximumObjectBytes/const",
+                  keyword: "const",
+                  params: { allowedValue: 524288 },
+                  message: "must be equal to constant",
+                };
+                if (vErrors === null) {
+                  vErrors = [err33];
+                } else {
+                  vErrors.push(err33);
+                }
+                errors++;
+              }
+            }
+          } else {
+            const err34 = {
+              instancePath: instancePath + "/infrastructure/storagePolicy",
+              schemaPath: "#/properties/infrastructure/properties/storagePolicy/type",
+              keyword: "type",
+              params: { type: "object" },
+              message: "must be object",
+            };
+            if (vErrors === null) {
+              vErrors = [err34];
+            } else {
+              vErrors.push(err34);
+            }
+            errors++;
+          }
+        }
+      } else {
+        const err35 = {
+          instancePath: instancePath + "/infrastructure",
+          schemaPath: "#/properties/infrastructure/type",
+          keyword: "type",
+          params: { type: "object" },
+          message: "must be object",
+        };
+        if (vErrors === null) {
+          vErrors = [err35];
+        } else {
+          vErrors.push(err35);
+        }
+        errors++;
+      }
+    }
+    if (data.trust !== undefined) {
+      let data15 = data.trust;
+      if (data15 && typeof data15 == "object" && !Array.isArray(data15)) {
+        if (data15.algorithm === undefined) {
+          const err36 = {
+            instancePath: instancePath + "/trust",
+            schemaPath: "#/properties/trust/required",
+            keyword: "required",
+            params: { missingProperty: "algorithm" },
+            message: "must have required property '" + "algorithm" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err36];
+          } else {
+            vErrors.push(err36);
+          }
+          errors++;
+        }
+        if (data15.canonicalization === undefined) {
+          const err37 = {
+            instancePath: instancePath + "/trust",
+            schemaPath: "#/properties/trust/required",
+            keyword: "required",
+            params: { missingProperty: "canonicalization" },
+            message: "must have required property '" + "canonicalization" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err37];
+          } else {
+            vErrors.push(err37);
+          }
+          errors++;
+        }
+        if (data15.trustedPublicKeys === undefined) {
+          const err38 = {
+            instancePath: instancePath + "/trust",
+            schemaPath: "#/properties/trust/required",
+            keyword: "required",
+            params: { missingProperty: "trustedPublicKeys" },
+            message: "must have required property '" + "trustedPublicKeys" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err38];
+          } else {
+            vErrors.push(err38);
+          }
+          errors++;
+        }
+        for (const key3 in data15) {
+          if (!(
+            key3 === "algorithm" ||
+            key3 === "canonicalization" ||
+            key3 === "trustedPublicKeys"
+          )) {
+            const err39 = {
+              instancePath: instancePath + "/trust",
+              schemaPath: "#/properties/trust/additionalProperties",
+              keyword: "additionalProperties",
+              params: { additionalProperty: key3 },
+              message: "must NOT have additional properties",
+            };
+            if (vErrors === null) {
+              vErrors = [err39];
+            } else {
+              vErrors.push(err39);
+            }
+            errors++;
+          }
+        }
+        if (data15.algorithm !== undefined) {
+          if ("ED25519" !== data15.algorithm) {
+            const err40 = {
+              instancePath: instancePath + "/trust/algorithm",
+              schemaPath: "#/properties/trust/properties/algorithm/const",
+              keyword: "const",
+              params: { allowedValue: "ED25519" },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err40];
+            } else {
+              vErrors.push(err40);
+            }
+            errors++;
+          }
+        }
+        if (data15.canonicalization !== undefined) {
+          if ("RFC8785" !== data15.canonicalization) {
+            const err41 = {
+              instancePath: instancePath + "/trust/canonicalization",
+              schemaPath: "#/properties/trust/properties/canonicalization/const",
+              keyword: "const",
+              params: { allowedValue: "RFC8785" },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err41];
+            } else {
+              vErrors.push(err41);
+            }
+            errors++;
+          }
+        }
+        if (data15.trustedPublicKeys !== undefined) {
+          let data18 = data15.trustedPublicKeys;
+          if (Array.isArray(data18)) {
+            if (data18.length > 8) {
+              const err42 = {
+                instancePath: instancePath + "/trust/trustedPublicKeys",
+                schemaPath: "#/properties/trust/properties/trustedPublicKeys/maxItems",
+                keyword: "maxItems",
+                params: { limit: 8 },
+                message: "must NOT have more than 8 items",
+              };
+              if (vErrors === null) {
+                vErrors = [err42];
+              } else {
+                vErrors.push(err42);
+              }
+              errors++;
+            }
+            const len0 = data18.length;
+            for (let i0 = 0; i0 < len0; i0++) {
+              let data19 = data18[i0];
+              if (data19 && typeof data19 == "object" && !Array.isArray(data19)) {
+                if (data19.keyId === undefined) {
+                  const err43 = {
+                    instancePath: instancePath + "/trust/trustedPublicKeys/" + i0,
+                    schemaPath: "#/properties/trust/properties/trustedPublicKeys/items/required",
+                    keyword: "required",
+                    params: { missingProperty: "keyId" },
+                    message: "must have required property '" + "keyId" + "'",
+                  };
+                  if (vErrors === null) {
+                    vErrors = [err43];
+                  } else {
+                    vErrors.push(err43);
+                  }
+                  errors++;
+                }
+                if (data19.publicKeyBase64Url === undefined) {
+                  const err44 = {
+                    instancePath: instancePath + "/trust/trustedPublicKeys/" + i0,
+                    schemaPath: "#/properties/trust/properties/trustedPublicKeys/items/required",
+                    keyword: "required",
+                    params: { missingProperty: "publicKeyBase64Url" },
+                    message: "must have required property '" + "publicKeyBase64Url" + "'",
+                  };
+                  if (vErrors === null) {
+                    vErrors = [err44];
+                  } else {
+                    vErrors.push(err44);
+                  }
+                  errors++;
+                }
+                for (const key4 in data19) {
+                  if (!(key4 === "keyId" || key4 === "publicKeyBase64Url")) {
+                    const err45 = {
+                      instancePath: instancePath + "/trust/trustedPublicKeys/" + i0,
+                      schemaPath:
+                        "#/properties/trust/properties/trustedPublicKeys/items/additionalProperties",
+                      keyword: "additionalProperties",
+                      params: { additionalProperty: key4 },
+                      message: "must NOT have additional properties",
+                    };
+                    if (vErrors === null) {
+                      vErrors = [err45];
+                    } else {
+                      vErrors.push(err45);
+                    }
+                    errors++;
+                  }
+                }
+                if (data19.keyId !== undefined) {
+                  let data20 = data19.keyId;
+                  if (typeof data20 === "string") {
+                    if (func1(data20) > 100) {
+                      const err46 = {
+                        instancePath: instancePath + "/trust/trustedPublicKeys/" + i0 + "/keyId",
+                        schemaPath:
+                          "#/properties/trust/properties/trustedPublicKeys/items/properties/keyId/maxLength",
+                        keyword: "maxLength",
+                        params: { limit: 100 },
+                        message: "must NOT have more than 100 characters",
+                      };
+                      if (vErrors === null) {
+                        vErrors = [err46];
+                      } else {
+                        vErrors.push(err46);
+                      }
+                      errors++;
+                    }
+                    if (func1(data20) < 12) {
+                      const err47 = {
+                        instancePath: instancePath + "/trust/trustedPublicKeys/" + i0 + "/keyId",
+                        schemaPath:
+                          "#/properties/trust/properties/trustedPublicKeys/items/properties/keyId/minLength",
+                        keyword: "minLength",
+                        params: { limit: 12 },
+                        message: "must NOT have fewer than 12 characters",
+                      };
+                      if (vErrors === null) {
+                        vErrors = [err47];
+                      } else {
+                        vErrors.push(err47);
+                      }
+                      errors++;
+                    }
+                    if (!pattern64.test(data20)) {
+                      const err48 = {
+                        instancePath: instancePath + "/trust/trustedPublicKeys/" + i0 + "/keyId",
+                        schemaPath:
+                          "#/properties/trust/properties/trustedPublicKeys/items/properties/keyId/pattern",
+                        keyword: "pattern",
+                        params: { pattern: "^production-[a-z0-9]+(?:[.-][a-z0-9]+)*$" },
+                        message:
+                          'must match pattern "' + "^production-[a-z0-9]+(?:[.-][a-z0-9]+)*$" + '"',
+                      };
+                      if (vErrors === null) {
+                        vErrors = [err48];
+                      } else {
+                        vErrors.push(err48);
+                      }
+                      errors++;
+                    }
+                  } else {
+                    const err49 = {
+                      instancePath: instancePath + "/trust/trustedPublicKeys/" + i0 + "/keyId",
+                      schemaPath:
+                        "#/properties/trust/properties/trustedPublicKeys/items/properties/keyId/type",
+                      keyword: "type",
+                      params: { type: "string" },
+                      message: "must be string",
+                    };
+                    if (vErrors === null) {
+                      vErrors = [err49];
+                    } else {
+                      vErrors.push(err49);
+                    }
+                    errors++;
+                  }
+                }
+                if (data19.publicKeyBase64Url !== undefined) {
+                  let data21 = data19.publicKeyBase64Url;
+                  if (typeof data21 === "string") {
+                    if (!pattern65.test(data21)) {
+                      const err50 = {
+                        instancePath:
+                          instancePath + "/trust/trustedPublicKeys/" + i0 + "/publicKeyBase64Url",
+                        schemaPath:
+                          "#/properties/trust/properties/trustedPublicKeys/items/properties/publicKeyBase64Url/pattern",
+                        keyword: "pattern",
+                        params: { pattern: "^[A-Za-z0-9_-]{43}$" },
+                        message: 'must match pattern "' + "^[A-Za-z0-9_-]{43}$" + '"',
+                      };
+                      if (vErrors === null) {
+                        vErrors = [err50];
+                      } else {
+                        vErrors.push(err50);
+                      }
+                      errors++;
+                    }
+                  } else {
+                    const err51 = {
+                      instancePath:
+                        instancePath + "/trust/trustedPublicKeys/" + i0 + "/publicKeyBase64Url",
+                      schemaPath:
+                        "#/properties/trust/properties/trustedPublicKeys/items/properties/publicKeyBase64Url/type",
+                      keyword: "type",
+                      params: { type: "string" },
+                      message: "must be string",
+                    };
+                    if (vErrors === null) {
+                      vErrors = [err51];
+                    } else {
+                      vErrors.push(err51);
+                    }
+                    errors++;
+                  }
+                }
+              } else {
+                const err52 = {
+                  instancePath: instancePath + "/trust/trustedPublicKeys/" + i0,
+                  schemaPath: "#/properties/trust/properties/trustedPublicKeys/items/type",
+                  keyword: "type",
+                  params: { type: "object" },
+                  message: "must be object",
+                };
+                if (vErrors === null) {
+                  vErrors = [err52];
+                } else {
+                  vErrors.push(err52);
+                }
+                errors++;
+              }
+            }
+            let i1 = data18.length;
+            let j0;
+            if (i1 > 1) {
+              outer0: for (; i1--;) {
+                for (j0 = i1; j0--;) {
+                  if (func0(data18[i1], data18[j0])) {
+                    const err53 = {
+                      instancePath: instancePath + "/trust/trustedPublicKeys",
+                      schemaPath: "#/properties/trust/properties/trustedPublicKeys/uniqueItems",
+                      keyword: "uniqueItems",
+                      params: { i: i1, j: j0 },
+                      message:
+                        "must NOT have duplicate items (items ## " +
+                        j0 +
+                        " and " +
+                        i1 +
+                        " are identical)",
+                    };
+                    if (vErrors === null) {
+                      vErrors = [err53];
+                    } else {
+                      vErrors.push(err53);
+                    }
+                    errors++;
+                    break outer0;
+                  }
+                }
+              }
+            }
+          } else {
+            const err54 = {
+              instancePath: instancePath + "/trust/trustedPublicKeys",
+              schemaPath: "#/properties/trust/properties/trustedPublicKeys/type",
+              keyword: "type",
+              params: { type: "array" },
+              message: "must be array",
+            };
+            if (vErrors === null) {
+              vErrors = [err54];
+            } else {
+              vErrors.push(err54);
+            }
+            errors++;
+          }
+        }
+      } else {
+        const err55 = {
+          instancePath: instancePath + "/trust",
+          schemaPath: "#/properties/trust/type",
+          keyword: "type",
+          params: { type: "object" },
+          message: "must be object",
+        };
+        if (vErrors === null) {
+          vErrors = [err55];
+        } else {
+          vErrors.push(err55);
+        }
+        errors++;
+      }
+    }
+    if (data.remote !== undefined) {
+      let data22 = data.remote;
+      if (data22 && typeof data22 == "object" && !Array.isArray(data22)) {
+        if (data22.publicBaseUrl === undefined) {
+          const err56 = {
+            instancePath: instancePath + "/remote",
+            schemaPath: "#/properties/remote/required",
+            keyword: "required",
+            params: { missingProperty: "publicBaseUrl" },
+            message: "must have required property '" + "publicBaseUrl" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err56];
+          } else {
+            vErrors.push(err56);
+          }
+          errors++;
+        }
+        if (data22.checkIntervalMilliseconds === undefined) {
+          const err57 = {
+            instancePath: instancePath + "/remote",
+            schemaPath: "#/properties/remote/required",
+            keyword: "required",
+            params: { missingProperty: "checkIntervalMilliseconds" },
+            message: "must have required property '" + "checkIntervalMilliseconds" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err57];
+          } else {
+            vErrors.push(err57);
+          }
+          errors++;
+        }
+        if (data22.failureRetryMilliseconds === undefined) {
+          const err58 = {
+            instancePath: instancePath + "/remote",
+            schemaPath: "#/properties/remote/required",
+            keyword: "required",
+            params: { missingProperty: "failureRetryMilliseconds" },
+            message: "must have required property '" + "failureRetryMilliseconds" + "'",
+          };
+          if (vErrors === null) {
+            vErrors = [err58];
+          } else {
+            vErrors.push(err58);
+          }
+          errors++;
+        }
+        for (const key5 in data22) {
+          if (!(
+            key5 === "publicBaseUrl" ||
+            key5 === "checkIntervalMilliseconds" ||
+            key5 === "failureRetryMilliseconds"
+          )) {
+            const err59 = {
+              instancePath: instancePath + "/remote",
+              schemaPath: "#/properties/remote/additionalProperties",
+              keyword: "additionalProperties",
+              params: { additionalProperty: key5 },
+              message: "must NOT have additional properties",
+            };
+            if (vErrors === null) {
+              vErrors = [err59];
+            } else {
+              vErrors.push(err59);
+            }
+            errors++;
+          }
+        }
+        if (data22.publicBaseUrl !== undefined) {
+          let data23 = data22.publicBaseUrl;
+          if (typeof data23 !== "string" && data23 !== null) {
+            const err60 = {
+              instancePath: instancePath + "/remote/publicBaseUrl",
+              schemaPath: "#/properties/remote/properties/publicBaseUrl/type",
+              keyword: "type",
+              params: { type: schema125.properties.remote.properties.publicBaseUrl.type },
+              message: "must be string,null",
+            };
+            if (vErrors === null) {
+              vErrors = [err60];
+            } else {
+              vErrors.push(err60);
+            }
+            errors++;
+          }
+          if (typeof data23 === "string") {
+            if (!pattern66.test(data23)) {
+              const err61 = {
+                instancePath: instancePath + "/remote/publicBaseUrl",
+                schemaPath: "#/properties/remote/properties/publicBaseUrl/pattern",
+                keyword: "pattern",
+                params: {
+                  pattern:
+                    "^https://[a-z0-9]{20}\\.supabase\\.co/storage/v1/object/public/rule-catalog-production/production$",
+                },
+                message:
+                  'must match pattern "' +
+                  "^https://[a-z0-9]{20}\\.supabase\\.co/storage/v1/object/public/rule-catalog-production/production$" +
+                  '"',
+              };
+              if (vErrors === null) {
+                vErrors = [err61];
+              } else {
+                vErrors.push(err61);
+              }
+              errors++;
+            }
+          }
+        }
+        if (data22.checkIntervalMilliseconds !== undefined) {
+          if (86400000 !== data22.checkIntervalMilliseconds) {
+            const err62 = {
+              instancePath: instancePath + "/remote/checkIntervalMilliseconds",
+              schemaPath: "#/properties/remote/properties/checkIntervalMilliseconds/const",
+              keyword: "const",
+              params: { allowedValue: 86400000 },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err62];
+            } else {
+              vErrors.push(err62);
+            }
+            errors++;
+          }
+        }
+        if (data22.failureRetryMilliseconds !== undefined) {
+          if (3600000 !== data22.failureRetryMilliseconds) {
+            const err63 = {
+              instancePath: instancePath + "/remote/failureRetryMilliseconds",
+              schemaPath: "#/properties/remote/properties/failureRetryMilliseconds/const",
+              keyword: "const",
+              params: { allowedValue: 3600000 },
+              message: "must be equal to constant",
+            };
+            if (vErrors === null) {
+              vErrors = [err63];
+            } else {
+              vErrors.push(err63);
+            }
+            errors++;
+          }
+        }
+      } else {
+        const err64 = {
+          instancePath: instancePath + "/remote",
+          schemaPath: "#/properties/remote/type",
+          keyword: "type",
+          params: { type: "object" },
+          message: "must be object",
+        };
+        if (vErrors === null) {
+          vErrors = [err64];
+        } else {
+          vErrors.push(err64);
+        }
+        errors++;
+      }
+    }
+  } else {
+    const err65 = {
+      instancePath,
+      schemaPath: "#/type",
+      keyword: "type",
+      params: { type: "object" },
+      message: "must be object",
+    };
+    if (vErrors === null) {
+      vErrors = [err65];
+    } else {
+      vErrors.push(err65);
+    }
+    errors++;
+  }
+  validate106.errors = vErrors;
+  return errors === 0;
+}
+validate106.evaluated = { props: true, dynamicProps: false, dynamicItems: false };

@@ -191,6 +191,27 @@ channel segment, preventing Preview credentials from reading or writing `product
 WP6a-2a does not configure a Production project, bucket, URL, secret, trust key, operator, upload,
 public pointer, client download, EAS channel, or catalog activation.
 
+## Production configuration contract and local preflight (WP6a-2b)
+
+`rules/schema/production-channel-config.schema.json` is the authoritative closed contract for a
+future public Production endpoint, dedicated infrastructure identity, non-secret trust ring, and
+remote intervals. Its only committed instance is `rules/config/production-channel.json`. That
+instance remains `DISABLED`, with no Supabase project URL, public base URL, or Production public
+key. It contains no credential or signing seed.
+
+`npm run rules:production:preflight` validates that fixed file through the generated standalone
+schema validator and channel-separation rules. It rejects Preview project/key reuse, independently
+edited remote URLs, invalid or duplicate Production public keys, contract/storage drift, and a
+prematurely enabled Delivery remote profile. The command reads no environment secret, performs no
+network request, and writes nothing. The committed disabled instance is therefore expected to
+return `BLOCKED`; a complete synthetic candidate can return only `READY_FOR_APPROVAL`, which has no
+activation effect.
+
+The complete ordered provisioning, trust-distribution, Generation-1 delivery, and later client
+activation plan is recorded in `docs/architecture/rule-catalog-production-plan.md`. WP6a-2b does
+not create or inspect a Supabase project or bucket, generate a signing key, change Preview, enable
+Production delivery/client profiles, publish an EAS update, or activate a catalog.
+
 ## Contract boundaries
 
 The schema accepts only typed data modules. It does not accept JavaScript, expressions, templates, arbitrary operators, or remote schema references. `additionalProperties: false` closes every data object. Fields such as `script`, `code`, or unrecognized future fields fail validation.

@@ -460,6 +460,204 @@ export interface PublicationSigning {
   keyId: PublicationIdentifier;
 }
 
+/**
+ * Public, non-secret configuration candidate for a strictly isolated Production rule-catalog channel.
+ */
+export interface PflegeShiftProductionRuleCatalogChannelConfig {
+  schemaVersion: 1;
+  channel: "PRODUCTION";
+  status: "DISABLED" | "CANDIDATE";
+  infrastructure: {
+    isolationMode: "DEDICATED_SUPABASE_PROJECT";
+    supabaseProjectUrl: string | null;
+    region: "eu-central-1";
+    bucketName: "rule-catalog-production";
+    objectRoot: "production";
+    deliverySecretEnvironmentName: "SUPABASE_PRODUCTION_SECRET_KEY";
+    storagePolicy: {
+      publicRead: true;
+      administrativeWriteOnly: true;
+      allowedMimeTypes: ["application/json"];
+      maximumObjectBytes: 524288;
+    };
+  };
+  trust: {
+    algorithm: "ED25519";
+    canonicalization: "RFC8785";
+    /**
+     * @maxItems 8
+     */
+    trustedPublicKeys:
+      | []
+      | [
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+        ]
+      | [
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+        ]
+      | [
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+        ]
+      | [
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+        ]
+      | [
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+        ]
+      | [
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+        ]
+      | [
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+        ]
+      | [
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+          {
+            keyId: string;
+            publicKeyBase64Url: string;
+          },
+        ];
+  };
+  remote: {
+    publicBaseUrl: string | null;
+    checkIntervalMilliseconds: 86400000;
+    failureRetryMilliseconds: 3600000;
+  };
+}
+
 export type RuleManifest = PflegeShiftRuleManifest;
 export type RulePackage = PflegeShiftRulePackage;
 export type RuleCatalogPublicationRequest = PflegeShiftRuleCatalogPublicationRequest;
+export type ProductionRuleCatalogChannelConfig = PflegeShiftProductionRuleCatalogChannelConfig;

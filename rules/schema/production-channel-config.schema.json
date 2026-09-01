@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pflegeshift.app/schemas/production-rule-catalog-channel-config-v1.json",
+  "title": "PflegeShift Production Rule Catalog Channel Config",
+  "description": "Public, non-secret configuration candidate for a strictly isolated Production rule-catalog channel.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "channel", "status", "infrastructure", "trust", "remote"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "channel": { "const": "PRODUCTION" },
+    "status": { "enum": ["DISABLED", "CANDIDATE"] },
+    "infrastructure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "isolationMode",
+        "supabaseProjectUrl",
+        "region",
+        "bucketName",
+        "objectRoot",
+        "deliverySecretEnvironmentName",
+        "storagePolicy"
+      ],
+      "properties": {
+        "isolationMode": { "const": "DEDICATED_SUPABASE_PROJECT" },
+        "supabaseProjectUrl": {
+          "type": ["string", "null"],
+          "pattern": "^https://[a-z0-9]{20}\\.supabase\\.co$"
+        },
+        "region": { "const": "eu-central-1" },
+        "bucketName": { "const": "rule-catalog-production" },
+        "objectRoot": { "const": "production" },
+        "deliverySecretEnvironmentName": {
+          "const": "SUPABASE_PRODUCTION_SECRET_KEY"
+        },
+        "storagePolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "publicRead",
+            "administrativeWriteOnly",
+            "allowedMimeTypes",
+            "maximumObjectBytes"
+          ],
+          "properties": {
+            "publicRead": { "const": true },
+            "administrativeWriteOnly": { "const": true },
+            "allowedMimeTypes": {
+              "const": ["application/json"]
+            },
+            "maximumObjectBytes": { "const": 524288 }
+          }
+        }
+      }
+    },
+    "trust": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "canonicalization", "trustedPublicKeys"],
+      "properties": {
+        "algorithm": { "const": "ED25519" },
+        "canonicalization": { "const": "RFC8785" },
+        "trustedPublicKeys": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["keyId", "publicKeyBase64Url"],
+            "properties": {
+              "keyId": {
+                "type": "string",
+                "minLength": 12,
+                "maxLength": 100,
+                "pattern": "^production-[a-z0-9]+(?:[.-][a-z0-9]+)*$"
+              },
+              "publicKeyBase64Url": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "remote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publicBaseUrl", "checkIntervalMilliseconds", "failureRetryMilliseconds"],
+      "properties": {
+        "publicBaseUrl": {
+          "type": ["string", "null"],
+          "pattern": "^https://[a-z0-9]{20}\\.supabase\\.co/storage/v1/object/public/rule-catalog-production/production$"
+        },
+        "checkIntervalMilliseconds": { "const": 86400000 },
+        "failureRetryMilliseconds": { "const": 3600000 }
+      }
+    }
+  }
+}
