@@ -287,3 +287,30 @@ The underlying npm commands are available for automation as `rules:preview:recov
 `rules:preview:prepare`, `rules:preview:preflight`, `rules:preview:activate`, and
 `rules:preview:verify`. Preflight never accepts a secret. Other secret inputs remain
 environment-only; the PowerShell wrappers are the normal interactive entry points.
+
+## WP6a-2a channel-neutral delivery core
+
+The low-level delivery CLI and Supabase Storage adapter no longer define Preview paths internally.
+They consume the single frozen contract in `scripts/rule-catalog-delivery-channels.mjs`:
+
+- `PREVIEW` maps to `preview/...`, requires `preview-` signing key IDs, and retains the existing
+  `rule-catalog` remote profile;
+- `PRODUCTION` maps to `production/...`, requires `production-` signing key IDs, and has no remote
+  profile.
+
+This allows a Production publication to pass the complete local delivery dry-run without making
+Production writable:
+
+```powershell
+npm.cmd run rules:deliver -- --manifest artifacts/rule-catalog-operator/production/manifests/1.json --trusted-public-key "production-<key-id>=<public-key-base64url>" --dry-run
+```
+
+Without `--dry-run`, Production fails with `CHANNEL_REMOTE_DISABLED` before either
+`SUPABASE_URL` or `SUPABASE_SECRET_KEY` is read and before a Storage adapter is created. The same
+guard exists inside the delivery orchestrator and Storage constructor, so bypassing the CLI cannot
+enable a Production request. A Preview-configured Storage adapter rejects every
+`production/...` object path before invoking `fetch`.
+
+WP6a-2a does not add or infer a Production Supabase URL, bucket, secret, signing key, public trust
+ring, operator command, or EAS setting. The versioned Preview operator and its activation flow are
+unchanged.
