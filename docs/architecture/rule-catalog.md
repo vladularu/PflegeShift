@@ -196,27 +196,25 @@ public pointer, client download, EAS channel, or catalog activation.
 `rules/schema/production-channel-config.schema.json` is the authoritative closed contract for a
 future public Production endpoint, dedicated infrastructure identity, non-secret trust ring, and
 remote intervals. Its only committed instance is `rules/config/production-channel.json`. That
-instance remains `DISABLED`, with no Supabase project URL, public base URL, or Production public
-key. It contains no credential or signing seed.
+instance is now a public `CANDIDATE` containing the verified dedicated project URL, derived public
+base URL, and initial Production public key. It contains no credential or signing seed.
 
 `npm run rules:production:preflight` validates that fixed file through the generated standalone
 schema validator and channel-separation rules. It rejects Preview project/key reuse, independently
 edited remote URLs, invalid or duplicate Production public keys, contract/storage drift, and a
 prematurely enabled Delivery remote profile. The command reads no environment secret, performs no
-network request, and writes nothing. The committed disabled instance is therefore expected to
-return `BLOCKED`; a complete synthetic candidate can return only `READY_FOR_APPROVAL`, which has no
-activation effect.
+network request, and writes nothing. The committed Candidate is expected to return
+`READY_FOR_APPROVAL`, which has no activation effect.
 
 The complete ordered provisioning, trust-distribution, Generation-1 delivery, and later client
 activation plan is recorded in `docs/architecture/rule-catalog-production-plan.md`. WP6a-2b does
 not create or inspect a Supabase project or bucket, generate a signing key, change Preview, enable
 Production delivery/client profiles, publish an EAS update, or activate a catalog.
 
-WP6a-2c adds a local provisioning-plan operator without extending that authority. It reads the
-same disabled contract and offers only `preflight`, `plan`, and `checklist`. Its `PLAN_READY` result
-means only that the repository is safe to prepare for a later, separately approved infrastructure
-write; it is not Production delivery readiness. The normal Production preflight remains `BLOCKED`.
-The exact resource boundary, evidence items, and stop conditions are versioned in
+WP6a-2c added a local provisioning-plan operator without extending that authority. It offers only
+`preflight`, `plan`, and `checklist`. Its historical `PLAN_READY` result meant only that the
+pre-candidate was safe for later infrastructure work; after WP6a-3b it fails closed because the
+public Candidate is populated. The exact resource boundary, evidence items, and stop conditions are versioned in
 `docs/operations/rule-catalog-production-provisioning-checklist.md`.
 
 ## Contract boundaries

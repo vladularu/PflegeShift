@@ -60,7 +60,7 @@ function candidateConfig() {
   };
 }
 
-test("committed Production contract is schema-valid, disabled, and locally blocked", async () => {
+test("committed Production Candidate is schema-valid and ready only for approval", async () => {
   const config = JSON.parse(await fs.readFile(contractPath, "utf8"));
   let networkTouched = false;
   const originalFetch = globalThis.fetch;
@@ -70,16 +70,8 @@ test("committed Production contract is schema-valid, disabled, and locally block
   };
   try {
     const result = preflightProductionRuleCatalogConfig(config);
-    assert.equal(result.status, "BLOCKED");
-    assert.deepEqual(
-      result.issues.map(({ code }) => code),
-      [
-        "PRODUCTION_DISABLED",
-        "INFRASTRUCTURE_NOT_CONFIGURED",
-        "REMOTE_NOT_CONFIGURED",
-        "TRUST_NOT_CONFIGURED",
-      ],
-    );
+    assert.equal(result.status, "READY_FOR_APPROVAL");
+    assert.deepEqual(result.issues, []);
     assert.equal(networkTouched, false);
   } finally {
     globalThis.fetch = originalFetch;
@@ -137,24 +129,23 @@ test("preflight rejects undocumented fields instead of accepting possible secret
   assert.equal(JSON.stringify(result).includes("must-never-be-accepted"), false);
 });
 
-test("CLI reads only the committed public contract and exits blocked without leaking secrets", async () => {
+test("CLI reads only the committed public Candidate and exits ready without leaking secrets", async () => {
   const sentinelSecret = "sb_secret_must_not_be_read_or_printed";
-  await assert.rejects(
-    execFileAsync(process.execPath, ["--import", tsxImport, preflightCliPath], {
+  const { stdout, stderr } = await execFileAsync(
+    process.execPath,
+    ["--import", tsxImport, preflightCliPath],
+    {
       cwd: repositoryRoot,
       encoding: "utf8",
       env: {
         ...process.env,
         SUPABASE_PRODUCTION_SECRET_KEY: sentinelSecret,
       },
-    }),
-    (error) => {
-      assert.match(error.stdout, /Production rule catalog preflight: BLOCKED/);
-      assert.match(error.stdout, /Network access: none/);
-      assert.match(error.stdout, /Secrets read: none/);
-      assert.equal(error.stdout.includes(sentinelSecret), false);
-      assert.equal(error.stderr, "");
-      return true;
     },
   );
+  assert.match(stdout, /Production rule catalog preflight: READY_FOR_APPROVAL/u);
+  assert.match(stdout, /Network access: none/u);
+  assert.match(stdout, /Secrets read: none/u);
+  assert.equal(stdout.includes(sentinelSecret), false);
+  assert.equal(stderr, "");
 });

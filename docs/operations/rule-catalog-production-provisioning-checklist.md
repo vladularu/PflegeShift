@@ -7,8 +7,8 @@ project and its empty Storage bucket. WP6a-2c performs none of those remote acti
 read a credential, call Supabase, create a project or bucket, generate a signing key, upload an
 object, enable delivery, or activate the app client.
 
-WP6a-3a adds the versioned trust-preparation code only. It does not execute its DPAPI wrapper or
-create a real Production seed. Seed generation remains a separate explicit approval boundary.
+WP6a-3b executed the separately approved trust-preparation wrapper. The real seed exists only as a
+DPAPI `CurrentUser` blob outside the repository; the Candidate records only its public key.
 
 The only authoritative input is `rules/config/production-channel.json`. Run the versioned local
 operator from the repository root:
@@ -56,15 +56,15 @@ evidence named below. The operator prints the same item IDs and current statuses
 | -------------------------------------- | --------------------------------------------------------------- | ------------- |
 | `local-plan-preflight`                 | Committed disabled contract passes the local planning preflight | `PASS`        |
 | `production-delivery-disabled`         | Production delivery channel has no remote profile               | `PASS`        |
-| `explicit-production-write-approval`   | Separate approval limited to creating the project and bucket    | `PENDING`     |
-| `dedicated-project-created`            | New Production project reference and public project URL         | `NOT_STARTED` |
-| `project-region-verified`              | Read-only evidence for `eu-central-1`                           | `NOT_STARTED` |
-| `preview-project-isolation-verified`   | Production origin differs from the Preview origin               | `NOT_STARTED` |
-| `production-bucket-created`            | Bucket exists only in the Production project                    | `NOT_STARTED` |
-| `bucket-policy-verified`               | Bucket metadata matches visibility, MIME, and size contract     | `NOT_STARTED` |
-| `production-object-root-empty`         | Empty listing for `production/` before first delivery           | `NOT_STARTED` |
-| `public-read-negative-check`           | Unauthenticated missing-object response without a credential    | `NOT_STARTED` |
-| `production-config-candidate-reviewed` | Later diff contains only public project and derived remote URLs | `NOT_STARTED` |
+| `explicit-production-write-approval`   | Separate approval limited to creating the project and bucket    | `PASS`        |
+| `dedicated-project-created`            | New Production project reference and public project URL         | `PASS`        |
+| `project-region-verified`              | Read-only evidence for `eu-central-1`                           | `PASS`        |
+| `preview-project-isolation-verified`   | Production origin differs from the Preview origin               | `PASS`        |
+| `production-bucket-created`            | Bucket exists only in the Production project                    | `PASS`        |
+| `bucket-policy-verified`               | Bucket metadata matches visibility, MIME, and size contract     | `PASS`        |
+| `production-object-root-empty`         | Empty listing for `production/` before first delivery           | `PASS`        |
+| `public-read-negative-check`           | Unauthenticated missing-object response without a credential    | `PASS`        |
+| `production-config-candidate-reviewed` | Candidate contains only public infrastructure and trust values  | `PASS`        |
 
 ## Trust-preparation code gate
 
@@ -75,8 +75,8 @@ Before any Production seed is generated, retain these local proofs:
 | `trust-operator-preflight`            | Secret-free command returns `READY_TO_PREPARE`                          | `PASS`        |
 | `trust-operator-no-remote-capability` | Tests prove no network, Supabase, signing, delivery, or activation path | `PASS`        |
 | `trust-wrapper-dpapi-contract`        | Static checks cover `CurrentUser`, round-trip, `CreateNew`, and cleanup | `PASS`        |
-| `production-signing-seed-created`     | Separately approved real run creates the DPAPI-protected initial seed   | `NOT_STARTED` |
-| `production-public-key-recorded`      | Only the derived public key is recorded in the Candidate contract       | `NOT_STARTED` |
+| `production-signing-seed-created`     | Separately approved real run creates the DPAPI-protected initial seed   | `PASS`        |
+| `production-public-key-recorded`      | Only the derived public key is recorded in the Candidate contract       | `PASS`        |
 
 ## Stop conditions
 

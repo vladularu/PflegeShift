@@ -319,14 +319,15 @@ unchanged.
 
 The future Production infrastructure and public trust inputs are described only by the generated
 contract sourced from `rules/schema/production-channel-config.schema.json`. The committed
-`rules/config/production-channel.json` remains disabled and deliberately omits every live URL and
-public key. It names the future dedicated project boundary, Frankfurt region,
-`rule-catalog-production` bucket, `production` object root, exact storage policy, and the
-`SUPABASE_PRODUCTION_SECRET_KEY` environment variable without containing that variable's value.
+`rules/config/production-channel.json` began as a disabled pre-candidate without live URLs or
+public keys. WP6a-3b advances it to a public `CANDIDATE` containing the verified dedicated project,
+derived public object URL, and Production public key. It still contains no credential or signing
+seed.
 
 `npm.cmd run rules:production:preflight` is a local, read-only readiness check. The current expected
-result is `BLOCKED`; this proves Production is not accidentally deployable. It performs no public
-fetch, administrative request, bucket lookup, credential read, signing operation, local write, or
+result is `READY_FOR_APPROVAL`; that result only proves the public Candidate is internally
+consistent and does not enable a client or delivery remote. It performs no public fetch,
+administrative request, bucket lookup, credential read, signing operation, local write, or
 activation. The complete later gate order is documented in
 `docs/architecture/rule-catalog-production-plan.md`.
 
@@ -338,10 +339,10 @@ only `preflight`, `plan`, and `checklist`; no mutation command or remote adapter
 tests also enforce the absence of network, process-secret, filesystem-write, and child-process
 primitives in the operator source.
 
-The planning preflight is intentionally separate from delivery readiness. It returns `PLAN_READY`
-only because Production is still unconfigured and write-disabled, while
-`rules:production:preflight` continues to return `BLOCKED`. The operator does not change Preview,
-create infrastructure, or enable the existing Production delivery profile.
+The planning preflight is intentionally separate from delivery readiness. It returned `PLAN_READY`
+only for the original unconfigured pre-candidate. It now fails closed because infrastructure and
+public trust are recorded, while `rules:production:preflight` returns `READY_FOR_APPROVAL`. The
+operator does not change Preview or enable the existing Production delivery profile.
 
 ## WP6a-3a Production trust-prepare operator
 
@@ -354,6 +355,12 @@ commands remain free of network, filesystem-write, signing, delivery, and activa
 
 The interactive Windows wrapper
 `scripts/operators/prepare-production-rule-catalog-trust.ps1` is the later approved entry point for
-seed generation and DPAPI `CurrentUser` storage. It is committed and statically checked in WP6a-3a
-but not executed. Production delivery remains `remote: null`, the Production app client remains
-`remote: null`, and the committed Production candidate remains `DISABLED` with no trusted key.
+seed generation and DPAPI `CurrentUser` storage. It was committed and statically checked in WP6a-3a
+without execution.
+
+## WP6a-3b Production trust Candidate
+
+The separately approved WP6a-3b run created the initial seed only in the DPAPI operator store and
+derived the public key for `production-2026-r1`. Only that public key and verified public
+infrastructure URLs are committed. Production delivery remains `remote: null`, the Production app
+client remains `remote: null`, and no catalog has been signed or uploaded.
