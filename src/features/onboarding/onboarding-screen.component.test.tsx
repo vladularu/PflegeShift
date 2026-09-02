@@ -5,6 +5,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import type { SaveProfileInput } from "@/domain/types";
 import { OnboardingScreen } from "@/features/onboarding/onboarding-screen";
+import { LIGHT_PALETTE } from "@/theme/palette-values";
+import { CONTROL_HEIGHT } from "@/theme/tokens";
 
 const mockUpdateProfile = jest.fn<(input: SaveProfileInput) => Promise<void>>();
 jest.mock("@/application/pflegeshift-provider", () => ({
@@ -66,6 +68,15 @@ describe("OnboardingScreen", () => {
     expect(screen.getByText("Willkommen bei LUNA Shift")).toBeTruthy();
     expect(screen.getByLabelText("LUNA Shift Logo")).toBeTruthy();
     expect(screen.getByLabelText("Schritt 1 von 5")).toBeTruthy();
+    expect(screen.getByTestId("onboarding-primary-action")).toHaveStyle({
+      width: "100%",
+      minHeight: CONTROL_HEIGHT.large,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: LIGHT_PALETTE.primary,
+      opacity: 1,
+    });
+    expect(screen.getByText("Los geht’s")).toHaveStyle({ color: LIGHT_PALETTE.onPrimary });
   });
 
   it("persists an explicitly selected TVöD-P guest profile", async () => {

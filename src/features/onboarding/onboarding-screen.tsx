@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useRef, useState, type ReactNode } from "react";
 import {
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -44,7 +45,7 @@ import {
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
-import { DropdownField, Field, PrimaryButton } from "@/ui/form-controls";
+import { DropdownField, Field } from "@/ui/form-controls";
 import { FormStatus } from "@/ui/form-layout";
 import { focusInvalidField, weeklyHoursFieldError } from "@/ui/form-validation";
 
@@ -185,6 +186,42 @@ function StepCopy({ children }: { readonly children: ReactNode }) {
     >
       {children}
     </Text>
+  );
+}
+
+function OnboardingPrimaryAction({
+  busy,
+  children,
+  onPress,
+}: {
+  readonly busy: boolean;
+  readonly children: ReactNode;
+  readonly onPress: () => void;
+}) {
+  const palette = usePalette();
+
+  return (
+    <Pressable
+      accessibilityLabel={busy ? "LUNA Shift wird eingerichtet" : undefined}
+      accessibilityRole="button"
+      accessibilityState={{ busy, disabled: busy }}
+      disabled={busy}
+      onPress={onPress}
+      style={[styles.primaryAction, { backgroundColor: palette.primary, opacity: busy ? 0.55 : 1 }]}
+      testID="onboarding-primary-action"
+    >
+      {busy ? (
+        <ActivityIndicator accessibilityElementsHidden color={palette.onPrimary} size="small" />
+      ) : (
+        <Text
+          dynamicTypeRamp="headline"
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
+        >
+          {children}
+        </Text>
+      )}
+    </Pressable>
   );
 }
 
@@ -529,10 +566,8 @@ export function OnboardingScreen() {
 
         <View style={[styles.footer, { backgroundColor }]}>
           <FormStatus error={error} />
-          <PrimaryButton
+          <OnboardingPrimaryAction
             busy={saving}
-            busyLabel="LUNA Shift wird eingerichtet"
-            disabled={saving}
             onPress={() => {
               if (step === 1) moveTo(2);
               else if (step === 2) continueFromIndustry();
@@ -542,7 +577,7 @@ export function OnboardingScreen() {
             }}
           >
             {buttonLabel}
-          </PrimaryButton>
+          </OnboardingPrimaryAction>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -610,9 +645,19 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
   },
   footer: {
+    alignItems: "stretch",
     gap: SPACING.sm,
     paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.md,
+  },
+  primaryAction: {
+    width: "100%",
+    minHeight: CONTROL_HEIGHT.large,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: RADII.control,
+    borderCurve: "continuous",
+    paddingHorizontal: SPACING.lg,
   },
 });
