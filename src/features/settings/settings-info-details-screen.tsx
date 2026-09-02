@@ -29,7 +29,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
       },
       {
         title: "Backup bewusst selbst ablegen",
-        text: "Aktuell gibt es weder Cloud-Sync noch ein automatisches Backup. Unter Mehr → Datensicherung kannst du eine lokale Backup-Datei erstellen und außerhalb der App sicher ablegen. Eine Deinstallation kann sonst lokale Daten entfernen.",
+        text: "Aktuell gibt es weder Cloud-Sync noch ein automatisches Backup. Unter Mehr → Datensicherung kannst du eine lokale Backup-Datei erstellen, vor dem Wiederherstellen prüfen und außerhalb der App sicher ablegen. Eine Deinstallation kann sonst lokale Daten entfernen.",
       },
       {
         title: "Löschen",

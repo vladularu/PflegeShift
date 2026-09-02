@@ -2,6 +2,8 @@ import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { CalendarEntry } from "@/domain/types";
 
+export async function cancelAllEntryNotifications(_db: SQLiteDatabase): Promise<void> {}
+
 export async function syncEntryNotifications(
   _db: SQLiteDatabase,
   _entry: CalendarEntry,
