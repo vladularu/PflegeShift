@@ -132,6 +132,10 @@ export function locationPickerRoute() {
   return Object.freeze({ pathname: "/location-picker" as const });
 }
 
+export function localBackupRoute() {
+  return Object.freeze({ pathname: "/data-backup" as const });
+}
+
 export function settingsEditorRoute(section: "WORK" | "TARIFF") {
   return Object.freeze({
     pathname: "/settings-editor" as const,

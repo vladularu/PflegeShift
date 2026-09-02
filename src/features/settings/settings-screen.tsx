@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState, type ComponentProps } from "react";
-import { Alert, View } from "react-native";
+import { Alert, Platform, View } from "react-native";
 
 import { PRODUCT_NAME } from "@/brand";
 import {
@@ -19,7 +19,12 @@ import {
 import { DEV_TOOLS_AVAILABLE } from "@/infrastructure/dev-tools-policy";
 import { APP_RUNTIME_LABEL } from "@/infrastructure/app-version";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
-import { settingsEditorRoute, settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
+import {
+  localBackupRoute,
+  settingsEditorRoute,
+  settingsInfoRoute,
+  tariffAssessmentRoute,
+} from "@/navigation/routes";
 import { usePalette } from "@/theme/palette";
 import { RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
@@ -161,6 +166,17 @@ export function SettingsScreen() {
         <View style={{ gap: SPACING.sm }}>
           <SectionHeader title="Daten & App" />
           <SurfaceCard>
+            {Platform.OS === "ios" ? (
+              <>
+                <RowButton
+                  leading={<SettingsIcon name="archive-outline" />}
+                  onPress={() => router.push(localBackupRoute())}
+                  subtitle="Backup-Datei erstellen und sicher ablegen"
+                  title="Datensicherung"
+                />
+                <CardSeparator />
+              </>
+            ) : null}
             <RowButton
               leading={<SettingsIcon name="phone-portrait-outline" />}
               onPress={() => router.push(settingsInfoRoute("STORAGE"))}

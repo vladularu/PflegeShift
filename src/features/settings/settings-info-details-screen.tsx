@@ -28,8 +28,8 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
         text: "Dienste, Termine, Tarifprofil und Einstellungen liegen in einer lokalen SQLite-Datenbank.",
       },
       {
-        title: "Keine vorgetäuschte Synchronisation",
-        text: "Aktuell gibt es weder Cloud-Sync noch ein automatisches Backup. Eine Deinstallation kann lokale Daten entfernen.",
+        title: "Backup bewusst selbst ablegen",
+        text: "Aktuell gibt es weder Cloud-Sync noch ein automatisches Backup. Unter Mehr → Datensicherung kannst du eine lokale Backup-Datei erstellen und außerhalb der App sicher ablegen. Eine Deinstallation kann sonst lokale Daten entfernen.",
       },
       {
         title: "Löschen",

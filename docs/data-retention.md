@@ -14,7 +14,14 @@ verschlüsselt in der lokalen Datenbank. Diese verzögerte physische Löschung i
 in der App unter **Mehr → Lokale Datenspeicherung** sichtbar beschrieben.
 
 Der Vertrag gilt unabhängig von einer Cloud-Synchronisation. LUNA Shift bietet
-aktuell weder Cloud-Sync noch ein automatisches Backup an.
+aktuell weder Cloud-Sync noch ein automatisches Backup an. Unter **Mehr →
+Datensicherung** kann die Person jedoch manuell eine versionierte JSON-Datei mit
+Profil, Vorlagen, Diensten, Terminen, Tarifentscheidungen und sichtbaren
+Einstellungen erstellen. Die Datei trägt einen SHA-256-Prüfwert, ist nach dem
+Export außerhalb der App aber nicht verschlüsselt und muss geschützt abgelegt
+werden. Testlabor-Zustand, Systemmitteilungsplanung und Regelwerkscache sind
+nicht enthalten. Ein offener Testlabor-Lauf blockiert den Export, damit keine
+Testdaten anstelle des gesicherten Originals exportiert werden.
 
 ## Aufbewahrungsfrist
 

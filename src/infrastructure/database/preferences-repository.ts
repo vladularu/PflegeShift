@@ -28,6 +28,12 @@ const CALENDAR_PREFERENCE_KEYS = {
   showShiftDuration: "calendar_show_shift_duration",
 } as const;
 
+export const USER_DATA_PREFERENCE_KEYS = Object.freeze([
+  TVOED_COVERAGE_KEY,
+  TVOED_ASSIGNMENT_KEY,
+  ...Object.values(CALENDAR_PREFERENCE_KEYS),
+] as const);
+
 export const DEFAULT_CALENDAR_PREFERENCES: CalendarPreferencesData = Object.freeze({
   viewMode: "MONTH",
   showShifts: true,

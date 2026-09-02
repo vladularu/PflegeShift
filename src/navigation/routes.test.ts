@@ -8,6 +8,7 @@ import {
   dayDetailsRoute,
   dayEditorRoute,
   locationPickerRoute,
+  localBackupRoute,
   premiumDetailsRoute,
   quickAddRoute,
   settingsEditorRoute,
@@ -134,5 +135,9 @@ describe("navigation contracts", () => {
 
   it("keeps private location data out of router parameters", () => {
     expect(locationPickerRoute()).toEqual({ pathname: "/location-picker" });
+  });
+
+  it("opens the local backup without private router parameters", () => {
+    expect(localBackupRoute()).toEqual({ pathname: "/data-backup" });
   });
 });
