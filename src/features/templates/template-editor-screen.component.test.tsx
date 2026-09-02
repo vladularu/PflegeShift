@@ -126,7 +126,7 @@ describe("TemplateEditorScreen compact layout", () => {
     expect(screen.getByLabelText("Benachrichtigung: 5 Min. vor Beginn")).toBeVisible();
   });
 
-  it("selects the PflegeShift service type from the compact iOS row", async () => {
+  it("selects the service type from the compact iOS row", async () => {
     jest
       .spyOn(ActionSheetIOS, "showActionSheetWithOptions")
       .mockImplementation((_options, callback) => callback(2));

@@ -4,7 +4,7 @@ export default function configureApp({ config }: ConfigContext): ExpoConfig {
   const internal = process.env.APP_VARIANT === "internal";
   return {
     ...config,
-    name: internal ? "PflegeShift Internal" : "PflegeShift",
+    name: internal ? "LUNA Shift Internal" : "LUNA Shift",
     slug: config.slug ?? "pflegeshift",
     scheme: internal ? "pflegeshift-internal" : "pflegeshift",
     ios: {

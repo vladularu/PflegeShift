@@ -20,6 +20,6 @@ describe("SettingsInfoDetailsScreen location disclosure", () => {
     expect(
       screen.getByText(/auf iOS Kartendaten von Apple und auf Android von Google/),
     ).toBeTruthy();
-    expect(screen.getByText(/nicht an einen PflegeShift-Server/)).toBeTruthy();
+    expect(screen.getByText(/nicht an einen LUNA Shift-Server/)).toBeTruthy();
   });
 });

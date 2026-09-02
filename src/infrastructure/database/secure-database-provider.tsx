@@ -1,11 +1,13 @@
 import { type PropsWithChildren } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { PRODUCT_NAME } from "@/brand";
+
 export function SecureDatabaseProvider(_props: PropsWithChildren) {
   return (
     <View accessibilityRole="alert" style={styles.centered}>
       <Text accessibilityRole="header" style={styles.title}>
-        PflegeShift benötigt einen nativen App-Build
+        {PRODUCT_NAME} benötigt einen nativen App-Build
       </Text>
       <Text style={styles.body}>
         Die verschlüsselte lokale Datenbank wird im Web nicht unterstützt. Nutze einen nativen

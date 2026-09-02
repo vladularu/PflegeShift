@@ -217,7 +217,7 @@ function expectPartialAnalysisShell(
   expect(screen.getByLabelText("Saldo: Nicht verfügbar")).toBeTruthy();
   expect(screen.queryByRole("alert")).toBeNull();
   expect(screen.queryByText("Diagnosecode: RULE_PACKAGE_NOT_FOUND")).toBeNull();
-  expect(screen.queryByText("PflegeShift konnte nicht angezeigt werden")).toBeNull();
+  expect(screen.queryByText("LUNA Shift konnte nicht angezeigt werden")).toBeNull();
 }
 
 async function expectRuleCoverageDiagnostic(component: ReactElement) {
@@ -225,7 +225,7 @@ async function expectRuleCoverageDiagnostic(component: ReactElement) {
   const screen = await render(component);
 
   expect(screen.getByText("Diagnosecode: RULE_PACKAGE_NOT_FOUND")).toBeTruthy();
-  expect(screen.queryByText("PflegeShift konnte nicht angezeigt werden")).toBeNull();
+  expect(screen.queryByText("LUNA Shift konnte nicht angezeigt werden")).toBeNull();
 }
 
 describe("reviewed Generation 1 rule coverage in analysis screens", () => {

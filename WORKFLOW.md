@@ -1,4 +1,4 @@
-# PflegeShift Entwicklungsworkflow
+# LUNA Shift Entwicklungsworkflow
 
 Dieser Ablauf hält Änderungen klein, überprüfbar und auf dem Zielgerät abnehmbar.
 

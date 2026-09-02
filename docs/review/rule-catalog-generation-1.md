@@ -28,7 +28,7 @@ hinterlegt. Normative Werte und Produktentscheidungen werden getrennt behandelt:
 - Normativ: Entgelttabelle, tarifliche Zuschläge und Zulagen, ArbZG-Grenzen sowie
   Feiertagsregeln.
 - Nicht normativ: `workPatternRules`, `workPatternPolicy`,
-  `grossPlanningWarningMinutes` und `planning`. Diese Werte sind PflegeShift-Heuristiken
+  `grossPlanningWarningMinutes` und `planning`. Diese Werte sind LUNA-Shift-Heuristiken
   und dürfen weder als Gesetz noch als Tarifvorgabe dargestellt werden.
 - Gemischte Objekte führen beide Quellarten auf. Die fachliche Prüfung muss die einzelnen
   Felder getrennt bewerten.

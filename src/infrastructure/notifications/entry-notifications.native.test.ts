@@ -83,13 +83,13 @@ describe("entry alarms", () => {
 
     expect(notificationMocks.schedule).toHaveBeenCalledTimes(2);
     expect(notificationMocks.schedule.mock.calls[0]?.[0].content).toMatchObject({
-      title: "PflegeShift",
+      title: "LUNA Shift",
       body: "Deine Erinnerung ist fällig.",
       sound: undefined,
       data: { reminderKind: "NOTIFICATION" },
     });
     expect(notificationMocks.schedule.mock.calls[1]?.[0].content).toMatchObject({
-      title: "PflegeShift",
+      title: "LUNA Shift",
       body: "Dein Dienst beginnt jetzt.",
       sound: "default",
       data: { reminderKind: "ALARM" },

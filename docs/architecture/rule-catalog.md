@@ -2,7 +2,7 @@
 
 ## Decision
 
-PflegeShift calculates salary, tariff, legal, and public-holiday results locally. The app must not send shifts, salary data, or calculation inputs to a rule backend. A later delivery service distributes only signed, immutable rule packages and a signed manifest. This preserves offline operation and prevents 100,000 monthly active users from creating a backend request for every calculation.
+LUNA Shift calculates salary, tariff, legal, and public-holiday results locally. The app must not send shifts, salary data, or calculation inputs to a rule backend. A later delivery service distributes only signed, immutable rule packages and a signed manifest. This preserves offline operation and prevents 100,000 monthly active users from creating a backend request for every calculation.
 
 The authoritative machine-readable contracts are:
 

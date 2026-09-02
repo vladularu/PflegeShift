@@ -12,7 +12,7 @@ const workPatternSettings = {
   updatedAt: null,
 };
 
-describe("PflegeShift snapshot loading", () => {
+describe("application snapshot loading", () => {
   it("uses the bounded annual analysis and adjacent-calendar window", () => {
     expect(entryRangeForActiveMonth("2026-08")).toEqual({
       startDate: "2025-01-01",

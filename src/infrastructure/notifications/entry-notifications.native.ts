@@ -2,6 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import * as Notifications from "expo-notifications";
 import type { SQLiteDatabase } from "expo-sqlite";
 
+import { PRODUCT_NAME } from "@/brand";
 import type { CalendarEntry, EntryNotification } from "@/domain/types";
 import { expandAppointmentSeries } from "@/engine/recurrence";
 import {
@@ -121,7 +122,7 @@ export async function syncEntryNotifications(
         const alarm = spec.kind === "ALARM";
         const notificationId = await Notifications.scheduleNotificationAsync({
           content: {
-            title: "PflegeShift",
+            title: PRODUCT_NAME,
             body: alarm ? "Dein Dienst beginnt jetzt." : "Deine Erinnerung ist fällig.",
             sound: alarm ? "default" : undefined,
             data: { reminderKind: spec.kind },

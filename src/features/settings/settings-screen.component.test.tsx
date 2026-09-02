@@ -69,6 +69,6 @@ describe("SettingsScreen production gates", () => {
     expect(screen.queryByText("Testlabor")).toBeNull();
     expect(isDeveloperModeEnabled).not.toHaveBeenCalled();
     expect(setDeveloperMode).not.toHaveBeenCalled();
-    expect(screen.getByText("Über PflegeShift")).toBeTruthy();
+    expect(screen.getByText("Über LUNA Shift")).toBeTruthy();
   });
 });

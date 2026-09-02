@@ -1,9 +1,9 @@
 {
   "name": "pflegeshift-map-search",
   "version": "0.1.0",
-  "description": "Native MapKit autocomplete for PflegeShift.",
+  "description": "Native MapKit autocomplete for LUNA Shift.",
   "license": "UNLICENSED",
-  "author": "PflegeShift",
+  "author": "LUNA Shift",
   "homepage": "https://github.com/vladularu/PflegeShift",
   "private": true,
   "main": "index.ts"

@@ -177,7 +177,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     expect(
       screen.getByText("Feiertagsregeln für diesen Zeitraum noch nicht verfügbar."),
     ).toBeTruthy();
-    expect(screen.queryByText("PflegeShift konnte nicht angezeigt werden")).toBeNull();
+    expect(screen.queryByText("LUNA Shift konnte nicht angezeigt werden")).toBeNull();
   });
 
   it("keeps the compact popup mounted beneath the root shift screen", async () => {

@@ -4,6 +4,7 @@ import { File, Paths } from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
 import { defaultDatabaseDirectory, openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 
+import { PRODUCT_NAME } from "@/brand";
 import {
   createSingleFlight,
   databaseArtifactNames,
@@ -199,7 +200,7 @@ async function prepareSecureDatabaseInternal(): Promise<void> {
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
     throw new DatabaseSecurityError(
       "expo-go-unsupported",
-      "Die verschlüsselte PflegeShift-Datenbank benötigt einen Development- oder Production-Build und funktioniert nicht in Expo Go.",
+      `Die verschlüsselte ${PRODUCT_NAME}-Datenbank benötigt einen Development- oder Production-Build und funktioniert nicht in Expo Go.`,
     );
   }
 
@@ -217,7 +218,7 @@ async function prepareSecureDatabaseInternal(): Promise<void> {
   if (action === "block-missing-key") {
     throw new DatabaseSecurityError(
       "missing-key",
-      "Der Schlüssel der verschlüsselten PflegeShift-Datenbank fehlt. Die Datenbank wurde nicht verändert.",
+      `Der Schlüssel der verschlüsselten ${PRODUCT_NAME}-Datenbank fehlt. Die Datenbank wurde nicht verändert.`,
     );
   }
 
@@ -297,7 +298,7 @@ export async function initializeSecureDatabase(database: SQLiteDatabase): Promis
     if (key === null) {
       throw new DatabaseSecurityError(
         "missing-key",
-        "Der Schlüssel der verschlüsselten PflegeShift-Datenbank fehlt.",
+        `Der Schlüssel der verschlüsselten ${PRODUCT_NAME}-Datenbank fehlt.`,
       );
     }
     await applyAndVerifySqlCipher(database, key);

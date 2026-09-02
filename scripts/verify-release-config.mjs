@@ -23,10 +23,19 @@ function expect(condition, message) {
   }
 }
 
-expect(expo.name === "PflegeShift", "Der App-Name muss PflegeShift lauten.");
-expect(expo.slug === "pflegeshift", "Der Expo-Slug muss pflegeshift lauten.");
-expect(expo.scheme === "pflegeshift", "Das Produktions-URL-Schema muss pflegeshift lauten.");
-expect(packageConfig.name === "pflegeshift", "Der npm-Paketname muss pflegeshift lauten.");
+expect(expo.name === "LUNA Shift", "Der sichtbare App-Name muss LUNA Shift lauten.");
+expect(
+  expo.slug === "pflegeshift",
+  "Der Expo-Slug muss aus Kompatibilitätsgründen pflegeshift bleiben.",
+);
+expect(
+  expo.scheme === "pflegeshift",
+  "Das Produktions-URL-Schema muss aus Kompatibilitätsgründen pflegeshift bleiben.",
+);
+expect(
+  packageConfig.name === "pflegeshift",
+  "Der npm-Paketname muss aus Kompatibilitätsgründen pflegeshift bleiben.",
+);
 expect(
   /^\d+\.\d+\.\d+$/.test(expo.version ?? ""),
   "expo.version muss semantisch versioniert sein.",
@@ -140,11 +149,15 @@ expect(
 
 const requiredAssets = [
   ["expo.icon", expo.icon],
+  ["expo.ios.icon.light", expo.ios?.icon?.light],
+  ["expo.ios.icon.dark", expo.ios?.icon?.dark],
+  ["expo.ios.icon.tinted", expo.ios?.icon?.tinted],
   ["expo.android.adaptiveIcon.foregroundImage", expo.android?.adaptiveIcon?.foregroundImage],
   ["expo.android.adaptiveIcon.backgroundImage", expo.android?.adaptiveIcon?.backgroundImage],
   ["expo.android.adaptiveIcon.monochromeImage", expo.android?.adaptiveIcon?.monochromeImage],
   ["expo.web.favicon", expo.web?.favicon],
   ["expo-splash-screen image", splashScreenPlugin?.[1]?.image],
+  ["expo-splash-screen dark image", splashScreenPlugin?.[1]?.dark?.image],
 ];
 
 for (const [assetName, assetPath] of requiredAssets) {

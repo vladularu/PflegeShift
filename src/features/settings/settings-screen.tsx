@@ -4,6 +4,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState, type ComponentProps } from "react";
 import { Alert, View } from "react-native";
 
+import { PRODUCT_NAME } from "@/brand";
 import {
   usePflegeShiftProfile,
   usePflegeShiftStatus,
@@ -179,7 +180,7 @@ export function SettingsScreen() {
               onLongPress={DEV_TOOLS_AVAILABLE ? () => void activateDeveloperMode() : undefined}
               onPress={() => router.push(settingsInfoRoute("ABOUT"))}
               subtitle={APP_RUNTIME_LABEL}
-              title="Über PflegeShift"
+              title={`Über ${PRODUCT_NAME}`}
             />
           </SurfaceCard>
         </View>
