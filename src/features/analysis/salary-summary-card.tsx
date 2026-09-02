@@ -26,7 +26,7 @@ interface SalaryDetailRow {
 export function SalarySummaryCard({
   pay,
   ruleFailure,
-  tariffReady,
+  salaryReady,
   expanded,
   onToggle,
   onSetup,
@@ -34,54 +34,57 @@ export function SalarySummaryCard({
 }: {
   readonly pay: MonthlyPayEstimate | null;
   readonly ruleFailure?: RuleResolutionFailure | null;
-  readonly tariffReady: boolean;
+  readonly salaryReady: boolean;
   readonly expanded: boolean;
   readonly onToggle: () => void;
   readonly onSetup: () => void;
   readonly onOpenAllowance: () => void;
 }) {
   const palette = usePalette();
-  const { value, visibleSummary } = salarySummaryPresentation(pay, tariffReady, ruleFailure);
+  const { value, visibleSummary } = salarySummaryPresentation(pay, salaryReady, ruleFailure);
+  const manualSalary = pay?.tariffLabel === "Manuell hinterlegt";
   const rows: readonly SalaryDetailRow[] =
-    !tariffReady || pay === null || !pay.available
+    !salaryReady || pay === null || !pay.available
       ? []
-      : [
-          { key: "base", label: "Grundentgelt", value: formatEuro(pay.personalBaseAmount) },
-          { key: "premium", label: "Zeitzuschläge", value: formatEuro(pay.timePremiumAmount) },
-          ...(pay.overtimeAmount > 0
-            ? [{ key: "overtime", label: "Überstunden", value: formatEuro(pay.overtimeAmount) }]
-            : []),
-          ...(pay.allowanceAmount > 0 ||
-          pay.assessment.requiresConfirmation ||
-          pay.assessment.suggestedAllowance !== "NONE"
-            ? [
-                {
-                  key: "shift-allowance",
-                  label: pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage prüfen",
-                  value: pay.allowanceAmount > 0 ? formatEuro(pay.allowanceAmount) : "Prüfen",
-                  onPress: onOpenAllowance,
-                },
-              ]
-            : []),
-          ...(pay.tvoedAllowanceAmount > 0
-            ? [
-                {
-                  key: "tvoed",
-                  label: "TVöD-Zulage",
-                  value: formatEuro(pay.tvoedAllowanceAmount),
-                },
-              ]
-            : []),
-          ...(pay.careAllowanceAmount > 0
-            ? [
-                {
-                  key: "care",
-                  label: "Pflegezulage TVöD-P",
-                  value: formatEuro(pay.careAllowanceAmount),
-                },
-              ]
-            : []),
-        ];
+      : manualSalary
+        ? [{ key: "base", label: "Monatsbrutto", value: formatEuro(pay.personalBaseAmount) }]
+        : [
+            { key: "base", label: "Grundentgelt", value: formatEuro(pay.personalBaseAmount) },
+            { key: "premium", label: "Zeitzuschläge", value: formatEuro(pay.timePremiumAmount) },
+            ...(pay.overtimeAmount > 0
+              ? [{ key: "overtime", label: "Überstunden", value: formatEuro(pay.overtimeAmount) }]
+              : []),
+            ...(pay.allowanceAmount > 0 ||
+            pay.assessment.requiresConfirmation ||
+            pay.assessment.suggestedAllowance !== "NONE"
+              ? [
+                  {
+                    key: "shift-allowance",
+                    label: pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage prüfen",
+                    value: pay.allowanceAmount > 0 ? formatEuro(pay.allowanceAmount) : "Prüfen",
+                    onPress: onOpenAllowance,
+                  },
+                ]
+              : []),
+            ...(pay.tvoedAllowanceAmount > 0
+              ? [
+                  {
+                    key: "tvoed",
+                    label: "TVöD-Zulage",
+                    value: formatEuro(pay.tvoedAllowanceAmount),
+                  },
+                ]
+              : []),
+            ...(pay.careAllowanceAmount > 0
+              ? [
+                  {
+                    key: "care",
+                    label: "Pflegezulage TVöD-P",
+                    value: formatEuro(pay.careAllowanceAmount),
+                  },
+                ]
+              : []),
+          ];
   return (
     <ExpandableHighlightCard
       accent={palette.primary}
@@ -92,7 +95,7 @@ export function SalarySummaryCard({
       title="Gehalt"
       value={value}
     >
-      {!tariffReady ? (
+      {!salaryReady ? (
         <Pressable
           accessibilityRole="button"
           onPress={onSetup}
@@ -112,7 +115,7 @@ export function SalarySummaryCard({
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
             style={{ color: palette.primary, ...TYPOGRAPHY.bodyStrong }}
           >
-            Tarifprofil einrichten
+            Gehalt einrichten
           </Text>
           <Ionicons color={palette.textMuted} name="chevron-forward" size={18} />
         </Pressable>
@@ -125,7 +128,7 @@ export function SalarySummaryCard({
             selectable
             style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
           >
-            Wähle einen unterstützten Monat oder aktualisiere dein Tarifprofil.
+            Wähle einen unterstützten Monat oder aktualisiere deine Gehaltsgrundlage.
           </Text>
         </View>
       ) : (

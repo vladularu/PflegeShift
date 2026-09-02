@@ -37,7 +37,7 @@ import { AnnualReportScreen, type AnalysisPeriod } from "@/features/analysis/ann
 import { useAnnualReportInputs } from "@/features/analysis/use-annual-report-inputs";
 import { useDeferredAnnualReport } from "@/features/analysis/use-annual-report";
 import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-compliance";
-import { tariffAssessmentRoute } from "@/navigation/routes";
+import { settingsEditorRoute, tariffAssessmentRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
@@ -141,6 +141,8 @@ export function AnalysisScreen({
     tariffDecisions,
     ruleResolver,
     period === "YEAR",
+    0,
+    profile?.tariff !== null,
   );
   const annualReport = useDeferredAnnualReport({
     enabled: isFocused && period === "YEAR" && annualInputs !== null,
@@ -281,11 +283,11 @@ export function AnalysisScreen({
             <SalarySummaryCard
               expanded={expandedCard === "PAY"}
               onOpenAllowance={() => router.push(tariffAssessmentRoute(month))}
-              onSetup={() => router.push("/more")}
+              onSetup={() => router.push(settingsEditorRoute("TARIFF"))}
               onToggle={() => toggleExpandedCard("PAY")}
               pay={pay.ok ? pay.value : null}
               ruleFailure={pay.ok ? null : pay.failure}
-              tariffReady={profile.tariff !== null}
+              salaryReady={profile.tariff !== null || profile.manualMonthlyGrossCents != null}
             />
 
             <WorktimeCard

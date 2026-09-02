@@ -22,7 +22,12 @@ import {
   captureRuleComputation,
   RuleComputationNotice,
 } from "@/features/analysis/rule-computation";
-import { premiumDetailsRoute, settingsInfoRoute, tariffAssessmentRoute } from "@/navigation/routes";
+import {
+  premiumDetailsRoute,
+  settingsEditorRoute,
+  settingsInfoRoute,
+  tariffAssessmentRoute,
+} from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
@@ -81,7 +86,10 @@ export function SalaryScreen() {
     if (!ready || error !== null || profile === null) return null;
     return captureRuleComputation(() => {
       const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts = selectAllowanceShifts(entries, month, ruleResolver);
+      const allowanceShifts =
+        profile.tariff === null
+          ? monthlyEntries.monthShifts
+          : selectAllowanceShifts(entries, month, ruleResolver);
       const decision = tariffDecisions.find((item) => item.month === month) ?? null;
       return {
         monthShifts: monthlyEntries.monthShifts,
@@ -129,6 +137,8 @@ export function SalaryScreen() {
   }
   if (!ready || profile === null || calculation === null) return <LoadingView />;
   const { monthShifts, pay } = calculation.value;
+  const manualSalary = profile.tariff === null && profile.manualMonthlyGrossCents != null;
+  const salaryReady = profile.tariff !== null || manualSalary;
 
   function moveMonth(delta: number) {
     const nextMonth = Temporal.PlainDate.from(`${month}-01`)
@@ -141,51 +151,57 @@ export function SalaryScreen() {
   }
 
   const hasPremiums = pay.shiftBreakdowns.some((item) => item.premiumLines.length > 0);
-  const tariffProfileLabel = profile.tariff
-    ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
-    : null;
-  const compositionRows = [
-    { key: "base", label: "Grundentgelt", value: euro(pay.personalBaseAmount) },
-    {
-      key: "premium",
-      label: "Zeitzuschläge",
-      value: euro(pay.timePremiumAmount),
-      onPress: hasPremiums ? () => router.push(premiumDetailsRoute(pay.month)) : undefined,
-    },
-    ...(pay.overtimeAmount > 0
-      ? [{ key: "overtime", label: "Überstunden", value: euro(pay.overtimeAmount) }]
-      : []),
-    ...(pay.allowanceAmount > 0
-      ? [
-          {
-            key: "shift-allowance",
-            label: pay.confirmedAllowance ? "Schichtzulage" : "Schichtzulage · Muster & Angaben",
-            value: euro(pay.allowanceAmount),
-            onPress: () => router.push(tariffAssessmentRoute(month)),
-          },
-        ]
-      : []),
-    ...(pay.tvoedAllowanceAmount > 0
-      ? [
-          {
-            key: "tvoed",
-            label: "TVöD-Zulage",
-            value: euro(pay.tvoedAllowanceAmount),
-            onPress: () => router.push(settingsInfoRoute("TVOED_ALLOWANCE")),
-          },
-        ]
-      : []),
-    ...(pay.careAllowanceAmount > 0
-      ? [
-          {
-            key: "care",
-            label: "Pflegezulage TVöD-P",
-            value: euro(pay.careAllowanceAmount),
-            onPress: () => router.push(settingsInfoRoute("CARE_ALLOWANCE")),
-          },
-        ]
-      : []),
-  ];
+  const salaryProfileLabel = manualSalary
+    ? "Manuell hinterlegt"
+    : profile.tariff
+      ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
+      : null;
+  const compositionRows = manualSalary
+    ? [{ key: "base", label: "Monatsbrutto", value: euro(pay.personalBaseAmount) }]
+    : [
+        { key: "base", label: "Grundentgelt", value: euro(pay.personalBaseAmount) },
+        {
+          key: "premium",
+          label: "Zeitzuschläge",
+          value: euro(pay.timePremiumAmount),
+          onPress: hasPremiums ? () => router.push(premiumDetailsRoute(pay.month)) : undefined,
+        },
+        ...(pay.overtimeAmount > 0
+          ? [{ key: "overtime", label: "Überstunden", value: euro(pay.overtimeAmount) }]
+          : []),
+        ...(pay.allowanceAmount > 0
+          ? [
+              {
+                key: "shift-allowance",
+                label: pay.confirmedAllowance
+                  ? "Schichtzulage"
+                  : "Schichtzulage · Muster & Angaben",
+                value: euro(pay.allowanceAmount),
+                onPress: () => router.push(tariffAssessmentRoute(month)),
+              },
+            ]
+          : []),
+        ...(pay.tvoedAllowanceAmount > 0
+          ? [
+              {
+                key: "tvoed",
+                label: "TVöD-Zulage",
+                value: euro(pay.tvoedAllowanceAmount),
+                onPress: () => router.push(settingsInfoRoute("TVOED_ALLOWANCE")),
+              },
+            ]
+          : []),
+        ...(pay.careAllowanceAmount > 0
+          ? [
+              {
+                key: "care",
+                label: "Pflegezulage TVöD-P",
+                value: euro(pay.careAllowanceAmount),
+                onPress: () => router.push(settingsInfoRoute("CARE_ALLOWANCE")),
+              },
+            ]
+          : []),
+      ];
 
   return (
     <ReportScrollView>
@@ -197,7 +213,7 @@ export function SalaryScreen() {
       <ReportPeriodContent>
         {testMonths.includes(month) ? <ReportTestBadge /> : null}
 
-        {profile.tariff === null ? (
+        {!salaryReady ? (
           <SetupCard />
         ) : !pay.available ? (
           <SurfaceCard style={{ gap: SPACING.xs, padding: SPACING.lg }}>
@@ -218,7 +234,7 @@ export function SalaryScreen() {
           </SurfaceCard>
         ) : (
           <>
-            {monthShifts.length === 0 ? (
+            {!manualSalary && monthShifts.length === 0 ? (
               <SurfaceCard style={{ gap: SPACING.xxs, padding: SPACING.md }}>
                 <Text
                   maxFontSizeMultiplier={TEXT_MAX_SCALE}
@@ -258,7 +274,7 @@ export function SalaryScreen() {
                     selectable
                     style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
                   >
-                    BRUTTO-SCHÄTZUNG
+                    {manualSalary ? "MONATSBRUTTO" : "BRUTTO-SCHÄTZUNG"}
                   </Text>
                 </View>
                 <Text
@@ -289,7 +305,7 @@ export function SalaryScreen() {
                   selectable
                   style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
                 >
-                  {tariffProfileLabel}
+                  {salaryProfileLabel}
                 </Text>
               </View>
               {compositionRows.map((row, index) => (
@@ -301,8 +317,9 @@ export function SalaryScreen() {
             </SurfaceCard>
 
             <ReportFootnote>
-              Unverbindliche Schätzung · Pausenzeiten werden mangels Lageangabe mittig angesetzt ·
-              keine Lohnabrechnung
+              {manualSalary
+                ? "Manuell hinterlegter Monatswert · keine Zuschläge · keine Lohnabrechnung"
+                : "Unverbindliche Schätzung · Pausenzeiten werden mangels Lageangabe mittig angesetzt · keine Lohnabrechnung"}
             </ReportFootnote>
           </>
         )}
@@ -327,11 +344,11 @@ function SetupCard() {
         selectable
         style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
       >
-        Hinterlege Gruppe, Stufe und Bereich für deine Schätzung.
+        Wähle TVöD-P oder hinterlege dein Monatsbrutto.
       </Text>
       <Pressable
         accessibilityRole="button"
-        onPress={() => router.push("/more")}
+        onPress={() => router.push(settingsEditorRoute("TARIFF"))}
         style={({ pressed }) => ({
           minHeight: CONTROL_HEIGHT.regular,
           alignItems: "center",
@@ -346,7 +363,7 @@ function SetupCard() {
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
         >
-          Tarifprofil einrichten
+          Gehalt einrichten
         </Text>
       </Pressable>
     </SurfaceCard>

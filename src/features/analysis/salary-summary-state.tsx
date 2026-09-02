@@ -13,10 +13,10 @@ export function formatEuro(value: number | null): string {
 
 export function salarySummaryPresentation(
   pay: MonthlyPayEstimate | null,
-  tariffReady: boolean,
+  salaryReady: boolean,
   ruleFailure: RuleResolutionFailure | null | undefined,
 ): { readonly value: string; readonly visibleSummary: string | undefined } {
-  if (!tariffReady) return { value: "Einrichten", visibleSummary: "Tarifprofil fehlt" };
+  if (!salaryReady) return { value: "Einrichten", visibleSummary: "Gehaltsgrundlage fehlt" };
   if (pay === null) {
     return {
       value: "Nicht verfügbar",

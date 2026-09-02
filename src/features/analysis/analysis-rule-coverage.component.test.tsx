@@ -66,7 +66,7 @@ const FUTURE_HOLIDAY_MISSING_LEGAL_RESOLVER = createRuleResolver(
   },
 );
 
-const mockProfile: UserProfile = {
+const MOCK_TARIFF_PROFILE: UserProfile = {
   federalState: "NW",
   holidayRegion: "NONE",
   weeklyMinutes: 2_310,
@@ -84,6 +84,7 @@ const mockProfile: UserProfile = {
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
+let mockProfile: UserProfile = MOCK_TARIFF_PROFILE;
 
 const mockCompliance: MonthlyComplianceResult = {
   month: "2027-01",
@@ -237,6 +238,7 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     mockAnnualInputFailure = null;
     mockAnnualReportValue = null;
     mockAnnualRuleFailure = null;
+    mockProfile = MOCK_TARIFF_PROFILE;
     mockActiveMonthCoordinator.setMonth.mockClear();
   });
 
@@ -263,6 +265,27 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(screen.getByLabelText("Ist: 7:30")).toBeTruthy();
     expect(screen.getByLabelText("Schichten zählen, Gesamt 1")).toBeTruthy();
     expect(screen.getByLabelText("Stunden pro Schicht, Gesamt 7:30 h")).toBeTruthy();
+  });
+
+  it("keeps manual salary visible without a valid tariff package", async () => {
+    mockRouteMonth = "2027-04";
+    mockRuleResolver = FUTURE_HOLIDAY_TARIFF_EXPIRY_RESOLVER;
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      manualMonthlyGrossCents: 345_050,
+    };
+    mockEntries = [{ ...januaryShift(), id: "april-shift", date: "2027-04-04" }];
+
+    const analysis = await render(<AnalysisScreen />);
+    expect(analysis.getByRole("button", { name: /^Gehalt, 3\.450,50/ })).toBeTruthy();
+
+    const salary = await render(<SalaryScreen />);
+    expect(salary.queryByText("Diagnosecode: RULE_PACKAGE_NOT_FOUND")).toBeNull();
+    expect(salary.getByText("MONATSBRUTTO")).toBeTruthy();
+    expect(salary.getByText("Monatsbrutto")).toBeTruthy();
+    expect(salary.getByText("Manuell hinterlegt")).toBeTruthy();
+    expect(salary.queryByText("Zeitzuschläge")).toBeNull();
   });
 
   it("does not present missing absence credits as exact zero hours", async () => {

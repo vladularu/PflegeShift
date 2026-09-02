@@ -18,16 +18,33 @@ export function useAnnualReportInputs(
   ruleResolver: RuleResolver = bundledRuleResolver,
   enabled = true,
   retryRevision = 0,
+  includeTariffLookback = true,
 ): RuleComputationResult<AnnualReportInputs> | null {
   const [committed, setCommitted] = useState<AnnualReportInputs | null>(null);
   const selected = useMemo(() => {
     void retryRevision;
     return enabled
       ? captureRuleComputation(() =>
-          selectAnnualReportInputs(committed, year, entries, tariffDecisions, ruleResolver),
+          selectAnnualReportInputs(
+            committed,
+            year,
+            entries,
+            tariffDecisions,
+            ruleResolver,
+            includeTariffLookback,
+          ),
         )
       : null;
-  }, [committed, enabled, entries, retryRevision, ruleResolver, tariffDecisions, year]);
+  }, [
+    committed,
+    enabled,
+    entries,
+    includeTariffLookback,
+    retryRevision,
+    ruleResolver,
+    tariffDecisions,
+    year,
+  ]);
 
   useEffect(() => {
     if (selected?.ok) {

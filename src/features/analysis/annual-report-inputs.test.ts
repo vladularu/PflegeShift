@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CalendarEntry, MonthlyTariffDecision } from "@/domain/types";
 import { selectAnnualReportInputs } from "@/features/analysis/annual-report-inputs";
+import { bundledRuleResolver } from "@/rules/rule-resolver";
 
 function appointment(id: string, date: string): CalendarEntry {
   return {
@@ -68,5 +69,19 @@ describe("annual report input selection", () => {
 
     expect(withAllowanceLookback.entries).not.toBe(first.entries);
     expect(withComplianceTail.entries).not.toBe(withAllowanceLookback.entries);
+  });
+
+  it("skips tariff lookback resolution for manual salary reports", () => {
+    const resolver = {
+      ...bundledRuleResolver,
+      resolveTariff: () => {
+        throw new Error("Manual salary must not resolve tariff lookback rules.");
+      },
+    };
+
+    const result = selectAnnualReportInputs(null, 2026, [], [], resolver, false);
+
+    expect(result.rangeStart).toBe("2025-11-06");
+    expect(result.rangeEnd).toBe("2027-06-30");
   });
 });

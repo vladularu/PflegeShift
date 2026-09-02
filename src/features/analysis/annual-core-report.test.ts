@@ -77,7 +77,7 @@ function resolver({
   );
 }
 
-function build(ruleResolver: ReturnType<typeof resolver>) {
+function build(ruleResolver: ReturnType<typeof resolver>, activeProfile: UserProfile = profile) {
   const entries: readonly CalendarEntry[] = [
     shift("worked", "2027-01-03"),
     shift("vacation", "2027-01-04", "VACATION"),
@@ -85,7 +85,7 @@ function build(ruleResolver: ReturnType<typeof resolver>) {
   const steps = buildAnnualAvailableReportSteps(
     2027,
     entries,
-    profile,
+    activeProfile,
     [],
     { workplaceCoverage: "UNKNOWN", assignment: "UNKNOWN", updatedAt: null },
     "2027-01-31",
@@ -127,5 +127,19 @@ describe("available annual report", () => {
     expect(report.worktimeCoverageComplete).toBe(true);
     expect(report.complianceCoverageComplete).toBe(true);
     expect(report.availablePayMonthCount).toBe(0);
+  });
+
+  it("keeps a manual monthly gross independent from missing tariff rules", () => {
+    const report = build(resolver({ tariff: false }), {
+      ...profile,
+      tariff: null,
+      manualMonthlyGrossCents: 420_000,
+    });
+
+    expect(report.availablePayMonthCount).toBe(12);
+    expect(report.estimatedGrossAmount).toBe(50_400);
+    expect(report.premiumAmount).toBe(0);
+    expect(report.overtimeAmount).toBe(0);
+    expect(report.allowanceAmount).toBe(0);
   });
 });
