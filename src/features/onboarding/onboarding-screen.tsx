@@ -214,7 +214,19 @@ export function OnboardingScreen() {
     setStep(nextStep);
   }
 
+  function continueFromIndustry() {
+    if (industry === null) {
+      setError("Bitte wähle deinen Berufsbereich aus.");
+      return;
+    }
+    moveTo(3);
+  }
+
   function continueFromSalary() {
+    if (salaryMode === null) {
+      setError("Bitte wähle eine Gehaltsgrundlage aus.");
+      return;
+    }
     if (salaryMode === "MANUAL") {
       const fieldError = manualMonthlyGrossFieldError(manualMonthlyGross);
       setManualGrossError(fieldError);
@@ -280,8 +292,6 @@ export function OnboardingScreen() {
   }
 
   const buttonLabel = step === 1 ? "Los geht’s" : step === 5 ? "LUNA Shift öffnen" : "Weiter";
-  const buttonDisabled =
-    saving || (step === 2 && industry === null) || (step === 3 && salaryMode === null);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>
@@ -522,10 +532,10 @@ export function OnboardingScreen() {
           <PrimaryButton
             busy={saving}
             busyLabel="LUNA Shift wird eingerichtet"
-            disabled={buttonDisabled}
+            disabled={saving}
             onPress={() => {
               if (step === 1) moveTo(2);
-              else if (step === 2) moveTo(3);
+              else if (step === 2) continueFromIndustry();
               else if (step === 3) continueFromSalary();
               else if (step === 4) continueFromWork();
               else void submitGuestProfile();

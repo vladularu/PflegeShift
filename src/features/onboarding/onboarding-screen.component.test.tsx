@@ -35,7 +35,11 @@ type OnboardingRender = Awaited<ReturnType<typeof render>>;
 async function openSalaryStep(screen: OnboardingRender, industry = "Pflege & Gesundheitswesen") {
   await fireEvent.press(screen.getByRole("button", { name: "Los geht’s" }));
   expect(screen.getByLabelText("Schritt 2 von 5")).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Weiter" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Weiter" })).not.toBeDisabled();
+  await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Bitte wähle deinen Berufsbereich aus.",
+  );
   await fireEvent.press(screen.getByRole("radio", { name: industry }));
   await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
   expect(screen.getByText("Wie möchtest du dein Gehalt einrichten?")).toBeTruthy();
@@ -68,7 +72,11 @@ describe("OnboardingScreen", () => {
     const screen = await render(onboarding());
     await openSalaryStep(screen);
 
-    expect(screen.getByRole("button", { name: "Weiter" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Weiter" })).not.toBeDisabled();
+    await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Bitte wähle eine Gehaltsgrundlage aus.",
+    );
     await fireEvent.press(screen.getByRole("radio", { name: /TVöD-P/ }));
     await openGuestStep(screen);
 
