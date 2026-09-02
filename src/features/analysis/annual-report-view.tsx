@@ -315,7 +315,7 @@ function AnnualSalaryCard({
             selectable
             style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
           >
-            Ohne gültigen Tarifstand werden keine Beträge ausgewiesen.
+            Ohne eingerichtete Gehaltsgrundlage werden keine Beträge ausgewiesen.
           </Text>
         </View>
       )}

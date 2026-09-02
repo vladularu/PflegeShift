@@ -54,7 +54,10 @@ export function calculateMonthlyAnalysis(
     complianceShifts,
     monthShifts: monthlyEntries.monthShifts,
     pay: captureRuleComputation(() => {
-      const allowanceShifts = selectAllowanceShifts(entries, month, ruleResolver);
+      const allowanceShifts =
+        profile.tariff === null
+          ? monthlyEntries.monthShifts
+          : selectAllowanceShifts(entries, month, ruleResolver);
       return calculateMonthlyPayEstimate(
         month,
         monthlyEntries.monthShifts,

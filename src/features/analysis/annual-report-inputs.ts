@@ -26,15 +26,18 @@ export function selectAnnualReportInputs(
   entries: readonly CalendarEntry[],
   tariffDecisions: readonly MonthlyTariffDecision[],
   ruleResolver: RuleResolver = bundledRuleResolver,
+  includeTariffLookback = true,
 ): AnnualReportInputs {
   let rangeStart = Temporal.PlainDate.from({ year, month: 1, day: 1 });
   let rangeEnd = Temporal.PlainDate.from({ year, month: 12, day: 31 });
   for (let month = 1; month <= 12; month += 1) {
     const first = Temporal.PlainDate.from({ year, month, day: 1 });
     const legalWindow = getLegalCalculationWindow(first.toString(), ruleResolver);
-    const allowanceStart = first.subtract({
-      months: getTariffAssessmentLookbackMonths(first.toString(), ruleResolver),
-    });
+    const allowanceStart = includeTariffLookback
+      ? first.subtract({
+          months: getTariffAssessmentLookbackMonths(first.toString(), ruleResolver),
+        })
+      : first;
     const complianceStart = first.subtract({ days: legalWindow.lookbackDays });
     const baseComplianceEnd = getLegalCalculationEnd(
       first.add({ months: 1 }).subtract({ days: 1 }),

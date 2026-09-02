@@ -176,7 +176,10 @@ function* calculateAvailableMonth(
   yield 2;
 
   const pay = captureRuleValue(() => {
-    const allowanceShifts = selectAllowanceShifts(entries, month, ruleResolver);
+    const allowanceShifts =
+      profile.tariff === null
+        ? monthlyEntries.monthShifts
+        : selectAllowanceShifts(entries, month, ruleResolver);
     return calculateMonthlyPayEstimate(
       month,
       monthlyEntries.monthShifts,

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { UserProfile } from "@/domain/types";
-import { settingsFormValues } from "@/features/settings/settings-form-values";
+import {
+  manualMonthlyGrossFieldError,
+  parseManualMonthlyGrossCents,
+  settingsFormValues,
+} from "@/features/settings/settings-form-values";
 
 const baseProfile: UserProfile = {
   federalState: "NW",
@@ -35,6 +39,9 @@ describe("settings form values", () => {
       federalState: "BY",
       holidayRegion: "NONE",
       weeklyHours: "40",
+      industry: "UNKNOWN",
+      salaryMode: "TVOED_P",
+      manualMonthlyGross: "",
       regularRotatingNightWork: "NO",
       sundayHolidayWorkEligible: "YES",
       allEmploymentWorkRecorded: "YES",
@@ -49,5 +56,28 @@ describe("settings form values", () => {
   it("uses federal-state-aware tariff defaults only when no tariff exists", () => {
     expect(settingsFormValues({ ...baseProfile, federalState: "BW" }).fullTimeHours).toBe("39");
     expect(settingsFormValues(baseProfile).fullTimeHours).toBe("38,5");
+    expect(settingsFormValues(baseProfile).salaryMode).toBe("UNSET");
+  });
+
+  it("restores the persisted industry and manual monthly gross", () => {
+    expect(
+      settingsFormValues({
+        ...baseProfile,
+        industry: "SOCIAL_SERVICES",
+        manualMonthlyGrossCents: 345_050,
+      }),
+    ).toMatchObject({
+      industry: "SOCIAL_SERVICES",
+      salaryMode: "MANUAL",
+      manualMonthlyGross: "3450,50",
+    });
+  });
+
+  it("parses a German decimal amount into exact cents", () => {
+    expect(parseManualMonthlyGrossCents("3450,50")).toBe(345_050);
+    expect(parseManualMonthlyGrossCents("3450.5")).toBe(345_050);
+    expect(manualMonthlyGrossFieldError("3450,50")).toBeNull();
+    expect(manualMonthlyGrossFieldError("0")).toMatch(/0,01 € und 100.000 €/);
+    expect(manualMonthlyGrossFieldError("3.450,50")).not.toBeNull();
   });
 });

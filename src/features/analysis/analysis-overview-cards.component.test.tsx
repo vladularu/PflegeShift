@@ -129,7 +129,7 @@ describe("analysis overview cards", () => {
           onSetup={jest.fn()}
           onToggle={onToggleSalary}
           pay={pay}
-          tariffReady
+          salaryReady
         />
       </>,
     );
@@ -183,7 +183,7 @@ describe("analysis overview cards", () => {
         onSetup={jest.fn()}
         onToggle={onToggleSalary}
         pay={pay}
-        tariffReady
+        salaryReady
       />,
     );
 
@@ -204,19 +204,59 @@ describe("analysis overview cards", () => {
       onToggle: jest.fn(),
     } as const;
     const screen = await render(
-      <SalarySummaryCard {...sharedProps} pay={null} tariffReady={false} />,
+      <SalarySummaryCard {...sharedProps} pay={null} salaryReady={false} />,
     );
 
-    const setupButton = screen.getByRole("button", { name: "Tarifprofil einrichten" });
+    const setupButton = screen.getByRole("button", { name: "Gehalt einrichten" });
     expect(setupButton).toBeTruthy();
     await fireEvent.press(setupButton);
     expect(onSetup).toHaveBeenCalledTimes(1);
 
-    await screen.rerender(<SalarySummaryCard {...sharedProps} pay={null} tariffReady />);
+    await screen.rerender(<SalarySummaryCard {...sharedProps} pay={null} salaryReady />);
 
     expect(
       screen.getByText(/Für die Gehaltsberechnung fehlt ein geprüfter Tarifstand/),
     ).toBeTruthy();
+  });
+
+  it("shows a manual monthly gross without TVöD additions", async () => {
+    const manualPay: MonthlyPayEstimate = {
+      ...pay,
+      tariffLabel: "Manuell hinterlegt",
+      fullTimeTableAmount: null,
+      personalBaseAmount: 3450.5,
+      timePremiumAmount: 0,
+      overtimeAmount: 0,
+      allowanceAmount: 0,
+      tvoedAllowanceAmount: 0,
+      careAllowanceAmount: 0,
+      estimatedGrossAmount: 3450.5,
+      assessment: {
+        shiftWork: "NOT_DETECTED",
+        alternatingShiftWork: "NOT_DETECTED",
+        criteria: [],
+        suggestedAllowance: "NONE",
+        evidence: [],
+        requiresConfirmation: false,
+      },
+      confirmedAllowance: null,
+    };
+    const screen = await render(
+      <SalarySummaryCard
+        expanded
+        onOpenAllowance={jest.fn()}
+        onSetup={jest.fn()}
+        onToggle={jest.fn()}
+        pay={manualPay}
+        salaryReady
+      />,
+    );
+
+    expect(screen.getAllByText("3.450,50 €")).toHaveLength(2);
+    expect(screen.getByText("Monatsbrutto")).toBeTruthy();
+    expect(screen.getByText("Manuell hinterlegt")).toBeTruthy();
+    expect(screen.queryByText("Zeitzuschläge")).toBeNull();
+    expect(screen.queryByText(/TVöD/)).toBeNull();
   });
 
   it("uses the same compact page header for the annual view", async () => {

@@ -7,11 +7,14 @@ import {
   FEDERAL_STATES,
   FEDERAL_STATE_LABELS,
   HOLIDAY_REGION_LABELS,
+  INDUSTRIES,
+  INDUSTRY_LABELS,
   PAY_GROUPS,
   PAY_LEVELS,
   TARIFF_REGION_LABELS,
   type FederalState,
   type HolidayRegion,
+  type Industry,
   type PayGroup,
   type PayLevel,
   type TariffRegion,
@@ -25,11 +28,15 @@ import {
 } from "@/domain/employment-profile";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { parseWeeklyHours } from "@/features/onboarding/onboarding-screen";
-import { resolveTariffUpdate } from "@/features/settings/profile-update";
+import { resolveSalaryUpdate } from "@/features/settings/profile-update";
 import {
   evidenceBoolean,
+  manualMonthlyGrossFieldError,
+  parseManualMonthlyGrossCents,
   settingsFormValues,
   type EvidenceFormValue,
+  type IndustryFormValue,
+  type SalaryMode,
 } from "@/features/settings/settings-form-values";
 import { parseEnumRouteParam, type RouteParam } from "@/navigation/route-params";
 import { DropdownField, Field } from "@/ui/form-controls";
@@ -82,6 +89,9 @@ function SettingsEditorForm({
   const [federalState, setFederalState] = useState<FederalState>(initialValues.federalState);
   const [holidayRegion, setHolidayRegion] = useState<HolidayRegion>(initialValues.holidayRegion);
   const [weeklyHours, setWeeklyHours] = useState(initialValues.weeklyHours);
+  const [industry, setIndustry] = useState<IndustryFormValue>(initialValues.industry);
+  const [salaryMode, setSalaryMode] = useState<SalaryMode>(initialValues.salaryMode);
+  const [manualMonthlyGross, setManualMonthlyGross] = useState(initialValues.manualMonthlyGross);
   const [regularRotatingNightWork, setRegularRotatingNightWork] = useState<EvidenceFormValue>(
     initialValues.regularRotatingNightWork,
   );
@@ -96,10 +106,12 @@ function SettingsEditorForm({
   const [sector, setSector] = useState<TariffSector>(initialValues.sector);
   const [tariffRegion, setTariffRegion] = useState<TariffRegion>(initialValues.tariffRegion);
   const [weeklyHoursError, setWeeklyHoursError] = useState<string | null>(null);
+  const [manualMonthlyGrossError, setManualMonthlyGrossError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const weeklyHoursRef = useRef<TextInput>(null);
+  const manualMonthlyGrossRef = useRef<TextInput>(null);
   const fullTimeWeeklyMinutes = tariffFullTimeWeeklyMinutes(sector, tariffRegion);
   const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
   const evidenceOptions = [
@@ -110,32 +122,60 @@ function SettingsEditorForm({
 
   async function submit() {
     const fieldError = section === "WORK" ? weeklyHoursFieldError(weeklyHours) : null;
+    const salaryModeError =
+      section === "TARIFF" && salaryMode === "UNSET" ? "Bitte eine Gehaltsgrundlage wählen." : null;
+    const salaryFieldError =
+      section === "TARIFF" && salaryMode === "MANUAL"
+        ? manualMonthlyGrossFieldError(manualMonthlyGross)
+        : null;
     setWeeklyHoursError(fieldError);
+    setManualMonthlyGrossError(salaryFieldError);
     if (fieldError) {
       setError(fieldError);
       setMessage(null);
       focusInvalidField(weeklyHoursRef, fieldError);
       return;
     }
+    if (salaryModeError) {
+      setError(salaryModeError);
+      setMessage(null);
+      return;
+    }
+    if (salaryFieldError) {
+      setError(salaryFieldError);
+      setMessage(null);
+      focusInvalidField(manualMonthlyGrossRef, salaryFieldError);
+      return;
+    }
     try {
       setSaving(true);
       setError(null);
       setMessage(null);
-      await updateProfile({
-        federalState,
-        holidayRegion,
-        weeklyMinutes: parseWeeklyHours(weeklyHours),
-        timeZone: profile.timeZone,
-        regularRotatingNightWork: evidenceBoolean(regularRotatingNightWork),
-        sundayHolidayWorkEligible: evidenceBoolean(sundayHolidayWorkEligible),
-        allEmploymentWorkRecorded: evidenceBoolean(allEmploymentWorkRecorded),
-        tariff: resolveTariffUpdate(section, profile.tariff, {
+      const salaryUpdate = resolveSalaryUpdate(
+        section,
+        profile.tariff,
+        profile.manualMonthlyGrossCents ?? null,
+        salaryMode,
+        {
           payGroup,
           payLevel,
           sector,
           tariffRegion,
           fullTimeWeeklyMinutes,
-        }),
+        },
+        parseManualMonthlyGrossCents(manualMonthlyGross),
+      );
+      await updateProfile({
+        federalState,
+        holidayRegion,
+        weeklyMinutes: parseWeeklyHours(weeklyHours),
+        timeZone: profile.timeZone,
+        industry: industry === "UNKNOWN" ? null : industry,
+        manualMonthlyGrossCents: salaryUpdate.manualMonthlyGrossCents,
+        regularRotatingNightWork: evidenceBoolean(regularRotatingNightWork),
+        sundayHolidayWorkEligible: evidenceBoolean(sundayHolidayWorkEligible),
+        allEmploymentWorkRecorded: evidenceBoolean(allEmploymentWorkRecorded),
+        tariff: salaryUpdate.tariff,
       });
       setMessage("Einstellungen gespeichert.");
     } catch (submitError) {
@@ -149,7 +189,7 @@ function SettingsEditorForm({
     <FormScreen>
       <Stack.Screen
         options={{
-          title: section === "WORK" ? "Arbeitszeitmodell" : "Tarifprofil",
+          title: section === "WORK" ? "Arbeitszeitmodell" : "Gehalt",
           headerRight: () => (
             <HeaderSaveAction
               busy={saving}
@@ -219,38 +259,78 @@ function SettingsEditorForm({
           />
         </FormSection>
       ) : (
-        <FormSection caption="Grundlage für die automatische Gehaltsberechnung." title="Tarifdaten">
-          <DropdownField
-            label="Tarifbereich"
-            onChange={setSector}
+        <FormSection
+          caption="TVöD-P berechnen oder einen eigenen Monatswert hinterlegen."
+          title="Gehaltsgrundlage"
+        >
+          <DropdownField<IndustryFormValue>
+            label="Berufsbereich"
+            onChange={setIndustry}
             options={[
-              { value: "BT_K", label: "Krankenhaus · BT-K" },
-              { value: "BT_B", label: "Pflege · BT-B" },
+              { value: "UNKNOWN", label: "Nicht angegeben" },
+              ...INDUSTRIES.map((value: Industry) => ({ value, label: INDUSTRY_LABELS[value] })),
             ]}
-            value={sector}
+            value={industry}
           />
           <DropdownField
-            label="Tarifgebiet"
-            onChange={setTariffRegion}
-            options={(["KAV_BW", "OTHER"] as const).map((region) => ({
-              value: region,
-              label: TARIFF_REGION_LABELS[region],
-            }))}
-            value={tariffRegion}
+            label="Berechnung"
+            onChange={setSalaryMode}
+            options={[
+              { value: "UNSET", label: "Bitte wählen" },
+              { value: "TVOED_P", label: "TVöD-P" },
+              { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
+            ]}
+            value={salaryMode}
           />
-          <DropdownField
-            label="Entgeltgruppe"
-            onChange={setPayGroup}
-            options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
-            value={payGroup}
-          />
-          <DropdownField
-            label="Stufe"
-            onChange={setPayLevel}
-            options={PAY_LEVELS.map((level) => ({ value: level, label: `Stufe ${level}` }))}
-            value={payLevel}
-          />
-          <Field editable={false} label="Tarifliche Vollzeit pro Woche" value={fullTimeHours} />
+          {salaryMode === "MANUAL" ? (
+            <Field
+              accessibilityHint="Betrag in Euro, zum Beispiel 3450 Komma 50"
+              error={manualMonthlyGrossError}
+              inputRef={manualMonthlyGrossRef}
+              keyboardType="decimal-pad"
+              label="Monatliches Brutto in Euro"
+              onChangeText={(value) => {
+                setManualMonthlyGross(value);
+                if (manualMonthlyGrossError) setManualMonthlyGrossError(null);
+              }}
+              returnKeyType="done"
+              value={manualMonthlyGross}
+            />
+          ) : (
+            <>
+              <DropdownField
+                label="Tarifbereich"
+                onChange={setSector}
+                options={[
+                  { value: "BT_K", label: "Krankenhaus · BT-K" },
+                  { value: "BT_B", label: "Pflege · BT-B" },
+                ]}
+                value={sector}
+              />
+              <DropdownField
+                label="Tarifgebiet"
+                onChange={setTariffRegion}
+                options={(["KAV_BW", "OTHER"] as const).map((region) => ({
+                  value: region,
+                  label: TARIFF_REGION_LABELS[region],
+                }))}
+                value={tariffRegion}
+              />
+              <DropdownField
+                label="Entgeltgruppe"
+                onChange={setPayGroup}
+                options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
+                value={payGroup}
+              />
+              <DropdownField
+                label="Stufe"
+                onChange={setPayLevel}
+                options={PAY_LEVELS.map((level) => ({ value: level, label: `Stufe ${level}` }))}
+                value={payLevel}
+              />
+              <Field editable={false} label="Tarifliche Vollzeit pro Woche" value={fullTimeHours} />
+            </>
+          )}
         </FormSection>
       )}
 

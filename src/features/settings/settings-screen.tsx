@@ -70,9 +70,11 @@ export function SettingsScreen() {
     }
   }
 
-  const tariffLabel = profile.tariff
-    ? `${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel} · ${profile.tariff.sector === "BT_K" ? "BT-K" : "BT-B"} · ${TARIFF_REGION_LABELS[profile.tariff.tariffRegion]}`
-    : "Nicht eingerichtet";
+  const salaryLabel = profile.tariff
+    ? `TVöD-P · ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel} · ${profile.tariff.sector === "BT_K" ? "BT-K" : "BT-B"} · ${TARIFF_REGION_LABELS[profile.tariff.tariffRegion]}`
+    : profile.manualMonthlyGrossCents != null
+      ? `Manuell · ${(profile.manualMonthlyGrossCents / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}`
+      : "Nicht eingerichtet";
   const workModelLabel = `${FEDERAL_STATE_LABELS[profile.federalState]} · ${(profile.weeklyMinutes / 60).toLocaleString("de-DE")} Std./Woche${profile.holidayRegion === "UNKNOWN" ? " · Feiertagsregion offen" : ""}`;
   const visibleCalendarContentCount = [
     calendarPreferences.showShifts,
@@ -111,18 +113,22 @@ export function SettingsScreen() {
             />
             <CardSeparator />
             <RowButton
-              leading={<SettingsIcon name="document-text-outline" />}
+              leading={<SettingsIcon name="wallet-outline" />}
               onPress={() => router.push(settingsEditorRoute("TARIFF"))}
-              subtitle={tariffLabel}
-              title="Tarifprofil"
+              subtitle={salaryLabel}
+              title="Gehalt"
             />
-            <CardSeparator />
-            <RowButton
-              leading={<SettingsIcon name="repeat-outline" />}
-              onPress={() => router.push(tariffAssessmentRoute(currentMonth(profile.timeZone)))}
-              subtitle={`${coverageLabel} · ${assignmentLabel}`}
-              title="Schichtmodell"
-            />
+            {profile.tariff !== null ? (
+              <>
+                <CardSeparator />
+                <RowButton
+                  leading={<SettingsIcon name="repeat-outline" />}
+                  onPress={() => router.push(tariffAssessmentRoute(currentMonth(profile.timeZone)))}
+                  subtitle={`${coverageLabel} · ${assignmentLabel}`}
+                  title="Schichtmodell"
+                />
+              </>
+            ) : null}
           </SurfaceCard>
         </View>
 
