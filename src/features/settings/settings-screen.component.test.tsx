@@ -79,6 +79,7 @@ describe("SettingsScreen production gates", () => {
     expect(isDeveloperModeEnabled).not.toHaveBeenCalled();
     expect(setDeveloperMode).not.toHaveBeenCalled();
     expect(screen.getByText("Über LUNA Shift")).toBeTruthy();
+    expect(screen.getByText("Datensicherung")).toBeTruthy();
     expect(screen.getByText("Gehalt")).toBeTruthy();
     expect(screen.queryByText("Schichtmodell")).toBeNull();
   });

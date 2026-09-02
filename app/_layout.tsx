@@ -109,6 +109,14 @@ export default function RootLayout() {
                           }}
                         />
                         <Stack.Screen
+                          name="data-backup"
+                          options={{
+                            title: "Datensicherung",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
                           name="premium-details"
                           options={{
                             title: "Zeitzuschläge",
