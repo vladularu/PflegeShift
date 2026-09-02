@@ -13,6 +13,7 @@ import type {
 import { getPublicHolidays } from "@/engine/holidays";
 import { calculateMonthlyAllowanceAmounts } from "@/engine/pay-allowances";
 import { conditionsMatch } from "@/engine/pay-conditions";
+import { createManualMonthlyPayEstimate } from "@/engine/pay-fallback";
 import {
   getHourlyTableAmountForStep,
   getIndividualHourlyRate,
@@ -449,6 +450,10 @@ export function calculateMonthlyPayEstimate(
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyPayEstimate {
+  if (profile.tariff === null && profile.manualMonthlyGrossCents != null) {
+    return createManualMonthlyPayEstimate(month, profile.manualMonthlyGrossCents);
+  }
+
   const monthShifts = shifts.filter(
     (shift) => shift.deletedAt === null && shift.date.startsWith(`${month}-`) && isWorkShift(shift),
   );

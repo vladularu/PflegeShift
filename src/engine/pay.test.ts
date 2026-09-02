@@ -14,7 +14,7 @@ import {
   LEGACY_RULE_PACKAGE_IDS,
 } from "@/rules/bundled-rules";
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
-import { createRuleResolver } from "@/rules/rule-resolver";
+import { createRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
 const profile: UserProfile = {
   federalState: "NW",
@@ -80,6 +80,74 @@ function shift(overrides: Partial<ShiftEntry> = {}): ShiftEntry {
 }
 
 describe("TVöD-P pay engine", () => {
+  it("uses a manual monthly gross without resolving or inventing TVöD additions", () => {
+    const unreachableRuleResolver = new Proxy({} as RuleResolver, {
+      get() {
+        throw new Error("Manual gross must not resolve TVöD rule packages.");
+      },
+    });
+    const result = calculateMonthlyPayEstimate(
+      "2026-07",
+      [shift()],
+      {
+        ...profile,
+        tariff: null,
+        manualMonthlyGrossCents: 345_050,
+      },
+      {
+        month: "2026-07",
+        allowanceStatus: "ALTERNATING_MONTHLY",
+        revision: 1,
+        confirmedAt: "2026-07-01T00:00:00.000Z",
+        updatedAt: "2026-07-01T00:00:00.000Z",
+      },
+      undefined,
+      undefined,
+      unreachableRuleResolver,
+    );
+
+    expect(result).toEqual({
+      month: "2026-07",
+      tariffLabel: "Manuell hinterlegt",
+      available: true,
+      fullTimeTableAmount: null,
+      personalBaseAmount: 3450.5,
+      shiftBreakdowns: [],
+      timePremiumAmount: 0,
+      overtimeAmount: 0,
+      allowanceAmount: 0,
+      tvoedAllowanceAmount: 0,
+      careAllowanceAmount: 0,
+      estimatedGrossAmount: 3450.5,
+      assessment: {
+        shiftWork: "NOT_DETECTED",
+        alternatingShiftWork: "NOT_DETECTED",
+        suggestedAllowance: "NONE",
+        evidence: [],
+        criteria: [],
+        requiresConfirmation: false,
+      },
+      confirmedAllowance: null,
+    });
+  });
+
+  it("keeps pay unavailable without a tariff or manual monthly gross", () => {
+    const result = calculateMonthlyPayEstimate(
+      "2026-07",
+      [shift()],
+      {
+        ...profile,
+        tariff: null,
+        manualMonthlyGrossCents: null,
+      },
+      null,
+    );
+
+    expect(result.available).toBe(false);
+    expect(result.personalBaseAmount).toBeNull();
+    expect(result.estimatedGrossAmount).toBeNull();
+  });
+
   it("reuses premium calculations while the shift and profile stay unchanged", () => {
     const input = shift();
     const first = calculateShiftPremiumBreakdown(input, profile);
