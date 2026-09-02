@@ -1,9 +1,18 @@
 /* global Buffer */
 import { deflateSync } from "node:zlib";
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const output = resolve("assets/images");
+const samplesPerAxis = 4;
+const designSize = 1024;
+
+const palette = {
+  graphite: [17, 19, 21, 255],
+  cream: [246, 243, 236, 255],
+  petrol: [46, 118, 111, 255],
+  black: [0, 0, 0, 255],
+};
 
 function crc32(buffer) {
   let crc = 0xffffffff;
@@ -25,92 +34,20 @@ function chunk(type, data) {
   return Buffer.concat([length, name, data, checksum]);
 }
 
-function createCanvas(size, color) {
-  const pixels = Buffer.alloc(size * size * 4);
-  for (let index = 0; index < size * size; index += 1) {
-    pixels[index * 4] = color[0];
-    pixels[index * 4 + 1] = color[1];
-    pixels[index * 4 + 2] = color[2];
-    pixels[index * 4 + 3] = color[3];
-  }
-  return { size, pixels };
-}
-
-function setPixel(canvas, x, y, color) {
-  if (x < 0 || y < 0 || x >= canvas.size || y >= canvas.size) return;
-  const offset = (y * canvas.size + x) * 4;
-  canvas.pixels[offset] = color[0];
-  canvas.pixels[offset + 1] = color[1];
-  canvas.pixels[offset + 2] = color[2];
-  canvas.pixels[offset + 3] = color[3];
-}
-
-function roundedRect(canvas, left, top, right, bottom, radius, color) {
-  for (let y = top; y < bottom; y += 1) {
-    for (let x = left; x < right; x += 1) {
-      const nearestX = Math.max(left + radius, Math.min(x, right - radius - 1));
-      const nearestY = Math.max(top + radius, Math.min(y, bottom - radius - 1));
-      const dx = x - nearestX;
-      const dy = y - nearestY;
-      if (dx * dx + dy * dy <= radius * radius) setPixel(canvas, x, y, color);
-    }
-  }
-}
-
-function circle(canvas, centerX, centerY, radius, color) {
-  const squared = radius * radius;
-  for (let y = centerY - radius; y <= centerY + radius; y += 1) {
-    for (let x = centerX - radius; x <= centerX + radius; x += 1) {
-      const dx = x - centerX;
-      const dy = y - centerY;
-      if (dx * dx + dy * dy <= squared) setPixel(canvas, x, y, color);
-    }
-  }
-}
-
-function drawMark(canvas, scale, monochrome = false) {
-  const teal = monochrome ? [0, 0, 0, 255] : [32, 122, 104, 255];
-  const mint = monochrome ? [0, 0, 0, 255] : [100, 212, 182, 255];
-  const white = monochrome ? [0, 0, 0, 0] : [255, 255, 255, 255];
-  const purple = monochrome ? teal : [126, 87, 194, 255];
-  const green = monochrome ? teal : [47, 163, 107, 255];
-  const red = monochrome ? teal : [234, 91, 85, 255];
-  const blue = monochrome ? teal : [47, 128, 237, 255];
-  const p = (value) => Math.round(value * scale);
-
-  roundedRect(canvas, p(150), p(145), p(850), p(855), p(160), teal);
-  if (monochrome) {
-    roundedRect(canvas, p(260), p(245), p(740), p(765), p(60), teal);
-    return;
-  }
-  roundedRect(canvas, p(260), p(245), p(740), p(765), p(60), white);
-  roundedRect(canvas, p(260), p(245), p(740), p(390), p(60), mint);
-  roundedRect(canvas, p(260), p(330), p(740), p(390), 0, mint);
-
-  const centers = [
-    [360, 485, purple],
-    [500, 485, green],
-    [640, 485, red],
-    [360, 625, blue],
-    [640, 625, purple],
-  ];
-  for (const [x, y, color] of centers) circle(canvas, p(x), p(y), p(45), color);
-  roundedRect(canvas, p(470), p(555), p(530), p(695), p(22), teal);
-  roundedRect(canvas, p(430), p(595), p(570), p(655), p(22), teal);
-}
-
-function encode(canvas) {
-  const rows = Buffer.alloc((canvas.size * 4 + 1) * canvas.size);
-  for (let y = 0; y < canvas.size; y += 1) {
-    const rowStart = y * (canvas.size * 4 + 1);
+function encodePng(size, pixels) {
+  const rows = Buffer.alloc((size * 4 + 1) * size);
+  for (let y = 0; y < size; y += 1) {
+    const rowStart = y * (size * 4 + 1);
     rows[rowStart] = 0;
-    canvas.pixels.copy(rows, rowStart + 1, y * canvas.size * 4, (y + 1) * canvas.size * 4);
+    pixels.copy(rows, rowStart + 1, y * size * 4, (y + 1) * size * 4);
   }
+
   const header = Buffer.alloc(13);
-  header.writeUInt32BE(canvas.size, 0);
-  header.writeUInt32BE(canvas.size, 4);
+  header.writeUInt32BE(size, 0);
+  header.writeUInt32BE(size, 4);
   header[8] = 8;
   header[9] = 6;
+
   return Buffer.concat([
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
     chunk("IHDR", header),
@@ -119,17 +56,79 @@ function encode(canvas) {
   ]);
 }
 
-function save(name, size, background, draw) {
-  const canvas = createCanvas(size, background);
-  draw(canvas, size / 1000);
-  writeFileSync(resolve(output, name), encode(canvas));
+function insideCircle(x, y, centerX, centerY, radius) {
+  const dx = x - centerX;
+  const dy = y - centerY;
+  return dx * dx + dy * dy <= radius * radius;
 }
 
-save("icon.png", 1024, [231, 245, 240, 255], (canvas, scale) => drawMark(canvas, scale));
-save("splash-icon.png", 512, [0, 0, 0, 0], (canvas, scale) => drawMark(canvas, scale));
-save("favicon.png", 48, [231, 245, 240, 255], (canvas, scale) => drawMark(canvas, scale));
-save("android-icon-background.png", 432, [231, 245, 240, 255], () => {});
-save("android-icon-foreground.png", 432, [0, 0, 0, 0], (canvas, scale) => drawMark(canvas, scale));
-save("android-icon-monochrome.png", 432, [0, 0, 0, 0], (canvas, scale) =>
-  drawMark(canvas, scale, true),
-);
+function insideCrescent(x, y) {
+  const insideOuter = insideCircle(x, y, 512, 510, 314);
+  const insideCutout = insideCircle(x, y, 512, 451, 269);
+  return insideOuter && !insideCutout;
+}
+
+function crescentCoverage(pixelX, pixelY, size) {
+  let covered = 0;
+  for (let sampleY = 0; sampleY < samplesPerAxis; sampleY += 1) {
+    for (let sampleX = 0; sampleX < samplesPerAxis; sampleX += 1) {
+      const x = ((pixelX + (sampleX + 0.5) / samplesPerAxis) * designSize) / size;
+      const y = ((pixelY + (sampleY + 0.5) / samplesPerAxis) * designSize) / size;
+      if (insideCrescent(x, y)) covered += 1;
+    }
+  }
+  return covered / (samplesPerAxis * samplesPerAxis);
+}
+
+function renderCrescent(size, background, foreground) {
+  const pixels = Buffer.alloc(size * size * 4);
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const coverage = crescentCoverage(x, y, size);
+      const offset = (y * size + x) * 4;
+
+      if (background === null) {
+        pixels[offset] = foreground[0];
+        pixels[offset + 1] = foreground[1];
+        pixels[offset + 2] = foreground[2];
+        pixels[offset + 3] = Math.round(foreground[3] * coverage);
+        continue;
+      }
+
+      pixels[offset] = Math.round(background[0] * (1 - coverage) + foreground[0] * coverage);
+      pixels[offset + 1] = Math.round(background[1] * (1 - coverage) + foreground[1] * coverage);
+      pixels[offset + 2] = Math.round(background[2] * (1 - coverage) + foreground[2] * coverage);
+      pixels[offset + 3] = 255;
+    }
+  }
+  return pixels;
+}
+
+function renderSolid(size, color) {
+  const pixels = Buffer.alloc(size * size * 4);
+  for (let offset = 0; offset < pixels.length; offset += 4) {
+    pixels[offset] = color[0];
+    pixels[offset + 1] = color[1];
+    pixels[offset + 2] = color[2];
+    pixels[offset + 3] = color[3];
+  }
+  return pixels;
+}
+
+function save(name, size, pixels) {
+  writeFileSync(resolve(output, name), encodePng(size, pixels));
+}
+
+mkdirSync(output, { recursive: true });
+
+save("icon.png", 1024, renderCrescent(1024, palette.petrol, palette.cream));
+save("icon-dark.png", 1024, renderCrescent(1024, palette.graphite, palette.cream));
+save("icon-tinted.png", 1024, renderCrescent(1024, palette.cream, palette.graphite));
+save("splash-icon.png", 512, renderCrescent(512, null, palette.petrol));
+save("splash-icon-dark.png", 512, renderCrescent(512, null, palette.cream));
+save("favicon.png", 48, renderCrescent(48, palette.petrol, palette.cream));
+save("android-icon-background.png", 432, renderSolid(432, palette.petrol));
+save("android-icon-foreground.png", 432, renderCrescent(432, null, palette.cream));
+save("android-icon-monochrome.png", 432, renderCrescent(432, null, palette.black));
+
+console.log("Generated 9 deterministic LUNA Shift brand assets in assets/images");

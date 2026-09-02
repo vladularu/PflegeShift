@@ -1,4 +1,4 @@
-# PflegeShift Release-Checkliste
+# LUNA Shift Release-Checkliste
 
 Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds und realen Gerätetests. Ein JavaScript-Export allein ist noch keine Store-Abnahme.
 

@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from "react";
 
+import { PRODUCT_NAME } from "@/brand";
 import { APP_RENDER_FAILURE_MESSAGE } from "@/domain/errors";
 import { recordDiagnostic } from "@/infrastructure/diagnostics";
 import { LoadFailureView } from "@/ui/loading-view";
@@ -35,7 +36,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
           diagnosticCode="APP_RENDER_FAILED"
           message={APP_RENDER_FAILURE_MESSAGE}
           onRetry={this.retry}
-          title={this.props.title ?? "PflegeShift konnte nicht angezeigt werden"}
+          title={this.props.title ?? `${PRODUCT_NAME} konnte nicht angezeigt werden`}
         />
       );
     }

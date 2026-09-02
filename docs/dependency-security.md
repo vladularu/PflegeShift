@@ -1,6 +1,6 @@
 # Abhängigkeitssicherheit unter Expo SDK 57
 
-PflegeShift verwendet die in `package.json` deklarierte Expo-57-Abhängigkeitsbasis. Sicherheitskorrekturen müssen innerhalb dieser kompatiblen Paketfamilie bleiben; ein Wechsel der Expo-Hauptversion ist ein eigenes Arbeitspaket mit nativer Geräteabnahme.
+LUNA Shift verwendet die in `package.json` deklarierte Expo-57-Abhängigkeitsbasis. Sicherheitskorrekturen müssen innerhalb dieser kompatiblen Paketfamilie bleiben; ein Wechsel der Expo-Hauptversion ist ein eigenes Arbeitspaket mit nativer Geräteabnahme.
 
 ## Automatisches Gate
 

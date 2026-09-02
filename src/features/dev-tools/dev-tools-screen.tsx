@@ -4,6 +4,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
+import { PRODUCT_NAME } from "@/brand";
 import { usePflegeShiftProfile, usePflegeShiftStatus } from "@/application/pflegeshift-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type { TestBackupSummary, TestRange, TestRunPreview, TestScenario } from "@/domain/types";
@@ -144,7 +145,7 @@ function DevToolsContent() {
           Testlabor gesperrt
         </Text>
         <Text style={{ color: palette.textMuted, textAlign: "center" }}>
-          Aktiviere es unter Mehr durch langes Drücken auf „PflegeShift 0.1“.
+          Aktiviere es unter Mehr durch langes Drücken auf „{PRODUCT_NAME} 0.1“.
         </Text>
         <PrimaryButton onPress={() => router.back()}>Schließen</PrimaryButton>
       </View>
@@ -166,7 +167,7 @@ function DevToolsContent() {
           Profil erforderlich
         </Text>
         <Text style={{ color: palette.textMuted, textAlign: "center" }}>
-          Schließe das Testlabor und richte PflegeShift zuerst ein.
+          Schließe das Testlabor und richte {PRODUCT_NAME} zuerst ein.
         </Text>
         <PrimaryButton onPress={() => router.replace("/onboarding")}>
           Einrichtung öffnen

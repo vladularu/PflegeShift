@@ -9,6 +9,7 @@ import {
 } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { PRODUCT_NAME } from "@/brand";
 import {
   initializeSecureDatabase,
   prepareSecureDatabase,
@@ -106,7 +107,7 @@ export function SecureDatabaseProvider({ children }: PropsWithChildren) {
         <Text accessibilityRole="header" style={styles.title}>
           Sichere Datenbank wird vorbereitet
         </Text>
-        <Text style={styles.body}>PflegeShift schützt deine lokalen Daten.</Text>
+        <Text style={styles.body}>{PRODUCT_NAME} schützt deine lokalen Daten.</Text>
       </View>
     );
   }

@@ -1,4 +1,4 @@
-# PflegeShift iPhone-Abnahme
+# LUNA Shift iPhone-Abnahme
 
 Dieses Protokoll gilt für einen signierten internen iOS-Preview-Build auf einem realen iPhone. Simulator-, Export-, Unit- und Maestro-Ergebnisse ergänzen die Geräteabnahme, ersetzen sie aber nicht.
 
@@ -59,7 +59,7 @@ Nachweis: kurzes Video mit Öffnen, Ändern, Schließen, Speichern und erneutem 
 
 ## 6. Testlabor-Backup v2 — P0
 
-Das Preview-Profil enthält das interne Testlabor. Aktivierung: `Mehr` → `Über PflegeShift` fünf Sekunden gedrückt halten → anschließend `Testlabor` im Bereich `Intern` öffnen.
+Das Preview-Profil enthält das interne Testlabor. Aktivierung: `Mehr` → `Über LUNA Shift` fünf Sekunden gedrückt halten → anschließend `Testlabor` im Bereich `Intern` öffnen.
 
 - [ ] Einen individuellen Ganztagsdienst mit Notiz, Erinnerung und Ort anlegen
 - [ ] Einen Termin mit zweiwöchentlicher Serie, Notiz, Erinnerung und Ort anlegen

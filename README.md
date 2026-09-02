@@ -1,10 +1,12 @@
-# PflegeShift
+# LUNA Shift
 
-PflegeShift ist ein lokaler, iPhone-first Dienstplaner für Schichtarbeit. Die App verbindet Kalender, Arbeitszeitauswertung und eine unverbindliche TVöD-P-Gehaltsberechnung in einer ruhigen, systemadaptiven Oberfläche.
+LUNA Shift ist ein lokaler, iPhone-first Dienstplaner für Schichtarbeit. Die App verbindet Kalender, Arbeitszeitauswertung und eine unverbindliche TVöD-P-Gehaltsberechnung in einer ruhigen, systemadaptiven Oberfläche.
 
-PflegeShift basiert auf Expo SDK 57, React Native und SQLite. Die Kernfunktionen benötigen weder Konto noch PflegeShift-Backend; persönliche Planungsdaten bleiben lokal auf dem Gerät. Die optionale Ortssuche und Kartenansicht verwenden auf iOS Apple-Dienste und auf Android den systemseitigen Geocoder sowie Google Maps. Suchtext, Kartenbereich und gespeicherte Koordinaten können dabei an den jeweiligen Anbieter übermittelt werden; PflegeShift liest keine aktuelle GPS-Position und betreibt kein Standorttracking. Der genaue Vertrag steht in [`docs/location-data-flows.md`](docs/location-data-flows.md).
+LUNA Shift basiert auf Expo SDK 57, React Native und SQLite. Die Kernfunktionen benötigen weder Konto noch LUNA-Shift-Backend; persönliche Planungsdaten bleiben lokal auf dem Gerät. Die optionale Ortssuche und Kartenansicht verwenden auf iOS Apple-Dienste und auf Android den systemseitigen Geocoder sowie Google Maps. Suchtext, Kartenbereich und gespeicherte Koordinaten können dabei an den jeweiligen Anbieter übermittelt werden; LUNA Shift liest keine aktuelle GPS-Position und betreibt kein Standorttracking. Der genaue Vertrag steht in [`docs/location-data-flows.md`](docs/location-data-flows.md).
 
-> **Veröffentlichungsstand:** Für PflegeShift ist derzeit kein Beta-Tag als aktuelle Installations- oder Migrationsbasis freigegeben. [`v0.1.0-beta.1`](https://github.com/vladularu/PflegeShift/releases/tag/v0.1.0-beta.1) gehört noch zu MediShift und verwendet andere App- und Datenbank-IDs.
+> **Veröffentlichungsstand:** Für LUNA Shift ist derzeit kein Beta-Tag als aktuelle Installations- oder Migrationsbasis freigegeben. [`v0.1.0-beta.1`](https://github.com/vladularu/PflegeShift/releases/tag/v0.1.0-beta.1) gehört noch zu MediShift und verwendet andere App- und Datenbank-IDs.
+
+Die sichtbare Marke und die absichtlich beibehaltenen technischen Kompatibilitätsnamen sind in [`docs/branding.md`](docs/branding.md) dokumentiert.
 
 ## Hauptbereiche
 
@@ -56,7 +58,7 @@ PflegeShift basiert auf Expo SDK 57, React Native und SQLite. Die Kernfunktionen
 
 ## Lokale Datenhaltung
 
-PflegeShift speichert Profileinstellungen, Dienstvorlagen, Einträge und Monatsentscheidungen in einer lokal mit SQLCipher verschlüsselten SQLite-Datenbank. Der Schlüssel liegt im nativen SecureStore. Änderungen verwenden Revisionen und Soft-Delete, damit Datensätze konsistent aktualisiert werden können.
+LUNA Shift speichert Profileinstellungen, Dienstvorlagen, Einträge und Monatsentscheidungen in einer lokal mit SQLCipher verschlüsselten SQLite-Datenbank. Der Schlüssel liegt im nativen SecureStore. Änderungen verwenden Revisionen und Soft-Delete, damit Datensätze konsistent aktualisiert werden können.
 
 Nicht enthalten sind:
 
@@ -129,7 +131,7 @@ Die vollständige Abnahme steht in der [Release-Checkliste](docs/release-checkli
 Das interne Testlabor erzeugt reproduzierbare Testmonate und ist ausschließlich in Entwicklungs- und internen Preview-Builds verfügbar:
 
 1. Tab **Mehr** öffnen.
-2. Die obere grüne PflegeShift-Karte fünf Sekunden gedrückt halten.
+2. Die obere grüne LUNA-Shift-Karte fünf Sekunden gedrückt halten.
 3. Unter **Intern** das **Testlabor** öffnen.
 
 Verfügbar sind unter anderem normale Rotation, zuschlagsreiche Monate, Compliance-Fälle und UI-Stresstests. Testläufe sichern vorhandene Monatsdaten und können anschließend wiederhergestellt oder übernommen werden.

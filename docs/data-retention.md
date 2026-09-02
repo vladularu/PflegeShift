@@ -1,6 +1,6 @@
 # Lokale Datenaufbewahrung
 
-PflegeShift speichert Nutzerdaten ausschließlich lokal. Normale Löschaktionen für
+LUNA Shift speichert Nutzerdaten ausschließlich lokal. Normale Löschaktionen für
 Dienste, Termine und Dienstvorlagen erzeugen zunächst einen Tombstone mit
 Revision und Löschzeitpunkt. Damit bleiben konkurrierende Änderungen erkennbar
 und eine spätere Synchronisation kann Löschungen eindeutig übertragen.
@@ -13,7 +13,7 @@ Wiederherstellungsfunktion. Der vollständige Datensatz bleibt jedoch zunächst
 verschlüsselt in der lokalen Datenbank. Diese verzögerte physische Löschung ist
 in der App unter **Mehr → Lokale Datenspeicherung** sichtbar beschrieben.
 
-Der Vertrag gilt unabhängig von einer Cloud-Synchronisation. PflegeShift bietet
+Der Vertrag gilt unabhängig von einer Cloud-Synchronisation. LUNA Shift bietet
 aktuell weder Cloud-Sync noch ein automatisches Backup an.
 
 ## Aufbewahrungsfrist

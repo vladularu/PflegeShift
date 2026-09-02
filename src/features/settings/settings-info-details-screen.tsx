@@ -1,6 +1,7 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 
+import { PRODUCT_NAME } from "@/brand";
 import type { SettingsInfoSection } from "@/navigation/routes";
 import { APP_RUNTIME_LABEL } from "@/infrastructure/app-version";
 import { parseEnumRouteParam, type RouteParam } from "@/navigation/route-params";
@@ -20,8 +21,7 @@ interface InfoContent {
 const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   STORAGE: {
     title: "Lokale Datenspeicherung",
-    intro:
-      "Die PflegeShift-Kernfunktionen arbeiten offline und speichern deine Angaben auf diesem Gerät.",
+    intro: `Die ${PRODUCT_NAME}-Kernfunktionen arbeiten offline und speichern deine Angaben auf diesem Gerät.`,
     items: [
       {
         title: "Kein Konto erforderlich",
@@ -37,15 +37,15 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
       },
       {
         title: "Ortssuche",
-        text: "Ab drei Zeichen wird deine Suche online über den Kartendienst des Betriebssystems aufgelöst: auf iOS über Apple, auf Android über den systemseitigen Geocoder. PflegeShift fragt dabei nicht deine aktuelle GPS-Position ab. Android kann für das Geocoding trotzdem eine Standortberechtigung verlangen.",
+        text: `Ab drei Zeichen wird deine Suche online über den Kartendienst des Betriebssystems aufgelöst: auf iOS über Apple, auf Android über den systemseitigen Geocoder. ${PRODUCT_NAME} fragt dabei nicht deine aktuelle GPS-Position ab. Android kann für das Geocoding trotzdem eine Standortberechtigung verlangen.`,
       },
       {
         title: "Karten",
-        text: "Die Vorschau lädt auf iOS Kartendaten von Apple und auf Android von Google. Wenn du einen Ort in einer Karten-App öffnest, werden die gespeicherten Koordinaten an Apple Karten oder Google Maps übergeben. Ortsname, Adresse und Koordinaten bleiben zusätzlich verschlüsselt in deiner lokalen PflegeShift-Datenbank.",
+        text: `Die Vorschau lädt auf iOS Kartendaten von Apple und auf Android von Google. Wenn du einen Ort in einer Karten-App öffnest, werden die gespeicherten Koordinaten an Apple Karten oder Google Maps übergeben. Ortsname, Adresse und Koordinaten bleiben zusätzlich verschlüsselt in deiner lokalen ${PRODUCT_NAME}-Datenbank.`,
       },
       {
         title: "Datenschutz",
-        text: "PflegeShift überträgt diese Daten nicht an einen PflegeShift-Server. Für die Online-Suche und Kartendarstellung gelten zusätzlich die Datenschutzbedingungen von Apple beziehungsweise Google.",
+        text: `${PRODUCT_NAME} überträgt diese Daten nicht an einen ${PRODUCT_NAME}-Server. Für die Online-Suche und Kartendarstellung gelten zusätzlich die Datenschutzbedingungen von Apple beziehungsweise Google.`,
       },
     ],
   },
@@ -60,7 +60,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
       },
       {
         title: "Pausendauer",
-        text: "Für die einfache Dienst- und Monatsberechnung speichert PflegeShift bewusst nur die gesamte Pausendauer. Pausenbeginn und einzelne Abschnitte müssen nicht nachgetragen werden.",
+        text: `Für die einfache Dienst- und Monatsberechnung speichert ${PRODUCT_NAME} bewusst nur die gesamte Pausendauer. Pausenbeginn und einzelne Abschnitte müssen nicht nachgetragen werden.`,
       },
       {
         title: "Feiertage und Zuschläge",
@@ -83,7 +83,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     items: [
       {
         title: "Vollzeitbetrag",
-        text: "PflegeShift berücksichtigt 25 Euro pro Monat bei Vollzeit, für Beschäftigte von Mitgliedern des KAV Baden-Württemberg 35 Euro. Bei Teilzeit wird der Betrag entsprechend der hinterlegten Wochenarbeitszeit anteilig berechnet.",
+        text: `${PRODUCT_NAME} berücksichtigt 25 Euro pro Monat bei Vollzeit, für Beschäftigte von Mitgliedern des KAV Baden-Württemberg 35 Euro. Bei Teilzeit wird der Betrag entsprechend der hinterlegten Wochenarbeitszeit anteilig berechnet.`,
       },
       {
         title: "Geltungsbereich",
@@ -102,7 +102,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     items: [
       {
         title: "Automatische Höhe",
-        text: "PflegeShift verwendet den im gewählten Monat gültigen Vollzeitbetrag und rechnet ihn bei Teilzeit proportional zur Wochenarbeitszeit um.",
+        text: `${PRODUCT_NAME} verwendet den im gewählten Monat gültigen Vollzeitbetrag und rechnet ihn bei Teilzeit proportional zur Wochenarbeitszeit um.`,
       },
       {
         title: "Tarifprofil",
@@ -115,7 +115,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
     ],
   },
   ABOUT: {
-    title: "Über PflegeShift",
+    title: `Über ${PRODUCT_NAME}`,
     intro: "Ein unabhängiger, offline-first Dienstplaner für Schichtarbeit im Gesundheitswesen.",
     items: [
       {
@@ -128,7 +128,7 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
       },
       {
         title: "Hinweis",
-        text: "PflegeShift ist eigenständig und nicht mit SuperShift oder einem Tarifpartner verbunden.",
+        text: `${PRODUCT_NAME} ist eigenständig und nicht mit SuperShift oder einem Tarifpartner verbunden.`,
       },
     ],
   },

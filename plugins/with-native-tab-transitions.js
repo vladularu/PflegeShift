@@ -17,7 +17,7 @@ const DELEGATE_ANCHOR = "#pragma mark - UINavigationControllerDelegate";
 const ANIMATOR_SOURCE = String.raw`
 
 // PFLEGESHIFT_NATIVE_TAB_TRANSITION_ANIMATOR
-// Mirrors the native iOS push language used by PflegeShift detail screens while
+// Mirrors the native iOS push language used by LUNA Shift detail screens while
 // keeping UITabBarController's system tab bar outside the animated content area.
 #import <QuartzCore/QuartzCore.h>
 
@@ -149,7 +149,7 @@ const DELEGATE_SOURCE = String.raw`
     animationControllerForTransitionFromViewController:(UIViewController *)fromViewController
     toViewController:(UIViewController *)toViewController
 {
-  RCTAssert(tabBarController == self, @"[PflegeShift] Unexpected tab bar controller instance");
+  RCTAssert(tabBarController == self, @"[LUNA Shift] Unexpected tab bar controller instance");
 
   if (UIAccessibilityIsReduceMotionEnabled()) {
     return nil;

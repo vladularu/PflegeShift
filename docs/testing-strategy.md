@@ -1,6 +1,6 @@
 # Teststrategie
 
-PflegeShift trennt schnelle Fachtests, React-Komponententests, native End-to-End-Flows und manuelle Geräteabnahme. Kein einzelnes Gate ersetzt eine andere Ebene.
+LUNA Shift trennt schnelle Fachtests, React-Komponententests, native End-to-End-Flows und manuelle Geräteabnahme. Kein einzelnes Gate ersetzt eine andere Ebene.
 
 `npm run verify:fast` bündelt das lokale Entwicklungs-Gate. `npm run verify:full` ergänzt Coverage, Produktionsaudit, Release-Konfiguration und alle Exporte. In GitHub Actions laufen die vollständigen Prüfgruppen parallel und werden im erforderlichen Statuscheck `quality-gates` zusammengeführt.
 

@@ -1,4 +1,4 @@
-# PflegeShift Arbeitsregeln
+# LUNA Shift Arbeitsregeln
 
 ## Expo-Version
 

@@ -24,9 +24,7 @@ describe("AppErrorBoundary", () => {
     );
 
     expect(screen.queryByText(/sensitive database path/i)).toBeNull();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "PflegeShift konnte nicht angezeigt werden",
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent("LUNA Shift konnte nicht angezeigt werden");
     expect(screen.getByText("Diagnosecode: APP_RENDER_FAILED")).toBeTruthy();
     expect(listDiagnosticEvents()).toEqual([
       expect.objectContaining({ code: "APP_RENDER_FAILED", errorClass: "Error" }),
