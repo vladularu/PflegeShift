@@ -1,6 +1,7 @@
 export interface Palette {
   readonly dark: boolean;
   readonly background: string;
+  readonly onboardingBackground: string;
   readonly groupedBackground: string;
   readonly surface: string;
   readonly surfaceRaised: string;
@@ -35,6 +36,7 @@ export interface Palette {
 export const LIGHT_PALETTE: Palette = {
   dark: false,
   background: "#F5F5F7",
+  onboardingBackground: "#F6F3EC",
   groupedBackground: "#F2F2F7",
   surface: "#FFFFFF",
   surfaceRaised: "#FFFFFF",
@@ -69,6 +71,7 @@ export const LIGHT_PALETTE: Palette = {
 export const DARK_PALETTE: Palette = {
   dark: true,
   background: "#000000",
+  onboardingBackground: "#111315",
   groupedBackground: "#000000",
   surface: "#242426",
   surfaceRaised: "#2C2C2E",

@@ -2,13 +2,20 @@ appId: com.pflegeshift.app.internal
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Zwei Angaben, dann geht’s los.*"
+- assertVisible: "Willkommen bei LUNA Shift"
+- tapOn: "Los geht’s"
+- tapOn: "Pflege & Gesundheitswesen"
+- tapOn: "Weiter"
+- tapOn: "Später einrichten"
+- tapOn: "Weiter"
 - tapOn:
     id: "onboarding-weekly-hours"
 - eraseText
 - inputText: "40"
 - hideKeyboard
-- tapOn: "Weiter zum Kalender"
+- tapOn: "Weiter"
+- assertVisible: "Ohne Konto starten"
+- tapOn: "LUNA Shift öffnen"
 - extendedWaitUntil:
     visible: "Dienstplan bearbeiten"
     timeout: 15000

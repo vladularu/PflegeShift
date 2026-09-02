@@ -3,7 +3,6 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { PRODUCT_NAME } from "@/brand";
 import { PflegeShiftRuntimeProvider } from "@/composition/pflegeshift-runtime-provider";
 import { CalendarPreferencesProvider } from "@/features/calendar/calendar-preferences";
 import { NotificationFeedbackBridge } from "@/features/notifications/notification-feedback-bridge";
@@ -61,7 +60,7 @@ export default function RootLayout() {
                         <Stack.Screen
                           name="onboarding"
                           options={{
-                            title: `${PRODUCT_NAME} einrichten`,
+                            headerShown: false,
                             presentation: "fullScreenModal",
                           }}
                         />
