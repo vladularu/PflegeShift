@@ -4,6 +4,7 @@ import { AccessibilityInfo, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { TEXT_MAX_SCALE } from "@/theme/typography";
+import { LIGHT_PALETTE } from "@/theme/palette-values";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
 import { DropdownField, Field, PrimaryButton, SecondaryButton } from "@/ui/form-controls";
 
@@ -61,19 +62,18 @@ describe("form controls", () => {
       </>,
     );
 
-    const primaryStyle = screen.getByRole("button", { name: "Speichern" }).props.style[0]({
-      pressed: false,
+    expect(screen.getByRole("button", { name: "Speichern" })).toHaveStyle({
+      width: "100%",
+      minHeight: 52,
+      borderWidth: 0,
+      backgroundColor: LIGHT_PALETTE.primary,
+      opacity: 1,
     });
-    const secondaryStyle = screen.getByRole("button", { name: "Abbrechen" }).props.style[0]({
-      pressed: false,
+    expect(screen.getByRole("button", { name: "Abbrechen" })).toHaveStyle({
+      width: "100%",
+      minHeight: 48,
+      borderWidth: 1,
     });
-
-    expect(primaryStyle).toEqual(
-      expect.arrayContaining([expect.objectContaining({ minHeight: 52, borderWidth: 0 })]),
-    );
-    expect(secondaryStyle).toEqual(
-      expect.arrayContaining([expect.objectContaining({ minHeight: 48, borderWidth: 1 })]),
-    );
     expect(screen.getByText("Abbrechen")).toHaveProp("dynamicTypeRamp", "headline");
   });
 

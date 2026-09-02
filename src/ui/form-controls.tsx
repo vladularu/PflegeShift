@@ -18,13 +18,14 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
-import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
+import { usePressMotion } from "@/ui/press-motion";
 
 export { SegmentedButton } from "@/ui/segmented-button";
 export { ColorPicker } from "@/ui/color-picker";
@@ -457,16 +458,17 @@ function FormActionButton({
   const foregroundColor = tone === "danger" ? palette.onDanger : palette.onPrimary;
 
   return (
-    <AnimatedPressable
-      accessibilityLabel={busy ? busyLabel : undefined}
-      accessibilityRole="button"
-      accessibilityState={{ busy, disabled: blocked }}
-      disabled={blocked}
-      onPressIn={pressMotion.onPressIn}
-      onPressOut={pressMotion.onPressOut}
-      onPress={onPress}
-      style={({ pressed }: PressableStateCallbackType) => [
-        {
+    <Animated.View style={[{ width: "100%" }, pressMotion.animatedStyle]}>
+      <Pressable
+        accessibilityLabel={busy ? busyLabel : undefined}
+        accessibilityRole="button"
+        accessibilityState={{ busy, disabled: blocked }}
+        disabled={blocked}
+        onPressIn={pressMotion.onPressIn}
+        onPressOut={pressMotion.onPressOut}
+        onPress={onPress}
+        style={({ pressed }: PressableStateCallbackType) => ({
+          width: "100%",
           minHeight: secondary ? CONTROL_HEIGHT.regular : CONTROL_HEIGHT.large,
           alignItems: "center",
           justifyContent: "center",
@@ -481,26 +483,25 @@ function FormActionButton({
             : backgroundColor,
           opacity: blocked ? 0.45 : pressed && !secondary ? 0.82 : 1,
           paddingHorizontal: SPACING.lg,
-        },
-        pressMotion.animatedStyle,
-      ]}
-    >
-      {busy ? (
-        <ActivityIndicator
-          accessibilityElementsHidden
-          color={secondary ? palette.primary : foregroundColor}
-          size="small"
-        />
-      ) : (
-        <Text
-          dynamicTypeRamp="headline"
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ color: secondary ? palette.primary : foregroundColor, ...TYPOGRAPHY.button }}
-        >
-          {children}
-        </Text>
-      )}
-    </AnimatedPressable>
+        })}
+      >
+        {busy ? (
+          <ActivityIndicator
+            accessibilityElementsHidden
+            color={secondary ? palette.primary : foregroundColor}
+            size="small"
+          />
+        ) : (
+          <Text
+            dynamicTypeRamp="headline"
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{ color: secondary ? palette.primary : foregroundColor, ...TYPOGRAPHY.button }}
+          >
+            {children}
+          </Text>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
