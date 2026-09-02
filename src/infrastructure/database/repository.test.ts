@@ -71,7 +71,7 @@ describe("SQLite repository", () => {
     expect(templates).toHaveLength(7);
     expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("star");
     expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({
-      count: 11,
+      count: 12,
     });
     expect(testDb.database.pragma("secure_delete", { simple: true })).toBe(1);
   });
@@ -162,6 +162,130 @@ describe("SQLite repository", () => {
       weeklyMinutes: 2_400,
       tariff: { payGroup: "P8", payLevel: 4, sector: "BT_K" },
     });
+  });
+
+  it("persists nullable industry and manual gross without losing them through legacy saves", async () => {
+    const profile = await saveProfile(db, {
+      federalState: "NW",
+      holidayRegion: "NONE",
+      weeklyMinutes: 2_310,
+      timeZone: "Europe/Berlin",
+      industry: "SOCIAL_SERVICES",
+      manualMonthlyGrossCents: 420_000,
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: false,
+      allEmploymentWorkRecorded: true,
+      tariff: null,
+    });
+    expect(profile).toMatchObject({
+      industry: "SOCIAL_SERVICES",
+      manualMonthlyGrossCents: 420_000,
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: false,
+      allEmploymentWorkRecorded: true,
+    });
+
+    const legacyUpdate = await saveProfile(db, {
+      federalState: "NW",
+      holidayRegion: "NONE",
+      weeklyMinutes: 2_400,
+      timeZone: "Europe/Berlin",
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: false,
+      allEmploymentWorkRecorded: true,
+      tariff: null,
+    });
+    expect(legacyUpdate).toMatchObject({
+      industry: "SOCIAL_SERVICES",
+      manualMonthlyGrossCents: 420_000,
+      weeklyMinutes: 2_400,
+      holidayRegion: "NONE",
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: false,
+      allEmploymentWorkRecorded: true,
+    });
+
+    const tariffUpdate = await saveProfile(db, {
+      federalState: "NW",
+      holidayRegion: "NONE",
+      weeklyMinutes: 2_400,
+      timeZone: "Europe/Berlin",
+      manualMonthlyGrossCents: null,
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: false,
+      allEmploymentWorkRecorded: true,
+      tariff: {
+        payGroup: "P8",
+        payLevel: 4,
+        sector: "BT_K",
+        tariffRegion: "OTHER",
+        fullTimeWeeklyMinutes: 2_310,
+      },
+    });
+    expect(tariffUpdate).toMatchObject({
+      industry: "SOCIAL_SERVICES",
+      manualMonthlyGrossCents: null,
+      holidayRegion: "NONE",
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: false,
+      allEmploymentWorkRecorded: true,
+      tariff: {
+        payGroup: "P8",
+        payLevel: 4,
+        sector: "BT_K",
+        tariffRegion: "OTHER",
+        fullTimeWeeklyMinutes: 2_310,
+      },
+    });
+  });
+
+  it("upgrades a version 11 profile without inventing industry or salary data", async () => {
+    await saveProfile(db, {
+      federalState: "BW",
+      holidayRegion: "NONE",
+      weeklyMinutes: 2_340,
+      timeZone: "Europe/Berlin",
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: true,
+      allEmploymentWorkRecorded: false,
+      tariff: {
+        payGroup: "P9",
+        payLevel: 3,
+        sector: "BT_K",
+        tariffRegion: "KAV_BW",
+        fullTimeWeeklyMinutes: 2_340,
+      },
+    });
+    testDb.database.exec(`
+      DELETE FROM schema_migrations WHERE version=12;
+      ALTER TABLE user_profile DROP COLUMN industry;
+      ALTER TABLE user_profile DROP COLUMN manual_monthly_gross_cents;
+    `);
+
+    await migrateDatabase(db);
+
+    expect(await loadProfile(db)).toMatchObject({
+      federalState: "BW",
+      holidayRegion: "NONE",
+      weeklyMinutes: 2_340,
+      industry: null,
+      manualMonthlyGrossCents: null,
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: true,
+      allEmploymentWorkRecorded: false,
+      tariff: {
+        payGroup: "P9",
+        payLevel: 3,
+        sector: "BT_K",
+        tariffRegion: "KAV_BW",
+        fullTimeWeeklyMinutes: 2_340,
+      },
+    });
+    expect(
+      testDb.database
+        .prepare("SELECT COUNT(*) count FROM schema_migrations WHERE version=12")
+        .get(),
+    ).toEqual({ count: 1 });
   });
 
   it("increments template revisions and keeps a tombstone", async () => {

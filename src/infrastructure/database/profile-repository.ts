@@ -8,8 +8,9 @@ import { mapProfileRow, type ProfileRow } from "@/infrastructure/database/profil
 export async function loadProfile(db: SQLiteDatabase): Promise<UserProfile | null> {
   const row = await db.getFirstAsync<ProfileRow>(
     `SELECT federal_state,holiday_region,weekly_minutes,time_zone,pay_group,pay_level,
-      tariff_sector,tariff_region,full_time_weekly_minutes,regular_rotating_night_work,
-      sunday_holiday_work_eligible,all_employment_work_recorded,created_at,updated_at
+      tariff_sector,tariff_region,full_time_weekly_minutes,industry,manual_monthly_gross_cents,
+      regular_rotating_night_work,sunday_holiday_work_eligible,all_employment_work_recorded,
+      created_at,updated_at
      FROM user_profile WHERE id='singleton'`,
   );
   return row === null ? null : mapProfileRow(row);
@@ -19,14 +20,26 @@ export async function saveProfile(
   db: SQLiteDatabase,
   rawInput: SaveProfileInput,
 ): Promise<UserProfile> {
-  const input = validateProfile(rawInput);
+  const current =
+    rawInput.industry === undefined || rawInput.manualMonthlyGrossCents === undefined
+      ? await loadProfile(db)
+      : null;
+  const input = validateProfile({
+    ...rawInput,
+    industry: rawInput.industry === undefined ? (current?.industry ?? null) : rawInput.industry,
+    manualMonthlyGrossCents:
+      rawInput.manualMonthlyGrossCents === undefined
+        ? (current?.manualMonthlyGrossCents ?? null)
+        : rawInput.manualMonthlyGrossCents,
+  });
   const now = new Date().toISOString();
   await db.runAsync(
     `INSERT INTO user_profile(
        id,federal_state,holiday_region,weekly_minutes,time_zone,pay_group,pay_level,
-       tariff_sector,tariff_region,full_time_weekly_minutes,regular_rotating_night_work,
-       sunday_holiday_work_eligible,all_employment_work_recorded,created_at,updated_at
-     ) VALUES('singleton',?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       tariff_sector,tariff_region,full_time_weekly_minutes,industry,manual_monthly_gross_cents,
+       regular_rotating_night_work,sunday_holiday_work_eligible,all_employment_work_recorded,
+       created_at,updated_at
+     ) VALUES('singleton',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        federal_state=excluded.federal_state,
        holiday_region=excluded.holiday_region,
@@ -37,6 +50,8 @@ export async function saveProfile(
        tariff_sector=excluded.tariff_sector,
        tariff_region=excluded.tariff_region,
        full_time_weekly_minutes=excluded.full_time_weekly_minutes,
+       industry=excluded.industry,
+       manual_monthly_gross_cents=excluded.manual_monthly_gross_cents,
        regular_rotating_night_work=excluded.regular_rotating_night_work,
        sunday_holiday_work_eligible=excluded.sunday_holiday_work_eligible,
        all_employment_work_recorded=excluded.all_employment_work_recorded,
@@ -50,6 +65,8 @@ export async function saveProfile(
     input.tariff?.sector ?? null,
     input.tariff?.tariffRegion ?? "OTHER",
     input.tariff?.fullTimeWeeklyMinutes ?? null,
+    input.industry ?? null,
+    input.manualMonthlyGrossCents ?? null,
     input.regularRotatingNightWork === null ? null : input.regularRotatingNightWork ? 1 : 0,
     input.sundayHolidayWorkEligible === null ? null : input.sundayHolidayWorkEligible ? 1 : 0,
     input.allEmploymentWorkRecorded === null ? null : input.allEmploymentWorkRecorded ? 1 : 0,

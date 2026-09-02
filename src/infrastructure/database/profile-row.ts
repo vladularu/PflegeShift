@@ -1,5 +1,6 @@
 import type {
   HolidayRegion,
+  Industry,
   PayGroup,
   PayLevel,
   TariffRegion,
@@ -14,6 +15,8 @@ export interface ProfileRow {
   holiday_region: HolidayRegion;
   weekly_minutes: number;
   time_zone: string;
+  industry: Industry | null;
+  manual_monthly_gross_cents: number | null;
   pay_group: PayGroup | null;
   pay_level: PayLevel | null;
   tariff_sector: TariffSector | null;
@@ -53,6 +56,8 @@ export function mapProfileRow(row: ProfileRow): UserProfile {
     holidayRegion,
     weeklyMinutes: row.weekly_minutes,
     timeZone: row.time_zone,
+    industry: row.industry,
+    manualMonthlyGrossCents: row.manual_monthly_gross_cents,
     regularRotatingNightWork: nullableBoolean(row.regular_rotating_night_work),
     sundayHolidayWorkEligible: nullableBoolean(row.sunday_holiday_work_eligible),
     allEmploymentWorkRecorded: nullableBoolean(row.all_employment_work_recorded),
@@ -63,6 +68,8 @@ export function mapProfileRow(row: ProfileRow): UserProfile {
     holidayRegion: validated.holidayRegion ?? defaultHolidayRegion(row.federal_state),
     weeklyMinutes: validated.weeklyMinutes,
     timeZone: validated.timeZone,
+    industry: validated.industry ?? null,
+    manualMonthlyGrossCents: validated.manualMonthlyGrossCents ?? null,
     regularRotatingNightWork: validated.regularRotatingNightWork ?? null,
     sundayHolidayWorkEligible: validated.sundayHolidayWorkEligible ?? null,
     allEmploymentWorkRecorded: validated.allEmploymentWorkRecorded ?? null,
