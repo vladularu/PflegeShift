@@ -1,11 +1,23 @@
 import { render } from "@testing-library/react-native";
-import { describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import { SettingsScreen } from "@/features/settings/settings-screen";
 import {
   isDeveloperModeEnabled,
   setDeveloperMode,
 } from "@/infrastructure/database/dev-tools-repository";
+
+const mockBaseProfile = {
+  federalState: "NW",
+  holidayRegion: "NONE",
+  weeklyMinutes: 2_400,
+  timeZone: "Europe/Berlin",
+  manualMonthlyGrossCents: null as number | null,
+  tariff: null,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+};
+let mockProfile = { ...mockBaseProfile };
 
 jest.mock("expo-sqlite", () => ({
   useSQLiteContext: () => ({}),
@@ -19,14 +31,7 @@ jest.mock("expo-router", () => ({
 jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftStatus: () => ({ error: null, ready: true, reload: jest.fn() }),
   usePflegeShiftProfile: () => ({
-    profile: {
-      federalState: "NW",
-      weeklyMinutes: 2_400,
-      timeZone: "Europe/Berlin",
-      tariff: null,
-      createdAt: "2026-01-01T00:00:00.000Z",
-      updatedAt: "2026-01-01T00:00:00.000Z",
-    },
+    profile: mockProfile,
   }),
   usePflegeShiftTariff: () => ({
     workPatternSettings: {
@@ -62,6 +67,10 @@ jest.mock("@/infrastructure/dev-tools-policy", () => ({
 }));
 
 describe("SettingsScreen production gates", () => {
+  beforeEach(() => {
+    mockProfile = { ...mockBaseProfile };
+  });
+
   it("ignores stale developer preferences and exposes no activation path", async () => {
     const screen = await render(<SettingsScreen />);
 
@@ -70,5 +79,16 @@ describe("SettingsScreen production gates", () => {
     expect(isDeveloperModeEnabled).not.toHaveBeenCalled();
     expect(setDeveloperMode).not.toHaveBeenCalled();
     expect(screen.getByText("Über LUNA Shift")).toBeTruthy();
+    expect(screen.getByText("Gehalt")).toBeTruthy();
+    expect(screen.queryByText("Schichtmodell")).toBeNull();
+  });
+
+  it("shows a manual monthly gross without TVöD-only settings", async () => {
+    mockProfile = { ...mockBaseProfile, manualMonthlyGrossCents: 345_050 };
+
+    const screen = await render(<SettingsScreen />);
+
+    expect(screen.getByText(/Manuell.*3\.450,50/)).toBeTruthy();
+    expect(screen.queryByText("Schichtmodell")).toBeNull();
   });
 });

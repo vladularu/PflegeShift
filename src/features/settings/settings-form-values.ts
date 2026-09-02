@@ -2,6 +2,7 @@ import { defaultTariffRegion, tariffFullTimeWeeklyMinutes } from "@/domain/emplo
 import type {
   FederalState,
   HolidayRegion,
+  Industry,
   PayGroup,
   PayLevel,
   TariffRegion,
@@ -10,11 +11,16 @@ import type {
 } from "@/domain/types";
 
 export type EvidenceFormValue = "UNKNOWN" | "YES" | "NO";
+export type IndustryFormValue = Industry | "UNKNOWN";
+export type SalaryMode = "UNSET" | "TVOED_P" | "MANUAL";
 
 export interface SettingsFormValues {
   readonly federalState: FederalState;
   readonly holidayRegion: HolidayRegion;
   readonly weeklyHours: string;
+  readonly industry: IndustryFormValue;
+  readonly salaryMode: SalaryMode;
+  readonly manualMonthlyGross: string;
   readonly regularRotatingNightWork: EvidenceFormValue;
   readonly sundayHolidayWorkEligible: EvidenceFormValue;
   readonly allEmploymentWorkRecorded: EvidenceFormValue;
@@ -37,11 +43,37 @@ function formatHours(minutes: number): string {
   return String(minutes / 60).replace(".", ",");
 }
 
+function formatManualMonthlyGross(cents: number | null | undefined): string {
+  return cents == null ? "" : (cents / 100).toFixed(2).replace(".", ",");
+}
+
+export function parseManualMonthlyGrossCents(value: string): number | null {
+  const trimmed = value.trim();
+  if (!/^\d+(?:[,.]\d{1,2})?$/.test(trimmed)) return null;
+  const euros = Number(trimmed.replace(",", "."));
+  const cents = Math.round(euros * 100);
+  return Number.isSafeInteger(cents) && cents >= 1 && cents <= 10_000_000 ? cents : null;
+}
+
+export function manualMonthlyGrossFieldError(value: string): string | null {
+  return parseManualMonthlyGrossCents(value) === null
+    ? "Bitte ein Monatsbrutto zwischen 0,01 € und 100.000 € angeben."
+    : null;
+}
+
 export function settingsFormValues(profile: UserProfile): SettingsFormValues {
   return Object.freeze({
     federalState: profile.federalState,
     holidayRegion: profile.holidayRegion,
     weeklyHours: formatHours(profile.weeklyMinutes),
+    industry: profile.industry ?? "UNKNOWN",
+    salaryMode:
+      profile.manualMonthlyGrossCents != null
+        ? "MANUAL"
+        : profile.tariff !== null
+          ? "TVOED_P"
+          : "UNSET",
+    manualMonthlyGross: formatManualMonthlyGross(profile.manualMonthlyGrossCents),
     regularRotatingNightWork: evidenceFormValue(profile.regularRotatingNightWork),
     sundayHolidayWorkEligible: evidenceFormValue(profile.sundayHolidayWorkEligible),
     allEmploymentWorkRecorded: evidenceFormValue(profile.allEmploymentWorkRecorded),
