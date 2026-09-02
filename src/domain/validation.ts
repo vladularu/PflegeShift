@@ -3,6 +3,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import {
   ALLOWANCE_STATUSES,
   FEDERAL_STATES,
+  INDUSTRIES,
   PAY_GROUPS,
   PAY_LEVELS,
   NOTIFICATION_UNITS,
@@ -10,6 +11,7 @@ import {
   SHIFT_TYPES,
   type AllowanceStatus,
   type FederalState,
+  type Industry,
   type EntryLocation,
   type EntryNotification,
   type MonthlyTariffDecision,
@@ -134,6 +136,22 @@ export function requireWeeklyMinutes(value: number): number {
   return value;
 }
 
+export function requireIndustry(value: string | null | undefined): Industry | null {
+  if (value === null || value === undefined) return null;
+  if (!INDUSTRIES.includes(value as Industry)) {
+    throw new ValidationError("Bitte einen gültigen Berufsbereich wählen.");
+  }
+  return value as Industry;
+}
+
+export function requireManualMonthlyGrossCents(value: number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  if (!Number.isInteger(value) || value < 1 || value > 10_000_000) {
+    throw new ValidationError("Bitte ein gültiges monatliches Brutto angeben.");
+  }
+  return value;
+}
+
 export function requireTimeZone(value: string): string {
   const trimmed = value.trim();
   try {
@@ -146,6 +164,8 @@ export function requireTimeZone(value: string): string {
 
 export function validateProfile(input: SaveProfileInput): SaveProfileInput {
   const federalState = requireFederalState(input.federalState);
+  const industry = requireIndustry(input.industry);
+  const manualMonthlyGrossCents = requireManualMonthlyGrossCents(input.manualMonthlyGrossCents);
   const holidayRegion = input.holidayRegion ?? defaultHolidayRegion(federalState);
   if (!isHolidayRegionCompatible(federalState, holidayRegion)) {
     throw new ValidationError("Die regionale Feiertagsregel passt nicht zum Bundesland.");
@@ -177,11 +197,16 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
       );
     }
   }
+  if (tariff !== null && tariff !== undefined && manualMonthlyGrossCents !== null) {
+    throw new ValidationError("Bitte entweder manuelles Gehalt oder TVöD-P wählen.");
+  }
   return {
     federalState,
     holidayRegion,
     weeklyMinutes: requireWeeklyMinutes(input.weeklyMinutes),
     timeZone: requireTimeZone(input.timeZone.trim() || "Europe/Berlin"),
+    industry,
+    manualMonthlyGrossCents,
     regularRotatingNightWork: input.regularRotatingNightWork ?? null,
     sundayHolidayWorkEligible: input.sundayHolidayWorkEligible ?? null,
     allEmploymentWorkRecorded: input.allEmploymentWorkRecorded ?? null,

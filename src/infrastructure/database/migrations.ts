@@ -483,4 +483,23 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     `);
     await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 11, now);
   }
+
+  const migration12 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=12",
+  );
+  if (migration12 === null) {
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "industry",
+      "TEXT CHECK (industry IN ('HEALTHCARE','EMERGENCY_SERVICES','SOCIAL_SERVICES','OTHER_SHIFT_WORK'))",
+    );
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "manual_monthly_gross_cents",
+      "INTEGER CHECK (manual_monthly_gross_cents BETWEEN 1 AND 10000000)",
+    );
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 12, now);
+  }
 }

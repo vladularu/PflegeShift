@@ -75,6 +75,19 @@ export const TARIFF_REGION_LABELS: Readonly<Record<TariffRegion, string>> = {
   KAV_BW: "KAV Baden-Württemberg",
   OTHER: "Übrige VKA-Tarifgebiete",
 };
+export const INDUSTRIES = [
+  "HEALTHCARE",
+  "EMERGENCY_SERVICES",
+  "SOCIAL_SERVICES",
+  "OTHER_SHIFT_WORK",
+] as const;
+export type Industry = (typeof INDUSTRIES)[number];
+export const INDUSTRY_LABELS: Readonly<Record<Industry, string>> = {
+  HEALTHCARE: "Pflege & Gesundheitswesen",
+  EMERGENCY_SERVICES: "Rettungsdienst",
+  SOCIAL_SERVICES: "Soziale Dienste",
+  OTHER_SHIFT_WORK: "Andere Schichtarbeit",
+};
 export const HOLIDAY_REGIONS = [
   "UNKNOWN",
   "NONE",
@@ -127,6 +140,8 @@ export interface UserProfile {
   readonly holidayRegion: HolidayRegion;
   readonly weeklyMinutes: number;
   readonly timeZone: string;
+  readonly industry?: Industry | null;
+  readonly manualMonthlyGrossCents?: number | null;
   readonly regularRotatingNightWork: boolean | null;
   readonly sundayHolidayWorkEligible: boolean | null;
   readonly allEmploymentWorkRecorded: boolean | null;
@@ -321,6 +336,8 @@ export interface SaveProfileInput {
   readonly holidayRegion?: HolidayRegion;
   readonly weeklyMinutes: number;
   readonly timeZone: string;
+  readonly industry?: Industry | null;
+  readonly manualMonthlyGrossCents?: number | null;
   readonly regularRotatingNightWork?: boolean | null;
   readonly sundayHolidayWorkEligible?: boolean | null;
   readonly allEmploymentWorkRecorded?: boolean | null;

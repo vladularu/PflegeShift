@@ -99,6 +99,57 @@ describe("domain validation", () => {
     ).toThrow("gültige Zeitzone");
   });
 
+  it("validates optional industry and manual monthly gross", () => {
+    expect(
+      validateProfile({
+        federalState: "NW",
+        weeklyMinutes: 2_310,
+        timeZone: "Europe/Berlin",
+        industry: "SOCIAL_SERVICES",
+        manualMonthlyGrossCents: 420_000,
+      }),
+    ).toMatchObject({
+      industry: "SOCIAL_SERVICES",
+      manualMonthlyGrossCents: 420_000,
+      tariff: null,
+    });
+
+    expect(() =>
+      validateProfile({
+        federalState: "NW",
+        weeklyMinutes: 2_310,
+        timeZone: "Europe/Berlin",
+        industry: "INVALID" as "HEALTHCARE",
+      }),
+    ).toThrow("Berufsbereich");
+    expect(() =>
+      validateProfile({
+        federalState: "NW",
+        weeklyMinutes: 2_310,
+        timeZone: "Europe/Berlin",
+        manualMonthlyGrossCents: 0,
+      }),
+    ).toThrow("monatliches Brutto");
+  });
+
+  it("keeps tariff and manual monthly gross mutually exclusive", () => {
+    expect(() =>
+      validateProfile({
+        federalState: "NW",
+        weeklyMinutes: 2_310,
+        timeZone: "Europe/Berlin",
+        manualMonthlyGrossCents: 420_000,
+        tariff: {
+          payGroup: "P8",
+          payLevel: 4,
+          sector: "BT_K",
+          tariffRegion: "OTHER",
+          fullTimeWeeklyMinutes: 2_310,
+        },
+      }),
+    ).toThrow("entweder manuelles Gehalt oder TVöD-P");
+  });
+
   it("validates every persisted tariff-decision field at runtime", () => {
     const valid = {
       month: "2026-08",
