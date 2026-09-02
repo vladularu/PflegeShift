@@ -42,47 +42,50 @@ export function buildRuleCatalogRuntimePort(
 ): RuleCatalogRuntimePort {
   const config = options.config ?? createRuleCatalogChannelConfig();
   const remoteConfig = config.remote;
+  const verificationPolicy = config.verificationPolicy;
   const now = options.now ?? (() => new Date());
-  const remote = remoteConfig
-    ? createRuleCatalogHttpClient({
-        baseUrl: remoteConfig.baseUrl,
-        fetchImplementation: options.fetchImplementation,
-      })
-    : null;
+  const remote =
+    remoteConfig !== null && verificationPolicy !== null
+      ? createRuleCatalogHttpClient({
+          baseUrl: remoteConfig.baseUrl,
+          fetchImplementation: options.fetchImplementation,
+        })
+      : null;
   const synchronizeCatalog: SynchronizeRuleCatalog = (activeGeneration, syncOptions = {}) => {
-    if (remote === null || remoteConfig === null) {
+    if (remote === null || remoteConfig === null || verificationPolicy === null) {
       return Promise.resolve(Object.freeze({ status: "DISABLED" }));
     }
     const activeRemoteConfig = remoteConfig;
+    const activeVerificationPolicy = verificationPolicy;
     return synchronizeRuleCatalog(activeGeneration, {
       remote,
       claimCheck: () =>
         syncOptions.force === true
           ? claimRuleCatalogCheck(
               db,
-              activeRemoteConfig.channel,
+              activeVerificationPolicy.expectedChannel,
               now(),
               activeRemoteConfig.failureRetryMilliseconds,
               true,
             )
           : claimRuleCatalogCheck(
               db,
-              activeRemoteConfig.channel,
+              activeVerificationPolicy.expectedChannel,
               now(),
               activeRemoteConfig.failureRetryMilliseconds,
             ),
       completeCheck: (generation) =>
         completeRuleCatalogCheck(
           db,
-          activeRemoteConfig.channel,
+          activeVerificationPolicy.expectedChannel,
           generation,
           now(),
           activeRemoteConfig.checkIntervalMilliseconds,
         ),
       verifyManifest: (manifestJson) =>
-        verifyRuleManifestOnDevice(manifestJson, activeRemoteConfig.verificationPolicy),
+        verifyRuleManifestOnDevice(manifestJson, activeVerificationPolicy),
       verifyArtifacts: (artifacts) =>
-        verifyRuleCatalogArtifactsOnDevice(artifacts, activeRemoteConfig.verificationPolicy),
+        verifyRuleCatalogArtifactsOnDevice(artifacts, activeVerificationPolicy),
       activate: (artifacts) => activateRuleCatalog(db, artifacts),
     });
   };

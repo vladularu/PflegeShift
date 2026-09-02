@@ -4,6 +4,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { PREVIEW_RULE_CATALOG_TRUST } from "../src/composition/rule-catalog-preview-trust.ts";
+import { PRODUCTION_RULE_CATALOG_TRUST } from "../src/composition/rule-catalog-production-trust.ts";
 import { validateProductionRuleCatalogChannelConfigSchema } from "../src/rules/schema-validators.generated.js";
 import { ruleCatalogDeliveryChannel } from "./rule-catalog-delivery-channels.mjs";
 import { ruleCatalogDeliveryConstants } from "./supabase-rule-catalog-storage.mjs";
@@ -45,7 +46,30 @@ function decodeCanonicalPublicKey(value) {
   return decoded;
 }
 
-export function preflightProductionRuleCatalogConfig(config) {
+function clientTrustMatchesContract(trustedPublicKeys, clientTrust) {
+  if (clientTrust.channel !== "PRODUCTION") return false;
+  if (clientTrust.trustedPublicKeys.length !== trustedPublicKeys.length) return false;
+
+  const clientKeys = new Map(
+    clientTrust.trustedPublicKeys.map(({ keyId, publicKey }) => {
+      if (
+        publicKey.length !== 32 ||
+        publicKey.some((value) => !Number.isInteger(value) || value < 0 || value > 255)
+      ) {
+        return [keyId, null];
+      }
+      return [keyId, Buffer.from(publicKey).toString("base64url")];
+    }),
+  );
+  return trustedPublicKeys.every(
+    ({ keyId, publicKeyBase64Url }) => clientKeys.get(keyId) === publicKeyBase64Url,
+  );
+}
+
+export function preflightProductionRuleCatalogConfig(
+  config,
+  clientTrust = PRODUCTION_RULE_CATALOG_TRUST,
+) {
   if (!validateProductionRuleCatalogChannelConfigSchema(config)) {
     return result("BLOCKED", schemaIssues());
   }
@@ -182,6 +206,20 @@ export function preflightProductionRuleCatalogConfig(config) {
           "INVALID_PUBLIC_KEY",
           "/trust/trustedPublicKeys",
           "Production public signing keys must be canonical base64url for exactly 32 bytes.",
+        ),
+      );
+    }
+    if (
+      !reusedPreviewKey &&
+      !duplicateKeyId &&
+      !invalidPublicKey &&
+      !clientTrustMatchesContract(trustedPublicKeys, clientTrust)
+    ) {
+      issues.push(
+        issue(
+          "CLIENT_TRUST_MISMATCH",
+          "/trust/trustedPublicKeys",
+          "The Production public trust distributed to the app differs from the committed Candidate.",
         ),
       );
     }

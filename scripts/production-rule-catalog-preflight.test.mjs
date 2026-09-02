@@ -9,6 +9,7 @@ import { promisify } from "node:util";
 import { createRequire } from "node:module";
 
 import { PREVIEW_RULE_CATALOG_TRUST } from "../src/composition/rule-catalog-preview-trust.ts";
+import { PRODUCTION_RULE_CATALOG_TRUST } from "../src/composition/rule-catalog-production-trust.ts";
 import { preflightProductionRuleCatalogConfig } from "./production-rule-catalog-preflight.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -48,7 +49,9 @@ function candidateConfig() {
       trustedPublicKeys: [
         {
           keyId: "production-2026-r1",
-          publicKeyBase64Url: Buffer.alloc(32, 7).toString("base64url"),
+          publicKeyBase64Url: Buffer.from(
+            PRODUCTION_RULE_CATALOG_TRUST.trustedPublicKeys[0].publicKey,
+          ).toString("base64url"),
         },
       ],
     },
@@ -83,6 +86,46 @@ test("complete isolated candidate is ready only for separate manual approval", (
     status: "READY_FOR_APPROVAL",
     issues: [],
   });
+});
+
+test("committed public trust is distributed to the app without endpoint or secret fields", async () => {
+  const config = JSON.parse(await fs.readFile(contractPath, "utf8"));
+
+  assert.deepEqual(Object.keys(PRODUCTION_RULE_CATALOG_TRUST).sort(), [
+    "channel",
+    "trustedPublicKeys",
+  ]);
+  assert.equal(Object.isFrozen(PRODUCTION_RULE_CATALOG_TRUST), true);
+  assert.equal(Object.isFrozen(PRODUCTION_RULE_CATALOG_TRUST.trustedPublicKeys), true);
+  assert.deepEqual(
+    PRODUCTION_RULE_CATALOG_TRUST.trustedPublicKeys.map(({ keyId, publicKey }) => ({
+      keyId,
+      publicKeyBase64Url: Buffer.from(publicKey).toString("base64url"),
+    })),
+    config.trust.trustedPublicKeys,
+  );
+});
+
+test("preflight blocks drift between the Candidate and the trust distributed to the app", () => {
+  const clientTrustWithDifferentBytes = {
+    channel: "PRODUCTION",
+    trustedPublicKeys: [
+      {
+        keyId: "production-2026-r1",
+        publicKey: Array.from(Buffer.alloc(32, 7)),
+      },
+    ],
+  };
+
+  const result = preflightProductionRuleCatalogConfig(
+    candidateConfig(),
+    clientTrustWithDifferentBytes,
+  );
+  assert.equal(result.status, "BLOCKED");
+  assert.deepEqual(
+    result.issues.map(({ code }) => code),
+    ["CLIENT_TRUST_MISMATCH"],
+  );
 });
 
 test("preflight rejects Preview project and trust reuse", () => {
