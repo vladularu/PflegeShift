@@ -1,3 +1,6 @@
+// Fail closed even when dependency lifecycle scripts were skipped.
+require("./scripts/image-size-guard.cjs").guardImageSize(__dirname, { check: true });
+
 const { getDefaultConfig } = require("expo/metro-config");
 
 /** @type {import("expo/metro-config").MetroConfig} */
