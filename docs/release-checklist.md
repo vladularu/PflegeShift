@@ -12,6 +12,7 @@ Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds 
 - [ ] `npm.cmd run export:ios`
 - [ ] Produktionsaudit enthält keine nicht freigegebenen hohen oder kritischen Befunde
 - [ ] Release-Check bestätigt SQLCipher und deaktivierte Android-App-Datenbackups
+- [ ] Release-Check bestätigt die effektive iOS-Fingerprint-Policy für `internal` und `production`, einschließlich dynamischer App-Konfiguration
 - [ ] Tarifstand für Auswertungsmonate ab April 2027 ergänzt oder der betroffene Zeitraum in der App kontrolliert gesperrt
 - [ ] Arbeitsverzeichnis enthält nur beabsichtigte Release-Änderungen
 
@@ -30,6 +31,39 @@ Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds 
 - [ ] iOS zunächst intern über TestFlight verteilen
 
 Android bleibt technisch im Repository, ist aber pausiert. APK, AAB und Play-Test-Track sind keine Freigabebedingung für den aktuellen iOS-Kandidaten. Vor einer Wiederaufnahme müssen Datenbank-Bootstrap, Kartenkonfiguration und reale Android-Geräteabnahme separat erfolgreich sein.
+
+### iOS-Runtime und OTA-Kompatibilität
+
+iOS verwendet die gemeinsame `runtimeVersion: { "policy": "fingerprint" }` aus
+`app.json`. Eine plattformspezifische Runtime hat laut
+[Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/config/app/#runtimeversion-1)
+Vorrang; feste Werte oder andere Policies dürfen den Fingerprint deshalb weder
+in `app.json` noch in `app.config.ts` überschreiben. `release:check` prüft die
+statische sowie beide aufgelösten App-Varianten; `test:runtime-policy` sichert
+diesen Vertrag auch in `verify:fast` ab.
+
+Build 27 und ältere September-Builds verwenden noch `ios-2026.09.1`, obwohl
+Build 27 mit `expo-document-picker` ein zusätzliches natives Modul enthält.
+Die Umstellung auf Fingerprints benötigt daher einen neuen nativen Preview-Build.
+Sie kann nicht per OTA auf Build 27 übertragen werden. Den neuen Build über die
+bestehende interne App installieren, ohne diese zu löschen; anschließend Dienste,
+Gehalt, JSON-Dateiauswahl und Datenerhalt nach einem Neustart prüfen. Die App-ID,
+EAS-Projekt-ID, Datenbank und Schlüssel bleiben unverändert.
+
+Vor jedem späteren iOS-Preview-OTA:
+
+- `APP_VARIANT=internal` ausdrücklich setzen und die EAS-Umgebung `preview` verwenden.
+- Den aufgelösten Runtime-Wert mit dem installierten Zielbuild vergleichen;
+  `npx.cmd expo-updates runtimeversion:resolve --platform ios` dient als lokale
+  Vorprüfung. Maßgeblich sind die EAS-Metadaten aus derselben Build-/Update-Umgebung.
+- Bei abweichender Runtime einen neuen Build erstellen. Den Wert niemals auf
+  `ios-2026.09.1` zurücksetzen oder einen Fingerprint fest eintragen, um ein Update
+  für einen alten Build passend erscheinen zu lassen.
+- Erst nach gesonderter OTA-Freigabe veröffentlichen und anschließend die Runtime
+  des veröffentlichten Updates sowie dessen Laden auf dem Zielgerät bestätigen.
+
+Ein neuer Build aktualisiert bestehende Installationen erst nach Installation.
+Künftige Updates mit der neuen Runtime erreichen die alten September-Builds nicht.
 
 ## 4. Geräteabnahme
 
