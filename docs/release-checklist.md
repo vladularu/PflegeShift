@@ -65,6 +65,28 @@ Vor jedem späteren iOS-Preview-OTA:
 Ein neuer Build aktualisiert bestehende Installationen erst nach Installation.
 Künftige Updates mit der neuen Runtime erreichen die alten September-Builds nicht.
 
+Der native Tab-Patch verändert beim Prebuild genau
+`node_modules/react-native-screens/ios/tabs/host/RNSTabBarController.mm`.
+`fingerprint.config.js` verwendet für diese Datei beim Hashen dieselbe idempotente
+Patch-Funktion. Damit werden vor und nach Prebuild die tatsächlich kompilierten
+Inhalte berücksichtigt. Andere Dateien werden unverändert gehasht; weder das
+Paket noch der Patch werden ausgeblendet. Die Fingerprint-Konfiguration selbst
+ist ebenfalls eine Hash-Quelle.
+
+Bei Build 28 wurde der Build wegen unterschiedlicher Hashes dieses Pakets vor
+und nach dem Patch abgebrochen. Der zusätzlich in den Logs aufgeführte generierte
+`ios`-Ordner hatte `hash: null` und ging bereits nicht in den Gesamt-Hash ein.
+Die bestehenden CNG-Ausschlüsse bleiben ausreichend; native Quellen in `modules/`
+und `plugins/` müssen weiterhin berücksichtigt werden.
+
+`npm.cmd run test:runtime-policy` prüft die Hash-Transformation auch unter Windows.
+Die CI führt zusätzlich `npm run test:runtime-prebuild` unter Linux im frischen
+Checkout aus: echter iOS-Prebuild ohne Pod-Installation, aktivierter Tab-Patch und
+Vergleich der vollständigen Runtime davor und danach. Dieser Check erzeugt `ios/`
+und verändert die installierte native Quelldatei; lokal nur in einer separaten
+Prüfkopie unter Linux/macOS ausführen. Expo unterstützt den vollständigen
+iOS-Prebuild unter Windows nicht. Der Check ersetzt keinen signierten EAS-Build.
+
 ## 4. Geräteabnahme
 
 Das ausführliche, ausfüllbare Prüfprotokoll steht unter [`docs/iphone-acceptance.md`](iphone-acceptance.md).

@@ -52,6 +52,8 @@ jobs:
       - run: npm ci
       - run: npm run audit:production
       - run: npm run release:check
+      - name: Compare iOS runtime before and after native prebuild
+        run: npm run test:runtime-prebuild
 
   exports:
     name: export-${{ matrix.platform }}
