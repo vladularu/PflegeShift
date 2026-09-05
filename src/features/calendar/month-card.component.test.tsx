@@ -457,7 +457,7 @@ describe("MonthCard", () => {
 
     const day = screen.getByRole("button", { name: new RegExp(formatDateTitle(date)) });
     expect(within(day).getByText("D")).toHaveStyle({
-      color: "#FFFFFF",
+      color: "#171719",
       fontSize: 12,
     });
     expect(within(day).getByText("06:00")).toHaveStyle({

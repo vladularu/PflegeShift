@@ -1,14 +1,14 @@
 import type { ShiftType } from "@/domain/types";
 
 export const SHIFT_COLOR_PAIRS = [
-  { main: "#4FCB68", soft: "#DDF4E2" },
-  { main: "#F05C68", soft: "#F9DDE0" },
-  { main: "#F2A93B", soft: "#FCEBCC" },
-  { main: "#31A7C3", soft: "#D8F0F5" },
-  { main: "#2F80ED", soft: "#DCEAFE" },
+  { main: "#59CA50", soft: "#DDF4D9" },
+  { main: "#E74C55", soft: "#F8D8DA" },
+  { main: "#FFA338", soft: "#FFE7C4" },
+  { main: "#25A3B9", soft: "#D4EFF3" },
+  { main: "#347ED1", soft: "#D9E8FA" },
   { main: "#D95F9A", soft: "#F7DDEC" },
   { main: "#F09A3E", soft: "#FBE8D3" },
-  { main: "#858A8E", soft: "#E5E7E8" },
+  { main: "#929292", soft: "#E7E7E7" },
   { main: "#9B59D0", soft: "#EBDCF4" },
   { main: "#4267D5", soft: "#DDE4F7" },
   { main: "#2AA0B8", soft: "#D8EFF3" },
@@ -25,13 +25,13 @@ export const HOLIDAY_COLOR = "#8B5BD1";
 export const DEFAULT_TEMPLATE_COLOR = "#D95F9A";
 
 export const SHIFT_TYPE_COLORS: Readonly<Record<ShiftType, string>> = {
-  EARLY: "#4FCB68",
-  LATE: "#F05C68",
-  NIGHT: "#F2A93B",
-  DAY: "#31A7C3",
-  TRAINING: "#2F80ED",
-  VACATION: "#858A8E",
+  EARLY: "#59CA50",
+  LATE: "#E74C55",
+  NIGHT: "#FFA338",
+  DAY: "#25A3B9",
+  TRAINING: "#347ED1",
+  VACATION: "#929292",
   SICK: "#F09A3E",
-  FREE: "#858A8E",
+  FREE: "#929292",
   CUSTOM: "#D95F9A",
 };
