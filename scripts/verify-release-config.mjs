@@ -2,6 +2,8 @@ import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { resolve } from "node:path";
 
+import { validateIosRuntimePolicy, validateResolvedIosRuntimePolicies } from "./runtime-policy.mjs";
+
 const projectRoot = resolve(import.meta.dirname, "..");
 
 async function readJson(fileName) {
@@ -16,6 +18,9 @@ const [appConfig, easConfig, packageConfig] = await Promise.all([
 
 const expo = appConfig.expo ?? {};
 const failures = [];
+
+failures.push(...validateIosRuntimePolicy(expo, "app.json"));
+failures.push(...validateResolvedIosRuntimePolicies(projectRoot));
 
 function expect(condition, message) {
   if (!condition) {
@@ -60,10 +65,6 @@ expect(
 expect(
   /^\d+(?:\.\d+){0,2}$/.test(expo.ios?.buildNumber ?? ""),
   "ios.buildNumber muss aus einer bis drei numerischen Komponenten bestehen.",
-);
-expect(
-  expo.ios?.runtimeVersion === "ios-2026.09.1",
-  "Die iOS-Runtime-Version muss den nativen September-Stand eindeutig isolieren.",
 );
 expect(
   expo.ios?.config?.usesNonExemptEncryption === false,

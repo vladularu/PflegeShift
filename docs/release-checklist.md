@@ -12,6 +12,7 @@ Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds 
 - [ ] `npm.cmd run export:ios`
 - [ ] Produktionsaudit enthält keine nicht freigegebenen hohen oder kritischen Befunde
 - [ ] Release-Check bestätigt SQLCipher und deaktivierte Android-App-Datenbackups
+- [ ] Release-Check bestätigt die effektive iOS-Fingerprint-Policy für `internal` und `production`, einschließlich dynamischer App-Konfiguration
 - [ ] Tarifstand für Auswertungsmonate ab April 2027 ergänzt oder der betroffene Zeitraum in der App kontrolliert gesperrt
 - [ ] Arbeitsverzeichnis enthält nur beabsichtigte Release-Änderungen
 
@@ -30,6 +31,61 @@ Diese Checkliste trennt lokale technische Qualität von signierten Store-Builds 
 - [ ] iOS zunächst intern über TestFlight verteilen
 
 Android bleibt technisch im Repository, ist aber pausiert. APK, AAB und Play-Test-Track sind keine Freigabebedingung für den aktuellen iOS-Kandidaten. Vor einer Wiederaufnahme müssen Datenbank-Bootstrap, Kartenkonfiguration und reale Android-Geräteabnahme separat erfolgreich sein.
+
+### iOS-Runtime und OTA-Kompatibilität
+
+iOS verwendet die gemeinsame `runtimeVersion: { "policy": "fingerprint" }` aus
+`app.json`. Eine plattformspezifische Runtime hat laut
+[Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/config/app/#runtimeversion-1)
+Vorrang; feste Werte oder andere Policies dürfen den Fingerprint deshalb weder
+in `app.json` noch in `app.config.ts` überschreiben. `release:check` prüft die
+statische sowie beide aufgelösten App-Varianten; `test:runtime-policy` sichert
+diesen Vertrag auch in `verify:fast` ab.
+
+Build 27 und ältere September-Builds verwenden noch `ios-2026.09.1`, obwohl
+Build 27 mit `expo-document-picker` ein zusätzliches natives Modul enthält.
+Die Umstellung auf Fingerprints benötigt daher einen neuen nativen Preview-Build.
+Sie kann nicht per OTA auf Build 27 übertragen werden. Den neuen Build über die
+bestehende interne App installieren, ohne diese zu löschen; anschließend Dienste,
+Gehalt, JSON-Dateiauswahl und Datenerhalt nach einem Neustart prüfen. Die App-ID,
+EAS-Projekt-ID, Datenbank und Schlüssel bleiben unverändert.
+
+Vor jedem späteren iOS-Preview-OTA:
+
+- `APP_VARIANT=internal` ausdrücklich setzen und die EAS-Umgebung `preview` verwenden.
+- Den aufgelösten Runtime-Wert mit dem installierten Zielbuild vergleichen;
+  `npx.cmd expo-updates runtimeversion:resolve --platform ios` dient als lokale
+  Vorprüfung. Maßgeblich sind die EAS-Metadaten aus derselben Build-/Update-Umgebung.
+- Bei abweichender Runtime einen neuen Build erstellen. Den Wert niemals auf
+  `ios-2026.09.1` zurücksetzen oder einen Fingerprint fest eintragen, um ein Update
+  für einen alten Build passend erscheinen zu lassen.
+- Erst nach gesonderter OTA-Freigabe veröffentlichen und anschließend die Runtime
+  des veröffentlichten Updates sowie dessen Laden auf dem Zielgerät bestätigen.
+
+Ein neuer Build aktualisiert bestehende Installationen erst nach Installation.
+Künftige Updates mit der neuen Runtime erreichen die alten September-Builds nicht.
+
+Der native Tab-Patch verändert beim Prebuild genau
+`node_modules/react-native-screens/ios/tabs/host/RNSTabBarController.mm`.
+`fingerprint.config.js` verwendet für diese Datei beim Hashen dieselbe idempotente
+Patch-Funktion. Damit werden vor und nach Prebuild die tatsächlich kompilierten
+Inhalte berücksichtigt. Andere Dateien werden unverändert gehasht; weder das
+Paket noch der Patch werden ausgeblendet. Die Fingerprint-Konfiguration selbst
+ist ebenfalls eine Hash-Quelle.
+
+Bei Build 28 wurde der Build wegen unterschiedlicher Hashes dieses Pakets vor
+und nach dem Patch abgebrochen. Der zusätzlich in den Logs aufgeführte generierte
+`ios`-Ordner hatte `hash: null` und ging bereits nicht in den Gesamt-Hash ein.
+Die bestehenden CNG-Ausschlüsse bleiben ausreichend; native Quellen in `modules/`
+und `plugins/` müssen weiterhin berücksichtigt werden.
+
+`npm.cmd run test:runtime-policy` prüft die Hash-Transformation auch unter Windows.
+Die CI führt zusätzlich `npm run test:runtime-prebuild` unter Linux im frischen
+Checkout aus: echter iOS-Prebuild ohne Pod-Installation, aktivierter Tab-Patch und
+Vergleich der vollständigen Runtime davor und danach. Dieser Check erzeugt `ios/`
+und verändert die installierte native Quelldatei; lokal nur in einer separaten
+Prüfkopie unter Linux/macOS ausführen. Expo unterstützt den vollständigen
+iOS-Prebuild unter Windows nicht. Der Check ersetzt keinen signierten EAS-Build.
 
 ## 4. Geräteabnahme
 
