@@ -20,11 +20,12 @@ describe("shift appearance catalog", () => {
 
   it("uses the reference-like standard shift colors", () => {
     expect(SHIFT_TYPE_COLORS).toMatchObject({
-      EARLY: "#4FCB68",
-      LATE: "#F05C68",
-      NIGHT: "#F2A93B",
-      DAY: "#31A7C3",
-      VACATION: "#858A8E",
+      EARLY: "#59CA50",
+      LATE: "#E74C55",
+      NIGHT: "#FFA338",
+      DAY: "#25A3B9",
+      TRAINING: "#347ED1",
+      VACATION: "#929292",
       SICK: "#F09A3E",
     });
   });
