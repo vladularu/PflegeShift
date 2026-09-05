@@ -9,7 +9,7 @@ und eine spätere Synchronisation kann Löschungen eindeutig übertragen.
 
 „Löschen“ entfernt einen Dienst, Termin oder eine Vorlage sofort aus der
 normalen App-Oberfläche und allen Berechnungen. Es gibt derzeit keine sichtbare
-Wiederherstellungsfunktion. Der vollständige Datensatz bleibt jedoch zunächst
+Einzelwiederherstellung für gelöschte Einträge. Der vollständige Datensatz bleibt jedoch zunächst
 verschlüsselt in der lokalen Datenbank. Diese verzögerte physische Löschung ist
 in der App unter **Mehr → Lokale Datenspeicherung** sichtbar beschrieben.
 
@@ -22,6 +22,16 @@ Export außerhalb der App aber nicht verschlüsselt und muss geschützt abgelegt
 werden. Testlabor-Zustand, Systemmitteilungsplanung und Regelwerkscache sind
 nicht enthalten. Ein offener Testlabor-Lauf blockiert den Export, damit keine
 Testdaten anstelle des gesicherten Originals exportiert werden.
+
+Eine lokal ausgewählte JSON-Sicherung wird vor jeder Änderung vollständig auf
+Dateityp, Größe, Formatversion, Datenbankschema, Feldtypen, Verknüpfungen und
+SHA-256-Prüfwert geprüft. Die App zeigt anschließend Zeitpunkt, Zeitraum und
+Datensatzanzahlen an. Erst nach einer ausdrücklichen Ersetzen-Bestätigung werden
+die enthaltenen Nutzerdaten in einer Transaktion wiederhergestellt. Schlägt die
+Transaktion fehl, bleiben die bisherigen Daten vollständig erhalten. Registrierte
+Eintragserinnerungen werden vor dem Ersetzen abgebrochen und nach dem Reload aus
+den wiederhergestellten Daten neu aufgebaut. Ein offener Testlabor-Lauf blockiert
+auch die Wiederherstellung.
 
 ## Aufbewahrungsfrist
 

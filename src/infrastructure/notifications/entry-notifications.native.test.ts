@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { ShiftEntry } from "@/domain/types";
-import { syncEntryNotifications } from "@/infrastructure/notifications/entry-notifications.native";
+import {
+  cancelAllEntryNotifications,
+  syncEntryNotifications,
+} from "@/infrastructure/notifications/entry-notifications.native";
 
 const notificationMocks = vi.hoisted(() => ({
   cancel: vi.fn(),
@@ -12,6 +15,7 @@ const notificationMocks = vi.hoisted(() => ({
   setHandler: vi.fn(),
 }));
 const repositoryMocks = vi.hoisted(() => ({
+  listAllIds: vi.fn(),
   listIds: vi.fn(),
   replace: vi.fn(),
 }));
@@ -26,6 +30,7 @@ vi.mock("expo-notifications", () => ({
 }));
 
 vi.mock("@/infrastructure/notifications/notification-schedule-repository", () => ({
+  listAllScheduledNotificationIds: repositoryMocks.listAllIds,
   listScheduledNotificationIds: repositoryMocks.listIds,
   replaceScheduledNotifications: repositoryMocks.replace,
 }));
@@ -58,12 +63,24 @@ const baseShift: ShiftEntry = {
 describe("entry alarms", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    repositoryMocks.listAllIds.mockResolvedValue([]);
     repositoryMocks.listIds.mockResolvedValue([]);
     repositoryMocks.replace.mockResolvedValue(undefined);
     notificationMocks.getPermissions.mockResolvedValue({ granted: true });
     notificationMocks.schedule
       .mockResolvedValueOnce("notification-1")
       .mockResolvedValueOnce("alarm-1");
+  });
+
+  it("cancels every registered entry notification before a restore", async () => {
+    repositoryMocks.listAllIds.mockResolvedValue(["notification-2", "notification-1"]);
+
+    await cancelAllEntryNotifications({} as SQLiteDatabase);
+
+    expect(notificationMocks.cancel).toHaveBeenCalledTimes(2);
+    expect(notificationMocks.cancel).toHaveBeenNthCalledWith(1, "notification-2");
+    expect(notificationMocks.cancel).toHaveBeenNthCalledWith(2, "notification-1");
+    expect(repositoryMocks.replace).not.toHaveBeenCalled();
   });
 
   it("schedules an audible alarm independently from an earlier notification", async () => {

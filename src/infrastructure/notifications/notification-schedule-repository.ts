@@ -2,6 +2,15 @@ import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { CalendarEntry } from "@/domain/types";
 
+export async function listAllScheduledNotificationIds(
+  db: SQLiteDatabase,
+): Promise<readonly string[]> {
+  const rows = await db.getAllAsync<{ notification_id: string }>(
+    "SELECT notification_id FROM scheduled_entry_notifications ORDER BY notification_id",
+  );
+  return Object.freeze(rows.map((row) => row.notification_id));
+}
+
 export async function listScheduledNotificationIds(
   db: SQLiteDatabase,
   entry: Pick<CalendarEntry, "id" | "kind">,

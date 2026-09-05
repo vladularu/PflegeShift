@@ -6,6 +6,7 @@ import { PRODUCT_NAME } from "@/brand";
 import type { CalendarEntry, EntryNotification } from "@/domain/types";
 import { expandAppointmentSeries } from "@/engine/recurrence";
 import {
+  listAllScheduledNotificationIds,
   listScheduledNotificationIds,
   replaceScheduledNotifications,
 } from "@/infrastructure/notifications/notification-schedule-repository";
@@ -83,6 +84,11 @@ function occurrenceDates(entry: CalendarEntry, today: string, endDate: string): 
       .slice(0, MAX_PENDING_FOR_ENTRY)
       .map((occurrence) => occurrence.date),
   );
+}
+
+export async function cancelAllEntryNotifications(db: SQLiteDatabase): Promise<void> {
+  const ids = await listAllScheduledNotificationIds(db);
+  await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id)));
 }
 
 export async function cancelEntryNotifications(

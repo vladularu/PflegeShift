@@ -18,5 +18,6 @@ describe("SettingsInfoDetailsScreen storage disclosure", () => {
       screen.getByText(/Der verschlüsselte Datensatz bleibt 90 Tage lokal gespeichert/),
     ).toBeTruthy();
     expect(screen.getByText(/Gelöschte Vorlagen bleiben länger erhalten/)).toBeTruthy();
+    expect(screen.getByText(/vor dem Wiederherstellen prüfen/)).toBeTruthy();
   });
 });
