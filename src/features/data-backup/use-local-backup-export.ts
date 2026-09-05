@@ -1,11 +1,12 @@
 import Constants from "expo-constants";
-import { CryptoDigestAlgorithm, digestStringAsync } from "expo-crypto";
+import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from "expo-crypto";
 import { File, Paths } from "expo-file-system";
 import { useSQLiteContext } from "expo-sqlite";
 import { useCallback, useState } from "react";
 import { Platform, Share } from "react-native";
 
 import { PRODUCT_NAME } from "@/brand";
+import { withBackupTempFile } from "@/features/data-backup/backup-temp-file";
 import {
   exportLocalBackup,
   type LocalBackupShareResult,
@@ -24,24 +25,38 @@ export function useLocalBackupExport(): {
     }
     setBusy(true);
     try {
-      return await exportLocalBackup({
-        db,
-        appVersion: Constants.expoConfig?.version ?? null,
-        createdAt: new Date(),
-        sha256: (value) => digestStringAsync(CryptoDigestAlgorithm.SHA256, value),
-        writeFile: async ({ fileName, serialized }) => {
-          const file = new File(Paths.cache, fileName);
-          file.create({ overwrite: true });
-          file.write(serialized);
-          return file.uri;
+      const file = new File(
+        Paths.cache,
+        `LUNA-Shift-Backup-${new Date().toISOString().slice(0, 19).replaceAll(":", "-")}-${randomUUID()}.json`,
+      );
+      let created = false;
+      return await withBackupTempFile({
+        cacheUri: Paths.cache.uri,
+        uri: file.uri,
+        kind: "export",
+        remove: () => {
+          if (created && file.exists) file.delete();
         },
-        shareFile: async (uri) => {
-          const result = await Share.share(
-            { url: uri },
-            { subject: `${PRODUCT_NAME} Datensicherung` },
-          );
-          return result.action === Share.dismissedAction ? "dismissed" : "shared";
-        },
+        run: () =>
+          exportLocalBackup({
+            db,
+            appVersion: Constants.expoConfig?.version ?? null,
+            createdAt: new Date(),
+            sha256: (value) => digestStringAsync(CryptoDigestAlgorithm.SHA256, value),
+            writeFile: async ({ serialized }) => {
+              file.create();
+              created = true;
+              file.write(serialized);
+              return file.uri;
+            },
+            shareFile: async (uri) => {
+              const result = await Share.share(
+                { url: uri },
+                { subject: `${PRODUCT_NAME} Datensicherung` },
+              );
+              return result.action === Share.dismissedAction ? "dismissed" : "shared";
+            },
+          }),
       });
     } finally {
       setBusy(false);

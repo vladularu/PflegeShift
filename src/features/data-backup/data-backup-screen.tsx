@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { Alert, Text, View } from "react-native";
+import { BackupTempCleanupError } from "@/features/data-backup/backup-temp-file";
 
 import {
   LocalBackupReloadRequiredError,
@@ -53,6 +54,13 @@ export function DataBackupScreen() {
         showFeedback({ message: "Backup wurde an iOS übergeben." });
       }
     } catch (error) {
+      if (error instanceof BackupTempCleanupError) {
+        Alert.alert(
+          "Temporäre Datei verblieben",
+          `${error.message} ${error.operationFailed ? "Der Export wurde nicht erfolgreich abgeschlossen." : "Der Teilen-Dialog ist beendet. Prüfe am gewählten Speicherort, ob deine Sicherung gespeichert wurde."} Deine App-Daten sind unverändert.`,
+        );
+        return;
+      }
       const blocked = error instanceof Error && error.name === "LocalBackupBlockedError";
       Alert.alert(
         blocked ? "Testlauf zuerst abschließen" : "Backup fehlgeschlagen",
@@ -68,6 +76,13 @@ export function DataBackupScreen() {
       const result = await selectBackup();
       if (result === "selected") showFeedback({ message: "Backup wurde geprüft." });
     } catch (error) {
+      if (error instanceof BackupTempCleanupError) {
+        Alert.alert(
+          "Temporäre Datei verblieben",
+          `${error.message} Die Wiederherstellung wurde nicht gestartet. Deine App-Daten und die ausgewählte Originaldatei sind unverändert.`,
+        );
+        return;
+      }
       Alert.alert(
         "Backup nicht verwendbar",
         error instanceof LocalBackupSelectionError
