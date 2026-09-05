@@ -3,6 +3,7 @@ import { Alert } from "react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import { DataBackupScreen } from "@/features/data-backup/data-backup-screen";
+import { BackupTempCleanupError } from "@/features/data-backup/backup-temp-file";
 import { LocalBackupSelectionError } from "@/features/data-backup/local-backup-restore-errors";
 import type { LocalBackupRestoreCandidate } from "@/features/data-backup/local-backup-restore-flow";
 
@@ -41,6 +42,36 @@ describe("DataBackupScreen", () => {
     mockShowFeedback.mockReset();
     mockCandidate = null;
     jest.spyOn(Alert, "alert").mockImplementation(() => undefined);
+  });
+
+  it("distinguishes an export cleanup warning from a failed export", async () => {
+    mockCreateAndShare.mockRejectedValue(
+      new BackupTempCleanupError(false, new Error("private path")),
+    );
+    const screen = await render(<DataBackupScreen />);
+    fireEvent.press(screen.getByRole("button", { name: "Backup erstellen und teilen" }));
+    await waitFor(() =>
+      expect(Alert.alert).toHaveBeenCalledWith(
+        "Temporäre Datei verblieben",
+        expect.stringContaining("Prüfe am gewählten Speicherort"),
+      ),
+    );
+    expect(JSON.stringify(jest.mocked(Alert.alert).mock.calls)).not.toContain("private path");
+  });
+
+  it("explains that an import cleanup failure has not replaced any data", async () => {
+    mockSelectBackup.mockRejectedValue(
+      new BackupTempCleanupError(false, new Error("private path")),
+    );
+    const screen = await render(<DataBackupScreen />);
+    fireEvent.press(screen.getByRole("button", { name: "Backup-Datei auswählen" }));
+    await waitFor(() =>
+      expect(Alert.alert).toHaveBeenCalledWith(
+        "Temporäre Datei verblieben",
+        expect.stringContaining("Wiederherstellung wurde nicht gestartet"),
+      ),
+    );
+    expect(mockRestoreSelected).not.toHaveBeenCalled();
   });
 
   it("explains the plaintext export before opening the share sheet", async () => {

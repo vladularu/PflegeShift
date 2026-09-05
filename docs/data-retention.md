@@ -33,6 +33,26 @@ Eintragserinnerungen werden vor dem Ersetzen abgebrochen und nach dem Reload aus
 den wiederhergestellten Daten neu aufgebaut. Ein offener Testlabor-Lauf blockiert
 auch die Wiederherstellung.
 
+## Temporäre Backup-Dateien
+
+Auf dem iPhone wird die temporäre Exportdatei erst nach Abschluss oder Abbruch
+des Teilen-Dialogs entfernt, auch nach Schreib- oder Übergabefehlern. Jeder Export
+erhält einen eigenen Dateinamen; bereits vorhandene Dateien werden nicht überschrieben.
+Die vom DocumentPicker erzeugte Cache-Kopie wird nach dem Einlesen und Prüfen
+entfernt, auch wenn die Prüfung fehlschlägt. Die Vorschau und Wiederherstellung
+verwenden danach ausschließlich die geprüften Daten im Arbeitsspeicher.
+
+Gelöscht wird nur die konkret zugehörige Datei innerhalb des App-Caches.
+Originaldateien im Dateianbieter, ausdrücklich gespeicherte Sicherungen und die
+Datenbank bleiben unberührt. Es gibt keine pauschale Ordnerbereinigung. Kann die
+temporäre Datei nicht entfernt werden, meldet die App dies gesondert; eine
+Wiederherstellung wird in diesem Fall nicht angeboten.
+
+Bei einem Prozessabbruch vor der Bereinigung können Cache-Kopien zurückbleiben.
+Auch Kopien älterer App-Versionen werden nicht nachträglich anhand ihres Namens
+gelöscht. Ihre spätere Entfernung bleibt der Cache-Verwaltung des Betriebssystems
+überlassen. Das Entfernen einer Datei ist keine Zusage forensisch sicherer Löschung.
+
 ## Aufbewahrungsfrist
 
 - Tombstones gelöschter Dienste und Termine werden 90 Tage aufbewahrt und beim

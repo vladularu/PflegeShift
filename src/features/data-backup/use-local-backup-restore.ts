@@ -1,10 +1,11 @@
 import { reloadAppAsync } from "expo";
 import * as DocumentPicker from "expo-document-picker";
 import { CryptoDigestAlgorithm, digestStringAsync } from "expo-crypto";
-import { File } from "expo-file-system";
+import { File, Paths } from "expo-file-system";
 import { useSQLiteContext } from "expo-sqlite";
 import { useCallback, useState } from "react";
 import { Platform } from "react-native";
+import { withBackupTempFile } from "@/features/data-backup/backup-temp-file";
 
 import {
   loadLocalBackupRestoreCandidate,
@@ -62,15 +63,24 @@ export function useLocalBackupRestore(): {
       if (asset === undefined) throw new Error("No document selected");
       const file = new File(asset.uri);
       setCandidate(null);
-      const selected = await loadLocalBackupRestoreCandidate({
-        selection: {
-          name: asset.name,
-          size: asset.size ?? file.size,
-          mimeType: asset.mimeType ?? null,
+      const selected = await withBackupTempFile({
+        cacheUri: Paths.cache.uri,
+        uri: file.uri,
+        kind: "import",
+        remove: () => {
+          if (file.exists) file.delete();
         },
-        maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(db),
-        readText: () => file.text(),
-        sha256: (value) => digestStringAsync(CryptoDigestAlgorithm.SHA256, value),
+        run: async () =>
+          loadLocalBackupRestoreCandidate({
+            selection: {
+              name: asset.name,
+              size: asset.size ?? file.size,
+              mimeType: asset.mimeType ?? null,
+            },
+            maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(db),
+            readText: () => file.text(),
+            sha256: (value) => digestStringAsync(CryptoDigestAlgorithm.SHA256, value),
+          }),
       });
       setCandidate(selected);
       return "selected" as const;
