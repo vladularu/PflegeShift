@@ -28,4 +28,9 @@ describe("CalendarViewTransition", () => {
     expect(typeof scene.props.entering).toBe("function");
     expect(typeof scene.props.exiting).toBe("function");
   });
+
+  it("compiles both custom layout animations as UI-thread worklets", () => {
+    expect(calendarViewEntering("MONTH")).toHaveProperty("__workletHash");
+    expect(calendarViewExiting("YEAR")).toHaveProperty("__workletHash");
+  });
 });

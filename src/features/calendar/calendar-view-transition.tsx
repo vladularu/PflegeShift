@@ -38,52 +38,58 @@ function monthTransformOrigin(month: string): ViewStyle["transformOrigin"] {
 export function calendarViewEntering(viewMode: "MONTH" | "YEAR"): EntryExitAnimationFunction {
   const edgeScale =
     viewMode === "MONTH" ? CALENDAR_VIEW_ZOOM.monthScale : CALENDAR_VIEW_ZOOM.yearScale;
-  return () => ({
-    initialValues: {
-      opacity: CALENDAR_VIEW_ZOOM.edgeOpacity,
-      transform: [{ scale: edgeScale }],
-    },
-    animations: {
-      opacity: withTiming(1, {
-        duration: CALENDAR_VIEW_ZOOM.duration,
-        easing: MOTION.easing.calm,
-        reduceMotion: MOTION.reduceMotion,
-      }),
-      transform: [
-        {
-          scale: withTiming(1, {
-            duration: CALENDAR_VIEW_ZOOM.duration,
-            easing: MOTION.easing.calm,
-            reduceMotion: MOTION.reduceMotion,
-          }),
-        },
-      ],
-    },
-  });
+  return () => {
+    "worklet";
+    return {
+      initialValues: {
+        opacity: CALENDAR_VIEW_ZOOM.edgeOpacity,
+        transform: [{ scale: edgeScale }],
+      },
+      animations: {
+        opacity: withTiming(1, {
+          duration: CALENDAR_VIEW_ZOOM.duration,
+          easing: MOTION.easing.calm,
+          reduceMotion: MOTION.reduceMotion,
+        }),
+        transform: [
+          {
+            scale: withTiming(1, {
+              duration: CALENDAR_VIEW_ZOOM.duration,
+              easing: MOTION.easing.calm,
+              reduceMotion: MOTION.reduceMotion,
+            }),
+          },
+        ],
+      },
+    };
+  };
 }
 
 export function calendarViewExiting(viewMode: "MONTH" | "YEAR"): EntryExitAnimationFunction {
   const edgeScale =
     viewMode === "MONTH" ? CALENDAR_VIEW_ZOOM.monthScale : CALENDAR_VIEW_ZOOM.yearScale;
-  return () => ({
-    initialValues: { opacity: 1, transform: [{ scale: 1 }] },
-    animations: {
-      opacity: withTiming(CALENDAR_VIEW_ZOOM.edgeOpacity, {
-        duration: CALENDAR_VIEW_ZOOM.duration,
-        easing: MOTION.easing.calm,
-        reduceMotion: MOTION.reduceMotion,
-      }),
-      transform: [
-        {
-          scale: withTiming(edgeScale, {
-            duration: CALENDAR_VIEW_ZOOM.duration,
-            easing: MOTION.easing.calm,
-            reduceMotion: MOTION.reduceMotion,
-          }),
-        },
-      ],
-    },
-  });
+  return () => {
+    "worklet";
+    return {
+      initialValues: { opacity: 1, transform: [{ scale: 1 }] },
+      animations: {
+        opacity: withTiming(CALENDAR_VIEW_ZOOM.edgeOpacity, {
+          duration: CALENDAR_VIEW_ZOOM.duration,
+          easing: MOTION.easing.calm,
+          reduceMotion: MOTION.reduceMotion,
+        }),
+        transform: [
+          {
+            scale: withTiming(edgeScale, {
+              duration: CALENDAR_VIEW_ZOOM.duration,
+              easing: MOTION.easing.calm,
+              reduceMotion: MOTION.reduceMotion,
+            }),
+          },
+        ],
+      },
+    };
+  };
 }
 
 export function CalendarViewTransition({
