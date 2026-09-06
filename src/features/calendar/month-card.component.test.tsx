@@ -218,7 +218,7 @@ describe("MonthCard", () => {
     expect(screen.toJSON()).toBeTruthy();
   });
 
-  it("places the ISO week number inside the Monday cell instead of a separate grid column", async () => {
+  it("keeps the calendar grid free of ISO week-number labels", async () => {
     const screen = await render(
       <MonthCard
         bottomReserve={80}
@@ -234,11 +234,9 @@ describe("MonthCard", () => {
     const monday = screen.getByRole("button", {
       name: new RegExp(formatDateTitle("2026-08-03")),
     });
-    const weekNumber = within(monday).getByText("32");
-    expect(weekNumber).toBeTruthy();
     expect(monday).toHaveProp("testID", "calendar-day-current-2026-08-03");
-    expect(weekNumber).toHaveStyle({ left: 1 });
-    expect(monday).toHaveStyle({ marginHorizontal: 0.25 });
+    expect(within(monday).queryByText("32")).toBeNull();
+    expect(monday).toHaveStyle({ marginHorizontal: 0 });
   });
 
   it("fades adjacent-month day cells together with their content", async () => {
@@ -259,7 +257,7 @@ describe("MonthCard", () => {
       name: new RegExp(formatDateTitle(outsideDate)),
     });
     expect(outsideDay).toHaveStyle({
-      backgroundColor: LIGHT_PALETTE.outsideMonth,
+      backgroundColor: "transparent",
       opacity: 1,
     });
     expect(within(outsideDay).getByTestId(`calendar-entry-layer-${outsideDate}`)).toHaveStyle({
@@ -268,7 +266,7 @@ describe("MonthCard", () => {
     expect(within(outsideDay).getByText("Frühdienst")).toBeTruthy();
   });
 
-  it("uses a subtle dedicated surface for in-month weekends only", async () => {
+  it("uses a clean surface and muted date labels for in-month weekends", async () => {
     const screen = await render(
       <MonthCard
         bottomReserve={80}
@@ -288,7 +286,7 @@ describe("MonthCard", () => {
       name: new RegExp(formatDateTitle("2026-08-03")),
     });
 
-    expect(saturday).toHaveStyle({ backgroundColor: LIGHT_PALETTE.weekend });
+    expect(saturday).toHaveStyle({ backgroundColor: "transparent" });
     expect(monday).toHaveStyle({ backgroundColor: "transparent" });
     expect(within(saturday).getByText("1").parent).toHaveStyle({
       backgroundColor: LIGHT_PALETTE.calendarSelection,
@@ -328,9 +326,7 @@ describe("MonthCard", () => {
     const todayAppointment = within(currentDay).getByText("Termin heute");
 
     expect(currentCell).toBeDefined();
-    expect(currentDay).toHaveStyle({
-      backgroundColor: currentCell?.weekend ? LIGHT_PALETTE.weekend : "transparent",
-    });
+    expect(currentDay).toHaveStyle({ backgroundColor: "transparent" });
     expect(dateNumber.parent).toHaveStyle({ backgroundColor: LIGHT_PALETTE.calendarToday });
     expect(dateNumber).toHaveStyle({ color: LIGHT_PALETTE.onCalendarToday });
     expect(todayAppointment).toHaveStyle({ color: LIGHT_PALETTE.text });
@@ -352,9 +348,9 @@ describe("MonthCard", () => {
     const sixthWeekDay = screen.getByRole("button", {
       name: new RegExp(formatDateTitle("2026-10-05")),
     });
-    expect(screen.getByTestId("calendar-week-6")).toHaveStyle({ height: 114 });
+    expect(screen.getByTestId("calendar-week-6")).toHaveStyle({ height: 117 });
     expect(sixthWeekDay).toHaveStyle({
-      backgroundColor: LIGHT_PALETTE.outsideMonth,
+      backgroundColor: "transparent",
       opacity: 1,
     });
     expect(within(sixthWeekDay).getByTestId("calendar-entry-layer-2026-10-05")).toHaveStyle({

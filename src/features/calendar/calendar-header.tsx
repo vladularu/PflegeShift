@@ -3,10 +3,8 @@ import { memo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Extrapolation,
-  FadeIn,
   FadeInDown,
   FadeInUp,
-  FadeOut,
   FadeOutDown,
   FadeOutUp,
   interpolate,
@@ -16,6 +14,10 @@ import Animated, {
 
 import type { CalendarViewMode } from "@/domain/types";
 import { formatMonthTitle } from "@/engine/calendar";
+import {
+  calendarHeaderFadeIn,
+  calendarHeaderFadeOut,
+} from "@/features/calendar/calendar-view-transition";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { CONTROL_HEIGHT, RADII } from "@/theme/tokens";
@@ -78,9 +80,7 @@ export const CalendarHeader = memo(function CalendarHeader({
         : formatMonthTitle(month);
   const titleEntering =
     transition === "CROSSFADE"
-      ? FadeIn.duration(MOTION.duration.deliberate)
-          .easing(MOTION.easing.calm)
-          .reduceMotion(MOTION.reduceMotion)
+      ? calendarHeaderFadeIn()
       : (direction === "NEXT" ? FadeInDown : FadeInUp)
           .duration(MOTION.duration.normal)
           .easing(MOTION.easing.calm)
@@ -90,9 +90,7 @@ export const CalendarHeader = memo(function CalendarHeader({
           .reduceMotion(MOTION.reduceMotion);
   const titleExiting =
     transition === "CROSSFADE"
-      ? FadeOut.duration(MOTION.duration.deliberate)
-          .easing(MOTION.easing.calm)
-          .reduceMotion(MOTION.reduceMotion)
+      ? calendarHeaderFadeOut()
       : (direction === "NEXT" ? FadeOutUp : FadeOutDown)
           .duration(MOTION.duration.normal)
           .easing(MOTION.easing.calm)
@@ -125,12 +123,8 @@ export const CalendarHeader = memo(function CalendarHeader({
         >
           <Animated.View
             key={viewMode}
-            entering={FadeIn.duration(MOTION.duration.fast)
-              .easing(MOTION.easing.calm)
-              .reduceMotion(MOTION.reduceMotion)}
-            exiting={FadeOut.duration(MOTION.duration.fast)
-              .easing(MOTION.easing.calm)
-              .reduceMotion(MOTION.reduceMotion)}
+            entering={calendarHeaderFadeIn()}
+            exiting={calendarHeaderFadeOut()}
             style={styles.modeActions}
             testID="calendar-header-mode-actions"
           >
@@ -167,6 +161,7 @@ export const CalendarHeader = memo(function CalendarHeader({
         </Animated.View>
       }
       title={title}
+      titleColor={viewMode === "YEAR" ? palette.primary : undefined}
       titleEntering={titleEntering}
       titleExiting={titleExiting}
       titleKey={`${viewMode}-${title}`}

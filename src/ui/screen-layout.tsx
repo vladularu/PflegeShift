@@ -63,6 +63,7 @@ export function TabScreenHeader({
   title,
   titleEntering,
   titleExiting,
+  titleColor,
   titleKey,
   toolbar,
 }: {
@@ -72,6 +73,7 @@ export function TabScreenHeader({
   readonly title: string;
   readonly titleEntering?: ComponentProps<typeof Animated.Text>["entering"];
   readonly titleExiting?: ComponentProps<typeof Animated.Text>["exiting"];
+  readonly titleColor?: string;
   readonly titleKey?: Key;
   readonly toolbar?: ReactNode;
 }) {
@@ -120,7 +122,7 @@ export function TabScreenHeader({
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
             style={{
               flex: stackAccessory ? undefined : 1,
-              color: palette.text,
+              color: titleColor ?? palette.text,
               ...TYPOGRAPHY.hero,
             }}
           >

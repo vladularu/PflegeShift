@@ -182,7 +182,7 @@ export function CalendarScreen() {
       }),
     [calendarEntries, preferences.showAppointments, preferences.showShifts],
   );
-  const { entriesByDate, visibleEntries } = entryIndex;
+  const { entriesByDate } = entryIndex;
   const quickActions = useMemo(() => buildQuickEntryActions(templates), [templates]);
   const quickPlannerActions = useMemo(() => quickEntryServiceActions(quickActions), [quickActions]);
   const visibleHolidayResolution = CalendarHolidays.useCalendarHolidayResolution(
@@ -565,8 +565,10 @@ export function CalendarScreen() {
       {preferences.viewMode === "MONTH" ? (
         <CalendarViewTransition
           key="MONTH"
+          month={visibleMonth}
           onLayout={measurePager}
           testID="calendar-month-pager-shell"
+          viewMode="MONTH"
         >
           <Animated.View style={[{ flex: 1 }, calendarHopStyle]}>
             {pageHeight > 0 ? (
@@ -622,9 +624,13 @@ export function CalendarScreen() {
           )}
         </CalendarViewTransition>
       ) : (
-        <CalendarViewTransition key="YEAR" testID="calendar-year-overview-shell">
+        <CalendarViewTransition
+          key="YEAR"
+          month={visibleMonth}
+          testID="calendar-year-overview-shell"
+          viewMode="YEAR"
+        >
           <YearOverview
-            entries={visibleEntries}
             onSelectMonth={openMonth}
             profile={profile}
             selectedMonth={visibleMonth}

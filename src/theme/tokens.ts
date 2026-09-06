@@ -44,14 +44,14 @@ export const SHADOWS = {
 } as const;
 
 export const CALENDAR_METRICS = {
-  horizontalInset: 6,
-  weekdayHeight: 28,
-  weekdayFontSize: 15,
+  horizontalInset: 0,
+  weekdayHeight: 30,
+  weekdayFontSize: 12,
   weekNumberFontSize: 9,
   weekNumberInset: 1,
-  dayNumberHeight: 27,
-  dayNumberFontSize: 15,
-  weekRowHeight: 114,
+  dayNumberHeight: 38,
+  dayNumberFontSize: 17,
+  weekRowHeight: 118,
   entryRowHeight: 17,
   entryFontSize: 12,
   entryLineHeight: 15,

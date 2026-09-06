@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { MOTION } from "@/theme/motion";
+import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 function PlannerHeader({
   direction = "NEXT",
@@ -90,9 +91,10 @@ describe("CalendarHeader", () => {
     );
     const title = screen.getByRole("header", { name: "2026" });
 
-    expect(title.props.entering.durationV).toBe(MOTION.duration.deliberate);
+    expect(title.props.entering.durationV).toBe(MOTION.duration.scene);
+    expect(title).toHaveStyle({ color: LIGHT_PALETTE.primary });
     expect(title.props.entering.initialValues).toBeUndefined();
-    expect(title.props.exiting.durationV).toBe(MOTION.duration.deliberate);
+    expect(title.props.exiting.durationV).toBe(MOTION.duration.normal);
     expect(title.props.exiting.targetValues).toBeUndefined();
   });
 
@@ -114,9 +116,9 @@ describe("CalendarHeader", () => {
       includeHiddenElements: true,
     });
 
-    expect(controls.props.entering.durationV).toBe(MOTION.duration.fast);
+    expect(controls.props.entering.durationV).toBe(MOTION.duration.scene);
     expect(controls.props.entering.initialValues).toBeUndefined();
-    expect(controls.props.exiting.durationV).toBe(MOTION.duration.fast);
+    expect(controls.props.exiting.durationV).toBe(MOTION.duration.normal);
     expect(controls.props.exiting.targetValues).toBeUndefined();
   });
 });

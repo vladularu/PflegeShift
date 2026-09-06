@@ -21,6 +21,7 @@ const TEXT_SHRINK_ALLOWLIST = new Set([
 const SINGLE_LINE_ALLOWLIST = new Set([
   "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
+  "features/calendar/year-overview.tsx",
   "features/templates/shift-template-list.tsx",
   "ui/shift-symbol.tsx",
 ]);

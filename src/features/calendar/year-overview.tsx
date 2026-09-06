@@ -10,31 +10,29 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import type { CalendarEntry, UserProfile } from "@/domain/types";
+import type { UserProfile } from "@/domain/types";
 import { createMonthGrid, today } from "@/engine/calendar";
 import { yearMonths } from "@/features/calendar/calendar-display";
 import { usePalette } from "@/theme/palette";
 import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
 
 const MONTH_LABELS = [
-  "Jan",
-  "Feb",
-  "Mär",
-  "Apr",
+  "Januar",
+  "Februar",
+  "März",
+  "April",
   "Mai",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Okt",
-  "Nov",
-  "Dez",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Dezember",
 ];
-const WEEKDAY_LABELS = ["M", "D", "M", "D", "F", "S", "S"];
 
 interface MiniMonthProps {
   readonly month: string;
-  readonly entriesByDate: ReadonlyMap<string, readonly CalendarEntry[]>;
   readonly currentDate: string;
   readonly selected: boolean;
   readonly onSelectMonth: (month: string) => void;
@@ -42,7 +40,6 @@ interface MiniMonthProps {
 
 const MiniMonth = memo(function MiniMonth({
   month,
-  entriesByDate,
   currentDate,
   selected,
   onSelectMonth,
@@ -50,6 +47,7 @@ const MiniMonth = memo(function MiniMonth({
   const palette = usePalette();
   const monthIndex = Number(month.slice(5, 7)) - 1;
   const grid = useMemo(() => createMonthGrid(month), [month]);
+  const currentMonth = currentDate.startsWith(month);
 
   return (
     <Pressable
@@ -60,52 +58,34 @@ const MiniMonth = memo(function MiniMonth({
       style={({ pressed }) => ({
         width: "100%",
         minWidth: 0,
-        opacity: pressed ? 0.58 : 1,
-        paddingHorizontal: 7,
-        paddingVertical: 6,
+        opacity: pressed ? 0.55 : 1,
+        paddingHorizontal: 8,
+        paddingVertical: 10,
       })}
     >
       <Text
         maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+        numberOfLines={1}
         style={{
-          color: palette.text,
-          fontSize: 18,
+          color: currentMonth ? palette.primary : palette.text,
+          fontSize: 19,
           fontWeight: "700",
-          marginBottom: 4,
+          marginBottom: 5,
         }}
       >
         {MONTH_LABELS[monthIndex]}
       </Text>
-      <View style={{ flexDirection: "row", marginBottom: 3 }}>
-        {WEEKDAY_LABELS.map((label, index) => (
-          <Text
-            key={`${label}-${index}`}
-            maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-            style={{
-              flex: 1,
-              color: index >= 5 ? palette.textMuted : palette.textSecondary,
-              fontSize: 9,
-              fontWeight: "500",
-              textAlign: "center",
-            }}
-          >
-            {label}
-          </Text>
-        ))}
-      </View>
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {grid.map((cell) => {
-          if (!cell.inMonth) {
+          if (!cell.inMonth)
             return <View key={cell.date} style={{ width: "14.285714%", height: 21 }} />;
-          }
-          const dayEntries = entriesByDate.get(cell.date) ?? [];
           const isToday = cell.date === currentDate;
           return (
             <View key={cell.date} style={{ width: "14.285714%", height: 21, alignItems: "center" }}>
               <View
                 style={{
-                  width: 17,
-                  height: 17,
+                  width: 18,
+                  height: 18,
                   borderRadius: 9,
                   alignItems: "center",
                   justifyContent: "center",
@@ -115,22 +95,18 @@ const MiniMonth = memo(function MiniMonth({
                 <Text
                   maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
                   style={{
-                    color: isToday ? palette.onPrimary : palette.text,
-                    fontSize: 9,
-                    fontWeight: "600",
+                    color: isToday
+                      ? palette.onPrimary
+                      : cell.weekend
+                        ? palette.textMuted
+                        : palette.text,
+                    fontSize: 10,
+                    fontWeight: isToday ? "700" : "500",
                     fontVariant: ["tabular-nums"],
                   }}
                 >
                   {cell.day}
                 </Text>
-              </View>
-              <View style={{ height: 4, flexDirection: "row", gap: 1 }}>
-                {dayEntries.slice(0, 2).map((entry) => (
-                  <View
-                    key={`${entry.kind}-${entry.id}`}
-                    style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: entry.color }}
-                  />
-                ))}
               </View>
             </View>
           );
@@ -145,27 +121,22 @@ interface YearRow {
   readonly months: readonly string[];
 }
 
-interface YearRowProps extends YearRow {
-  readonly currentDate: string;
-  readonly entriesByDate: ReadonlyMap<string, readonly CalendarEntry[]>;
-  readonly onSelectMonth: (month: string) => void;
-  readonly selectedMonth: string;
-}
-
 const YearRowView = memo(function YearRowView({
   currentDate,
-  entriesByDate,
   months,
   onSelectMonth,
   selectedMonth,
-}: YearRowProps) {
+}: YearRow & {
+  readonly currentDate: string;
+  readonly onSelectMonth: (month: string) => void;
+  readonly selectedMonth: string;
+}) {
   return (
     <View style={{ flexDirection: "row" }}>
       {months.map((month) => (
-        <View key={month} style={{ width: "33.333333%", padding: 1 }}>
+        <View key={month} style={{ width: "33.333333%" }}>
           <MiniMonth
             currentDate={currentDate}
-            entriesByDate={entriesByDate}
             month={month}
             onSelectMonth={onSelectMonth}
             selected={selectedMonth === month}
@@ -178,13 +149,11 @@ const YearRowView = memo(function YearRowView({
 
 export function YearOverview({
   year,
-  entries,
   profile,
   selectedMonth,
   onSelectMonth,
 }: {
   readonly year: number;
-  readonly entries: readonly CalendarEntry[];
   readonly profile: UserProfile;
   readonly selectedMonth: string;
   readonly onSelectMonth: (month: string) => void;
@@ -192,16 +161,6 @@ export function YearOverview({
   const palette = usePalette();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const entriesByDate = useMemo(() => {
-    const map = new Map<string, CalendarEntry[]>();
-    for (const entry of entries) {
-      if (entry.deletedAt !== null || !entry.date.startsWith(`${year}-`)) continue;
-      const values = map.get(entry.date) ?? [];
-      values.push(entry);
-      map.set(entry.date, values);
-    }
-    return map;
-  }, [entries, year]);
   const rows = useMemo<readonly YearRow[]>(() => {
     const months = yearMonths(year);
     return Array.from({ length: 4 }, (_, index) => ({
@@ -210,13 +169,12 @@ export function YearOverview({
     }));
   }, [year]);
   const currentDate = today(profile.timeZone);
-  const contentWidth = Math.min(width - 12, 720);
+  const contentWidth = Math.min(width, 720);
   const renderRow = useCallback(
     ({ item }: ListRenderItemInfo<YearRow>) => (
       <View style={{ width: contentWidth }}>
         <YearRowView
           currentDate={currentDate}
-          entriesByDate={entriesByDate}
           key={item.key}
           months={item.months}
           onSelectMonth={onSelectMonth}
@@ -224,41 +182,27 @@ export function YearOverview({
         />
       </View>
     ),
-    [contentWidth, currentDate, entriesByDate, onSelectMonth, selectedMonth],
+    [contentWidth, currentDate, onSelectMonth, selectedMonth],
   );
 
   return (
-    <View
-      style={{
-        flex: 1,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: palette.separator,
-        borderRadius: 22,
-        borderCurve: "continuous",
-        backgroundColor: palette.surface,
-        marginHorizontal: 6,
-        marginBottom: 6,
-      }}
-    >
+    <View style={{ flex: 1, overflow: "hidden", backgroundColor: palette.background }}>
       <FlatList
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{
           alignItems: "center",
-          gap: 2,
-          paddingTop: 8,
+          gap: 6,
+          paddingTop: 6,
           paddingBottom:
             Platform.OS === "ios" ? insets.bottom + 57 : Math.max(8, insets.bottom + 8),
         }}
         data={rows}
-        initialNumToRender={2}
+        initialNumToRender={4}
         keyExtractor={(item) => item.key}
-        maxToRenderPerBatch={2}
-        removeClippedSubviews={process.env.EXPO_OS !== "web"}
+        removeClippedSubviews={false}
         renderItem={renderRow}
         showsVerticalScrollIndicator={false}
         style={{ flex: 1 }}
-        windowSize={3}
       />
     </View>
   );
