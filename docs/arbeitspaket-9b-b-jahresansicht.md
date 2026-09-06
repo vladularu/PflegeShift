@@ -39,6 +39,36 @@ mit iOS 26.6.1 und dem installierten Preview-Build 31.
 
 ## Abgrenzung
 
+### Abschlusskorrektur nach Gerätevideo vom 6. September, 06:36 Uhr
+
+Die positionsbasierte OTA zu Commit `9986f7f` wurde auf dem Gerät geprüft:
+Monat → Jahr passt laut Nutzer; Jahr → Monat zeigt zum Ende einen Sprung.
+Die Aufnahme zeigt bewegte Tageszahlen und vergrößerte Jahres-Monatsnamen
+gleichzeitig mit dem bereits sichtbaren fertigen Monatsraster.
+
+Nur Jahr → Monat erhält deshalb getrennte Phasen innerhalb der bisherigen 600 ms:
+450 ms Bewegung mit ruhiger Zielannäherung, danach 150 ms Überblendung bei bereits
+erreichten Zielpositionen und Schriftgrößen. Die Jahresszene ist vor Beginn dieser
+Überblendung unsichtbar. Monat → Jahr behält die bisherigen Kurven und Formeln.
+Dateiscope: Übergangscontainer, neue Phasenhilfe mit Tests und dieses Dokument;
+bei Bedarf zugehörige Komponententests. Keine nativen oder fachlichen Änderungen.
+Die Phasenhilfe läuft ausdrücklich als Worklet auf dem UI-Thread.
+
+Abnahme dieser Korrektur: Januar, September und Dezember aus der Jahresübersicht
+öffnen, ohne doppelte Zahlen, sichtbare Jahresreste oder Abschlusssprung; in Hell
+und Dunkel testen. Gegenrichtung, Abbruch und „Bewegung reduzieren“ dürfen nicht
+regressieren. Lokale Tests ersetzen diese noch ausstehende Geräteabnahme nicht.
+
+Lokale Prüfung der Abschlusskorrektur: `verify:fast` erfolgreich (95 Vitest-Dateien,
+588 Tests; 54 Jest-Suites, 216 Tests sowie zusätzliche Skriptprüfungen). Fokussierte
+Phasen-/Geometrietests und Übergangs-Komponententests bestanden. Interner iOS-Hermes-
+Export erfolgreich; Worklet-Transformation der neuen Phasenhilfe mit dem SDK-57-
+Expo-Preset geprüft. iOS-Fingerprint weiterhin
+`eac302484061dfb3fa63e2a74b8618ff6000861c` (Build 31). Kein Commit, Push oder OTA
+für diese Abschlusskorrektur erfolgt; Geräteabnahme ausstehend.
+
+### Unveränderter Gesamtscope
+
 Betroffen sind Kalenderkopf, Ansichtscontainer, Monatsraster, Jahresraster,
 Mess-/Geometriehilfen, Mini-Kalendermaße, Datenabdeckungsprüfung, zugehörige Tests
 und dieses Dokument. Unverändert bleiben

@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import Animated, {
   cancelAnimation,
+  Easing,
   FadeIn,
   FadeOut,
   interpolateColor,
@@ -43,9 +44,12 @@ import {
   type MeasureCalendarNode,
 } from "./calendar-morph-measurement";
 import { MOTION } from "@/theme/motion";
+import { calendarMorphPhases } from "./calendar-morph-phases";
 import { usePalette } from "@/theme/palette";
 
 export const CALENDAR_VIEW_ZOOM = { duration: 600, measurementTimeout: 900 } as const;
+// Resolve Reanimated's easing factory once, not once per glyph and frame.
+const morphTravelEasing = MOTION.easing.calm.factory();
 
 export function calendarHeaderFadeIn() {
   return FadeIn.duration(CALENDAR_VIEW_ZOOM.duration)
@@ -61,18 +65,21 @@ export function calendarHeaderFadeOut() {
 function MorphDayView({
   day,
   progress,
+  toMonth,
 }: {
   readonly day: MorphDay;
   readonly progress: SharedValue<number>;
+  readonly toMonth: boolean;
 }) {
   const style = useAnimatedStyle(() => {
-    const p = progress.value;
+    const phase = calendarMorphPhases(progress.value, toMonth);
+    const p = toMonth ? morphTravelEasing(phase.travel) : phase.travel;
     const fromX = day.from.x + day.from.width / 2;
     const fromY = day.from.y + day.from.height / 2;
     const toX = day.to.x + day.to.width / 2;
     const toY = day.to.y + day.to.height / 2;
     return {
-      opacity: Math.min(1, (1 - p) / 0.35),
+      opacity: phase.glyphOpacity,
       transform: [
         { translateX: fromX + (toX - fromX) * p - day.to.width / 2 },
         { translateY: fromY + (toY - fromY) * p - day.to.height / 2 },
@@ -86,7 +93,8 @@ function MorphDayView({
     };
   });
   const textStyle = useAnimatedStyle(() => {
-    const p = progress.value;
+    const phase = calendarMorphPhases(progress.value, toMonth);
+    const p = toMonth ? morphTravelEasing(phase.travel) : phase.travel;
     const circleScaleX = day.from.width / day.to.width + (1 - day.from.width / day.to.width) * p;
     const circleScaleY =
       day.from.height / day.to.height + (1 - day.from.height / day.to.height) * p;
@@ -132,9 +140,11 @@ function MorphDayView({
 function MorphOverlay({
   plan,
   progress,
+  toMonth,
 }: {
   readonly plan: CalendarMorphPlan;
   readonly progress: SharedValue<number>;
+  readonly toMonth: boolean;
 }) {
   return (
     <View
@@ -146,7 +156,7 @@ function MorphOverlay({
       testID="calendar-morph-overlay"
     >
       {plan.days.map((day) => (
-        <MorphDayView key={day.date} day={day} progress={progress} />
+        <MorphDayView key={day.date} day={day} progress={progress} toMonth={toMonth} />
       ))}
     </View>
   );
@@ -273,7 +283,7 @@ export function CalendarTransitionHost({
         viewMode === "MONTH" ? 1 : 0,
         {
           duration: CALENDAR_VIEW_ZOOM.duration,
-          easing: MOTION.easing.calm,
+          easing: viewMode === "MONTH" ? Easing.linear : MOTION.easing.calm,
           reduceMotion: MOTION.reduceMotion,
         },
         (finished) => {
@@ -294,10 +304,18 @@ export function CalendarTransitionHost({
   }, [finish, plan, progress, viewMode]);
 
   const monthStyle = useAnimatedStyle(() => ({
-    opacity: plan ? Math.max(0, (progress.value - 0.65) / 0.35) : displayedMode === "MONTH" ? 1 : 0,
+    opacity: plan
+      ? calendarMorphPhases(progress.value, viewMode === "MONTH").monthOpacity
+      : displayedMode === "MONTH"
+        ? 1
+        : 0,
   }));
   const yearStyle = useAnimatedStyle(() => ({
-    opacity: plan || displayedMode === "YEAR" ? 1 : 0,
+    opacity: plan
+      ? calendarMorphPhases(progress.value, viewMode === "MONTH").yearOpacity
+      : displayedMode === "YEAR"
+        ? 1
+        : 0,
   }));
   const motion = useMemo(() => (plan ? { month, plan, progress } : null), [month, plan, progress]);
   const busy = plan !== null || viewMode !== displayedMode;
@@ -330,7 +348,9 @@ export function CalendarTransitionHost({
           >
             {monthView}
           </Animated.View>
-          {plan ? <MorphOverlay plan={plan} progress={progress} /> : null}
+          {plan ? (
+            <MorphOverlay plan={plan} progress={progress} toMonth={viewMode === "MONTH"} />
+          ) : null}
         </View>
       </CalendarMorphMotion.Provider>
     </CalendarMorphRegistry.Provider>
