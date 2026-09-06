@@ -141,6 +141,38 @@ Lokaler finaler Stand: `verify:fast`, die gezielten Bildschirmtests sowie der
 iOS-Hermes-Export sind bestanden. iOS-Fingerprint unverändert:
 `eac302484061dfb3fa63e2a74b8618ff6000861c`. Geräteabnahme der Januar-Korrektur offen.
 
+### Synchronisierung nach Geräteaufnahme 07:46
+
+Die Aufnahme nach `80f6ded` zeigt einen vorauseilenden Monatskopf und einen
+verzögerten Zoomstart. Die vorige Januar-Korrektur ist damit nicht abgenommen.
+Ziel dieser freigegebenen Korrektur: stabiler Zielmonat und gemeinsamer Start von
+Kalenderkopf und Zoom, ohne eine neue native Build-Version.
+
+Beim Auswählen eines Monats startet der versteckte Pager direkt am Zielindex;
+er muss nicht mehr von seinem alten Monat dorthin scrollen und dabei auf
+virtualisierte Zellen warten. Nur dieser versteckte Pager wird bei der Auswahl
+neu montiert, nicht der Ansichtscontainer oder die Jahresansicht. Die bisherigen
+Geometrieprüfungen bleiben bestehen; der Timeout wurde nicht einfach verkürzt.
+Scroll-Ereignisse aus der Jahresansicht, während des Übergangs und verspätete
+programmatische Ereignisse nach einer Monatsauswahl werden ignoriert. Ein echter
+Drag bzw. ein Heute-Auftrag gibt das Paging wieder frei. Der Kalenderkopf erhält
+den neuen Ansichtsmodus erst beim Animationsstart oder beim sicheren Abschluss
+ohne Messung. Hintergrund-/Abbruchpfade lösen die Übergangssperre ebenfalls.
+
+Dateiscope: Kalenderbildschirm, Übergangscontainer, extrahierter Paging-Hook,
+zugehörige Komponententests und dieses Dokument (sechs Dateien). Keine Änderung
+an Animationskurven, Daten, Regeln, Farben, Abhängigkeiten oder nativer Integration.
+Freigegeben: Umsetzung, Commit, Push, CI und Preview-OTA; kein Merge.
+Zielgerät: iPhone 14 Pro Max / iOS 26.6.1 / Preview Build 31.
+
+Regressionstests prüfen Januar als direkten Startmonat, ignorierte alte und
+versteckte Scroll-Ereignisse, Weiterblättern nach echtem Drag und den verzögerten
+Start des Kopfwechsels bis zur vorbereiteten Animation. Bestehende Tests für
+Heute, Dezember/Januar, Hinweisgeometrie und Animationsabbruch bleiben erhalten.
+Geräteabnahme offen: Januar und Dezember jeweils hin/zurück, keine vorgelagerte
+Pause oder falscher Monat, kein Abschlussflackern; danach Heute und Daten nach
+Neustart prüfen. Tests liefern keinen Nachweis der tatsächlichen iPhone-Bildrate.
+
 ### Weiterhin unveränderte Bereiche
 
 Betroffen sind Kalenderkopf, Ansichtscontainer, Monatsraster, Jahresraster,
@@ -175,6 +207,11 @@ Status: lokale Umsetzung; der visuelle Vergleich und die Bildrate auf dem Zielge
 sind noch nicht abgenommen. Die Ursache der vorherigen iOS-Abdunklung ist nicht durch
 ein natives Profiling nachgewiesen. Tests sichern Geometrie und Lebenszyklus, ersetzen
 aber den Gerätevergleich mit dem Referenzvideo nicht.
+
+Lokale Synchronisierungsprüfung: `verify:fast` bestanden (589 Unit-Tests,
+224 Komponententests und Skriptprüfungen); iOS-Hermes-Export erfolgreich.
+Der interne iOS-Fingerprint ist weiterhin
+`eac302484061dfb3fa63e2a74b8618ff6000861c`. Geräteabnahme bleibt offen.
 
 Die Änderung ist JavaScript/UI-only. Nach Commit, Push und grüner Pull-Request-CI ist
 eine separat freizugebende Preview-OTA für Build 31 vorgesehen; ein neuer EAS-Build

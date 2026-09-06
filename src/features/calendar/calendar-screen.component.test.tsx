@@ -91,7 +91,10 @@ jest.mock("@/navigation/active-month", () => ({
   useCalendarTodayRequestRevision: () => mockTodayRequestRevision,
 }));
 
-jest.mock("@/features/calendar/calendar-header", () => ({ CalendarHeader: () => null }));
+jest.mock("@/features/calendar/calendar-header", () => ({
+  CalendarHeader: ({ month, viewMode }: { month: string; viewMode: string }) =>
+    MockReact.createElement(MockText, { testID: "header-state" }, `${viewMode}:${month}`),
+}));
 
 jest.mock("@/features/calendar/month-card", () => ({
   MonthCard: ({
@@ -148,7 +151,14 @@ jest.mock("@/features/calendar/quick-entry-popup", () => ({
       ),
     ),
 }));
-jest.mock("@/features/calendar/year-overview", () => ({ YearOverview: () => null }));
+jest.mock("@/features/calendar/year-overview", () => ({
+  YearOverview: ({ onSelectMonth }: { onSelectMonth: (month: string) => void }) =>
+    MockReact.createElement(MockPressable, {
+      accessibilityRole: "button",
+      accessibilityLabel: "Januar 2026 öffnen",
+      onPress: () => onSelectMonth("2026-01"),
+    }),
+}));
 jest.mock("@/features/calendar/use-quick-stamp-action", () => ({
   useQuickStampAction: () => jest.fn(),
 }));
@@ -171,6 +181,73 @@ describe("CalendarScreen quick-entry navigation", () => {
       callback(0);
       return 1;
     });
+  });
+
+  it("ignores hidden pager scroll events while a year is displayed", async () => {
+    mockPreferences.viewMode = "YEAR";
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(
+      screen.getByTestId("calendar-month-pager-shell", { includeHiddenElements: true }),
+      "layout",
+      {
+        nativeEvent: { layout: { height: 700 } },
+      },
+    );
+    const pager = screen.getByTestId("calendar-month-pager", { includeHiddenElements: true });
+    await act(async () => {
+      pager.props.onScroll({
+        nativeEvent: {
+          contentOffset: { x: 0, y: 700 * 16 },
+          layoutMeasurement: { width: 390, height: 700 },
+          contentSize: { width: 390, height: 42700 },
+        },
+      });
+      pager.props.onMomentumScrollEnd({ nativeEvent: { contentOffset: { y: 700 * 16 } } });
+    });
+    expect(mockActiveMonth).toBe("2026-08");
+    expect(screen.getByTestId("header-state")).toHaveTextContent("YEAR:2026-08");
+  });
+
+  it("mounts January directly and locks its selection until a real drag", async () => {
+    mockPreferences.viewMode = "YEAR";
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(
+      screen.getByTestId("calendar-month-pager-shell", { includeHiddenElements: true }),
+      "layout",
+      {
+        nativeEvent: { layout: { height: 700 } },
+      },
+    );
+    const oldPager = screen.getByTestId("calendar-month-pager", { includeHiddenElements: true });
+    await fireEvent.press(screen.getByRole("button", { name: "Januar 2026 öffnen" }));
+    mockPreferences.viewMode = "MONTH";
+    await screen.rerender(<CalendarScreen />);
+    const pager = screen.getByTestId("calendar-month-pager", { includeHiddenElements: true });
+    expect(pager).not.toBe(oldPager);
+    expect(screen.getByTestId("month-card-2026-01", { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByTestId("header-state")).toHaveTextContent("YEAR:2026-01");
+    const staleEvent = {
+      nativeEvent: {
+        contentOffset: { x: 0, y: 700 * 24 },
+        layoutMeasurement: { width: 390, height: 700 },
+        contentSize: { width: 390, height: 42700 },
+      },
+    };
+    await act(async () => {
+      oldPager.props.onScroll(staleEvent);
+      pager.props.onScroll(staleEvent);
+      pager.props.onMomentumScrollEnd(staleEvent);
+    });
+    expect(mockActiveMonth).toBe("2026-01");
+    await screen.findByTestId("calendar-month-scene", {}, { timeout: 1500 });
+    expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-01");
+    await fireEvent(pager, "momentumScrollEnd", staleEvent);
+    expect(mockActiveMonth).toBe("2026-01");
+    await fireEvent(pager, "scrollBeginDrag");
+    const nextEvent = { nativeEvent: { contentOffset: { y: 700 * 18 } } };
+    await fireEvent.scroll(pager, nextEvent);
+    await fireEvent(pager, "momentumScrollEnd", nextEvent);
+    expect(mockActiveMonth).toBe("2026-02");
   });
 
   it.each([-36, 36])(

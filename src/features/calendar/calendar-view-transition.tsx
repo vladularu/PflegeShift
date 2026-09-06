@@ -169,12 +169,16 @@ export function CalendarTransitionHost({
   active,
   monthView,
   yearView,
+  onTransitionStart,
+  onTransitionComplete,
 }: {
   readonly month: string;
   readonly viewMode: CalendarMode;
   readonly active: boolean;
   readonly monthView: ReactNode;
   readonly yearView: ReactNode;
+  readonly onTransitionStart?: (mode: CalendarMode) => void;
+  readonly onTransitionComplete?: () => void;
 }) {
   const palette = usePalette();
   const reduceMotion = useReducedMotion();
@@ -183,6 +187,10 @@ export function CalendarTransitionHost({
   const registry = useMemo(() => new Set<MeasureCalendarNode>(), []);
   const epoch = useRef(0);
   const desired = useRef(viewMode);
+  const callbacks = useRef({ onTransitionStart, onTransitionComplete });
+  useLayoutEffect(() => {
+    callbacks.current = { onTransitionStart, onTransitionComplete };
+  });
   const [displayedMode, setDisplayedMode] = useState(viewMode);
   const [plan, setPlan] = useState<CalendarMorphPlan | null>(null);
   const [foreground, setForeground] = useState(AppState.currentState !== "background");
@@ -191,6 +199,8 @@ export function CalendarTransitionHost({
     if (epoch.current !== id) return;
     setDisplayedMode(desired.current);
     setPlan(null);
+    callbacks.current.onTransitionStart?.(desired.current);
+    callbacks.current.onTransitionComplete?.();
   }, []);
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) =>
@@ -279,6 +289,7 @@ export function CalendarTransitionHost({
     if (!plan) return;
     const id = epoch.current;
     const frame = requestAnimationFrame(() => {
+      callbacks.current.onTransitionStart?.(viewMode);
       progress.value = withTiming(
         viewMode === "MONTH" ? 1 : 0,
         {

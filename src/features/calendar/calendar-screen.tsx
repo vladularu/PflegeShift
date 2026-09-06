@@ -6,8 +6,6 @@ import {
   View,
   type LayoutChangeEvent,
   type ListRenderItemInfo,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -42,11 +40,7 @@ import type { CalendarAnchorRect } from "@/features/calendar/calendar-layout";
 import { clampDateToMonth } from "@/features/calendar/calendar-metrics";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
 import { MonthCard } from "@/features/calendar/month-card";
-import {
-  createMonthWindow,
-  monthAtPagerOffset,
-  shouldRecenterMonthWindow,
-} from "@/features/calendar/month-window";
+import { createMonthWindow, shouldRecenterMonthWindow } from "@/features/calendar/month-window";
 import {
   buildQuickEntryActions,
   isQuickEntryStampAction,
@@ -61,6 +55,7 @@ import { QuickPlannerDock } from "@/features/calendar/quick-planner-dock";
 import { stampToolSelectedAnnouncement } from "@/features/calendar/stamp-accessibility";
 import { YearOverview } from "@/features/calendar/year-overview";
 import { useCalendarTodayScroll } from "@/features/calendar/use-calendar-today-scroll";
+import { useCalendarPaging } from "@/features/calendar/use-calendar-paging";
 import { useOpenShiftSelection } from "@/features/calendar/use-open-shift-selection";
 import { useQuickStampAction } from "@/features/calendar/use-quick-stamp-action";
 import { dayDetailsRoute, dayEditorRoute, quickAddRoute } from "@/navigation/routes";
@@ -111,6 +106,13 @@ export function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectionVisible, setSelectionVisible] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(targetMonth);
+  const [headerMode, setHeaderMode] = useState(preferences.viewMode);
+  const transitionInFlight = useRef(false);
+  const monthSelectionPending = useRef(false);
+  const transitionStarted = useCallback((mode: "MONTH" | "YEAR") => setHeaderMode(mode), []);
+  const transitionCompleted = useCallback(() => {
+    transitionInFlight.current = false;
+  }, []);
   const calendarReady =
     ready ||
     (preferences.viewMode === "MONTH"
@@ -285,6 +287,7 @@ export function CalendarScreen() {
   );
 
   const resetTodayUi = useCallback(() => {
+    monthSelectionPending.current = false;
     setQuickPopup(null);
     setPlannerMode(false);
     setStampTool(null);
@@ -316,6 +319,9 @@ export function CalendarScreen() {
 
   const openMonth = useCallback(
     (month: string) => {
+      if (transitionInFlight.current) return;
+      transitionInFlight.current = true;
+      monthSelectionPending.current = true;
       setQuickPopup(null);
       setSelectedDate((date) => clampDateToMonth(date, month));
       setSelectionVisible(false);
@@ -326,13 +332,16 @@ export function CalendarScreen() {
       settledMonth.current = month;
       const recenter = shouldRecenterMonthWindow(months, month);
       if (recenter) setMonthAnchor(month);
+      // Mount the hidden pager at its destination, avoiding virtualized scroll catch-up.
+      setPagerResetRevision((revision) => revision + 1);
       preferences.setViewMode("MONTH");
-      if (!recenter) requestAnimationFrame(() => scrollToMonth(month, false));
     },
-    [activeMonthCoordinator, months, preferences, scrollToMonth, visibleMonth],
+    [activeMonthCoordinator, months, preferences, visibleMonth],
   );
 
   const openYear = useCallback(() => {
+    if (transitionInFlight.current) return;
+    transitionInFlight.current = true;
     setQuickPopup(null);
     setPlannerMode(false);
     setStampTool(null);
@@ -357,41 +366,25 @@ export function CalendarScreen() {
     [pageHeight],
   );
 
-  const trackPaging = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const month = monthAtPagerOffset(months, pageHeight, event.nativeEvent.contentOffset.y);
-      if (!month || month === visibleMonth) return;
-      setQuickPopup(null);
-      setHeaderDirection(month > visibleMonth ? "NEXT" : "PREVIOUS");
-      setHeaderTransition("SPATIAL");
-      setVisibleMonth(month);
-      setSelectedDate((date) => clampDateToMonth(date, month));
-      setSelectionVisible(false);
-    },
-    [months, pageHeight, visibleMonth],
-  );
-
-  const finishPaging = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const month = monthAtPagerOffset(months, pageHeight, event.nativeEvent.contentOffset.y);
-      if (!month) return;
-      setQuickPopup(null);
-
-      if (finishTodayScrollAtMonth(month)) return;
-
-      const didChangeMonth = settledMonth.current !== month;
-      settledMonth.current = month;
-      setVisibleMonth(month);
-      activeMonthCoordinator.setMonth(month);
-      if (didChangeMonth) {
-        setSelectedDate((date) => clampDateToMonth(date, month));
-        setSelectionVisible(false);
-      }
-      if (shouldRecenterMonthWindow(months, month)) setMonthAnchor(month);
-      if (didChangeMonth) selectionFeedback();
-    },
-    [activeMonthCoordinator, finishTodayScrollAtMonth, months, pageHeight],
-  );
+  const clearPopup = useCallback(() => setQuickPopup(null), []);
+  const { trackPaging, finishPaging } = useCalendarPaging({
+    months,
+    pageHeight,
+    visibleMonth,
+    viewMode: preferences.viewMode,
+    transitionInFlight,
+    monthSelectionPending,
+    settledMonthRef: settledMonth,
+    activeMonthCoordinator,
+    finishTodayScrollAtMonth,
+    clearPopup,
+    setHeaderDirection,
+    setHeaderTransition,
+    setVisibleMonth,
+    setSelectedDate,
+    setSelectionVisible,
+    setMonthAnchor,
+  });
 
   const beginPlanning = useCallback(() => {
     setQuickPopup(null);
@@ -465,6 +458,7 @@ export function CalendarScreen() {
   const visibleMonthIndex = months.indexOf(visibleMonth);
   const moveYear = useCallback(
     (amount: number) => {
+      if (transitionInFlight.current) return;
       const nextMonth = addMonths(visibleMonth, amount * 12);
       setQuickPopup(null);
       setHeaderDirection(amount >= 0 ? "NEXT" : "PREVIOUS");
@@ -538,7 +532,7 @@ export function CalendarScreen() {
         plannerTransition={plannerTransition}
         referenceMonth={currentMonth(timeZone)}
         transition={headerTransition}
-        viewMode={preferences.viewMode}
+        viewMode={headerMode}
       />
       {plannerError ? (
         <View
@@ -565,6 +559,8 @@ export function CalendarScreen() {
         </View>
       ) : null}
       <CalendarTransitionHost
+        onTransitionStart={transitionStarted}
+        onTransitionComplete={transitionCompleted}
         month={visibleMonth}
         viewMode={preferences.viewMode}
         active={isFocused}
@@ -594,6 +590,9 @@ export function CalendarScreen() {
                   keyExtractor={(month) => month}
                   maxToRenderPerBatch={2}
                   onMomentumScrollEnd={finishPaging}
+                  onScrollBeginDrag={() => {
+                    if (!transitionInFlight.current) monthSelectionPending.current = false;
+                  }}
                   onScroll={trackPaging}
                   onScrollEndDrag={(event) => {
                     const { contentOffset, velocity } = event.nativeEvent;

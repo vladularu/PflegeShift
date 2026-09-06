@@ -61,12 +61,24 @@ describe("CalendarTransitionHost", () => {
       return <Text>Gemessener Monat</Text>;
     }
     const content = { monthView: <MeasuredScene />, yearView: <Text>Jahr</Text> };
+    const started = jest.fn();
+    const completed = jest.fn();
+    const lifecycle = { onTransitionStart: started, onTransitionComplete: completed };
     const screen = await render(
-      <CalendarTransitionHost month="2026-09" viewMode="YEAR" active {...content} />,
+      <CalendarTransitionHost month="2026-09" viewMode="YEAR" active {...content} {...lifecycle} />,
     );
+    started.mockClear();
+    completed.mockClear();
     await screen.rerender(
-      <CalendarTransitionHost month="2026-09" viewMode="MONTH" active {...content} />,
+      <CalendarTransitionHost
+        month="2026-09"
+        viewMode="MONTH"
+        active
+        {...content}
+        {...lifecycle}
+      />,
     );
+    expect(started).not.toHaveBeenCalled();
     for (let step = 0; step < 4; step += 1) {
       await act(async () => {
         jest.advanceTimersByTime(20);
@@ -75,6 +87,7 @@ describe("CalendarTransitionHost", () => {
     expect(
       screen.getByTestId("calendar-morph-overlay", { includeHiddenElements: true }),
     ).toBeTruthy();
+    expect(started).toHaveBeenCalledWith("MONTH");
     await act(async () => {
       if (ending === "background") appState.mock.calls[0][1]("background");
       else jest.advanceTimersByTime(1000);
@@ -83,6 +96,7 @@ describe("CalendarTransitionHost", () => {
       screen.queryByTestId("calendar-morph-overlay", { includeHiddenElements: true }),
     ).toBeNull();
     expect(screen.getByText("Gemessener Monat")).toBeTruthy();
+    expect(completed).toHaveBeenCalled();
     await act(async () => {
       jest.advanceTimersByTime(2000);
     });
