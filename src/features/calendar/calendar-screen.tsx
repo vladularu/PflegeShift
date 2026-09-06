@@ -31,7 +31,10 @@ import type { CalendarEntry } from "@/domain/types";
 import { addMonths, createMonthGrid, currentMonth, today } from "@/engine/calendar";
 import { expandCalendarEntries } from "@/engine/recurrence";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
-import { CalendarViewTransition } from "@/features/calendar/calendar-view-transition";
+import {
+  CalendarTransitionHost,
+  CalendarViewTransition,
+} from "@/features/calendar/calendar-view-transition";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
 import * as CalendarHolidays from "@/features/calendar/calendar-holidays";
@@ -562,82 +565,78 @@ export function CalendarScreen() {
         </View>
       ) : null}
       <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
-      {preferences.viewMode === "MONTH" ? (
-        <CalendarViewTransition
-          key="MONTH"
-          month={visibleMonth}
-          onLayout={measurePager}
-          testID="calendar-month-pager-shell"
-          viewMode="MONTH"
-        >
-          <Animated.View style={[{ flex: 1 }, calendarHopStyle]}>
-            {pageHeight > 0 ? (
-              <FlatList
-                ref={listRef}
-                contentInsetAdjustmentBehavior="never"
-                data={months}
-                decelerationRate="fast"
-                disableIntervalMomentum
-                getItemLayout={(_, index) => ({
-                  index,
-                  length: pageHeight,
-                  offset: pageHeight * index,
-                })}
-                initialScrollIndex={visibleMonthIndex >= 0 ? visibleMonthIndex : MONTHS_BEFORE}
-                initialNumToRender={1}
-                key={`month-pager-${pageHeight}-${monthAnchor}-${pagerResetRevision}`}
-                keyExtractor={(month) => month}
-                maxToRenderPerBatch={2}
-                onMomentumScrollEnd={finishPaging}
-                onScroll={trackPaging}
-                onScrollEndDrag={(event) => {
-                  const { contentOffset, velocity } = event.nativeEvent;
-                  const page = Math.round(contentOffset.y / pageHeight) * pageHeight;
-                  if (velocity?.y === 0 && Math.abs(contentOffset.y - page) < 1)
-                    finishPaging(event);
-                }}
-                pagingEnabled
-                removeClippedSubviews={process.env.EXPO_OS !== "web"}
-                renderItem={renderMonth}
-                scrollEnabled={!todayScrollActive}
-                showsVerticalScrollIndicator={false}
-                snapToAlignment="start"
-                snapToInterval={pageHeight}
-                scrollEventThrottle={16}
-                testID="calendar-month-pager"
-                updateCellsBatchingPeriod={24}
-                windowSize={3}
+      <CalendarTransitionHost
+        month={visibleMonth}
+        viewMode={preferences.viewMode}
+        active={isFocused}
+        monthView={
+          <CalendarViewTransition onLayout={measurePager} testID="calendar-month-pager-shell">
+            <Animated.View style={[{ flex: 1 }, calendarHopStyle]}>
+              {pageHeight > 0 ? (
+                <FlatList
+                  ref={listRef}
+                  contentInsetAdjustmentBehavior="never"
+                  data={months}
+                  decelerationRate="fast"
+                  disableIntervalMomentum
+                  getItemLayout={(_, index) => ({
+                    index,
+                    length: pageHeight,
+                    offset: pageHeight * index,
+                  })}
+                  initialScrollIndex={visibleMonthIndex >= 0 ? visibleMonthIndex : MONTHS_BEFORE}
+                  initialNumToRender={1}
+                  key={`month-pager-${pageHeight}-${monthAnchor}-${pagerResetRevision}`}
+                  keyExtractor={(month) => month}
+                  maxToRenderPerBatch={2}
+                  onMomentumScrollEnd={finishPaging}
+                  onScroll={trackPaging}
+                  onScrollEndDrag={(event) => {
+                    const { contentOffset, velocity } = event.nativeEvent;
+                    const page = Math.round(contentOffset.y / pageHeight) * pageHeight;
+                    if (velocity?.y === 0 && Math.abs(contentOffset.y - page) < 1)
+                      finishPaging(event);
+                  }}
+                  pagingEnabled
+                  removeClippedSubviews={process.env.EXPO_OS !== "web"}
+                  renderItem={renderMonth}
+                  scrollEnabled={!todayScrollActive}
+                  showsVerticalScrollIndicator={false}
+                  snapToAlignment="start"
+                  snapToInterval={pageHeight}
+                  scrollEventThrottle={16}
+                  testID="calendar-month-pager"
+                  updateCellsBatchingPeriod={24}
+                  windowSize={3}
+                />
+              ) : null}
+            </Animated.View>
+            {!isFocused || quickPopup !== null ? null : (
+              <QuickPlannerDock
+                actions={quickPlannerActions}
+                activeKey={stampTool?.key ?? null}
+                busy={plannerBusy}
+                onOpen={beginPlanning}
+                onClose={closePlanning}
+                onSelectAction={selectPlannerAction}
+                open={plannerMode}
+                transitionProgress={plannerTransition}
               />
-            ) : null}
-          </Animated.View>
-          {!isFocused || quickPopup !== null ? null : (
-            <QuickPlannerDock
-              actions={quickPlannerActions}
-              activeKey={stampTool?.key ?? null}
-              busy={plannerBusy}
-              onOpen={beginPlanning}
-              onClose={closePlanning}
-              onSelectAction={selectPlannerAction}
-              open={plannerMode}
-              transitionProgress={plannerTransition}
+            )}
+          </CalendarViewTransition>
+        }
+        yearView={
+          <CalendarViewTransition testID="calendar-year-overview-shell">
+            <YearOverview
+              active={preferences.viewMode === "YEAR"}
+              onSelectMonth={openMonth}
+              profile={profile}
+              selectedMonth={visibleMonth}
+              year={Number(visibleMonth.slice(0, 4))}
             />
-          )}
-        </CalendarViewTransition>
-      ) : (
-        <CalendarViewTransition
-          key="YEAR"
-          month={visibleMonth}
-          testID="calendar-year-overview-shell"
-          viewMode="YEAR"
-        >
-          <YearOverview
-            onSelectMonth={openMonth}
-            profile={profile}
-            selectedMonth={visibleMonth}
-            year={Number(visibleMonth.slice(0, 4))}
-          />
-        </CalendarViewTransition>
-      )}
+          </CalendarViewTransition>
+        }
+      />
       {quickPopup ? (
         <QuickEntryPopup
           actions={quickActions}

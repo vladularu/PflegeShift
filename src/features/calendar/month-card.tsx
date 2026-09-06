@@ -43,11 +43,13 @@ import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
 import { CALENDAR_METRICS, SPACING } from "@/theme/tokens";
 import { usePressMotion } from "@/ui/press-motion";
 import { ShiftSymbol } from "@/ui/shift-symbol";
+import { useCalendarMorphMeasurement } from "./calendar-morph-measurement";
 
 const WEEKDAYS = ["M", "D", "M", "D", "F", "S", "S"];
 const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
 type CalendarCell = ReturnType<typeof createMonthGrid>[number];
 interface DayCellProps {
+  readonly morphEnabled: boolean;
   readonly cell: CalendarCell;
   readonly entries: readonly CalendarEntry[];
   readonly holidayName?: string;
@@ -226,6 +228,7 @@ const EmptyStampSlot = memo(function EmptyStampSlot({
 });
 const DayCell = memo(
   function DayCell({
+    morphEnabled,
     cell,
     entries,
     holidayName,
@@ -244,6 +247,25 @@ const DayCell = memo(
     const palette = usePalette();
     const pressMotion = usePressMotion(1, 0.985);
     const cellRef = useRef<View>(null);
+    const { fontScale } = useWindowDimensions();
+    const dayNumberRef = useCalendarMorphMeasurement(
+      {
+        kind: "DAY",
+        month: cell.date.slice(0, 7),
+        date: cell.date,
+        fontSize: CALENDAR_METRICS.dayNumberFontSize * Math.min(fontScale, COMPACT_TEXT_MAX_SCALE),
+        color: isSelected
+          ? palette.onCalendarSelection
+          : cell.weekend
+            ? palette.textMuted
+            : palette.text,
+        mutedColor: palette.textMuted,
+        today: isToday ? cell.date : "",
+        todayColor: palette.onCalendarToday,
+        todayBackground: palette.calendarToday,
+      },
+      morphEnabled,
+    );
     const detailed = showShiftTimes || showShiftDuration;
     const preview = useMemo(
       () =>
@@ -306,6 +328,8 @@ const DayCell = memo(
             }}
           >
             <View
+              ref={dayNumberRef}
+              collapsable={false}
               style={{
                 minWidth: 30,
                 height: 30,
@@ -414,6 +438,7 @@ const DayCell = memo(
     );
   },
   (previous, next) =>
+    previous.morphEnabled === next.morphEnabled &&
     previous.cell === next.cell &&
     previous.labelMode === next.labelMode &&
     calendarEntryListsEqual(previous.entries, next.entries) &&
@@ -613,6 +638,7 @@ export const MonthCard = memo(function MonthCard({
           >
             {week.map((cell, dayIndex) => (
               <DayCell
+                morphEnabled={accessibilityVisible && cell.inMonth}
                 key={cell.date}
                 cell={cell}
                 labelMode={labelMode}

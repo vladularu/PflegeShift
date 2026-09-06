@@ -58,3 +58,9 @@ export const CALENDAR_METRICS = {
   cardRadius: 22,
   floatingActionSize: 40,
 } as const;
+
+export const CALENDAR_MINI_METRICS = {
+  rowHeight: 21,
+  daySize: 18,
+  fontSize: 10,
+} as const;

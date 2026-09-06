@@ -5,6 +5,7 @@ import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { CalendarHeader } from "@/features/calendar/calendar-header";
+import { CALENDAR_VIEW_ZOOM } from "@/features/calendar/calendar-view-transition";
 import { MOTION } from "@/theme/motion";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
@@ -91,7 +92,7 @@ describe("CalendarHeader", () => {
     );
     const title = screen.getByRole("header", { name: "2026" });
 
-    expect(title.props.entering.durationV).toBe(MOTION.duration.scene);
+    expect(title.props.entering.durationV).toBe(CALENDAR_VIEW_ZOOM.duration);
     expect(title).toHaveStyle({ color: LIGHT_PALETTE.primary });
     expect(title.props.entering.initialValues).toBeUndefined();
     expect(title.props.exiting.durationV).toBe(MOTION.duration.normal);
@@ -116,7 +117,7 @@ describe("CalendarHeader", () => {
       includeHiddenElements: true,
     });
 
-    expect(controls.props.entering.durationV).toBe(MOTION.duration.scene);
+    expect(controls.props.entering.durationV).toBe(CALENDAR_VIEW_ZOOM.duration);
     expect(controls.props.entering.initialValues).toBeUndefined();
     expect(controls.props.exiting.durationV).toBe(MOTION.duration.normal);
     expect(controls.props.exiting.targetValues).toBeUndefined();

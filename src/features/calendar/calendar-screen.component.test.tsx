@@ -254,7 +254,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     expect(screen.queryByTestId("calendar-month-pager-shell")).toBeNull();
   });
 
-  it("mounts distinct transition scenes for month and year views", async () => {
+  it("retains the month scene while switching to the year scene", async () => {
     const screen = await render(<CalendarScreen />);
     expect(screen.getByTestId("calendar-month-pager-shell")).toBeTruthy();
 
@@ -264,7 +264,12 @@ describe("CalendarScreen quick-entry navigation", () => {
     });
 
     expect(screen.queryByTestId("calendar-month-pager-shell")).toBeNull();
-    expect(screen.getByTestId("calendar-year-overview-shell")).toBeTruthy();
+    expect(
+      await screen.findByTestId("calendar-year-overview-shell", {}, { timeout: 1500 }),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId("calendar-month-pager-shell", { includeHiddenElements: true }),
+    ).toBeTruthy();
   });
 
   it("warns when December's visible grid reaches beyond holiday coverage", async () => {
