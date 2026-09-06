@@ -162,6 +162,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     mockRuleResolver = bundledRuleResolver;
     mockReady = true;
     mockCalendarRange = null;
+    mockPreferences.viewMode = "MONTH";
     jest.mocked(router.push).mockClear();
     mockActiveMonthCoordinator.completeTodayRequest.mockClear();
     mockActiveMonthCoordinator.setMonth.mockClear();
@@ -240,6 +241,31 @@ describe("CalendarScreen quick-entry navigation", () => {
       expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
     },
   );
+
+  it("keeps a covered year overview visible while its surrounding range refreshes", async () => {
+    mockActiveMonth = "2027-08";
+    mockPreferences.viewMode = "YEAR";
+    mockReady = false;
+    mockCalendarRange = { startDate: "2025-01-01", endDate: "2027-12-31" };
+
+    const screen = await render(<CalendarScreen />);
+
+    expect(screen.getByTestId("calendar-year-overview-shell")).toBeTruthy();
+    expect(screen.queryByTestId("calendar-month-pager-shell")).toBeNull();
+  });
+
+  it("mounts distinct transition scenes for month and year views", async () => {
+    const screen = await render(<CalendarScreen />);
+    expect(screen.getByTestId("calendar-month-pager-shell")).toBeTruthy();
+
+    await act(async () => {
+      mockPreferences.viewMode = "YEAR";
+      await screen.rerender(<CalendarScreen />);
+    });
+
+    expect(screen.queryByTestId("calendar-month-pager-shell")).toBeNull();
+    expect(screen.getByTestId("calendar-year-overview-shell")).toBeTruthy();
+  });
 
   it("warns when December's visible grid reaches beyond holiday coverage", async () => {
     const holidayPackage = BUNDLED_HOLIDAY_RULES[0];

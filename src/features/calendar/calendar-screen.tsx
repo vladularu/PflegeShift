@@ -10,8 +10,6 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import Animated, {
-  FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -24,12 +22,16 @@ import {
   usePflegeShiftTemplates,
   usePflegeShiftTestData,
 } from "@/application/pflegeshift-provider";
-import { calendarRangeCoversMonth } from "@/application/calendar-entry-loading";
+import {
+  calendarRangeCoversMonth,
+  calendarRangeCoversYear,
+} from "@/application/calendar-entry-loading";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type { CalendarEntry } from "@/domain/types";
 import { addMonths, createMonthGrid, currentMonth, today } from "@/engine/calendar";
 import { expandCalendarEntries } from "@/engine/recurrence";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
+import { CalendarViewTransition } from "@/features/calendar/calendar-view-transition";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
 import * as CalendarHolidays from "@/features/calendar/calendar-holidays";
@@ -108,8 +110,9 @@ export function CalendarScreen() {
   const [visibleMonth, setVisibleMonth] = useState(targetMonth);
   const calendarReady =
     ready ||
-    (preferences.viewMode === "MONTH" &&
-      calendarRangeCoversMonth(calendarRange ?? null, visibleMonth));
+    (preferences.viewMode === "MONTH"
+      ? calendarRangeCoversMonth(calendarRange ?? null, visibleMonth)
+      : calendarRangeCoversYear(calendarRange ?? null, Number(visibleMonth.slice(0, 4))));
   const [pagerResetRevision, setPagerResetRevision] = useState(0);
   const [headerDirection, setHeaderDirection] = useState<"NEXT" | "PREVIOUS">("NEXT");
   const [headerTransition, setHeaderTransition] = useState<"SPATIAL" | "CROSSFADE">("SPATIAL");
@@ -530,6 +533,7 @@ export function CalendarScreen() {
         onOpenYear={openYear}
         plannerActive={plannerMode}
         plannerTransition={plannerTransition}
+        referenceMonth={currentMonth(timeZone)}
         transition={headerTransition}
         viewMode={preferences.viewMode}
       />
@@ -559,15 +563,9 @@ export function CalendarScreen() {
       ) : null}
       <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
       {preferences.viewMode === "MONTH" ? (
-        <Animated.View
-          entering={FadeIn.duration(MOTION.duration.deliberate)
-            .easing(MOTION.easing.calm)
-            .reduceMotion(MOTION.reduceMotion)}
-          exiting={FadeOut.duration(MOTION.duration.deliberate)
-            .easing(MOTION.easing.calm)
-            .reduceMotion(MOTION.reduceMotion)}
+        <CalendarViewTransition
+          key="MONTH"
           onLayout={measurePager}
-          style={{ flex: 1 }}
           testID="calendar-month-pager-shell"
         >
           <Animated.View style={[{ flex: 1 }, calendarHopStyle]}>
@@ -622,17 +620,9 @@ export function CalendarScreen() {
               transitionProgress={plannerTransition}
             />
           )}
-        </Animated.View>
+        </CalendarViewTransition>
       ) : (
-        <Animated.View
-          entering={FadeIn.duration(MOTION.duration.deliberate)
-            .easing(MOTION.easing.calm)
-            .reduceMotion(MOTION.reduceMotion)}
-          exiting={FadeOut.duration(MOTION.duration.deliberate)
-            .easing(MOTION.easing.calm)
-            .reduceMotion(MOTION.reduceMotion)}
-          style={{ flex: 1 }}
-        >
+        <CalendarViewTransition key="YEAR" testID="calendar-year-overview-shell">
           <YearOverview
             entries={visibleEntries}
             onSelectMonth={openMonth}
@@ -640,7 +630,7 @@ export function CalendarScreen() {
             selectedMonth={visibleMonth}
             year={Number(visibleMonth.slice(0, 4))}
           />
-        </Animated.View>
+        </CalendarViewTransition>
       )}
       {quickPopup ? (
         <QuickEntryPopup

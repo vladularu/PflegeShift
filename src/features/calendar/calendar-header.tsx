@@ -46,6 +46,7 @@ function HeaderIconButton({
 
 export const CalendarHeader = memo(function CalendarHeader({
   month,
+  referenceMonth,
   viewMode,
   onOpenYear,
   onOpenDisplay,
@@ -56,6 +57,7 @@ export const CalendarHeader = memo(function CalendarHeader({
   transition = "SPATIAL",
 }: {
   readonly month: string;
+  readonly referenceMonth: string;
   readonly viewMode: CalendarViewMode;
   readonly onOpenYear: () => void;
   readonly onOpenDisplay: () => void;
@@ -68,7 +70,12 @@ export const CalendarHeader = memo(function CalendarHeader({
   const palette = usePalette();
   const year = month.slice(0, 4);
   const monthName = formatMonthTitle(month).replace(/\s+\d{4}$/, "");
-  const title = viewMode === "YEAR" ? year : monthName;
+  const title =
+    viewMode === "YEAR"
+      ? year
+      : year === referenceMonth.slice(0, 4)
+        ? monthName
+        : formatMonthTitle(month);
   const titleEntering =
     transition === "CROSSFADE"
       ? FadeIn.duration(MOTION.duration.deliberate)
@@ -116,35 +123,47 @@ export const CalendarHeader = memo(function CalendarHeader({
           ]}
           testID="calendar-header-actions"
         >
-          {viewMode === "MONTH" ? (
-            <>
-              <HeaderIconButton
-                label={`${year}, Jahresansicht öffnen`}
-                name="calendar-number-outline"
-                onPress={onOpenYear}
-              />
-              <View style={[styles.separator, { backgroundColor: palette.separator }]} />
-              <HeaderIconButton
-                label="Kalenderdarstellung öffnen"
-                name="options-outline"
-                onPress={onOpenDisplay}
-              />
-            </>
-          ) : (
-            <>
-              <HeaderIconButton
-                label="Vorheriges Jahr"
-                name="chevron-back"
-                onPress={() => onMoveYear(-1)}
-              />
-              <View style={[styles.separator, { backgroundColor: palette.separator }]} />
-              <HeaderIconButton
-                label="Nächstes Jahr"
-                name="chevron-forward"
-                onPress={() => onMoveYear(1)}
-              />
-            </>
-          )}
+          <Animated.View
+            key={viewMode}
+            entering={FadeIn.duration(MOTION.duration.fast)
+              .easing(MOTION.easing.calm)
+              .reduceMotion(MOTION.reduceMotion)}
+            exiting={FadeOut.duration(MOTION.duration.fast)
+              .easing(MOTION.easing.calm)
+              .reduceMotion(MOTION.reduceMotion)}
+            style={styles.modeActions}
+            testID="calendar-header-mode-actions"
+          >
+            {viewMode === "MONTH" ? (
+              <>
+                <HeaderIconButton
+                  label={`${year}, Jahresansicht öffnen`}
+                  name="calendar-number-outline"
+                  onPress={onOpenYear}
+                />
+                <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+                <HeaderIconButton
+                  label="Kalenderdarstellung öffnen"
+                  name="options-outline"
+                  onPress={onOpenDisplay}
+                />
+              </>
+            ) : (
+              <>
+                <HeaderIconButton
+                  label="Vorheriges Jahr"
+                  name="chevron-back"
+                  onPress={() => onMoveYear(-1)}
+                />
+                <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+                <HeaderIconButton
+                  label="Nächstes Jahr"
+                  name="chevron-forward"
+                  onPress={() => onMoveYear(1)}
+                />
+              </>
+            )}
+          </Animated.View>
         </Animated.View>
       }
       title={title}
@@ -170,6 +189,10 @@ const styles = StyleSheet.create({
     height: CONTROL_HEIGHT.compact,
     alignItems: "center",
     justifyContent: "center",
+  },
+  modeActions: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   separator: {
     width: StyleSheet.hairlineWidth,

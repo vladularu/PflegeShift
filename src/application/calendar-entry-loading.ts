@@ -9,6 +9,11 @@ export function calendarRangeCoversMonth(range: CalendarEntryRange | null, month
   return range.startDate <= grid[0].date && range.endDate >= grid[grid.length - 1].date;
 }
 
+export function calendarRangeCoversYear(range: CalendarEntryRange | null, year: number): boolean {
+  if (range === null) return false;
+  return range.startDate <= `${year}-01-01` && range.endDate >= `${year}-12-31`;
+}
+
 // Preserve saves and deletions completed while the range query was in flight.
 export function reconcileCalendarRange(
   loaded: readonly CalendarEntry[],

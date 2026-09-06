@@ -10,11 +10,13 @@ import { MOTION } from "@/theme/motion";
 function PlannerHeader({
   direction = "NEXT",
   month = "2026-08",
+  referenceMonth = "2026-08",
   titleTransition = "SPATIAL",
   viewMode = "MONTH",
 }: {
   direction?: "NEXT" | "PREVIOUS";
   month?: string;
+  referenceMonth?: string;
   titleTransition?: "SPATIAL" | "CROSSFADE";
   viewMode?: "MONTH" | "YEAR";
 } = {}) {
@@ -34,6 +36,7 @@ function PlannerHeader({
         onOpenYear={jest.fn()}
         plannerActive
         plannerTransition={plannerTransition}
+        referenceMonth={referenceMonth}
         transition={titleTransition}
         viewMode={viewMode}
       />
@@ -91,5 +94,29 @@ describe("CalendarHeader", () => {
     expect(title.props.entering.initialValues).toBeUndefined();
     expect(title.props.exiting.durationV).toBe(MOTION.duration.deliberate);
     expect(title.props.exiting.targetValues).toBeUndefined();
+  });
+
+  it("keeps the current year quiet and shows other years for orientation", async () => {
+    const current = await render(<PlannerHeader month="2026-08" referenceMonth="2026-09" />);
+    expect(current.getByRole("header", { name: "August" })).toBeTruthy();
+    await current.unmount();
+
+    for (const year of ["2025", "2027"]) {
+      const other = await render(<PlannerHeader month={`${year}-08`} referenceMonth="2026-09" />);
+      expect(other.getByRole("header", { name: `August ${year}` })).toBeTruthy();
+      await other.unmount();
+    }
+  });
+
+  it("crossfades the mode controls without moving the header pill", async () => {
+    const screen = await render(<PlannerHeader viewMode="YEAR" />);
+    const controls = screen.getByTestId("calendar-header-mode-actions", {
+      includeHiddenElements: true,
+    });
+
+    expect(controls.props.entering.durationV).toBe(MOTION.duration.fast);
+    expect(controls.props.entering.initialValues).toBeUndefined();
+    expect(controls.props.exiting.durationV).toBe(MOTION.duration.fast);
+    expect(controls.props.exiting.targetValues).toBeUndefined();
   });
 });
