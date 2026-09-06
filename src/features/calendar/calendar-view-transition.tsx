@@ -46,6 +46,7 @@ import {
 import { MOTION } from "@/theme/motion";
 import { calendarMorphPhases } from "./calendar-morph-phases";
 import { usePalette } from "@/theme/palette";
+import { calendarPerformance } from "@/application/calendar-performance";
 
 export const CALENDAR_VIEW_ZOOM = { duration: 600, measurementTimeout: 900 } as const;
 // Resolve Reanimated's easing factory once, not once per glyph and frame.
@@ -197,6 +198,7 @@ export function CalendarTransitionHost({
   const progress = useSharedValue(viewMode === "MONTH" ? 1 : 0);
   const finish = useCallback((id: number) => {
     if (epoch.current !== id) return;
+    calendarPerformance.record("animation-end", { epoch: id });
     setDisplayedMode(desired.current);
     setPlan(null);
     callbacks.current.onTransitionStart?.(desired.current);
@@ -211,6 +213,8 @@ export function CalendarTransitionHost({
 
   useLayoutEffect(() => {
     const id = ++epoch.current;
+    const measuring = calendarPerformance.span("plan-ready", { epoch: id });
+    let rounds = 0;
     desired.current = viewMode;
     cancelAnimation(progress);
     setPlan(null);
@@ -227,15 +231,25 @@ export function CalendarTransitionHost({
       end();
     } else {
       progress.value = displayedMode === "MONTH" ? 1 : 0;
-      timeout = setTimeout(end, CALENDAR_VIEW_ZOOM.measurementTimeout);
+      calendarPerformance.record("prepare", { epoch: id, mode: viewMode === "MONTH" ? 1 : 0 });
+      timeout = setTimeout(() => {
+        calendarPerformance.record("fallback", { epoch: id, round: rounds });
+        end();
+      }, CALENDAR_VIEW_ZOOM.measurementTimeout);
       let previousGeometry = "";
       const measure = async () => {
         if (settled || epoch.current !== id || !root.current) return;
+        const finishRound = calendarPerformance.span("measure", {
+          epoch: id,
+          round: ++rounds,
+          nodes: registry.size,
+        });
         const viewport = measureCalendarRect(root.current);
         const [bounds, measured] = await Promise.all([
           viewport,
           Promise.all([...registry].map((read) => read())),
         ]);
+        finishRound({ valid: measured.filter(Boolean).length });
         if (settled || epoch.current !== id) return;
         if (!bounds) {
           end();
@@ -259,6 +273,7 @@ export function CalendarTransitionHost({
         }
         if (timeout) clearTimeout(timeout);
         settled = true;
+        measuring({ round: rounds });
         setPlan(candidate);
       };
       frame = requestAnimationFrame(() => {
@@ -266,6 +281,7 @@ export function CalendarTransitionHost({
       });
     }
     return () => {
+      calendarPerformance.record("effect-cleanup", { epoch: id });
       epoch.current += 1;
       if (frame !== undefined) cancelAnimationFrame(frame);
       if (timeout) clearTimeout(timeout);
@@ -289,6 +305,7 @@ export function CalendarTransitionHost({
     if (!plan) return;
     const id = epoch.current;
     const frame = requestAnimationFrame(() => {
+      calendarPerformance.record("animation-start", { epoch: id });
       callbacks.current.onTransitionStart?.(viewMode);
       progress.value = withTiming(
         viewMode === "MONTH" ? 1 : 0,

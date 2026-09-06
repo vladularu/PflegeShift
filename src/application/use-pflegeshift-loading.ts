@@ -19,6 +19,7 @@ import {
 } from "@/application/pflegeshift-snapshot";
 import { DATA_LOAD_FAILURE_MESSAGE } from "@/domain/errors";
 import type { CalendarEntry } from "@/domain/types";
+import { calendarPerformance } from "./calendar-performance";
 
 export function usePflegeShiftLoading(
   activeMonth: string,
@@ -49,6 +50,14 @@ export function usePflegeShiftLoading(
   const load = useCallback(
     async (full: boolean) => {
       const revision = ++sequence.current;
+      const finishTiming = calendarPerformance.span("load-end", {
+        load: revision,
+        full: full ? 1 : 0,
+      });
+      calendarPerformance.record("load-start", {
+        load: revision,
+        month: (Number(range.startDate.slice(0, 4)) + 1) * 100,
+      });
       const before = currentEntries.current;
       const deleted = new Set<string>();
       deletedDuringLoad.current = deleted;
@@ -61,7 +70,10 @@ export function usePflegeShiftLoading(
       try {
         if (full || !initialized.current) {
           const snapshot = await loadPflegeShiftSnapshot(repository, range);
-          if (revision !== sequence.current) return;
+          if (revision !== sequence.current) {
+            calendarPerformance.record("load-discard", { load: revision });
+            return;
+          }
           applySnapshot(snapshot);
           initialized.current = true;
           void reconcileLoadedEntryNotifications(
@@ -79,15 +91,20 @@ export function usePflegeShiftLoading(
           });
         } else {
           const loaded = await repository.listCalendarEntries(range.startDate, range.endDate);
-          if (revision !== sequence.current) return;
+          if (revision !== sequence.current) {
+            calendarPerformance.record("load-discard", { load: revision });
+            return;
+          }
           setEntries((current) => reconcileCalendarRange(loaded, before, current, range, deleted));
         }
         setCalendarRange(range);
       } catch (loadError) {
+        calendarPerformance.record("load-error", { load: revision });
         if (revision !== sequence.current) return;
         diagnostics.record("provider", "PROVIDER_RELOAD_FAILED", loadError);
         setError(DATA_LOAD_FAILURE_MESSAGE);
       } finally {
+        finishTiming();
         if (revision === sequence.current) setLoadedKey(rangeKey);
       }
     },

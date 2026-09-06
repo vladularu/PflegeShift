@@ -4,6 +4,7 @@ import type { ActiveMonthCoordinator } from "@/navigation/active-month";
 import { clampDateToMonth } from "./calendar-metrics";
 import { monthAtPagerOffset, shouldRecenterMonthWindow } from "./month-window";
 import { selectionFeedback } from "@/ui/haptics";
+import { calendarPerformance } from "@/application/calendar-performance";
 
 export function useCalendarPaging({
   months,
@@ -79,6 +80,7 @@ export function useCalendarPaging({
       clearPopup();
       if (finishTodayScrollAtMonth(month)) return;
       const didChangeMonth = settledMonthRef.current !== month;
+      calendarPerformance.record("scroll-end", { month: Number(month.replace("-", "")) });
       settledMonthRef.current = month;
       setVisibleMonth(month);
       activeMonthCoordinator.setMonth(month);

@@ -26,15 +26,15 @@ import {
 } from "@/application/calendar-entry-loading";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type { CalendarEntry } from "@/domain/types";
-import { addMonths, createMonthGrid, currentMonth, today } from "@/engine/calendar";
-import { expandCalendarEntries } from "@/engine/recurrence";
+import { addMonths, currentMonth, today } from "@/engine/calendar";
+import { calendarPerformance } from "@/application/calendar-performance";
+import { useCalendarPerformance, useMeasuredCalendarEntries } from "./use-calendar-performance";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import {
   CalendarTransitionHost,
   CalendarViewTransition,
 } from "@/features/calendar/calendar-view-transition";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
-import { buildCalendarEntryIndex } from "@/features/calendar/calendar-entry-index";
 import * as CalendarHolidays from "@/features/calendar/calendar-holidays";
 import type { CalendarAnchorRect } from "@/features/calendar/calendar-layout";
 import { clampDateToMonth } from "@/features/calendar/calendar-metrics";
@@ -106,6 +106,7 @@ export function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectionVisible, setSelectionVisible] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(targetMonth);
+  useCalendarPerformance(isFocused, visibleMonth, preferences.viewMode);
   const [headerMode, setHeaderMode] = useState(preferences.viewMode);
   const transitionInFlight = useRef(false);
   const monthSelectionPending = useRef(false);
@@ -170,22 +171,11 @@ export function CalendarScreen() {
     setPlannerError(null);
   }, [isFocused]);
 
-  const calendarEntries = useMemo(() => {
-    const firstMonth = months[0];
-    const lastMonth = months[months.length - 1];
-    const firstDate = createMonthGrid(firstMonth)[0].date;
-    const lastGrid = createMonthGrid(lastMonth);
-    const lastDate = lastGrid[lastGrid.length - 1].date;
-    return expandCalendarEntries(entries, firstDate, lastDate);
-  }, [entries, months]);
-
-  const entryIndex = useMemo(
-    () =>
-      buildCalendarEntryIndex(calendarEntries, {
-        showAppointments: preferences.showAppointments,
-        showShifts: preferences.showShifts,
-      }),
-    [calendarEntries, preferences.showAppointments, preferences.showShifts],
+  const entryIndex = useMeasuredCalendarEntries(
+    entries,
+    months,
+    preferences.showAppointments,
+    preferences.showShifts,
   );
   const { entriesByDate } = entryIndex;
   const quickActions = useMemo(() => buildQuickEntryActions(templates), [templates]);
@@ -287,6 +277,7 @@ export function CalendarScreen() {
   );
 
   const resetTodayUi = useCallback(() => {
+    calendarPerformance.begin("request-today");
     monthSelectionPending.current = false;
     setQuickPopup(null);
     setPlannerMode(false);
@@ -319,6 +310,7 @@ export function CalendarScreen() {
 
   const openMonth = useCallback(
     (month: string) => {
+      calendarPerformance.begin("request-month", month);
       if (transitionInFlight.current) return;
       transitionInFlight.current = true;
       monthSelectionPending.current = true;
@@ -340,6 +332,7 @@ export function CalendarScreen() {
   );
 
   const openYear = useCallback(() => {
+    calendarPerformance.begin("request-year", visibleMonth);
     if (transitionInFlight.current) return;
     transitionInFlight.current = true;
     setQuickPopup(null);
@@ -348,7 +341,7 @@ export function CalendarScreen() {
     setHeaderTransition("CROSSFADE");
     preferences.setViewMode("YEAR");
     selectionFeedback();
-  }, [preferences]);
+  }, [preferences, visibleMonth]);
 
   const openCalendarDisplay = useCallback(() => {
     setQuickPopup(null);
@@ -361,6 +354,7 @@ export function CalendarScreen() {
   const measurePager = useCallback(
     (event: LayoutChangeEvent) => {
       const nextHeight = Math.round(event.nativeEvent.layout.height);
+      calendarPerformance.record("pager-layout", { height: nextHeight });
       if (nextHeight > 0 && nextHeight !== pageHeight) setPageHeight(nextHeight);
     },
     [pageHeight],
@@ -458,6 +452,7 @@ export function CalendarScreen() {
   const visibleMonthIndex = months.indexOf(visibleMonth);
   const moveYear = useCallback(
     (amount: number) => {
+      calendarPerformance.begin("request-year-step", addMonths(visibleMonth, amount * 12));
       if (transitionInFlight.current) return;
       const nextMonth = addMonths(visibleMonth, amount * 12);
       setQuickPopup(null);
@@ -591,6 +586,7 @@ export function CalendarScreen() {
                   maxToRenderPerBatch={2}
                   onMomentumScrollEnd={finishPaging}
                   onScrollBeginDrag={() => {
+                    calendarPerformance.begin("scroll-begin", visibleMonth);
                     if (!transitionInFlight.current) monthSelectionPending.current = false;
                   }}
                   onScroll={trackPaging}
