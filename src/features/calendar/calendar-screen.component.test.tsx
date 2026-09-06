@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { router } from "expo-router";
 import * as MockReact from "react";
@@ -288,6 +288,45 @@ describe("CalendarScreen quick-entry navigation", () => {
     ).toBeTruthy();
     expect(screen.queryByText("LUNA Shift konnte nicht angezeigt werden")).toBeNull();
   });
+
+  it.each(["2026-01", "2026-12"])(
+    "retains the holiday notice inside the month scene across year transitions for %s",
+    async (month) => {
+      const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
+      mockActiveMonth = month;
+      mockRuleResolver = createRuleResolver({
+        tariff: BUNDLED_TARIFF_RULES,
+        legal: BUNDLED_LEGAL_RULES,
+        holiday: [{ ...holidayPackage, validFrom: "2026-01-01", validTo: "2026-12-31" }],
+      });
+      const screen = await render(<CalendarScreen />);
+      const message = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
+      const notice = within(screen.getByTestId("calendar-month-scene")).getByText(message);
+      const viewport = screen.getByTestId("calendar-month-pager-shell");
+      // Pager height is measured below the notice, not on the whole scene.
+      expect(screen.getByTestId("calendar-month-scene").props.onLayout).toBeUndefined();
+      await fireEvent(viewport, "layout", { nativeEvent: { layout: { height: 640 } } });
+      const pager = screen.getByTestId("calendar-month-pager");
+      expect(pager.props.snapToInterval).toBe(640);
+      for (const viewMode of ["YEAR", "MONTH", "YEAR", "MONTH"]) {
+        mockPreferences.viewMode = viewMode;
+        await screen.rerender(<CalendarScreen />);
+        await screen.findByTestId(
+          viewMode === "YEAR" ? "calendar-year-overview-shell" : "calendar-month-scene",
+          {},
+          { timeout: 1500 },
+        );
+        const scene = screen.getByTestId("calendar-month-scene", { includeHiddenElements: true });
+        expect(within(scene).getByText(message, { includeHiddenElements: true })).toBe(notice);
+        expect(screen.getByTestId("calendar-month-pager", { includeHiddenElements: true })).toBe(
+          pager,
+        );
+        expect(pager.props.snapToInterval).toBe(640);
+        if (viewMode === "YEAR") expect(screen.queryByText(message)).toBeNull();
+        else expect(screen.getByText(message)).toBeVisible();
+      }
+    },
+  );
 
   it("keeps the compact popup mounted beneath the root shift screen", async () => {
     const screen = await render(<CalendarScreen />);

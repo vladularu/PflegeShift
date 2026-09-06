@@ -115,6 +115,34 @@ Export bestanden. iOS-Fingerprint unverändert:
 
 ### Unveränderte Bereiche
 
+### Januar-Korrektur nach Gerätevideo vom 6. September, 07:30 Uhr
+
+Nutzer bestätigt September und Dezember nach `f0b3f1f`, Januar bleibt fehlerhaft.
+Die Aufnahme zeigt einen zusätzlichen Layoutwechsel durch den Feiertagshinweis
+beim Öffnen und Schließen der Monatsansicht. Der Hinweis stand außerhalb des
+Animationshosts und wurde nur im Monatsmodus aufgelöst. Dadurch änderten sich
+Host-Höhe und Pager-Geometrie beim Moduswechsel.
+
+Der Hinweis liegt jetzt innerhalb der montiert bleibenden Monatsansicht, vor dem
+Pager. Die Feiertagsauflösung hängt nicht mehr vom Ansichtsmodus ab. Die Pagerhöhe
+wird unterhalb des Hinweises gemessen; die Jahresansicht behält die volle Fläche.
+Hinweis und Pager bleiben beim Hin-/Zurückwechseln montiert und unverändert groß.
+Die Warnung bleibt in der Monatsansicht sichtbar und wird in der Jahresansicht
+mit der gesamten Monatsszene visuell und für Screenreader verborgen.
+
+Scope: Kalenderbildschirm, Bildschirmtests, Dokumentation. Keine Tarif-/Feiertags-
+Regeländerung, keine Animationskurvenänderung, keine native Änderung. Freigabe umfasst
+lokale Umsetzung, Commit, Push, CI und Preview-OTA. Abnahme auf Build 31/iPhone 14 Pro
+Max/iOS 26.6.1: Januar hin und zurück ohne Layoutsprung oder ausgeblendete Monate,
+Hinweis korrekt sichtbar, September/Dezember weiterhin ruhig, Hell/Dunkel und Daten
+nach Neustart unverändert. Native Geometrie bleibt auf dem Gerät zu bestätigen.
+
+Lokaler finaler Stand: `verify:fast`, die gezielten Bildschirmtests sowie der
+iOS-Hermes-Export sind bestanden. iOS-Fingerprint unverändert:
+`eac302484061dfb3fa63e2a74b8618ff6000861c`. Geräteabnahme der Januar-Korrektur offen.
+
+### Weiterhin unveränderte Bereiche
+
 Betroffen sind Kalenderkopf, Ansichtscontainer, Monatsraster, Jahresraster,
 Mess-/Geometriehilfen, Mini-Kalendermaße, Datenabdeckungsprüfung, zugehörige Tests
 und dieses Dokument. Unverändert bleiben

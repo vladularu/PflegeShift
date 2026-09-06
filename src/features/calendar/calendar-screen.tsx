@@ -192,7 +192,7 @@ export function CalendarScreen() {
     visibleMonth,
     profile,
     ruleResolver,
-    preferences.viewMode === "MONTH" && preferences.showHolidays,
+    preferences.showHolidays,
   );
   const quickPopupHolidayName = useMemo(() => {
     if (profile === null || quickPopup === null) return undefined;
@@ -564,14 +564,18 @@ export function CalendarScreen() {
           </PrimaryButton>
         </View>
       ) : null}
-      <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
       <CalendarTransitionHost
         month={visibleMonth}
         viewMode={preferences.viewMode}
         active={isFocused}
         monthView={
-          <CalendarViewTransition onLayout={measurePager} testID="calendar-month-pager-shell">
-            <Animated.View style={[{ flex: 1 }, calendarHopStyle]}>
+          <CalendarViewTransition testID="calendar-month-scene">
+            <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
+            <Animated.View
+              onLayout={measurePager}
+              testID="calendar-month-pager-shell"
+              style={[{ flex: 1 }, calendarHopStyle]}
+            >
               {pageHeight > 0 ? (
                 <FlatList
                   ref={listRef}
