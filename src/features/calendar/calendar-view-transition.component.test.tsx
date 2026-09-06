@@ -6,7 +6,6 @@ import {
   CALENDAR_VIEW_ZOOM,
   CalendarViewTransition,
   calendarViewEntering,
-  calendarViewExiting,
 } from "@/features/calendar/calendar-view-transition";
 
 describe("CalendarViewTransition", () => {
@@ -19,18 +18,17 @@ describe("CalendarViewTransition", () => {
     const scene = screen.getByTestId("calendar-scene");
 
     const entering = calendarViewEntering("MONTH")({} as never);
-    const exiting = calendarViewExiting("MONTH")({} as never);
     expect(entering.initialValues).toMatchObject({
       opacity: CALENDAR_VIEW_ZOOM.edgeOpacity,
       transform: [{ scale: CALENDAR_VIEW_ZOOM.monthScale }],
     });
-    expect(exiting.initialValues).toMatchObject({ opacity: 1, transform: [{ scale: 1 }] });
     expect(typeof scene.props.entering).toBe("function");
-    expect(typeof scene.props.exiting).toBe("function");
+    expect(scene.props.exiting).toBeUndefined();
+    expect(scene).toHaveProp("collapsable", false);
   });
 
-  it("compiles both custom layout animations as UI-thread worklets", () => {
+  it("compiles both zoom directions as UI-thread worklets", () => {
     expect(calendarViewEntering("MONTH")).toHaveProperty("__workletHash");
-    expect(calendarViewExiting("YEAR")).toHaveProperty("__workletHash");
+    expect(calendarViewEntering("YEAR")).toHaveProperty("__workletHash");
   });
 });

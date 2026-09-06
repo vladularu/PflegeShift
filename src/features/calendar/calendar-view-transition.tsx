@@ -3,6 +3,7 @@ import type { LayoutChangeEvent, ViewStyle } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
+  LayoutAnimationConfig,
   withTiming,
   type EntryExitAnimationFunction,
 } from "react-native-reanimated";
@@ -65,33 +66,6 @@ export function calendarViewEntering(viewMode: "MONTH" | "YEAR"): EntryExitAnima
   };
 }
 
-export function calendarViewExiting(viewMode: "MONTH" | "YEAR"): EntryExitAnimationFunction {
-  const edgeScale =
-    viewMode === "MONTH" ? CALENDAR_VIEW_ZOOM.monthScale : CALENDAR_VIEW_ZOOM.yearScale;
-  return () => {
-    "worklet";
-    return {
-      initialValues: { opacity: 1, transform: [{ scale: 1 }] },
-      animations: {
-        opacity: withTiming(CALENDAR_VIEW_ZOOM.edgeOpacity, {
-          duration: CALENDAR_VIEW_ZOOM.duration,
-          easing: MOTION.easing.calm,
-          reduceMotion: MOTION.reduceMotion,
-        }),
-        transform: [
-          {
-            scale: withTiming(edgeScale, {
-              duration: CALENDAR_VIEW_ZOOM.duration,
-              easing: MOTION.easing.calm,
-              reduceMotion: MOTION.reduceMotion,
-            }),
-          },
-        ],
-      },
-    };
-  };
-}
-
 export function CalendarViewTransition({
   children,
   month,
@@ -106,13 +80,15 @@ export function CalendarViewTransition({
 }>) {
   return (
     <Animated.View
+      collapsable={false}
       entering={calendarViewEntering(viewMode)}
-      exiting={calendarViewExiting(viewMode)}
       onLayout={onLayout}
       style={{ flex: 1, transformOrigin: monthTransformOrigin(month) }}
       testID={testID}
     >
-      {children}
+      <LayoutAnimationConfig skipEntering skipExiting>
+        {children}
+      </LayoutAnimationConfig>
     </Animated.View>
   );
 }

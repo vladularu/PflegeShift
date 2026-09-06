@@ -10,6 +10,9 @@ mit iOS 26.6.1 und dem installierten Preview-Build 31.
   wächst der ausgewählte Mini-Monat aus seiner Position in die Monatsansicht; beim
   Zurückgehen verkleinert sich die Monatsansicht wieder dorthin. Opacity und Skalierung
   laufen gemeinsam über 420 ms mit der ruhigen LUNA-Kurve.
+- Für eine gleichmäßige Bildrate wird nur die neu erscheinende Vollbild-Szene animiert.
+  Verschachtelte Ein- und Ausblendungen der Kalendereinträge werden während dieses
+  Szenenwechsels unterdrückt.
 - Monats- und Jahresansicht verwenden eine durchgehende, kartenlose Kalenderfläche.
   Wochenzahlen und flächige Wochenendbänder entfallen. Die Jahresansicht zeigt zwölf
   kompakte Mini-Monate in einem 3-mal-4-Raster mit ausgeschriebenen Monatsnamen.
