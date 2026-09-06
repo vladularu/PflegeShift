@@ -2,34 +2,42 @@ import { describe, expect, it } from "vitest";
 import { calendarMorphPhases } from "./calendar-morph-phases";
 
 describe("calendar morph handoff", () => {
-  it("never shows the real month while date geometry is still moving", () => {
+  it("reveals entries during travel but never shows displaced duplicate dates", () => {
     for (let frame = 0; frame <= 120; frame += 1) {
       const phase = calendarMorphPhases(frame / 120, true);
-      if (phase.travel < 1) expect(phase.monthOpacity).toBe(0);
+      if (phase.travel < 1) expect(phase.realGlyphOpacity).toBe(0);
       if (phase.monthOpacity > 0) {
-        expect(phase.travel).toBe(1);
         expect(phase.yearOpacity).toBe(0);
       }
-      expect(phase.glyphOpacity + phase.monthOpacity).toBeCloseTo(1);
+      if (phase.realGlyphOpacity > 0) {
+        expect(phase.travel).toBe(1);
+        expect(phase.monthOpacity).toBe(1);
+      }
+      expect(phase.glyphOpacity + phase.realGlyphOpacity).toBeCloseTo(1);
     }
+    expect(calendarMorphPhases(0.5, true).monthOpacity).toBeGreaterThan(0);
+    expect(calendarMorphPhases(0.5, true).travel).toBeLessThan(1);
   });
 
   it("crossfades only stationary dates and ends without residual layers", () => {
     expect(calendarMorphPhases(0.75, true)).toEqual({
       travel: 1,
-      monthOpacity: 0,
+      monthOpacity: 1,
+      realGlyphOpacity: 0,
       glyphOpacity: 1,
       yearOpacity: 0,
     });
     expect(calendarMorphPhases(0.875, true)).toEqual({
       travel: 1,
-      monthOpacity: 0.5,
+      monthOpacity: 1,
+      realGlyphOpacity: 0.5,
       glyphOpacity: 0.5,
       yearOpacity: 0,
     });
     expect(calendarMorphPhases(1, true)).toEqual({
       travel: 1,
       monthOpacity: 1,
+      realGlyphOpacity: 1,
       glyphOpacity: 0,
       yearOpacity: 0,
     });
@@ -43,6 +51,7 @@ describe("calendar morph handoff", () => {
         monthOpacity: Math.max(0, (p - 0.65) / 0.35),
         glyphOpacity: Math.min(1, (1 - p) / 0.35),
         yearOpacity: 1,
+        realGlyphOpacity: 1,
       });
     }
   });

@@ -67,6 +67,26 @@ Expo-Preset geprüft. iOS-Fingerprint weiterhin
 `eac302484061dfb3fa63e2a74b8618ff6000861c` (Build 31). Kein Commit, Push oder OTA
 für diese Abschlusskorrektur erfolgt; Geräteabnahme ausstehend.
 
+### Pausenkorrektur nach Gerätefeedback zur OTA `aae44707-81f9-41cf-a865-a46589d8cd03`
+
+Nutzer bestätigt erhaltene Daten, meldet aber eine Pause zwischen Kalender und
+Dienstanzeige. Die vorangegangene Trennung des gesamten Monatsinhalts war zu strikt.
+Jetzt blenden Raster und Einträge zwischen 150 und 390 ms während der noch laufenden
+450-ms-Bewegung ein. Nur die echten Tageszahlen im gewählten Monat bleiben bis zur
+positionsgleichen Übergabe verborgen (450–600 ms). Jahresreste sind vor Beginn der
+Inhaltsüberblendung ausgeblendet. Die Gegenrichtung bleibt unverändert.
+
+Scope: Phasenhilfe, Animationskontext/-container, Tageszahlen in `month-card.tsx`,
+Tests und dieses Dokument. Abnahme: Dienste erscheinen ohne nachgelagerte Pause;
+keine versetzten Doppelzahlen oder Jahresreste, Hell/Dunkel, Januar/September/Dezember,
+Gegenrichtung und Neustart mit erhaltenen Daten. Nutzerfreigabe umfasst Umsetzung,
+Commit, Push, CI und Preview-OTA, nicht Merge oder Geräteabnahme.
+
+Lokaler finaler Stand: `verify:fast` bestanden (588 Vitest-Tests, 220 Jest-Tests
+und zusätzliche Skriptprüfungen), iOS-Hermes-Export und Worklet-Transformation
+bestanden. Die Dateigrößen-Grenze bleibt unverändert. iOS-Fingerprint weiterhin
+`eac302484061dfb3fa63e2a74b8618ff6000861c`; Geräteabnahme der Pausenkorrektur offen.
+
 ### Unveränderter Gesamtscope
 
 Betroffen sind Kalenderkopf, Ansichtscontainer, Monatsraster, Jahresraster,

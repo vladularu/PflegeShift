@@ -43,7 +43,7 @@ import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
 import { CALENDAR_METRICS, SPACING } from "@/theme/tokens";
 import { usePressMotion } from "@/ui/press-motion";
 import { ShiftSymbol } from "@/ui/shift-symbol";
-import { useCalendarMorphMeasurement } from "./calendar-morph-measurement";
+import { useMorphDayStyle, useCalendarMorphMeasurement } from "./calendar-morph-measurement";
 
 const WEEKDAYS = ["M", "D", "M", "D", "F", "S", "S"];
 const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
@@ -266,6 +266,7 @@ const DayCell = memo(
       },
       morphEnabled,
     );
+    const dayNumberStyle = useMorphDayStyle(cell.date, morphEnabled);
     const detailed = showShiftTimes || showShiftDuration;
     const preview = useMemo(
       () =>
@@ -327,24 +328,28 @@ const DayCell = memo(
               pointerEvents: "none",
             }}
           >
-            <View
+            <Animated.View
               ref={dayNumberRef}
+              testID={`calendar-day-number-${cell.date}`}
               collapsable={false}
-              style={{
-                minWidth: 30,
-                height: 30,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: isSelected && !isToday ? 1 : 0,
-                borderColor: isSelected && !isToday ? palette.calendarSelection : "transparent",
-                borderRadius: 15,
-                backgroundColor: isToday
-                  ? palette.calendarToday
-                  : isSelected
-                    ? palette.calendarSelection
-                    : "transparent",
-                paddingHorizontal: 4,
-              }}
+              style={[
+                {
+                  minWidth: 30,
+                  height: 30,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: isSelected && !isToday ? 1 : 0,
+                  borderColor: isSelected && !isToday ? palette.calendarSelection : "transparent",
+                  borderRadius: 15,
+                  backgroundColor: isToday
+                    ? palette.calendarToday
+                    : isSelected
+                      ? palette.calendarSelection
+                      : "transparent",
+                  paddingHorizontal: 4,
+                },
+                dayNumberStyle,
+              ]}
             >
               <Text
                 maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
@@ -365,7 +370,7 @@ const DayCell = memo(
               >
                 {cell.day}
               </Text>
-            </View>
+            </Animated.View>
             {holidayName ? (
               <Text
                 maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}

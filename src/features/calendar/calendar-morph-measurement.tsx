@@ -1,6 +1,7 @@
 import { createContext, useContext, useLayoutEffect, useRef } from "react";
 import type { View } from "react-native";
-import type { SharedValue } from "react-native-reanimated";
+import { useAnimatedStyle, type SharedValue } from "react-native-reanimated";
+import { calendarMorphPhases } from "./calendar-morph-phases";
 import type { CalendarAnchorRect } from "./calendar-layout";
 import type {
   CalendarMorphNode,
@@ -14,7 +15,20 @@ export const CalendarMorphMotion = createContext<{
   readonly month: string;
   readonly plan: CalendarMorphPlan;
   readonly progress: SharedValue<number>;
+  readonly toMonth: boolean;
 } | null>(null);
+
+/** Entries can appear during travel; only the matched real date waits for handoff. */
+export function useMorphDayStyle(date: string, enabled: boolean) {
+  const morph = useContext(CalendarMorphMotion);
+  const movingDate = enabled && morph?.month === date.slice(0, 7);
+  return useAnimatedStyle(() => ({
+    opacity:
+      movingDate && morph?.toMonth
+        ? calendarMorphPhases(morph.progress.value, true).realGlyphOpacity
+        : 1,
+  }));
+}
 
 export function measureCalendarRect(view: View | null): Promise<CalendarAnchorRect | null> {
   return new Promise((resolve) => {

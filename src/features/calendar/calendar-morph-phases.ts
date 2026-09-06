@@ -8,16 +8,19 @@ export function calendarMorphPhases(progress: number, toMonth: boolean) {
       monthOpacity: Math.max(0, (p - 0.65) / 0.35),
       glyphOpacity: Math.min(1, (1 - p) / 0.35),
       yearOpacity: 1,
+      realGlyphOpacity: 1,
     };
   }
-  // Finish all geometry BEFORE the real month becomes visible. During the
-  // handoff, both copies of each date occupy the exact same measured rectangle.
+  // Reveal entries during travel, but keep the real date glyphs hidden until
+  // their moving counterparts have reached exactly the same rectangle.
   const handoff = Math.max(0, (p - 0.75) / 0.25);
   const blend = handoff * handoff * (3 - 2 * handoff);
-  const departure = Math.min(1, p / 0.65);
+  const departure = Math.min(1, p / 0.25);
+  const content = Math.max(0, Math.min(1, (p - 0.25) / 0.4));
   return {
     travel: Math.min(1, p / 0.75),
-    monthOpacity: blend,
+    monthOpacity: content * content * (3 - 2 * content),
+    realGlyphOpacity: blend,
     glyphOpacity: 1 - blend,
     yearOpacity: 1 - departure * departure * (3 - 2 * departure),
   };

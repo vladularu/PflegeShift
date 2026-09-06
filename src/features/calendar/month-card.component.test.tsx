@@ -5,6 +5,7 @@ import { useSharedValue } from "react-native-reanimated";
 import type { Appointment, CalendarLabelMode, ShiftEntry, UserProfile } from "@/domain/types";
 import { createMonthGrid, formatDateTitle, today } from "@/engine/calendar";
 import { MonthCard } from "@/features/calendar/month-card";
+import { CalendarMorphMotion } from "./calendar-morph-measurement";
 import {
   BUNDLED_HOLIDAY_RULES,
   BUNDLED_LEGAL_RULES,
@@ -35,6 +36,45 @@ jest.mock("@/ui/shift-symbol", () => {
 });
 
 const SHORT_LABEL_MODE: CalendarLabelMode = "SHORT";
+
+describe("month date handoff during entry reveal", () => {
+  it.each([
+    { progress: 0.5, toMonth: true, opacity: 0 },
+    { progress: 0.875, toMonth: true, opacity: 0.5 },
+    { progress: 1, toMonth: true, opacity: 1 },
+    { progress: 0.5, toMonth: false, opacity: 1 },
+  ])("separates entries from date glyphs at $progress toward month=$toMonth", async (state) => {
+    function Scene() {
+      const progress = useSharedValue(state.progress);
+      const rect = { x: 0, y: 0, width: 100, height: 100 };
+      return (
+        <CalendarMorphMotion.Provider
+          value={{
+            month: "2026-09",
+            progress,
+            toMonth: state.toMonth,
+            plan: { days: [], neighbors: [], anchor: rect, destination: rect },
+          }}
+        >
+          <MonthCard
+            bottomReserve={80}
+            entriesByDate={new Map([["2026-09-01", [shift("2026-09-01")]]])}
+            month="2026-09"
+            onSelectDate={jest.fn()}
+            pageHeight={700}
+            profile={PROFILE}
+            selectedDate={null}
+          />
+        </CalendarMorphMotion.Provider>
+      );
+    }
+    const screen = await render(<Scene />);
+    expect(screen.getByTestId("calendar-day-number-2026-09-01")).toHaveStyle({
+      opacity: state.opacity,
+    });
+    expect(screen.getByText("Frühdienst")).toBeVisible();
+  });
+});
 
 const PROFILE: UserProfile = {
   federalState: "NW",

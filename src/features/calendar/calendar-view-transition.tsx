@@ -317,7 +317,10 @@ export function CalendarTransitionHost({
         ? 1
         : 0,
   }));
-  const motion = useMemo(() => (plan ? { month, plan, progress } : null), [month, plan, progress]);
+  const motion = useMemo(
+    () => (plan ? { month, plan, progress, toMonth: viewMode === "MONTH" } : null),
+    [month, plan, progress, viewMode],
+  );
   const busy = plan !== null || viewMode !== displayedMode;
   return (
     <CalendarMorphRegistry.Provider value={registry}>
