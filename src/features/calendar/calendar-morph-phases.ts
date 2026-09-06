@@ -20,8 +20,11 @@ export function calendarMorphPhases(progress: number, toMonth: boolean) {
   return {
     travel: Math.min(1, p / 0.75),
     monthOpacity: content * content * (3 - 2 * content),
-    realGlyphOpacity: blend,
-    glyphOpacity: 1 - blend,
+    // Source-over alpha is not additive: two 50% layers yield only 75%.
+    // Keep the upper glyph opaque until its stationary replacement is opaque,
+    // then fade the upper glyph. Never expose the canvas during the handoff.
+    realGlyphOpacity: Math.min(1, blend * 2),
+    glyphOpacity: Math.min(1, (1 - blend) * 2),
     yearOpacity: 1 - departure * departure * (3 - 2 * departure),
   };
 }

@@ -89,6 +89,32 @@ bestanden. Die Dateigrößen-Grenze bleibt unverändert. iOS-Fingerprint weiterh
 
 ### Unveränderter Gesamtscope
 
+### Flackerkorrektur nach Gerätevideo vom 6. September, 07:12 Uhr
+
+Die Pausenkorrektur `1b9b734` / OTA `bb957a8a-972d-443e-b1c6-80f332a4046b`
+verbessert laut Nutzer den Verlauf, zeigt aber Flackern am Ende. Die Aufnahme zeigt
+einen Helligkeitswechsel der Tageszahlen/Heute-Markierung bei stehendem Dienstraster.
+Die bisher komplementären Ebenendeckkräfte summieren sich zwar zu 1, ergeben beim
+Source-over-Compositing jedoch in der Mitte nur 0,75 effektive Deckkraft.
+
+Korrektur nur der Zahlenübergabe: Animierte Ebene bleibt vollständig deckend, bis
+die echte Zahlenebene volle Deckkraft erreicht; erst danach blendet das Overlay aus.
+Die 600-ms-Gesamtdauer, Bewegung, Inhalts-/Jahresausblendung und Gegenrichtung bleiben
+unverändert. Scope: Phasenhilfe, Phasentest, Monatsraster-Komponententest und dieses
+Dokument. Freigabe umfasst Commit, Push, CI und Preview-OTA, nicht Merge.
+
+Abnahme auf iPhone 14 Pro Max / iOS 26.6.1 / Build 31: Jahresansicht → Januar,
+September, Dezember ohne Helligkeitseinbruch oder Flackern, Dienste ohne Pause;
+Hell/Dunkel, Gegenrichtung und erhaltene Daten nach Neustart. Tests prüfen die
+Deckkraftrechnung, nicht das reale iOS-Compositing; Geräteabnahme bleibt offen.
+
+Lokale Prüfung: `verify:fast` bestanden (589 Vitest-Tests, 220 Jest-Tests und
+Skriptprüfungen), gezielte Übergangstests, Worklet-Transformation und iOS-Hermes-
+Export bestanden. iOS-Fingerprint unverändert:
+`eac302484061dfb3fa63e2a74b8618ff6000861c`.
+
+### Unveränderte Bereiche
+
 Betroffen sind Kalenderkopf, Ansichtscontainer, Monatsraster, Jahresraster,
 Mess-/Geometriehilfen, Mini-Kalendermaße, Datenabdeckungsprüfung, zugehörige Tests
 und dieses Dokument. Unverändert bleiben

@@ -40,7 +40,7 @@ const SHORT_LABEL_MODE: CalendarLabelMode = "SHORT";
 describe("month date handoff during entry reveal", () => {
   it.each([
     { progress: 0.5, toMonth: true, opacity: 0 },
-    { progress: 0.875, toMonth: true, opacity: 0.5 },
+    { progress: 0.875, toMonth: true, opacity: 1 },
     { progress: 1, toMonth: true, opacity: 1 },
     { progress: 0.5, toMonth: false, opacity: 1 },
   ])("separates entries from date glyphs at $progress toward month=$toMonth", async (state) => {
