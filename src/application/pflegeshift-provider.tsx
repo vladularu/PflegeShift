@@ -9,11 +9,11 @@ import React, {
 } from "react";
 
 import type { PflegeShiftPorts } from "@/application/pflegeshift-ports";
-import { reconcileLoadedEntryNotifications } from "@/application/pflegeshift-notifications";
+import { usePflegeShiftLoading } from "@/application/use-pflegeshift-loading";
 import {
   EMPTY_WORK_PATTERN_SETTINGS,
-  entryRangeForYear,
-  loadPflegeShiftSnapshot,
+  type CalendarEntryRange,
+  type PflegeShiftSnapshot,
 } from "@/application/pflegeshift-snapshot";
 import type {
   Appointment,
@@ -30,7 +30,6 @@ import type {
   TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
-import { DATA_LOAD_FAILURE_MESSAGE } from "@/domain/errors";
 import { compareCalendarEntries } from "@/engine/calendar-entry-order";
 
 interface PflegeShiftProviderProps extends PropsWithChildren {
@@ -40,6 +39,7 @@ interface PflegeShiftProviderProps extends PropsWithChildren {
 
 interface PflegeShiftStatusValue {
   readonly ready: boolean;
+  readonly calendarRange: CalendarEntryRange | null;
   readonly error: string | null;
   readonly notificationWarning: NotificationWarning | null;
   readonly clearNotificationWarning: (id: number) => void;
@@ -129,11 +129,6 @@ function useRequiredContext<T>(context: React.Context<T | null>, name: string): 
 
 export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShiftProviderProps) {
   const { repository, notifications, diagnostics, devTools } = ports;
-  const activeYear = Number(activeMonth.slice(0, 4));
-  const entryRange = useMemo(() => entryRangeForYear(activeYear), [activeYear]);
-  const entryRangeKey = `${entryRange.startDate}:${entryRange.endDate}`;
-  const [loadedEntryRangeKey, setLoadedEntryRangeKey] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [templates, setTemplates] = useState<readonly ShiftTemplate[]>([]);
   const [entries, setEntries] = useState<readonly CalendarEntry[]>([]);
@@ -142,9 +137,7 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
   const [testMonths, setTestMonths] = useState<readonly string[]>([]);
   const [testDataLoadRevision, setTestDataLoadRevision] = useState(0);
   const [notificationWarning, setNotificationWarning] = useState<NotificationWarning | null>(null);
-  const loadSequence = useRef(0);
   const notificationWarningSequence = useRef(0);
-  const statusReady = loadedEntryRangeKey === entryRangeKey;
 
   const publishNotificationWarning = useCallback((message: string) => {
     setNotificationWarning({ id: ++notificationWarningSequence.current, message });
@@ -154,50 +147,28 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
     setNotificationWarning((current) => (current?.id === id ? null : current));
   }, []);
 
-  const reload = useCallback(async () => {
-    const loadRevision = ++loadSequence.current;
-    setLoadedEntryRangeKey(null);
-    try {
-      const snapshot = await loadPflegeShiftSnapshot(repository, entryRange);
-      if (loadRevision !== loadSequence.current) return;
-      setProfile(snapshot.profile);
-      setTemplates(snapshot.templates);
-      setEntries(snapshot.entries);
-      setTariffDecisions(snapshot.tariffDecisions);
-      setWorkPatternSettings(snapshot.workPatternSettings);
-      setTestDataLoadRevision((current) => current + 1);
-      setError(null);
-      const notificationTimeZone = snapshot.profile?.timeZone ?? "Europe/Berlin";
-      void reconcileLoadedEntryNotifications(snapshot.entries, notificationTimeZone, {
-        notifications,
-        diagnostics,
-      }).then((failed) => {
-        if (loadRevision !== loadSequence.current) return;
-        if (failed) {
-          publishNotificationWarning("Erinnerungen konnten nicht vollständig aktualisiert werden.");
-        }
-      });
-    } catch (loadError) {
-      if (loadRevision !== loadSequence.current) return;
-      diagnostics.record("provider", "PROVIDER_RELOAD_FAILED", loadError);
-      setError(DATA_LOAD_FAILURE_MESSAGE);
-    } finally {
-      if (loadRevision === loadSequence.current) {
-        setLoadedEntryRangeKey(entryRangeKey);
-      }
-    }
-  }, [
-    diagnostics,
-    entryRange,
-    entryRangeKey,
-    notifications,
+  const applySnapshot = useCallback((snapshot: PflegeShiftSnapshot) => {
+    setProfile(snapshot.profile);
+    setTemplates(snapshot.templates);
+    setEntries(snapshot.entries);
+    setTariffDecisions(snapshot.tariffDecisions);
+    setWorkPatternSettings(snapshot.workPatternSettings);
+    setTestDataLoadRevision((current) => current + 1);
+  }, []);
+  const {
+    ready: statusReady,
+    calendarRange,
+    error,
+    reload,
+    recordDeletion,
+  } = usePflegeShiftLoading(
+    activeMonth,
+    ports,
+    entries,
+    setEntries,
+    applySnapshot,
     publishNotificationWarning,
-    repository,
-  ]);
-
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+  );
 
   useEffect(() => {
     if (!devTools.shouldLoadState(statusReady, testDataLoadRevision)) return;
@@ -326,6 +297,7 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
   const removeEntry = useCallback(
     async (entry: CalendarEntry) => {
       await repository.deleteCalendarEntry(entry);
+      recordDeletion(entry);
       setEntries((current) => current.filter((item) => item.id !== entry.id));
       try {
         await notifications.cancelEntry(entry);
@@ -336,7 +308,7 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
         );
       }
     },
-    [diagnostics, notifications, publishNotificationWarning, repository],
+    [diagnostics, notifications, publishNotificationWarning, recordDeletion, repository],
   );
 
   const restoreEntry = useCallback(
@@ -371,8 +343,15 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
   );
 
   const statusValue = useMemo<PflegeShiftStatusValue>(
-    () => ({ ready: statusReady, error, notificationWarning, clearNotificationWarning, reload }),
-    [clearNotificationWarning, error, notificationWarning, reload, statusReady],
+    () => ({
+      ready: statusReady,
+      calendarRange,
+      error,
+      notificationWarning,
+      clearNotificationWarning,
+      reload,
+    }),
+    [calendarRange, clearNotificationWarning, error, notificationWarning, reload, statusReady],
   );
   const profileValue = useMemo<PflegeShiftProfileValue>(
     () => ({ profile, updateProfile }),

@@ -31,6 +31,8 @@ let mockActiveMonth = "2026-08";
 let mockTodayRequestRevision = 0;
 let mockCompletedTodayRequestRevision = 0;
 let mockRuleResolver: RuleResolver = bundledRuleResolver;
+let mockReady = true;
+let mockCalendarRange: { startDate: string; endDate: string } | null = null;
 
 const mockActiveMonthCoordinator = {
   completeTodayRequest: jest.fn((revision: number) => {
@@ -66,7 +68,12 @@ jest.mock("@/application/pflegeshift-provider", () => ({
       timeZone: "Europe/Berlin",
     },
   }),
-  usePflegeShiftStatus: () => ({ error: null, ready: true, reload: jest.fn() }),
+  usePflegeShiftStatus: () => ({
+    error: null,
+    ready: mockReady,
+    calendarRange: mockCalendarRange,
+    reload: jest.fn(),
+  }),
   usePflegeShiftTemplates: () => ({ templates: [] }),
   usePflegeShiftTestData: () => ({ testMonths: [] }),
 }));
@@ -153,6 +160,8 @@ describe("CalendarScreen quick-entry navigation", () => {
     mockTodayRequestRevision = 0;
     mockCompletedTodayRequestRevision = 0;
     mockRuleResolver = bundledRuleResolver;
+    mockReady = true;
+    mockCalendarRange = null;
     jest.mocked(router.push).mockClear();
     mockActiveMonthCoordinator.completeTodayRequest.mockClear();
     mockActiveMonthCoordinator.setMonth.mockClear();
@@ -162,6 +171,75 @@ describe("CalendarScreen quick-entry navigation", () => {
       return 1;
     });
   });
+
+  it.each([-36, 36])(
+    "returns from a distant year (%s months) without publishing animation pages",
+    async (distance) => {
+      const month = today("Europe/Berlin").slice(0, 7);
+      mockActiveMonth = addMonths(month, distance);
+      const screen = await render(<CalendarScreen />);
+      await act(async () =>
+        fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+          nativeEvent: { layout: { height: 700 } },
+        }),
+      );
+      mockActiveMonthCoordinator.setMonth.mockClear();
+      await act(async () => {
+        mockTodayRequestRevision = 1;
+        await screen.rerender(<CalendarScreen />);
+      });
+      expect(mockActiveMonthCoordinator.setMonth).toHaveBeenCalledTimes(1);
+      expect(mockActiveMonthCoordinator.setMonth).toHaveBeenLastCalledWith(month);
+      const targetIndex = distance < 0 ? 28 : 20;
+      await act(async () => {
+        const nativeEvent = { contentOffset: { y: 700 * (distance < 0 ? 25 : 23) } };
+        await fireEvent.scroll(screen.getByTestId("calendar-month-pager"), { nativeEvent });
+        await fireEvent(screen.getByTestId("calendar-month-pager"), "momentumScrollEnd", {
+          nativeEvent,
+        });
+      });
+      expect(mockActiveMonthCoordinator.setMonth).toHaveBeenCalledTimes(1);
+      expect(mockActiveMonthCoordinator.completeTodayRequest).not.toHaveBeenCalled();
+      await act(async () =>
+        fireEvent(screen.getByTestId("calendar-month-pager"), "momentumScrollEnd", {
+          nativeEvent: { contentOffset: { y: 700 * targetIndex } },
+        }),
+      );
+      expect(mockActiveMonthCoordinator.completeTodayRequest).toHaveBeenCalledWith(1);
+      expect(mockActiveMonth).toBe(month);
+      expect(screen.getByTestId("calendar-month-pager").props.scrollEnabled).toBe(true);
+    },
+  );
+
+  it.each(["momentumScrollEnd", "scrollEndDrag"])(
+    "keeps the December/January pager mounted after %s while entries refresh",
+    async (completion) => {
+      mockActiveMonth = "2026-12";
+      const screen = await render(<CalendarScreen />);
+      await act(async () =>
+        fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+          nativeEvent: { layout: { height: 700 } },
+        }),
+      );
+      const pager = screen.getByTestId("calendar-month-pager");
+      await act(async () =>
+        fireEvent.scroll(pager, { nativeEvent: { contentOffset: { y: 700 * 25 } } }),
+      );
+      expect(mockActiveMonth).toBe("2026-12");
+      await act(async () =>
+        fireEvent(pager, completion, {
+          nativeEvent: { contentOffset: { y: 700 * 25 }, velocity: { y: 0 } },
+        }),
+      );
+      expect(mockActiveMonth).toBe("2027-01");
+      await act(async () => {
+        mockReady = false;
+        mockCalendarRange = { startDate: "2025-01-01", endDate: "2027-12-31" };
+        await screen.rerender(<CalendarScreen />);
+      });
+      expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
+    },
+  );
 
   it("warns when December's visible grid reaches beyond holiday coverage", async () => {
     const holidayPackage = BUNDLED_HOLIDAY_RULES[0];

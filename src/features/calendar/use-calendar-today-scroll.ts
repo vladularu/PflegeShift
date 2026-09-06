@@ -25,6 +25,7 @@ interface TodayScrollState {
 
 interface CalendarTodayScrollOptions {
   readonly activeMonthCoordinator: ActiveMonthCoordinator;
+  readonly pagerReady: boolean;
   readonly isFocused: boolean;
   readonly months: readonly string[];
   readonly pageHeight: number;
@@ -47,6 +48,7 @@ interface CalendarTodayScrollOptions {
 
 export function useCalendarTodayScroll({
   activeMonthCoordinator,
+  pagerReady,
   isFocused,
   months,
   pageHeight,
@@ -107,7 +109,7 @@ export function useCalendarTodayScroll({
       setViewMode(target.viewMode);
 
       if (!changesVisibleMonth || reduceMotion) {
-        if (changesVisibleMonth) {
+        if (changesVisibleMonth || todayScroll !== null) {
           setHeaderDirection(target.visibleMonth > visibleMonth ? "NEXT" : "PREVIOUS");
           setMonthAnchor(target.visibleMonth);
           setPagerResetRevision(requestRevision);
@@ -120,8 +122,9 @@ export function useCalendarTodayScroll({
       setSelectedDate(target.selectedDate);
       setSelectionVisible(false);
       setVisibleMonth(scroll.startMonth);
-      activeMonthCoordinator.setMonth(scroll.startMonth);
-      settledMonthRef.current = scroll.startMonth;
+      // Load the destination once; intermediate animation pages stay local.
+      activeMonthCoordinator.setMonth(scroll.targetMonth);
+      settledMonthRef.current = scroll.targetMonth;
       setMonthAnchor(scroll.startMonth);
       setPagerResetRevision(requestRevision);
       startedTodayScrollRevision.current = null;
@@ -142,6 +145,7 @@ export function useCalendarTodayScroll({
       setVisibleMonth,
       settledMonthRef,
       timeZone,
+      todayScroll,
       visibleMonth,
       viewMode,
     ],
@@ -162,6 +166,7 @@ export function useCalendarTodayScroll({
     if (
       todayScroll === null ||
       !isFocused ||
+      !pagerReady ||
       viewMode !== "MONTH" ||
       pageHeight <= 0 ||
       startedTodayScrollRevision.current === todayScroll.requestRevision ||
@@ -170,19 +175,34 @@ export function useCalendarTodayScroll({
       return;
     }
 
-    startedTodayScrollRevision.current = todayScroll.requestRevision;
     const frame = requestAnimationFrame(() => {
-      if (!scrollToMonth(todayScroll.targetMonth, true)) {
-        startedTodayScrollRevision.current = null;
-      }
+      if (scrollToMonth(todayScroll.targetMonth, true))
+        startedTodayScrollRevision.current = todayScroll.requestRevision;
     });
-    return () => cancelAnimationFrame(frame);
-  }, [isFocused, months, pageHeight, scrollToMonth, todayScroll, viewMode]);
+    // Native momentum completion can be lost when a pager is remounted or blurred.
+    const fallback = setTimeout(() => {
+      if (scrollToMonth(todayScroll.targetMonth, false)) completeTodayScroll(todayScroll);
+    }, 1500);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(fallback);
+      startedTodayScrollRevision.current = null;
+    };
+  }, [
+    completeTodayScroll,
+    isFocused,
+    months,
+    pageHeight,
+    pagerReady,
+    scrollToMonth,
+    todayScroll,
+    viewMode,
+  ]);
 
   const finishTodayScrollAtMonth = useCallback(
     (month: string): boolean => {
-      if (todayScroll === null || month !== todayScroll.targetMonth) return false;
-      completeTodayScroll(todayScroll);
+      if (todayScroll === null) return false;
+      if (month === todayScroll.targetMonth) completeTodayScroll(todayScroll);
       return true;
     },
     [completeTodayScroll, todayScroll],

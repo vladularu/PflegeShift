@@ -24,6 +24,7 @@ import {
   usePflegeShiftTemplates,
   usePflegeShiftTestData,
 } from "@/application/pflegeshift-provider";
+import { calendarRangeCoversMonth } from "@/application/calendar-entry-loading";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type { CalendarEntry } from "@/domain/types";
 import { addMonths, createMonthGrid, currentMonth, today } from "@/engine/calendar";
@@ -84,7 +85,7 @@ export function CalendarScreen() {
   const { setViewMode } = preferences;
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { ready, error, reload } = usePflegeShiftStatus();
+  const { ready, calendarRange, error, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
   const { templates } = usePflegeShiftTemplates();
   const { entries, removeEntry, upsertShift } = usePflegeShiftEntries();
@@ -105,6 +106,10 @@ export function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectionVisible, setSelectionVisible] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(targetMonth);
+  const calendarReady =
+    ready ||
+    (preferences.viewMode === "MONTH" &&
+      calendarRangeCoversMonth(calendarRange ?? null, visibleMonth));
   const [pagerResetRevision, setPagerResetRevision] = useState(0);
   const [headerDirection, setHeaderDirection] = useState<"NEXT" | "PREVIOUS">("NEXT");
   const [headerTransition, setHeaderTransition] = useState<"SPATIAL" | "CROSSFADE">("SPATIAL");
@@ -244,7 +249,7 @@ export function CalendarScreen() {
   useFocusEffect(
     useCallback(() => {
       const activeMonth = activeMonthCoordinator.getMonth();
-      if (activeMonth === visibleMonth) return;
+      if (activeMonth === settledMonth.current) return;
 
       setVisibleMonth(activeMonth);
       setHeaderTransition("SPATIAL");
@@ -258,7 +263,7 @@ export function CalendarScreen() {
       } else if (preferences.viewMode === "MONTH") {
         requestAnimationFrame(() => scrollToMonth(activeMonth, false));
       }
-    }, [activeMonthCoordinator, months, preferences.viewMode, scrollToMonth, visibleMonth]),
+    }, [activeMonthCoordinator, months, preferences.viewMode, scrollToMonth]),
   );
 
   useFocusEffect(
@@ -282,6 +287,7 @@ export function CalendarScreen() {
 
   const { finishTodayScrollAtMonth, todayScrollActive } = useCalendarTodayScroll({
     activeMonthCoordinator,
+    pagerReady: calendarReady && error === null,
     isFocused,
     months,
     pageHeight,
@@ -353,11 +359,10 @@ export function CalendarScreen() {
       setHeaderDirection(month > visibleMonth ? "NEXT" : "PREVIOUS");
       setHeaderTransition("SPATIAL");
       setVisibleMonth(month);
-      activeMonthCoordinator.setMonth(month);
       setSelectedDate((date) => clampDateToMonth(date, month));
       setSelectionVisible(false);
     },
-    [activeMonthCoordinator, months, pageHeight, visibleMonth],
+    [months, pageHeight, visibleMonth],
   );
 
   const finishPaging = useCallback(
@@ -450,7 +455,6 @@ export function CalendarScreen() {
     [openQuickEditor, saveStampAction],
   );
 
-  const activeKey = stampTool?.key ?? null;
   const calendarBottomReserve = process.env.EXPO_OS === "ios" ? 55 : 0;
   const visibleMonthIndex = months.indexOf(visibleMonth);
   const moveYear = useCallback(
@@ -514,7 +518,7 @@ export function CalendarScreen() {
   );
 
   if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
-  if (!ready || profile === null) return <LoadingView />;
+  if (!calendarReady || profile === null) return <LoadingView />;
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.background }}>
@@ -586,15 +590,11 @@ export function CalendarScreen() {
                 maxToRenderPerBatch={2}
                 onMomentumScrollEnd={finishPaging}
                 onScroll={trackPaging}
-                onScrollToIndexFailed={({ index }) => {
-                  setTimeout(
-                    () =>
-                      listRef.current?.scrollToIndex({
-                        index,
-                        animated: todayScrollActive,
-                      }),
-                    60,
-                  );
+                onScrollEndDrag={(event) => {
+                  const { contentOffset, velocity } = event.nativeEvent;
+                  const page = Math.round(contentOffset.y / pageHeight) * pageHeight;
+                  if (velocity?.y === 0 && Math.abs(contentOffset.y - page) < 1)
+                    finishPaging(event);
                 }}
                 pagingEnabled
                 removeClippedSubviews={process.env.EXPO_OS !== "web"}
@@ -613,7 +613,7 @@ export function CalendarScreen() {
           {!isFocused || quickPopup !== null ? null : (
             <QuickPlannerDock
               actions={quickPlannerActions}
-              activeKey={activeKey}
+              activeKey={stampTool?.key ?? null}
               busy={plannerBusy}
               onOpen={beginPlanning}
               onClose={closePlanning}
