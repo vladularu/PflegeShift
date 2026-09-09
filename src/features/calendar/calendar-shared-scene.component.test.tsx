@@ -89,6 +89,9 @@ describe("shared live calendar scene", () => {
     await act(async () => listener.mock.calls[0][1]("background"));
     expect(onComplete).toHaveBeenCalled();
     expect(screen.getByTestId("shared-month-2026-01")).toBe(month);
+    expect(
+      screen.getByTestId("calendar-year-overview-shell", { includeHiddenElements: true }),
+    ).not.toBeVisible();
   });
   it("opens the tapped date with its anchor without a measurement callback", async () => {
     const screen = await render(<Tree entries={[appointment]} />);

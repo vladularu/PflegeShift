@@ -14,6 +14,7 @@ export function CalendarStablePager({
   renderMonth,
   onBeginDrag,
   onSettled,
+  onVisibleMonth,
 }: {
   month: string;
   months: readonly string[];
@@ -23,6 +24,7 @@ export function CalendarStablePager({
   renderMonth: (month: string) => ReactNode;
   onBeginDrag: () => void;
   onSettled: (event: ScrollEvent) => void;
+  onVisibleMonth?: (month: string) => void;
 }) {
   const ref = useRef<ScrollView>(null);
   const dragging = useRef(false);
@@ -57,6 +59,7 @@ export function CalendarStablePager({
       Math.min(1, Math.round(event.nativeEvent.contentOffset.y / height) - 1),
     );
     const index = months.indexOf(addMonths(month, offset));
+    onVisibleMonth?.(addMonths(month, offset));
     if (Math.abs(nativeOffset.current - height) > 1) {
       awaitingCenter.current = true;
       setRecentering(true);
@@ -84,6 +87,10 @@ export function CalendarStablePager({
       scrollEventThrottle={16}
       onScroll={(event) => {
         nativeOffset.current = event.nativeEvent.contentOffset.y;
+        if (dragging.current && !awaitingCenter.current && enabled && height > 0) {
+          const slot = Math.max(-1, Math.min(1, Math.round(nativeOffset.current / height) - 1));
+          onVisibleMonth?.(addMonths(month, slot));
+        }
         if (awaitingCenter.current && Math.abs(nativeOffset.current - height) <= 1) {
           awaitingCenter.current = false;
           setRecentering(false);

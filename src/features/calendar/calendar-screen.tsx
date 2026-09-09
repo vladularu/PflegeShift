@@ -22,6 +22,7 @@ import { useCalendarPerformance, useMeasuredCalendarEntries } from "./use-calend
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { SharedCalendarScene, SharedCalendarMonth } from "./calendar-shared-scene";
 import { CalendarStablePager } from "./calendar-stable-pager";
+import { useCalendarController } from "./use-calendar-controller";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import * as CalendarHolidays from "@/features/calendar/calendar-holidays";
 import type { CalendarAnchorRect } from "@/features/calendar/calendar-layout";
@@ -97,22 +98,25 @@ export function CalendarScreen() {
     return Array.from({ length: 14 }, (_, index) => addMonths(january, index - 1));
   }, [visibleYear]);
   useCalendarPerformance(isFocused, visibleMonth, preferences.viewMode);
-  const [headerMode, setHeaderMode] = useState(preferences.viewMode);
-  const transitionInFlight = useRef(false);
+  const [pageHeight, setPageHeight] = useState(0);
+  const [pagerResetRevision, setPagerResetRevision] = useState(0);
+  const controller = useCalendarController({
+    month: visibleMonth,
+    mode: preferences.viewMode,
+    active: isFocused,
+    ready: pageHeight > 0,
+    revision: pagerResetRevision,
+  });
+  const isTransitionInFlight = controller.isTransitionInFlight;
+  const tryBeginTransition = controller.tryBeginTransition;
   const monthSelectionPending = useRef(false);
-  const transitionStarted = useCallback((mode: "MONTH" | "YEAR") => setHeaderMode(mode), []);
-  const transitionCompleted = useCallback(() => {
-    transitionInFlight.current = false;
-  }, []);
   const calendarReady =
     (calendarRange === null && ready) ||
     (preferences.viewMode === "MONTH"
       ? calendarRangeCoversMonth(calendarRange ?? null, visibleMonth)
       : calendarRangeCoversYear(calendarRange ?? null, Number(visibleMonth.slice(0, 4))));
-  const [pagerResetRevision, setPagerResetRevision] = useState(0);
   const [headerDirection, setHeaderDirection] = useState<"NEXT" | "PREVIOUS">("NEXT");
   const [headerTransition, setHeaderTransition] = useState<"SPATIAL" | "CROSSFADE">("SPATIAL");
-  const [pageHeight, setPageHeight] = useState(0);
   const [plannerMode, setPlannerMode] = useState(false);
   const plannerTransition = useSharedValue(0);
   const [plannerBusy, setPlannerBusy] = useState(false);
@@ -286,8 +290,7 @@ export function CalendarScreen() {
   const openMonth = useCallback(
     (month: string) => {
       calendarPerformance.begin("request-month", month);
-      if (transitionInFlight.current) return;
-      transitionInFlight.current = true;
+      if (!tryBeginTransition()) return;
       monthSelectionPending.current = true;
       setQuickPopup(null);
       setSelectedDate((date) => clampDateToMonth(date, month));
@@ -303,13 +306,18 @@ export function CalendarScreen() {
       if (month !== visibleMonth) setPagerResetRevision((revision) => revision + 1);
       preferences.setViewMode("MONTH");
     },
-    [activeMonthCoordinator, months, preferences, visibleMonth],
+    [activeMonthCoordinator, months, preferences, tryBeginTransition, visibleMonth],
   );
 
   const openYear = useCallback(() => {
     calendarPerformance.begin("request-year", visibleMonth);
-    if (transitionInFlight.current) return;
-    transitionInFlight.current = true;
+    if (!tryBeginTransition()) return;
+    if (controller.displayMonth !== visibleMonth) {
+      setVisibleMonth(controller.displayMonth);
+      activeMonthCoordinator.setMonth(controller.displayMonth);
+      settledMonth.current = controller.displayMonth;
+      setPagerResetRevision((revision) => revision + 1);
+    }
     setQuickPopup(null);
     setSelectionVisible(false);
     setPlannerMode(false);
@@ -317,7 +325,13 @@ export function CalendarScreen() {
     setHeaderTransition("CROSSFADE");
     preferences.setViewMode("YEAR");
     selectionFeedback();
-  }, [preferences, visibleMonth]);
+  }, [
+    activeMonthCoordinator,
+    controller.displayMonth,
+    preferences,
+    tryBeginTransition,
+    visibleMonth,
+  ]);
 
   const openCalendarDisplay = useCallback(() => {
     setQuickPopup(null);
@@ -342,7 +356,7 @@ export function CalendarScreen() {
     pageHeight,
     visibleMonth,
     viewMode: preferences.viewMode,
-    transitionInFlight,
+    isTransitionInFlight,
     monthSelectionPending,
     settledMonthRef: settledMonth,
     activeMonthCoordinator,
@@ -428,7 +442,7 @@ export function CalendarScreen() {
   const moveYear = useCallback(
     (amount: number) => {
       calendarPerformance.begin("request-year-step", addMonths(visibleMonth, amount * 12));
-      if (transitionInFlight.current) return;
+      if (isTransitionInFlight()) return;
       const nextMonth = addMonths(visibleMonth, amount * 12);
       setQuickPopup(null);
       setHeaderDirection(amount >= 0 ? "NEXT" : "PREVIOUS");
@@ -441,7 +455,7 @@ export function CalendarScreen() {
       setSelectionVisible(false);
       selectionFeedback();
     },
-    [activeMonthCoordinator, visibleMonth],
+    [activeMonthCoordinator, isTransitionInFlight, visibleMonth],
   );
   const renderMonth = useCallback(
     (item: string) =>
@@ -485,8 +499,16 @@ export function CalendarScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: palette.background }}>
       <CalendarHeader
+        synchronized
+        notice={
+          !calendarReady
+            ? "Kalenderdaten werden geladen …"
+            : visibleHolidayResolution.status !== "AVAILABLE"
+              ? "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar."
+              : undefined
+        }
         direction={headerDirection}
-        month={visibleMonth}
+        month={controller.displayMonth}
         onMoveYear={moveYear}
         onOpenDisplay={openCalendarDisplay}
         onOpenYear={openYear}
@@ -494,7 +516,7 @@ export function CalendarScreen() {
         plannerTransition={plannerTransition}
         referenceMonth={currentMonth(timeZone)}
         transition={headerTransition}
-        viewMode={headerMode}
+        viewMode={controller.mode}
       />
       {plannerError ? (
         <View
@@ -520,36 +542,8 @@ export function CalendarScreen() {
           </PrimaryButton>
         </View>
       ) : null}
-      <View testID="calendar-notice-slot">
-        <View
-          testID="calendar-notice-reservation"
-          pointerEvents="none"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            opacity: 0,
-            paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
-            paddingBottom: SPACING.sm,
-          }}
-        >
-          <InlineNotice
-            message="Feiertagsregeln für diesen Zeitraum noch nicht verfügbar."
-            tone="warning"
-          />
-        </View>
-        <View style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
-          {!calendarReady ? (
-            <View style={{ paddingHorizontal: SCREEN_LAYOUT.horizontalPadding }}>
-              <InlineNotice message="Kalenderdaten werden geladen …" tone="warning" />
-            </View>
-          ) : (
-            <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
-          )}
-        </View>
-      </View>
       <SharedCalendarScene
-        onTransitionStart={transitionStarted}
-        onTransitionComplete={transitionCompleted}
+        controller={controller}
         month={visibleMonth}
         viewMode={preferences.viewMode}
         active={isFocused}
@@ -564,6 +558,7 @@ export function CalendarScreen() {
           >
             {pageHeight > 0 ? (
               <CalendarStablePager
+                onVisibleMonth={controller.previewMonth}
                 month={visibleMonth}
                 months={months}
                 height={pageHeight}
@@ -572,7 +567,7 @@ export function CalendarScreen() {
                 onSettled={finishPaging}
                 onBeginDrag={() => {
                   calendarPerformance.begin("scroll-begin", visibleMonth);
-                  if (!transitionInFlight.current) monthSelectionPending.current = false;
+                  if (!isTransitionInFlight()) monthSelectionPending.current = false;
                 }}
                 renderMonth={renderMonth}
               />

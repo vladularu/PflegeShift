@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { memo } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Extrapolation,
   FadeInDown,
@@ -29,7 +29,12 @@ function HeaderIconButton({
   onPress,
 }: {
   readonly label: string;
-  readonly name: "calendar-number-outline" | "options-outline" | "chevron-back" | "chevron-forward";
+  readonly name:
+    | "calendar-number-outline"
+    | "options-outline"
+    | "chevron-back"
+    | "chevron-forward"
+    | "alert-circle-outline";
   readonly onPress: () => void;
 }) {
   const palette = usePalette();
@@ -57,6 +62,8 @@ export const CalendarHeader = memo(function CalendarHeader({
   plannerTransition,
   direction = "NEXT",
   transition = "SPATIAL",
+  synchronized = false,
+  notice,
 }: {
   readonly month: string;
   readonly referenceMonth: string;
@@ -68,6 +75,8 @@ export const CalendarHeader = memo(function CalendarHeader({
   readonly plannerTransition: SharedValue<number>;
   readonly direction?: "NEXT" | "PREVIOUS";
   readonly transition?: "SPATIAL" | "CROSSFADE";
+  readonly synchronized?: boolean;
+  readonly notice?: string;
 }) {
   const palette = usePalette();
   const year = month.slice(0, 4);
@@ -122,9 +131,9 @@ export const CalendarHeader = memo(function CalendarHeader({
           testID="calendar-header-actions"
         >
           <Animated.View
-            key={viewMode}
-            entering={calendarHeaderFadeIn()}
-            exiting={calendarHeaderFadeOut()}
+            key={synchronized ? "calendar-controls" : viewMode}
+            entering={synchronized ? undefined : calendarHeaderFadeIn()}
+            exiting={synchronized ? undefined : calendarHeaderFadeOut()}
             style={styles.modeActions}
             testID="calendar-header-mode-actions"
           >
@@ -158,13 +167,27 @@ export const CalendarHeader = memo(function CalendarHeader({
               </>
             )}
           </Animated.View>
+          {synchronized || notice ? (
+            <View
+              testID="calendar-notice-control"
+              style={{ width: CONTROL_HEIGHT.compact, height: CONTROL_HEIGHT.compact }}
+            >
+              {notice ? (
+                <HeaderIconButton
+                  name="alert-circle-outline"
+                  label={notice}
+                  onPress={() => Alert.alert("Kalenderhinweis", notice)}
+                />
+              ) : null}
+            </View>
+          ) : null}
         </Animated.View>
       }
       title={title}
       titleColor={viewMode === "YEAR" ? palette.primary : undefined}
-      titleEntering={titleEntering}
-      titleExiting={titleExiting}
-      titleKey={`${viewMode}-${title}`}
+      titleEntering={synchronized ? undefined : titleEntering}
+      titleExiting={synchronized ? undefined : titleExiting}
+      titleKey={synchronized ? "calendar-title" : `${viewMode}-${title}`}
     />
   );
 });

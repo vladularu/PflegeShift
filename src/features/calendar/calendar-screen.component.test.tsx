@@ -92,8 +92,21 @@ jest.mock("@/navigation/active-month", () => ({
 }));
 
 jest.mock("@/features/calendar/calendar-header", () => ({
-  CalendarHeader: ({ month, viewMode }: { month: string; viewMode: string }) =>
-    MockReact.createElement(MockText, { testID: "header-state" }, `${viewMode}:${month}`),
+  CalendarHeader: ({
+    month,
+    viewMode,
+    notice,
+  }: {
+    month: string;
+    viewMode: string;
+    notice?: string;
+  }) =>
+    MockReact.createElement(
+      MockReact.Fragment,
+      null,
+      MockReact.createElement(MockText, { testID: "header-state" }, `${viewMode}:${month}`),
+      notice ? MockReact.createElement(MockText, null, notice) : null,
+    ),
 }));
 
 jest.mock("@/features/calendar/calendar-shared-scene", () => ({
@@ -334,6 +347,29 @@ describe("CalendarScreen quick-entry navigation", () => {
     },
   );
 
+  it("tracks the swipe heading before publishing a single settled data month", async () => {
+    mockActiveMonth = "2026-09";
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+      nativeEvent: { layout: { height: 700 } },
+    });
+    const pager = screen.getByTestId("calendar-month-pager");
+    mockActiveMonthCoordinator.setMonth.mockClear();
+    await fireEvent(pager, "scrollBeginDrag");
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 1120 } } });
+    expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-10");
+    expect(mockActiveMonthCoordinator.setMonth).not.toHaveBeenCalled();
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 } } });
+    expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-09");
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 1400 } } });
+    await fireEvent(pager, "momentumScrollEnd", {
+      nativeEvent: { contentOffset: { x: 0, y: 1400 } },
+    });
+    expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-10");
+    expect(mockActiveMonthCoordinator.setMonth).toHaveBeenCalledTimes(1);
+    expect(mockActiveMonthCoordinator.setMonth).toHaveBeenLastCalledWith("2026-10");
+  });
+
   it("keeps a covered year overview visible while its surrounding range refreshes", async () => {
     mockActiveMonth = "2027-08";
     mockPreferences.viewMode = "YEAR";
@@ -412,14 +448,9 @@ describe("CalendarScreen quick-entry navigation", () => {
       const screen = await render(<CalendarScreen />);
       const message = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
       const notice = screen.getByText(message);
-      const reservation = screen.getByTestId("calendar-notice-reservation", {
-        includeHiddenElements: true,
-      });
-      expect(reservation.props.accessibilityElementsHidden).toBe(true);
-      expect(reservation).not.toBeVisible();
       const viewport = screen.getByTestId("calendar-month-pager-shell");
-      // Notices occupy their own layout row, never an overlay over the calendar/tab bar.
-      expect(screen.getByTestId("calendar-notice-slot").props.style?.position).not.toBe("absolute");
+      // Notice is handled by the fixed-height header, not an extra calendar row.
+      expect(screen.queryByTestId("calendar-notice-slot")).toBeNull();
       expect(screen.getByTestId("calendar-month-scene").props.onLayout).toBeUndefined();
       await fireEvent(viewport, "layout", { nativeEvent: { layout: { height: 640 } } });
       const pager = screen.getByTestId("calendar-month-pager");
@@ -433,9 +464,7 @@ describe("CalendarScreen quick-entry navigation", () => {
           { timeout: 1500 },
         );
         expect(screen.getByText(message)).toBe(notice);
-        expect(
-          screen.getByTestId("calendar-notice-reservation", { includeHiddenElements: true }),
-        ).toBe(reservation);
+        expect(screen.queryByTestId("calendar-notice-reservation")).toBeNull();
         expect(screen.getByTestId("calendar-month-pager", { includeHiddenElements: true })).toBe(
           pager,
         );

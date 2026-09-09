@@ -11,7 +11,7 @@ export function useCalendarPaging({
   pageHeight,
   visibleMonth,
   viewMode,
-  transitionInFlight,
+  isTransitionInFlight,
   monthSelectionPending,
   settledMonthRef,
   activeMonthCoordinator,
@@ -28,7 +28,7 @@ export function useCalendarPaging({
   pageHeight: number;
   visibleMonth: string;
   viewMode: "MONTH" | "YEAR";
-  transitionInFlight: RefObject<boolean>;
+  isTransitionInFlight: () => boolean;
   monthSelectionPending: RefObject<boolean>;
   settledMonthRef: RefObject<string>;
   activeMonthCoordinator: ActiveMonthCoordinator;
@@ -43,11 +43,11 @@ export function useCalendarPaging({
 }) {
   const eventMonth = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (viewMode !== "MONTH" || transitionInFlight.current || monthSelectionPending.current)
+      if (viewMode !== "MONTH" || isTransitionInFlight() || monthSelectionPending.current)
         return null;
       return monthAtPagerOffset(months, pageHeight, event.nativeEvent.contentOffset.y);
     },
-    [months, pageHeight, viewMode, transitionInFlight, monthSelectionPending],
+    [months, pageHeight, viewMode, isTransitionInFlight, monthSelectionPending],
   );
 
   const trackPaging = useCallback(

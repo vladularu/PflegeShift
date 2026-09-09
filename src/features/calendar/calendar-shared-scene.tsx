@@ -1,23 +1,8 @@
-import {
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
+import { createContext, use, useMemo, useState, type ReactNode } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
-  cancelAnimation,
-  Easing,
-  runOnJS,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
-  withTiming,
   type SharedValue,
 } from "react-native-reanimated";
 import type { CalendarEntry, CalendarViewMode, UserProfile } from "@/domain/types";
@@ -31,6 +16,7 @@ import { PrototypeDates, PrototypeMonthContent, PrototypeYear } from "./calendar
 import type { PrototypeDisplay } from "./prototype-entry-content";
 import { useCalendarHolidayResolution } from "./calendar-holidays";
 import { stampDayAccessibilityHint } from "./stamp-accessibility";
+import { useCalendarController, type CalendarController } from "./use-calendar-controller";
 
 interface SceneValue {
   progress: SharedValue<number>;
@@ -43,69 +29,45 @@ interface SceneValue {
 const Scene = createContext<SceneValue | null>(null);
 
 /** Same persistent glyphs at both endpoints; no native measurements or overlay handoff. */
-export function SharedCalendarScene({
-  month,
-  viewMode,
-  active,
-  bottomReserve,
-  onSelectMonth,
-  onTransitionStart,
-  onTransitionComplete,
-  children,
-}: {
+type SharedCalendarSceneProps = {
   month: string;
   viewMode: CalendarViewMode;
   active: boolean;
   bottomReserve: number;
   onSelectMonth: (month: string) => void;
-  onTransitionStart: (mode: CalendarViewMode) => void;
-  onTransitionComplete: () => void;
+  onTransitionStart?: (mode: CalendarViewMode) => void;
+  onTransitionComplete?: () => void;
   children: ReactNode;
-}) {
-  const [size, setSize] = useState({ width: 0, height: 0 });
-  const [foreground, setForeground] = useState(AppState.currentState === "active");
-  const [busy, setBusy] = useState(false);
-  const progress = useSharedValue(viewMode === "MONTH" ? 1 : 0);
-  const reduced = useReducedMotion();
-  const previous = useRef(viewMode);
-  const hasSize = size.width > 0;
-  const epoch = useRef(0);
-  const complete = useCallback(
-    (id: number) => {
-      if (id !== epoch.current) return;
-      setBusy(false);
-      onTransitionComplete();
-    },
-    [onTransitionComplete],
+  controller?: CalendarController;
+};
+
+export function SharedCalendarScene(props: SharedCalendarSceneProps) {
+  return props.controller ? (
+    <CalendarSceneContent {...props} controller={props.controller} />
+  ) : (
+    <StandaloneCalendarScene {...props} />
   );
-  useEffect(() => {
-    const listener = AppState.addEventListener("change", (state) =>
-      setForeground(state === "active"),
-    );
-    return () => listener.remove();
-  }, []);
-  useLayoutEffect(() => {
-    const id = ++epoch.current;
-    const changed = previous.current !== viewMode;
-    previous.current = viewMode;
-    const end = viewMode === "MONTH" ? 1 : 0;
-    cancelAnimation(progress);
-    onTransitionStart(viewMode);
-    if (!changed || !active || !foreground || reduced || !hasSize) {
-      progress.value = end;
-      complete(id);
-      return;
-    }
-    setBusy(true);
-    progress.value = withTiming(
-      end,
-      { duration: 420, easing: Easing.bezier(0.22, 0.68, 0, 1) },
-      (finished) => {
-        if (finished) runOnJS(complete)(id);
-      },
-    );
-    return () => cancelAnimation(progress);
-  }, [active, complete, foreground, onTransitionStart, progress, reduced, hasSize, viewMode]);
+}
+
+function StandaloneCalendarScene(props: SharedCalendarSceneProps) {
+  const controller = useCalendarController({
+    month: props.month,
+    mode: props.viewMode,
+    active: props.active,
+    onTransitionStart: props.onTransitionStart,
+    onTransitionComplete: props.onTransitionComplete,
+  });
+  return <CalendarSceneContent {...props} controller={controller} />;
+}
+
+function CalendarSceneContent({
+  bottomReserve,
+  onSelectMonth,
+  children,
+  controller,
+}: SharedCalendarSceneProps & { controller: CalendarController }) {
+  const { month, mode: viewMode, progress, busy, yearVisible } = controller;
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const height = Math.max(1, size.height - bottomReserve);
   const year = month.slice(0, 4);
   const layouts = useMemo(
@@ -133,7 +95,7 @@ export function SharedCalendarScene({
       >
         <View
           testID="calendar-year-overview-shell"
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, { opacity: yearVisible ? 1 : 0 }]}
           pointerEvents={viewMode === "YEAR" && !busy ? "auto" : "none"}
           accessibilityElementsHidden={viewMode !== "YEAR"}
           importantForAccessibility={viewMode === "YEAR" ? "auto" : "no-hide-descendants"}

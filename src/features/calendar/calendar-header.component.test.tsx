@@ -1,6 +1,6 @@
-import { render } from "@testing-library/react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
-import { StyleSheet } from "react-native";
+import { Alert, StyleSheet } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -15,14 +15,20 @@ function PlannerHeader({
   referenceMonth = "2026-08",
   titleTransition = "SPATIAL",
   viewMode = "MONTH",
+  synchronized = false,
+  notice,
+  plannerActive = true,
 }: {
   direction?: "NEXT" | "PREVIOUS";
   month?: string;
   referenceMonth?: string;
   titleTransition?: "SPATIAL" | "CROSSFADE";
   viewMode?: "MONTH" | "YEAR";
+  synchronized?: boolean;
+  notice?: string;
+  plannerActive?: boolean;
 } = {}) {
-  const plannerTransition = useSharedValue(1);
+  const plannerTransition = useSharedValue(plannerActive ? 1 : 0);
   return (
     <SafeAreaProvider
       initialMetrics={{
@@ -31,12 +37,14 @@ function PlannerHeader({
       }}
     >
       <CalendarHeader
+        synchronized={synchronized}
+        notice={notice}
         direction={direction}
         month={month}
         onMoveYear={jest.fn()}
         onOpenDisplay={jest.fn()}
         onOpenYear={jest.fn()}
-        plannerActive
+        plannerActive={plannerActive}
         plannerTransition={plannerTransition}
         referenceMonth={referenceMonth}
         transition={titleTransition}
@@ -47,6 +55,25 @@ function PlannerHeader({
 }
 
 describe("CalendarHeader", () => {
+  it("updates the controlled title in place and keeps the full warning accessible", async () => {
+    const notice = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
+    const alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
+    const screen = await render(
+      <PlannerHeader synchronized notice={notice} plannerActive={false} />,
+    );
+    const title = screen.getByRole("header", { name: "August" });
+    expect(title.props.entering).toBeUndefined();
+    expect(title.props.exiting).toBeUndefined();
+    await screen.rerender(
+      <PlannerHeader synchronized month="2026-09" notice={notice} plannerActive={false} />,
+    );
+    expect(screen.getByRole("header", { name: "September" })).toBe(title);
+    await fireEvent.press(
+      screen.getByRole("button", { name: notice, includeHiddenElements: true }),
+    );
+    expect(alert).toHaveBeenCalledWith("Kalenderhinweis", notice);
+    alert.mockRestore();
+  });
   it("fades and disables the view controls while quick planning is active", async () => {
     const screen = await render(<PlannerHeader />);
     const toolbar = screen.getByTestId("calendar-header-actions", {
