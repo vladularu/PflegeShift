@@ -1,4 +1,4 @@
-import { act, fireEvent, render, within } from "@testing-library/react-native";
+import { act, fireEvent, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { router } from "expo-router";
 import * as MockReact from "react";
@@ -96,8 +96,9 @@ jest.mock("@/features/calendar/calendar-header", () => ({
     MockReact.createElement(MockText, { testID: "header-state" }, `${viewMode}:${month}`),
 }));
 
-jest.mock("@/features/calendar/month-card", () => ({
-  MonthCard: ({
+jest.mock("@/features/calendar/calendar-shared-scene", () => ({
+  ...jest.requireActual<object>("@/features/calendar/calendar-shared-scene"),
+  SharedCalendarMonth: ({
     month,
     onSelectDate,
     selectedDate,
@@ -208,6 +209,21 @@ describe("CalendarScreen quick-entry navigation", () => {
     expect(screen.getByTestId("header-state")).toHaveTextContent("YEAR:2026-08");
   });
 
+  it("reuses the existing page when selecting the same month from the year", async () => {
+    mockPreferences.viewMode = "YEAR";
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(
+      screen.getByTestId("calendar-month-pager-shell", { includeHiddenElements: true }),
+      "layout",
+      { nativeEvent: { layout: { height: 700 } } },
+    );
+    const pager = screen.getByTestId("calendar-month-pager", { includeHiddenElements: true });
+    await fireEvent.press(screen.getByRole("button", { name: "August 2026 öffnen" }));
+    mockPreferences.viewMode = "MONTH";
+    await screen.rerender(<CalendarScreen />);
+    expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
+  });
+
   it("mounts January directly and locks its selection until a real drag", async () => {
     mockPreferences.viewMode = "YEAR";
     const screen = await render(<CalendarScreen />);
@@ -225,7 +241,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     const pager = screen.getByTestId("calendar-month-pager", { includeHiddenElements: true });
     expect(pager).not.toBe(oldPager);
     expect(screen.getByTestId("month-card-2026-01", { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.getByTestId("header-state")).toHaveTextContent("YEAR:2026-01");
+    expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-01");
     const staleEvent = {
       nativeEvent: {
         contentOffset: { x: 0, y: 700 * 24 },
@@ -277,7 +293,7 @@ describe("CalendarScreen quick-entry navigation", () => {
         });
       });
       expect(mockActiveMonthCoordinator.setMonth).toHaveBeenCalledTimes(1);
-      expect(mockActiveMonthCoordinator.completeTodayRequest).not.toHaveBeenCalled();
+      expect(mockActiveMonthCoordinator.completeTodayRequest).toHaveBeenCalledWith(1);
       await act(async () =>
         fireEvent(screen.getByTestId("calendar-month-pager"), "momentumScrollEnd", {
           nativeEvent: { contentOffset: { y: 700 * targetIndex } },
@@ -331,6 +347,24 @@ describe("CalendarScreen quick-entry navigation", () => {
     expect(screen.queryByTestId("calendar-month-pager-shell")).toBeNull();
   });
 
+  it("keeps an uncovered month mounted but blocks day actions until its data arrives", async () => {
+    mockReady = false;
+    mockCalendarRange = { startDate: "2020-01-01", endDate: "2020-12-31" };
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+      nativeEvent: { layout: { height: 700 } },
+    });
+    const pager = screen.getByTestId("calendar-month-pager");
+    expect(screen.getByText("Kalenderdaten werden geladen …")).toBeTruthy();
+    await fireEvent.press(screen.getByTestId("calendar-day"));
+    expect(screen.queryByTestId("mounted-quick-entry-popup")).toBeNull();
+    mockCalendarRange = { startDate: "2025-01-01", endDate: "2027-12-31" };
+    await screen.rerender(<CalendarScreen />);
+    expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
+    await fireEvent.press(screen.getByTestId("calendar-day"));
+    expect(screen.getByTestId("mounted-quick-entry-popup")).toBeTruthy();
+  });
+
   it("retains the month scene while switching to the year scene", async () => {
     const screen = await render(<CalendarScreen />);
     expect(screen.getByTestId("calendar-month-pager-shell")).toBeTruthy();
@@ -367,7 +401,7 @@ describe("CalendarScreen quick-entry navigation", () => {
   });
 
   it.each(["2026-01", "2026-12"])(
-    "retains the holiday notice inside the month scene across year transitions for %s",
+    "retains the holiday notice without changing pager geometry across transitions for %s",
     async (month) => {
       const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
       mockActiveMonth = month;
@@ -378,9 +412,9 @@ describe("CalendarScreen quick-entry navigation", () => {
       });
       const screen = await render(<CalendarScreen />);
       const message = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
-      const notice = within(screen.getByTestId("calendar-month-scene")).getByText(message);
+      const notice = screen.getByText(message);
       const viewport = screen.getByTestId("calendar-month-pager-shell");
-      // Pager height is measured below the notice, not on the whole scene.
+      // The notice is outside layout flow and cannot change the shared coordinates.
       expect(screen.getByTestId("calendar-month-scene").props.onLayout).toBeUndefined();
       await fireEvent(viewport, "layout", { nativeEvent: { layout: { height: 640 } } });
       const pager = screen.getByTestId("calendar-month-pager");
@@ -393,14 +427,12 @@ describe("CalendarScreen quick-entry navigation", () => {
           {},
           { timeout: 1500 },
         );
-        const scene = screen.getByTestId("calendar-month-scene", { includeHiddenElements: true });
-        expect(within(scene).getByText(message, { includeHiddenElements: true })).toBe(notice);
+        expect(screen.getByText(message)).toBe(notice);
         expect(screen.getByTestId("calendar-month-pager", { includeHiddenElements: true })).toBe(
           pager,
         );
         expect(pager.props.snapToInterval).toBe(640);
-        if (viewMode === "YEAR") expect(screen.queryByText(message)).toBeNull();
-        else expect(screen.getByText(message)).toBeVisible();
+        expect(screen.getByText(message)).toBeVisible();
       }
     },
   );
@@ -449,7 +481,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     });
 
     expect(mockPreferences.setViewMode).toHaveBeenCalledWith("MONTH");
-    expect(mockActiveMonthCoordinator.completeTodayRequest).not.toHaveBeenCalled();
+    expect(mockActiveMonthCoordinator.completeTodayRequest).toHaveBeenCalledWith(1);
 
     await act(async () => {
       fireEvent.scroll(screen.getByTestId("calendar-month-pager"), {
@@ -458,7 +490,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     });
 
     expect(mockPreferences.setViewMode).toHaveBeenCalledTimes(1);
-    expect(mockActiveMonthCoordinator.completeTodayRequest).not.toHaveBeenCalled();
+    expect(mockActiveMonthCoordinator.completeTodayRequest).toHaveBeenCalledWith(1);
 
     await act(async () => {
       fireEvent(screen.getByTestId("calendar-month-pager"), "momentumScrollEnd", {
@@ -468,7 +500,7 @@ describe("CalendarScreen quick-entry navigation", () => {
 
     expect(mockActiveMonthCoordinator.setMonth).toHaveBeenLastCalledWith(currentMonth);
     expect(mockActiveMonthCoordinator.completeTodayRequest).toHaveBeenCalledWith(1);
-    expect(screen.getByTestId(`month-card-selection-${scrollStartMonth}`).props.children).toBe(
+    expect(screen.getByTestId(`month-card-selection-${currentMonth}`).props.children).toBe(
       currentDate,
     );
 
@@ -478,7 +510,7 @@ describe("CalendarScreen quick-entry navigation", () => {
       });
     });
 
-    expect(screen.getByTestId(`month-card-selection-${scrollStartMonth}`).props.children).toBe(
+    expect(screen.getByTestId(`month-card-selection-${currentMonth}`).props.children).toBe(
       currentDate,
     );
   });
