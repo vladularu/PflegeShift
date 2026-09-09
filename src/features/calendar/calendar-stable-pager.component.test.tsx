@@ -84,6 +84,46 @@ function Harness() {
 }
 
 describe("permanent calendar slots with the real shared scene", () => {
+  it("renders uninterrupted rapid swipes before any momentum settlement", async () => {
+    const screen = await render(<Harness />);
+    const pager = screen.getByTestId("calendar-month-pager");
+    const months = createMonthWindow("2026-09", 24, 36);
+    for (const index of [25, 26, 27, 28, 29, 30, 29, 28, 27, 26, 25]) {
+      await fireEvent(pager, "scrollBeginDrag");
+      await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: index * 700 } } });
+      expect(
+        within(screen.getByTestId("calendar-slot-0", { includeHiddenElements: true })).getByTestId(
+          `shared-month-${months[index]}`,
+          { includeHiddenElements: true },
+        ),
+      ).toBeTruthy();
+      expect(screen.getAllByTestId(/calendar-slot-/, { includeHiddenElements: true })).toHaveLength(
+        5,
+      );
+      expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2026-09");
+      expect(pager.props.scrollEnabled).toBe(true);
+    }
+    await fireEvent(pager, "momentumScrollEnd", {
+      nativeEvent: { contentOffset: { x: 0, y: 25 * 700 } },
+    });
+    expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2026-10");
+  });
+  it("resets a preview window on Today even if no month was committed", async () => {
+    const screen = await render(<Harness />);
+    const pager = screen.getByTestId("calendar-month-pager");
+    await fireEvent(pager, "scrollBeginDrag");
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 29 * 700 } } });
+    await fireEvent.press(screen.getByRole("button", { name: "Heute" }));
+    expect(
+      within(screen.getByTestId("calendar-slot-0")).getByTestId("shared-month-2026-09"),
+    ).toBeTruthy();
+    await fireEvent(pager, "momentumScrollEnd", {
+      nativeEvent: { contentOffset: { x: 0, y: 29 * 700 } },
+    });
+    expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2026-09");
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 24 * 700 } } });
+    expect(pager.props.scrollEnabled).toBe(true);
+  });
   it("requires acknowledgement at the new center when viewport height changes", async () => {
     const month = "2026-09";
     const props = {

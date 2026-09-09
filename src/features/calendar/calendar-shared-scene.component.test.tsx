@@ -66,6 +66,13 @@ function Tree({
   );
 }
 describe("shared live calendar scene", () => {
+  it("keeps selected day accessible but removes its full-cell outline", async () => {
+    const screen = await render(<Tree />);
+    expect(screen.getByTestId("calendar-day-2026-01-08")).toHaveStyle({ borderWidth: 0 });
+    expect(screen.getByTestId("calendar-day-2026-01-08").props.accessibilityState).toEqual({
+      selected: true,
+    });
+  });
   afterEach(() => {
     jest.restoreAllMocks();
     jest.clearAllMocks();

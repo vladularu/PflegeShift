@@ -4,8 +4,9 @@ import { useSharedValue } from "react-native-reanimated";
 import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 import { PrototypeMonthContent, PrototypeYear } from "./calendar-prototype-canvas";
 import { calendarPrototypeLayout } from "./calendar-prototype-layout";
+import type { CalendarEntry } from "@/domain/types";
 
-function Year({ year = "2026" }) {
+function Year({ year = "2026", entries = [] }: { year?: string; entries?: CalendarEntry[] }) {
   const progress = useSharedValue(0);
   return (
     <PrototypeYear
@@ -16,6 +17,7 @@ function Year({ year = "2026" }) {
       referenceMonth="2026-09"
       progress={progress}
       onSelect={() => {}}
+      entriesByDate={new Map([["2026-01-08", entries]])}
     />
   );
 }
@@ -34,6 +36,34 @@ function Month() {
   );
 }
 describe("calendar orientation", () => {
+  it("restores up to two live shift color marks, including the selected month", async () => {
+    const entry = {
+      kind: "SHIFT",
+      id: "a",
+      date: "2026-01-08",
+      color: "#59CA50",
+      deletedAt: null,
+    } as CalendarEntry;
+    const entries = [entry, { ...entry, id: "b", color: "#FFA338" }, { ...entry, id: "c" }];
+    const screen = await render(<Year entries={entries} />);
+    const marks = screen.getByTestId("calendar-mini-shifts-2026-01-08", {
+      includeHiddenElements: true,
+    });
+    expect(marks.children).toHaveLength(2);
+    expect(marks.children[0]).toHaveStyle({ backgroundColor: "#59CA50" });
+    expect(marks.children[1]).toHaveStyle({ backgroundColor: "#FFA338" });
+    await screen.rerender(
+      <Year
+        entries={[
+          { ...entry, deletedAt: "2026-09-10" },
+          { ...entry, kind: "APPOINTMENT" } as CalendarEntry,
+        ]}
+      />,
+    );
+    expect(
+      screen.queryByTestId("calendar-mini-shifts-2026-01-08", { includeHiddenElements: true }),
+    ).toBeNull();
+  });
   it.each([false, true])("highlights only the real current month (dark=%s)", async (dark) => {
     const spy = jest
       .spyOn(jest.requireActual<typeof import("react-native")>("react-native"), "useColorScheme")

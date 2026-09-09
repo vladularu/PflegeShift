@@ -1,5 +1,22 @@
 # Kalender: schnelle Wischfolgen und Orientierung
 
+## Ergänzung nach Geräteprüfung
+
+601196b zeigte leere Seiten bei erneuten Wischgesten vor dem Einrasten. Die
+fünf Renderseiten müssen dem sichtbaren Monat bereits in onScroll folgen,
+während der fachliche Datenmonat erst beim Einrasten aktualisiert wird.
+Regression: mindestens sechs Monate ohne Momentum-Ende, sofort rückwärts,
+danach Einrasten sowie Heute während einer unbestätigten Vorschau.
+
+Zusätzlich freigegeben: farbige Dienstmarkierungen in Jahresminiaturen,
+Kachelradius 4 und kompakte Abstände wie 626cd1e, weiße Dienst-/Uhrzeittexte
+ohne Änderung der Farben und keine Umrandung für Heute oder ausgewählten Tag.
+Weiße Schrift auf hellen Flächen unterschreitet bewusst den bisherigen
+Kontraststandard; der Nutzer hat dies ausdrücklich verlangt und prüft die
+Lesbarkeit selbst. Keine pauschale Barrierefreiheitsfreigabe. Tageszahlen
+behalten ihre Markierung, leere Stempelfelder bleiben separate Bedienelemente.
+Freigabe bis einschließlich Preview-OTA; Merge weiterhin nach Geräteabnahme.
+
 ## Scope / Freigabe
 
 Ziel: Direkt aufeinanderfolgende einzelne Monatswischgesten ohne reguläre

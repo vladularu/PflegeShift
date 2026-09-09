@@ -29,6 +29,8 @@ export function CalendarStablePager({
   const ref = useRef<ScrollView>(null);
   const dragging = useRef(false);
   const index = Math.max(0, months.indexOf(month));
+  const [renderMonthKey, setRenderMonthKey] = useState(month);
+  const renderIndex = Math.max(0, months.indexOf(renderMonthKey));
   const target = index * height;
   const [initialOffset] = useState({ x: 0, y: target });
   const nativeOffset = useRef(target);
@@ -46,6 +48,7 @@ export function CalendarStablePager({
       old.first !== months[0];
     previous.current = { height, revision, enabled, first: months[0] };
     if (!external) return;
+    setRenderMonthKey(month);
     dragging.current = false;
     settledMonth.current = month;
     pendingTarget.current = Math.abs(nativeOffset.current - target) > 1 ? target : null;
@@ -73,12 +76,13 @@ export function CalendarStablePager({
     dragging.current = false;
     nativeOffset.current = y;
     const next = monthAt(y);
+    setRenderMonthKey(next);
     settledMonth.current = next;
     onVisibleMonth?.(next);
     onSettled(event);
   };
-  const start = Math.max(0, index - 2);
-  const end = Math.min(months.length - 1, index + 2);
+  const start = Math.max(0, renderIndex - 2);
+  const end = Math.min(months.length - 1, renderIndex + 2);
   return (
     <ScrollView
       ref={ref}
@@ -99,7 +103,11 @@ export function CalendarStablePager({
             pendingTarget.current = null;
             setPositioning(false);
           }
-        } else if (dragging.current && enabled && height > 0) onVisibleMonth?.(monthAt(y));
+        } else if (dragging.current && enabled && height > 0) {
+          const visible = monthAt(y);
+          setRenderMonthKey(visible);
+          onVisibleMonth?.(visible);
+        }
       }}
       pagingEnabled
       bounces={false}
@@ -119,7 +127,7 @@ export function CalendarStablePager({
     >
       <View key="before" style={{ height: start * height }} />
       {[-2, -1, 0, 1, 2]
-        .filter((offset) => months[index + offset])
+        .filter((offset) => months[renderIndex + offset])
         .map((offset) => (
           <View
             key={offset}
@@ -128,7 +136,7 @@ export function CalendarStablePager({
             accessibilityElementsHidden={offset !== 0}
             importantForAccessibility={offset === 0 ? "auto" : "no-hide-descendants"}
           >
-            {renderMonth(months[index + offset])}
+            {renderMonth(months[renderIndex + offset])}
           </View>
         ))}
       <View key="after" style={{ height: (months.length - end - 1) * height }} />

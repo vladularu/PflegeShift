@@ -40,6 +40,7 @@ type SharedCalendarSceneProps = {
   children: ReactNode;
   controller?: CalendarController;
   referenceMonth?: string;
+  entriesByDate?: ReadonlyMap<string, readonly CalendarEntry[]>;
 };
 
 export function SharedCalendarScene(props: SharedCalendarSceneProps) {
@@ -67,6 +68,7 @@ function CalendarSceneContent({
   children,
   controller,
   referenceMonth,
+  entriesByDate,
 }: SharedCalendarSceneProps & { controller: CalendarController }) {
   const { month, mode: viewMode, progress, busy, yearVisible } = controller;
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -108,6 +110,7 @@ function CalendarSceneContent({
             onSelect={onSelectMonth}
             progress={progress}
             referenceMonth={referenceMonth}
+            entriesByDate={entriesByDate}
           />
         </View>
         <View
@@ -173,7 +176,6 @@ export function SharedCalendarMonth({
       scene={scene}
       still={still}
       holidays={holidays.holidays}
-      color={palette.primary}
       separator={palette.separator}
     />
   );
@@ -192,7 +194,6 @@ function SharedMonthBody({
   scene,
   still,
   holidays,
-  color,
   separator,
   stampMode,
   stampToolLabel,
@@ -200,7 +201,6 @@ function SharedMonthBody({
   scene: SceneValue;
   still: SharedValue<number>;
   holidays: ReadonlyMap<string, { name: string }>;
-  color: string;
   separator: string;
 }) {
   const layout = useMemo(
@@ -208,6 +208,7 @@ function SharedMonthBody({
     [month, scene.width, scene.height],
   );
   const selected = month === scene.month;
+  const currentDate = today(profile.timeZone);
   const progress = selected ? scene.progress : still;
   const visible = accessibilityVisible && scene.mode === "MONTH" && !scene.busy;
   const opacity = useAnimatedStyle(() => ({ opacity: selected ? 1 : scene.progress.value }));
@@ -225,7 +226,12 @@ function SharedMonthBody({
         timeZone={profile.timeZone}
         visible={false}
       />
-      <PrototypeDates layout={layout} progress={progress} currentDate={today(profile.timeZone)} />
+      <PrototypeDates
+        layout={layout}
+        progress={progress}
+        currentDate={currentDate}
+        selectedDate={visible ? selectedDate : null}
+      />
       <View
         pointerEvents={visible ? "box-none" : "none"}
         accessibilityElementsHidden={!visible}
@@ -259,10 +265,13 @@ function SharedMonthBody({
               height: layout.weekHeight,
               borderRadius: RADII.small,
               borderWidth:
-                selectedDate === day.date || (stampMode && !entriesByDate.get(day.date)?.length)
+                stampMode &&
+                !entriesByDate.get(day.date)?.length &&
+                selectedDate !== day.date &&
+                day.date !== currentDate
                   ? 1
                   : 0,
-              borderColor: selectedDate === day.date ? color : separator,
+              borderColor: separator,
             }}
           />
         ))}

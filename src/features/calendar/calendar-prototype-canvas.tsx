@@ -18,13 +18,16 @@ const MovingDay = memo(function MovingDay({
   day,
   progress,
   currentDate,
+  selectedDate,
 }: {
   day: PrototypeDay;
   progress: SharedValue<number>;
   currentDate: string;
+  selectedDate?: string | null;
 }) {
   const palette = usePalette();
   const isToday = currentDate === day.date;
+  const isSelected = selectedDate === day.date;
   const motion = useAnimatedStyle(() => ({
     transform: [
       { translateX: day.fromX + (day.toX - day.fromX) * progress.value - 15 },
@@ -35,14 +38,31 @@ const MovingDay = memo(function MovingDay({
   // This very same glyph survives both endpoints: there is no overlay handoff.
   return (
     <Animated.View
-      style={[styles.day, { backgroundColor: isToday ? palette.primary : "transparent" }, motion]}
+      testID={`calendar-date-marker-${day.date}`}
+      style={[
+        styles.day,
+        {
+          backgroundColor: isToday
+            ? palette.primary
+            : isSelected
+              ? palette.calendarSelection
+              : "transparent",
+        },
+        motion,
+      ]}
     >
       <Text
         allowFontScaling={false}
         style={{
           fontSize: CALENDAR_METRICS.dayNumberFontSize,
           fontWeight: isToday ? "700" : "500",
-          color: isToday ? palette.onPrimary : day.weekend ? palette.textMuted : palette.text,
+          color: isToday
+            ? palette.onPrimary
+            : isSelected
+              ? palette.onCalendarSelection
+              : day.weekend
+                ? palette.textMuted
+                : palette.text,
         }}
       >
         {day.day}
@@ -57,12 +77,14 @@ export const PrototypeYear = memo(function PrototypeYear({
   onSelect,
   progress,
   referenceMonth = today("Europe/Berlin").slice(0, 7),
+  entriesByDate,
 }: {
   layouts: readonly PrototypeMonth[];
   selectedMonth: string;
   onSelect: (month: string) => void;
   progress: SharedValue<number>;
   referenceMonth?: string;
+  entriesByDate?: ReadonlyMap<string, readonly CalendarEntry[]>;
 }) {
   const palette = usePalette();
   const motion = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
@@ -96,6 +118,38 @@ export const PrototypeYear = memo(function PrototypeYear({
           >
             {PROTOTYPE_MONTH_NAMES[index]}
           </Text>
+          {layout.days.map((day) => {
+            const shifts = (entriesByDate?.get(day.date) ?? [])
+              .filter((entry) => entry.kind === "SHIFT" && !entry.deletedAt)
+              .slice(0, 2);
+            return shifts.length ? (
+              <View
+                key={`marks-${day.date}`}
+                pointerEvents="none"
+                accessible={false}
+                testID={`calendar-mini-shifts-${day.date}`}
+                style={{
+                  position: "absolute",
+                  left: day.fromX - (shifts.length * 4 - 1) / 2,
+                  top: day.fromY + 8,
+                  flexDirection: "row",
+                  gap: CALENDAR_METRICS.chipGap,
+                }}
+              >
+                {shifts.map((entry) => (
+                  <View
+                    key={entry.id}
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: RADII.pill,
+                      backgroundColor: entry.color,
+                    }}
+                  />
+                ))}
+              </View>
+            ) : null;
+          })}
           {layout.month !== selectedMonth
             ? layout.days.map((day) => (
                 <Text
@@ -189,7 +243,10 @@ export function PrototypeMonthContent({
         // overlap the next week (including very short six-week viewports).
         const rows = Math.max(
           0,
-          Math.floor((layout.weekHeight - 43) / CALENDAR_METRICS.entryRowHeight),
+          Math.floor(
+            (layout.weekHeight - CALENDAR_METRICS.dayNumberHeight - 2) /
+              (CALENDAR_METRICS.entryRowHeight + CALENDAR_METRICS.chipGap),
+          ),
         );
         const preview = prototypeEntryPreview(
           entries,
@@ -214,8 +271,9 @@ export function PrototypeMonthContent({
             {rows > 0 ? (
               <View
                 style={{
-                  marginTop: 41,
-                  marginHorizontal: 2,
+                  marginTop: CALENDAR_METRICS.dayNumberHeight,
+                  marginHorizontal: CALENDAR_METRICS.chipHorizontalInset,
+                  gap: CALENDAR_METRICS.chipGap,
                   overflow: "hidden",
                 }}
               >
@@ -264,10 +322,12 @@ export function PrototypeDates({
   layout,
   progress,
   currentDate,
+  selectedDate,
 }: {
   layout: PrototypeMonth;
   progress: SharedValue<number>;
   currentDate: string;
+  selectedDate?: string | null;
 }) {
   return (
     <View
@@ -277,7 +337,13 @@ export function PrototypeDates({
       style={StyleSheet.absoluteFill}
     >
       {layout.days.map((day) => (
-        <MovingDay key={day.day} day={day} progress={progress} currentDate={currentDate} />
+        <MovingDay
+          key={day.day}
+          day={day}
+          progress={progress}
+          currentDate={currentDate}
+          selectedDate={selectedDate}
+        />
       ))}
     </View>
   );

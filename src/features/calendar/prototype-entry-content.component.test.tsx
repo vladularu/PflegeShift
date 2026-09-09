@@ -2,6 +2,7 @@ import { render } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 import type { ShiftEntry } from "@/domain/types";
 import { PrototypeEntryContent } from "./prototype-entry-content";
+import { calendarChipPalette } from "@/theme/color-contrast";
 
 jest.mock("@/ui/shift-symbol", () => ({ ShiftSymbol: () => null }));
 const shift: ShiftEntry = {
@@ -25,6 +26,25 @@ const shift: ShiftEntry = {
   deletedAt: null,
 };
 describe("prototype real shift content", () => {
+  it.each(["#59CA50", "#FFA338"])(
+    "keeps %s unchanged with explicitly requested white text",
+    async (color) => {
+      const screen = await render(
+        <PrototypeEntryContent
+          entry={{ ...shift, color }}
+          display={{ labelMode: "FULL", showShiftTimes: true, showShiftDuration: false }}
+          timeZone="Europe/Berlin"
+        />,
+      );
+      expect(screen.getByText("Früh")).toHaveStyle({ color: "#FFFFFF" });
+      expect(screen.getByText("07:00")).toHaveStyle({
+        color: "#FFFFFF",
+        backgroundColor: calendarChipPalette(color, false).detail,
+      });
+      expect(screen.getByText("Früh").parent).toHaveStyle({ backgroundColor: color });
+      expect(screen.getByText("Früh").parent?.parent).toHaveStyle({ borderRadius: 4 });
+    },
+  );
   it("honors title, time and duration options without entrance animations", async () => {
     const screen = await render(
       <PrototypeEntryContent
