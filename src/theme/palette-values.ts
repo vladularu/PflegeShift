@@ -23,6 +23,7 @@ export interface Palette {
   readonly outsideMonth: string;
   readonly tabBar: string;
   readonly calendarToday: string;
+  readonly calendarYearAccent: string;
   readonly onCalendarToday: string;
   readonly calendarSelection: string;
   readonly onCalendarSelection: string;
@@ -58,6 +59,7 @@ export const LIGHT_PALETTE: Palette = {
   outsideMonth: "#F3F3F5",
   tabBar: "#FBFBFC",
   calendarToday: "#242426",
+  calendarYearAccent: "#D52D3A",
   onCalendarToday: "#FFFFFF",
   calendarSelection: "#EADDE2",
   onCalendarSelection: "#34232B",
@@ -70,6 +72,7 @@ export const LIGHT_PALETTE: Palette = {
 
 export const DARK_PALETTE: Palette = {
   dark: true,
+  calendarYearAccent: "#FF5A64",
   background: "#000000",
   onboardingBackground: "#111315",
   groupedBackground: "#000000",

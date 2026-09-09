@@ -27,6 +27,20 @@ describe("prototype shared calendar coordinates", () => {
     expect(resized.days[0].toX).not.toBe(first.days[0].toX);
     expect(resized.weekHeight).not.toBe(first.weekHeight);
   });
+  it("keeps boundary dates out of the moving year glyphs, including leap years", () => {
+    for (const month of ["2024-02", "2026-01", "2026-12", "2027-01"]) {
+      const layout = calendarPrototypeLayout(month, 430, 640);
+      const cells = [...layout.days, ...layout.adjacentDays];
+      expect(cells.length % 7).toBe(0);
+      expect(new Set(cells.map((cell) => cell.date)).size).toBe(cells.length);
+      expect(layout.adjacentDays.every((cell) => !cell.date.startsWith(month))).toBe(true);
+      expect(layout.days.every((cell) => cell.date.startsWith(month))).toBe(true);
+      expect(layout.adjacentDays.every((cell) => cell.toY > 0 && cell.toY < 640)).toBe(true);
+    }
+    expect(
+      calendarPrototypeLayout("2026-01", 430, 640).adjacentDays.map((cell) => cell.date),
+    ).toContain("2025-12-31");
+  });
   it("uses fixed fixtures rather than user records", () => {
     expect(prototypeShift(1)?.title).toBe("Früh");
     expect(prototypeShift(3)?.title).toBe("Nacht");

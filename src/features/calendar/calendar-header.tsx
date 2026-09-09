@@ -191,7 +191,7 @@ export const CalendarHeader = memo(function CalendarHeader({
       }
       title={title}
       stableTitle={synchronized}
-      titleColor={viewMode === "YEAR" ? palette.primary : undefined}
+      titleColor={viewMode === "YEAR" ? palette.calendarYearAccent : undefined}
       titleEntering={synchronized ? undefined : titleEntering}
       titleExiting={synchronized ? undefined : titleExiting}
       titleKey={synchronized ? "calendar-title" : `${viewMode}-${title}`}

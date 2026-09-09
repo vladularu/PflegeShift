@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
-import { addMonths } from "@/engine/calendar";
 
 type ScrollEvent = NativeSyntheticEvent<NativeScrollEvent>;
 
-/** Three permanent slots. Date navigation never remounts the native scroll view. */
+/** Fixed native positions, five reusable bodies. Ordinary swipes never recenter.
+ * The center body survives year transitions with its moving date glyphs. */
 export function CalendarStablePager({
   month,
   months,
@@ -28,73 +28,78 @@ export function CalendarStablePager({
 }) {
   const ref = useRef<ScrollView>(null);
   const dragging = useRef(false);
-  const nativeOffset = useRef(height);
-  const [recentering, setRecentering] = useState(false);
-  const awaitingCenter = useRef(false);
+  const index = Math.max(0, months.indexOf(month));
+  const target = index * height;
+  const [initialOffset] = useState({ x: 0, y: target });
+  const nativeOffset = useRef(target);
+  const settledMonth = useRef(month);
+  const previous = useRef({ height, revision, enabled, first: months[0] });
+  const pendingTarget = useRef<number | null>(null);
+  const [positioning, setPositioning] = useState(false);
   useLayoutEffect(() => {
+    const old = previous.current;
+    const external =
+      settledMonth.current !== month ||
+      old.height !== height ||
+      old.revision !== revision ||
+      old.enabled !== enabled ||
+      old.first !== months[0];
+    previous.current = { height, revision, enabled, first: months[0] };
+    if (!external) return;
     dragging.current = false;
-    if (Math.abs(nativeOffset.current - height) > 1) {
-      awaitingCenter.current = true;
-      setRecentering(true);
-    }
-  }, [month, height, enabled, revision]);
-  useLayoutEffect(() => {
-    ref.current?.scrollTo({ y: height, animated: false });
-  }, [month, height, enabled, revision, recentering]);
-  // A command is not an acknowledgement. Keep all slots coherent until onScroll
-  // reports the center; retry if the command raced a native layout transaction.
+    settledMonth.current = month;
+    pendingTarget.current = Math.abs(nativeOffset.current - target) > 1 ? target : null;
+    setPositioning(pendingTarget.current !== null);
+    ref.current?.scrollTo({ y: target, animated: false });
+  }, [month, height, revision, enabled, months, target]);
+  // Recovery only for explicit jumps/layout changes racing native layout.
+  // Ordinary settled gestures never enter this state.
   useEffect(() => {
-    if (!recentering) return;
+    if (!positioning) return;
     const retry = setInterval(() => {
-      ref.current?.scrollTo({ y: height, animated: false });
+      if (pendingTarget.current !== null)
+        ref.current?.scrollTo({ y: pendingTarget.current, animated: false });
     }, 200);
     return () => clearInterval(retry);
-  }, [height, recentering]);
+  }, [positioning]);
+
+  const monthAt = (y: number) =>
+    months[Math.max(0, Math.min(months.length - 1, Math.round(y / height)))];
   const settle = (event: ScrollEvent) => {
-    if (!enabled || awaitingCenter.current || !dragging.current || height <= 0) return;
+    if (!enabled || pendingTarget.current !== null || !dragging.current || height <= 0) return;
+    const y = event.nativeEvent.contentOffset.y;
+    // Intermediate end events from an interrupted native snap are not commits.
+    if (Math.abs(y / height - Math.round(y / height)) > 0.001) return;
     dragging.current = false;
-    nativeOffset.current = event.nativeEvent.contentOffset.y;
-    const offset = Math.max(
-      -1,
-      Math.min(1, Math.round(event.nativeEvent.contentOffset.y / height) - 1),
-    );
-    const index = months.indexOf(addMonths(month, offset));
-    onVisibleMonth?.(addMonths(month, offset));
-    if (Math.abs(nativeOffset.current - height) > 1) {
-      awaitingCenter.current = true;
-      setRecentering(true);
-    }
-    if (index >= 0)
-      onSettled({
-        ...event,
-        nativeEvent: {
-          ...event.nativeEvent,
-          contentOffset: { x: 0, y: index * height },
-        },
-      });
-    if (offset === 0) ref.current?.scrollTo({ y: height, animated: false });
+    nativeOffset.current = y;
+    const next = monthAt(y);
+    settledMonth.current = next;
+    onVisibleMonth?.(next);
+    onSettled(event);
   };
+  const start = Math.max(0, index - 2);
+  const end = Math.min(months.length - 1, index + 2);
   return (
     <ScrollView
       ref={ref}
       testID="calendar-month-pager"
       contentInsetAdjustmentBehavior="never"
-      contentOffset={{ x: 0, y: height }}
+      contentOffset={initialOffset}
       onContentSizeChange={() => {
-        if (!dragging.current) ref.current?.scrollTo({ y: height, animated: false });
+        if (pendingTarget.current !== null)
+          ref.current?.scrollTo({ y: pendingTarget.current, animated: false });
       }}
-      scrollEnabled={enabled && !recentering}
+      scrollEnabled={enabled && !positioning}
       scrollEventThrottle={16}
       onScroll={(event) => {
-        nativeOffset.current = event.nativeEvent.contentOffset.y;
-        if (dragging.current && !awaitingCenter.current && enabled && height > 0) {
-          const slot = Math.max(-1, Math.min(1, Math.round(nativeOffset.current / height) - 1));
-          onVisibleMonth?.(addMonths(month, slot));
-        }
-        if (awaitingCenter.current && Math.abs(nativeOffset.current - height) <= 1) {
-          awaitingCenter.current = false;
-          setRecentering(false);
-        }
+        const y = event.nativeEvent.contentOffset.y;
+        nativeOffset.current = y;
+        if (pendingTarget.current !== null) {
+          if (Math.abs(y - pendingTarget.current) <= 1) {
+            pendingTarget.current = null;
+            setPositioning(false);
+          }
+        } else if (dragging.current && enabled && height > 0) onVisibleMonth?.(monthAt(y));
       }}
       pagingEnabled
       bounces={false}
@@ -103,31 +108,30 @@ export function CalendarStablePager({
       snapToInterval={height}
       showsVerticalScrollIndicator={false}
       onScrollBeginDrag={() => {
-        if (!enabled || awaitingCenter.current) return;
+        if (!enabled || pendingTarget.current !== null) return;
         dragging.current = true;
         onBeginDrag();
       }}
       onMomentumScrollEnd={settle}
       onScrollEndDrag={(event) => {
-        const { velocity, contentOffset } = event.nativeEvent;
-        if (
-          velocity?.y === 0 &&
-          Math.abs(contentOffset.y / height - Math.round(contentOffset.y / height)) < 0.001
-        )
-          settle(event);
+        if (event.nativeEvent.velocity?.y === 0) settle(event);
       }}
     >
-      {[-1, 0, 1].map((offset) => (
-        <View
-          key={offset}
-          testID={`calendar-slot-${offset}`}
-          style={{ height }}
-          accessibilityElementsHidden={offset !== 0}
-          importantForAccessibility={offset === 0 ? "auto" : "no-hide-descendants"}
-        >
-          {renderMonth(recentering ? month : addMonths(month, offset))}
-        </View>
-      ))}
+      <View key="before" style={{ height: start * height }} />
+      {[-2, -1, 0, 1, 2]
+        .filter((offset) => months[index + offset])
+        .map((offset) => (
+          <View
+            key={offset}
+            testID={`calendar-slot-${offset}`}
+            style={{ height }}
+            accessibilityElementsHidden={offset !== 0}
+            importantForAccessibility={offset === 0 ? "auto" : "no-hide-descendants"}
+          >
+            {renderMonth(months[index + offset])}
+          </View>
+        ))}
+      <View key="after" style={{ height: (months.length - end - 1) * height }} />
     </ScrollView>
   );
 }

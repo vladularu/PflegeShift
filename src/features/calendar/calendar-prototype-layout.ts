@@ -31,6 +31,18 @@ export function calendarPrototypeLayout(month: string, width: number, height: nu
     title: { x: column * miniWidth + 8, y: row * miniHeight + 4 },
     cellWidth: width / 7,
     weekHeight,
+    adjacentDays: grid.flatMap((cell, index) =>
+      cell.inMonth
+        ? []
+        : [
+            {
+              date: cell.date,
+              day: cell.day,
+              toX: (((index % 7) + 0.5) * width) / 7,
+              toY: 32 + Math.floor(index / 7) * weekHeight + 20,
+            },
+          ],
+    ),
     days: grid.flatMap((cell, index) =>
       cell.inMonth
         ? [

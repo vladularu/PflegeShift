@@ -138,7 +138,7 @@ describe("CalendarHeader", () => {
     const title = screen.getByRole("header", { name: "2026" });
 
     expect(title.props.entering.durationV).toBe(CALENDAR_VIEW_ZOOM.duration);
-    expect(title).toHaveStyle({ color: LIGHT_PALETTE.primary });
+    expect(title).toHaveStyle({ color: LIGHT_PALETTE.calendarYearAccent });
     expect(title.props.entering.initialValues).toBeUndefined();
     expect(title.props.exiting.durationV).toBe(MOTION.duration.normal);
     expect(title.props.exiting.targetValues).toBeUndefined();

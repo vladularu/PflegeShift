@@ -270,8 +270,9 @@ describe("CalendarScreen quick-entry navigation", () => {
     expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-01");
     await fireEvent(pager, "momentumScrollEnd", staleEvent);
     expect(mockActiveMonth).toBe("2026-01");
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { y: 700 * 17 } } });
     await fireEvent(pager, "scrollBeginDrag");
-    const nextEvent = { nativeEvent: { contentOffset: { y: 700 * 2 } } };
+    const nextEvent = { nativeEvent: { contentOffset: { y: 700 * 18 } } };
     await fireEvent.scroll(pager, nextEvent);
     await fireEvent(pager, "momentumScrollEnd", nextEvent);
     expect(mockActiveMonth).toBe("2026-02");
@@ -329,12 +330,12 @@ describe("CalendarScreen quick-entry navigation", () => {
       const pager = screen.getByTestId("calendar-month-pager");
       await fireEvent(pager, "scrollBeginDrag");
       await act(async () =>
-        fireEvent.scroll(pager, { nativeEvent: { contentOffset: { y: 700 * 2 } } }),
+        fireEvent.scroll(pager, { nativeEvent: { contentOffset: { y: 700 * 25 } } }),
       );
       expect(mockActiveMonth).toBe("2026-12");
       await act(async () =>
         fireEvent(pager, completion, {
-          nativeEvent: { contentOffset: { y: 700 * 2 }, velocity: { y: 0 } },
+          nativeEvent: { contentOffset: { y: 700 * 25 }, velocity: { y: 0 } },
         }),
       );
       expect(mockActiveMonth).toBe("2027-01");
@@ -356,14 +357,14 @@ describe("CalendarScreen quick-entry navigation", () => {
     const pager = screen.getByTestId("calendar-month-pager");
     mockActiveMonthCoordinator.setMonth.mockClear();
     await fireEvent(pager, "scrollBeginDrag");
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 1120 } } });
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 * 24.6 } } });
     expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-10");
     expect(mockActiveMonthCoordinator.setMonth).not.toHaveBeenCalled();
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 } } });
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 * 24 } } });
     expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-09");
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 1400 } } });
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 * 25 } } });
     await fireEvent(pager, "momentumScrollEnd", {
-      nativeEvent: { contentOffset: { x: 0, y: 1400 } },
+      nativeEvent: { contentOffset: { x: 0, y: 700 * 25 } },
     });
     expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-10");
     expect(mockActiveMonthCoordinator.setMonth).toHaveBeenCalledTimes(1);

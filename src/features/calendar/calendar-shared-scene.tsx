@@ -39,6 +39,7 @@ type SharedCalendarSceneProps = {
   onTransitionComplete?: () => void;
   children: ReactNode;
   controller?: CalendarController;
+  referenceMonth?: string;
 };
 
 export function SharedCalendarScene(props: SharedCalendarSceneProps) {
@@ -65,6 +66,7 @@ function CalendarSceneContent({
   onSelectMonth,
   children,
   controller,
+  referenceMonth,
 }: SharedCalendarSceneProps & { controller: CalendarController }) {
   const { month, mode: viewMode, progress, busy, yearVisible } = controller;
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -105,6 +107,7 @@ function CalendarSceneContent({
             selectedMonth={month}
             onSelect={onSelectMonth}
             progress={progress}
+            referenceMonth={referenceMonth}
           />
         </View>
         <View

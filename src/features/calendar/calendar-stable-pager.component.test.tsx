@@ -17,12 +17,12 @@ const profile = {
 const noop = () => {};
 const onDate = jest.fn();
 
-// Real scene + real three-slot pager + real month glyphs: no MonthCard stub.
+// Real scene + real bounded pager + real month glyphs: no MonthCard stub.
 function Harness() {
   const [month, setMonth] = useState("2026-09");
   const [mode, setMode] = useState<"MONTH" | "YEAR">("MONTH");
   const [revision, setRevision] = useState(0);
-  const months = createMonthWindow(month, 24, 36);
+  const [months] = useState(() => createMonthWindow("2026-09", 24, 36));
   return (
     <>
       <Text testID="heading">
@@ -99,65 +99,46 @@ describe("permanent calendar slots with the real shared scene", () => {
     const pager = screen.getByTestId("calendar-month-pager");
     await screen.rerender(<CalendarStablePager {...props} height={640} />);
     expect(pager.props.scrollEnabled).toBe(false);
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 } } });
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 24 * 700 } } });
     expect(pager.props.scrollEnabled).toBe(false);
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 640 } } });
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 24 * 640 } } });
     expect(pager.props.scrollEnabled).toBe(true);
     expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
   });
 
-  it("keeps the visible trailing slot on October until native center acknowledgement", async () => {
+  it("accepts five consecutive swipes and immediate reversal without recenter events", async () => {
     const screen = await render(<Harness />);
     const pager = screen.getByTestId("calendar-month-pager");
-    await fireEvent(pager, "scrollBeginDrag");
-    await fireEvent(pager, "momentumScrollEnd", {
-      nativeEvent: { contentOffset: { x: 0, y: 1400 } },
-    });
-    expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2026-10");
-    for (const slot of [-1, 0, 1]) {
+    const months = createMonthWindow("2026-09", 24, 36);
+    for (const index of [25, 26, 27, 28, 29, 28, 27, 26, 25, 24]) {
+      expect(pager.props.scrollEnabled).toBe(true);
+      await fireEvent(pager, "scrollBeginDrag");
+      await fireEvent(pager, "momentumScrollEnd", {
+        nativeEvent: { contentOffset: { x: 0, y: index * 700 } },
+      });
+      expect(screen.getByTestId("heading")).toHaveTextContent(`MONTH:${months[index]}`);
+      expect(pager.props.scrollEnabled).toBe(true);
       expect(
-        within(
-          screen.getByTestId(`calendar-slot-${slot}`, { includeHiddenElements: true }),
-        ).getByTestId("shared-month-2026-10", { includeHiddenElements: true }),
+        within(screen.getByTestId("calendar-slot-0")).getByTestId(`shared-month-${months[index]}`),
       ).toBeTruthy();
+      expect(screen.getAllByTestId(/calendar-slot-/, { includeHiddenElements: true })).toHaveLength(
+        5,
+      );
     }
-    expect(pager.props.scrollEnabled).toBe(false);
-    // Delayed or intermediate native events must not restore November prematurely.
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 1100 } } });
-    expect(pager.props.scrollEnabled).toBe(false);
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 } } });
-    expect(pager.props.scrollEnabled).toBe(true);
-    expect(
-      within(screen.getByTestId("calendar-slot-1", { includeHiddenElements: true })).getByTestId(
-        "shared-month-2026-11",
-        { includeHiddenElements: true },
-      ),
-    ).toBeTruthy();
-    await fireEvent(pager, "scrollBeginDrag");
-    await fireEvent(pager, "momentumScrollEnd", {
-      nativeEvent: { contentOffset: { x: 0, y: 0 } },
-    });
-    expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2026-09");
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 } } });
-    expect(pager.props.scrollEnabled).toBe(true);
   });
 
-  it("replaces an unacknowledged target with Today without accepting old momentum", async () => {
+  it("cancels stale momentum on Today and waits only for the explicit jump", async () => {
     const screen = await render(<Harness />);
     const pager = screen.getByTestId("calendar-month-pager");
+    const trailing = { nativeEvent: { contentOffset: { x: 0, y: 25 * 700 } } };
     await fireEvent(pager, "scrollBeginDrag");
-    const trailing = { nativeEvent: { contentOffset: { x: 0, y: 1400 } } };
     await fireEvent(pager, "momentumScrollEnd", trailing);
+    await fireEvent(pager, "scrollBeginDrag");
     await fireEvent.press(screen.getByRole("button", { name: "Heute" }));
     await fireEvent(pager, "momentumScrollEnd", trailing);
     expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2026-09");
-    expect(
-      within(screen.getByTestId("calendar-slot-1", { includeHiddenElements: true })).getByTestId(
-        "shared-month-2026-09",
-        { includeHiddenElements: true },
-      ),
-    ).toBeTruthy();
-    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 } } });
+    expect(pager.props.scrollEnabled).toBe(false);
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 24 * 700 } } });
     expect(pager.props.scrollEnabled).toBe(true);
   });
   it("keeps the same center page and glyphs for September → January → Today → year", async () => {
@@ -203,8 +184,9 @@ describe("permanent calendar slots with the real shared scene", () => {
     const pager = screen.getByTestId("calendar-month-pager");
     await fireEvent.press(screen.getByRole("button", { name: "Jahr" }));
     await fireEvent.press(screen.getByRole("button", { name: "Dezember 2026 öffnen" }));
+    await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 27 * 700 } } });
     await fireEvent(pager, "scrollBeginDrag");
-    const next = { nativeEvent: { contentOffset: { x: 0, y: 1400 }, velocity: { y: 0 } } };
+    const next = { nativeEvent: { contentOffset: { x: 0, y: 28 * 700 }, velocity: { y: 0 } } };
     await fireEvent(pager, "scrollEndDrag", next);
     await fireEvent(pager, "momentumScrollEnd", next);
     expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2027-01");
@@ -215,7 +197,7 @@ describe("permanent calendar slots with the real shared scene", () => {
     expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
   });
 
-  it("opens every previously unvisited month using the same three slots", async () => {
+  it("opens every previously unvisited month using the same five slots", async () => {
     const screen = await render(<Harness />);
     const pager = screen.getByTestId("calendar-month-pager");
     const center = screen.getByTestId("calendar-slot-0");
@@ -230,7 +212,7 @@ describe("permanent calendar slots with the real shared scene", () => {
       expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
       expect(screen.getByTestId("calendar-slot-0")).toBe(center);
       expect(screen.getAllByTestId(/calendar-slot-/, { includeHiddenElements: true })).toHaveLength(
-        3,
+        5,
       );
     }
   });

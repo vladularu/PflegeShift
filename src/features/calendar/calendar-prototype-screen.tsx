@@ -202,6 +202,7 @@ export function CalendarPrototypeScreen() {
             >
               <PrototypeYear
                 layouts={layouts}
+                referenceMonth={currentDate.slice(0, 7)}
                 selectedMonth={target.month}
                 onSelect={(month) => request(month, "MONTH")}
                 progress={progress}

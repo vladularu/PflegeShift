@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { today } from "@/engine/calendar";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, type SharedValue } from "react-native-reanimated";
 import { usePalette } from "@/theme/palette";
@@ -55,11 +56,13 @@ export const PrototypeYear = memo(function PrototypeYear({
   selectedMonth,
   onSelect,
   progress,
+  referenceMonth = today("Europe/Berlin").slice(0, 7),
 }: {
   layouts: readonly PrototypeMonth[];
   selectedMonth: string;
   onSelect: (month: string) => void;
   progress: SharedValue<number>;
+  referenceMonth?: string;
 }) {
   const palette = usePalette();
   const motion = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
@@ -84,7 +87,11 @@ export const PrototypeYear = memo(function PrototypeYear({
             accessible={false}
             style={[
               styles.title,
-              { left: layout.title.x, top: layout.title.y, color: palette.text },
+              {
+                left: layout.title.x,
+                top: layout.title.y,
+                color: layout.month === referenceMonth ? palette.calendarYearAccent : palette.text,
+              },
             ]}
           >
             {PROTOTYPE_MONTH_NAMES[index]}
@@ -151,6 +158,30 @@ export function PrototypeMonthContent({
           </Text>
         ))}
       </View>
+      {layout.adjacentDays.map((day) => (
+        <Text
+          key={day.date}
+          testID={`calendar-adjacent-${day.date}`}
+          accessible={visible}
+          accessibilityLabel={`${day.date}, Nachbarmonat`}
+          allowFontScaling={false}
+          style={{
+            position: "absolute",
+            left: day.toX - 15,
+            top: day.toY - 15,
+            width: 30,
+            height: 30,
+            textAlign: "center",
+            textAlignVertical: "center",
+            lineHeight: TYPOGRAPHY.screenTitle.lineHeight,
+            fontSize: CALENDAR_METRICS.dayNumberFontSize,
+            color: palette.textMuted,
+            opacity: 0.5,
+          }}
+        >
+          {day.day}
+        </Text>
+      ))}
       {layout.days.map((day) => {
         const entries = entriesByDate.get(day.date) ?? [];
         const holiday = holidays.get(day.date)?.name;

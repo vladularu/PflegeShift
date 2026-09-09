@@ -549,6 +549,7 @@ export function CalendarScreen() {
       ) : null}
       <SharedCalendarScene
         controller={controller}
+        referenceMonth={currentMonth(profile?.timeZone ?? "Europe/Berlin")}
         month={visibleMonth}
         viewMode={preferences.viewMode}
         active={isFocused}
