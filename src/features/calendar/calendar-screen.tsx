@@ -1,12 +1,6 @@
 import { router, useFocusEffect, useIsFocused, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  AccessibilityInfo,
-  FlatList,
-  View,
-  type LayoutChangeEvent,
-  type ListRenderItemInfo,
-} from "react-native";
+import { AccessibilityInfo, View, type LayoutChangeEvent } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 
 import {
@@ -27,6 +21,7 @@ import { calendarPerformance } from "@/application/calendar-performance";
 import { useCalendarPerformance, useMeasuredCalendarEntries } from "./use-calendar-performance";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { SharedCalendarScene, SharedCalendarMonth } from "./calendar-shared-scene";
+import { CalendarStablePager } from "./calendar-stable-pager";
 import { calendarDayPressAction } from "@/features/calendar/calendar-display";
 import * as CalendarHolidays from "@/features/calendar/calendar-holidays";
 import type { CalendarAnchorRect } from "@/features/calendar/calendar-layout";
@@ -126,7 +121,6 @@ export function CalendarScreen() {
   const [quickPopup, setQuickPopup] = useState<QuickPopupState | null>(null);
   const pendingSelectedDate = useRef<string | null>(null);
   const settledMonth = useRef(targetMonth);
-  const listRef = useRef<FlatList<string>>(null);
 
   useEffect(() => {
     if (ready && error === null && profile === null) router.replace("/onboarding");
@@ -218,16 +212,10 @@ export function CalendarScreen() {
     [calendarReady, error, plannerMode, stampDate, stampTool],
   );
 
-  const scrollToMonth = useCallback(
-    (month: string, animated = true): boolean => {
-      const index = months.indexOf(month);
-      const list = listRef.current;
-      if (index < 0 || list === null) return false;
-      list.scrollToIndex({ index, animated });
-      return true;
-    },
-    [months],
-  );
+  const scrollToMonth = useCallback((month: string): boolean => {
+    setVisibleMonth(month);
+    return true;
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -244,7 +232,7 @@ export function CalendarScreen() {
       if (recenter) {
         setMonthAnchor(activeMonth);
       } else if (preferences.viewMode === "MONTH") {
-        requestAnimationFrame(() => scrollToMonth(activeMonth, false));
+        scrollToMonth(activeMonth);
       }
     }, [activeMonthCoordinator, months, preferences.viewMode, scrollToMonth]),
   );
@@ -311,7 +299,7 @@ export function CalendarScreen() {
       settledMonth.current = month;
       const recenter = shouldRecenterMonthWindow(months, month);
       if (recenter) setMonthAnchor(month);
-      // Mount the hidden pager at its destination, avoiding virtualized scroll catch-up.
+      // Invalidate an older gesture; the three native page slots are retained.
       if (month !== visibleMonth) setPagerResetRevision((revision) => revision + 1);
       preferences.setViewMode("MONTH");
     },
@@ -323,6 +311,7 @@ export function CalendarScreen() {
     if (transitionInFlight.current) return;
     transitionInFlight.current = true;
     setQuickPopup(null);
+    setSelectionVisible(false);
     setPlannerMode(false);
     setStampTool(null);
     setHeaderTransition("CROSSFADE");
@@ -348,7 +337,7 @@ export function CalendarScreen() {
   );
 
   const clearPopup = useCallback(() => setQuickPopup(null), []);
-  const { trackPaging, finishPaging } = useCalendarPaging({
+  const { finishPaging } = useCalendarPaging({
     months,
     pageHeight,
     visibleMonth,
@@ -436,7 +425,6 @@ export function CalendarScreen() {
   );
 
   const calendarBottomReserve = process.env.EXPO_OS === "ios" ? 55 : 0;
-  const visibleMonthIndex = months.indexOf(visibleMonth);
   const moveYear = useCallback(
     (amount: number) => {
       calendarPerformance.begin("request-year-step", addMonths(visibleMonth, amount * 12));
@@ -456,7 +444,7 @@ export function CalendarScreen() {
     [activeMonthCoordinator, visibleMonth],
   );
   const renderMonth = useCallback(
-    ({ item }: ListRenderItemInfo<string>) =>
+    (item: string) =>
       profile ? (
         <SharedCalendarMonth
           accessibilityVisible={isFocused && item === visibleMonth}
@@ -532,6 +520,12 @@ export function CalendarScreen() {
           </PrimaryButton>
         </View>
       ) : null}
+      <View testID="calendar-notice-slot">
+        {!calendarReady ? (
+          <InlineNotice message="Kalenderdaten werden geladen …" tone="warning" />
+        ) : null}
+        <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
+      </View>
       <SharedCalendarScene
         onTransitionStart={transitionStarted}
         onTransitionComplete={transitionCompleted}
@@ -548,45 +542,18 @@ export function CalendarScreen() {
             style={{ flex: 1 }}
           >
             {pageHeight > 0 ? (
-              <FlatList
-                ref={listRef}
-                contentInsetAdjustmentBehavior="never"
-                data={months}
-                decelerationRate="fast"
-                disableIntervalMomentum
-                getItemLayout={(_, index) => ({
-                  index,
-                  length: pageHeight,
-                  offset: pageHeight * index,
-                })}
-                initialScrollIndex={visibleMonthIndex >= 0 ? visibleMonthIndex : MONTHS_BEFORE}
-                initialNumToRender={1}
-                key={`month-pager-${pageHeight}-${monthAnchor}-${pagerResetRevision}`}
-                keyExtractor={(month) => month}
-                maxToRenderPerBatch={2}
-                onMomentumScrollEnd={finishPaging}
-                onScrollBeginDrag={() => {
+              <CalendarStablePager
+                month={visibleMonth}
+                months={months}
+                height={pageHeight}
+                revision={pagerResetRevision}
+                enabled={preferences.viewMode === "MONTH" && !todayScrollActive}
+                onSettled={finishPaging}
+                onBeginDrag={() => {
                   calendarPerformance.begin("scroll-begin", visibleMonth);
                   if (!transitionInFlight.current) monthSelectionPending.current = false;
                 }}
-                onScroll={trackPaging}
-                onScrollEndDrag={(event) => {
-                  const { contentOffset, velocity } = event.nativeEvent;
-                  const page = Math.round(contentOffset.y / pageHeight) * pageHeight;
-                  if (velocity?.y === 0 && Math.abs(contentOffset.y - page) < 1)
-                    finishPaging(event);
-                }}
-                pagingEnabled
-                removeClippedSubviews={false}
-                renderItem={renderMonth}
-                scrollEnabled={preferences.viewMode === "MONTH" && !todayScrollActive}
-                showsVerticalScrollIndicator={false}
-                snapToAlignment="start"
-                snapToInterval={pageHeight}
-                scrollEventThrottle={16}
-                testID="calendar-month-pager"
-                updateCellsBatchingPeriod={24}
-                windowSize={3}
+                renderMonth={renderMonth}
               />
             ) : null}
           </Animated.View>
@@ -604,15 +571,6 @@ export function CalendarScreen() {
           )}
         </View>
       </SharedCalendarScene>
-      <View
-        pointerEvents="none"
-        style={{ position: "absolute", bottom: calendarBottomReserve, left: 0, right: 0 }}
-      >
-        {!calendarReady ? (
-          <InlineNotice message="Kalenderdaten werden geladen …" tone="warning" />
-        ) : null}
-        <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
-      </View>
       {quickPopup ? (
         <QuickEntryPopup
           actions={quickActions}

@@ -29,6 +29,7 @@ describe("Today scroll lifecycle", () => {
     initialMonth = "2024-12",
     initialView: "MONTH" | "YEAR" = "MONTH",
     reduced = false,
+    initialPagerRevision = 0,
   ) {
     const coordinator = createActiveMonthCoordinator(initialMonth);
     coordinator.requestToday();
@@ -42,7 +43,7 @@ describe("Today scroll lifecycle", () => {
       const [selection, setSelectionVisible] = useState(false);
       const [, setHeaderDirection] = useState<"NEXT" | "PREVIOUS">("NEXT");
       const [, setHeaderTransition] = useState<"SPATIAL" | "CROSSFADE">("SPATIAL");
-      const [, setPagerResetRevision] = useState(0);
+      const [pagerRevision, setPagerResetRevision] = useState(initialPagerRevision);
       const settledMonthRef = useRef(initialMonth);
       const months = useMemo(() => createMonthWindow(anchor, 24, 36), [anchor]);
       const scroll = useCalendarTodayScroll({
@@ -67,7 +68,7 @@ describe("Today scroll lifecycle", () => {
         viewMode,
         visibleMonth: month,
       });
-      return { ...scroll, month, selected, selection, viewMode };
+      return { ...scroll, month, selected, selection, viewMode, pagerRevision };
     };
     return { coordinator, hook: useHarness, scrollToMonth };
   }
@@ -89,6 +90,14 @@ describe("Today scroll lifecycle", () => {
       selection: true,
       todayScrollActive: false,
     });
+    expect(coordinator.hasPendingTodayRequest(1)).toBe(false);
+  });
+
+  it("invalidates a prior month-selection revision even when Today has the same request number", async () => {
+    const { hook, coordinator } = setup("2026-09", "MONTH", true, 1);
+    const screen = await renderHook(hook, { initialProps: { ready: true, focused: true } });
+    expect(screen.result.current.pagerRevision).toBe(2);
+    expect(screen.result.current.month).toBe("2027-01");
     expect(coordinator.hasPendingTodayRequest(1)).toBe(false);
   });
 

@@ -68,6 +68,7 @@ export function SharedCalendarScene({
   const progress = useSharedValue(viewMode === "MONTH" ? 1 : 0);
   const reduced = useReducedMotion();
   const previous = useRef(viewMode);
+  const hasSize = size.width > 0;
   const epoch = useRef(0);
   const complete = useCallback(
     (id: number) => {
@@ -90,7 +91,7 @@ export function SharedCalendarScene({
     const end = viewMode === "MONTH" ? 1 : 0;
     cancelAnimation(progress);
     onTransitionStart(viewMode);
-    if (!changed || !active || !foreground || reduced || !size.width) {
+    if (!changed || !active || !foreground || reduced || !hasSize) {
       progress.value = end;
       complete(id);
       return;
@@ -104,7 +105,7 @@ export function SharedCalendarScene({
       },
     );
     return () => cancelAnimation(progress);
-  }, [active, complete, foreground, onTransitionStart, progress, reduced, size, viewMode]);
+  }, [active, complete, foreground, onTransitionStart, progress, reduced, hasSize, viewMode]);
   const height = Math.max(1, size.height - bottomReserve);
   const year = month.slice(0, 4);
   const layouts = useMemo(
@@ -264,7 +265,7 @@ function SharedMonthBody({
         pointerEvents={visible ? "box-none" : "none"}
         accessibilityElementsHidden={!visible}
         importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
-        style={StyleSheet.absoluteFill}
+        style={[StyleSheet.absoluteFill, { opacity: visible ? 1 : 0 }]}
       >
         {layout.days.map((day) => (
           <Pressable

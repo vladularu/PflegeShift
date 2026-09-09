@@ -112,7 +112,7 @@ export function useCalendarTodayScroll({
         if (changesVisibleMonth || todayScroll !== null) {
           setHeaderDirection(target.visibleMonth > visibleMonth ? "NEXT" : "PREVIOUS");
           setMonthAnchor(target.visibleMonth);
-          setPagerResetRevision(requestRevision);
+          setPagerResetRevision((revision) => revision + 1);
         }
         completeTodayScroll(scroll);
         return;
@@ -126,7 +126,7 @@ export function useCalendarTodayScroll({
       activeMonthCoordinator.setMonth(scroll.targetMonth);
       settledMonthRef.current = scroll.targetMonth;
       setMonthAnchor(scroll.startMonth);
-      setPagerResetRevision(requestRevision);
+      setPagerResetRevision((revision) => revision + 1);
       startedTodayScrollRevision.current = null;
       setTodayScroll(scroll);
     },

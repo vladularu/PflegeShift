@@ -1,5 +1,40 @@
 # Phase 3B – Hauptkalender integrieren
 
+## Reparatur nach abgelehnter Geräteabnahme (09.09.2026)
+
+Die erste Integration wurde nicht abgenommen. Video 21:11 zeigt ab etwa 10,4 s
+September im Titel mit Januar-Inhalt; Screenshots zeigen den Auswahlrahmen im
+Jahr, fehlende September-Inhalte und überlagernde Hinweise.
+
+Freigabe: Reparatur einschließlich Commit, Push, CI, kompatibler Preview-OTA.
+Kein Merge, kein nativer Build. Derselbe PR-Branch enthält die Vorstufen.
+Scope: calendar-screen, shared-scene, neuer stable-pager, Today-Hook und deren
+Regressionstests sowie dieses Dokument (höchstens neun Dateien).
+
+Die nachfolgende ursprüngliche Integrationsbeschreibung wird hinsichtlich der
+virtualisierten Liste und der absoluten Hinweisplatzierung ersetzt:
+
+- Genau drei dauerhaft vorhandene ScrollView-Plätze, keine virtualisierte
+  Monatsliste, keine wechselnden React-Keys und kein initialScrollIndex.
+  Die mittlere Zeichenfläche/Glyphen bleiben auch bei Januar/Heute erhalten.
+- Echte Wischbewegungen werden erst am Endpunkt einmal übernommen; danach wird
+  mit dem neuen Inhalt synchron im Layout-Effekt zentriert. Programmatische
+  Sprünge und Moduswechsel verwerfen noch offene Scroll-Ereignisse.
+- Today verwendet eine monotone Navigationsrevision, nicht den unabhängigen
+  Request-Zähler als Listenidentität. Monatsname und mittlerer Inhalt werden
+  vom selben sichtbaren Monat abgeleitet.
+- Auswahl-/Stempelrahmen sind außerhalb der aktiven Monatsansicht unsichtbar.
+- Hinweise stehen im Layout vor der Zeichenfläche, nicht über Kalender/Tabs.
+  Höhenänderungen starten/beenden keinen zusätzlichen Animationszyklus.
+- Echte Szenen-, Monats- und Pager-Komponenten werden gemeinsam getestet, ohne
+  die Monatsdarstellung zu ersetzen. Native Scroll-/Frame-Performance bleibt
+  Gegenstand der erneuten iPhone-Abnahme, nicht durch Jest bewiesen.
+
+Geräteabnahme: September → Januar → Heute → Jahr; alle zwölf Monate sichtbar,
+kein Rahmen im Jahr, Hinweise frei lesbar. Erstmalige Monatswahl und wiederholte
+Dezember/Januar-Wischwechsel ohne Ruckler/Versatz. Danach Tagesaktionen,
+Schnelleingabe, Hell/Dunkel, reduzierte Bewegung und Daten nach Neustart.
+
 ## Vertrag
 
 Phase 3A mit echten Daten wurde vom Nutzer auf Build 31 abgenommen. Freigegeben:

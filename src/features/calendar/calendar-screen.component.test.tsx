@@ -196,7 +196,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     );
     const pager = screen.getByTestId("calendar-month-pager", { includeHiddenElements: true });
     await act(async () => {
-      pager.props.onScroll({
+      pager.props.onMomentumScrollEnd({
         nativeEvent: {
           contentOffset: { x: 0, y: 700 * 16 },
           layoutMeasurement: { width: 390, height: 700 },
@@ -239,7 +239,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     mockPreferences.viewMode = "MONTH";
     await screen.rerender(<CalendarScreen />);
     const pager = screen.getByTestId("calendar-month-pager", { includeHiddenElements: true });
-    expect(pager).not.toBe(oldPager);
+    expect(pager).toBe(oldPager);
     expect(screen.getByTestId("month-card-2026-01", { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByTestId("header-state")).toHaveTextContent("MONTH:2026-01");
     const staleEvent = {
@@ -250,8 +250,6 @@ describe("CalendarScreen quick-entry navigation", () => {
       },
     };
     await act(async () => {
-      oldPager.props.onScroll(staleEvent);
-      pager.props.onScroll(staleEvent);
       pager.props.onMomentumScrollEnd(staleEvent);
     });
     expect(mockActiveMonth).toBe("2026-01");
@@ -260,7 +258,7 @@ describe("CalendarScreen quick-entry navigation", () => {
     await fireEvent(pager, "momentumScrollEnd", staleEvent);
     expect(mockActiveMonth).toBe("2026-01");
     await fireEvent(pager, "scrollBeginDrag");
-    const nextEvent = { nativeEvent: { contentOffset: { y: 700 * 18 } } };
+    const nextEvent = { nativeEvent: { contentOffset: { y: 700 * 2 } } };
     await fireEvent.scroll(pager, nextEvent);
     await fireEvent(pager, "momentumScrollEnd", nextEvent);
     expect(mockActiveMonth).toBe("2026-02");
@@ -316,13 +314,14 @@ describe("CalendarScreen quick-entry navigation", () => {
         }),
       );
       const pager = screen.getByTestId("calendar-month-pager");
+      await fireEvent(pager, "scrollBeginDrag");
       await act(async () =>
-        fireEvent.scroll(pager, { nativeEvent: { contentOffset: { y: 700 * 25 } } }),
+        fireEvent.scroll(pager, { nativeEvent: { contentOffset: { y: 700 * 2 } } }),
       );
       expect(mockActiveMonth).toBe("2026-12");
       await act(async () =>
         fireEvent(pager, completion, {
-          nativeEvent: { contentOffset: { y: 700 * 25 }, velocity: { y: 0 } },
+          nativeEvent: { contentOffset: { y: 700 * 2 }, velocity: { y: 0 } },
         }),
       );
       expect(mockActiveMonth).toBe("2027-01");
@@ -414,7 +413,8 @@ describe("CalendarScreen quick-entry navigation", () => {
       const message = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
       const notice = screen.getByText(message);
       const viewport = screen.getByTestId("calendar-month-pager-shell");
-      // The notice is outside layout flow and cannot change the shared coordinates.
+      // Notices occupy their own layout row, never an overlay over the calendar/tab bar.
+      expect(screen.getByTestId("calendar-notice-slot").props.style?.position).not.toBe("absolute");
       expect(screen.getByTestId("calendar-month-scene").props.onLayout).toBeUndefined();
       await fireEvent(viewport, "layout", { nativeEvent: { layout: { height: 640 } } });
       const pager = screen.getByTestId("calendar-month-pager");
