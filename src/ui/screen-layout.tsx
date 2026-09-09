@@ -65,6 +65,7 @@ export function TabScreenHeader({
   titleExiting,
   titleColor,
   titleKey,
+  stableTitle = false,
   toolbar,
 }: {
   readonly accessory?: ReactNode;
@@ -75,6 +76,7 @@ export function TabScreenHeader({
   readonly titleExiting?: ComponentProps<typeof Animated.Text>["exiting"];
   readonly titleColor?: string;
   readonly titleKey?: Key;
+  readonly stableTitle?: boolean;
   readonly toolbar?: ReactNode;
 }) {
   const palette = usePalette();
@@ -120,10 +122,14 @@ export function TabScreenHeader({
             entering={titleEntering}
             exiting={titleExiting}
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            numberOfLines={stableTitle ? 1 : undefined}
+            adjustsFontSizeToFit={stableTitle}
+            accessibilityLabel={title}
             style={{
               flex: stackAccessory ? undefined : 1,
               color: titleColor ?? palette.text,
               ...TYPOGRAPHY.hero,
+              height: stableTitle ? Math.ceil(TYPOGRAPHY.hero.lineHeight * fontScale) : undefined,
             }}
           >
             {title}

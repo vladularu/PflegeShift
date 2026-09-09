@@ -1,6 +1,6 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
-import { Alert, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -57,7 +57,6 @@ function PlannerHeader({
 describe("CalendarHeader", () => {
   it("updates the controlled title in place and keeps the full warning accessible", async () => {
     const notice = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
-    const alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
     const screen = await render(
       <PlannerHeader synchronized notice={notice} plannerActive={false} />,
     );
@@ -69,10 +68,29 @@ describe("CalendarHeader", () => {
     );
     expect(screen.getByRole("header", { name: "September" })).toBe(title);
     await fireEvent.press(
-      screen.getByRole("button", { name: notice, includeHiddenElements: true }),
+      screen.getByRole("button", {
+        name: `Kalenderdarstellung öffnen. Hinweis: ${notice}`,
+        includeHiddenElements: true,
+      }),
     );
-    expect(alert).toHaveBeenCalledWith("Kalenderhinweis", notice);
-    alert.mockRestore();
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+    expect(screen.queryByTestId("calendar-notice-control")).toBeNull();
+    expect(screen.getByTestId("calendar-notice-badge")).toHaveStyle({ position: "absolute" });
+  });
+  it("keeps one title line and the same height for September 2027 and year view", async () => {
+    const screen = await render(
+      <PlannerHeader synchronized month="2027-09" referenceMonth="2026-09" plannerActive={false} />,
+    );
+    const title = screen.getByRole("header", { name: "September 2027" });
+    const height = StyleSheet.flatten(title.props.style).height;
+    expect(height).toBeGreaterThan(0);
+    expect(title.props.numberOfLines).toBe(1);
+    expect(title.props.adjustsFontSizeToFit).toBe(true);
+    await screen.rerender(
+      <PlannerHeader synchronized month="2027-09" viewMode="YEAR" plannerActive={false} />,
+    );
+    expect(screen.getByRole("header", { name: "2027" })).toHaveStyle({ height });
+    expect(screen.getAllByRole("button")).toHaveLength(2);
   });
   it("fades and disables the view controls while quick planning is active", async () => {
     const screen = await render(<PlannerHeader />);

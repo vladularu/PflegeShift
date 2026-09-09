@@ -218,7 +218,7 @@ function VisibilitySwitch({
   );
 }
 
-export function CalendarViewScreen() {
+export function CalendarViewScreen({ notice }: { readonly notice?: string } = {}) {
   const palette = usePalette();
   const preferences = useCalendarPreferences();
 
@@ -228,6 +228,7 @@ export function CalendarViewScreen() {
       style={{ backgroundColor: palette.background }}
       contentContainerStyle={{ gap: 18, padding: 16, paddingBottom: 32 }}
     >
+      {notice ? <InlineNotice message={notice} tone="warning" /> : null}
       {preferences.error ? (
         <View style={{ gap: 10 }}>
           <InlineNotice message={preferences.error} tone="error" />

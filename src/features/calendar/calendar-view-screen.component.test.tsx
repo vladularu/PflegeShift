@@ -111,6 +111,13 @@ describe("CalendarViewScreen", () => {
     expect(screen.queryByText("Früh")).toBeNull();
   });
 
+  it("shows the full calendar notice without replacing display settings", async () => {
+    const message = "Feiertagsregeln für den gewählten Monat sind nicht verfügbar.";
+    const screen = await render(<CalendarViewScreen notice={message} />);
+    expect(screen.getByText(message)).toBeVisible();
+    expect(screen.getByText("Kalenderinhalte")).toBeVisible();
+  });
+
   it("shows total duration instead of start time in the preview", async () => {
     const screen = await render(<CalendarViewScreen />);
 

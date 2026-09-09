@@ -418,9 +418,9 @@ describe("CalendarScreen quick-entry navigation", () => {
     ).toBeTruthy();
   });
 
-  it("warns when December's visible grid reaches beyond holiday coverage", async () => {
+  it("warns when the displayed month itself is outside holiday coverage", async () => {
     const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
-    mockActiveMonth = "2026-12";
+    mockActiveMonth = "2027-01";
     mockRuleResolver = createRuleResolver({
       tariff: BUNDLED_TARIFF_RULES,
       legal: BUNDLED_LEGAL_RULES,
@@ -436,7 +436,7 @@ describe("CalendarScreen quick-entry navigation", () => {
   });
 
   it.each(["2026-01", "2026-12"])(
-    "retains the holiday notice without changing pager geometry across transitions for %s",
+    "ignores unavailable invisible neighbour months and retains pager geometry for %s",
     async (month) => {
       const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
       mockActiveMonth = month;
@@ -447,7 +447,7 @@ describe("CalendarScreen quick-entry navigation", () => {
       });
       const screen = await render(<CalendarScreen />);
       const message = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
-      const notice = screen.getByText(message);
+      expect(screen.queryByText(message)).toBeNull();
       const viewport = screen.getByTestId("calendar-month-pager-shell");
       // Notice is handled by the fixed-height header, not an extra calendar row.
       expect(screen.queryByTestId("calendar-notice-slot")).toBeNull();
@@ -463,13 +463,12 @@ describe("CalendarScreen quick-entry navigation", () => {
           {},
           { timeout: 1500 },
         );
-        expect(screen.getByText(message)).toBe(notice);
+        expect(screen.queryByText(message)).toBeNull();
         expect(screen.queryByTestId("calendar-notice-reservation")).toBeNull();
         expect(screen.getByTestId("calendar-month-pager", { includeHiddenElements: true })).toBe(
           pager,
         );
         expect(pager.props.snapToInterval).toBe(640);
-        expect(screen.getByText(message)).toBeVisible();
       }
     },
   );

@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { memo } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Extrapolation,
   FadeInDown,
@@ -146,7 +146,11 @@ export const CalendarHeader = memo(function CalendarHeader({
                 />
                 <View style={[styles.separator, { backgroundColor: palette.separator }]} />
                 <HeaderIconButton
-                  label="Kalenderdarstellung öffnen"
+                  label={
+                    notice
+                      ? `Kalenderdarstellung öffnen. Hinweis: ${notice}`
+                      : "Kalenderdarstellung öffnen"
+                  }
                   name="options-outline"
                   onPress={onOpenDisplay}
                 />
@@ -167,23 +171,26 @@ export const CalendarHeader = memo(function CalendarHeader({
               </>
             )}
           </Animated.View>
-          {synchronized || notice ? (
+          {notice && viewMode === "MONTH" ? (
             <View
-              testID="calendar-notice-control"
-              style={{ width: CONTROL_HEIGHT.compact, height: CONTROL_HEIGHT.compact }}
-            >
-              {notice ? (
-                <HeaderIconButton
-                  name="alert-circle-outline"
-                  label={notice}
-                  onPress={() => Alert.alert("Kalenderhinweis", notice)}
-                />
-              ) : null}
-            </View>
+              pointerEvents="none"
+              accessible={false}
+              testID="calendar-notice-badge"
+              style={{
+                position: "absolute",
+                right: 6,
+                top: 6,
+                width: 6,
+                height: 6,
+                borderRadius: RADII.pill,
+                backgroundColor: palette.primary,
+              }}
+            />
           ) : null}
         </Animated.View>
       }
       title={title}
+      stableTitle={synchronized}
       titleColor={viewMode === "YEAR" ? palette.primary : undefined}
       titleEntering={synchronized ? undefined : titleEntering}
       titleExiting={synchronized ? undefined : titleExiting}

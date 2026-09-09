@@ -337,9 +337,14 @@ export function CalendarScreen() {
     setQuickPopup(null);
     setPlannerMode(false);
     setStampTool(null);
-    router.push("/calendar-view");
+    const notice = !calendarReady
+      ? "loading"
+      : visibleHolidayResolution.status !== "AVAILABLE"
+        ? "holidays"
+        : undefined;
+    router.push(notice ? { pathname: "/calendar-view", params: { notice } } : "/calendar-view");
     selectionFeedback();
-  }, []);
+  }, [calendarReady, visibleHolidayResolution.status]);
 
   const measurePager = useCallback(
     (event: LayoutChangeEvent) => {
