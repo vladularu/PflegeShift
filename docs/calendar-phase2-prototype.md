@@ -57,3 +57,24 @@ Es gibt keinen GPU-FPS-Nachweis. Visuelle Abnahme zusätzlich ohne Recorder.
 Wenn der Prototyp besteht, wird die Integration in den Hauptkalender separat
 abgegrenzt. Wenn nicht, keine weitere Serie von Timing-Patches: native
 Profilierung bzw. ein anderer Renderer ist als eigene Entscheidung erforderlich.
+
+## Sicherheitskorrektur vor Preview-OTA (2026-09-09)
+
+Ziel: die blockierenden Parser-Advisories mit Patchversionen beheben. Fortsetzung
+auf demselben PR-Branch; erlaubt bis einschließlich kompatibler Preview-OTA,
+kein Merge oder nativer Build. Dateiscope: package.json, package-lock.json und
+diese Dokumentation. Kalenderimplementierung, Daten und Audit-Ausnahmen bleiben
+unverändert. Abnahme: Produktions-Audit, verify:fast, PR-CI und Runtimevergleich;
+danach weiterhin die oben beschriebene Geräteabnahme des Prototyps.
+
+- @xmldom/xmldom 0.8.13 → 0.8.15 innerhalb der bestehenden @expo/plist-Anforderung.
+  Die zweite Auflösung 0.9.12 bleibt unverändert. Referenzen:
+  https://github.com/advisories/GHSA-965w-775f-mr7g und
+  https://github.com/advisories/GHSA-93r5-fhx6-vmg9.
+- Der aktuelle Audit meldete zusätzlich GHSA-2883-xcg3-v3hh. Bestehende
+  js-yaml-Overrides daher auf 3.15.2 und 4.3.2 angehoben; keine Major-Upgrades.
+  Referenz: https://github.com/advisories/GHSA-2883-xcg3-v3hh.
+- Lokal aufgelöste iOS-Runtime nach beiden Patches mit APP_VARIANT=internal:
+  eac302484061dfb3fa63e2a74b8618ff6000861c (unverändert zu Build 31).
+- Keine neue Sicherheitsausnahme: die bereits befristeten image-size-Ausnahmen
+  bleiben unverändert. Ein bestandener Audit bedeutet nicht null Advisories.
