@@ -76,6 +76,37 @@ Kalenderzustand und keine Verwendung des read-only Prototyp-Caches im Hauptpfad.
 
 ## Prüfkriterien
 
+### Synchronisationskorrektur nach Gerätevideo vom 09.09.2026
+
+Freigabe: Umsetzung, Commit, Push, CI und kompatible Preview-OTA; kein Build,
+kein Merge. Fortsetzung des bestehenden Kalenderbranches in einem isolierten
+Checkout, da der Haupt-Checkout inzwischen für Graft verwendet wird.
+
+Der Pager hält beim Zentrieren in allen drei permanenten Slots denselben
+Zielmonat. Erst ein natives onScroll-Ereignis am Mittelpunkt gibt Nachbarseiten
+und Wischgesten wieder frei. scrollTo allein gilt nicht als Bestätigung. Bei
+verzögerter nativer Verarbeitung wird der Zentrierbefehl erneut gesendet; ein
+Heute-Sprung ersetzt auch währenddessen das Ziel. Alte Momentum-Endereignisse
+dürfen ohne neuen Drag keinen weiteren Monat veröffentlichen.
+
+Der Hinweisbereich reserviert stets die vollständige, mit der Schriftgröße
+wachsende Warnungshöhe. Unsichtbarer Platzhalter ohne Accessibility-Inhalt,
+darüber entweder Lade- oder Feiertagshinweis: kein zusätzlicher Layoutplatz
+beim Wechsel nach Januar, keine Änderung der Feiertagsregeln. Bei verfügbarem
+Zeitraum bleibt dieser Platz leer. Keine Änderung der Animationsdauer.
+
+Regressionstests: verzögerte und intermediäre native Offset-Bestätigung,
+Oktober darf nicht November zeigen, Rückwärtswechsel, Heute vor Bestätigung,
+unveränderte Reservierung bei Monat/Jahr. Native Flüssigkeit bleibt offen bis
+zur iPhone-Abnahme (erstes Öffnen, Januar, Dezember, schnelle Wechsel, Heute).
+
+Runtime-Abgleich: EAS bestätigt für die vorherige Reparatur-OTA
+`eac302484061dfb3fa63e2a74b8618ff6000861c`. Im separaten Checkout müssen echte
+lokale node_modules verwendet werden (keine Junction zum Haupt-Checkout).
+Die vom Fingerprint erfasste .gitignore liegt für diesen Windows-Preview-Stand
+mit CRLF vor; Git-Inhalt bleibt unverändert. Mit diesen identischen Eingaben
+wird exakt derselbe Fingerprint berechnet, ohne Runtime-Override.
+
 Lokal: verify:fast, gezielte Szenen-/Navigationstests, Runtimevergleich.
 CI: alle sieben Gates vor OTA. iPhone: Monat/Jahr in beiden Richtungen,
 Januar/Dezember, schnelle Monats-/Jahreswechsel, Heute aus entfernten Jahren;

@@ -521,10 +521,31 @@ export function CalendarScreen() {
         </View>
       ) : null}
       <View testID="calendar-notice-slot">
-        {!calendarReady ? (
-          <InlineNotice message="Kalenderdaten werden geladen …" tone="warning" />
-        ) : null}
-        <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
+        <View
+          testID="calendar-notice-reservation"
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={{
+            opacity: 0,
+            paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
+            paddingBottom: SPACING.sm,
+          }}
+        >
+          <InlineNotice
+            message="Feiertagsregeln für diesen Zeitraum noch nicht verfügbar."
+            tone="warning"
+          />
+        </View>
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
+          {!calendarReady ? (
+            <View style={{ paddingHorizontal: SCREEN_LAYOUT.horizontalPadding }}>
+              <InlineNotice message="Kalenderdaten werden geladen …" tone="warning" />
+            </View>
+          ) : (
+            <CalendarHolidays.CalendarHolidayCoverageNotice resolution={visibleHolidayResolution} />
+          )}
+        </View>
       </View>
       <SharedCalendarScene
         onTransitionStart={transitionStarted}

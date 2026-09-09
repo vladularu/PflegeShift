@@ -412,6 +412,11 @@ describe("CalendarScreen quick-entry navigation", () => {
       const screen = await render(<CalendarScreen />);
       const message = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
       const notice = screen.getByText(message);
+      const reservation = screen.getByTestId("calendar-notice-reservation", {
+        includeHiddenElements: true,
+      });
+      expect(reservation.props.accessibilityElementsHidden).toBe(true);
+      expect(reservation).not.toBeVisible();
       const viewport = screen.getByTestId("calendar-month-pager-shell");
       // Notices occupy their own layout row, never an overlay over the calendar/tab bar.
       expect(screen.getByTestId("calendar-notice-slot").props.style?.position).not.toBe("absolute");
@@ -428,6 +433,9 @@ describe("CalendarScreen quick-entry navigation", () => {
           { timeout: 1500 },
         );
         expect(screen.getByText(message)).toBe(notice);
+        expect(
+          screen.getByTestId("calendar-notice-reservation", { includeHiddenElements: true }),
+        ).toBe(reservation);
         expect(screen.getByTestId("calendar-month-pager", { includeHiddenElements: true })).toBe(
           pager,
         );
