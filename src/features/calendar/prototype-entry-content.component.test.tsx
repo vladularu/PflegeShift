@@ -26,9 +26,17 @@ const shift: ShiftEntry = {
   deletedAt: null,
 };
 describe("prototype real shift content", () => {
-  it.each(["#59CA50", "#FFA338"])(
-    "keeps %s unchanged with explicitly requested white text",
-    async (color) => {
+  it.each([
+    ["#59CA50", false],
+    ["#FFA338", false],
+    ["#59CA50", true],
+    ["#FFA338", true],
+  ] as [string, boolean][])(
+    "keeps %s with white title and reference time contrast in dark=%s",
+    async (color, dark) => {
+      const scheme = jest
+        .spyOn(jest.requireActual<typeof import("react-native")>("react-native"), "useColorScheme")
+        .mockReturnValue(dark ? "dark" : "light");
       const screen = await render(
         <PrototypeEntryContent
           entry={{ ...shift, color }}
@@ -38,11 +46,12 @@ describe("prototype real shift content", () => {
       );
       expect(screen.getByText("Früh")).toHaveStyle({ color: "#FFFFFF" });
       expect(screen.getByText("07:00")).toHaveStyle({
-        color: "#FFFFFF",
-        backgroundColor: calendarChipPalette(color, false).detail,
+        color: dark ? "#FFFFFF" : "#171719",
+        backgroundColor: calendarChipPalette(color, dark).detail,
       });
       expect(screen.getByText("Früh").parent).toHaveStyle({ backgroundColor: color });
-      expect(screen.getByText("Früh").parent?.parent).toHaveStyle({ borderRadius: 4 });
+      expect(screen.getByText("Früh").parent?.parent).toHaveStyle({ borderRadius: 2 });
+      scheme.mockRestore();
     },
   );
   it("honors title, time and duration options without entrance animations", async () => {

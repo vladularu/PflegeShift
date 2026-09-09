@@ -3,8 +3,9 @@ import { ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } f
 
 type ScrollEvent = NativeSyntheticEvent<NativeScrollEvent>;
 
-/** Fixed native positions, five reusable bodies. Ordinary swipes never recenter.
- * The center body survives year transitions with its moving date glyphs. */
+/** Fixed native positions and a five-month window keyed by actual month.
+ * Four bodies survive a one-month swipe; only the entering edge mounts.
+ * The selected body survives its year transition with its moving date glyphs. */
 export function CalendarStablePager({
   month,
   months,
@@ -130,7 +131,7 @@ export function CalendarStablePager({
         .filter((offset) => months[renderIndex + offset])
         .map((offset) => (
           <View
-            key={offset}
+            key={months[renderIndex + offset]}
             testID={`calendar-slot-${offset}`}
             style={{ height }}
             accessibilityElementsHidden={offset !== 0}

@@ -56,7 +56,7 @@ export const PrototypeEntryContent = memo(function PrototypeEntryContent({
           style={[
             styles.row,
             styles.center,
-            { backgroundColor: colors.detail, color: CALENDAR_METRICS.chipTextColor },
+            { backgroundColor: colors.detail, color: colors.onDetail },
           ]}
         >
           {detail}

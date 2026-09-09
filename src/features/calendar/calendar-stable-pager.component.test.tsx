@@ -84,6 +84,39 @@ function Harness() {
 }
 
 describe("permanent calendar slots with the real shared scene", () => {
+  it("retains four actual month bodies and their glyphs on each window advance", async () => {
+    const screen = await render(<Harness />);
+    const pager = screen.getByTestId("calendar-month-pager");
+    const months = createMonthWindow("2026-09", 24, 36);
+    let previousIndex = 24;
+    for (const index of [25, 26, 27, 28, 29, 28, 27]) {
+      const retained = months.slice(
+        Math.max(previousIndex, index) - 2,
+        Math.min(previousIndex, index) + 3,
+      );
+      expect(retained).toHaveLength(4);
+      const bodies = retained.map((month) =>
+        screen.getByTestId(`shared-month-${month}`, { includeHiddenElements: true }),
+      );
+      const glyphs = retained.map((month) =>
+        screen.getByTestId(`calendar-date-marker-${month}-01`, { includeHiddenElements: true }),
+      );
+      await fireEvent(pager, "scrollBeginDrag");
+      await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: index * 700 } } });
+      retained.forEach((month, i) => {
+        expect(screen.getByTestId(`shared-month-${month}`, { includeHiddenElements: true })).toBe(
+          bodies[i],
+        );
+        expect(
+          screen.getByTestId(`calendar-date-marker-${month}-01`, { includeHiddenElements: true }),
+        ).toBe(glyphs[i]);
+      });
+      expect(screen.getAllByTestId(/calendar-slot-/, { includeHiddenElements: true })).toHaveLength(
+        5,
+      );
+      previousIndex = index;
+    }
+  });
   it("renders uninterrupted rapid swipes before any momentum settlement", async () => {
     const screen = await render(<Harness />);
     const pager = screen.getByTestId("calendar-month-pager");
@@ -181,29 +214,37 @@ describe("permanent calendar slots with the real shared scene", () => {
     await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 24 * 700 } } });
     expect(pager.props.scrollEnabled).toBe(true);
   });
-  it("keeps the same center page and glyphs for September → January → Today → year", async () => {
+  it("keeps each selected month through its year transition and positions distant jumps", async () => {
     const screen = await render(<Harness />);
     await fireEvent(screen.getByTestId("calendar-shared-scene"), "layout", {
       nativeEvent: { layout: { width: 430, height: 700 } },
     });
     const pager = screen.getByTestId("calendar-month-pager");
-    const center = screen.getByTestId("calendar-slot-0");
     const september = screen.getByTestId("shared-month-2026-09");
     await fireEvent.press(screen.getByRole("button", { name: "Jahr" }));
+    expect(screen.getByTestId("shared-month-2026-09", { includeHiddenElements: true })).toBe(
+      september,
+    );
     expect(
       screen.getByTestId("calendar-day-2026-09-09", { includeHiddenElements: true }),
     ).not.toBeVisible();
     await fireEvent.press(screen.getByRole("button", { name: "Januar 2026 öffnen" }));
     expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2026-01");
-    expect(screen.getByTestId("shared-month-2026-01")).toBe(september);
     expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
-    expect(screen.getByTestId("calendar-slot-0")).toBe(center);
-    expect(within(center).getByText("Neujahr", { includeHiddenElements: true })).toBeTruthy();
+    expect(
+      within(screen.getByTestId("calendar-slot-0")).getByText("Neujahr", {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
     await fireEvent.press(screen.getByRole("button", { name: "Heute" }));
     expect(screen.getByTestId("heading")).toHaveTextContent("MONTH:2026-09");
+    const center = screen.getByTestId("calendar-slot-0");
     expect(within(center).queryByText("Neujahr", { includeHiddenElements: true })).toBeNull();
-    expect(screen.getByTestId("shared-month-2026-09")).toBe(september);
+    const returnedSeptember = screen.getByTestId("shared-month-2026-09");
     await fireEvent.press(screen.getByRole("button", { name: "Jahr" }));
+    expect(screen.getByTestId("shared-month-2026-09", { includeHiddenElements: true })).toBe(
+      returnedSeptember,
+    );
     const year = screen.getByTestId("calendar-year-overview-shell");
     expect(within(year).getAllByRole("button")).toHaveLength(12);
     expect(within(year).getByText("September", { includeHiddenElements: true })).toBeTruthy();
@@ -237,10 +278,9 @@ describe("permanent calendar slots with the real shared scene", () => {
     expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
   });
 
-  it("opens every previously unvisited month using the same five slots", async () => {
+  it("opens every previously unvisited month in a bounded five-month window", async () => {
     const screen = await render(<Harness />);
     const pager = screen.getByTestId("calendar-month-pager");
-    const center = screen.getByTestId("calendar-slot-0");
     for (let index = 0; index < 12; index++) {
       await fireEvent.press(screen.getByRole("button", { name: "Jahr" }));
       await fireEvent.press(
@@ -248,9 +288,10 @@ describe("permanent calendar slots with the real shared scene", () => {
       );
       const month = `2026-${String(index + 1).padStart(2, "0")}`;
       expect(screen.getByTestId("heading")).toHaveTextContent(`MONTH:${month}`);
-      expect(within(center).getByTestId(`shared-month-${month}`)).toBeTruthy();
+      expect(
+        within(screen.getByTestId("calendar-slot-0")).getByTestId(`shared-month-${month}`),
+      ).toBeTruthy();
       expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
-      expect(screen.getByTestId("calendar-slot-0")).toBe(center);
       expect(screen.getAllByTestId(/calendar-slot-/, { includeHiddenElements: true })).toHaveLength(
         5,
       );

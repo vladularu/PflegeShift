@@ -44,9 +44,9 @@ export const SHADOWS = {
 } as const;
 
 export const CALENDAR_METRICS = {
-  chipRadius: 4,
+  chipRadius: 2,
   chipGap: 1,
-  chipHorizontalInset: 0.25,
+  chipHorizontalInset: 1,
   chipTextColor: "#FFFFFF",
   horizontalInset: 0,
   weekdayHeight: 30,
