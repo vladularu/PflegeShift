@@ -1,5 +1,6 @@
 import { File, Paths } from "expo-file-system";
 import Constants from "expo-constants";
+import { router } from "expo-router";
 import * as Updates from "expo-updates";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Alert, Platform } from "react-native";
@@ -54,6 +55,11 @@ export function CalendarPerformanceControls() {
   };
   return (
     <SurfaceCard>
+      <RowButton
+        title="Kalender-Prototyp öffnen"
+        subtitle="Phase 2: neue Animation mit Beispieldiensten. Der Hauptkalender und deine Daten bleiben unverändert."
+        onPress={() => router.push("/calendar-prototype")}
+      />
       <RowButton
         title={session ? "Kalenderdiagnose läuft – stoppen" : "Kalenderdiagnose starten"}
         subtitle="Nur lokale Zeiten und Anzahlen, keine Titel oder Gehälter. Maximal 10 Minuten; Neustart löscht den Bericht. Ein neuer Start ersetzt die vorige Messung."

@@ -1,5 +1,8 @@
 /** Opt-in, bounded numeric diagnostics. No domain objects or free text are accepted. */
 const kinds = [
+  "prototype-request",
+  "prototype-start",
+  "prototype-end",
   "request-month",
   "request-year",
   "request-year-step",
