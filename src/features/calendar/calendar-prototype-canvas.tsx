@@ -4,10 +4,11 @@ import Animated, { useAnimatedStyle, type SharedValue } from "react-native-reani
 import { usePalette } from "@/theme/palette";
 import { CALENDAR_METRICS, RADII } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
-import { calendarChipPalette } from "@/theme/color-contrast";
+import type { CalendarEntry } from "@/domain/types";
+import { prototypeEntryPreview } from "./prototype-entry-preview";
+import { PrototypeEntryContent, type PrototypeDisplay } from "./prototype-entry-content";
 import {
   PROTOTYPE_MONTH_NAMES,
-  prototypeShift,
   type PrototypeDay,
   type PrototypeMonth,
 } from "./calendar-prototype-layout";
@@ -117,16 +118,27 @@ export const PrototypeYear = memo(function PrototypeYear({
 export function PrototypeMonthContent({
   layout,
   progress,
+  entriesByDate,
+  holidays,
+  display,
+  timeZone,
+  visible,
 }: {
   layout: PrototypeMonth;
   progress: SharedValue<number>;
+  entriesByDate: ReadonlyMap<string, readonly CalendarEntry[]>;
+  holidays: ReadonlyMap<string, { readonly name: string }>;
+  display: PrototypeDisplay;
+  timeZone: string;
+  visible: boolean;
 }) {
   const palette = usePalette();
   const motion = useAnimatedStyle(() => ({ opacity: Math.max(0, (progress.value - 0.4) / 0.6) }));
   return (
     <Animated.View
       pointerEvents="none"
-      accessibilityElementsHidden
+      accessibilityElementsHidden={!visible}
+      importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
       style={[StyleSheet.absoluteFill, motion]}
     >
       <View style={styles.weekdays}>
@@ -140,11 +152,24 @@ export function PrototypeMonthContent({
         ))}
       </View>
       {layout.days.map((day) => {
-        const shift = prototypeShift(day.day);
-        const colors = shift ? calendarChipPalette(shift.color, palette.dark) : null;
+        const entries = entriesByDate.get(day.date) ?? [];
+        const holiday = holidays.get(day.date)?.name;
+        // Reserve overflow space before choosing entries so dense days never
+        // overlap the next week (including very short six-week viewports).
+        const rows = Math.max(
+          0,
+          Math.floor((layout.weekHeight - 43) / CALENDAR_METRICS.entryRowHeight),
+        );
+        const preview = prototypeEntryPreview(
+          entries,
+          rows - (holiday && rows > 1 ? 1 : 0),
+          display.showShiftTimes || display.showShiftDuration,
+        );
         return (
           <View
             key={day.date}
+            accessible={visible}
+            accessibilityLabel={`${day.date}${holiday ? `, ${holiday}` : ""}, ${entries.length ? entries.map((entry) => entry.title).join(", ") : "Keine Einträge"}`}
             style={{
               position: "absolute",
               left: day.toX - layout.cellWidth / 2,
@@ -155,37 +180,46 @@ export function PrototypeMonthContent({
               borderColor: palette.separator,
             }}
           >
-            {shift && colors ? (
+            {rows > 0 ? (
               <View
                 style={{
                   marginTop: 41,
                   marginHorizontal: 2,
-                  borderRadius: RADII.small,
                   overflow: "hidden",
                 }}
               >
-                <Text
-                  allowFontScaling={false}
-                  style={{
-                    color: colors.onMain,
-                    backgroundColor: colors.main,
-                    fontSize: CALENDAR_METRICS.entryFontSize,
-                    textAlign: "center",
-                  }}
-                >
-                  {shift.title}
-                </Text>
-                <Text
-                  allowFontScaling={false}
-                  style={{
-                    color: colors.onDetail,
-                    backgroundColor: colors.detail,
-                    fontSize: CALENDAR_METRICS.entryFontSize,
-                    textAlign: "center",
-                  }}
-                >
-                  {shift.time}
-                </Text>
+                {holiday && rows > 1 ? (
+                  <Text
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                    style={{
+                      height: CALENDAR_METRICS.entryRowHeight,
+                      color: palette.textMuted,
+                      fontSize: CALENDAR_METRICS.entryFontSize,
+                    }}
+                  >
+                    {holiday}
+                  </Text>
+                ) : null}
+                {preview.entries.map((entry) => (
+                  <PrototypeEntryContent
+                    key={`${entry.kind}:${entry.id}:${entry.date}`}
+                    entry={entry}
+                    display={display}
+                    timeZone={timeZone}
+                  />
+                ))}
+                {preview.overflowCount > 0 ? (
+                  <Text
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                    style={{
+                      height: CALENDAR_METRICS.entryRowHeight,
+                      color: palette.textMuted,
+                      fontSize: CALENDAR_METRICS.entryFontSize,
+                    }}
+                  >{`+${preview.overflowCount}`}</Text>
+                ) : null}
               </View>
             ) : null}
           </View>

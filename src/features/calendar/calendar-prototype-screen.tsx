@@ -17,6 +17,12 @@ import { RADII, SPACING } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
 import { calendarPrototypeLayout, PROTOTYPE_MONTH_NAMES } from "./calendar-prototype-layout";
 import { PrototypeDates, PrototypeMonthContent, PrototypeYear } from "./calendar-prototype-canvas";
+import { usePflegeShiftProfile } from "@/application/pflegeshift-provider";
+import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
+import { useCalendarPreferences } from "./calendar-preferences";
+import { useCalendarHolidayResolution } from "./calendar-holidays";
+import { usePrototypeEntries } from "./use-prototype-entries";
+import { buildCalendarEntryIndex } from "./calendar-entry-index";
 
 function PrototypeButton({
   label,
@@ -48,7 +54,11 @@ export function CalendarPrototypeScreen() {
   const insets = useSafeAreaInsets();
   const active = useIsFocused();
   const reduced = useReducedMotion();
-  const currentDate = today("Europe/Berlin");
+  const { profile } = usePflegeShiftProfile();
+  const { resolver } = useRuleCatalogRuntime();
+  const preferences = useCalendarPreferences();
+  const timeZone = profile?.timeZone ?? "Europe/Berlin";
+  const currentDate = today(timeZone);
   const [target, setTarget] = useState({ month: currentDate.slice(0, 7), mode: "YEAR", serial: 0 });
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [foreground, setForeground] = useState(AppState.currentState === "active");
@@ -56,6 +66,21 @@ export function CalendarPrototypeScreen() {
   const progress = useSharedValue(0);
   const epoch = useRef(0);
   const year = target.month.slice(0, 4);
+  const data = usePrototypeEntries(year, active && foreground);
+  const entryIndex = useMemo(
+    () =>
+      buildCalendarEntryIndex(data.entries, {
+        showAppointments: preferences.showAppointments,
+        showShifts: preferences.showShifts,
+      }),
+    [data.entries, preferences.showAppointments, preferences.showShifts],
+  );
+  const holidays = useCalendarHolidayResolution(
+    target.month,
+    profile,
+    resolver,
+    preferences.showHolidays,
+  );
   const layouts = useMemo(
     () =>
       Array.from({ length: 12 }, (_, i) =>
@@ -112,8 +137,27 @@ export function CalendarPrototypeScreen() {
       ]}
     >
       <Text style={{ color: palette.textMuted, paddingHorizontal: SPACING.md }}>
-        Prototyp · Beispieldienste · keine echten Daten
+        Prototyp · Echte Daten · nur Ansicht
       </Text>
+      <View style={{ height: 44, paddingHorizontal: SPACING.md, justifyContent: "center" }}>
+        {data.error ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={data.retry}
+            style={{ minHeight: 44, justifyContent: "center" }}
+          >
+            <Text style={{ color: palette.text }}>Laden fehlgeschlagen. Erneut versuchen</Text>
+          </Pressable>
+        ) : (
+          <Text accessibilityLiveRegion="polite" style={{ color: palette.textMuted }}>
+            {data.loading
+              ? "Jahresdaten werden geladen …"
+              : holidays.status !== "AVAILABLE"
+                ? "Feiertagsregeln für diesen Zeitraum fehlen."
+                : "Anzeigeoptionen wie im Hauptkalender"}
+          </Text>
+        )}
+      </View>
       <View style={styles.header}>
         <Text
           accessibilityRole="header"
@@ -163,7 +207,15 @@ export function CalendarPrototypeScreen() {
                 progress={progress}
               />
             </View>
-            <PrototypeMonthContent layout={selected} progress={progress} />
+            <PrototypeMonthContent
+              layout={selected}
+              progress={progress}
+              entriesByDate={entryIndex.entriesByDate}
+              holidays={holidays.holidays}
+              display={preferences}
+              timeZone={timeZone}
+              visible={target.mode === "MONTH" && !busy && !data.loading && !data.error}
+            />
             <PrototypeDates layout={selected} progress={progress} currentDate={currentDate} />
           </>
         ) : null}

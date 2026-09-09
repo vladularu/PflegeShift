@@ -19,6 +19,9 @@ const TEXT_SHRINK_ALLOWLIST = new Set([
 ]);
 
 const SINGLE_LINE_ALLOWLIST = new Set([
+  // Bounded prototype day cells; complete titles remain in each day's accessible label.
+  "features/calendar/calendar-prototype-canvas.tsx",
+  "features/calendar/prototype-entry-content.tsx",
   "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
   "features/calendar/year-overview.tsx",

@@ -4,6 +4,28 @@ import { AppState } from "react-native";
 import CalendarPrototypeRoute from "../../../app/calendar-prototype";
 import { CalendarPrototypeScreen } from "./calendar-prototype-screen";
 import { calendarPerformance } from "@/application/calendar-performance";
+import { bundledRuleResolver as mockRuleResolver } from "@/rules/rule-resolver";
+import type { CalendarEntry } from "@/domain/types";
+
+const mockPreferences = {
+  labelMode: "FULL",
+  showShiftTimes: true,
+  showShiftDuration: false,
+  showShifts: true,
+  showAppointments: true,
+  showHolidays: true,
+};
+const mockData = { entries: [] as CalendarEntry[], loading: false, error: false, retry: jest.fn() };
+jest.mock("./use-prototype-entries", () => ({ usePrototypeEntries: () => mockData }));
+jest.mock("./calendar-preferences", () => ({ useCalendarPreferences: () => mockPreferences }));
+jest.mock("@/application/pflegeshift-provider", () => ({
+  usePflegeShiftProfile: () => ({
+    profile: { federalState: "HE", holidayRegion: "NONE", timeZone: "Europe/Berlin" },
+  }),
+}));
+jest.mock("@/application/rule-catalog-runtime-provider", () => ({
+  useRuleCatalogRuntime: () => ({ resolver: mockRuleResolver }),
+}));
 
 let mockAvailable = true;
 let mockReduced = false;
@@ -31,6 +53,12 @@ describe("isolated calendar prototype", () => {
     jest.useRealTimers();
     mockAvailable = true;
     mockReduced = false;
+    mockData.entries = [];
+    mockData.loading = false;
+    mockData.error = false;
+    mockPreferences.labelMode = "FULL";
+    mockPreferences.showAppointments = true;
+    mockPreferences.showShifts = true;
   });
   it("opens a month immediately without a measurement timer and handles 30 reversals", async () => {
     jest.useFakeTimers();
@@ -60,7 +88,7 @@ describe("isolated calendar prototype", () => {
     expect(events.filter((e) => e.kind === "prototype-request")).toHaveLength(30);
     expect(events.filter((e) => e.kind === "prototype-start")).toHaveLength(30);
     expect(events.some((e) => e.kind === "measure" || e.kind === "load-start")).toBe(false);
-    expect(screen.getByText(/keine echten Daten/)).toBeTruthy();
+    expect(screen.getByText(/Echte Daten · nur Ansicht/)).toBeTruthy();
   }, 30000);
   it("supports year navigation, Today and background cancellation", async () => {
     const listener = jest.spyOn(AppState, "addEventListener");
@@ -79,6 +107,49 @@ describe("isolated calendar prototype", () => {
     mockAvailable = false;
     const screen = await render(<CalendarPrototypeRoute />);
     expect(screen.queryByTestId("prototype-canvas")).toBeNull();
+  });
+  it("renders real appointments unshortened in symbol mode and honors visibility filters", async () => {
+    mockReduced = true;
+    mockPreferences.labelMode = "SYMBOL";
+    const screen = await render(<CalendarPrototypeScreen />);
+    const year = screen.getByTestId("prototype-heading").props.children;
+    mockData.entries = [
+      {
+        kind: "APPOINTMENT",
+        id: "real",
+        date: `${year}-01-01`,
+        title: "Physiotherapie",
+        allDay: true,
+        startTime: null,
+        endTime: null,
+        color: "#123456",
+        note: null,
+        revision: 1,
+        createdAt: "2026-01-01T00:00:00Z",
+        updatedAt: "2026-01-01T00:00:00Z",
+        deletedAt: null,
+      },
+    ];
+    await fireEvent(screen.getByTestId("prototype-canvas"), "layout", {
+      nativeEvent: { layout: { width: 430, height: 640 } },
+    });
+    await fireEvent.press(screen.getByRole("button", { name: `Januar ${year} öffnen` }));
+    expect(screen.getByText("• Physiotherapie")).toBeTruthy();
+    expect(screen.getByText("Neujahr")).toBeTruthy();
+    mockPreferences.showAppointments = false;
+    await screen.rerender(<CalendarPrototypeScreen />);
+    expect(screen.queryByText("• Physiotherapie")).toBeNull();
+  });
+  it("keeps navigation available while loading or on retryable failure", async () => {
+    mockData.loading = true;
+    const screen = await render(<CalendarPrototypeScreen />);
+    expect(screen.getByText("Jahresdaten werden geladen …")).toBeTruthy();
+    await fireEvent.press(screen.getByTestId("prototype-next"));
+    mockData.loading = false;
+    mockData.error = true;
+    await screen.rerender(<CalendarPrototypeScreen />);
+    await fireEvent.press(screen.getByText("Laden fehlgeschlagen. Erneut versuchen"));
+    expect(mockData.retry).toHaveBeenCalled();
   });
   it("honors reduced motion without starting an animation", async () => {
     mockReduced = true;
