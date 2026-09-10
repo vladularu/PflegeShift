@@ -65,15 +65,16 @@ export function ShiftSelectionScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen options={{ headerShown: false, gestureEnabled: !busy }} />
       <ShiftSelectionPanel
         actions={actions}
         animateEntry={false}
+        inNativeSheet
         busy={busy}
         date={date}
-        onAddTemplate={() => router.push(templateEditorRoute(undefined, date))}
+        onAddTemplate={() => router.replace(templateEditorRoute(undefined, date))}
         onClose={() => router.back()}
-        onEditTemplate={(templateId) => router.push(templateEditorRoute(templateId, date))}
+        onEditTemplate={(templateId) => router.replace(templateEditorRoute(templateId, date))}
         onSelectAction={(action, selectedDate) => void selectAction(action, selectedDate)}
       />
       {saveError ? <ShiftSelectionErrorNotice message={saveError} /> : null}

@@ -33,6 +33,6 @@ export function planningModeFeedback(): void {
   run(() =>
     process.env.EXPO_OS === "android"
       ? Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Gesture_Start)
-      : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
+      : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft),
   );
 }

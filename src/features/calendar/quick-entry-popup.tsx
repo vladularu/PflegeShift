@@ -19,6 +19,7 @@ import {
 import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
+import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
@@ -79,7 +80,8 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
   readonly onOpenShiftPicker: (date: string) => void;
   readonly onSelectAction: (action: QuickEntryAction, date: string) => void;
 }) {
-  const palette = usePalette();
+  const appPalette = usePalette();
+  const palette = appPalette.dark ? LIGHT_PALETTE : DARK_PALETTE;
   const insets = useSafeAreaInsets();
   const { width, height, fontScale } = useWindowDimensions();
   const dialogHeadingRef = useRef<View>(null);
@@ -123,7 +125,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
   );
   const popupMotion = useMemo(() => {
     const anchorOffset =
-      placement.direction === "BELOW" ? -MOTION.distance.small : MOTION.distance.small;
+      placement.direction === "BELOW" ? -MOTION.distance.subtle : MOTION.distance.subtle;
     return {
       entering: new Keyframe({
         0: {
@@ -200,7 +202,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
             aria-hidden
             importantForAccessibility="no-hide-descendants"
             onPress={closePopup}
-            style={{ flex: 1, backgroundColor: palette.overlaySubtle }}
+            style={{ flex: 1, backgroundColor: appPalette.overlaySubtle }}
           />
         </Animated.View>
       )}

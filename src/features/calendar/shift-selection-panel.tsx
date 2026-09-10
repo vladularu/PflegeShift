@@ -35,6 +35,7 @@ function longDate(date: string): string {
 export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
   actions,
   animateEntry = true,
+  inNativeSheet = false,
   busy,
   date,
   onAddTemplate,
@@ -44,6 +45,7 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
 }: {
   readonly actions: readonly QuickEntryAction[];
   readonly animateEntry?: boolean;
+  readonly inNativeSheet?: boolean;
   readonly busy: boolean;
   readonly date: string;
   readonly onAddTemplate: () => void;
@@ -71,12 +73,16 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
           ? SlideInDown.duration(MOTION.duration.deliberate).reduceMotion(MOTION.reduceMotion)
           : undefined
       }
-      exiting={SlideOutDown.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
+      exiting={
+        animateEntry
+          ? SlideOutDown.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)
+          : undefined
+      }
       style={[
         styles.screen,
         {
           backgroundColor: palette.background,
-          paddingTop: insets.top,
+          paddingTop: inNativeSheet ? SPACING.lg : insets.top,
         },
       ]}
       testID="shift-selection-panel"
@@ -85,6 +91,8 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
         <Pressable
           accessibilityLabel="Schichtauswahl schließen"
           accessibilityRole="button"
+          accessibilityState={{ disabled: busy }}
+          disabled={busy}
           onPress={onClose}
           style={({ pressed }) => [
             styles.closeButton,

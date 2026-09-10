@@ -24,7 +24,7 @@ import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { QuickEntryActionStrip } from "@/features/calendar/quick-entry-action-strip";
 import { QUICK_PLANNER_METRICS } from "@/features/calendar/quick-planner-appearance";
 import { MOTION } from "@/theme/motion";
-import { usePalette } from "@/theme/palette";
+import { DARK_PALETTE, LIGHT_PALETTE, usePalette } from "@/theme/palette";
 import { CALENDAR_METRICS } from "@/theme/tokens";
 import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
 
@@ -67,14 +67,15 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   readonly onClose: () => void;
 }) {
   const palette = usePalette();
+  const dockPalette = palette.dark ? LIGHT_PALETTE : DARK_PALETTE;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const [closing, setClosing] = useState(false);
   const internalProgress = useSharedValue(open ? 1 : 0);
   const progress = transitionProgress ?? internalProgress;
-  const pencilPressMotion = usePressMotion(1, 0.92);
-  const closePressMotion = usePressMotion(1, 0.92);
+  const pencilPressMotion = usePressMotion(1, MOTION.scale.press);
+  const closePressMotion = usePressMotion(1, MOTION.scale.press);
   const baseOpenBottom = Platform.OS === "web" ? 8 : Math.max(insets.bottom - 16, 8);
   const openBottom =
     Platform.OS === "ios" ? baseOpenBottom - IOS_NATIVE_TAB_OVERLAY_DROP : baseOpenBottom;
@@ -135,7 +136,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
               translateY: interpolate(
                 value,
                 [0, 1],
-                [CONTROL_HEIGHT + openBottom, 0],
+                [MOTION.distance.scene, 0],
                 Extrapolation.CLAMP,
               ),
             },
@@ -153,7 +154,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
               translateY: interpolate(
                 progress.value,
                 [0, 0.62],
-                [0, CONTROL_HEIGHT + openBottom],
+                [0, MOTION.distance.subtle],
                 Extrapolation.CLAMP,
               ),
             },
@@ -173,7 +174,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
               translateY: interpolate(
                 progress.value,
                 [0, 1],
-                [CONTROL_HEIGHT + openBottom, 0],
+                [MOTION.distance.scene, 0],
                 Extrapolation.CLAMP,
               ),
             },
@@ -200,8 +201,8 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
           style={[
             styles.dockSurface,
             {
-              backgroundColor: palette.floatingAction,
-              borderColor: palette.onFloatingAction,
+              backgroundColor: dockPalette.surface,
+              borderColor: dockPalette.separator,
               boxShadow: `0 10px 28px ${palette.shadow}`,
             },
             dockMotionStyle,
@@ -248,12 +249,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
                 },
               ]}
             >
-              <Ionicons
-                accessible={false}
-                color={palette.onFloatingAction}
-                name="pencil"
-                size={18}
-              />
+              <Ionicons accessible={false} color={palette.onFloatingAction} name="add" size={24} />
             </View>
           </AnimatedPressable>
         </Animated.View>
@@ -278,20 +274,15 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
                 style={[
                   styles.closeVisual,
                   {
-                    backgroundColor: palette.floatingAction,
-                    borderColor: palette.onFloatingAction,
+                    backgroundColor: dockPalette.surface,
+                    borderColor: dockPalette.separator,
                     boxShadow: `0 4px 12px ${palette.shadow}`,
                     opacity: pressed ? 0.72 : 1,
                   },
                 ]}
                 testID="quick-planner-close-visual"
               >
-                <Ionicons
-                  accessible={false}
-                  color={palette.onFloatingAction}
-                  name="close"
-                  size={20}
-                />
+                <Ionicons accessible={false} color={dockPalette.text} name="close" size={20} />
               </View>
             )}
           </AnimatedPressable>

@@ -160,9 +160,9 @@ export default function RootLayout() {
                           name="shift-selection"
                           options={{
                             headerShown: false,
-                            presentation: "card",
-                            animation: "slide_from_bottom",
-                            animationDuration: MOTION.duration.scene,
+                            presentation: "formSheet",
+                            sheetAllowedDetents: [0.85, 1],
+                            sheetGrabberVisible: true,
                             contentStyle: { backgroundColor: palette.background },
                           }}
                         />
