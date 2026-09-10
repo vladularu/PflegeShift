@@ -101,6 +101,16 @@ function build(ruleResolver: ReturnType<typeof resolver>, activeProfile: UserPro
 }
 
 describe("available annual report", () => {
+  it("retains category and informational counts for every fully calculated month", () => {
+    const report = build(resolver({}));
+    for (const month of report.months) {
+      expect(month.checkCounts).toBeDefined();
+      const { legal, planning } = month.checkCounts!;
+      expect(legal.criticalCount + planning.criticalCount).toBe(month.criticalCount);
+      expect(legal.warningCount + planning.warningCount).toBe(month.warningCount);
+      expect(legal.infoCount + planning.infoCount).toBe(month.infoCount);
+    }
+  });
   it("yields current core data before touching any rule-bound calculation", () => {
     let core: { actualMinutes: number; entryCount: number } | undefined;
     const rules = resolver({});

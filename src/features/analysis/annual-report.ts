@@ -17,8 +17,11 @@ import {
 } from "@/features/analysis/analysis-data";
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
+import { classifyChecks, type ClassifiedCheckCounts } from "./check-visibility";
 
 export interface AnnualMonthReport {
+  readonly checkCounts?: ClassifiedCheckCounts;
+  readonly infoCount?: number;
   readonly month: string;
   readonly entryCount: number;
   readonly targetMinutes: number | null;
@@ -31,6 +34,7 @@ export interface AnnualMonthReport {
 }
 
 export interface AnnualReport {
+  readonly infoCount?: number;
   readonly year: number;
   readonly months: readonly AnnualMonthReport[];
   readonly targetMinutes: number | null;
@@ -243,6 +247,8 @@ function* calculateAnnualMonthContribution(
       premiumAmount: pay.timePremiumAmount + pay.overtimeAmount + allowanceAmount,
       criticalCount: compliance.criticalCount,
       warningCount: compliance.warningCount,
+      infoCount: compliance.infoCount,
+      checkCounts: classifyChecks(compliance.issues),
     }),
     workMinutes: summary.work.minutes,
     trainingMinutes: summary.training.minutes,
