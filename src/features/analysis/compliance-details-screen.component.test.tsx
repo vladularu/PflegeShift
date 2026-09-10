@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react-native";
-import { describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import type { MonthlyComplianceResult } from "@/domain/types";
 import { ComplianceDetailsScreen } from "@/features/analysis/compliance-details-screen";
@@ -11,8 +11,21 @@ const mockCompliance: MonthlyComplianceResult = {
   warningCount: 1,
   infoCount: 0,
   affectedDates: [],
-  issues: [],
+  issues: [0, 1, 2].map((index) => ({
+    id: String(index),
+    kind: index === 2 ? "PLANNING" : "LEGAL",
+    severity: index === 2 ? "warning" : "critical",
+    rule: "TEST",
+    title: "Hinweis",
+    description: "Test",
+    date: "2026-08-01",
+    relatedShiftIds: [],
+  })),
 };
+let mockPlanning = true;
+jest.mock("@/features/settings/check-preferences", () => ({
+  useCheckPreferences: () => ({ enabled: mockPlanning, error: null }),
+}));
 
 jest.mock("expo-router", () => ({
   router: { back: jest.fn() },
@@ -58,6 +71,16 @@ jest.mock("@/features/analysis/analysis-screen", () => {
 });
 
 describe("ComplianceDetailsScreen", () => {
+  beforeEach(() => {
+    mockPlanning = true;
+  });
+  it("filters the detail summary but keeps legal critical findings", async () => {
+    mockPlanning = false;
+    const screen = await render(<ComplianceDetailsScreen />);
+    expect(screen.getByRole("header", { name: "2 Meldungen" })).toHaveStyle({
+      color: LIGHT_PALETTE.danger,
+    });
+  });
   it("shows one neutral total and reserves color for its severity", async () => {
     const screen = await render(<ComplianceDetailsScreen />);
 

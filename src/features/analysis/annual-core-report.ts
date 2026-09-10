@@ -19,6 +19,7 @@ import {
 } from "@/features/analysis/analysis-data";
 import { buildMonthlyTimedShiftTypeAnalysis } from "@/features/analysis/analysis-metrics";
 import type { AnnualMonthReport, AnnualReport } from "@/features/analysis/annual-report";
+import { classifyChecks } from "./check-visibility";
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
 import {
   requireResolvedPackage,
@@ -348,6 +349,8 @@ export function* buildAnnualAvailableReportSteps(
           : 0,
         criticalCount: available.compliance?.criticalCount ?? 0,
         warningCount: available.compliance?.warningCount ?? 0,
+        infoCount: available.compliance?.infoCount ?? 0,
+        checkCounts: classifyChecks(available.compliance?.issues ?? []),
       }),
     );
     yield 4;

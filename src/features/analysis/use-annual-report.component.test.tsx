@@ -21,6 +21,7 @@ import type {
 } from "@/rules/contracts.generated";
 import { createRuleResolver } from "@/rules/rule-resolver";
 import { scheduleIdleWork } from "@/ui/schedule-idle-work";
+import { selectAnnualCheckDisplay } from "./check-visibility";
 
 let mockReferenceDate = "2026-08-04";
 
@@ -91,6 +92,38 @@ const GENERATION_ONE_REVIEWED_RESOLVER = createRuleResolver(
 );
 
 describe("useDeferredAnnualReport", () => {
+  it("changes display selection without restarting or invalidating completed annual work", async () => {
+    jest.useFakeTimers();
+    const screen = await renderHook(
+      ({ showPlanning }: { showPlanning: boolean }) => {
+        const result = useDeferredAnnualReport({
+          enabled: true,
+          entries: ENTRIES,
+          profile: PROFILE,
+          tariffDecisions: DECISIONS,
+          workPatternSettings: WORK_PATTERN,
+          year: 2026,
+        });
+        return {
+          raw: result.report,
+          display: result.report && selectAnnualCheckDisplay(result.report, showPlanning),
+        };
+      },
+      { initialProps: { showPlanning: true } },
+    );
+    await act(async () => {
+      jest.runAllTimers();
+    });
+    expect(screen.result.current.raw).not.toBeNull();
+    const raw = screen.result.current.raw;
+    const scheduled = jest.mocked(scheduleIdleWork).mock.calls.length;
+    await screen.rerender({ showPlanning: false });
+    expect(screen.result.current.raw).toBe(raw);
+    expect(jest.mocked(scheduleIdleWork).mock.calls.length).toBe(scheduled);
+    await screen.rerender({ showPlanning: true });
+    expect(screen.result.current.raw).toBe(raw);
+    expect(jest.mocked(scheduleIdleWork).mock.calls.length).toBe(scheduled);
+  });
   afterEach(() => {
     jest.useRealTimers();
     mockReferenceDate = "2026-08-04";

@@ -12,6 +12,9 @@ import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-l
 import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
 import { ComplianceDetails } from "@/features/analysis/analysis-screen";
 import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-compliance";
+import { useCheckPreferences } from "@/features/settings/check-preferences";
+import { selectVisibleCompliance } from "./check-visibility";
+import { AnalysisCoverageNote } from "./analysis-coverage-note";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
@@ -19,6 +22,7 @@ import { ReportScrollView } from "@/ui/report-layout";
 
 export function ComplianceDetailsScreen() {
   const palette = usePalette();
+  const preferences = useCheckPreferences();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { error, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
@@ -38,7 +42,11 @@ export function ComplianceDetailsScreen() {
     ruleResolver,
     shifts: window.complianceShifts,
   });
-  const compliance = monthlyCompliance.result;
+  const sourceCompliance = monthlyCompliance.result;
+  const compliance =
+    sourceCompliance === null
+      ? null
+      : selectVisibleCompliance(sourceCompliance, preferences.enabled !== false);
 
   if (parsedMonth.status !== "valid") {
     return (
@@ -75,18 +83,23 @@ export function ComplianceDetailsScreen() {
 
   return (
     <ReportScrollView>
+      {preferences.error ? <AnalysisCoverageNote message={preferences.error} /> : null}
+      {preferences.enabled === null && !preferences.error ? (
+        <AnalysisCoverageNote message="Prüfungseinstellungen werden geladen … Hinweise sind vorläufig vollständig sichtbar." />
+      ) : null}
       <AnalysisDetailSummaryCard
         accent={accent}
         caption="Automatische Prüfung deiner Dienste. Die Hinweise ersetzen keine Rechtsberatung."
         period={formatMonthTitle(month)}
         title={
           messageCount === 0
-            ? "Alles im grünen Bereich"
+            ? "Keine sichtbaren Auffälligkeiten"
             : `${messageCount} ${messageCount === 1 ? "Meldung" : "Meldungen"}`
         }
       />
       <ComplianceDetails
-        compliance={compliance}
+        compliance={sourceCompliance!}
+        showPlanning={preferences.enabled !== false}
         heading="Meldungen"
         shifts={window.complianceShifts}
       />

@@ -1,11 +1,6 @@
-import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 
-import {
-  loadPlanningHintsPreference,
-  savePlanningHintsPreference,
-} from "@/infrastructure/database/preferences-repository";
+import { useCheckPreferences } from "./check-preferences";
 import { usePalette } from "@/theme/palette";
 import { SPACING } from "@/theme/tokens";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
@@ -15,58 +10,19 @@ import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { ScreenScrollView } from "@/ui/screen-layout";
 
 export function CheckSettingsScreen() {
-  const db = useSQLiteContext();
   const palette = usePalette();
-  const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [retry, setRetry] = useState(0);
-  const busy = useRef(false);
-  const mounted = useRef(false);
-  useEffect(() => {
-    mounted.current = true;
-    let active = true;
-    setError(null);
-    void loadPlanningHintsPreference(db).then(
-      (value) => {
-        if (active) setEnabled(value);
-      },
-      () => {
-        if (active) setError("Prüfungseinstellungen konnten nicht geladen werden.");
-      },
-    );
-    return () => {
-      active = false;
-      mounted.current = false;
-    };
-  }, [db, retry]);
-
-  async function save(value: boolean) {
-    if (busy.current) return;
-    busy.current = true;
-    setSaving(true);
-    setError(null);
-    try {
-      await savePlanningHintsPreference(db, value);
-      if (mounted.current) setEnabled(value);
-    } catch {
-      if (mounted.current) setError("Nicht gespeichert. Bitte betätige den Schalter erneut.");
-    } finally {
-      busy.current = false;
-      if (mounted.current) setSaving(false);
-    }
-  }
+  const { enabled, error, saving, save, retry } = useCheckPreferences();
 
   if (enabled === null)
     return error ? (
-      <LoadFailureView message={error} onRetry={() => setRetry((value) => value + 1)} />
+      <LoadFailureView message={error} onRetry={retry} />
     ) : (
       <LoadingView label="Prüfungseinstellungen werden geladen …" />
     );
 
   return (
     <ScreenScrollView surface="groupedBackground">
-      <InlineNotice message="Vorbereitung: Deine Auswahl wird gespeichert. Die Auswertung berücksichtigt sie erst mit dem nächsten Teil von Arbeitspaket 9G. Bis dahin bleiben alle bisherigen Hinweise sichtbar." />
+      <InlineNotice message="Deine Auswahl gilt für Monats- und Jahresauswertung sowie die Prüfungsdetails. Gesetzliche Hinweise bleiben immer sichtbar." />
       <SectionHeader title="Gesetzliche Prüfung" />
       <SurfaceCard>
         <Text
@@ -121,7 +77,7 @@ export function CheckSettingsScreen() {
           ? "Die bisherige Auswahl bleibt erhalten."
           : saving
             ? "Wird gespeichert …"
-            : "Auswahl gespeichert · Wirkung in der Auswertung folgt mit 9G-B."}
+            : "Auswahl gespeichert."}
       </Text>
       {error ? <InlineNotice message={error} /> : null}
     </ScreenScrollView>
