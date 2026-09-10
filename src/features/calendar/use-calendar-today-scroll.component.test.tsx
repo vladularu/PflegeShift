@@ -101,6 +101,17 @@ describe("Today scroll lifecycle", () => {
     expect(coordinator.hasPendingTodayRequest(1)).toBe(false);
   });
 
+  it("resets every same-month Today request, including repeated tab presses", async () => {
+    const { hook, coordinator } = setup("2027-01", "MONTH", true, 4);
+    const screen = await renderHook(hook, { initialProps: { ready: true, focused: true } });
+    expect(screen.result.current.pagerRevision).toBe(5);
+    mockRequestRevision = coordinator.requestToday();
+    await screen.rerender({ ready: true, focused: true });
+    expect(screen.result.current.pagerRevision).toBe(6);
+    expect(screen.result.current).toMatchObject({ month: "2027-01", todayScrollActive: false });
+    expect(coordinator.hasPendingTodayRequest(2)).toBe(false);
+  });
+
   it("resumes an interrupted request after returning to the calendar", async () => {
     const { hook, scrollToMonth } = setup();
     const screen = await renderHook(hook, { initialProps: { ready: true, focused: true } });

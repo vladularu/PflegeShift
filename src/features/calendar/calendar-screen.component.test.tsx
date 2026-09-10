@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { router } from "expo-router";
 import * as MockReact from "react";
@@ -370,6 +370,38 @@ describe("CalendarScreen quick-entry navigation", () => {
     expect(mockActiveMonthCoordinator.setMonth).toHaveBeenCalledTimes(1);
     expect(mockActiveMonthCoordinator.setMonth).toHaveBeenLastCalledWith("2026-10");
   });
+
+  it.each(["preview", "partial", "settled"])(
+    "returns to Today after a %s swipe and rejects trailing momentum",
+    async (phase) => {
+      const month = today("Europe/Berlin").slice(0, 7);
+      mockActiveMonth = month;
+      const screen = await render(<CalendarScreen />);
+      await fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+        nativeEvent: { layout: { height: 700 } },
+      });
+      const pager = screen.getByTestId("calendar-month-pager");
+      const displaced = {
+        nativeEvent: { contentOffset: { x: 0, y: 700 * (phase === "partial" ? 24.3 : 27) } },
+      };
+      await fireEvent(pager, "scrollBeginDrag");
+      await fireEvent.scroll(pager, displaced);
+      if (phase === "settled") await fireEvent(pager, "momentumScrollEnd", displaced);
+      mockTodayRequestRevision = 1;
+      await screen.rerender(<CalendarScreen />);
+      expect(screen.getByTestId("header-state")).toHaveTextContent(`MONTH:${month}`);
+      expect(
+        within(screen.getByTestId("calendar-slot-0")).getByTestId(`month-card-${month}`),
+      ).toBeTruthy();
+      expect(pager.props.scrollEnabled).toBe(false);
+      await fireEvent(pager, "momentumScrollEnd", displaced);
+      expect(mockActiveMonth).toBe(month);
+      await fireEvent.scroll(pager, { nativeEvent: { contentOffset: { x: 0, y: 700 * 24 } } });
+      expect(pager.props.scrollEnabled).toBe(true);
+      expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
+      expect(mockActiveMonthCoordinator.completeTodayRequest).toHaveBeenCalledWith(1);
+    },
+  );
 
   it("keeps a covered year overview visible while its surrounding range refreshes", async () => {
     mockActiveMonth = "2027-08";

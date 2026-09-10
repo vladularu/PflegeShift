@@ -107,12 +107,14 @@ export function useCalendarTodayScroll({
       resetTransientUi();
       setHeaderTransition(viewMode === "MONTH" ? "SPATIAL" : "CROSSFADE");
       setViewMode(target.viewMode);
+      // A live native swipe can differ from the committed month (even within
+      // the same page). Every Today request must cancel that gesture/preview.
+      setPagerResetRevision((revision) => revision + 1);
 
       if (!changesVisibleMonth || reduceMotion) {
         if (changesVisibleMonth || todayScroll !== null) {
           setHeaderDirection(target.visibleMonth > visibleMonth ? "NEXT" : "PREVIOUS");
           setMonthAnchor(target.visibleMonth);
-          setPagerResetRevision((revision) => revision + 1);
         }
         completeTodayScroll(scroll);
         return;
@@ -126,7 +128,6 @@ export function useCalendarTodayScroll({
       activeMonthCoordinator.setMonth(scroll.targetMonth);
       settledMonthRef.current = scroll.targetMonth;
       setMonthAnchor(scroll.startMonth);
-      setPagerResetRevision((revision) => revision + 1);
       startedTodayScrollRevision.current = null;
       setTodayScroll(scroll);
     },
