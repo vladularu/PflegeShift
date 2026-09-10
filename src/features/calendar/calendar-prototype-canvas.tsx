@@ -277,19 +277,6 @@ export function PrototypeMonthContent({
                   overflow: "hidden",
                 }}
               >
-                {holiday && rows > 1 ? (
-                  <Text
-                    numberOfLines={1}
-                    allowFontScaling={false}
-                    style={{
-                      height: CALENDAR_METRICS.entryRowHeight,
-                      color: palette.textMuted,
-                      fontSize: CALENDAR_METRICS.entryFontSize,
-                    }}
-                  >
-                    {holiday}
-                  </Text>
-                ) : null}
                 {preview.entries.map((entry) => (
                   <PrototypeEntryContent
                     key={`${entry.kind}:${entry.id}:${entry.date}`}
@@ -308,6 +295,20 @@ export function PrototypeMonthContent({
                       fontSize: CALENDAR_METRICS.entryFontSize,
                     }}
                   >{`+${preview.overflowCount}`}</Text>
+                ) : null}
+                {/* Keep the first entry aligned with neighboring days. */}
+                {holiday && rows > 1 ? (
+                  <Text
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                    style={{
+                      height: CALENDAR_METRICS.entryRowHeight,
+                      color: palette.textMuted,
+                      fontSize: CALENDAR_METRICS.entryFontSize,
+                    }}
+                  >
+                    {holiday}
+                  </Text>
                 ) : null}
               </View>
             ) : null}
