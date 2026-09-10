@@ -1,4 +1,4 @@
-import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, userEvent, waitFor } from "@testing-library/react-native";
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
@@ -19,6 +19,29 @@ afterEach(() => {
 });
 
 describe("AnalysisCardDetails", () => {
+  it("responds to a real press sequence without removing the card summary", async () => {
+    const toggle = jest.fn();
+    const screen = await render(
+      <ExpandableHighlightCard
+        title="Prüfung"
+        value="Meldung"
+        countBadge={1}
+        summary="Ein Hinweis"
+        icon="warning-outline"
+        accent="#74515F"
+        expanded={false}
+        onToggle={toggle}
+      >
+        <Text>Detail</Text>
+      </ExpandableHighlightCard>,
+    );
+    await userEvent
+      .setup()
+      .press(screen.getByRole("button", { name: "Prüfung, 1 Meldung, Ein Hinweis" }));
+    expect(toggle).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Ein Hinweis")).toBeVisible();
+    expect(screen.queryByText("Detail")).toBeNull();
+  });
   it("measures independently, clips content and uses one retargetable height animation", async () => {
     const timing = jest.mocked(Reanimated.withTiming);
     const content = <Text>Details</Text>;
