@@ -1,5 +1,6 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import * as MockReact from "react";
 import type { ReactElement } from "react";
 
 import holidayPackageValue from "../../../rules/packages/reviewed/de-holidays/2026.json";
@@ -111,6 +112,7 @@ let mockAnnualRuleFailure: {
   readonly failure: RuleResolutionError["failure"];
 } | null = null;
 
+let mockFocused = true;
 const mockActiveMonthCoordinator = {
   getMonth: () => mockRouteMonth,
   setMonth: jest.fn((month: string) => month),
@@ -118,8 +120,9 @@ const mockActiveMonthCoordinator = {
 
 jest.mock("expo-router", () => ({
   router: { back: jest.fn(), push: jest.fn() },
-  useFocusEffect: () => undefined,
-  useIsFocused: () => true,
+  useFocusEffect: (effect: () => void | (() => void)) =>
+    MockReact.useEffect(() => (mockFocused ? effect() : undefined), [effect, mockFocused]),
+  useIsFocused: () => mockFocused,
   useLocalSearchParams: () => ({ month: mockRouteMonth }),
 }));
 
@@ -232,6 +235,7 @@ async function expectRuleCoverageDiagnostic(component: ReactElement) {
 describe("reviewed Generation 1 rule coverage in analysis screens", () => {
   beforeEach(() => {
     mockEntries = [];
+    mockFocused = true;
     mockRuleResolver = GENERATION_ONE_REVIEWED_RESOLVER;
     mockRouteMonth = "2027-01";
     mockAnnualFatalError = null;
@@ -240,6 +244,22 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     mockAnnualRuleFailure = null;
     mockProfile = MOCK_TARIFF_PROFILE;
     mockActiveMonthCoordinator.setMonth.mockClear();
+  });
+
+  it.each(["Prüfung", "Gehalt"])("closes %s after leaving analysis", async (title) => {
+    mockRouteMonth = "2026-09";
+    mockEntries = [{ ...januaryShift(), date: "2026-09-04" }];
+    const screen = await render(<AnalysisScreen />);
+    const name = new RegExp(`^${title},`);
+    await fireEvent.press(screen.getByRole("button", { name }));
+    expect(screen.getByRole("button", { name }).props.accessibilityState.expanded).toBe(true);
+    mockFocused = false;
+    await screen.rerender(<AnalysisScreen />);
+    mockRouteMonth = "2026-10";
+    mockEntries = [{ ...januaryShift(), date: "2026-10-04" }];
+    mockFocused = true;
+    await screen.rerender(<AnalysisScreen />);
+    expect(screen.getByRole("button", { name }).props.accessibilityState.expanded).toBe(false);
   });
 
   it("keeps January 2027 navigable and shows independent zero values without shifts", async () => {

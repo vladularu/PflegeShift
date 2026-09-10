@@ -100,6 +100,7 @@ export function AnalysisScreen({
       setYear((current) =>
         current === Number(activeMonth.slice(0, 4)) ? current : Number(activeMonth.slice(0, 4)),
       );
+      return () => setExpandedCard(null);
     }, [activeMonthCoordinator]),
   );
 

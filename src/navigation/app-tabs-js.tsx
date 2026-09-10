@@ -39,6 +39,8 @@ export function AppTabs() {
         name="(calendar)"
         options={{
           title: "Kalender",
+          // Keep external month changes positioned before this tab is revealed.
+          freezeOnBlur: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons accessible={false} color={color} name="calendar-outline" size={size} />
           ),

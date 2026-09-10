@@ -1,5 +1,27 @@
 # 9D – Ruhige Auswertungskarten
 
+## Ergänzung: Tab-Wechsel (freigegeben bis Preview-OTA)
+
+Ziel: Nach einem Monatswechsel in Auswertung zeigt Kalender sofort den passenden
+Monat. Prüfung und Gehalt sind nach Verlassen und Rückkehr geschlossen.
+
+Der Kalender abonniert externe Monatsänderungen im Hintergrund und positioniert
+seinen bestehenden Pager vor der Rückkehr. Nur der Kalender-Tab wird dafür nicht
+eingefroren; die übrigen Tabs behalten ihre bisherige Einstellung. Eigene
+Kalendergesten bleiben führend, ohne neue Animation oder Pager-Neumontage.
+Die Auswertung setzt beim Fokusverlust ausschließlich den Aufklappzustand zurück.
+
+Zusätzlicher Scope: CalendarScreen, AnalysisScreen, AppTabs und Regressionstests.
+Nicht-Ziele: Daten, Berechnungen, native Abhängigkeiten, Kalendergestaltung,
+Heute-Rücksprung und Jahreszoom. Plattform und Freigabegrenzen bleiben wie unten.
+
+Gemeinsame Geräteabnahme nach OTA:
+
+1. In Auswertung mehrere Monate wechseln, dann Kalender öffnen: kein alter Monat.
+2. Prüfung öffnen, Kalender besuchen und Monat wechseln, Auswertung öffnen:
+   neue Daten, geschlossene Karten. Mit Gehalt wiederholen.
+3. Kalender schnell scrollen, Heute-Rücksprung und Jahreszoom kurz gegenprüfen.
+
 ## Vertrag
 
 Ziel: Prüfung und Gehalt ohne überlappende Kacheln öffnen, schließen und wechseln,
