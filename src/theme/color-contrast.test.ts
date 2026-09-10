@@ -44,8 +44,8 @@ describe("accessible service chips", () => {
     expect(chip.onDetail).toBe("#171719");
   });
 
-  it("keeps the light detail band in dark mode too", () => {
-    expect(calendarChipPalette("#62B94C", true).detail).toBe("#D3EBCD");
+  it("uses a dark matching detail band with light time text in dark mode", () => {
+    expect(calendarChipPalette("#62B94C", true).onDetail).toBe("#FFFFFF");
 
     for (const color of ["#62B94C", "#F05C59", "#31A7C3", "#D95F9A"]) {
       const chip = calendarChipPalette(color, true);
@@ -56,8 +56,8 @@ describe("accessible service chips", () => {
       expect(detailLuminance).not.toBeNull();
       expect(
         detailLuminance!,
-        `${chip.detail} should be visibly lighter than ${chip.main}`,
-      ).toBeGreaterThan(mainLuminance!);
+        `${chip.detail} should be visibly darker than ${chip.main}`,
+      ).toBeLessThan(mainLuminance!);
       expect(colorContrastRatio(chip.onDetail, chip.detail)).toBeGreaterThanOrEqual(
         MINIMUM_TEXT_CONTRAST,
       );

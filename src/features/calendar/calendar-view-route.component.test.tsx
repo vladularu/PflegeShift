@@ -7,9 +7,11 @@ import { CalendarViewScreen } from "@/features/calendar/calendar-view-screen";
 import { DARK_PALETTE, LIGHT_PALETTE, type Palette } from "@/theme/palette-values";
 
 const mockUsePalette = jest.fn<() => Palette>();
+let mockParams: { notice?: string | string[] } = {};
 
 jest.mock("expo-router", () => ({
   Stack: { Screen: jest.fn(() => null) },
+  useLocalSearchParams: () => mockParams,
 }));
 
 jest.mock("@/features/calendar/calendar-view-screen", () => ({
@@ -28,6 +30,7 @@ describe("CalendarViewRoute", () => {
     mockCalendarViewScreen.mockClear();
     mockStackScreen.mockClear();
     mockUsePalette.mockReset();
+    mockParams = {};
   });
 
   it("uses a light native header in light mode", async () => {
@@ -48,6 +51,18 @@ describe("CalendarViewRoute", () => {
     );
     expect(mockCalendarViewScreen).toHaveBeenCalledTimes(1);
   });
+  it.each(["holidays", "loading", "unknown"])(
+    "only forwards known notice codes: %s",
+    async (notice) => {
+      mockUsePalette.mockReturnValue(LIGHT_PALETTE);
+      mockParams = { notice };
+      await render(<CalendarViewRoute />);
+      expect(mockCalendarViewScreen).toHaveBeenCalledWith(
+        expect.objectContaining({ notice: notice === "unknown" ? undefined : expect.any(String) }),
+        undefined,
+      );
+    },
+  );
 
   it("keeps the native header dark in dark mode", async () => {
     mockUsePalette.mockReturnValue(DARK_PALETTE);

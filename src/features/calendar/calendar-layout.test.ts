@@ -67,22 +67,22 @@ describe("calendar layout", () => {
       bottomReserve: 8,
     });
 
-    expect(fiveWeeks.rowHeight).toBeCloseTo(103.2, 1);
-    expect(sixWeeks.rowHeight).toBeCloseTo(86, 2);
+    expect(fiveWeeks.rowHeight).toBeCloseTo(102.8, 1);
+    expect(sixWeeks.rowHeight).toBeCloseTo(85.67, 2);
     expect(fiveWeeks.gridHeight + 16).toBe(560);
     expect(sixWeeks.gridHeight + 16).toBe(560);
   });
 
-  it("keeps six SuperShift-like 114-point rows without stretching the final row", () => {
+  it("keeps six spacious 117-point rows without stretching the final row", () => {
     const layout = calculateCalendarGridLayout({
       pageHeight: 795,
       weekCount: 6,
       bottomReserve: 55,
     });
 
-    expect(layout.headerHeight).toBe(28);
-    expect(layout.rowHeight).toBe(114);
-    expect(layout.gridHeight).toBe(712);
+    expect(layout.headerHeight).toBe(30);
+    expect(layout.rowHeight).toBe(117);
+    expect(layout.gridHeight).toBe(732);
   });
 
   it("reserves exactly the native tab inset and keeps the planner action above it", () => {

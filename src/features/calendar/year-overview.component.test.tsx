@@ -29,7 +29,6 @@ describe("YearOverview", () => {
         }}
       >
         <YearOverview
-          entries={[]}
           onSelectMonth={onSelectMonth}
           profile={PROFILE}
           selectedMonth="2026-05"
@@ -41,7 +40,7 @@ describe("YearOverview", () => {
     const may = screen.getByRole("button", { name: "Mai 2026 öffnen" });
     expect(may.props.accessibilityState).toEqual({ selected: true });
 
-    fireEvent.press(screen.getByRole("button", { name: "Jan 2026 öffnen" }));
+    fireEvent.press(screen.getByRole("button", { name: "Januar 2026 öffnen" }));
     expect(onSelectMonth).toHaveBeenCalledWith("2026-01");
   });
 });

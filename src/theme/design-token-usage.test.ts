@@ -57,7 +57,6 @@ const LEGACY_RADIUS_LITERAL_FILES = [
   "src/features/calendar/month-card.tsx",
   "src/features/calendar/quick-entry-popup.tsx",
   "src/features/calendar/shift-selection-panel.tsx",
-  "src/features/calendar/year-overview.tsx",
   "src/features/day-editor/appointment-edit-overlay.tsx",
   "src/features/day-editor/appointment-recurrence-overlay.tsx",
   "src/features/day-editor/day-editor-components.tsx",

@@ -44,17 +44,27 @@ export const SHADOWS = {
 } as const;
 
 export const CALENDAR_METRICS = {
-  horizontalInset: 6,
-  weekdayHeight: 28,
-  weekdayFontSize: 15,
+  chipRadius: 2,
+  chipGap: 1,
+  chipHorizontalInset: 1,
+  chipTextColor: "#FFFFFF",
+  horizontalInset: 0,
+  weekdayHeight: 30,
+  weekdayFontSize: 12,
   weekNumberFontSize: 9,
   weekNumberInset: 1,
-  dayNumberHeight: 27,
-  dayNumberFontSize: 15,
-  weekRowHeight: 114,
+  dayNumberHeight: 38,
+  dayNumberFontSize: 17,
+  weekRowHeight: 118,
   entryRowHeight: 17,
   entryFontSize: 12,
   entryLineHeight: 15,
   cardRadius: 22,
   floatingActionSize: 40,
+} as const;
+
+export const CALENDAR_MINI_METRICS = {
+  rowHeight: 21,
+  daySize: 18,
+  fontSize: 10,
 } as const;

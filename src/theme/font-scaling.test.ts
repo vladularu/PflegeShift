@@ -13,14 +13,20 @@ const COMPACT_SCALE_ALLOWLIST = new Set([
 ]);
 
 const TEXT_SHRINK_ALLOWLIST = new Set([
+  // Opt-in stable calendar title only: full accessible label and font-scaled height.
+  "ui/screen-layout.tsx",
   "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
   "ui/shift-symbol.tsx",
 ]);
 
 const SINGLE_LINE_ALLOWLIST = new Set([
+  // Bounded prototype day cells; complete titles remain in each day's accessible label.
+  "features/calendar/calendar-prototype-canvas.tsx",
+  "features/calendar/prototype-entry-content.tsx",
   "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
+  "features/calendar/year-overview.tsx",
   "features/templates/shift-template-list.tsx",
   "ui/shift-symbol.tsx",
 ]);
@@ -29,11 +35,19 @@ function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) return sourceFiles(path);
-    return entry.name.endsWith(".tsx") ? [path] : [];
+    return entry.name.endsWith(".tsx") && !entry.name.endsWith(".test.tsx") ? [path] : [];
   });
 }
 
 describe("font scaling policy", () => {
+  it("keeps title fitting opt-in rather than shrinking other screen headers", () => {
+    const source = readFileSync(join(process.cwd(), "src/ui/screen-layout.tsx"), "utf8");
+    expect(source).toContain("stableTitle = false");
+    expect(source).toContain("adjustsFontSizeToFit={stableTitle}");
+    expect(source).toContain("numberOfLines={stableTitle ? 1 : undefined}");
+    expect(source).toContain("accessibilityLabel={title}");
+    expect(source).toContain("TYPOGRAPHY.hero.lineHeight * fontScale");
+  });
   it("leaves semantic text unlimited and permits 200% for compact glyphs", () => {
     expect(TEXT_MAX_SCALE).toBe(0);
     expect(COMPACT_TEXT_MAX_SCALE).toBeGreaterThanOrEqual(2);

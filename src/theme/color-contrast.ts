@@ -59,9 +59,9 @@ export function readableTextColor(backgroundColor: string): string {
   return lightContrast >= darkContrast ? LIGHT_TEXT : DARK_TEXT;
 }
 
-export function calendarChipPalette(backgroundColor: string, _dark: boolean) {
+export function calendarChipPalette(backgroundColor: string, dark: boolean) {
   const main = backgroundColor;
-  const detail = mixHexColors(backgroundColor, "#FFFFFF", 0.72);
+  const detail = mixHexColors(backgroundColor, dark ? "#242426" : "#FFFFFF", 0.72);
   return Object.freeze({
     main,
     detail,

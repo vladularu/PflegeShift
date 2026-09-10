@@ -19,6 +19,7 @@ import {
 import { DEV_TOOLS_AVAILABLE } from "@/infrastructure/dev-tools-policy";
 import { APP_RUNTIME_LABEL } from "@/infrastructure/app-version";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
+import { CalendarPerformanceControls } from "@/features/calendar/calendar-performance-controls";
 import {
   localBackupRoute,
   settingsEditorRoute,
@@ -149,6 +150,7 @@ export function SettingsScreen() {
           </SurfaceCard>
         </View>
 
+        <CalendarPerformanceControls />
         {DEV_TOOLS_AVAILABLE && developerMode ? (
           <View style={{ gap: SPACING.sm }}>
             <SectionHeader title="Intern" />

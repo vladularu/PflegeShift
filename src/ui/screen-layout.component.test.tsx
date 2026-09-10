@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react-native";
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
 import { Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { FadeIn, FadeOut } from "react-native-reanimated";
@@ -13,6 +13,31 @@ const SAFE_AREA_METRICS = {
 };
 
 describe("screen layout", () => {
+  it.each([1, 1.4, 2])(
+    "keeps calendar title geometry stable at font scale %s",
+    async (fontScale) => {
+      const dimensions = jest
+        .spyOn(
+          jest.requireActual<typeof import("react-native")>("react-native"),
+          "useWindowDimensions",
+        )
+        .mockReturnValue({ width: 430, height: 932, scale: 3, fontScale });
+      try {
+        const screen = await render(
+          <TabScreenHeader stableTitle title="September 2027" accessory={<Text>Buttons</Text>} />,
+        );
+        const height = Math.ceil(41 * fontScale);
+        expect(screen.getByRole("header", { name: "September 2027" })).toHaveStyle({ height });
+        await screen.rerender(
+          <TabScreenHeader stableTitle title="2027" accessory={<Text>Buttons</Text>} />,
+        );
+        expect(screen.getByRole("header", { name: "2027" })).toHaveStyle({ height });
+        await screen.unmount();
+      } finally {
+        dimensions.mockRestore();
+      }
+    },
+  );
   it("applies the shared content rhythm to scroll screens", async () => {
     const screen = await render(
       <ScreenScrollView bottomPadding={64} testID="screen-shell">

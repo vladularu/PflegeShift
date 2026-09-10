@@ -3,10 +3,8 @@ import { memo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Extrapolation,
-  FadeIn,
   FadeInDown,
   FadeInUp,
-  FadeOut,
   FadeOutDown,
   FadeOutUp,
   interpolate,
@@ -16,6 +14,10 @@ import Animated, {
 
 import type { CalendarViewMode } from "@/domain/types";
 import { formatMonthTitle } from "@/engine/calendar";
+import {
+  calendarHeaderFadeIn,
+  calendarHeaderFadeOut,
+} from "@/features/calendar/calendar-view-transition";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { CONTROL_HEIGHT, RADII } from "@/theme/tokens";
@@ -27,7 +29,12 @@ function HeaderIconButton({
   onPress,
 }: {
   readonly label: string;
-  readonly name: "calendar-number-outline" | "options-outline" | "chevron-back" | "chevron-forward";
+  readonly name:
+    | "calendar-number-outline"
+    | "options-outline"
+    | "chevron-back"
+    | "chevron-forward"
+    | "alert-circle-outline";
   readonly onPress: () => void;
 }) {
   const palette = usePalette();
@@ -46,6 +53,7 @@ function HeaderIconButton({
 
 export const CalendarHeader = memo(function CalendarHeader({
   month,
+  referenceMonth,
   viewMode,
   onOpenYear,
   onOpenDisplay,
@@ -54,8 +62,11 @@ export const CalendarHeader = memo(function CalendarHeader({
   plannerTransition,
   direction = "NEXT",
   transition = "SPATIAL",
+  synchronized = false,
+  notice,
 }: {
   readonly month: string;
+  readonly referenceMonth: string;
   readonly viewMode: CalendarViewMode;
   readonly onOpenYear: () => void;
   readonly onOpenDisplay: () => void;
@@ -64,16 +75,21 @@ export const CalendarHeader = memo(function CalendarHeader({
   readonly plannerTransition: SharedValue<number>;
   readonly direction?: "NEXT" | "PREVIOUS";
   readonly transition?: "SPATIAL" | "CROSSFADE";
+  readonly synchronized?: boolean;
+  readonly notice?: string;
 }) {
   const palette = usePalette();
   const year = month.slice(0, 4);
   const monthName = formatMonthTitle(month).replace(/\s+\d{4}$/, "");
-  const title = viewMode === "YEAR" ? year : monthName;
+  const title =
+    viewMode === "YEAR"
+      ? year
+      : year === referenceMonth.slice(0, 4)
+        ? monthName
+        : formatMonthTitle(month);
   const titleEntering =
     transition === "CROSSFADE"
-      ? FadeIn.duration(MOTION.duration.deliberate)
-          .easing(MOTION.easing.calm)
-          .reduceMotion(MOTION.reduceMotion)
+      ? calendarHeaderFadeIn()
       : (direction === "NEXT" ? FadeInDown : FadeInUp)
           .duration(MOTION.duration.normal)
           .easing(MOTION.easing.calm)
@@ -83,9 +99,7 @@ export const CalendarHeader = memo(function CalendarHeader({
           .reduceMotion(MOTION.reduceMotion);
   const titleExiting =
     transition === "CROSSFADE"
-      ? FadeOut.duration(MOTION.duration.deliberate)
-          .easing(MOTION.easing.calm)
-          .reduceMotion(MOTION.reduceMotion)
+      ? calendarHeaderFadeOut()
       : (direction === "NEXT" ? FadeOutUp : FadeOutDown)
           .duration(MOTION.duration.normal)
           .easing(MOTION.easing.calm)
@@ -116,41 +130,71 @@ export const CalendarHeader = memo(function CalendarHeader({
           ]}
           testID="calendar-header-actions"
         >
-          {viewMode === "MONTH" ? (
-            <>
-              <HeaderIconButton
-                label={`${year}, Jahresansicht öffnen`}
-                name="calendar-number-outline"
-                onPress={onOpenYear}
-              />
-              <View style={[styles.separator, { backgroundColor: palette.separator }]} />
-              <HeaderIconButton
-                label="Kalenderdarstellung öffnen"
-                name="options-outline"
-                onPress={onOpenDisplay}
-              />
-            </>
-          ) : (
-            <>
-              <HeaderIconButton
-                label="Vorheriges Jahr"
-                name="chevron-back"
-                onPress={() => onMoveYear(-1)}
-              />
-              <View style={[styles.separator, { backgroundColor: palette.separator }]} />
-              <HeaderIconButton
-                label="Nächstes Jahr"
-                name="chevron-forward"
-                onPress={() => onMoveYear(1)}
-              />
-            </>
-          )}
+          <Animated.View
+            key={synchronized ? "calendar-controls" : viewMode}
+            entering={synchronized ? undefined : calendarHeaderFadeIn()}
+            exiting={synchronized ? undefined : calendarHeaderFadeOut()}
+            style={styles.modeActions}
+            testID="calendar-header-mode-actions"
+          >
+            {viewMode === "MONTH" ? (
+              <>
+                <HeaderIconButton
+                  label={`${year}, Jahresansicht öffnen`}
+                  name="calendar-number-outline"
+                  onPress={onOpenYear}
+                />
+                <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+                <HeaderIconButton
+                  label={
+                    notice
+                      ? `Kalenderdarstellung öffnen. Hinweis: ${notice}`
+                      : "Kalenderdarstellung öffnen"
+                  }
+                  name="options-outline"
+                  onPress={onOpenDisplay}
+                />
+              </>
+            ) : (
+              <>
+                <HeaderIconButton
+                  label="Vorheriges Jahr"
+                  name="chevron-back"
+                  onPress={() => onMoveYear(-1)}
+                />
+                <View style={[styles.separator, { backgroundColor: palette.separator }]} />
+                <HeaderIconButton
+                  label="Nächstes Jahr"
+                  name="chevron-forward"
+                  onPress={() => onMoveYear(1)}
+                />
+              </>
+            )}
+          </Animated.View>
+          {notice && viewMode === "MONTH" ? (
+            <View
+              pointerEvents="none"
+              accessible={false}
+              testID="calendar-notice-badge"
+              style={{
+                position: "absolute",
+                right: 6,
+                top: 6,
+                width: 6,
+                height: 6,
+                borderRadius: RADII.pill,
+                backgroundColor: palette.primary,
+              }}
+            />
+          ) : null}
         </Animated.View>
       }
       title={title}
-      titleEntering={titleEntering}
-      titleExiting={titleExiting}
-      titleKey={`${viewMode}-${title}`}
+      stableTitle={synchronized}
+      titleColor={viewMode === "YEAR" ? palette.calendarYearAccent : undefined}
+      titleEntering={synchronized ? undefined : titleEntering}
+      titleExiting={synchronized ? undefined : titleExiting}
+      titleKey={synchronized ? "calendar-title" : `${viewMode}-${title}`}
     />
   );
 });
@@ -170,6 +214,10 @@ const styles = StyleSheet.create({
     height: CONTROL_HEIGHT.compact,
     alignItems: "center",
     justifyContent: "center",
+  },
+  modeActions: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   separator: {
     width: StyleSheet.hairlineWidth,

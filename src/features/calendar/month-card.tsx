@@ -21,7 +21,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import type { CalendarEntry, CalendarLabelMode, UserProfile } from "@/domain/types";
-import { createMonthGrid, formatDateTitle, isoWeekNumber, today } from "@/engine/calendar";
+import { createMonthGrid, formatDateTitle, today } from "@/engine/calendar";
 import { calendarShiftDetail, calendarEntryPreview } from "@/features/calendar/calendar-display";
 import {
   calculateCalendarGridLayout,
@@ -43,11 +43,13 @@ import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
 import { CALENDAR_METRICS, SPACING } from "@/theme/tokens";
 import { usePressMotion } from "@/ui/press-motion";
 import { ShiftSymbol } from "@/ui/shift-symbol";
+import { useMorphDayStyle, useCalendarMorphMeasurement } from "./calendar-morph-measurement";
 
 const WEEKDAYS = ["M", "D", "M", "D", "F", "S", "S"];
 const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
 type CalendarCell = ReturnType<typeof createMonthGrid>[number];
 interface DayCellProps {
+  readonly morphEnabled: boolean;
   readonly cell: CalendarCell;
   readonly entries: readonly CalendarEntry[];
   readonly holidayName?: string;
@@ -66,7 +68,6 @@ interface DayCellProps {
   readonly showShiftDuration: boolean;
   readonly timeZone: string;
   readonly entryRowCapacity: number;
-  readonly weekNumber?: number;
 }
 const EntryMark = memo(function EntryMark({
   labelMode,
@@ -227,6 +228,7 @@ const EmptyStampSlot = memo(function EmptyStampSlot({
 });
 const DayCell = memo(
   function DayCell({
+    morphEnabled,
     cell,
     entries,
     holidayName,
@@ -241,11 +243,30 @@ const DayCell = memo(
     showShiftDuration,
     timeZone,
     entryRowCapacity,
-    weekNumber,
   }: DayCellProps) {
     const palette = usePalette();
     const pressMotion = usePressMotion(1, 0.985);
     const cellRef = useRef<View>(null);
+    const { fontScale } = useWindowDimensions();
+    const dayNumberRef = useCalendarMorphMeasurement(
+      {
+        kind: "DAY",
+        month: cell.date.slice(0, 7),
+        date: cell.date,
+        fontSize: CALENDAR_METRICS.dayNumberFontSize * Math.min(fontScale, COMPACT_TEXT_MAX_SCALE),
+        color: isSelected
+          ? palette.onCalendarSelection
+          : cell.weekend
+            ? palette.textMuted
+            : palette.text,
+        mutedColor: palette.textMuted,
+        today: isToday ? cell.date : "",
+        todayColor: palette.onCalendarToday,
+        todayBackground: palette.calendarToday,
+      },
+      morphEnabled,
+    );
+    const dayNumberStyle = useMorphDayStyle(cell.date, morphEnabled);
     const detailed = showShiftTimes || showShiftDuration;
     const preview = useMemo(
       () =>
@@ -289,64 +310,46 @@ const DayCell = memo(
           style={({ pressed }: PressableStateCallbackType) => ({
             flex: 1,
             minWidth: 0,
-            marginHorizontal: 0.25,
-            marginVertical: 2,
+            marginHorizontal: 0,
+            marginVertical: 0,
             opacity: 1,
             overflow: "hidden",
-            borderRadius: 4,
-            borderCurve: "continuous",
-            backgroundColor: pressed
-              ? palette.primarySoft
-              : !cell.inMonth
-                ? palette.outsideMonth
-                : cell.weekend
-                  ? palette.weekend
-                  : "transparent",
-            paddingHorizontal: 1,
-            paddingTop: 0,
+            borderRadius: 0,
+            backgroundColor: pressed ? palette.primarySoft : "transparent",
+            paddingHorizontal: 5,
+            paddingTop: 8,
           })}
         >
           <View
             style={{
               height: CALENDAR_METRICS.dayNumberHeight,
-              alignItems: "center",
+              alignItems: "flex-start",
               justifyContent: "flex-start",
               pointerEvents: "none",
             }}
           >
-            {weekNumber === undefined ? null : (
-              <Text
-                accessible={false}
-                maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-                style={{
-                  position: "absolute",
-                  top: 2,
-                  left: CALENDAR_METRICS.weekNumberInset,
-                  color: palette.textMuted,
-                  fontSize: CALENDAR_METRICS.weekNumberFontSize,
-                  fontWeight: "500",
-                  fontVariant: ["tabular-nums"],
-                }}
-              >
-                {weekNumber}
-              </Text>
-            )}
-            <View
-              style={{
-                minWidth: 26,
-                height: 20,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: isSelected && !isToday ? 1 : 0,
-                borderColor: isSelected && !isToday ? palette.calendarSelection : "transparent",
-                borderRadius: 10,
-                backgroundColor: isToday
-                  ? palette.calendarToday
-                  : isSelected
-                    ? palette.calendarSelection
-                    : "transparent",
-                paddingHorizontal: 4,
-              }}
+            <Animated.View
+              ref={dayNumberRef}
+              testID={`calendar-day-number-${cell.date}`}
+              collapsable={false}
+              style={[
+                {
+                  minWidth: 30,
+                  height: 30,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: isSelected && !isToday ? 1 : 0,
+                  borderColor: isSelected && !isToday ? palette.calendarSelection : "transparent",
+                  borderRadius: 15,
+                  backgroundColor: isToday
+                    ? palette.calendarToday
+                    : isSelected
+                      ? palette.calendarSelection
+                      : "transparent",
+                  paddingHorizontal: 4,
+                },
+                dayNumberStyle,
+              ]}
             >
               <Text
                 maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
@@ -356,7 +359,9 @@ const DayCell = memo(
                     : isSelected
                       ? palette.onCalendarSelection
                       : cell.inMonth
-                        ? palette.text
+                        ? cell.weekend
+                          ? palette.textMuted
+                          : palette.text
                         : palette.textMuted,
                   fontSize: CALENDAR_METRICS.dayNumberFontSize,
                   fontWeight: isToday || isSelected ? "700" : "500",
@@ -365,7 +370,7 @@ const DayCell = memo(
               >
                 {cell.day}
               </Text>
-            </View>
+            </Animated.View>
             {holidayName ? (
               <Text
                 maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
@@ -438,6 +443,7 @@ const DayCell = memo(
     );
   },
   (previous, next) =>
+    previous.morphEnabled === next.morphEnabled &&
     previous.cell === next.cell &&
     previous.labelMode === next.labelMode &&
     calendarEntryListsEqual(previous.entries, next.entries) &&
@@ -451,8 +457,7 @@ const DayCell = memo(
     previous.stampMode === next.stampMode &&
     previous.stampTransitionProgress === next.stampTransitionProgress &&
     previous.stampToolLabel === next.stampToolLabel &&
-    previous.timeZone === next.timeZone &&
-    previous.weekNumber === next.weekNumber,
+    previous.timeZone === next.timeZone,
 );
 
 interface MonthCardProps {
@@ -573,16 +578,10 @@ export const MonthCard = memo(function MonthCard({
     >
       <View
         style={{
-          width: contentWidth - CALENDAR_METRICS.horizontalInset * 2,
+          width: contentWidth,
           overflow: "hidden",
-          borderWidth: 1,
-          borderColor: palette.separator,
-          borderRadius: CALENDAR_METRICS.cardRadius,
-          borderCurve: "continuous",
-          backgroundColor: palette.surface,
-          boxShadow: palette.dark ? undefined : `0 1px 2px ${palette.shadow}`,
-          marginHorizontal: CALENDAR_METRICS.horizontalInset,
-          marginTop: 2,
+          backgroundColor: palette.background,
+          marginTop: 0,
         }}
       >
         {testData ? (
@@ -615,13 +614,13 @@ export const MonthCard = memo(function MonthCard({
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: 4,
-                backgroundColor: index >= 5 ? palette.weekend : "transparent",
+                backgroundColor: "transparent",
               }}
             >
               <Text
                 maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
                 style={{
-                  color: index >= 5 ? palette.textMuted : palette.textSecondary,
+                  color: palette.textSecondary,
                   fontSize: CALENDAR_METRICS.weekdayFontSize,
                   fontWeight: "400",
                 }}
@@ -644,6 +643,7 @@ export const MonthCard = memo(function MonthCard({
           >
             {week.map((cell, dayIndex) => (
               <DayCell
+                morphEnabled={accessibilityVisible && cell.inMonth}
                 key={cell.date}
                 cell={cell}
                 labelMode={labelMode}
@@ -659,7 +659,6 @@ export const MonthCard = memo(function MonthCard({
                 stampTransitionProgress={stampProgress}
                 stampToolLabel={stampToolLabel}
                 timeZone={profile.timeZone}
-                weekNumber={dayIndex === 0 ? isoWeekNumber(week[0].date) : undefined}
               />
             ))}
           </View>

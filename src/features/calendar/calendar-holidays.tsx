@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { View } from "react-native";
 
 import type { UserProfile } from "@/domain/types";
-import { createMonthGrid } from "@/engine/calendar";
 import { resolveHolidayMapForMonths, type HolidayMonthResolution } from "@/engine/holidays";
 import type { RuleResolver } from "@/rules/rule-resolver";
 import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
@@ -22,9 +21,8 @@ export function useCalendarHolidayResolution(
 ): HolidayMonthResolution {
   return useMemo(() => {
     if (profile === null || !showHolidays) return HOLIDAYS_HIDDEN;
-    const grid = createMonthGrid(month);
     return resolveHolidayMapForMonths(
-      [grid[0].date.slice(0, 7), month, grid[grid.length - 1].date.slice(0, 7)],
+      [month],
       profile.federalState,
       ruleResolver,
       profile.holidayRegion,
