@@ -323,7 +323,7 @@ export function DayEditorForm({
           durationMinutes={durationMinutes}
           endTime={endTime}
           error={error}
-          locationName={shiftLocation?.name ?? null}
+          location={shiftLocation}
           note={shiftNote}
           notification={shiftNotification}
           onAlarmPress={() => setOptionSheet("ALARM")}
@@ -419,7 +419,7 @@ export function DayEditorForm({
         durationMinutes={durationMinutes}
         endTime={appointmentEnd}
         error={error}
-        locationName={appointmentLocation?.name ?? null}
+        location={appointmentLocation}
         note={appointmentNote}
         notification={appointmentNotification}
         onAllDayChange={setAllDay}

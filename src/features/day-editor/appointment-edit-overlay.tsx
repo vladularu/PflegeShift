@@ -2,7 +2,8 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
-import type { EntryNotification, RecurrenceRule } from "@/domain/types";
+import type { EntryLocation, EntryNotification, RecurrenceRule } from "@/domain/types";
+import { LocationPreview } from "@/features/location/location-preview";
 import { AppointmentRecurrenceOverlay } from "@/features/day-editor/appointment-recurrence-overlay";
 import { EntryEditOverlayFrame } from "@/features/day-editor/entry-edit-overlay-frame";
 import { notificationLabel, recurrenceLabel } from "@/features/day-editor/entry-options";
@@ -86,7 +87,7 @@ export function AppointmentEditOverlay({
   durationMinutes,
   endTime,
   error,
-  locationName,
+  location,
   note,
   notification,
   onAllDayChange,
@@ -112,7 +113,7 @@ export function AppointmentEditOverlay({
   readonly durationMinutes: number | null;
   readonly endTime: string;
   readonly error: string | null;
-  readonly locationName: string | null;
+  readonly location: EntryLocation | null;
   readonly note: string;
   readonly notification: EntryNotification | null;
   readonly onAllDayChange: (value: boolean) => void;
@@ -133,6 +134,7 @@ export function AppointmentEditOverlay({
 }) {
   const palette = usePalette();
   const [notificationVisible, setNotificationVisible] = useState(false);
+  const locationName = location?.name ?? null;
   const [recurrenceVisible, setRecurrenceVisible] = useState(false);
   const openNotificationPicker = () => {
     if (Platform.OS !== "ios") {
@@ -273,6 +275,7 @@ export function AppointmentEditOverlay({
               ) : null}
             </View>
           </View>
+          {location ? <LocationPreview location={location} /> : null}
         </View>
       }
       date={date}

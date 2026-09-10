@@ -5,7 +5,7 @@ import type { GeocodedEntryLocation } from "@/domain/types";
 export function LocationMap({ location }: { readonly location: GeocodedEntryLocation }) {
   return (
     <MapView
-      initialRegion={{
+      region={{
         latitude: location.latitude,
         longitude: location.longitude,
         latitudeDelta: 0.018,
