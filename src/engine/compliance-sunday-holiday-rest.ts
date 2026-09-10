@@ -72,8 +72,15 @@ function dateLabel(date: Temporal.PlainDate): string {
   return `${String(date.day).padStart(2, "0")}.${String(date.month).padStart(2, "0")}.${date.year}`;
 }
 
+// Calendar boundaries do not depend on shifts or rules. Share this expensive
+// timezone conversion across all twelve monthly checks, including a cold report.
+const dayStarts = new Map<string, Temporal.ZonedDateTime>();
+
 function dayStart(date: Temporal.PlainDate, timeZone: string): Temporal.ZonedDateTime {
-  return Temporal.ZonedDateTime.from(
+  const key = `${timeZone}:${date.toString()}`;
+  const cached = dayStarts.get(key);
+  if (cached) return cached;
+  const value = Temporal.ZonedDateTime.from(
     {
       timeZone,
       year: date.year,
@@ -84,11 +91,20 @@ function dayStart(date: Temporal.PlainDate, timeZone: string): Temporal.ZonedDat
     },
     { disambiguation: "earlier" },
   );
+  if (dayStarts.size >= 2048) dayStarts.delete(dayStarts.keys().next().value!);
+  dayStarts.set(key, value);
+  return value;
 }
 
-function minutesBetween(left: Temporal.ZonedDateTime, right: Temporal.ZonedDateTime): number {
-  return Math.round(Number(right.epochMilliseconds - left.epochMilliseconds) / 60_000);
-}
+const intervalCalendarDates = new WeakMap<
+  Interval,
+  {
+    readonly start: Temporal.ZonedDateTime;
+    readonly end: Temporal.ZonedDateTime;
+    readonly timeZone: string;
+    readonly dates: readonly string[];
+  }
+>();
 
 function* workByCalendarDateIncrementally(
   intervals: readonly Interval[],
@@ -97,18 +113,36 @@ function* workByCalendarDateIncrementally(
   const result = new Map<string, Interval[]>();
   let processed = 0;
   for (const interval of intervals) {
-    for (let date = interval.start.toPlainDate(); ; date = date.add({ days: 1 })) {
-      const start = dayStart(date, timeZone);
-      if (Temporal.ZonedDateTime.compare(start, interval.end) >= 0) break;
-      const end = dayStart(date.add({ days: 1 }), timeZone);
-      if (
-        Temporal.ZonedDateTime.compare(interval.start, end) < 0 &&
-        Temporal.ZonedDateTime.compare(interval.end, start) > 0
-      ) {
-        const entries = result.get(date.toString()) ?? [];
-        entries.push(interval);
-        result.set(date.toString(), entries);
+    const cached = intervalCalendarDates.get(interval);
+    let dates: readonly string[];
+    if (
+      cached?.start === interval.start &&
+      cached.end === interval.end &&
+      cached.timeZone === timeZone
+    ) {
+      dates = cached.dates;
+    } else {
+      const computed: string[] = [];
+      const intervalStart = interval.start.epochMilliseconds;
+      const intervalEnd = interval.end.epochMilliseconds;
+      for (let date = interval.start.toPlainDate(); ; date = date.add({ days: 1 })) {
+        const start = dayStart(date, timeZone).epochMilliseconds;
+        if (start >= intervalEnd) break;
+        const end = dayStart(date.add({ days: 1 }), timeZone).epochMilliseconds;
+        if (intervalStart < end && intervalEnd > start) computed.push(date.toString());
       }
+      dates = computed;
+      intervalCalendarDates.set(interval, {
+        start: interval.start,
+        end: interval.end,
+        timeZone,
+        dates,
+      });
+    }
+    for (const date of dates) {
+      const entries = result.get(date) ?? [];
+      entries.push(interval);
+      result.set(date, entries);
     }
     processed += 1;
     if (processed % 24 === 0) yield processed;
@@ -142,29 +176,31 @@ function* knownHolidayDatesIncrementally(
 
 function observedRestAroundCalendarDay(
   date: Temporal.PlainDate,
-  intervals: readonly Interval[],
+  intervals: readonly { readonly start: number; readonly end: number }[],
   timeZone: string,
 ): number | null {
-  const start = dayStart(date, timeZone);
-  const end = dayStart(date.add({ days: 1 }), timeZone);
-  let previousEnd: Temporal.ZonedDateTime | null = null;
-  let nextStart: Temporal.ZonedDateTime | null = null;
+  const start = dayStart(date, timeZone).epochMilliseconds;
+  const end = dayStart(date.add({ days: 1 }), timeZone).epochMilliseconds;
+  let previousEnd: number | null = null;
+  let nextStart: number | null = null;
   for (const interval of intervals) {
-    if (Temporal.ZonedDateTime.compare(interval.end, start) <= 0) {
-      if (previousEnd === null || Temporal.ZonedDateTime.compare(interval.end, previousEnd) > 0) {
+    if (interval.end <= start) {
+      if (previousEnd === null || interval.end > previousEnd) {
         previousEnd = interval.end;
       }
-    } else if (nextStart === null && Temporal.ZonedDateTime.compare(interval.start, end) >= 0) {
+    } else if (nextStart === null && interval.start >= end) {
       nextStart = interval.start;
     }
   }
-  return previousEnd === null || nextStart === null ? null : minutesBetween(previousEnd, nextStart);
+  return previousEnd === null || nextStart === null
+    ? null
+    : Math.round((nextStart - previousEnd) / 60_000);
 }
 
 function replacementCandidate(
   date: Temporal.PlainDate,
   entriesByDate: ReadonlyMap<string, readonly ShiftEntry[]>,
-  intervals: readonly Interval[],
+  intervals: readonly { readonly start: number; readonly end: number }[],
   workDates: ReadonlyMap<string, readonly Interval[]>,
   holidayDates: ReadonlySet<string>,
   evidenceShiftType: ShiftEntry["type"],
@@ -182,18 +218,18 @@ function replacementCandidate(
     return null;
   }
 
-  const start = dayStart(date, timeZone);
-  const end = dayStart(date.add({ days: 1 }), timeZone);
-  let previousEnd: Temporal.ZonedDateTime | null = null;
-  let nextStart: Temporal.ZonedDateTime | null = null;
+  const start = dayStart(date, timeZone).epochMilliseconds;
+  const end = dayStart(date.add({ days: 1 }), timeZone).epochMilliseconds;
+  let previousEnd: number | null = null;
+  let nextStart: number | null = null;
   for (const interval of intervals) {
-    if (Temporal.ZonedDateTime.compare(interval.end, start) <= 0) {
-      if (previousEnd === null || Temporal.ZonedDateTime.compare(interval.end, previousEnd) > 0) {
+    if (interval.end <= start) {
+      if (previousEnd === null || interval.end > previousEnd) {
         previousEnd = interval.end;
       }
       continue;
     }
-    if (Temporal.ZonedDateTime.compare(interval.start, end) >= 0) {
+    if (interval.start >= end) {
       nextStart = interval.start;
       break;
     }
@@ -203,7 +239,9 @@ function replacementCandidate(
     date,
     evidence: entries,
     observedRestMinutes:
-      previousEnd === null || nextStart === null ? null : minutesBetween(previousEnd, nextStart),
+      previousEnd === null || nextStart === null
+        ? null
+        : Math.round((nextStart - previousEnd) / 60_000),
   };
 }
 
@@ -267,34 +305,35 @@ function matchObligations(
   const unmatched: RestObligation[] = [];
   const available = new Set(candidates);
   const matched: ObligationMatch[] = [];
+  // Calendar-day distance, not elapsed hours: preserve matching across DST changes.
+  const epoch = Temporal.PlainDate.from("1970-01-01");
+  const ranked = candidates.map((candidate) => ({
+    candidate,
+    day: candidate.date.since(epoch).days,
+    quality:
+      candidate.observedRestMinutes === null
+        ? 2
+        : candidate.observedRestMinutes >= requiredRestMinutes
+          ? 0
+          : 1,
+  }));
   for (const obligation of obligations) {
-    const candidate = candidates
-      .filter(
-        (item) =>
-          available.has(item) &&
-          Temporal.PlainDate.compare(item.date, obligation.windowStart) >= 0 &&
-          Temporal.PlainDate.compare(item.date, obligation.windowEnd) <= 0,
+    const start = obligation.windowStart.since(epoch).days;
+    const end = obligation.windowEnd.since(epoch).days;
+    const day = obligation.date.since(epoch).days;
+    let best: (typeof ranked)[number] | undefined;
+    for (const item of ranked) {
+      if (!available.has(item.candidate) || item.day < start || item.day > end) continue;
+      if (
+        best === undefined ||
+        item.quality < best.quality ||
+        (item.quality === best.quality &&
+          (Math.abs(item.day - day) < Math.abs(best.day - day) ||
+            (Math.abs(item.day - day) === Math.abs(best.day - day) && item.day < best.day)))
       )
-      .sort((left, right) => {
-        const leftQuality =
-          left.observedRestMinutes === null
-            ? 2
-            : left.observedRestMinutes >= requiredRestMinutes
-              ? 0
-              : 1;
-        const rightQuality =
-          right.observedRestMinutes === null
-            ? 2
-            : right.observedRestMinutes >= requiredRestMinutes
-              ? 0
-              : 1;
-        return (
-          leftQuality - rightQuality ||
-          Math.abs(obligation.date.until(left.date).days) -
-            Math.abs(obligation.date.until(right.date).days) ||
-          Temporal.PlainDate.compare(left.date, right.date)
-        );
-      })[0];
+        best = item;
+    }
+    const candidate = best?.candidate;
     if (candidate === undefined) {
       unmatched.push(obligation);
     } else {
@@ -413,12 +452,18 @@ export function* checkSundayHolidayRestIncrementally(
     Temporal.PlainDate.from(coverageEndValue),
   );
   const candidates: ReplacementCandidate[] = [];
+  // Inputs are minute-precision instants; convert once, outside the candidate loop.
+  // Day boundaries still use Temporal in the profile's time zone (including DST).
+  const restIntervals = intervals.map((interval) => ({
+    start: interval.start.epochMilliseconds,
+    end: interval.end.epochMilliseconds,
+  }));
   let processedCandidates = 0;
   for (const date of candidateDates) {
     const candidate = replacementCandidate(
       date,
       entriesByDate,
-      intervals,
+      restIntervals,
       workDates,
       holidayDates,
       restRules.evidenceShiftType,
@@ -513,7 +558,7 @@ export function* checkSundayHolidayRestIncrementally(
     if (workDates.has(dateValue) || (date.dayOfWeek !== 7 && !holidayDates.has(dateValue))) {
       continue;
     }
-    const observedRest = observedRestAroundCalendarDay(date, intervals, timeZone);
+    const observedRest = observedRestAroundCalendarDay(date, restIntervals, timeZone);
     if (observedRest !== null && observedRest < requiredRestMinutes) {
       issues.push(
         issue(

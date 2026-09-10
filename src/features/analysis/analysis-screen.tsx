@@ -22,6 +22,7 @@ import type {
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { calculateMonthlyAnalysis } from "@/features/analysis/monthly-analysis";
 import { AnnualReportRuleFailure } from "@/features/analysis/annual-report-failure";
+import { AnalysisYearHeader } from "@/features/analysis/analysis-period-header";
 import { AnalysisCoverageNote } from "@/features/analysis/analysis-coverage-note";
 import {
   AnalysisMonthHeader,
@@ -146,7 +147,7 @@ export function AnalysisScreen({
     profile?.tariff !== null,
   );
   const annualReport = useDeferredAnnualReport({
-    enabled: isFocused && period === "YEAR" && annualInputs !== null,
+    enabled: ready && !error && isFocused && period === "YEAR" && annualInputs !== null,
     entries: annualInputs?.ok ? annualInputs.value.entries : entries,
     profile,
     ruleResolver,
@@ -194,11 +195,23 @@ export function AnalysisScreen({
         />
       );
     }
-    if (annualReport.report === null)
-      return <LoadingView label="Jahresauswertung wird berechnet …" />;
+    const visibleReport = annualReport.report ?? annualReport.coreReport;
+    if (!ready || visibleReport === null)
+      return (
+        <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
+          <AnalysisYearHeader
+            year={year}
+            onPrevious={() => moveYear(-1)}
+            onNext={() => moveYear(1)}
+            onOpenMonth={() => changePeriod("MONTH")}
+          />
+          <LoadingView label="Jahresauswertung wird berechnet …" />
+        </View>
+      );
     return (
       <AnnualReportScreen
-        report={annualReport.report}
+        report={visibleReport}
+        pending={annualReport.report === null}
         testMonths={testMonths}
         onBackToMonth={() => changePeriod("MONTH")}
         onMoveYear={moveYear}

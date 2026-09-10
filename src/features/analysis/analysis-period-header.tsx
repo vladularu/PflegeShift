@@ -59,7 +59,7 @@ export function AnalysisYearHeader({
   onOpenMonth,
 }: {
   readonly year: number;
-  readonly activeMonthCount: number;
+  readonly activeMonthCount?: number;
   readonly onPrevious: () => void;
   readonly onNext: () => void;
   readonly onOpenMonth: () => void;
@@ -73,7 +73,7 @@ export function AnalysisYearHeader({
       onPrevious={onPrevious}
       onToggle={onOpenMonth}
       previousAccessibilityLabel={`Vorheriges Jahr, aktuell ${label}`}
-      secondaryLabel={`${activeMonthCount} Monate mit Einträgen`}
+      secondaryLabel={`${activeMonthCount ?? "…"} Monate mit Einträgen`}
       testID="analysis-year-toolbar"
       toggleAccessibilityLabel="Monatsauswertung öffnen"
     />

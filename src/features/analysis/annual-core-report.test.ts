@@ -5,7 +5,10 @@ import holiday2027Value from "../../../rules/packages/reviewed/de-holidays/2027.
 import legalValue from "../../../rules/packages/reviewed/de-arbzg-care/2026-01.json";
 import tariffValue from "../../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json";
 import type { CalendarEntry, ShiftEntry, UserProfile } from "@/domain/types";
-import { buildAnnualAvailableReportSteps } from "@/features/analysis/annual-core-report";
+import {
+  buildAnnualAvailableReportSteps,
+  createAnnualAvailableReportCache,
+} from "@/features/analysis/annual-core-report";
 import type {
   RuleHolidayPackage,
   RuleLegalPackage,
@@ -98,6 +101,93 @@ function build(ruleResolver: ReturnType<typeof resolver>, activeProfile: UserPro
 }
 
 describe("available annual report", () => {
+  it("yields current core data before touching any rule-bound calculation", () => {
+    let core: { actualMinutes: number; entryCount: number } | undefined;
+    const rules = resolver({});
+    const steps = buildAnnualAvailableReportSteps(
+      2027,
+      [shift("work", "2027-05-02")],
+      profile,
+      [],
+      { workplaceCoverage: "UNKNOWN", assignment: "UNKNOWN", updatedAt: null },
+      "2027-05-03",
+      {
+        ...rules,
+        resolveHoliday: () => {
+          throw new Error("not yet");
+        },
+      },
+      {
+        onCore: (report) => {
+          core = report;
+        },
+      },
+    );
+    expect(steps.next()).toEqual({ done: false, value: 0 });
+    expect(core).toMatchObject({ actualMinutes: 450, entryCount: 1 });
+    expect(() => steps.next()).toThrow("not yet");
+  });
+
+  it("recomputes dependency windows after same-revision edits, additions and deletions", () => {
+    const rules = resolver({});
+    const cache = createAnnualAvailableReportCache();
+    const run = (
+      entries: readonly CalendarEntry[],
+      reuse = true,
+      date = "2027-06-01",
+      activeProfile = profile,
+      activeRules = rules,
+    ) => {
+      const steps = buildAnnualAvailableReportSteps(
+        2027,
+        entries,
+        activeProfile,
+        [],
+        { workplaceCoverage: "UNKNOWN", assignment: "UNKNOWN", updatedAt: null },
+        date,
+        activeRules,
+        reuse ? { cache } : {},
+      );
+      for (;;) {
+        const next = steps.next();
+        if (next.done) return next.value;
+      }
+    };
+    const initial = [shift("january", "2027-01-03"), shift("may", "2027-05-02")];
+    const expected = run(initial);
+    const january = { ...cache.get(rules)!.get("2027-01")! };
+    const may = { ...cache.get(rules)!.get("2027-05")! };
+    const december = { ...cache.get(rules)!.get("2027-12")! };
+    const fresh = JSON.parse(JSON.stringify(initial)) as CalendarEntry[];
+    expect(run(fresh)).toEqual(expected);
+    expect(cache.get(rules)!.get("2027-01")!.compliance!.value).toBe(january.compliance!.value);
+    const changed = [initial[0]!, { ...initial[1]!, endTime: "18:00" }];
+    expect(run(changed)).toEqual(run(changed, false));
+    expect(cache.get(rules)!.get("2027-01")!.summary!.value).toBe(january.summary!.value);
+    expect(cache.get(rules)!.get("2027-05")!.summary!.value).not.toBe(may.summary!.value);
+    // Legal annual coverage crosses month boundaries; December pay does not depend on May.
+    expect(cache.get(rules)!.get("2027-01")!.compliance!.value).not.toBe(january.compliance!.value);
+    expect(cache.get(rules)!.get("2027-12")!.pay!.value).toBe(december.pay!.value);
+    for (const entries of [
+      [...changed, shift("new", "2027-06-01")],
+      [changed[0]!, { ...changed[1]!, deletedAt: "2027-06-01T00:00:00Z" }],
+      [...initial, shift("boundary", "2026-12-31")],
+    ])
+      expect(run(entries)).toEqual(run(entries, false));
+    for (const activeProfile of [
+      { ...profile, weeklyMinutes: 1800 },
+      { ...profile, timeZone: "UTC" },
+    ]) {
+      expect(run(initial, true, "2027-07-01", activeProfile)).toEqual(
+        run(initial, false, "2027-07-01", activeProfile),
+      );
+    }
+    const missing = resolver({ holiday: false });
+    expect(run(initial, true, "2027-07-01", profile, missing)).toEqual(
+      run(initial, false, "2027-07-01", profile, missing),
+    );
+  });
+
   it("keeps timed work and absence counts when holiday coverage is missing", () => {
     const report = build(resolver({ holiday: false }));
 

@@ -106,6 +106,7 @@ let mockAnnualInputFailure: {
   readonly failure: RuleResolutionError["failure"];
 } | null = null;
 let mockAnnualReportValue: AnnualReport | null = null;
+let mockAnnualCoreValue: AnnualReport | null = null;
 let mockAnnualRuleFailure: {
   readonly ok: false;
   readonly error: RuleResolutionError;
@@ -174,6 +175,7 @@ jest.mock("@/features/analysis/use-annual-report", () => ({
     error: null,
     fatalError: mockAnnualFatalError,
     report: mockAnnualReportValue,
+    coreReport: mockAnnualCoreValue,
     retry: jest.fn(),
     ruleFailure: mockAnnualRuleFailure,
   }),
@@ -241,6 +243,7 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     mockAnnualFatalError = null;
     mockAnnualInputFailure = null;
     mockAnnualReportValue = null;
+    mockAnnualCoreValue = null;
     mockAnnualRuleFailure = null;
     mockProfile = MOCK_TARIFF_PROFILE;
     mockActiveMonthCoordinator.setMonth.mockClear();
@@ -401,6 +404,26 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
       ),
     ).toBeTruthy();
     expect(assessment.queryByLabelText("Monatswert manuell festlegen")).toBeNull();
+  });
+
+  it("keeps year navigation and return to month available while calculating", async () => {
+    const screen = await render(<AnalysisScreen />);
+    await fireEvent.press(screen.getByLabelText("Jahresauswertung öffnen"));
+    expect(screen.getByText("Jahresauswertung wird berechnet …")).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText(/Nächstes Jahr, aktuell/));
+    expect(screen.getByTestId("analysis-year-toolbar")).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText("Monatsauswertung öffnen"));
+    expect(screen.queryByText("Jahresauswertung wird berechnet …")).toBeNull();
+  });
+
+  it("renders current core content before the complete annual result", async () => {
+    mockAnnualCoreValue = buildAnnualCoreReport(2027, [januaryShift()], mockProfile);
+    const screen = await render(<AnalysisScreen />);
+    await fireEvent.press(screen.getByLabelText("Jahresauswertung öffnen"));
+    expect(screen.queryByText("Jahresauswertung wird berechnet …")).toBeNull();
+    expect(screen.getByText("Dienstverteilung")).toBeTruthy();
+    expect(screen.getByText(/Prüfung und Gehalt werden berechnet/)).toBeTruthy();
+    expect(screen.getByLabelText("Ist: 7:30")).toBeTruthy();
   });
 
   it("keeps annual rule coverage local after switching from a covered month", async () => {

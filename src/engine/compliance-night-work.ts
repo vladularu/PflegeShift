@@ -55,6 +55,15 @@ function zonedMinute(
 }
 
 function nightWorkMinutes(item: Interval, rules: RuleLegalRules): number {
+  const cached = NIGHT_MINUTES.get(item);
+  if (
+    cached?.start === item.start &&
+    cached.end === item.end &&
+    cached.startMinute === rules.nightWork.startMinute &&
+    cached.endMinute === rules.nightWork.endMinute
+  ) {
+    return cached.minutes;
+  }
   let total = 0;
   let date = item.start.toPlainDate().subtract({ days: 1 });
   const lastDate = item.end.toPlainDate();
@@ -73,8 +82,29 @@ function nightWorkMinutes(item: Interval, rules: RuleLegalRules): number {
     }
     date = date.add({ days: 1 });
   }
+  NIGHT_MINUTES.set(item, {
+    start: item.start,
+    end: item.end,
+    startMinute: rules.nightWork.startMinute,
+    endMinute: rules.nightWork.endMinute,
+    minutes: total,
+  });
   return total;
 }
+
+// Shared pure preparation for monthly checks of the same annual interval set.
+// One value per weakly held interval; changed instants/time zone/night window miss.
+// Qualification thresholds remain evaluated separately on every call.
+const NIGHT_MINUTES = new WeakMap<
+  Interval,
+  {
+    readonly start: Temporal.ZonedDateTime;
+    readonly end: Temporal.ZonedDateTime;
+    readonly startMinute: number;
+    readonly endMinute: number;
+    readonly minutes: number;
+  }
+>();
 
 function compareThreshold(
   value: number,

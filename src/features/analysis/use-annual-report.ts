@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   CalendarEntry,
@@ -6,7 +6,11 @@ import type {
   TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
-import { buildAnnualAvailableReportSteps } from "@/features/analysis/annual-core-report";
+import {
+  annualInputKey,
+  buildAnnualAvailableReportSteps,
+  createAnnualAvailableReportCache,
+} from "@/features/analysis/annual-core-report";
 import type { AnnualReport } from "@/features/analysis/annual-report";
 import type { RuleComputationFailure } from "@/features/analysis/rule-computation";
 import { useLocalReferenceDate } from "@/features/analysis/use-local-reference-date";
@@ -14,20 +18,17 @@ import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 
 interface AnnualReportState {
-  readonly entries: readonly CalendarEntry[];
+  readonly inputKey: string;
   readonly error: string | null;
   readonly fatalError: Error | null;
-  readonly profile: UserProfile;
-  readonly referenceDate: string;
   readonly report: AnnualReport | null;
   readonly ruleFailure: RuleComputationFailure | null;
   readonly ruleResolver: RuleResolver;
-  readonly tariffDecisions: readonly MonthlyTariffDecision[];
-  readonly workPatternSettings: TvoedWorkPatternSettings;
   readonly year: number;
 }
 
 interface DeferredAnnualReportResult {
+  readonly coreReport: AnnualReport | null;
   readonly error: string | null;
   readonly fatalError: Error | null;
   readonly report: AnnualReport | null;
@@ -53,25 +54,41 @@ export function useDeferredAnnualReport({
   readonly year: number;
 }): DeferredAnnualReportResult {
   const [retryRevision, setRetryRevision] = useState(0);
-  const [state, setState] = useState<AnnualReportState | null>(null);
+  const [states, setStates] = useState<readonly AnnualReportState[]>([]);
+  const [coreState, setCoreState] = useState<AnnualReportState | null>(null);
+  const [computationCache] = useState(createAnnualAvailableReportCache);
   const requestRevision = useRef(0);
   const retry = useCallback(() => setRetryRevision((value) => value + 1), []);
   const referenceDate = useLocalReferenceDate(profile?.timeZone ?? "Europe/Berlin");
+  // Database reloads create new objects. Compare complete values, not identity or
+  // revision alone: template joins and restores can change values at the same revision.
+  // Keep this key in memory only; no diagnostic log or persistent cache.
+  const inputKey = useMemo(
+    () =>
+      enabled
+        ? annualInputKey({
+            entries,
+            profile,
+            tariffDecisions,
+            workPatternSettings,
+            year,
+            referenceDate,
+          })
+        : null,
+    [enabled, entries, profile, tariffDecisions, workPatternSettings, year, referenceDate],
+  );
 
-  const matchesRequest =
-    state !== null &&
-    profile !== null &&
-    state.entries === entries &&
-    state.profile === profile &&
-    state.referenceDate === referenceDate &&
-    state.ruleResolver === ruleResolver &&
-    state.tariffDecisions === tariffDecisions &&
-    state.workPatternSettings === workPatternSettings &&
-    state.year === year;
-  const completedRequest = matchesRequest && state.report !== null && state.error === null;
+  const state = states.find(
+    (item) =>
+      profile !== null &&
+      item.inputKey === inputKey &&
+      item.ruleResolver === ruleResolver &&
+      item.year === year,
+  );
+  const completedRequest = state !== undefined && state.report !== null && state.error === null;
 
   useEffect(() => {
-    if (!enabled || profile === null || completedRequest) return;
+    if (!enabled || profile === null || inputKey === null || completedRequest) return;
     let active = true;
     let cancelScheduledWork = () => {};
     requestRevision.current += 1;
@@ -84,25 +101,48 @@ export function useDeferredAnnualReport({
       workPatternSettings,
       referenceDate,
       ruleResolver,
+      {
+        cache: computationCache,
+        onCore: (report) => {
+          if (!active || requestRevision.current !== currentRequest) return;
+          setCoreState({
+            inputKey,
+            report,
+            year,
+            ruleResolver,
+            error: null,
+            fatalError: null,
+            ruleFailure: null,
+          });
+        },
+      },
     );
     const advance = () => {
       try {
-        const step = steps.next();
+        if (!active || requestRevision.current !== currentRequest) return;
+        // Amortize idle callbacks, but yield back to input/rendering after a small slice.
+        // The step cap also bounds work with coarse/fake clocks.
+        const deadline = performance.now() + 4;
+        let step = steps.next();
+        let count = 1;
+        while (!step.done && step.value !== 0 && count < 32 && performance.now() < deadline) {
+          step = steps.next();
+          count += 1;
+        }
         if (!active || requestRevision.current !== currentRequest) return;
         if (step.done) {
-          setState({
-            entries,
+          const next: AnnualReportState = {
+            inputKey,
             error: null,
             fatalError: null,
-            profile,
-            referenceDate,
             report: step.value,
             ruleFailure: null,
             ruleResolver,
-            tariffDecisions,
-            workPatternSettings,
             year,
-          });
+          };
+          setStates((previous) =>
+            [next, ...previous.filter((item) => item.year !== year)].slice(0, 3),
+          );
         } else {
           cancelScheduledWork = scheduleIdleWork(advance);
         }
@@ -112,19 +152,18 @@ export function useDeferredAnnualReport({
             ? reportError
             : new Error("Annual report computation failed.");
         if (active) {
-          setState({
-            entries,
+          const next: AnnualReportState = {
+            inputKey,
             error: null,
             fatalError,
-            profile,
-            referenceDate,
             report: null,
             ruleFailure: null,
             ruleResolver,
-            tariffDecisions,
-            workPatternSettings,
             year,
-          });
+          };
+          setStates((previous) =>
+            [next, ...previous.filter((item) => item.year !== year)].slice(0, 3),
+          );
         }
       }
     };
@@ -134,9 +173,11 @@ export function useDeferredAnnualReport({
       cancelScheduledWork();
     };
   }, [
+    computationCache,
     completedRequest,
     enabled,
     entries,
+    inputKey,
     profile,
     referenceDate,
     retryRevision,
@@ -147,10 +188,14 @@ export function useDeferredAnnualReport({
   ]);
 
   return {
-    error: matchesRequest ? state.error : null,
-    fatalError: matchesRequest ? state.fatalError : null,
-    report: matchesRequest ? state.report : null,
-    ruleFailure: matchesRequest ? state.ruleFailure : null,
+    coreReport:
+      coreState?.inputKey === inputKey && coreState?.ruleResolver === ruleResolver
+        ? coreState.report
+        : null,
+    error: state?.error ?? null,
+    fatalError: state?.fatalError ?? null,
+    report: state?.report ?? null,
+    ruleFailure: state?.ruleFailure ?? null,
     retry,
   };
 }

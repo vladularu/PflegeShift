@@ -28,12 +28,14 @@ export type AnalysisPeriod = "MONTH" | "YEAR";
 
 export function AnnualReportScreen({
   report,
+  pending = false,
   testMonths,
   onBackToMonth,
   onMoveYear,
   onSelectMonth,
 }: {
   readonly report: AnnualReport;
+  readonly pending?: boolean;
   readonly testMonths: readonly string[];
   readonly onBackToMonth: () => void;
   readonly onMoveYear: (delta: number) => void;
@@ -61,7 +63,9 @@ export function AnnualReportScreen({
         <ReportPeriodContent>
           {testMonthCount > 0 ? <AnnualTestBadge count={testMonthCount} /> : null}
 
-          {report.complianceCoverageComplete ? (
+          {pending ? (
+            <AnalysisCoverageNote message="Prüfung und Gehalt werden berechnet … Erfasste Dienste und Zeiten sind bereits sichtbar; Abwesenheitsgutschriften folgen." />
+          ) : report.complianceCoverageComplete ? (
             <AnnualCheckCard
               expanded={expandedCard === "CHECK"}
               onSelectMonth={(month) => onSelectMonth(month, "CHECK")}
@@ -72,18 +76,22 @@ export function AnnualReportScreen({
             <AnalysisCoverageNote message="Die Jahresprüfung benötigt vollständige Regelstände. Erfasste Zeiten und Schichten bleiben sichtbar." />
           )}
 
-          <AnnualSalaryCard
-            expanded={expandedCard === "PAY"}
-            onToggle={() => toggleExpandedCard("PAY")}
-            report={report}
-          />
+          {!pending ? (
+            <AnnualSalaryCard
+              expanded={expandedCard === "PAY"}
+              onToggle={() => toggleExpandedCard("PAY")}
+              report={report}
+            />
+          ) : null}
 
           <WorktimeCard
             actual={formatMinutes(report.actualMinutes)}
             balance={
-              report.balanceMinutes === null
-                ? "Nicht verfügbar"
-                : formatSignedMinutes(report.balanceMinutes)
+              pending
+                ? "Wird berechnet"
+                : report.balanceMinutes === null
+                  ? "Nicht verfügbar"
+                  : formatSignedMinutes(report.balanceMinutes)
             }
             balanceAccent={
               report.balanceMinutes === null
@@ -93,17 +101,24 @@ export function AnnualReportScreen({
                   : palette.success
             }
             target={
-              report.targetMinutes === null
-                ? "Nicht verfügbar"
-                : formatMinutes(report.targetMinutes)
+              pending
+                ? "Wird berechnet"
+                : report.targetMinutes === null
+                  ? "Nicht verfügbar"
+                  : formatMinutes(report.targetMinutes)
             }
           />
 
-          {!report.worktimeCoverageComplete ? (
+          {!pending && !report.worktimeCoverageComplete ? (
             <AnalysisCoverageNote message="Soll, Saldo und Abwesenheitsgutschriften sind ohne vollständigen Feiertagsstand nicht verfügbar. Angezeigt werden sicher berechenbare Arbeits- und Fortbildungszeiten." />
           ) : null}
 
-          <MonthlyBars report={report} testMonths={testMonths} onSelectMonth={onSelectMonth} />
+          <MonthlyBars
+            report={report}
+            pending={pending}
+            testMonths={testMonths}
+            onSelectMonth={onSelectMonth}
+          />
 
           <DistributionList distribution={report.distribution} />
 
@@ -325,10 +340,12 @@ function AnnualSalaryCard({
 
 function MonthlyBars({
   report,
+  pending,
   testMonths,
   onSelectMonth,
 }: {
   readonly report: AnnualReport;
+  readonly pending: boolean;
   readonly testMonths: readonly string[];
   readonly onSelectMonth: (month: string) => void;
 }) {
@@ -357,7 +374,7 @@ function MonthlyBars({
             return (
               <Pressable
                 key={item.month}
-                accessibilityLabel={`${formatMonthTitle(item.month)}, ${formatMinutes(item.actualMinutes)} Ist`}
+                accessibilityLabel={`${formatMonthTitle(item.month)}, ${formatMinutes(item.actualMinutes)} ${pending ? "erfasst; Prüfung ausstehend" : "Ist"}`}
                 accessibilityRole="button"
                 onPress={() => onSelectMonth(item.month)}
                 style={({ pressed }) => ({
@@ -399,7 +416,7 @@ function MonthlyBars({
         </View>
         <View style={{ flexDirection: "row", gap: 14 }}>
           <LegendDot color={palette.primary} label="Arbeitszeit" />
-          <LegendDot color={palette.warning} label="mit Hinweis" />
+          {!pending ? <LegendDot color={palette.warning} label="mit Hinweis" /> : null}
         </View>
       </View>
     </SurfaceCard>
