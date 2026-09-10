@@ -28,6 +28,20 @@ SDK-Referenz: https://docs.expo.dev/versions/v57.0.0/sdk/map-view/
 
 ## Geräteabnahme – offen
 
+### Korrektur: Vorlagenübernahme
+
+Die Schnelleingabe und das direkte Einfügen nach Vorlagenbearbeitung ließen Ort
+und Benachrichtigung im gemeinsamen Übergabehelfer weg. Beide Felder werden
+jetzt übernommen; auch die normale Dienstauswahl nutzt denselben Helfer.
+Bestehende Dienste werden nicht rückwirkend ergänzt oder überschrieben.
+Der Feiertagsversatz ist ein separates, weiterhin offenes Layoutthema.
+
+Zusätzliche Abnahme: Auf einem leeren Tag einen neuen Dienst per Schnelleingabe
+aus einer Vorlage mit Ort und Benachrichtigung einfügen. Ohne erneute Ortswahl
+müssen Ort, Karte und Benachrichtigung nach Öffnen und Neustart vorhanden sein.
+Dasselbe über die normale Dienstauswahl prüfen. Änderungen am einzelnen Dienst
+dürfen die Vorlage nicht verändern.
+
 1. OTA laden; vorhandene Daten unverändert.
 2. Dienst und Termin mit gespeicherten Koordinaten öffnen: Karte sichtbar.
 3. Ort wechseln: Markierung und Ausschnitt zeigen den neuen Ort.

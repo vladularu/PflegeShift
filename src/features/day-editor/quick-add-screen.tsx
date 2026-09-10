@@ -11,6 +11,7 @@ import { userFacingErrorMessage } from "@/domain/errors";
 import { today } from "@/engine/calendar";
 import {
   buildQuickEntryActions,
+  saveQuickEntryAction,
   type QuickEntryStampAction,
 } from "@/features/calendar/quick-entry-actions";
 import {
@@ -51,24 +52,10 @@ export function QuickAddScreen() {
   if (!ready) return <LoadingView />;
 
   async function saveTemplate(action: QuickEntryStampAction, selectedDate: string) {
-    const { template } = action;
     try {
       setSaving(true);
       setError(null);
-      await upsertShift({
-        date: selectedDate,
-        templateId: template.id,
-        title: template.name,
-        type: template.type,
-        allDay: template.allDay,
-        startTime: template.startTime,
-        endTime: template.endTime,
-        breakMinutes: template.breakMinutes,
-        color: template.color,
-        symbol: template.symbol,
-        notification: template.notification,
-        location: template.location,
-      });
+      await saveQuickEntryAction(action, selectedDate, upsertShift);
       successFeedback();
       router.back();
     } catch (saveError) {

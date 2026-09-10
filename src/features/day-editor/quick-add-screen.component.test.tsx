@@ -30,6 +30,8 @@ jest.mock("@/application/pflegeshift-provider", () => ({
         breakMinutes: 30,
         color: "#2F80ED",
         symbol: "T",
+        location: { name: "Heppenheim", latitude: 49.64, longitude: 8.64 },
+        notification: { amount: 30, unit: "MINUTE", direction: "BEFORE", reference: "START" },
         sortOrder: 1,
         revision: 1,
         createdAt: "2026-01-01T00:00:00.000Z",
@@ -85,6 +87,12 @@ describe("QuickAddScreen", () => {
     });
 
     await waitFor(() => expect(mockUpsertShift).toHaveBeenCalledTimes(1));
+    expect(mockUpsertShift).toHaveBeenCalledWith(
+      expect.objectContaining({
+        location: { name: "Heppenheim", latitude: 49.64, longitude: 8.64 },
+        notification: { amount: 30, unit: "MINUTE", direction: "BEFORE", reference: "START" },
+      }),
+    );
     expect(successFeedback).toHaveBeenCalledTimes(1);
     expect(router.back).toHaveBeenCalledTimes(1);
     expect(screen.queryByText("Eintrag gespeichert.")).toBeNull();
