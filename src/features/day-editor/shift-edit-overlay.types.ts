@@ -1,7 +1,7 @@
 import type { Ref } from "react";
 import type { TextInput } from "react-native";
 
-import type { EntryNotification, ShiftType } from "@/domain/types";
+import type { EntryLocation, EntryNotification, ShiftType } from "@/domain/types";
 
 export interface ShiftEditOverlayProps {
   readonly alarmEnabled: boolean;
@@ -11,7 +11,7 @@ export interface ShiftEditOverlayProps {
   readonly durationMinutes: number | null;
   readonly endTime: string;
   readonly error: string | null;
-  readonly locationName: string | null;
+  readonly location: EntryLocation | null;
   readonly note: string;
   readonly notification: EntryNotification | null;
   readonly onAlarmPress: () => void;

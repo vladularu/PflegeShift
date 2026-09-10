@@ -11,6 +11,7 @@ import { DAY_EDITOR_SHIFT_TYPES } from "@/features/day-editor/day-editor-layout"
 import { ShiftNotificationOverlay } from "@/features/day-editor/shift-notification-overlay";
 import type { ShiftEditOverlayProps } from "@/features/day-editor/shift-edit-overlay.types";
 import { ShiftOvertimeFields } from "@/features/day-editor/shift-overtime-fields";
+import { LocationPreview } from "@/features/location/location-preview";
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 import { MOTION } from "@/theme/motion";
 import { usePalette } from "@/theme/palette";
@@ -134,7 +135,7 @@ export function ShiftEditOverlay({
   date,
   durationMinutes,
   error,
-  locationName,
+  location,
   note,
   notification,
   onAlarmPress,
@@ -164,6 +165,7 @@ export function ShiftEditOverlay({
   endTime,
 }: ShiftEditOverlayProps) {
   const palette = usePalette();
+  const locationName = location?.name ?? null;
   const [popup, setPopup] = useState<Popup>(null);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const headerColor = accessibleChipBackgroundColor(shiftColor);
@@ -291,6 +293,7 @@ export function ShiftEditOverlay({
                 ) : null}
               </View>
             </View>
+            {location ? <LocationPreview location={location} /> : null}
           </View>
 
           {popup === "PAUSE" ? (

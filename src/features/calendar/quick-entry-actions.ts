@@ -108,6 +108,8 @@ export function quickEntryShiftInputFromTemplate(
     breakMinutes: template.breakMinutes,
     color: template.color,
     symbol: template.symbol,
+    notification: template.notification,
+    location: template.location,
   });
 }
 

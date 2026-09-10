@@ -8,6 +8,7 @@ import {
   quickEntryServiceActions,
   quickEntryTemplateActions,
   quickEntryEditorTarget,
+  quickEntryShiftInputFromTemplate,
   saveQuickEntryAction,
 } from "@/features/calendar/quick-entry-actions";
 
@@ -41,6 +42,37 @@ const absenceTemplate: ShiftTemplate = {
 };
 
 describe("shared quick-entry actions", () => {
+  it.each([
+    { name: "Heppenheim", address: "Zentrum", latitude: 49.64, longitude: 8.64 },
+    { name: "Station 3" },
+    null,
+  ])("copies the complete location and notification into a new service", async (location) => {
+    const source: ShiftTemplate = {
+      ...template,
+      location,
+      notification: { amount: 30, unit: "MINUTE", direction: "BEFORE", reference: "START" },
+    };
+    const action = buildQuickEntryActions([source])[0];
+    if (!isQuickEntryStampAction(action)) throw new Error("Expected template");
+    const save = vi.fn(async (input) => input as ShiftEntry);
+    await saveQuickEntryAction(action, "2026-10-03", save);
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        date: "2026-10-03",
+        location,
+        notification: source.notification,
+      }),
+    );
+    const first = quickEntryShiftInputFromTemplate(source, "2026-10-03");
+    const next = quickEntryShiftInputFromTemplate(
+      { ...source, location: { name: "Neu" } },
+      "2026-10-04",
+    );
+    expect(first.location).toEqual(location);
+    expect(next.location).toEqual({ name: "Neu" });
+    expect(source.location).toEqual(location);
+  });
+
   it("builds one ordered catalog for popup and dock", () => {
     const popupActions = buildQuickEntryActions([template, absenceTemplate]);
     const dockActions = buildQuickEntryActions([template, absenceTemplate]);

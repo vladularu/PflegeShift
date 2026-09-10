@@ -22,7 +22,7 @@ async function renderOverlay(
     durationMinutes: 510,
     endTime: "21:30",
     error: null,
-    locationName: null,
+    location: null,
     note: "",
     notification: null,
     onAlarmPress: jest.fn(),
@@ -65,6 +65,22 @@ async function renderOverlay(
 }
 
 describe("ShiftEditOverlay", () => {
+  it("shows the saved location map without changing the location action", async () => {
+    const { screen, props } = await renderOverlay({
+      location: { name: "Heppenheim", latitude: 49.64, longitude: 8.64 },
+    });
+    expect(screen.getByRole("button", { name: "Heppenheim in Karten öffnen" })).toBeTruthy();
+    await fireEvent.press(screen.getByRole("button", { name: "Ort: Heppenheim" }));
+    expect(props.onLocationPress).toHaveBeenCalledTimes(1);
+    expect(props.onRequestClose).not.toHaveBeenCalled();
+  });
+
+  it("retains a text-only location without displaying a map", async () => {
+    const { screen } = await renderOverlay({ location: { name: "Station 3" } });
+    expect(screen.getByRole("button", { name: "Ort: Station 3" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /in Karten öffnen/ })).toBeNull();
+  });
+
   beforeEach(() => {
     jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({
       granted: true,
@@ -75,7 +91,7 @@ describe("ShiftEditOverlay", () => {
   });
 
   it("supports the complete compact shift editing surface", async () => {
-    const { screen, props } = await renderOverlay({ locationName: "Station 3" });
+    const { screen, props } = await renderOverlay({ location: { name: "Station 3" } });
 
     expect(screen.getByText("Do. 20. Aug.")).toBeTruthy();
     expect(screen.getByText("8h 30min")).toBeTruthy();

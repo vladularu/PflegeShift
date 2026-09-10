@@ -13,8 +13,8 @@ const template: ShiftTemplate = {
   breakMinutes: 30,
   color: "#7C4DCC",
   symbol: "F",
-  notification: null,
-  location: null,
+  notification: { amount: 30, unit: "MINUTE", direction: "BEFORE", reference: "START" },
+  location: { name: "Heppenheim", latitude: 49.64, longitude: 8.64 },
   sortOrder: 10,
   revision: 1,
   createdAt: "2026-08-15T00:00:00.000Z",
@@ -77,7 +77,13 @@ describe("template editor quick-entry completion", () => {
 
     expect(upsertTemplate).toHaveBeenCalledWith(input);
     expect(upsertShift).toHaveBeenCalledWith(
-      expect.objectContaining({ date: "2026-08-15", templateId: "early", title: "Früh" }),
+      expect.objectContaining({
+        date: "2026-08-15",
+        templateId: "early",
+        title: "Früh",
+        location: template.location,
+        notification: template.notification,
+      }),
     );
   });
 
