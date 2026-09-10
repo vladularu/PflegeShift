@@ -403,6 +403,16 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(assessment.queryByLabelText("Monatswert manuell festlegen")).toBeNull();
   });
 
+  it("keeps year navigation and return to month available while calculating", async () => {
+    const screen = await render(<AnalysisScreen />);
+    await fireEvent.press(screen.getByLabelText("Jahresauswertung öffnen"));
+    expect(screen.getByText("Jahresauswertung wird berechnet …")).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText(/Nächstes Jahr, aktuell/));
+    expect(screen.getByTestId("analysis-year-toolbar")).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText("Monatsauswertung öffnen"));
+    expect(screen.queryByText("Jahresauswertung wird berechnet …")).toBeNull();
+  });
+
   it("keeps annual rule coverage local after switching from a covered month", async () => {
     mockRouteMonth = "2026-08";
     const resolution = GENERATION_ONE_REVIEWED_RESOLVER.resolveHoliday("2027-01-01");

@@ -164,7 +164,7 @@ function observedRestAroundCalendarDay(
 function replacementCandidate(
   date: Temporal.PlainDate,
   entriesByDate: ReadonlyMap<string, readonly ShiftEntry[]>,
-  intervals: readonly Interval[],
+  intervals: readonly { readonly start: number; readonly end: number }[],
   workDates: ReadonlyMap<string, readonly Interval[]>,
   holidayDates: ReadonlySet<string>,
   evidenceShiftType: ShiftEntry["type"],
@@ -182,18 +182,18 @@ function replacementCandidate(
     return null;
   }
 
-  const start = dayStart(date, timeZone);
-  const end = dayStart(date.add({ days: 1 }), timeZone);
-  let previousEnd: Temporal.ZonedDateTime | null = null;
-  let nextStart: Temporal.ZonedDateTime | null = null;
+  const start = dayStart(date, timeZone).epochMilliseconds;
+  const end = dayStart(date.add({ days: 1 }), timeZone).epochMilliseconds;
+  let previousEnd: number | null = null;
+  let nextStart: number | null = null;
   for (const interval of intervals) {
-    if (Temporal.ZonedDateTime.compare(interval.end, start) <= 0) {
-      if (previousEnd === null || Temporal.ZonedDateTime.compare(interval.end, previousEnd) > 0) {
+    if (interval.end <= start) {
+      if (previousEnd === null || interval.end > previousEnd) {
         previousEnd = interval.end;
       }
       continue;
     }
-    if (Temporal.ZonedDateTime.compare(interval.start, end) >= 0) {
+    if (interval.start >= end) {
       nextStart = interval.start;
       break;
     }
@@ -203,7 +203,9 @@ function replacementCandidate(
     date,
     evidence: entries,
     observedRestMinutes:
-      previousEnd === null || nextStart === null ? null : minutesBetween(previousEnd, nextStart),
+      previousEnd === null || nextStart === null
+        ? null
+        : Math.round((nextStart - previousEnd) / 60_000),
   };
 }
 
@@ -267,34 +269,35 @@ function matchObligations(
   const unmatched: RestObligation[] = [];
   const available = new Set(candidates);
   const matched: ObligationMatch[] = [];
+  // Calendar-day distance, not elapsed hours: preserve matching across DST changes.
+  const epoch = Temporal.PlainDate.from("1970-01-01");
+  const ranked = candidates.map((candidate) => ({
+    candidate,
+    day: candidate.date.since(epoch).days,
+    quality:
+      candidate.observedRestMinutes === null
+        ? 2
+        : candidate.observedRestMinutes >= requiredRestMinutes
+          ? 0
+          : 1,
+  }));
   for (const obligation of obligations) {
-    const candidate = candidates
-      .filter(
-        (item) =>
-          available.has(item) &&
-          Temporal.PlainDate.compare(item.date, obligation.windowStart) >= 0 &&
-          Temporal.PlainDate.compare(item.date, obligation.windowEnd) <= 0,
+    const start = obligation.windowStart.since(epoch).days;
+    const end = obligation.windowEnd.since(epoch).days;
+    const day = obligation.date.since(epoch).days;
+    let best: (typeof ranked)[number] | undefined;
+    for (const item of ranked) {
+      if (!available.has(item.candidate) || item.day < start || item.day > end) continue;
+      if (
+        best === undefined ||
+        item.quality < best.quality ||
+        (item.quality === best.quality &&
+          (Math.abs(item.day - day) < Math.abs(best.day - day) ||
+            (Math.abs(item.day - day) === Math.abs(best.day - day) && item.day < best.day)))
       )
-      .sort((left, right) => {
-        const leftQuality =
-          left.observedRestMinutes === null
-            ? 2
-            : left.observedRestMinutes >= requiredRestMinutes
-              ? 0
-              : 1;
-        const rightQuality =
-          right.observedRestMinutes === null
-            ? 2
-            : right.observedRestMinutes >= requiredRestMinutes
-              ? 0
-              : 1;
-        return (
-          leftQuality - rightQuality ||
-          Math.abs(obligation.date.until(left.date).days) -
-            Math.abs(obligation.date.until(right.date).days) ||
-          Temporal.PlainDate.compare(left.date, right.date)
-        );
-      })[0];
+        best = item;
+    }
+    const candidate = best?.candidate;
     if (candidate === undefined) {
       unmatched.push(obligation);
     } else {
@@ -413,12 +416,18 @@ export function* checkSundayHolidayRestIncrementally(
     Temporal.PlainDate.from(coverageEndValue),
   );
   const candidates: ReplacementCandidate[] = [];
+  // Inputs are minute-precision instants; convert once, outside the candidate loop.
+  // Day boundaries still use Temporal in the profile's time zone (including DST).
+  const restIntervals = intervals.map((interval) => ({
+    start: interval.start.epochMilliseconds,
+    end: interval.end.epochMilliseconds,
+  }));
   let processedCandidates = 0;
   for (const date of candidateDates) {
     const candidate = replacementCandidate(
       date,
       entriesByDate,
-      intervals,
+      restIntervals,
       workDates,
       holidayDates,
       restRules.evidenceShiftType,

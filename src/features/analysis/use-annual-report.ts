@@ -35,6 +35,12 @@ interface DeferredAnnualReportResult {
   readonly retry: () => void;
 }
 
+function sameItems<T>(left: readonly T[], right: readonly T[]): boolean {
+  return (
+    left === right || (left.length === right.length && left.every((item, i) => item === right[i]))
+  );
+}
+
 export function useDeferredAnnualReport({
   enabled,
   entries,
@@ -53,22 +59,23 @@ export function useDeferredAnnualReport({
   readonly year: number;
 }): DeferredAnnualReportResult {
   const [retryRevision, setRetryRevision] = useState(0);
-  const [state, setState] = useState<AnnualReportState | null>(null);
+  const [states, setStates] = useState<readonly AnnualReportState[]>([]);
   const requestRevision = useRef(0);
   const retry = useCallback(() => setRetryRevision((value) => value + 1), []);
   const referenceDate = useLocalReferenceDate(profile?.timeZone ?? "Europe/Berlin");
 
-  const matchesRequest =
-    state !== null &&
-    profile !== null &&
-    state.entries === entries &&
-    state.profile === profile &&
-    state.referenceDate === referenceDate &&
-    state.ruleResolver === ruleResolver &&
-    state.tariffDecisions === tariffDecisions &&
-    state.workPatternSettings === workPatternSettings &&
-    state.year === year;
-  const completedRequest = matchesRequest && state.report !== null && state.error === null;
+  const state = states.find(
+    (item) =>
+      profile !== null &&
+      sameItems(item.entries, entries) &&
+      item.profile === profile &&
+      item.referenceDate === referenceDate &&
+      item.ruleResolver === ruleResolver &&
+      sameItems(item.tariffDecisions, tariffDecisions) &&
+      item.workPatternSettings === workPatternSettings &&
+      item.year === year,
+  );
+  const completedRequest = state !== undefined && state.report !== null && state.error === null;
 
   useEffect(() => {
     if (!enabled || profile === null || completedRequest) return;
@@ -87,10 +94,19 @@ export function useDeferredAnnualReport({
     );
     const advance = () => {
       try {
-        const step = steps.next();
+        if (!active || requestRevision.current !== currentRequest) return;
+        // Amortize idle callbacks, but yield back to input/rendering after a small slice.
+        // The step cap also bounds work with coarse/fake clocks.
+        const deadline = performance.now() + 4;
+        let step = steps.next();
+        let count = 1;
+        while (!step.done && count < 32 && performance.now() < deadline) {
+          step = steps.next();
+          count += 1;
+        }
         if (!active || requestRevision.current !== currentRequest) return;
         if (step.done) {
-          setState({
+          const next: AnnualReportState = {
             entries,
             error: null,
             fatalError: null,
@@ -102,7 +118,10 @@ export function useDeferredAnnualReport({
             tariffDecisions,
             workPatternSettings,
             year,
-          });
+          };
+          setStates((previous) =>
+            [next, ...previous.filter((item) => item.year !== year)].slice(0, 3),
+          );
         } else {
           cancelScheduledWork = scheduleIdleWork(advance);
         }
@@ -112,7 +131,7 @@ export function useDeferredAnnualReport({
             ? reportError
             : new Error("Annual report computation failed.");
         if (active) {
-          setState({
+          const next: AnnualReportState = {
             entries,
             error: null,
             fatalError,
@@ -124,7 +143,10 @@ export function useDeferredAnnualReport({
             tariffDecisions,
             workPatternSettings,
             year,
-          });
+          };
+          setStates((previous) =>
+            [next, ...previous.filter((item) => item.year !== year)].slice(0, 3),
+          );
         }
       }
     };
@@ -147,10 +169,10 @@ export function useDeferredAnnualReport({
   ]);
 
   return {
-    error: matchesRequest ? state.error : null,
-    fatalError: matchesRequest ? state.fatalError : null,
-    report: matchesRequest ? state.report : null,
-    ruleFailure: matchesRequest ? state.ruleFailure : null,
+    error: state?.error ?? null,
+    fatalError: state?.fatalError ?? null,
+    report: state?.report ?? null,
+    ruleFailure: state?.ruleFailure ?? null,
     retry,
   };
 }
