@@ -1,9 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { ComponentProps, ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
-import Animated, { FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
-
-import { MOTION } from "@/theme/motion";
+import { AnalysisCardDetails } from "@/features/analysis/analysis-card-details";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
@@ -33,9 +31,7 @@ export function ExpandableHighlightCard({
   const palette = usePalette();
   const accessibleValue = countBadge === undefined ? value : `${countBadge} ${value}`;
   return (
-    <Animated.View
-      layout={LinearTransition.duration(MOTION.duration.normal).reduceMotion(MOTION.reduceMotion)}
-    >
+    <View>
       <SurfaceCard
         style={{
           borderColor: `${accent}52`,
@@ -148,16 +144,11 @@ export function ExpandableHighlightCard({
             ) : null}
           </View>
         </Pressable>
-        {expanded ? (
-          <Animated.View
-            entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
-            exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(MOTION.reduceMotion)}
-          >
-            <CardSeparator inset={0} />
-            {children}
-          </Animated.View>
-        ) : null}
+        <AnalysisCardDetails expanded={expanded}>
+          <CardSeparator inset={0} />
+          {children}
+        </AnalysisCardDetails>
       </SurfaceCard>
-    </Animated.View>
+    </View>
   );
 }
