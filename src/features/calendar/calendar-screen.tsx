@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useIsFocused, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, View, type LayoutChangeEvent } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 
@@ -221,13 +221,12 @@ export function CalendarScreen() {
     return true;
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
+  useLayoutEffect(() => {
+    const synchronizeMonth = () => {
       const activeMonth = activeMonthCoordinator.getMonth();
       if (activeMonth === settledMonth.current) return;
 
       setVisibleMonth(activeMonth);
-      setHeaderTransition("SPATIAL");
       setQuickPopup(null);
       settledMonth.current = activeMonth;
       setSelectedDate((date) => clampDateToMonth(date, activeMonth));
@@ -238,8 +237,14 @@ export function CalendarScreen() {
       } else if (preferences.viewMode === "MONTH") {
         scrollToMonth(activeMonth);
       }
-    }, [activeMonthCoordinator, months, preferences.viewMode, scrollToMonth]),
-  );
+    };
+    synchronizeMonth();
+    // Prepare the native pager while hidden; calendar gestures remain its sole
+    // month authority while focused.
+    return activeMonthCoordinator.subscribeMonths(() => {
+      if (!isFocused) synchronizeMonth();
+    });
+  }, [activeMonthCoordinator, isFocused, months, preferences.viewMode, scrollToMonth]);
 
   useFocusEffect(
     useCallback(() => {

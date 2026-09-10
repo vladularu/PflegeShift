@@ -28,6 +28,8 @@ const mockPreferences = {
 };
 
 let mockActiveMonth = "2026-08";
+let mockFocused = true;
+const mockMonthListeners = new Set<() => void>();
 let mockTodayRequestRevision = 0;
 let mockCompletedTodayRequestRevision = 0;
 let mockRuleResolver: RuleResolver = bundledRuleResolver;
@@ -39,9 +41,16 @@ const mockActiveMonthCoordinator = {
     mockCompletedTodayRequestRevision = Math.max(mockCompletedTodayRequestRevision, revision);
   }),
   getMonth: () => mockActiveMonth,
+  subscribeMonths: (listener: () => void) => {
+    mockMonthListeners.add(listener);
+    return () => {
+      mockMonthListeners.delete(listener);
+    };
+  },
   hasPendingTodayRequest: (revision: number) => revision > mockCompletedTodayRequestRevision,
   setMonth: jest.fn((month: string) => {
     mockActiveMonth = month;
+    mockMonthListeners.forEach((listener) => listener());
     return month;
   }),
 };
@@ -50,7 +59,7 @@ jest.mock("expo-router", () => ({
   router: { push: jest.fn(), replace: jest.fn() },
   Stack: { Screen: () => null },
   useFocusEffect: (effect: () => void) => effect(),
-  useIsFocused: () => true,
+  useIsFocused: () => mockFocused,
   useLocalSearchParams: () => ({}),
   useNavigation: () => ({ getParent: () => null }),
 }));
@@ -181,6 +190,8 @@ jest.mock("@/ui/use-theme-status-bar", () => ({ useThemeStatusBar: () => undefin
 describe("CalendarScreen quick-entry navigation", () => {
   beforeEach(() => {
     mockActiveMonth = "2026-08";
+    mockFocused = true;
+    mockMonthListeners.clear();
     mockTodayRequestRevision = 0;
     mockCompletedTodayRequestRevision = 0;
     mockRuleResolver = bundledRuleResolver;
@@ -195,6 +206,25 @@ describe("CalendarScreen quick-entry navigation", () => {
       callback(0);
       return 1;
     });
+  });
+
+  it("synchronizes another tab's month while hidden, without replacing the pager", async () => {
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+      nativeEvent: { layout: { height: 700 } },
+    });
+    const pager = screen.getByTestId("calendar-month-pager");
+    mockFocused = false;
+    await screen.rerender(<CalendarScreen />);
+    await act(async () => {
+      mockActiveMonthCoordinator.setMonth("2026-12");
+    });
+    expect(screen.getByTestId("header-state").props.children).toBe("MONTH:2026-12");
+    expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
+    mockFocused = true;
+    await screen.rerender(<CalendarScreen />);
+    expect(screen.getByTestId("header-state").props.children).toBe("MONTH:2026-12");
+    expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
   });
 
   it("ignores hidden pager scroll events while a year is displayed", async () => {
