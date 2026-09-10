@@ -9,6 +9,8 @@ import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { buildAnnualDistributionSections } from "@/features/analysis/annual-distribution";
 import { AnalysisCoverageNote } from "@/features/analysis/analysis-coverage-note";
 import type { AnnualReport } from "@/features/analysis/annual-report";
+import { useCheckPreferences } from "@/features/settings/check-preferences";
+import { PLANNING_HIDDEN_NOTICE, selectAnnualCheckDisplay } from "./check-visibility";
 import {
   AnalysisYearHeader,
   ExpandableHighlightCard,
@@ -27,7 +29,7 @@ import { ReportFootnote, ReportPeriodContent, ReportScrollView } from "@/ui/repo
 export type AnalysisPeriod = "MONTH" | "YEAR";
 
 export function AnnualReportScreen({
-  report,
+  report: sourceReport,
   pending = false,
   testMonths,
   onBackToMonth,
@@ -42,6 +44,9 @@ export function AnnualReportScreen({
   readonly onSelectMonth: (month: string, expandedCard?: "CHECK") => void;
 }) {
   const palette = usePalette();
+  const preferences = useCheckPreferences();
+  const showPlanning = preferences.enabled !== false;
+  const report = selectAnnualCheckDisplay(sourceReport, showPlanning);
   const [expandedCard, setExpandedCard] = useState<"CHECK" | "PAY" | null>(null);
   const testMonthCount = report.months.filter((item) => testMonths.includes(item.month)).length;
 
@@ -62,11 +67,17 @@ export function AnnualReportScreen({
       <ReportScrollView>
         <ReportPeriodContent>
           {testMonthCount > 0 ? <AnnualTestBadge count={testMonthCount} /> : null}
+          {!showPlanning ? <AnalysisCoverageNote message={PLANNING_HIDDEN_NOTICE} /> : null}
+          {preferences.error ? <AnalysisCoverageNote message={preferences.error} /> : null}
+          {preferences.enabled === null && !preferences.error ? (
+            <AnalysisCoverageNote message="Prüfungseinstellungen werden geladen … Hinweise sind vorläufig vollständig sichtbar." />
+          ) : null}
 
           {pending ? (
             <AnalysisCoverageNote message="Prüfung und Gehalt werden berechnet … Erfasste Dienste und Zeiten sind bereits sichtbar; Abwesenheitsgutschriften folgen." />
           ) : report.complianceCoverageComplete ? (
             <AnnualCheckCard
+              showPlanning={showPlanning}
               expanded={expandedCard === "CHECK"}
               onSelectMonth={(month) => onSelectMonth(month, "CHECK")}
               onToggle={() => toggleExpandedCard("CHECK")}
@@ -157,26 +168,33 @@ function AnnualTestBadge({ count }: { readonly count: number }) {
 
 function AnnualCheckCard({
   report,
+  showPlanning,
   expanded,
   onToggle,
   onSelectMonth,
 }: {
   readonly report: AnnualReport;
+  readonly showPlanning: boolean;
   readonly expanded: boolean;
   readonly onToggle: () => void;
   readonly onSelectMonth: (month: string) => void;
 }) {
   const palette = usePalette();
   const issueMonths = report.months.filter(
-    (item) => item.criticalCount > 0 || item.warningCount > 0,
+    (item) => item.criticalCount + item.warningCount + (item.infoCount ?? 0) > 0,
   );
-  const clear = report.criticalCount === 0 && report.warningCount === 0;
+  const messageCount = report.criticalCount + report.warningCount + (report.infoCount ?? 0);
+  const clear = messageCount === 0;
   const accent = clear
     ? palette.success
     : report.criticalCount > 0
       ? palette.danger
-      : palette.warning;
-  const messageCount = report.criticalCount + report.warningCount;
+      : report.warningCount > 0
+        ? palette.warning
+        : palette.primary;
+  const legalReport = selectAnnualCheckDisplay(report, false);
+  const legalCount =
+    legalReport.criticalCount + legalReport.warningCount + (legalReport.infoCount ?? 0);
 
   return (
     <ExpandableHighlightCard
@@ -188,6 +206,16 @@ function AnnualCheckCard({
       title="Prüfung"
       value={messageCount === 1 ? "Meldung" : "Meldungen"}
     >
+      <View style={{ padding: SPACING.lg, gap: SPACING.sm }}>
+        <Text style={{ color: palette.text, ...TYPOGRAPHY.body }}>
+          Gesetzliche Prüfung: {legalCount}
+        </Text>
+        {showPlanning ? (
+          <Text style={{ color: palette.text, ...TYPOGRAPHY.body }}>
+            Freiwillige Planung: {messageCount - legalCount}
+          </Text>
+        ) : null}
+      </View>
       {issueMonths.length === 0 ? (
         <View style={{ padding: SPACING.lg }}>
           <Text
@@ -195,7 +223,7 @@ function AnnualCheckCard({
             selectable
             style={{ color: palette.success, ...TYPOGRAPHY.bodyStrong }}
           >
-            In keinem Monat wurden Auffälligkeiten erkannt.
+            In den sichtbaren Prüfungen wurden keine Auffälligkeiten erkannt.
           </Text>
         </View>
       ) : (
@@ -222,7 +250,12 @@ function AnnualCheckCard({
                     width: 8,
                     height: 8,
                     borderRadius: 4,
-                    backgroundColor: item.criticalCount > 0 ? palette.danger : palette.warning,
+                    backgroundColor:
+                      item.criticalCount > 0
+                        ? palette.danger
+                        : item.warningCount > 0
+                          ? palette.warning
+                          : palette.primary,
                   }}
                 />
                 <View style={{ minWidth: 0, flex: 1, gap: SPACING.xxs }}>
@@ -238,8 +271,10 @@ function AnnualCheckCard({
                     selectable
                     style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
                   >
-                    {item.criticalCount + item.warningCount}{" "}
-                    {item.criticalCount + item.warningCount === 1 ? "Meldung" : "Meldungen"}
+                    {item.criticalCount + item.warningCount + (item.infoCount ?? 0)}{" "}
+                    {item.criticalCount + item.warningCount + (item.infoCount ?? 0) === 1
+                      ? "Meldung"
+                      : "Meldungen"}
                   </Text>
                 </View>
                 <Ionicons color={palette.textMuted} name="chevron-forward" size={18} />
@@ -395,7 +430,11 @@ function MonthlyBars({
                     height,
                     minHeight: 3,
                     borderRadius: 5,
-                    backgroundColor: hasIssue ? palette.warning : palette.primary,
+                    backgroundColor: hasIssue
+                      ? item.criticalCount > 0
+                        ? palette.danger
+                        : palette.warning
+                      : palette.primary,
                   }}
                 />
                 <Text

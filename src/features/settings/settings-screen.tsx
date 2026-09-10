@@ -139,7 +139,7 @@ export function SettingsScreen() {
             <RowButton
               leading={<SettingsIcon name="shield-checkmark-outline" />}
               onPress={() => router.push("/check-settings")}
-              subtitle="Freiwillige Planungshinweise vorbereiten"
+              subtitle="Freiwillige Planungshinweise anzeigen"
               title="Prüfung"
             />
           </SurfaceCard>
