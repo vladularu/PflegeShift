@@ -24,7 +24,7 @@ import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { QuickEntryActionStrip } from "@/features/calendar/quick-entry-action-strip";
 import { QUICK_PLANNER_METRICS } from "@/features/calendar/quick-planner-appearance";
 import { MOTION } from "@/theme/motion";
-import { usePalette } from "@/theme/palette";
+import { DARK_PALETTE, LIGHT_PALETTE, usePalette } from "@/theme/palette";
 import { CALENDAR_METRICS } from "@/theme/tokens";
 import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
 
@@ -67,6 +67,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   readonly onClose: () => void;
 }) {
   const palette = usePalette();
+  const dockPalette = palette.dark ? LIGHT_PALETTE : DARK_PALETTE;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
@@ -200,8 +201,8 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
           style={[
             styles.dockSurface,
             {
-              backgroundColor: palette.floatingAction,
-              borderColor: palette.onFloatingAction,
+              backgroundColor: dockPalette.surface,
+              borderColor: dockPalette.separator,
               boxShadow: `0 10px 28px ${palette.shadow}`,
             },
             dockMotionStyle,
@@ -273,20 +274,15 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
                 style={[
                   styles.closeVisual,
                   {
-                    backgroundColor: palette.floatingAction,
-                    borderColor: palette.onFloatingAction,
+                    backgroundColor: dockPalette.surface,
+                    borderColor: dockPalette.separator,
                     boxShadow: `0 4px 12px ${palette.shadow}`,
                     opacity: pressed ? 0.72 : 1,
                   },
                 ]}
                 testID="quick-planner-close-visual"
               >
-                <Ionicons
-                  accessible={false}
-                  color={palette.onFloatingAction}
-                  name="close"
-                  size={20}
-                />
+                <Ionicons accessible={false} color={dockPalette.text} name="close" size={20} />
               </View>
             )}
           </AnimatedPressable>

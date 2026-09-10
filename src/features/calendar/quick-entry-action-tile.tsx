@@ -7,7 +7,7 @@ import {
   QUICK_PLANNER_COLORS,
   QUICK_PLANNER_METRICS,
 } from "@/features/calendar/quick-planner-appearance";
-import { APPOINTMENT_COLOR, usePalette } from "@/theme/palette";
+import { APPOINTMENT_COLOR, DARK_PALETTE, LIGHT_PALETTE, usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { ColorBadge } from "@/ui/design-system";
 import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
@@ -25,7 +25,8 @@ export const QuickEntryActionTile = memo(function QuickEntryActionTile({
   readonly onPress: (action: QuickEntryAction) => void;
   readonly width?: number;
 }) {
-  const palette = usePalette();
+  const appPalette = usePalette();
+  const palette = appPalette.dark ? LIGHT_PALETTE : DARK_PALETTE;
   const isStampAction = action.kind === "TEMPLATE";
   const editorIcon = action.kind === "APPOINTMENT" ? "calendar-outline" : "add";
   const editorColor =
@@ -69,7 +70,7 @@ export const QuickEntryActionTile = memo(function QuickEntryActionTile({
         style={[
           styles.label,
           {
-            color: active ? QUICK_PLANNER_COLORS.active : palette.onFloatingAction,
+            color: active ? QUICK_PLANNER_COLORS.active : palette.text,
             maxWidth: width - 6,
           },
           active && styles.labelActive,

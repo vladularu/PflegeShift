@@ -574,8 +574,8 @@ function TemplateEditorForm({
         completeShiftSelectionNavigation();
       }
       successFeedback();
-      if (quickEntryDate) router.dismiss(2);
-      else router.back();
+      // The calendar picker is replaced by this editor, not left underneath it.
+      router.back();
     } catch (submitError) {
       warningFeedback();
       setError(userFacingErrorMessage(submitError, "Vorlage konnte nicht gespeichert werden."));

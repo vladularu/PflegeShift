@@ -28,6 +28,21 @@ Datenmodell, Gehalt, Prüfregeln und Karten. Keine neue Scroll-Architektur.
 
 ## Gemeinsame Geräteabnahme – offen
 
+### Korrektur nach Gerätefeedback vom 10.09.2026
+
+- Scope: Dock, Aktionsstreifen/-texte, Auswahl-zu-Editor-Navigation und deren Tests.
+  Keine Änderung an Kalenderlayout, Animationen, Scrolling oder Fachlogik.
+- Offene Schnelleingabe inklusive Schließen: dunkle Fläche/helle Schrift im
+  Hellmodus, helle Fläche/dunkle Schrift im Dunkelmodus. Geschlossenes Plus
+  behält den LUNA-Akzent.
+- Bearbeiten und Hinzufügen ersetzen die native Auswahlroute, statt einen
+  Card-Editor hinter das Sheet zu schieben. Zurück führt zum Kalender;
+  Speichern geht entsprechend nur eine Ebene zurück. Datum und bestehende
+  Speicherlogik bleiben erhalten.
+- Abnahme: beide Farbschemata; Bearbeiten und Hinzufügen ohne verdeckenden
+  Auswahl-Sheet; Abbruch ohne Änderung und Speichern mit korrekter Rückkehr.
+  Commit, Push und Preview-OTA freigegeben; Merge weiterhin nicht freigegeben.
+
 1. OTA laden, Daten vorhanden.
 2. Plus öffnen/schließen, Vorlage wählen und einen Testdienst eintragen.
 3. Tages-Popup: dunkel im Hellmodus, hell im Dunkelmodus, Texte lesbar.

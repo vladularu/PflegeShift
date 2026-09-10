@@ -1,20 +1,27 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import * as Notifications from "expo-notifications";
+import { router } from "expo-router";
+import type { ReactNode } from "react";
 import { ActionSheetIOS } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { TemplateEditorScreen } from "@/features/templates/template-editor-screen";
+import type { SaveShiftTemplateInput, ShiftTemplate } from "@/domain/types";
 
 const mockUpsertShift = jest.fn<() => Promise<void>>();
-const mockUpsertTemplate = jest.fn<() => Promise<void>>();
+const mockUpsertTemplate = jest.fn<(input: SaveShiftTemplateInput) => Promise<ShiftTemplate>>();
 const mockRemoveTemplate = jest.fn<() => Promise<void>>();
+let mockParams: { quickEntryDate?: string } = {};
 
 jest.mock("expo-router", () => ({
   router: { back: jest.fn(), dismiss: jest.fn(), push: jest.fn() },
-  Stack: { Screen: () => null },
+  Stack: {
+    Screen: ({ options }: { options: { headerRight?: () => ReactNode } }) =>
+      options.headerRight?.() ?? null,
+  },
   useFocusEffect: (effect: () => void) => effect(),
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => mockParams,
 }));
 
 jest.mock("@/application/pflegeshift-provider", () => ({
@@ -43,6 +50,7 @@ async function renderEditor() {
 describe("TemplateEditorScreen compact layout", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockParams = {};
     jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({
       granted: true,
     } as Notifications.NotificationPermissionsStatus);
@@ -53,6 +61,24 @@ describe("TemplateEditorScreen compact layout", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it("returns one level after saving from the replaced calendar picker", async () => {
+    mockParams = { quickEntryDate: "2026-08-15" };
+    mockUpsertTemplate.mockImplementation(async (input) => ({
+      ...input,
+      id: "saved-template",
+      revision: 1,
+      createdAt: "2026-08-15T00:00:00.000Z",
+      updatedAt: "2026-08-15T00:00:00.000Z",
+      deletedAt: null,
+    }));
+    mockUpsertShift.mockResolvedValue(undefined);
+    await renderEditor();
+    await fireEvent.changeText(screen.getByLabelText("Titel"), "Testdienst");
+    await fireEvent.press(screen.getByRole("button", { name: "Fertig und schließen" }));
+    await waitFor(() => expect(router.back).toHaveBeenCalledTimes(1));
+    expect(router.dismiss).not.toHaveBeenCalled();
   });
 
   it("keeps the default editor compact and preserves usable row heights", async () => {

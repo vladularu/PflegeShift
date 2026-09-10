@@ -33,7 +33,7 @@ const template: ShiftTemplate = {
 const mockSaveStamp = jest.fn<() => Promise<boolean>>();
 
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn(), dismissTo: jest.fn(), push: jest.fn() },
+  router: { back: jest.fn(), dismissTo: jest.fn(), push: jest.fn(), replace: jest.fn() },
   Stack: { Screen: () => null },
   useLocalSearchParams: () => ({ date: "2026-08-15" }),
 }));
@@ -69,11 +69,12 @@ describe("ShiftSelectionScreen", () => {
     jest.mocked(router.back).mockClear();
     jest.mocked(router.dismissTo).mockClear();
     jest.mocked(router.push).mockClear();
+    jest.mocked(router.replace).mockClear();
     mockSaveStamp.mockReset();
     mockSaveStamp.mockResolvedValue(true);
   });
 
-  it("keeps Meine Dienste mounted while opening edit or add above it", async () => {
+  it("replaces the native selection sheet when editing or adding a template", async () => {
     const screen = await render(<TestScreen />);
 
     expect(screen.getByRole("header", { name: /Schicht auswählen/ })).toBeVisible();
@@ -88,17 +89,19 @@ describe("ShiftSelectionScreen", () => {
     expect(screen.getByTestId("shift-selection-panel")).toHaveStyle({ paddingTop: SPACING.lg });
 
     await fireEvent.press(screen.getByRole("button", { name: "Früh Dienstvorlage bearbeiten" }));
-    expect(router.push).toHaveBeenLastCalledWith({
+    expect(router.replace).toHaveBeenLastCalledWith({
       pathname: "/template-editor",
       params: { id: "early", quickEntryDate: "2026-08-15" },
     });
     expect(screen.getByText("Meine Dienste")).toBeVisible();
 
     await fireEvent.press(screen.getByRole("button", { name: "Neue Schichtvorlage hinzufügen" }));
-    expect(router.push).toHaveBeenLastCalledWith({
+    expect(router.replace).toHaveBeenLastCalledWith({
       pathname: "/template-editor",
       params: { quickEntryDate: "2026-08-15" },
     });
+    expect(router.push).not.toHaveBeenCalled();
+    expect(mockSaveStamp).not.toHaveBeenCalled();
   });
 
   it("returns to the calendar after a normal template selection", async () => {

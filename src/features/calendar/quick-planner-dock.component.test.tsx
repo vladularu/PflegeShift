@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
-import { describe, expect, it, jest } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -14,7 +14,7 @@ import {
   quickPlannerTransitionDuration,
 } from "@/features/calendar/quick-planner-dock";
 import { MOTION } from "@/theme/motion";
-import { LIGHT_PALETTE } from "@/theme/palette-values";
+import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 
 jest.mock("@expo/vector-icons/Ionicons", () => {
   const { Text } = jest.requireActual<typeof import("react-native")>("react-native");
@@ -44,11 +44,13 @@ function renderDock({
   onOpen = jest.fn(),
   open = true,
   busy = false,
+  activeKey = "template:early",
 }: {
   onClose?: jest.Mock;
   onOpen?: jest.Mock;
   open?: boolean;
   busy?: boolean;
+  activeKey?: string | null;
 } = {}) {
   return render(
     <SafeAreaProvider
@@ -59,7 +61,7 @@ function renderDock({
     >
       <QuickPlannerDock
         actions={buildQuickEntryActions([TEMPLATE]).slice(0, 1)}
-        activeKey="template:early"
+        activeKey={activeKey}
         busy={busy}
         onOpen={onOpen}
         onClose={onClose}
@@ -71,6 +73,29 @@ function renderDock({
 }
 
 describe("QuickPlannerDock", () => {
+  beforeEach(() => {
+    jest
+      .spyOn(jest.requireActual<typeof import("react-native")>("react-native"), "useColorScheme")
+      .mockReturnValue("light");
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it.each([false, true])("inverts open controls and inactive text (dark=%s)", async (dark) => {
+    jest
+      .spyOn(jest.requireActual<typeof import("react-native")>("react-native"), "useColorScheme")
+      .mockReturnValue(dark ? "dark" : "light");
+    const inverse = dark ? LIGHT_PALETTE : DARK_PALETTE;
+    const screen = await renderDock({ activeKey: null });
+    expect(screen.getByTestId("quick-planner-dock")).toHaveStyle({
+      backgroundColor: inverse.surface,
+    });
+    expect(screen.getByTestId("quick-planner-close-visual")).toHaveStyle({
+      backgroundColor: inverse.surface,
+    });
+    expect(screen.getByText("Früh")).toHaveStyle({ color: inverse.text });
+  });
   it("keeps the pencil, dock and close action in one persistent synchronized control", async () => {
     const screen = await renderDock();
     const mountReveal = screen.getByTestId("quick-planner-mount-reveal");
@@ -107,8 +132,8 @@ describe("QuickPlannerDock", () => {
     ).toBe(QUICK_PLANNER_METRICS.closeVisualGap);
     expect(dockStyle.height).toBe(QUICK_PLANNER_METRICS.dockHeight);
     expect(dockStyle.borderRadius).toBe(QUICK_PLANNER_METRICS.dockHeight / 2);
-    expect(dockStyle.backgroundColor).toBe(LIGHT_PALETTE.floatingAction);
-    expect(closeVisualStyle.backgroundColor).toBe(LIGHT_PALETTE.floatingAction);
+    expect(dockStyle.backgroundColor).toBe(DARK_PALETTE.surface);
+    expect(closeVisualStyle.backgroundColor).toBe(DARK_PALETTE.surface);
     expect(screen.queryByTestId("quick-planner-dock-shell")).toBeNull();
     expect(screen.queryByText("Fertig")).toBeNull();
   });
@@ -169,7 +194,7 @@ describe("QuickPlannerDock", () => {
 
     expect(StyleSheet.flatten(action.props.style).opacity).not.toBe(0.42);
     expect(screen.getByTestId("quick-planner-dock")).toHaveStyle({
-      backgroundColor: LIGHT_PALETTE.floatingAction,
+      backgroundColor: DARK_PALETTE.surface,
     });
   });
 });
