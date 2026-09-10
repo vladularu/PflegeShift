@@ -6,7 +6,11 @@ import type {
   TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
-import { buildAnnualAvailableReportSteps } from "@/features/analysis/annual-core-report";
+import {
+  annualInputKey,
+  buildAnnualAvailableReportSteps,
+  createAnnualAvailableReportCache,
+} from "@/features/analysis/annual-core-report";
 import type { AnnualReport } from "@/features/analysis/annual-report";
 import type { RuleComputationFailure } from "@/features/analysis/rule-computation";
 import { useLocalReferenceDate } from "@/features/analysis/use-local-reference-date";
@@ -24,23 +28,12 @@ interface AnnualReportState {
 }
 
 interface DeferredAnnualReportResult {
+  readonly coreReport: AnnualReport | null;
   readonly error: string | null;
   readonly fatalError: Error | null;
   readonly report: AnnualReport | null;
   readonly ruleFailure: RuleComputationFailure | null;
   readonly retry: () => void;
-}
-
-function canonicalize(value: Record<string, unknown>): string {
-  return JSON.stringify(value, (_key, item: unknown) => {
-    if (item === null || typeof item !== "object" || Array.isArray(item)) return item;
-    const record = item as Record<string, unknown>;
-    return Object.fromEntries(
-      Object.keys(record)
-        .sort()
-        .map((key) => [key, record[key]]),
-    );
-  });
 }
 
 export function useDeferredAnnualReport({
@@ -62,6 +55,8 @@ export function useDeferredAnnualReport({
 }): DeferredAnnualReportResult {
   const [retryRevision, setRetryRevision] = useState(0);
   const [states, setStates] = useState<readonly AnnualReportState[]>([]);
+  const [coreState, setCoreState] = useState<AnnualReportState | null>(null);
+  const [computationCache] = useState(createAnnualAvailableReportCache);
   const requestRevision = useRef(0);
   const retry = useCallback(() => setRetryRevision((value) => value + 1), []);
   const referenceDate = useLocalReferenceDate(profile?.timeZone ?? "Europe/Berlin");
@@ -71,7 +66,7 @@ export function useDeferredAnnualReport({
   const inputKey = useMemo(
     () =>
       enabled
-        ? canonicalize({
+        ? annualInputKey({
             entries,
             profile,
             tariffDecisions,
@@ -106,6 +101,21 @@ export function useDeferredAnnualReport({
       workPatternSettings,
       referenceDate,
       ruleResolver,
+      {
+        cache: computationCache,
+        onCore: (report) => {
+          if (!active || requestRevision.current !== currentRequest) return;
+          setCoreState({
+            inputKey,
+            report,
+            year,
+            ruleResolver,
+            error: null,
+            fatalError: null,
+            ruleFailure: null,
+          });
+        },
+      },
     );
     const advance = () => {
       try {
@@ -115,7 +125,7 @@ export function useDeferredAnnualReport({
         const deadline = performance.now() + 4;
         let step = steps.next();
         let count = 1;
-        while (!step.done && count < 32 && performance.now() < deadline) {
+        while (!step.done && step.value !== 0 && count < 32 && performance.now() < deadline) {
           step = steps.next();
           count += 1;
         }
@@ -163,6 +173,7 @@ export function useDeferredAnnualReport({
       cancelScheduledWork();
     };
   }, [
+    computationCache,
     completedRequest,
     enabled,
     entries,
@@ -177,6 +188,10 @@ export function useDeferredAnnualReport({
   ]);
 
   return {
+    coreReport:
+      coreState?.inputKey === inputKey && coreState?.ruleResolver === ruleResolver
+        ? coreState.report
+        : null,
     error: state?.error ?? null,
     fatalError: state?.fatalError ?? null,
     report: state?.report ?? null,

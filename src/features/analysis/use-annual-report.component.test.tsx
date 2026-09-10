@@ -308,6 +308,7 @@ describe("useDeferredAnnualReport", () => {
     });
     expect(screen.result.current.report).toBeNull();
     await screen.rerender({ enabled: false });
+    expect(screen.result.current.coreReport).toBeNull();
     await act(async () => {
       jest.runAllTimers();
     });
@@ -337,7 +338,10 @@ describe("useDeferredAnnualReport", () => {
     await act(async () => {
       jest.advanceTimersToNextTimer();
     });
+    expect(screen.result.current.coreReport?.year).toBe(2026);
+    expect(screen.result.current.report).toBeNull();
     await screen.rerender({ year: 2027 });
+    expect(screen.result.current.coreReport).toBeNull();
     await act(async () => {
       jest.runAllTimers();
     });

@@ -195,7 +195,8 @@ export function AnalysisScreen({
         />
       );
     }
-    if (!ready || annualReport.report === null)
+    const visibleReport = annualReport.report ?? annualReport.coreReport;
+    if (!ready || visibleReport === null)
       return (
         <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
           <AnalysisYearHeader
@@ -209,7 +210,8 @@ export function AnalysisScreen({
       );
     return (
       <AnnualReportScreen
-        report={annualReport.report}
+        report={visibleReport}
+        pending={annualReport.report === null}
         testMonths={testMonths}
         onBackToMonth={() => changePeriod("MONTH")}
         onMoveYear={moveYear}

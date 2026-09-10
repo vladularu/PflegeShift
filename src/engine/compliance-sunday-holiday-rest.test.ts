@@ -397,6 +397,30 @@ describe("ArbZG Sunday and public-holiday rest", () => {
     expect(result.issues.some((item) => item.rule.startsWith("ARBZG_11_"))).toBe(false);
   });
 
+  it("preserves 23/25-hour Sunday boundaries when sharing date preparation", () => {
+    for (const [saturday, sunday, monday, shortRest] of [
+      ["2026-03-28", "2026-03-29", "2026-03-30", true],
+      ["2026-10-24", "2026-10-25", "2026-10-26", false],
+    ] as const) {
+      const entries = [
+        shift("before", saturday, "08:00", "19:00"),
+        shift("after", monday, "06:00", "14:00"),
+      ];
+      // 35 wall-clock hours: 34 at the spring transition, 36 in autumn, 35 in UTC.
+      for (const timeZone of ["Europe/Berlin", "UTC", "Europe/Berlin"]) {
+        const options = { federalState: "NW" as const, referenceDate: "2026-12-31" };
+        const result = calculateMonthlyCompliance(sunday.slice(0, 7), entries, timeZone, options);
+        const hasConnectionIssue = result.issues.some(
+          (item) => item.date === sunday && item.rule === "ARBZG_11_REST_CONNECTION",
+        );
+        expect(hasConnectionIssue).toBe(timeZone === "Europe/Berlin" && shortRest);
+        expect(calculateMonthlyCompliance(sunday.slice(0, 7), entries, timeZone, options)).toEqual(
+          result,
+        );
+      }
+    }
+  });
+
   it("keeps Sunday checks active and reports missing holiday coverage", () => {
     const result = calculateMonthlyCompliance(
       "2026-07",

@@ -41,6 +41,25 @@ const report: AnnualReport = {
 };
 
 describe("annual report view", () => {
+  it("shows core content without claiming completed pay or checks while pending", async () => {
+    const screen = await render(
+      <AnnualReportScreen
+        report={report}
+        pending
+        testMonths={[]}
+        onBackToMonth={jest.fn()}
+        onMoveYear={jest.fn()}
+        onSelectMonth={jest.fn()}
+      />,
+    );
+    expect(screen.getByText("Dienstverteilung")).toBeTruthy();
+    expect(screen.getByText("Jahresverlauf")).toBeTruthy();
+    expect(screen.getByText(/Prüfung und Gehalt werden berechnet/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Prüfung,/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Gehalt,/ })).toBeNull();
+    expect(screen.getAllByText("Wird berechnet")).toHaveLength(2);
+    expect(screen.queryByText("28.700,00 €")).toBeNull();
+  });
   it("keeps the card style and expands check and salary details inline", async () => {
     const onSelectMonth = jest.fn();
     const screen = await render(

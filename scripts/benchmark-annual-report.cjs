@@ -16,14 +16,30 @@ if (compareIndex !== -1) {
         encoding: "utf8",
       }),
     );
-  const before = run(["--baseline", base]);
-  const after = run([]);
+  const before = run(["--cold", "--baseline", base]);
+  const after = run(["--cold"]);
   assert.deepEqual(
     after.map(({ key, digest }) => ({ key, digest })),
     before.map(({ key, digest }) => ({ key, digest })),
     "Annual results changed",
   );
   console.log(JSON.stringify({ resultsIdentical: true, before, after }, null, 2));
+} else if (process.argv.includes("--cold")) {
+  // Each sample starts a fresh process: no inherited date, interval or report cache.
+  const baselineIndex = process.argv.indexOf("--baseline");
+  const baselineArgs = baselineIndex === -1 ? [] : ["--baseline", process.argv[baselineIndex + 1]];
+  const samples = ["0", "20", "all", "sparse"].flatMap((limit) =>
+    [2026, 2027].flatMap((year) =>
+      JSON.parse(
+        execFileSync(
+          process.execPath,
+          ["--require", "tsx/cjs", __filename, "--case", `${limit}/${year}`, ...baselineArgs],
+          { encoding: "utf8" },
+        ),
+      ),
+    ),
+  );
+  console.log(JSON.stringify(samples, null, 2));
 } else {
   const baselineIndex = process.argv.indexOf("--baseline");
   if (baselineIndex !== -1) {
@@ -35,6 +51,7 @@ if (compareIndex !== -1) {
     for (const relative of [
       "src/engine/compliance-sunday-holiday-rest.ts",
       "src/engine/compliance-night-work.ts",
+      "src/features/analysis/annual-core-report.ts",
     ]) {
       const filename = path.resolve(__dirname, "..", relative);
       const source = execFileSync("git", ["show", `${ref}:${relative}`], {
@@ -59,6 +76,7 @@ if (compareIndex !== -1) {
   const { generateTestPlan } = require("../src/engine/test-data-generator");
   const {
     buildAnnualAvailableReportSteps,
+    createAnnualAvailableReportCache,
   } = require("../src/features/analysis/annual-core-report");
   const { bundledRuleResolver } = require("../src/rules/rule-resolver");
   const profile = {
@@ -125,6 +143,14 @@ if (compareIndex !== -1) {
         deletedAt: null,
       }));
     for (const year of [2026, 2027]) {
+      const caseIndex = process.argv.indexOf("--case");
+      if (
+        caseIndex !== -1 &&
+        process.argv[caseIndex + 1] !== `${limit === Infinity ? "all" : limit}/${year}`
+      )
+        continue;
+      const editBenchmark = process.argv.includes("--edit");
+      const cache = editBenchmark ? createAnnualAvailableReportCache() : undefined;
       const steps = buildAnnualAvailableReportSteps(
         year,
         entries,
@@ -137,10 +163,12 @@ if (compareIndex !== -1) {
         },
         "2026-09-10",
         bundledRuleResolver,
+        { cache },
       );
       let cpuMs = 0,
         maxStepMs = 0,
-        calls = 0;
+        calls = 0,
+        coreReadyMs = null;
       const stages = {};
       for (;;) {
         const start = performance.now();
@@ -149,6 +177,7 @@ if (compareIndex !== -1) {
         cpuMs += elapsed;
         maxStepMs = Math.max(maxStepMs, elapsed);
         calls++;
+        if (!step.done && step.value === 0) coreReadyMs = cpuMs;
         const stage = step.done ? "finish" : String(step.value);
         stages[stage] = (stages[stage] || 0) + elapsed;
         if (step.done) {
@@ -157,6 +186,7 @@ if (compareIndex !== -1) {
             cpuMs,
             maxStepMs,
             calls,
+            coreReadyMs,
             stages,
             digest: createHash("sha256")
               .update(
@@ -168,6 +198,71 @@ if (compareIndex !== -1) {
           });
           break;
         }
+      }
+      if (editBenchmark && entries.length > 0) {
+        const updated = [
+          ...entries,
+          {
+            ...entries[0],
+            id: "added-shift",
+            date: `${year}-${year === 2026 ? "06" : "03"}-15`,
+          },
+        ];
+        const calculate = (reuse) => {
+          const iterator = buildAnnualAvailableReportSteps(
+            year,
+            updated,
+            profile,
+            [],
+            { workplaceCoverage: "UNKNOWN", assignment: "UNKNOWN", updatedAt: null },
+            "2026-09-10",
+            bundledRuleResolver,
+            reuse ? { cache } : {},
+          );
+          const started = performance.now();
+          let coreReadyMs = null;
+          for (;;) {
+            const step = iterator.next();
+            if (step.done)
+              return { report: step.value, cpuMs: performance.now() - started, coreReadyMs };
+            if (step.value === 0) coreReadyMs = performance.now() - started;
+          }
+        };
+        const incrementalSamples = [];
+        const completeSamples = [];
+        for (let sample = 0; sample < 5; sample++) {
+          // Restore pre-edit inputs so each incremental sample must process the edit.
+          const prime = buildAnnualAvailableReportSteps(
+            year,
+            entries,
+            profile,
+            [],
+            { workplaceCoverage: "UNKNOWN", assignment: "UNKNOWN", updatedAt: null },
+            "2026-09-10",
+            bundledRuleResolver,
+            { cache },
+          );
+          while (!prime.next().done) {
+            /* prepare only; not measured */
+          }
+          // Alternate order to avoid rewarding the second run's warmer engine caches.
+          const first = calculate(sample % 2 === 0);
+          const second = calculate(sample % 2 !== 0);
+          const incremental = sample % 2 === 0 ? first : second;
+          const complete = sample % 2 === 0 ? second : first;
+          assert.deepEqual(incremental.report, complete.report, "Changed-year results differ");
+          incrementalSamples.push(incremental);
+          completeSamples.push(complete);
+        }
+        const median = (values) => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
+        results.push({
+          key: `${entries.length}/${year}/added-shift`,
+          cpuMs: median(incrementalSamples.map((item) => item.cpuMs)),
+          fullRecalculationMs: median(completeSamples.map((item) => item.cpuMs)),
+          coreReadyMs: median(incrementalSamples.map((item) => item.coreReadyMs)),
+          samples: 5,
+          resultsIdentical: true,
+        });
       }
     }
   }

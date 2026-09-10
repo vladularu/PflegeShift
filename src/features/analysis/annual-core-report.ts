@@ -129,6 +129,38 @@ interface AvailableMonthCalculation {
   readonly summary: MonthlySummary | null;
 }
 
+interface CachedPart<T> {
+  readonly key: string;
+  readonly value: T;
+}
+
+interface AvailableMonthCache {
+  summary?: CachedPart<MonthlySummary | null>;
+  compliance?: CachedPart<MonthlyComplianceResult | null>;
+  pay?: CachedPart<MonthlyPayEstimate | null>;
+}
+
+export function createAnnualAvailableReportCache() {
+  return new WeakMap<RuleResolver, Map<string, AvailableMonthCache>>();
+}
+
+export function annualInputKey(value: unknown): string {
+  return JSON.stringify(value, (_key, item: unknown) => {
+    if (item === null || typeof item !== "object" || Array.isArray(item)) return item;
+    const record = item as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(record)
+        .sort()
+        .map((key) => [key, record[key]]),
+    );
+  });
+}
+
+interface AnnualComputationOptions {
+  readonly cache?: ReturnType<typeof createAnnualAvailableReportCache>;
+  readonly onCore?: (report: AnnualReport) => void;
+}
+
 function* calculateAvailableMonth(
   month: string,
   entries: readonly CalendarEntry[],
@@ -137,11 +169,17 @@ function* calculateAvailableMonth(
   workPatternSettings: TvoedWorkPatternSettings,
   referenceDate: string,
   ruleResolver: RuleResolver,
+  cached: AvailableMonthCache,
 ): Generator<number, AvailableMonthCalculation, void> {
   const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-  const summary = captureRuleValue(() =>
-    calculateMonthlySummary(month, monthlyEntries.monthShifts, profile, ruleResolver),
-  );
+  const summaryKey = annualInputKey([monthlyEntries.monthShifts, profile]);
+  const summary =
+    cached.summary?.key === summaryKey
+      ? cached.summary.value
+      : captureRuleValue(() =>
+          calculateMonthlySummary(month, monthlyEntries.monthShifts, profile, ruleResolver),
+        );
+  cached.summary = { key: summaryKey, value: summary };
   yield 1;
 
   let compliance: MonthlyComplianceResult | null = null;
@@ -149,7 +187,11 @@ function* calculateAvailableMonth(
     requireResolvedPackage(ruleResolver.resolveHoliday(`${month}-01`));
     return selectComplianceShifts(entries, month, ruleResolver);
   });
-  if (complianceShifts !== null) {
+  // Use the engine's complete legal window, not merely the edited month.
+  const complianceKey = annualInputKey([complianceShifts, profile, referenceDate]);
+  if (cached.compliance?.key === complianceKey) {
+    compliance = cached.compliance.value;
+  } else if (complianceShifts !== null) {
     try {
       const steps = calculateMonthlyComplianceSteps(month, complianceShifts, profile.timeZone, {
         federalState: profile.federalState,
@@ -173,23 +215,37 @@ function* calculateAvailableMonth(
       if (!(error instanceof RuleResolutionError)) throw error;
     }
   }
+  cached.compliance = { key: complianceKey, value: compliance };
   yield 2;
 
-  const pay = captureRuleValue(() => {
-    const allowanceShifts =
-      profile.tariff === null
-        ? monthlyEntries.monthShifts
-        : selectAllowanceShifts(entries, month, ruleResolver);
-    return calculateMonthlyPayEstimate(
-      month,
-      monthlyEntries.monthShifts,
-      profile,
-      decision,
-      allowanceShifts,
-      workPatternSettings,
-      ruleResolver,
-    );
-  });
+  const allowanceShifts = captureRuleValue(() =>
+    profile.tariff === null
+      ? monthlyEntries.monthShifts
+      : selectAllowanceShifts(entries, month, ruleResolver),
+  );
+  const payKey = annualInputKey([
+    monthlyEntries.monthShifts,
+    allowanceShifts,
+    profile,
+    decision,
+    workPatternSettings,
+  ]);
+  const pay =
+    cached.pay?.key === payKey
+      ? cached.pay.value
+      : captureRuleValue(() => {
+          if (allowanceShifts === null) return null;
+          return calculateMonthlyPayEstimate(
+            month,
+            monthlyEntries.monthShifts,
+            profile,
+            decision,
+            allowanceShifts,
+            workPatternSettings,
+            ruleResolver,
+          );
+        });
+  cached.pay = { key: payKey, value: pay };
   yield 3;
 
   return { compliance, pay, summary };
@@ -203,11 +259,17 @@ export function* buildAnnualAvailableReportSteps(
   workPatternSettings: TvoedWorkPatternSettings,
   referenceDate: string,
   ruleResolver: RuleResolver,
+  options: AnnualComputationOptions = {},
 ): Generator<number, AnnualReport, void> {
   if (!Number.isInteger(year) || year < 1900 || year > 4099) {
     throw new Error("Ungültiges Berichtsjahr.");
   }
   const core = buildAnnualCoreReport(year, entries, profile);
+  options.onCore?.(core);
+  // Explicit paint boundary: do not start legal work in the core's scheduler slice.
+  yield 0;
+  const monthsCache = options.cache?.get(ruleResolver) ?? new Map<string, AvailableMonthCache>();
+  options.cache?.set(ruleResolver, monthsCache);
   const decisions = new Map(tariffDecisions.map((item) => [item.month, item]));
   const months: AnnualMonthReport[] = [];
   let targetMinutes = 0;
@@ -223,6 +285,11 @@ export function* buildAnnualAvailableReportSteps(
   let complianceCoverageComplete = true;
 
   for (const coreMonth of core.months) {
+    const cached = monthsCache.get(coreMonth.month) ?? {};
+    if (!monthsCache.has(coreMonth.month) && monthsCache.size >= 36) {
+      monthsCache.delete(monthsCache.keys().next().value!);
+    }
+    monthsCache.set(coreMonth.month, cached);
     const calculation = calculateAvailableMonth(
       coreMonth.month,
       entries,
@@ -231,6 +298,7 @@ export function* buildAnnualAvailableReportSteps(
       workPatternSettings,
       referenceDate,
       ruleResolver,
+      cached,
     );
     let available: AvailableMonthCalculation;
     while (true) {
