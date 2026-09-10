@@ -135,6 +135,13 @@ export function SettingsScreen() {
                 />
               </>
             ) : null}
+            <CardSeparator />
+            <RowButton
+              leading={<SettingsIcon name="shield-checkmark-outline" />}
+              onPress={() => router.push("/check-settings")}
+              subtitle="Freiwillige Planungshinweise vorbereiten"
+              title="Prüfung"
+            />
           </SurfaceCard>
         </View>
 

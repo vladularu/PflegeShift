@@ -11,6 +11,32 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 
 const TVOED_COVERAGE_KEY = "tvoed_workplace_coverage";
 const TVOED_ASSIGNMENT_KEY = "tvoed_assignment";
+export const PLANNING_HINTS_PREFERENCE_KEY = "check_show_planning_hints";
+
+export async function loadPlanningHintsPreference(db: SQLiteDatabase): Promise<boolean> {
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM app_preferences WHERE key = ?",
+    PLANNING_HINTS_PREFERENCE_KEY,
+  );
+  // Missing (including older backups) or malformed values preserve existing visibility.
+  return row?.value !== "false";
+}
+
+export async function savePlanningHintsPreference(
+  db: SQLiteDatabase,
+  enabled: boolean,
+): Promise<void> {
+  if (typeof enabled !== "boolean") throw new Error("Ungültige Prüfungseinstellung.");
+  await withImmediateTransaction(db, async (transaction) => {
+    await transaction.runAsync(
+      `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
+       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
+      PLANNING_HINTS_PREFERENCE_KEY,
+      String(enabled),
+      new Date().toISOString(),
+    );
+  });
+}
 
 interface PreferenceRow {
   key: string;
@@ -29,6 +55,7 @@ const CALENDAR_PREFERENCE_KEYS = {
 } as const;
 
 export const USER_DATA_PREFERENCE_KEYS = Object.freeze([
+  PLANNING_HINTS_PREFERENCE_KEY,
   TVOED_COVERAGE_KEY,
   TVOED_ASSIGNMENT_KEY,
   ...Object.values(CALENDAR_PREFERENCE_KEYS),

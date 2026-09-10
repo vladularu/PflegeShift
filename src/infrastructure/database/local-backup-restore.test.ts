@@ -19,6 +19,10 @@ import {
   type LocalBackupDocument,
 } from "@/infrastructure/database/local-backup";
 import { migrateDatabase } from "@/infrastructure/database/migrations";
+import {
+  loadPlanningHintsPreference,
+  savePlanningHintsPreference,
+} from "@/infrastructure/database/preferences-repository";
 
 class TestDatabase {
   readonly database = new Database(":memory:");
@@ -166,6 +170,62 @@ describe("local backup restore", () => {
   afterEach(() => {
     source.database.close();
     destination.database.close();
+  });
+
+  it("persists planning settings and restores them through a validated backup", async () => {
+    expect(await loadPlanningHintsPreference(sourceDb)).toBe(true);
+    await savePlanningHintsPreference(sourceDb, false);
+    expect(await loadPlanningHintsPreference(sourceDb)).toBe(false);
+    const snapshot = await loadLocalBackupSnapshot(sourceDb);
+    const exported = await createLocalBackupDocument(snapshot, {
+      appVersion: "test",
+      createdAt: new Date("2026-09-10T00:00:00Z"),
+      sha256,
+    });
+    const backup = await validateLocalBackup(exported.serialized, {
+      maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(destinationDb),
+      sha256,
+    });
+    await restoreLocalBackup(destinationDb, backup);
+    expect(await loadPlanningHintsPreference(destinationDb)).toBe(false);
+    await savePlanningHintsPreference(destinationDb, true);
+    expect(await loadPlanningHintsPreference(destinationDb)).toBe(true);
+  });
+
+  it("restores an older backup without keeping a newer hidden-planning setting", async () => {
+    await savePlanningHintsPreference(destinationDb, false);
+    const backup = await validateLocalBackup(JSON.stringify(document), {
+      maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(destinationDb),
+      sha256,
+    });
+    await restoreLocalBackup(destinationDb, backup);
+    expect(await loadPlanningHintsPreference(destinationDb)).toBe(true);
+  });
+
+  it("rejects a signed backup with a malformed planning preference before restore", async () => {
+    const serialized = await signedSerialized(document, (unsigned) => {
+      const data = unsigned.data as { preferences: Record<string, unknown>[] };
+      data.preferences.push({
+        key: "check_show_planning_hints",
+        value: "off",
+        updated_at: "2026-09-10T00:00:00.000Z",
+      });
+    });
+    await expect(
+      validateLocalBackup(serialized, {
+        maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(destinationDb),
+        sha256,
+      }),
+    ).rejects.toThrow(LocalBackupValidationError);
+  });
+
+  it("rejects invalid planning preference writes and retains the previous value on failure", async () => {
+    await expect(
+      savePlanningHintsPreference(sourceDb, "false" as unknown as boolean),
+    ).rejects.toThrow();
+    source.failSqlIncludes = "INSERT INTO app_preferences";
+    await expect(savePlanningHintsPreference(sourceDb, false)).rejects.toThrow();
+    expect(await loadPlanningHintsPreference(sourceDb)).toBe(true);
   });
 
   it("validates a current v1 backup and builds a user-facing preview", async () => {

@@ -567,6 +567,7 @@ function validateTariffDecisionRow(value: unknown): BackupRow {
 
 function validatePreferenceValue(key: string, value: string): void {
   const booleans = [
+    "check_show_planning_hints",
     "calendar_show_shifts",
     "calendar_show_appointments",
     "calendar_show_holidays",
