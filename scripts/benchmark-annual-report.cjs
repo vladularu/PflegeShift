@@ -27,30 +27,34 @@ if (compareIndex !== -1) {
 } else {
   const baselineIndex = process.argv.indexOf("--baseline");
   if (baselineIndex !== -1) {
-    // Load only the pre-optimization engine module, without changing checkout files.
+    // Load the changed pre-optimization engine modules, without changing checkout files.
     const ref = process.argv[baselineIndex + 1];
     assert.match(ref, /^[0-9a-f]{7,40}$/i);
     const Module = require("node:module");
     const ts = require("typescript");
-    const relative = "src/engine/compliance-sunday-holiday-rest.ts";
-    const filename = path.resolve(__dirname, "..", relative);
-    const source = execFileSync("git", ["show", `${ref}:${relative}`], {
-      encoding: "utf8",
-      cwd: path.resolve(__dirname, ".."),
-    });
-    const baseline = new Module(filename, module);
-    baseline.filename = filename;
-    baseline.paths = Module._nodeModulePaths(path.dirname(filename));
-    baseline._compile(
-      ts.transpileModule(source, {
-        compilerOptions: {
-          module: ts.ModuleKind.CommonJS,
-          target: ts.ScriptTarget.ES2022,
-        },
-      }).outputText,
-      filename,
-    );
-    require.cache[filename] = baseline;
+    for (const relative of [
+      "src/engine/compliance-sunday-holiday-rest.ts",
+      "src/engine/compliance-night-work.ts",
+    ]) {
+      const filename = path.resolve(__dirname, "..", relative);
+      const source = execFileSync("git", ["show", `${ref}:${relative}`], {
+        encoding: "utf8",
+        cwd: path.resolve(__dirname, ".."),
+      });
+      const baseline = new Module(filename, module);
+      baseline.filename = filename;
+      baseline.paths = Module._nodeModulePaths(path.dirname(filename));
+      baseline._compile(
+        ts.transpileModule(source, {
+          compilerOptions: {
+            module: ts.ModuleKind.CommonJS,
+            target: ts.ScriptTarget.ES2022,
+          },
+        }).outputText,
+        filename,
+      );
+      require.cache[filename] = baseline;
+    }
   }
   const { generateTestPlan } = require("../src/engine/test-data-generator");
   const {
@@ -87,14 +91,22 @@ if (compareIndex !== -1) {
       ).shifts,
   );
   const results = [];
-  for (const limit of [0, 20, Infinity]) {
+  for (const limit of [0, 20, Infinity, "sparse"]) {
     const counts = new Map();
     const entries = all
       .filter((s) => {
         const month = s.date.slice(0, 7);
+        if (
+          limit === "sparse" &&
+          !(
+            (month >= "2026-01" && month <= "2026-05") ||
+            (month >= "2027-01" && month <= "2027-02")
+          )
+        )
+          return false;
         const count = counts.get(month) || 0;
         counts.set(month, count + 1);
-        return count < limit;
+        return count < (limit === "sparse" ? 20 : limit);
       })
       .map((s, i) => ({
         ...s,
@@ -146,7 +158,13 @@ if (compareIndex !== -1) {
             maxStepMs,
             calls,
             stages,
-            digest: createHash("sha256").update(JSON.stringify(step.value)).digest("hex"),
+            digest: createHash("sha256")
+              .update(
+                JSON.stringify(step.value, (_key, value) =>
+                  value instanceof Map ? [...value] : value,
+                ),
+              )
+              .digest("hex"),
           });
           break;
         }

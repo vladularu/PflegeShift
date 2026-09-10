@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   CalendarEntry,
@@ -14,16 +14,12 @@ import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 
 interface AnnualReportState {
-  readonly entries: readonly CalendarEntry[];
+  readonly inputKey: string;
   readonly error: string | null;
   readonly fatalError: Error | null;
-  readonly profile: UserProfile;
-  readonly referenceDate: string;
   readonly report: AnnualReport | null;
   readonly ruleFailure: RuleComputationFailure | null;
   readonly ruleResolver: RuleResolver;
-  readonly tariffDecisions: readonly MonthlyTariffDecision[];
-  readonly workPatternSettings: TvoedWorkPatternSettings;
   readonly year: number;
 }
 
@@ -35,10 +31,16 @@ interface DeferredAnnualReportResult {
   readonly retry: () => void;
 }
 
-function sameItems<T>(left: readonly T[], right: readonly T[]): boolean {
-  return (
-    left === right || (left.length === right.length && left.every((item, i) => item === right[i]))
-  );
+function canonicalize(value: Record<string, unknown>): string {
+  return JSON.stringify(value, (_key, item: unknown) => {
+    if (item === null || typeof item !== "object" || Array.isArray(item)) return item;
+    const record = item as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(record)
+        .sort()
+        .map((key) => [key, record[key]]),
+    );
+  });
 }
 
 export function useDeferredAnnualReport({
@@ -63,22 +65,35 @@ export function useDeferredAnnualReport({
   const requestRevision = useRef(0);
   const retry = useCallback(() => setRetryRevision((value) => value + 1), []);
   const referenceDate = useLocalReferenceDate(profile?.timeZone ?? "Europe/Berlin");
+  // Database reloads create new objects. Compare complete values, not identity or
+  // revision alone: template joins and restores can change values at the same revision.
+  // Keep this key in memory only; no diagnostic log or persistent cache.
+  const inputKey = useMemo(
+    () =>
+      enabled
+        ? canonicalize({
+            entries,
+            profile,
+            tariffDecisions,
+            workPatternSettings,
+            year,
+            referenceDate,
+          })
+        : null,
+    [enabled, entries, profile, tariffDecisions, workPatternSettings, year, referenceDate],
+  );
 
   const state = states.find(
     (item) =>
       profile !== null &&
-      sameItems(item.entries, entries) &&
-      item.profile === profile &&
-      item.referenceDate === referenceDate &&
+      item.inputKey === inputKey &&
       item.ruleResolver === ruleResolver &&
-      sameItems(item.tariffDecisions, tariffDecisions) &&
-      item.workPatternSettings === workPatternSettings &&
       item.year === year,
   );
   const completedRequest = state !== undefined && state.report !== null && state.error === null;
 
   useEffect(() => {
-    if (!enabled || profile === null || completedRequest) return;
+    if (!enabled || profile === null || inputKey === null || completedRequest) return;
     let active = true;
     let cancelScheduledWork = () => {};
     requestRevision.current += 1;
@@ -107,16 +122,12 @@ export function useDeferredAnnualReport({
         if (!active || requestRevision.current !== currentRequest) return;
         if (step.done) {
           const next: AnnualReportState = {
-            entries,
+            inputKey,
             error: null,
             fatalError: null,
-            profile,
-            referenceDate,
             report: step.value,
             ruleFailure: null,
             ruleResolver,
-            tariffDecisions,
-            workPatternSettings,
             year,
           };
           setStates((previous) =>
@@ -132,16 +143,12 @@ export function useDeferredAnnualReport({
             : new Error("Annual report computation failed.");
         if (active) {
           const next: AnnualReportState = {
-            entries,
+            inputKey,
             error: null,
             fatalError,
-            profile,
-            referenceDate,
             report: null,
             ruleFailure: null,
             ruleResolver,
-            tariffDecisions,
-            workPatternSettings,
             year,
           };
           setStates((previous) =>
@@ -159,6 +166,7 @@ export function useDeferredAnnualReport({
     completedRequest,
     enabled,
     entries,
+    inputKey,
     profile,
     referenceDate,
     retryRevision,

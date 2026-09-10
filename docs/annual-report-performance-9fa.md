@@ -1,5 +1,31 @@
 # 9F-A – Jahresauswertung
 
+## Reparatur nach fehlgeschlagener Geräteabnahme
+
+9F-A ist noch nicht abgenommen. Die erste OTA beschleunigt den wiederholten Jahreswechsel auf dem Gerät nicht ausreichend. Reproduziert: Daten-Neuladen erzeugt inhaltsgleiche, aber referenzverschiedene Einträge; der bisherige Cache-Test erfasste diesen Pfad nicht.
+
+Lokaler Reparatur-Scope: Report-Cache mit kanonischem Inhaltsvergleich, Wiederverwendung der Nachtzeit-Vorbereitung zwischen Monatsprüfungen, echte Auswahl-/Ladeabgleichsregressionen und Vergleichsmessung. Keine Provider-Änderung, keine neuen Fachregeln, kein Überspringen leerer Monate und keine native Änderung. Commit/Push/OTA erfolgen nicht in diesem lokalen Prüfschritt. Abnahme: keine erneute Fachberechnung bei unverändertem 2026→2027→2026 nach Daten-Neuladen; Änderungen einschließlich Vorlagenwerte und Restore-Inhalte verwerfen alte Ergebnisse.
+
+### Lokaler Reparaturnachweis
+
+- Regression zuerst rot: Nach Auswahl und `reconcileCalendarRange` mit inhaltsgleichen neuen Objekten lieferte die Rückkehr nach 2026 keinen Cache-Treffer. Nach Reparatur gleicher Report und kein neuer Idle-/Rechendurchlauf.
+- Vollständige kanonische JSON-Eingaben statt Objektidentität; Schlüssel nur im Speicher, maximal drei Jahresberichte. Geänderte Feldreihenfolge ist unschädlich; Vorlagenwerte und Restore-Zeiten bei gleicher ID/Revision invalidieren. Regeln bleiben zusätzlich über den Resolver getrennt; Tageswechsel invalidiert. Keine Schlüsselerzeugung bei deaktivierter Jahresberechnung.
+- Nachtzeit-Anteile werden je schwach referenziertem Intervall wiederverwendet. Andere Zeitpunkte/Zeitzonen oder Nachtfenster verwerfen die Vorbereitung; Qualifikationsschwellen werden weiterhin neu ausgewertet. Tests für beide Zeitumstellungen 2026.
+- Vergleich: `node --require tsx/cjs scripts/benchmark-annual-report.cjs --compare f0d2055`. Beide geänderten Engine-Module werden gegen ihren Git-Stand geprüft; der Reportvergleich umfasst jetzt auch Map-Inhalte. Acht Ergebnisvergleiche identisch.
+
+| Synthetische Dienste / Jahr                | Erste OTA CPU | Reparatur CPU |
+| ------------------------------------------ | ------------- | ------------- |
+| 140 (fünf bzw. zwei belegte Monate) / 2026 | 1450 ms       | 930 ms        |
+| 140 (fünf bzw. zwei belegte Monate) / 2027 | 507 ms        | 298 ms        |
+| 720 / 2026                                 | 2651 ms       | 1792 ms       |
+| 720 / 2027                                 | 2384 ms       | 1396 ms       |
+| 3285 / 2026                                | 7739 ms       | 6284 ms       |
+| 3285 / 2027                                | 6200 ms       | 4188 ms       |
+
+Einzelmessungen Windows/Node, nicht iPhone. Datenbank-Wartezeit und Rendering sind nicht enthalten. Lange Einzelschritte im Stressfall bleiben bis etwa 247 ms: keine Zusage, dass jeder Erstaufruf bereits flüssig ist. Der automatische Rücksprungtest prüft die realen Auswahl-/Abgleichsfunktionen mit simuliertem Datenbankergebnis, nicht SQLite auf dem Gerät. Provider-Ladezeit bleibt für 9F-B separat zu messen.
+
+Lokale Reparatur-Gates: `verify:fast` grün (609 Unit-/314 Komponententests plus Werkzeugtests). Anschließend erweiterter Rücksprungtest mit wechselndem Vor-/Folgejahresbereich und Restore erneut grün, Typecheck erneut grün. Keine Veröffentlichung; Geräteabnahme offen.
+
 ## Vertrag
 
 - Ziel: gemessene CPU-Kosten der Jahresauswertung reduzieren, Rechenarbeit zeitlich bündeln und abgeschlossene Jahresberichte begrenzt wiederverwenden.
@@ -36,7 +62,7 @@ Einzelmessungen mit Laufzeitstreuung, keine harten Timing-Assertions in CI. Der 
 
 - Ersatzruhetagsprüfung: Zeitpunkte einmal vorbereiten; Auswahl unverändert nach Qualität, kalendarischem Abstand und Datum. Tagesgrenzen weiterhin mit Temporal/Zeitumstellung.
 - Jahres-Hook: höchstens 32 Schritte beziehungsweise 4 ms pro Idle-Durchlauf; Abbruch bei Eingabewechsel/Verlassen.
-- Höchstens drei abgeschlossene Jahre pro eingebautem Hook. Wiederverwendung nur bei identischen Eingabeobjekten (äquivalente Auswahlarrays erlaubt), Profil, Regeln, Entscheidungen, Arbeitsmuster und lokalem Referenztag. Keine persistente Speicherung. Neu geladene/ersetzte Eingabeobjekte erzwingen sicher eine Neuberechnung.
+- Ursprungsstand f0d2055: höchstens drei abgeschlossene Jahre pro eingebautem Hook, aber Vergleich über Eingabeobjekte. Diese unzureichende Invalidierung wird durch die oben dokumentierte Reparatur ersetzt. Keine persistente Speicherung.
 - Während Provider-Ladevorgängen keine neue Jahresberechnung. Navigation bleibt im Jahres-Ladezustand erreichbar.
 - 9F-B: verbleibende lange Einzelschritte und gemeinsame Daten-Neuladungen zuerst gezielt messen; keine Behauptung, dass 9F-A den gesamten Dezember/Januar-Wechsel löst.
 
@@ -49,7 +75,7 @@ Einzelmessungen mit Laufzeitstreuung, keine harten Timing-Assertions in CI. Der 
 
 Erst nach dieser Abnahme Merge. Keine neue native Build-Anforderung; OTA-Runtime vor Veröffentlichung prüfen.
 
-## Lokale Gates
+## Lokale Gates des Ursprungsstands
 
 - `npm.cmd run verify:fast`: grün, 606 Unit- und 313 Komponententests sowie Regel-/Release-Werkzeugtests.
 - Interner iOS-Fingerprint: `eac302484061dfb3fa63e2a74b8618ff6000861c`, unverändert gegenüber Build 31.
