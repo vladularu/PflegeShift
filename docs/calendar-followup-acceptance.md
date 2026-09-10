@@ -1,5 +1,9 @@
 # Kalender: schnelle Wischfolgen und Orientierung
 
+> Abgeschlossen: Geräteabnahme und Merge von PR #60 am 10.09.2026.
+> Die nachfolgenden Abschnitte dokumentieren frühere Zwischenstände.
+> Maßgeblicher abgenommener Endstand: [9C – Ausgangsstand 9B-B](arbeitspaket-9c-tagesaktionen.md#abgeschlossener-ausgangsstand-9b-b).
+
 ## Ergänzung nach Geräteprüfung
 
 601196b zeigte leere Seiten bei erneuten Wischgesten vor dem Einrasten. Die

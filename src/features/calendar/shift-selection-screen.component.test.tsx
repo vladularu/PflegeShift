@@ -9,6 +9,7 @@ import {
   consumeShiftSelectionPopupRestore,
 } from "@/features/calendar/quick-entry-navigation";
 import { ShiftSelectionScreen } from "@/features/calendar/shift-selection-screen";
+import { SPACING } from "@/theme/tokens";
 
 const template: ShiftTemplate = {
   id: "early",
@@ -83,6 +84,8 @@ describe("ShiftSelectionScreen", () => {
     });
     expect(screen.getByText("Meine Dienste")).toBeVisible();
     expect(screen.getByTestId("shift-selection-panel").props.entering).toBeUndefined();
+    expect(screen.getByTestId("shift-selection-panel").props.exiting).toBeUndefined();
+    expect(screen.getByTestId("shift-selection-panel")).toHaveStyle({ paddingTop: SPACING.lg });
 
     await fireEvent.press(screen.getByRole("button", { name: "Früh Dienstvorlage bearbeiten" }));
     expect(router.push).toHaveBeenLastCalledWith({
@@ -108,5 +111,12 @@ describe("ShiftSelectionScreen", () => {
     );
     expect(router.back).toHaveBeenCalledTimes(1);
     expect(consumeShiftSelectionPopupRestore()).toBe(false);
+  });
+
+  it("closes without writing when selection is cancelled", async () => {
+    const screen = await render(<TestScreen />);
+    await fireEvent.press(screen.getByRole("button", { name: "Schichtauswahl schließen" }));
+    expect(router.back).toHaveBeenCalledTimes(1);
+    expect(mockSaveStamp).not.toHaveBeenCalled();
   });
 });

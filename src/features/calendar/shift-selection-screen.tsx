@@ -65,10 +65,11 @@ export function ShiftSelectionScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen options={{ headerShown: false, gestureEnabled: !busy }} />
       <ShiftSelectionPanel
         actions={actions}
         animateEntry={false}
+        inNativeSheet
         busy={busy}
         date={date}
         onAddTemplate={() => router.push(templateEditorRoute(undefined, date))}

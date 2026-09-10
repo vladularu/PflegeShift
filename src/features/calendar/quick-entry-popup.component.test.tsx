@@ -5,6 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { ShiftEntry } from "@/domain/types";
 import { QuickEntryPopup } from "@/features/calendar/quick-entry-popup";
 import { MOTION } from "@/theme/motion";
+import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 
 const earlyTemplateAction = {
   kind: "TEMPLATE" as const,
@@ -53,6 +54,39 @@ const existingShift: ShiftEntry = {
 describe("QuickEntryPopup", () => {
   afterEach(() => {
     jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it.each([false, true])("inverts surface and text together for dark=%s", async (dark) => {
+    jest
+      .spyOn(jest.requireActual<typeof import("react-native")>("react-native"), "useColorScheme")
+      .mockReturnValue(dark ? "dark" : "light");
+    const expected = dark ? LIGHT_PALETTE : DARK_PALETTE;
+    const screen = await render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { height: 800, width: 400, x: 0, y: 0 },
+          insets: { bottom: 0, left: 0, right: 0, top: 0 },
+        }}
+      >
+        <QuickEntryPopup
+          actions={[]}
+          anchor={{ height: 48, width: 48, x: 40, y: 100 }}
+          busy={false}
+          date="2026-08-04"
+          entries={[existingShift]}
+          onClose={jest.fn()}
+          onOpenDetails={jest.fn()}
+          onOpenEntry={jest.fn()}
+          onOpenShiftPicker={jest.fn()}
+          onSelectAction={jest.fn()}
+        />
+      </SafeAreaProvider>,
+    );
+    expect(screen.getByTestId("quick-entry-popup")).toHaveStyle({
+      backgroundColor: expected.surfaceRaised,
+    });
+    expect(screen.getByText("Nacht")).toHaveStyle({ color: expected.text });
   });
 
   it("opens the stacked shift selection from the compact day popup", async () => {
@@ -131,7 +165,7 @@ describe("QuickEntryPopup", () => {
     expect(screen.getByText("Nacht")).toBeVisible();
   });
 
-  it("moves eight points from the calendar day and exits faster", async () => {
+  it("moves subtly from the calendar day and exits faster", async () => {
     const screen = await render(
       <SafeAreaProvider
         initialMetrics={{
@@ -157,12 +191,12 @@ describe("QuickEntryPopup", () => {
 
     expect(popup.props.entering.durationV).toBe(MOTION.duration.normal);
     expect(popup.props.entering.definitions[0].transform).toEqual([
-      { translateY: -MOTION.distance.small },
+      { translateY: -MOTION.distance.subtle },
       { scale: MOTION.scale.enter },
     ]);
     expect(popup.props.exiting.durationV).toBe(MOTION.duration.fast);
     expect(popup.props.exiting.definitions[100].transform).toEqual([
-      { translateY: -MOTION.distance.small },
+      { translateY: -MOTION.distance.subtle },
       { scale: MOTION.scale.enter },
     ]);
   });
@@ -191,7 +225,7 @@ describe("QuickEntryPopup", () => {
     );
 
     expect(screen.getByTestId("quick-entry-popup").props.entering.definitions[0].transform).toEqual(
-      [{ translateY: MOTION.distance.small }, { scale: MOTION.scale.enter }],
+      [{ translateY: MOTION.distance.subtle }, { scale: MOTION.scale.enter }],
     );
   });
 

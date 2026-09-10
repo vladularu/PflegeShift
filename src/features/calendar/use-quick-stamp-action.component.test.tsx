@@ -97,7 +97,7 @@ describe("useQuickStampAction", () => {
     jest.spyOn(AccessibilityInfo, "announceForAccessibility").mockImplementation(jest.fn());
   });
 
-  it("adds a service silently while retaining success haptics and accessibility", async () => {
+  it("adds a service with only subtle selection feedback and accessibility", async () => {
     const screen = await render(
       <TestProvider>
         <Harness entries={[]} />
@@ -109,7 +109,8 @@ describe("useQuickStampAction", () => {
     });
 
     await waitFor(() => expect(mockUpsertShift).toHaveBeenCalledTimes(1));
-    expect(successFeedback).toHaveBeenCalledTimes(1);
+    expect(selectionFeedback).toHaveBeenCalledTimes(1);
+    expect(successFeedback).not.toHaveBeenCalled();
     expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
       expect.stringContaining("hinzugefügt"),
     );

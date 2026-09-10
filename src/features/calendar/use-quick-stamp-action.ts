@@ -9,7 +9,7 @@ import {
   type QuickEntryStampAction,
 } from "@/features/calendar/quick-entry-actions";
 import { announceStampResult } from "@/features/calendar/stamp-accessibility";
-import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
+import { selectionFeedback } from "@/ui/haptics";
 
 export function useQuickStampAction({
   entries,
@@ -46,11 +46,11 @@ export function useQuickStampAction({
         } else {
           await saveQuickEntryAction(action, date, upsertShift);
           announceStampResult(AccessibilityInfo.announceForAccessibility, action.label, date, 0);
-          successFeedback();
+          selectionFeedback();
         }
         return true;
       } catch (saveError) {
-        warningFeedback();
+        selectionFeedback();
         onError(userFacingErrorMessage(saveError, "Eintrag konnte nicht geändert werden."));
         return false;
       } finally {

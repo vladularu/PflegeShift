@@ -16,6 +16,13 @@ import {
 import { MOTION } from "@/theme/motion";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
+jest.mock("@expo/vector-icons/Ionicons", () => {
+  const { Text } = jest.requireActual<typeof import("react-native")>("react-native");
+  return function Icon({ name }: { name: string }) {
+    return <Text>{name}</Text>;
+  };
+});
+
 const TEMPLATE: ShiftTemplate = {
   id: "early",
   name: "Früh",
@@ -139,6 +146,16 @@ describe("QuickPlannerDock", () => {
   it("opens from the persistent pencil target", async () => {
     const onOpen = jest.fn();
     const screen = await renderDock({ onOpen, open: false });
+    expect(
+      screen.getByText("add", {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText("pencil", {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
 
     await fireEvent.press(screen.getByRole("button", { name: "Dienstplan bearbeiten" }));
     expect(onOpen).toHaveBeenCalledTimes(1);

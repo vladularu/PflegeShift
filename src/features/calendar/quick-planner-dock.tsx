@@ -73,8 +73,8 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   const [closing, setClosing] = useState(false);
   const internalProgress = useSharedValue(open ? 1 : 0);
   const progress = transitionProgress ?? internalProgress;
-  const pencilPressMotion = usePressMotion(1, 0.92);
-  const closePressMotion = usePressMotion(1, 0.92);
+  const pencilPressMotion = usePressMotion(1, MOTION.scale.press);
+  const closePressMotion = usePressMotion(1, MOTION.scale.press);
   const baseOpenBottom = Platform.OS === "web" ? 8 : Math.max(insets.bottom - 16, 8);
   const openBottom =
     Platform.OS === "ios" ? baseOpenBottom - IOS_NATIVE_TAB_OVERLAY_DROP : baseOpenBottom;
@@ -135,7 +135,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
               translateY: interpolate(
                 value,
                 [0, 1],
-                [CONTROL_HEIGHT + openBottom, 0],
+                [MOTION.distance.scene, 0],
                 Extrapolation.CLAMP,
               ),
             },
@@ -153,7 +153,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
               translateY: interpolate(
                 progress.value,
                 [0, 0.62],
-                [0, CONTROL_HEIGHT + openBottom],
+                [0, MOTION.distance.subtle],
                 Extrapolation.CLAMP,
               ),
             },
@@ -173,7 +173,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
               translateY: interpolate(
                 progress.value,
                 [0, 1],
-                [CONTROL_HEIGHT + openBottom, 0],
+                [MOTION.distance.scene, 0],
                 Extrapolation.CLAMP,
               ),
             },
@@ -248,12 +248,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
                 },
               ]}
             >
-              <Ionicons
-                accessible={false}
-                color={palette.onFloatingAction}
-                name="pencil"
-                size={18}
-              />
+              <Ionicons accessible={false} color={palette.onFloatingAction} name="add" size={24} />
             </View>
           </AnimatedPressable>
         </Animated.View>
