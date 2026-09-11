@@ -8,6 +8,29 @@ jest.mock("./night-sequence-explanation", () => ({ explainNightSequence: jest.fn
 const explainMock = jest.mocked(explainNightSequence);
 
 describe("optional night explanation", () => {
+  it("renders the exact shared assessment without recalculating it", async () => {
+    explainMock.mockClear();
+    const screen = await render(
+      <NightSequenceExplanationCard
+        entries={[]}
+        month="2026-07"
+        timeZone="Europe/Berlin"
+        explanation={{
+          title: "Gemeinsames Ergebnis",
+          dates: [],
+          deadline: null,
+          hasAbsence: false,
+          uncertain: false,
+          qualifiedNightCount: 0,
+        }}
+        estimateNote="Deine manuelle Monatsfestlegung bleibt maßgeblich."
+      />,
+    );
+    await fireEvent.press(screen.getByText("Einschätzung erklären"));
+    expect(screen.getByText("Gemeinsames Ergebnis")).toBeTruthy();
+    expect(screen.getByText("Deine manuelle Monatsfestlegung bleibt maßgeblich.")).toBeTruthy();
+    expect(explainMock).not.toHaveBeenCalled();
+  });
   it("does no extra computation until opened and has no new inputs", async () => {
     explainMock.mockClear();
     explainMock.mockReturnValue({
@@ -16,6 +39,7 @@ describe("optional night explanation", () => {
       deadline: "2026-08-03",
       hasAbsence: false,
       uncertain: false,
+      qualifiedNightCount: 3,
     });
     const screen = await render(
       <NightSequenceExplanationCard entries={[]} month="2026-07" timeZone="Europe/Berlin" />,
@@ -28,7 +52,7 @@ describe("optional night explanation", () => {
     expect(explainMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Passende Nachtdienstfolge gefunden")).toBeTruthy();
     expect(screen.getByText(/02.07.2026/)).toBeTruthy();
-    expect(screen.getByText(/Gehaltswert.*unverändert/)).toBeTruthy();
+    expect(screen.getByText(/kein bestätigter Monatsanspruch/)).toBeTruthy();
     await fireEvent.press(screen.getByText("Einschätzung erklären"));
     expect(screen.queryByText("Passende Nachtdienstfolge gefunden")).toBeNull();
     expect(screen.getAllByRole("button")).toHaveLength(1);
@@ -40,6 +64,7 @@ describe("optional night explanation", () => {
       deadline: null,
       hasAbsence: true,
       uncertain: true,
+      qualifiedNightCount: 0,
     });
     const entries: never[] = [];
     const screen = await render(

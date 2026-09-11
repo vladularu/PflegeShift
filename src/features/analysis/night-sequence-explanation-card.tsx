@@ -3,7 +3,10 @@ import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { CalendarEntry } from "@/domain/types";
-import { explainNightSequence } from "@/features/analysis/night-sequence-explanation";
+import {
+  explainNightSequence,
+  type NightSequenceExplanation,
+} from "@/features/analysis/night-sequence-explanation";
 import { usePalette } from "@/theme/palette";
 import { SPACING } from "@/theme/tokens";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
@@ -14,23 +17,23 @@ function dateLabel(date: string) {
   return `${day}.${month}.${year}`;
 }
 
-function Explanation({
-  entries,
-  month,
-  timeZone,
-}: {
+interface ExplanationProps {
   readonly entries: readonly CalendarEntry[];
   readonly month: string;
   readonly timeZone: string;
-}) {
+  readonly explanation?: NightSequenceExplanation;
+  readonly estimateNote?: string;
+}
+
+function Explanation({ entries, month, timeZone, explanation, estimateNote }: ExplanationProps) {
   const palette = usePalette();
   const result = useMemo(() => {
     try {
-      return explainNightSequence(entries, month, timeZone);
+      return explanation ?? explainNightSequence(entries, month, timeZone);
     } catch {
       return null;
     }
-  }, [entries, month, timeZone]);
+  }, [entries, month, timeZone, explanation]);
   const lines = result
     ? [
         result.dates.length > 0
@@ -47,7 +50,8 @@ function Explanation({
               "Urlaub oder Krankheit sind eingetragen. Daraus leiten wir hier keinen Wegfall der Zulage ab.",
             ]
           : []),
-        "Dies erklärt nur die Nachtdienstfolge, nicht den vollständigen Monatsanspruch. Dein bisheriger Gehaltswert und eine manuelle Festlegung bleiben unverändert.",
+        estimateNote ??
+          "Kalenderbasierte Schätzung, kein bestätigter Monatsanspruch. Eine manuelle Festlegung bleibt maßgeblich.",
       ]
     : [
         "Die Erklärung ist gerade nicht verfügbar. Dein Gehaltswert und deine Angaben bleiben unverändert.",
@@ -73,11 +77,7 @@ function Explanation({
   );
 }
 
-export function NightSequenceExplanationCard(props: {
-  readonly entries: readonly CalendarEntry[];
-  readonly month: string;
-  readonly timeZone: string;
-}) {
+export function NightSequenceExplanationCard(props: ExplanationProps) {
   const palette = usePalette();
   const [expanded, setExpanded] = useState(false);
   return (

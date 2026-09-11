@@ -116,6 +116,7 @@ function TariffAssessmentForm({
         allowanceShifts,
         { workplaceCoverage: coverage, assignment, updatedAt: workPatternSettings.updatedAt },
         ruleResolver,
+        profile ?? undefined,
       );
     });
   }, [
@@ -123,6 +124,7 @@ function TariffAssessmentForm({
     coverage,
     entries,
     month,
+    profile,
     ruleResolver,
     ruleRetryRevision,
     workPatternSettings.updatedAt,
@@ -205,7 +207,12 @@ function TariffAssessmentForm({
   return (
     <ReportScrollView>
       <AnalysisDetailSummaryCard
-        caption="Wir schätzen dein Dienstmuster automatisch ein. Deine Angaben zum Arbeitsplatz bleiben gespeichert."
+        caption={
+          decision
+            ? "Deine manuelle Monatsfestlegung bleibt maßgeblich."
+            : (assessment.estimateNote ??
+              "Wir schätzen dein Dienstmuster automatisch ein. Deine Angaben zum Arbeitsplatz bleiben gespeichert.")
+        }
         period={formatMonthTitle(month)}
         title={resultTitle}
       />
@@ -287,6 +294,12 @@ function TariffAssessmentForm({
           entries={entries}
           month={month}
           timeZone={profile.timeZone}
+          explanation={assessmentResult.nightSequence}
+          estimateNote={
+            decision
+              ? "Deine manuelle Monatsfestlegung bleibt maßgeblich."
+              : assessment.estimateNote
+          }
         />
       ) : null}
 
