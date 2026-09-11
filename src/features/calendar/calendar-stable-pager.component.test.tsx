@@ -278,6 +278,8 @@ describe("permanent calendar slots with the real shared scene", () => {
     expect(screen.getByTestId("calendar-month-pager")).toBe(pager);
   });
 
+  // Twelve full scene transitions exceed Jest's default timeout on slower hosts.
+  // This is a functional integration test, not an on-device performance budget.
   it("opens every previously unvisited month in a bounded five-month window", async () => {
     const screen = await render(<Harness />);
     const pager = screen.getByTestId("calendar-month-pager");
@@ -296,5 +298,5 @@ describe("permanent calendar slots with the real shared scene", () => {
         5,
       );
     }
-  });
+  }, 20_000);
 });

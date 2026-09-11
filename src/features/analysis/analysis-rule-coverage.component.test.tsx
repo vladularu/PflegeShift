@@ -371,6 +371,37 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(screen.getByText("Wird dein Arbeitsbereich rund um die Uhr betrieben?")).toBeTruthy();
   });
 
+  it("explains real entries on demand and closes details for a new month", async () => {
+    mockRouteMonth = "2026-09";
+    mockEntries = ["02", "23", "24"].map((day) => ({
+      ...januaryShift(),
+      id: day,
+      date: `2026-09-${day}`,
+      startTime: "21:00",
+      endTime: "07:00",
+    }));
+    const screen = await render(<TariffAssessmentScreen />);
+    const name = "Einschätzung erklären";
+    expect(screen.getByRole("button", { name, expanded: false })).toBeTruthy();
+    await fireEvent.press(screen.getByRole("button", { name }));
+    expect(screen.getByText("Passende Nachtdienstfolge gefunden")).toBeTruthy();
+    mockEntries = [];
+    await screen.rerender(<TariffAssessmentScreen />);
+    expect(screen.getByText("Noch keine passende Nachtdienstfolge erkennbar")).toBeTruthy();
+    mockRouteMonth = "2026-10";
+    await screen.rerender(<TariffAssessmentScreen />);
+    expect(screen.getByRole("button", { name, expanded: false })).toBeTruthy();
+  });
+
+  it("does not apply the BT-K explanation to another tariff sector", async () => {
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: { ...MOCK_TARIFF_PROFILE.tariff!, sector: "BT_B" },
+    };
+    const screen = await render(<TariffAssessmentScreen />);
+    expect(screen.queryByText("Einschätzung erklären")).toBeNull();
+  });
+
   it("keeps core, salary and holiday worktime independent from missing legal rules", async () => {
     mockRuleResolver = FUTURE_HOLIDAY_MISSING_LEGAL_RESOLVER;
     mockEntries = [januaryShift()];
@@ -404,6 +435,7 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
       ),
     ).toBeTruthy();
     expect(assessment.queryByLabelText("Monatswert manuell festlegen")).toBeNull();
+    expect(assessment.queryByText("Einschätzung erklären")).toBeNull();
   });
 
   it("keeps year navigation and return to month available while calculating", async () => {
