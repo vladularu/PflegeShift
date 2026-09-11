@@ -45,9 +45,14 @@ describe("simple calendar-based night explanation", () => {
       explain(sequence.map((item) => ({ ...item, startTime: "08:00", endTime: "16:00" }))).dates,
     ).toEqual([]);
   });
-  it("includes following-month entries through the complete deadline day", () => {
-    expect(explain([sequence[0], sequence[1], shift("2026-08-03")]).dates).toHaveLength(3);
-    expect(explain([sequence[0], sequence[1], shift("2026-08-04")]).dates).toEqual([]);
+  it("uses the complete deadline day without borrowing next-month follow-ups", () => {
+    expect(
+      explain([shift("2026-06-02"), shift("2026-07-02"), shift("2026-07-03")]).dates,
+    ).toHaveLength(3);
+    expect(explain([shift("2026-06-02"), shift("2026-07-02"), shift("2026-07-04")]).dates).toEqual(
+      [],
+    );
+    expect(explain([sequence[0], sequence[1], shift("2026-08-03")]).dates).toEqual([]);
   });
   it("includes previous-year anchors for January", () => {
     expect(
@@ -61,8 +66,13 @@ describe("simple calendar-based night explanation", () => {
   });
   it("finds a selected-month follow-up even if earlier candidates also exist", () => {
     expect(
-      explain([shift("2026-06-20"), shift("2026-06-21"), shift("2026-06-22"), shift("2026-07-01")])
-        .dates,
+      explain([
+        shift("2026-06-20"),
+        shift("2026-06-21"),
+        shift("2026-06-22"),
+        shift("2026-07-01"),
+        shift("2026-07-02"),
+      ]).dates,
     ).toContain("2026-07-01");
   });
   it("keeps pause-sensitive qualification uncertain", () => {

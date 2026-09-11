@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 
 import type { MonthlyPayEstimate } from "@/domain/types";
 import { ExpandableHighlightCard } from "@/features/analysis/expandable-highlight-card";
+import { SalaryEstimateCaption } from "@/features/analysis/salary-estimate-caption";
 import {
   formatEuro,
   SalaryRuleUnavailableContent,
@@ -56,7 +57,8 @@ export function SalarySummaryCard({
               : []),
             ...(pay.allowanceAmount > 0 ||
             pay.assessment.requiresConfirmation ||
-            pay.assessment.suggestedAllowance !== "NONE"
+            pay.assessment.suggestedAllowance !== "NONE" ||
+            pay.assessment.estimateNote
               ? [
                   {
                     key: "shift-allowance",
@@ -141,13 +143,7 @@ export function SalarySummaryCard({
             >
               Zusammensetzung
             </Text>
-            <Text
-              maxFontSizeMultiplier={TEXT_MAX_SCALE}
-              selectable
-              style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-            >
-              {pay.tariffLabel}
-            </Text>
+            <SalaryEstimateCaption pay={pay} />
           </View>
           {rows.map((row, index) => (
             <View key={row.key}>

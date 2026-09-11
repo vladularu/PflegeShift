@@ -387,6 +387,8 @@ export interface ShiftPremiumBreakdown {
 }
 
 export interface TvoedAssessment {
+  /** Optional calendar-estimate limitation; not a statutory finding. */
+  readonly estimateNote?: string;
   readonly shiftWork: "DETECTED" | "REVIEW" | "NOT_DETECTED";
   readonly alternatingShiftWork: "DETECTED" | "REVIEW" | "NOT_DETECTED";
   readonly suggestedAllowance: AllowanceStatus;

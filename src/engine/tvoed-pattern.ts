@@ -100,6 +100,7 @@ export function assessTvoedPattern(
   settings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
   effectiveDate?: string,
+  calendarNightEvidence?: { readonly met: boolean; readonly count: number },
 ): TvoedAssessment {
   const work = shifts
     .filter(isPayWorkShift)
@@ -112,16 +113,17 @@ export function assessTvoedPattern(
       .workPatternPolicy ?? BUNDLED_TARIFF_RULES.at(-1)!.rules.workPatternPolicy;
   const orderedWindows = work.map((shift) => shiftWindow(shift, policy));
   const windows = new Set(orderedWindows);
-  const nightShiftCount = work.filter(
-    (shift) => tariffNightMinutes(shift, policy) >= policy.nightQualificationMinutes,
-  ).length;
+  const nightShiftCount =
+    calendarNightEvidence?.count ??
+    work.filter((shift) => tariffNightMinutes(shift, policy) >= policy.nightQualificationMinutes)
+      .length;
   const changeCount = orderedWindows.reduce(
     (count, window, index) =>
       index > 0 && orderedWindows[index - 1] !== window ? count + 1 : count,
     0,
   );
   const hasRegularChange = changeCount >= policy.regularChangeCount;
-  const recurringNightShifts = hasRecurringNightShifts(work, policy);
+  const recurringNightShifts = calendarNightEvidence?.met ?? hasRecurringNightShifts(work, policy);
   const hasAlternatingPattern =
     work.length >= policy.alternatingMinimumShifts &&
     windows.size >= policy.alternatingMinimumWindows &&

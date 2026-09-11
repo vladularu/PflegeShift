@@ -12,6 +12,8 @@ import type {
 } from "@/domain/types";
 import { getPublicHolidays } from "@/engine/holidays";
 import { calculateMonthlyAllowanceAmounts } from "@/engine/pay-allowances";
+import { assessTvoedKCalendarMonth } from "@/engine/tvoed-k-calendar-assessment";
+import type { NightSequenceExplanation } from "@/engine/tvoed-k-calendar-nights";
 import { conditionsMatch } from "@/engine/pay-conditions";
 import { createManualMonthlyPayEstimate } from "@/engine/pay-fallback";
 import {
@@ -42,6 +44,7 @@ const HOLIDAY_DATE_CACHE = new WeakMap<RuleResolver, Map<string, ReadonlySet<str
 export { assessTvoedPattern, DEFAULT_TVOED_WORK_PATTERN_SETTINGS };
 
 export interface MonthlyTvoedAssessmentResult {
+  readonly nightSequence?: NightSequenceExplanation;
   readonly assessment: TvoedAssessment | null;
   readonly available: boolean;
   readonly tariffLabel: string | null;
@@ -466,6 +469,7 @@ export function calculateMonthlyPayEstimate(
     assessmentShifts,
     workPatternSettings,
     ruleResolver,
+    profile,
   );
   const assessment =
     assessmentResult.assessment ??
@@ -559,6 +563,7 @@ export function calculateMonthlyTvoedAssessment(
   assessmentShifts: readonly ShiftEntry[],
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
+  profile?: Pick<UserProfile, "tariff" | "timeZone">,
 ): MonthlyTvoedAssessmentResult {
   const first = Temporal.PlainDate.from(`${month}-01`);
   const dateKey = first.toString();
@@ -574,6 +579,23 @@ export function calculateMonthlyTvoedAssessment(
     .subtract({ months: getTariffAssessmentLookbackMonths(dateKey, ruleResolver) })
     .toString();
   const assessmentEnd = first.add({ months: 1 }).subtract({ days: 1 }).toString();
+  if (profile?.tariff?.sector === "BT_K") {
+    const relevant = assessmentShifts.filter(
+      (shift) =>
+        shift.deletedAt === null && shift.date >= assessmentStart && shift.date <= assessmentEnd,
+    );
+    return {
+      ...assessTvoedKCalendarMonth(
+        month,
+        relevant,
+        workPatternSettings,
+        ruleResolver,
+        profile.timeZone,
+      ),
+      available: true,
+      tariffLabel: version.label,
+    };
+  }
   const relevantShifts =
     currentWorkShifts.length === 0
       ? []
