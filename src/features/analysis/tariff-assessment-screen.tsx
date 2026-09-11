@@ -31,6 +31,7 @@ import {
   RuleComputationNotice,
 } from "@/features/analysis/rule-computation";
 import { TariffQuestion } from "@/features/analysis/tariff-question";
+import { NightSequenceExplanationCard } from "@/features/analysis/night-sequence-explanation-card";
 import { resolveEditorSession } from "@/features/editor-session";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
@@ -91,6 +92,7 @@ function TariffAssessmentForm({
   const palette = usePalette();
   const { resolver: ruleResolver } = useRuleCatalogRuntime();
   const { entries } = usePflegeShiftEntries();
+  const { profile } = usePflegeShiftProfile();
   const { tariffDecisions, workPatternSettings, updateWorkPatternSettings, upsertTariffDecision } =
     usePflegeShiftTariff();
   const [coverage, setCoverage] = useState<TvoedWorkplaceCoverage>(
@@ -203,7 +205,7 @@ function TariffAssessmentForm({
   return (
     <ReportScrollView>
       <AnalysisDetailSummaryCard
-        caption="Dienstmuster werden aus den letzten drei Monaten erkannt. Angaben zum Arbeitsplatz bestätigst du einmal selbst."
+        caption="Wir schätzen dein Dienstmuster automatisch ein. Deine Angaben zum Arbeitsplatz bleiben gespeichert."
         period={formatMonthTitle(month)}
         title={resultTitle}
       />
@@ -278,6 +280,15 @@ function TariffAssessmentForm({
           </View>
         ))}
       </SurfaceCard>
+
+      {profile?.tariff?.sector === "BT_K" ? (
+        <NightSequenceExplanationCard
+          key={month}
+          entries={entries}
+          month={month}
+          timeZone={profile.timeZone}
+        />
+      ) : null}
 
       <TariffQuestion
         title="Wird dein Arbeitsbereich rund um die Uhr betrieben?"
