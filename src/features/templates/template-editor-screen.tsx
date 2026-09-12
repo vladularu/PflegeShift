@@ -50,7 +50,7 @@ import { CardSeparator, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { ColorPicker, SecondaryButton, TimePickerField } from "@/ui/form-controls";
 import { DestructiveFormAction, FormScreen, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
-import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
+import { deletionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
 import { LabeledSwitch } from "@/ui/labeled-switch";
 import { PauseWheel } from "@/ui/pause-wheel";
 import { ShiftSymbol } from "@/ui/shift-symbol";
@@ -592,7 +592,7 @@ function TemplateEditorForm({
       onConfirm: () =>
         void removeTemplate(existing)
           .then(() => {
-            selectionFeedback();
+            deletionFeedback();
             router.back();
           })
           .catch((reason: unknown) =>

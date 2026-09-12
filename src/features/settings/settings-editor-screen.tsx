@@ -39,6 +39,7 @@ import {
   type SalaryMode,
 } from "@/features/settings/settings-form-values";
 import { parseEnumRouteParam, type RouteParam } from "@/navigation/route-params";
+import { usePalette } from "@/theme/palette";
 import { DropdownField, Field } from "@/ui/form-controls";
 import { FormScreen, FormSection, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
@@ -84,6 +85,7 @@ function SettingsEditorForm({
   readonly profile: UserProfile;
   readonly section: SettingsSection;
 }) {
+  const palette = usePalette();
   const { updateProfile } = usePflegeShiftProfile();
   const initialValues = settingsFormValues(profile);
   const [federalState, setFederalState] = useState<FederalState>(initialValues.federalState);
@@ -190,6 +192,10 @@ function SettingsEditorForm({
       <Stack.Screen
         options={{
           title: section === "WORK" ? "Arbeitszeitmodell" : "Gehalt",
+          headerStyle: { backgroundColor: palette.background },
+          headerTintColor: palette.text,
+          headerTitleStyle: { color: palette.text },
+          statusBarStyle: palette.dark ? "light" : "dark",
           headerRight: () => (
             <HeaderSaveAction
               busy={saving}
