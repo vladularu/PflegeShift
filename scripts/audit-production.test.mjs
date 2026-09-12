@@ -15,7 +15,7 @@ function report(vulnerabilities) {
   return { vulnerabilities };
 }
 
-test("allows only the exact temporary image-size advisory and its meta chain", () => {
+test("blocks the formerly approved image-size advisory and its cyclic meta chain", () => {
   const result = evaluateAuditReport(
     report({
       "image-size": { severity: "high", via: [allowedImageSizeAdvisory] },
@@ -26,8 +26,8 @@ test("allows only the exact temporary image-size advisory and its meta chain", (
     new Date("2026-08-14T00:00:00Z"),
   );
 
-  assert.equal(result.blocking.length, 0);
-  assert.deepEqual(result.approved, [allowedImageSizeAdvisory]);
+  assert.deepEqual(result.blocking, [allowedImageSizeAdvisory]);
+  assert.deepEqual(result.approved, []);
 });
 
 test("blocks an unrelated high advisory", () => {
@@ -61,13 +61,18 @@ test("blocks an advisory that spoofs an approved source with another URL", () =>
   assert.equal(result.approved.length, 0);
 });
 
-test("blocks the temporary exception after its expiry", () => {
+test("blocks the second formerly approved image-size advisory", () => {
+  const advisory = {
+    ...allowedImageSizeAdvisory,
+    source: 1138809,
+    url: "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
+  };
   const result = evaluateAuditReport(
-    report({ "image-size": { severity: "high", via: [allowedImageSizeAdvisory] } }),
+    report({ "image-size": { severity: "high", via: [advisory] } }),
     new Date("2026-09-15T00:00:00Z"),
   );
 
-  assert.deepEqual(result.blocking, [allowedImageSizeAdvisory]);
+  assert.deepEqual(result.blocking, [advisory]);
   assert.equal(result.approved.length, 0);
 });
 
