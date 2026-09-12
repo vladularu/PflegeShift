@@ -1,5 +1,7 @@
 # Arbeitspaket 9B-B – Jahresanzeige und Ansichtswechsel
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #60](https://github.com/vladularu/PflegeShift/pull/60) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 Ziel: Der Wechsel zwischen Monats- und Jahresansicht wirkt ruhig und die Orientierung
 bleibt außerhalb des aktuellen Jahres eindeutig. Zielgerät ist ein iPhone 14 Pro Max
 mit iOS 26.6.1 und dem installierten Preview-Build 31.

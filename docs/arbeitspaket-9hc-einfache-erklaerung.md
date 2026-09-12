@@ -1,5 +1,7 @@
 # 9H-C – einfache Erklärung aus eingetragenen Diensten
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #70](https://github.com/vladularu/PflegeShift/pull/70) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 ## Ziel und Scope
 
 Alltagsbegleiter für Schichtarbeitende, keine exakte Lohnabrechnung. Vorhandene Schichtzulagen-Ansicht um einen geschlossenen Bereich „Einschätzung erklären“ ergänzen. Keine neue Nachweisverwaltung, Pflichtbestätigung oder Eingabemaske. Gespeicherte Arbeitsplatzangaben bleiben erhalten. Gehalt und manuelle Monatswerte bleiben unverändert.

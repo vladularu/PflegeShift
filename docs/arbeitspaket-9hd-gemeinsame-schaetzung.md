@@ -1,5 +1,7 @@
 # 9H-D – gemeinsame automatische BT-K-Schätzung
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #71](https://github.com/vladularu/PflegeShift/pull/71) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 ## Vertrag
 
 Ziel: Eine gemeinsame Monatsgrundlage für Nachtdienst-Erklärung und automatische Zulagenschätzung, ohne neue Pflichtangaben. Lokal umsetzen und prüfen ist freigegeben; kein Commit, Push, PR, Build oder OTA. Expo ~57.0.20; https://docs.expo.dev/versions/v57.0.0/. Zielgerät iPhone, später gemeinsame kompatible Preview-OTA und Geräteabnahme.

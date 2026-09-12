@@ -1,5 +1,7 @@
 # 9H-B1 – isolierter BT-K-Nachtdienst-Baustein
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #68](https://github.com/vladularu/PflegeShift/pull/68) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 ## Vertrag und Grenzen
 
 Ziel: Quellengebundene Referenzfälle und ein reiner, noch nicht produktiv angebundener Berechnungskern für die Nachtdienstfolge. Plattform: TypeScript, Expo ~57.0.20; spätere Zielabnahme iPhone 14 Pro Max. SDK-Referenz: https://docs.expo.dev/versions/v57.0.0/sdk/updates/.

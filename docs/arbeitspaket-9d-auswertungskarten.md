@@ -1,5 +1,7 @@
 # 9D – Ruhige Auswertungskarten
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #62](https://github.com/vladularu/PflegeShift/pull/62) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 ## Ergänzung: Tab-Wechsel (freigegeben bis Preview-OTA)
 
 Ziel: Nach einem Monatswechsel in Auswertung zeigt Kalender sofort den passenden

@@ -1,5 +1,7 @@
 # Arbeitspaket 9B-A – Jahresgrenzen und Heute-Navigation
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #59](https://github.com/vladularu/PflegeShift/pull/59) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 Ziel: Der Monatskalender bleibt beim Jahreswechsel bedienbar und der Rücksprung
 zum aktuellen Monat beendet sich zuverlässig, auch aus entfernten Jahren.
 Zielgerät: iPhone 14 Pro Max, iOS 26.6.1, installierter Preview-Build 31.

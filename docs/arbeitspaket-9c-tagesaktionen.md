@@ -1,5 +1,7 @@
 # 9C – Tagesaktionen und Schnelleingabe
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #61](https://github.com/vladularu/PflegeShift/pull/61) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 ## Vertrag
 
 Ziel: Plus statt Stift, ruhige lokale Bewegungen, subtile Kalender-Haptik,

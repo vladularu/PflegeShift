@@ -1,5 +1,7 @@
 # 9G-B – Prüfung nach Kategorien darstellen
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #67](https://github.com/vladularu/PflegeShift/pull/67) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 Ziel: Gespeicherte Auswahl aus 9G-A wirkt auf Monat, Jahr und Detailansicht. Gesetzliche Meldungen bleiben sichtbar; freiwillige Planung ist optional. Zähler, Farben und Meldungslisten bleiben konsistent einschließlich Informationsmeldungen.
 
 Nicht-Ziele: Rechtsregeln, Gehalt, Tarifprüfung, Kalender, neue Score-Formel oder native Integration. Expo ~57.0.20, SQLite-Referenz https://docs.expo.dev/versions/v57.0.0/sdk/sqlite/.
