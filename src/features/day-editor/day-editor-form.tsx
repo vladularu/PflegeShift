@@ -29,7 +29,7 @@ import {
 } from "@/features/location/location-selection";
 import { useStableEditorSession } from "@/features/editor-session";
 import { APPOINTMENT_COLOR, SHIFT_TYPE_COLORS } from "@/theme/palette";
-import { selectionFeedback, successFeedback, warningFeedback } from "@/ui/haptics";
+import { deletionFeedback, selectionFeedback, warningFeedback } from "@/ui/haptics";
 import {
   focusInvalidField,
   integerRangeFieldError,
@@ -270,7 +270,7 @@ export function DayEditorForm({
       setSaving(true);
       setError(null);
       await removeEntry(existing);
-      successFeedback();
+      deletionFeedback();
       allowRemovalRef.current = true;
       router.back();
     } catch (deleteError) {

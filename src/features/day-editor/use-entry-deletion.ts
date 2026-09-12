@@ -4,7 +4,7 @@ import { usePflegeShiftEntries } from "@/application/pflegeshift-provider";
 import type { CalendarEntry } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
-import { selectionFeedback } from "@/ui/haptics";
+import { deletionFeedback } from "@/ui/haptics";
 
 export function useEntryDeletion({
   onDeleted,
@@ -23,7 +23,7 @@ export function useEntryDeletion({
         onConfirm: () =>
           void removeEntry(entry)
             .then(() => {
-              selectionFeedback();
+              deletionFeedback();
               onDeleted();
             })
             .catch((reason: unknown) =>

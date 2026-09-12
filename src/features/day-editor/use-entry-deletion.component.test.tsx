@@ -7,7 +7,7 @@ import type { ShiftEntry } from "@/domain/types";
 import { useEntryDeletion } from "@/features/day-editor/use-entry-deletion";
 import { confirmDestructiveAction } from "@/ui/confirm-action";
 import { FeedbackProvider } from "@/ui/feedback";
-import { selectionFeedback } from "@/ui/haptics";
+import { deletionFeedback } from "@/ui/haptics";
 
 const mockRemoveEntry = jest.fn<(entry: ShiftEntry) => Promise<void>>();
 const mockRestoreEntry = jest.fn<(entry: ShiftEntry) => Promise<ShiftEntry>>();
@@ -24,6 +24,7 @@ jest.mock("@/ui/confirm-action", () => ({
 }));
 
 jest.mock("@/ui/haptics", () => ({
+  deletionFeedback: jest.fn(),
   selectionFeedback: jest.fn(),
   successFeedback: jest.fn(),
   warningFeedback: jest.fn(),
@@ -80,6 +81,7 @@ function TestProvider({ children }: React.PropsWithChildren) {
 
 describe("useEntryDeletion", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     mockRemoveEntry.mockResolvedValue(undefined);
     mockRestoreEntry.mockResolvedValue(ENTRY);
     jest.mocked(confirmDestructiveAction).mockImplementation(({ onConfirm }) => onConfirm());
@@ -100,7 +102,7 @@ describe("useEntryDeletion", () => {
 
     await waitFor(() => expect(mockRemoveEntry).toHaveBeenCalledWith(ENTRY));
     expect(onDeleted).toHaveBeenCalledTimes(1);
-    expect(selectionFeedback).toHaveBeenCalledTimes(1);
+    expect(deletionFeedback).toHaveBeenCalledTimes(1);
     expect(mockRestoreEntry).not.toHaveBeenCalled();
     expect(screen.queryByText("Eintrag gelöscht.")).toBeNull();
     expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
@@ -121,6 +123,17 @@ describe("useEntryDeletion", () => {
     });
 
     await waitFor(() => expect(onError).toHaveBeenCalledWith("Löschen fehlgeschlagen."));
+    expect(onDeleted).not.toHaveBeenCalled();
+    expect(deletionFeedback).not.toHaveBeenCalled();
+  });
+
+  it("does not delete or vibrate when confirmation is cancelled", async () => {
+    jest.mocked(confirmDestructiveAction).mockImplementation(() => undefined);
+    const onDeleted = jest.fn();
+    const screen = await render(<Harness onDeleted={onDeleted} onError={jest.fn()} />);
+    await fireEvent.press(screen.getByRole("button", { name: "Eintrag löschen" }));
+    expect(mockRemoveEntry).not.toHaveBeenCalled();
+    expect(deletionFeedback).not.toHaveBeenCalled();
     expect(onDeleted).not.toHaveBeenCalled();
   });
 });

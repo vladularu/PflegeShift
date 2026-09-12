@@ -21,6 +21,15 @@ export function successFeedback(): void {
   );
 }
 
+/** A single quiet acknowledgement after a successful deletion. */
+export function deletionFeedback(): void {
+  run(() =>
+    process.env.EXPO_OS === "android"
+      ? Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Segment_Frequent_Tick)
+      : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft),
+  );
+}
+
 export function warningFeedback(): void {
   run(() =>
     process.env.EXPO_OS === "android"
