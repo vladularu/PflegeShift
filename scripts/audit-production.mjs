@@ -11,43 +11,8 @@ const severityRank = {
 
 const minimumSeverity = severityRank.high;
 
-// Metro currently pulls image-size into Expo's Node-only build toolchain. Both
-// advisories have no patched release. Keep these exceptions exact and short-lived.
-const approvedAdvisories = new Map([
-  [
-    1138808,
-    {
-      dependency: "image-size",
-      url: "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr",
-      expiresOn: "2026-09-15",
-    },
-  ],
-  [
-    1138809,
-    {
-      dependency: "image-size",
-      url: "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
-      expiresOn: "2026-09-15",
-    },
-  ],
-]);
-
 function isAtLeastHigh(severity) {
   return (severityRank[severity] ?? Number.POSITIVE_INFINITY) >= minimumSeverity;
-}
-
-function isApproved(advisory, now) {
-  const approval = approvedAdvisories.get(Number(advisory.source));
-  if (!approval) {
-    return false;
-  }
-
-  const expiresAt = Date.parse(`${approval.expiresOn}T00:00:00Z`);
-  return (
-    advisory.name === approval.dependency &&
-    advisory.url === approval.url &&
-    now.getTime() < expiresAt
-  );
 }
 
 function collectHighAdvisories(packageName, vulnerabilities, visited = new Set()) {
@@ -109,13 +74,12 @@ function findingKey(finding) {
   return `${finding.source ?? "unknown"}:${finding.name}:${finding.url ?? ""}`;
 }
 
-export function evaluateAuditReport(report, now = new Date()) {
+export function evaluateAuditReport(report) {
   const vulnerabilities = report?.vulnerabilities;
   if (!vulnerabilities || typeof vulnerabilities !== "object") {
     throw new Error("npm audit lieferte keinen auswertbaren Vulnerability-Report.");
   }
 
-  const approved = new Map();
   const blocking = new Map();
 
   for (const [packageName, vulnerability] of Object.entries(vulnerabilities)) {
@@ -135,13 +99,12 @@ export function evaluateAuditReport(report, now = new Date()) {
     }
 
     for (const finding of findings) {
-      const target = isApproved(finding, now) ? approved : blocking;
-      target.set(findingKey(finding), finding);
+      blocking.set(findingKey(finding), finding);
     }
   }
 
   return {
-    approved: [...approved.values()],
+    approved: [],
     blocking: [...blocking.values()],
   };
 }
