@@ -10,7 +10,40 @@ Gepinnte transitive Overrides dürfen nur innerhalb kompatibler APIs aktualisier
 
 `npm audit fix --force` wird nicht verwendet, weil es unkontrollierte Hauptversionswechsel und damit native Inkompatibilitäten auslösen kann. Aktuelle Befunde werden durch `npm run audit:production` bewertet und nicht als dauerhafte Momentaufnahme in diesem Dokument gepflegt.
 
-## Metro-Sicherheitskorrektur vom 13. September 2026
+## SDK-57-Patchabgleich vom 13. September 2026
+
+Ziel ist der gemeinsame iOS-Release-Kandidat, ohne UI-, Gehalts-, Datenmodell-
+oder Berechtigungsänderungen. Der lokale Dateiscope umfasst `package.json`,
+`package-lock.json` und diese Prüfdokumentation. Expo wurde über `expo install`
+von 57.0.20 auf 57.0.22 und die 15 zugehörigen direkten Expo-Pakete auf die
+empfohlenen SDK-57-Patches angeglichen. React Native 0.86.3, Screens 4.26.2,
+Reanimated 4.5.1 und Worklets 0.10.1 bleiben unverändert.
+
+Lokale Nachweise:
+
+- Online-`expo install --check`: bestanden, keine Ausschlüsse.
+- `verify:fast`: bestanden, 729 Unit-Tests, 335 Komponententests und Skripttests.
+- Der Standardlauf `verify:full` stoppte beim Unit-Coverage-Test
+  `annual-core-report.test.ts` (same-revision edits) wegen des unveränderten
+  5000-ms-Limits. Ein zweiter Standard-Coverage-Lauf zeigte denselben Timeout.
+- `test:coverage:unit -- --maxWorkers=2`: alle 728 Tests bestanden, unveränderte
+  Zeitgrenze und Coverage-Schwellen. Dies spricht für lokale Lastabhängigkeit,
+  ersetzt aber keinen erfolgreichen Standardlauf in der Linux-CI.
+- `test:coverage:components`: 335 Tests bestanden.
+- Produktions-Audit: keine High-/Critical-Befunde, keine Ausnahmen.
+- Release-Konfiguration sowie Web-, Android- und iOS-Export bestanden.
+- Interner lokaler iOS-Fingerprint:
+  `383af7859fc54aa28daf0b5f21f5bd01e311a885`.
+
+Offen bleiben die frische Installation und der Standardlauf in der Linux-PR-CI,
+einschließlich des iOS-Prebuild-Fingerprint-Vergleichs. Das vorhandene Skript
+unterstützt diesen Vergleich nicht auf Windows. Geräteabnahme, Build und Upload
+wurden nicht durchgeführt. Keine OTA auf die alte Build-31-Runtime veröffentlichen.
+Der gemeinsame native Kandidat folgt erst nach den Release-Pflichtangaben und
+der erfolgreichen CI; auf dem iPhone sind Daten/Neustart, Backup/Import,
+Erinnerungen, Karten und Kalender-/Tab-Wechsel in Hell/Dunkel abzunehmen.
+
+## Metro-Sicherheitskorrektur vom 13. September 2026 (vor Patchabgleich)
 
 Der gezielte Override `metro@0.84.4 -> 0.84.5` entfernt den verbleibenden
 `image-size`-Abhängigkeitspfad der React-Native-Werkzeugkette. Expo verwendet
