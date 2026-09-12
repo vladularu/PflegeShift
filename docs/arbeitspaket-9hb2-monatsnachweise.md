@@ -1,5 +1,7 @@
 # 9H-B2 – Monatszuordnung und Abwesenheitsnachweise
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #69](https://github.com/vladularu/PflegeShift/pull/69) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 ## Vertrag
 
 Ziel: isolierter, unveränderlicher TypeScript-Kern zur Prüfung vorgeschlagener BT-K-Monatsnachweise; keine vollständige Anspruchs- oder Gehaltsentscheidung. Expo ~57.0.20, Referenz https://docs.expo.dev/versions/v57.0.0/sdk/updates/. Spätere Zielplattform iOS; jetzt keine native oder visuelle Änderung.

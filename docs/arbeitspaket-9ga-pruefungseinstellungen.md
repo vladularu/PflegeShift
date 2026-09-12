@@ -1,5 +1,7 @@
 # 9G-A – Prüfungseinstellungen
 
+> Statusabgleich 12.09.2026: Paket abgenommen und über [PR #66](https://github.com/vladularu/PflegeShift/pull/66) integriert. Aktueller Status und verbleibende Prüfpunkte stehen in der [zentralen Roadmap](roadmap.md). Die folgenden Freigaben, offenen Abnahmen und Implementierungsbeschreibungen dokumentieren den damaligen Arbeitsstand; sie sind keine neuen Aufträge und kein Beleg für den heutigen Code. Fachliche Grenzen bleiben maßgeblich, soweit spätere Pakete sie nicht ausdrücklich ersetzen.
+
 Ziel: Mehr → Prüfung bietet einen dauerhaft gespeicherten Schalter für freiwillige Planungshinweise. Default true erhält das bisherige Verhalten. Die Seite kennzeichnet ausdrücklich, dass die Anwendung auf Auswertungen erst in 9G-B folgt.
 
 Nicht-Ziele: Filterung, neue Rechts- oder Tarifregeln, Score, Gehalt, Kalender, native Integration. Kein gesetzlicher Abschaltschalter.
