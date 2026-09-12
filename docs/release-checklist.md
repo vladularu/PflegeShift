@@ -117,6 +117,13 @@ Ein aktueller iOS-Release-Candidate ist erst freigegeben, wenn alle lokalen Prü
 
 ## SQLCipher-Abnahmeprotokoll
 
+Für die neue iOS-Produktions-ID `com.lunashift.app` ist zusätzlich eine frische Installation
+mit JSON-Wiederherstellung aus der internen Preview und anschließendem Neustart zu prüfen.
+Apple-Registrierung, Signierung und App-Store-Connect-Zuordnung müssen genau diese ID verwenden.
+Keine Übernahme des bisherigen Datencontainers oder Schlüsselbunds voraussetzen. Der folgende
+historische Update-Test gilt nur zwischen Builds mit identischer alter App-ID; er belegt
+keine Migration von `com.pflegeshift.app` nach `com.lunashift.app`.
+
 Die automatisierten Unit-Tests prüfen Promotion, Integrität und Fail-closed-Verhalten isoliert. Der Maestro-Persistenzlauf prüft zusätzlich Schlüsselkontinuität in einem echten nativen Build. Die einmalige Klartext-Promotion benötigt einen Update-Test mit zwei installierten Builds und bleibt deshalb ein zwingender manueller Release-Gate:
 
 1. Einen signierten unverschlüsselten PflegeShift-Baseline-Build mit `com.pflegeshift.app` und `pflegeshift.db` installieren, Beispieldienst und Notiz anlegen, App vollständig beenden. Der MediShift-Tag `v0.1.0-beta.1` ist wegen `com.medishift.app` und `medishift.db` keine gültige Basis.
