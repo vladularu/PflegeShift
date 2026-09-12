@@ -1,10 +1,12 @@
 import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { resolve } from "node:path";
+import { createRequire } from "node:module";
 
 import { validateIosRuntimePolicy, validateResolvedIosRuntimePolicies } from "./runtime-policy.mjs";
 
 const projectRoot = resolve(import.meta.dirname, "..");
+const { getConfig } = createRequire(import.meta.url)("expo/config");
 
 async function readJson(fileName) {
   return JSON.parse(await readFile(resolve(projectRoot, fileName), "utf8"));
@@ -58,10 +60,7 @@ expect(
   expo.ios?.supportsTablet === false,
   "iPad-Support darf erst nach eigener Abnahme aktiviert werden.",
 );
-expect(
-  expo.ios?.bundleIdentifier === "com.pflegeshift.app",
-  "Die iOS Bundle-ID ist nicht korrekt.",
-);
+expect(expo.ios?.bundleIdentifier === "com.lunashift.app", "Die iOS Bundle-ID ist nicht korrekt.");
 expect(
   /^\d+(?:\.\d+){0,2}$/.test(expo.ios?.buildNumber ?? ""),
   "ios.buildNumber muss aus einer bis drei numerischen Komponenten bestehen.",
@@ -71,6 +70,26 @@ expect(
   "Die iOS-Export-Compliance-Angabe fehlt.",
 );
 expect(expo.android?.package === "com.pflegeshift.app", "Der Android-Paketname ist nicht korrekt.");
+const previousVariant = process.env.APP_VARIANT;
+try {
+  for (const variant of ["internal", "production"]) {
+    process.env.APP_VARIANT = variant;
+    const { exp } = getConfig(projectRoot, { skipPlugins: true });
+    expect(
+      exp.ios?.bundleIdentifier ===
+        (variant === "internal" ? "com.pflegeshift.app.internal" : "com.lunashift.app"),
+      `APP_VARIANT=${variant}: Die aufgelöste iOS-Bundle-ID ist nicht korrekt.`,
+    );
+    expect(
+      exp.android?.package ===
+        (variant === "internal" ? "com.pflegeshift.app.internal" : "com.pflegeshift.app"),
+      `APP_VARIANT=${variant}: Der Android-Paketname darf sich nicht ändern.`,
+    );
+  }
+} finally {
+  if (previousVariant === undefined) delete process.env.APP_VARIANT;
+  else process.env.APP_VARIANT = previousVariant;
+}
 expect(
   Number.isInteger(expo.android?.versionCode) && expo.android.versionCode > 0,
   "android.versionCode muss positiv sein.",

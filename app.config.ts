@@ -9,7 +9,7 @@ export default function configureApp({ config }: ConfigContext): ExpoConfig {
     scheme: internal ? "pflegeshift-internal" : "pflegeshift",
     ios: {
       ...config.ios,
-      bundleIdentifier: internal ? "com.pflegeshift.app.internal" : "com.pflegeshift.app",
+      bundleIdentifier: internal ? "com.pflegeshift.app.internal" : "com.lunashift.app",
     },
     android: {
       ...config.android,

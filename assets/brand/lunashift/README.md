@@ -7,6 +7,7 @@ Graphit `#111315`, warmem Creme `#F6F3EC` und Petrol `#2E766F` eingesetzt.
 verwendeten PNG-Dateien unter `assets/images/` werden reproduzierbar mit
 `npm.cmd run assets` aus `scripts/generate-brand-assets.mjs` erzeugt.
 
-Technische Kompatibilitätsnamen wie Expo-Slug und URL-Schema `pflegeshift`, die Bundle-/Package-ID
-`com.pflegeshift.app` sowie bestehende Datenbank- und SecureStore-Namen bleiben absichtlich
-unverändert. Sie sind keine sichtbare Produktmarke und sichern die Update- und Datenkontinuität.
+Die iOS-Produktion verwendet `com.lunashift.app`. Expo-Slug und URL-Schema `pflegeshift`,
+die Android-ID `com.pflegeshift.app`, die interne ID `com.pflegeshift.app.internal` sowie
+bestehende Datenbank- und SecureStore-Namen bleiben unverändert. Den getrennten Build- und
+Datenübertragungsplan beschreibt `docs/branding.md`.

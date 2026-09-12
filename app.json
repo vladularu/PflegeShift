@@ -15,7 +15,7 @@
         "dark": "./assets/images/icon-dark.png",
         "tinted": "./assets/images/icon-tinted.png"
       },
-      "bundleIdentifier": "com.pflegeshift.app",
+      "bundleIdentifier": "com.lunashift.app",
       "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
