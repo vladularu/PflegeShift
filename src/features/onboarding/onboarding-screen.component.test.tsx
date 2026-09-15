@@ -1,179 +1,287 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor, within } from "@testing-library/react-native";
 import { router } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
 import type { SaveProfileInput } from "@/domain/types";
-import { OnboardingScreen } from "@/features/onboarding/onboarding-screen";
-import { LIGHT_PALETTE } from "@/theme/palette-values";
-import { CONTROL_HEIGHT } from "@/theme/tokens";
+import { OnboardingScreen, normalizeOnboardingGross, parseWeeklyHours } from "./onboarding-screen";
 
 const mockUpdateProfile = jest.fn<(input: SaveProfileInput) => Promise<void>>();
+let mockProfile: object | null = null;
 jest.mock("@/application/pflegeshift-provider", () => ({
-  usePflegeShiftProfile: () => ({ updateProfile: mockUpdateProfile }),
+  usePflegeShiftProfile: () => ({ profile: mockProfile, updateProfile: mockUpdateProfile }),
 }));
-
-jest.mock("expo-router", () => ({
-  router: { replace: jest.fn() },
-}));
-
-const mockReplace = jest.mocked(router.replace);
-
-const SAFE_AREA_METRICS = {
+jest.mock("expo-router", () => ({ router: { replace: jest.fn(), back: jest.fn() } }));
+const metrics = {
   frame: { x: 0, y: 0, width: 430, height: 932 },
   insets: { top: 59, right: 0, bottom: 34, left: 0 },
 };
-
-function onboarding() {
+function onboarding(preview = false) {
   return (
-    <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <OnboardingScreen />
+    <SafeAreaProvider initialMetrics={metrics}>
+      <OnboardingScreen preview={preview} />
     </SafeAreaProvider>
   );
 }
-
-type OnboardingRender = Awaited<ReturnType<typeof render>>;
-
-async function openSalaryStep(screen: OnboardingRender, industry = "Pflege & Gesundheitswesen") {
-  await fireEvent.press(screen.getByRole("button", { name: "Los geht’s" }));
-  expect(screen.getByLabelText("Schritt 2 von 5")).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Weiter" })).not.toBeDisabled();
-  await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent(
-    "Bitte wähle deinen Berufsbereich aus.",
-  );
+type Screen = Awaited<ReturnType<typeof render>>;
+const press = (screen: Screen, name: string | RegExp) =>
+  fireEvent.press(screen.getByRole("button", { name }));
+async function select(screen: Screen, field: string, option: string) {
+  await press(screen, new RegExp(`^${field}:`));
+  await fireEvent.press(screen.getByRole("radio", { name: option }));
+}
+async function salary(screen: Screen, industry = "Pflege & Gesundheitswesen") {
+  await press(screen, "Los geht’s");
   await fireEvent.press(screen.getByRole("radio", { name: industry }));
-  await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
-  expect(screen.getByText("Wie möchtest du dein Gehalt einrichten?")).toBeTruthy();
+  await press(screen, "Weiter");
+}
+async function work(screen: Screen) {
+  await fireEvent.press(screen.getByRole("radio", { name: "Später einrichten" }));
+  await press(screen, "Weiter");
+}
+async function summary(screen: Screen, hours = "38,5") {
+  await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), hours);
+  await select(screen, "Bundesland deines Arbeitsorts", "Nordrhein-Westfalen");
+  await press(screen, "Weiter");
+  expect(screen.getByText("Dein Überblick ist bereit.")).toBeTruthy();
 }
 
-async function openGuestStep(screen: OnboardingRender, weeklyHours = "38,5") {
-  await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
-  expect(screen.getByText("Wie sieht deine Arbeitszeit aus?")).toBeTruthy();
-  await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), weeklyHours);
-  await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
-  expect(screen.getByText("Bereit für deinen Dienstplan?")).toBeTruthy();
-}
-
-describe("OnboardingScreen", () => {
+describe("LUNA onboarding", () => {
+  it("keeps the main action outside the scroll area and uses the centered blueprint welcome", async () => {
+    const screen = await render(onboarding());
+    expect(screen.getByText("Dein Dienstplan.\nDein Rhythmus.")).toHaveStyle({
+      textAlign: "center",
+    });
+    expect(screen.getByText("F")).toBeTruthy();
+    expect(screen.getByText("S")).toBeTruthy();
+    expect(screen.getByText("N")).toBeTruthy();
+    expect(screen.getByText("1 / 5")).toBeTruthy();
+    expect(
+      within(screen.getByTestId("onboarding-scroll-content")).queryByTestId(
+        "onboarding-primary-action",
+      ),
+    ).toBeNull();
+    expect(
+      within(screen.getByTestId("onboarding-fixed-footer")).getByRole("button", {
+        name: "Los geht’s",
+      }),
+    ).toBeTruthy();
+    await salary(screen);
+    await work(screen);
+    expect(screen.queryByRole("button", { name: "20 Wochenstunden auswählen" })).toBeNull();
+  });
+  it("preserves real hours and the percentage baseline through summary editing in preview", async () => {
+    const screen = await render(onboarding(true));
+    await salary(screen);
+    await work(screen);
+    const slider = screen.getByTestId("onboarding-percentage-slider");
+    await fireEvent(slider, "layout", { nativeEvent: { layout: { width: 90 } } });
+    await fireEvent(slider, "responderGrant", { nativeEvent: { locationX: 65, pageX: 65 } });
+    await fireEvent(slider, "responderRelease", {});
+    expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("30");
+    await select(screen, "100 % entsprechen", "38,5 h");
+    expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("30");
+    expect(screen.getByTestId("onboarding-percentage-value")).toHaveTextContent("77,9 %");
+    await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), "19,25");
+    expect(screen.getByTestId("onboarding-percentage-value")).toHaveTextContent("50 %");
+    await select(screen, "Bundesland deines Arbeitsorts", "Berlin");
+    await press(screen, "Weiter");
+    await press(screen, "Arbeitszeit bearbeiten");
+    expect(screen.getByRole("button", { name: "100 % entsprechen: 38,5 h" })).toBeTruthy();
+    expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("19,25");
+    await press(screen, "Übernehmen");
+    await press(screen, "Ohne Konto starten");
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
+    mockProfile = null;
+    jest.clearAllMocks();
     mockUpdateProfile.mockReset();
-    mockReplace.mockReset();
     mockUpdateProfile.mockResolvedValue(undefined);
   });
-
-  it("starts with the approved LUNA welcome and no preselected industry", async () => {
+  it("shows the brand and requires a deliberate industry and salary choice", async () => {
     const screen = await render(onboarding());
-
-    expect(screen.getByText("Willkommen bei LUNA Shift")).toBeTruthy();
+    expect(screen.getByText("Dein Dienstplan.\nDein Rhythmus.")).toBeTruthy();
     expect(screen.getByLabelText("LUNA Shift Logo")).toBeTruthy();
-    expect(screen.getByLabelText("Schritt 1 von 5")).toBeTruthy();
     expect(screen.getByTestId("onboarding-primary-action")).toHaveStyle({
-      width: "100%",
-      minHeight: CONTROL_HEIGHT.large,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: LIGHT_PALETTE.primary,
-      opacity: 1,
+      backgroundColor: "#C93443",
+      minHeight: 52,
     });
-    expect(screen.getByText("Los geht’s")).toHaveStyle({ color: LIGHT_PALETTE.onPrimary });
+    await press(screen, "Los geht’s");
+    screen.getAllByRole("radio").forEach((radio) => expect(radio).not.toBeChecked());
+    await press(screen, "Weiter");
+    expect(screen.getByRole("alert")).toHaveTextContent("Bitte wähle deinen Berufsbereich aus.");
+    await fireEvent.press(screen.getByRole("radio", { name: "Rettungsdienst" }));
+    await press(screen, "Weiter");
+    await press(screen, "Weiter");
+    expect(screen.getByRole("alert")).toHaveTextContent("Bitte wähle eine Gehaltsgrundlage aus.");
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
   });
-
-  it("persists an explicitly selected TVöD-P guest profile", async () => {
+  it("requires all tariff fields and saves explicitly chosen values", async () => {
     const screen = await render(onboarding());
-    await openSalaryStep(screen);
-
-    expect(screen.getByRole("button", { name: "Weiter" })).not.toBeDisabled();
-    await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Bitte wähle eine Gehaltsgrundlage aus.",
-    );
-    await fireEvent.press(screen.getByRole("radio", { name: /TVöD-P/ }));
-    await openGuestStep(screen);
-
-    expect(screen.getByText("Ohne Konto starten")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Konto erstellen/ })).toBeNull();
-    await fireEvent.press(screen.getByRole("button", { name: "LUNA Shift öffnen" }));
-
-    await waitFor(() => {
+    await salary(screen);
+    await fireEvent.press(screen.getByRole("radio", { name: "TVöD-P" }));
+    await press(screen, "Weiter");
+    expect(screen.getAllByRole("alert")).toHaveLength(3);
+    await select(screen, "Entgeltgruppe", "P8");
+    await select(screen, "Stufe", "Stufe 4");
+    await select(screen, "Tarifbereich", "Krankenhäuser · BT-K");
+    await press(screen, "Weiter");
+    await summary(screen);
+    await press(screen, "Ohne Konto starten");
+    await waitFor(() =>
       expect(mockUpdateProfile).toHaveBeenCalledWith({
+        industry: "HEALTHCARE",
         federalState: "NW",
         holidayRegion: "NONE",
-        weeklyMinutes: 2_310,
+        weeklyMinutes: 2310,
         timeZone: "Europe/Berlin",
-        industry: "HEALTHCARE",
         manualMonthlyGrossCents: null,
         tariff: {
           payGroup: "P8",
           payLevel: 4,
           sector: "BT_K",
           tariffRegion: "OTHER",
-          fullTimeWeeklyMinutes: 2_310,
+          fullTimeWeeklyMinutes: 2310,
         },
-      });
-      expect(mockReplace).toHaveBeenCalledWith("/");
-    });
+      }),
+    );
+    expect(router.replace).toHaveBeenCalledWith("/");
   });
-
-  it("persists a manual monthly gross without tariff data", async () => {
+  it("accepts grouped German gross and saves manual salary without tariff", async () => {
     const screen = await render(onboarding());
-    await openSalaryStep(screen);
-
-    await fireEvent.press(screen.getByRole("radio", { name: /Monatsbrutto selbst eintragen/ }));
-    await fireEvent.changeText(screen.getByTestId("onboarding-manual-gross"), "3450,50");
-    await openGuestStep(screen, "40");
-    await fireEvent.press(screen.getByRole("button", { name: "LUNA Shift öffnen" }));
-
-    await waitFor(() => {
-      expect(mockUpdateProfile).toHaveBeenCalledWith({
-        federalState: "NW",
-        holidayRegion: "NONE",
-        weeklyMinutes: 2_400,
-        timeZone: "Europe/Berlin",
-        industry: "HEALTHCARE",
-        manualMonthlyGrossCents: 345_050,
-        tariff: null,
-      });
-    });
+    await salary(screen);
+    await fireEvent.press(screen.getByRole("radio", { name: "Monatsbrutto eintragen" }));
+    await fireEvent.changeText(screen.getByTestId("onboarding-manual-gross"), "3.450,50");
+    await press(screen, "Weiter");
+    await summary(screen, "40");
+    expect(screen.getByText("3.450,50 € brutto / Monat")).toBeTruthy();
+    await press(screen, "Ohne Konto starten");
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          manualMonthlyGrossCents: 345050,
+          tariff: null,
+          weeklyMinutes: 2400,
+        }),
+      ),
+    );
   });
-
-  it("allows salary setup to be deferred without inventing a default", async () => {
+  it("rejects scientific, overprecision and out-of-range manual salary", async () => {
     const screen = await render(onboarding());
-    await openSalaryStep(screen, "Soziale Dienste");
-
-    await fireEvent.press(screen.getByRole("radio", { name: "Später einrichten" }));
-    await openGuestStep(screen);
-    await fireEvent.press(screen.getByRole("button", { name: "LUNA Shift öffnen" }));
-
-    await waitFor(() => {
+    await salary(screen);
+    await fireEvent.press(screen.getByRole("radio", { name: "Monatsbrutto eintragen" }));
+    for (const value of ["1e3", "3.450,501", "0", "100.000,01", "3.45,00"]) {
+      await fireEvent.changeText(screen.getByTestId("onboarding-manual-gross"), value);
+      await press(screen, "Weiter");
+      expect(screen.getByTestId("onboarding-manual-gross")).toHaveProp("aria-invalid", true);
+      expect(screen.getByRole("alert")).toBeTruthy();
+    }
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
+  });
+  it("requires work hours and state without defaults and rejects scientific hours", async () => {
+    const screen = await render(onboarding());
+    await salary(screen);
+    await work(screen);
+    expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("");
+    await press(screen, "Weiter");
+    expect(screen.getAllByRole("alert")).toHaveLength(2);
+    await select(screen, "Bundesland deines Arbeitsorts", "Berlin");
+    for (const value of ["1e1", "0,99", "80,01"]) {
+      await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), value);
+      await press(screen, "Weiter");
+      expect(screen.getByTestId("onboarding-weekly-hours")).toHaveProp("aria-invalid", true);
+    }
+  });
+  it("resets regional holiday selection after changing state", async () => {
+    const screen = await render(onboarding());
+    await salary(screen);
+    await work(screen);
+    await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), "30");
+    await select(screen, "Bundesland deines Arbeitsorts", "Bayern");
+    await press(screen, "Weiter");
+    expect(screen.getByRole("alert")).toHaveTextContent(/Feiertagsregion/);
+    await select(screen, "Regionale Feiertage am Arbeitsort", "Stadt Augsburg");
+    await select(screen, "Bundesland deines Arbeitsorts", "Sachsen");
+    await press(screen, "Weiter");
+    expect(screen.getByRole("alert")).toHaveTextContent(/Feiertagsregion/);
+    await select(screen, "Regionale Feiertage am Arbeitsort", "Keine regionale Sonderregel");
+    await press(screen, "Weiter");
+    await press(screen, "Ohne Konto starten");
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ federalState: "SN", holidayRegion: "NONE" }),
+      ),
+    );
+  });
+  it("preserves inputs on back and supports editing the summary", async () => {
+    const screen = await render(onboarding());
+    await salary(screen, "Soziale Dienste");
+    await work(screen);
+    await summary(screen);
+    await press(screen, "Arbeitszeit bearbeiten");
+    expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("38,5");
+    await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), "20");
+    await press(screen, "Übernehmen");
+    expect(screen.getByText("20 h / Woche")).toBeTruthy();
+    await press(screen, "Gehalt bearbeiten");
+    expect(screen.getByRole("radio", { name: "Später einrichten" })).toBeChecked();
+    await press(screen, "Übernehmen");
+    await press(screen, "Ohne Konto starten");
+    await waitFor(() =>
       expect(mockUpdateProfile).toHaveBeenCalledWith(
         expect.objectContaining({
           industry: "SOCIAL_SERVICES",
-          manualMonthlyGrossCents: null,
           tariff: null,
+          manualMonthlyGrossCents: null,
+          weeklyMinutes: 1200,
         }),
-      );
-    });
+      ),
+    );
   });
-
-  it("keeps invalid manual salary and weekly hours on their respective steps", async () => {
-    const screen = await render(onboarding());
-    await openSalaryStep(screen);
-
-    await fireEvent.press(screen.getByRole("radio", { name: /Monatsbrutto selbst eintragen/ }));
-    await fireEvent.changeText(screen.getByTestId("onboarding-manual-gross"), "ungültig");
-    await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Bitte ein Monatsbrutto zwischen 0,01 € und 100.000 € angeben.",
-    );
-
-    await fireEvent.changeText(screen.getByTestId("onboarding-manual-gross"), "3000");
-    await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
-    await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), "ungültig");
-    await fireEvent.press(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Bitte gültige Wochenstunden angeben.",
-    );
+  it.each(["preview", "existing"])("never writes data in %s mode", async (mode) => {
+    mockProfile = mode === "existing" ? { federalState: "BY" } : null;
+    const screen = await render(onboarding(mode === "preview"));
+    expect(screen.getByTestId("onboarding-preview-hint")).toBeTruthy();
+    await salary(screen);
+    await work(screen);
+    await summary(screen);
+    await press(screen, "Ohne Konto starten");
     expect(mockUpdateProfile).not.toHaveBeenCalled();
+    expect(router.back).toHaveBeenCalledTimes(1);
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+  it("can close the test flow before completing fields", async () => {
+    const screen = await render(onboarding(true));
+    await press(screen, "Los geht’s");
+    await press(screen, "Testmodus schließen");
+    expect(router.back).toHaveBeenCalledTimes(1);
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
+  });
+  it("locks duplicate saves, retains values on failure and allows retry", async () => {
+    let rejectSave: (error: Error) => void = () => {};
+    mockUpdateProfile.mockImplementationOnce(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          rejectSave = reject;
+        }),
+    );
+    const screen = await render(onboarding());
+    await salary(screen);
+    await work(screen);
+    await summary(screen);
+    await press(screen, "Ohne Konto starten");
+    expect(screen.getByTestId("onboarding-primary-action")).toBeDisabled();
+    await fireEvent.press(screen.getByTestId("onboarding-primary-action"));
+    expect(mockUpdateProfile).toHaveBeenCalledTimes(1);
+    await act(async () => rejectSave(new Error("Speicher nicht erreichbar")));
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.getByText("38,5 h / Woche")).toBeTruthy();
+    await press(screen, "Ohne Konto starten");
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(2));
+  });
+  it("keeps the existing weekly-hours export compatible", () => {
+    expect(parseWeeklyHours("38,5")).toBe(2310);
+    expect(parseWeeklyHours("38.5")).toBe(2310);
+    expect(normalizeOnboardingGross("3.450,50")).toBe("3450,50");
   });
 });

@@ -158,16 +158,27 @@ export function SettingsScreen() {
         </View>
 
         <CalendarPerformanceControls />
-        {DEV_TOOLS_AVAILABLE && developerMode ? (
+        {DEV_TOOLS_AVAILABLE ? (
           <View style={{ gap: SPACING.sm }}>
             <SectionHeader title="Intern" />
             <SurfaceCard>
               <RowButton
-                leading={<SettingsIcon name="flask-outline" />}
-                onPress={() => router.push("/dev-tools")}
-                subtitle="Testdaten sicher erzeugen und zurücksetzen"
-                title="Testlabor"
+                leading={<SettingsIcon name="sparkles-outline" />}
+                onPress={() => router.push({ pathname: "/onboarding", params: { preview: "1" } })}
+                subtitle="Ausprobieren, ohne deine Daten zu ändern"
+                title="Onboarding testen"
               />
+              {developerMode ? (
+                <>
+                  <CardSeparator />
+                  <RowButton
+                    leading={<SettingsIcon name="flask-outline" />}
+                    onPress={() => router.push("/dev-tools")}
+                    subtitle="Testdaten sicher erzeugen und zurücksetzen"
+                    title="Testlabor"
+                  />
+                </>
+              ) : null}
             </SurfaceCard>
           </View>
         ) : null}

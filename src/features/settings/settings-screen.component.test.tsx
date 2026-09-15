@@ -1,5 +1,6 @@
-import { render } from "@testing-library/react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { router } from "expo-router";
 
 import { SettingsScreen } from "@/features/settings/settings-screen";
 import {
@@ -18,6 +19,7 @@ const mockBaseProfile = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 let mockProfile = { ...mockBaseProfile };
+let mockDevToolsAvailable = false;
 
 jest.mock("expo-sqlite", () => ({
   useSQLiteContext: () => ({}),
@@ -63,12 +65,15 @@ jest.mock("@/infrastructure/database/dev-tools-repository", () => ({
 }));
 
 jest.mock("@/infrastructure/dev-tools-policy", () => ({
-  DEV_TOOLS_AVAILABLE: false,
+  get DEV_TOOLS_AVAILABLE() {
+    return mockDevToolsAvailable;
+  },
 }));
 
 describe("SettingsScreen production gates", () => {
   beforeEach(() => {
     mockProfile = { ...mockBaseProfile };
+    mockDevToolsAvailable = false;
   });
 
   it("ignores stale developer preferences and exposes no activation path", async () => {
@@ -76,6 +81,7 @@ describe("SettingsScreen production gates", () => {
 
     expect(screen.queryByText("Intern")).toBeNull();
     expect(screen.queryByText("Testlabor")).toBeNull();
+    expect(screen.queryByText("Onboarding testen")).toBeNull();
     expect(isDeveloperModeEnabled).not.toHaveBeenCalled();
     expect(setDeveloperMode).not.toHaveBeenCalled();
     expect(screen.getByText("Über LUNA Shift")).toBeTruthy();
@@ -91,5 +97,14 @@ describe("SettingsScreen production gates", () => {
 
     expect(screen.getByText(/Manuell.*3\.450,50/)).toBeTruthy();
     expect(screen.queryByText("Schichtmodell")).toBeNull();
+  });
+
+  it("opens a non-persisting onboarding preview in internal builds", async () => {
+    mockDevToolsAvailable = true;
+    jest.mocked(isDeveloperModeEnabled).mockResolvedValue(false);
+    const screen = await render(<SettingsScreen />);
+    await fireEvent.press(screen.getByText("Onboarding testen"));
+    expect(router.push).toHaveBeenCalledWith({ pathname: "/onboarding", params: { preview: "1" } });
+    expect(screen.queryByText("Testlabor")).toBeNull();
   });
 });
