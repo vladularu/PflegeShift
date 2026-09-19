@@ -3,10 +3,13 @@ import { act, fireEvent, render, waitFor, within } from "@testing-library/react-
 import { router } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { SaveProfileInput } from "@/domain/types";
+import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 import { OnboardingScreen, normalizeOnboardingGross, parseWeeklyHours } from "./onboarding-screen";
 
 const mockUpdateProfile = jest.fn<(input: SaveProfileInput) => Promise<void>>();
 let mockProfile: object | null = null;
+let mockPalette = LIGHT_PALETTE;
+jest.mock("@/theme/palette", () => ({ usePalette: () => mockPalette }));
 jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftProfile: () => ({ profile: mockProfile, updateProfile: mockUpdateProfile }),
 }));
@@ -93,10 +96,30 @@ describe("LUNA onboarding", () => {
     expect(mockUpdateProfile).not.toHaveBeenCalled();
   });
   beforeEach(() => {
+    mockPalette = LIGHT_PALETTE;
     mockProfile = null;
     jest.clearAllMocks();
     mockUpdateProfile.mockReset();
     mockUpdateProfile.mockResolvedValue(undefined);
+  });
+  it("keeps the same red action and entered choices through a live theme change", async () => {
+    const screen = await render(onboarding(true));
+    await salary(screen);
+    await work(screen);
+    await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), "32");
+    for (const palette of [DARK_PALETTE, LIGHT_PALETTE]) {
+      mockPalette = palette;
+      await screen.rerender(onboarding(true));
+      expect(screen.getByTestId("onboarding-primary-action")).toHaveStyle({
+        backgroundColor: "#C93443",
+      });
+      expect(screen.getByText("Weiter")).toHaveStyle({ color: "#FFFFFF" });
+      expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("32");
+      expect(screen.getByTestId("onboarding-percentage-value")).toHaveStyle({
+        color: palette.primary,
+      });
+    }
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
   });
   it("shows the brand and requires a deliberate industry and salary choice", async () => {
     const screen = await render(onboarding());

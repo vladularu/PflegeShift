@@ -83,7 +83,7 @@ describe("calendar orientation", () => {
       const palette = dark ? DARK_PALETTE : LIGHT_PALETTE;
       const screen = await render(<Year />);
       expect(screen.getByText("September", { includeHiddenElements: true })).toHaveStyle({
-        color: palette.calendarYearAccent,
+        color: "#C93443",
       });
       expect(screen.getByText("Januar", { includeHiddenElements: true })).toHaveStyle({
         color: palette.text,

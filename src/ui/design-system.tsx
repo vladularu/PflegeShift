@@ -460,7 +460,7 @@ export function HeaderAction({
           alignItems: "center",
           justifyContent: "center",
           borderRadius: label === "+" ? RADII.pill : RADII.control,
-          backgroundColor: emphasis ? palette.primary : palette.surfaceMuted,
+          backgroundColor: emphasis ? palette.accent : palette.surfaceMuted,
           opacity: pressed ? 0.72 : 1,
           paddingHorizontal: label.length > 2 ? 12 : 0,
         },
@@ -470,14 +470,14 @@ export function HeaderAction({
       {label === "+" ? (
         <Ionicons
           accessibilityElementsHidden
-          color={emphasis ? palette.onPrimary : palette.primary}
+          color={emphasis ? palette.onAccent : palette.primary}
           name="add"
           size={22}
         />
       ) : (
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ color: emphasis ? palette.onPrimary : palette.primary, ...TYPOGRAPHY.label }}
+          style={{ color: emphasis ? palette.onAccent : palette.primary, ...TYPOGRAPHY.label }}
         >
           {label}
         </Text>

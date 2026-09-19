@@ -47,7 +47,7 @@ export function PercentageSlider({
     <View style={styles.root}>
       <View style={styles.heading}>
         <Text style={[styles.label, { color: p.text }]}>Teilzeit in Prozent</Text>
-        <Text testID="onboarding-percentage-value" style={[styles.label, { color: p.accent }]}>
+        <Text testID="onboarding-percentage-value" style={[styles.label, { color: p.accentText }]}>
           {display}
         </Text>
       </View>
@@ -86,12 +86,12 @@ export function PercentageSlider({
         onResponderTerminate={() => onInteractionChange(false)}
         style={styles.slider}
       >
-        <View pointerEvents="none" style={[styles.track, { backgroundColor: p.border }]}>
+        <View pointerEvents="none" style={[styles.track, { backgroundColor: p.control }]}>
           <View style={[styles.fill, { width: `${position}%`, backgroundColor: p.accent }]} />
           <View
             style={[
               styles.thumb,
-              { left: `${position}%`, backgroundColor: p.accent, borderColor: p.surface },
+              { left: `${position}%`, backgroundColor: p.accent, borderColor: p.onAccent },
             ]}
           />
         </View>

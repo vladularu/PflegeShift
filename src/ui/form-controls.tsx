@@ -454,8 +454,8 @@ function FormActionButton({
   const pressMotion = usePressMotion();
   const secondary = tone === "secondary";
   const blocked = disabled || busy;
-  const backgroundColor = tone === "danger" ? palette.danger : palette.primary;
-  const foregroundColor = tone === "danger" ? palette.onDanger : palette.onPrimary;
+  const backgroundColor = tone === "danger" ? palette.danger : palette.accent;
+  const foregroundColor = tone === "danger" ? palette.onDanger : palette.onAccent;
 
   return (
     <Animated.View style={[{ width: "100%" }, pressMotion.animatedStyle]}>

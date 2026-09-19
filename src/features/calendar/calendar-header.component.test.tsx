@@ -7,7 +7,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { CALENDAR_VIEW_ZOOM } from "@/features/calendar/calendar-view-transition";
 import { MOTION } from "@/theme/motion";
-import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 function PlannerHeader({
   direction = "NEXT",
@@ -131,18 +130,28 @@ describe("CalendarHeader", () => {
     expect(previousTitle.props.exiting.targetValues).toMatchObject({ translateY: 8 });
   });
 
-  it("uses a transform-free deliberate crossfade between month and year", async () => {
-    const screen = await render(
-      <PlannerHeader month="2026-08" titleTransition="CROSSFADE" viewMode="YEAR" />,
-    );
-    const title = screen.getByRole("header", { name: "2026" });
+  it.each([false, true])(
+    "keeps the year red through a transform-free crossfade (dark=%s)",
+    async (dark) => {
+      const scheme = jest
+        .spyOn(jest.requireActual<typeof import("react-native")>("react-native"), "useColorScheme")
+        .mockReturnValue(dark ? "dark" : "light");
+      try {
+        const screen = await render(
+          <PlannerHeader month="2026-08" titleTransition="CROSSFADE" viewMode="YEAR" />,
+        );
+        const title = screen.getByRole("header", { name: "2026" });
 
-    expect(title.props.entering.durationV).toBe(CALENDAR_VIEW_ZOOM.duration);
-    expect(title).toHaveStyle({ color: LIGHT_PALETTE.calendarYearAccent });
-    expect(title.props.entering.initialValues).toBeUndefined();
-    expect(title.props.exiting.durationV).toBe(MOTION.duration.normal);
-    expect(title.props.exiting.targetValues).toBeUndefined();
-  });
+        expect(title.props.entering.durationV).toBe(CALENDAR_VIEW_ZOOM.duration);
+        expect(title).toHaveStyle({ color: "#C93443" });
+        expect(title.props.entering.initialValues).toBeUndefined();
+        expect(title.props.exiting.durationV).toBe(MOTION.duration.normal);
+        expect(title.props.exiting.targetValues).toBeUndefined();
+      } finally {
+        scheme.mockRestore();
+      }
+    },
+  );
 
   it("keeps the current year quiet and shows other years for orientation", async () => {
     const current = await render(<PlannerHeader month="2026-08" referenceMonth="2026-09" />);

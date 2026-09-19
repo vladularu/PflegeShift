@@ -1,20 +1,25 @@
-import { useColorScheme, type TextStyle } from "react-native";
+import { type TextStyle } from "react-native";
+import { usePalette } from "./palette";
 import { TYPOGRAPHY } from "./typography";
 
-// Scoped to the approved red onboarding; existing app palettes remain unchanged.
+// Share functional colors with the app; pastels remain decorative onboarding assets.
 export function useOnboardingPalette() {
-  const dark = useColorScheme() === "dark";
+  const palette = usePalette();
+  const { dark } = palette;
   return {
     dark,
-    canvas: dark ? "#111315" : "#F7F6F3",
-    surface: dark ? "#292B30" : "#FFFFFF",
-    text: dark ? "#FFFFFF" : "#111315",
-    muted: dark ? "#B8BAC2" : "#64666D",
-    accent: dark ? "#FF8591" : "#C93443",
-    onAccent: dark ? "#111315" : "#FFFFFF",
-    border: dark ? "#44464D" : "#D9DADD",
-    control: dark ? "#93969E" : "#767880",
-    overlay: "rgba(17, 19, 21, 0.5)",
+    canvas: palette.onboardingBackground,
+    surface: palette.surface,
+    text: palette.text,
+    muted: palette.textMuted,
+    accent: palette.accent,
+    onAccent: palette.onAccent,
+    accentText: palette.primary,
+    selectionBorder: dark ? palette.border : palette.accent,
+    error: palette.danger,
+    border: palette.separator,
+    control: palette.border,
+    overlay: palette.overlay,
     rose: dark ? "#39252A" : "#F7DFE2",
     apricot: dark ? "#352C25" : "#F5E5D5",
     lavender: dark ? "#2D293A" : "#E8E3F3",
