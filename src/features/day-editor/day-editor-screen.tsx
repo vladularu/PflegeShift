@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { usePflegeShiftEntries, usePflegeShiftStatus } from "@/application/pflegeshift-provider";
+import type { CalendarEntry } from "@/domain/types";
 import { today } from "@/engine/calendar";
 import { DayEditorForm } from "@/features/day-editor/day-editor-form";
 import { resolveEditorSession, resolveEditorTarget } from "@/features/editor-session";
@@ -35,6 +36,10 @@ export function DayEditorScreen() {
     [entries, entryId],
   );
   const requestedMode = parsedMode.status === "valid" ? parsedMode.value : "SHIFT";
+  const sessionKey = `${date}:${entryId ?? "new"}:${requestedMode}`;
+  const [deletion, setDeletion] = useState<{ key: string; entry: CalendarEntry } | null>(null);
+  // Keep only this editor's own deletion alive until cleanup and navigation finish.
+  const deletingEntry = deletion?.key === sessionKey ? deletion.entry : null;
 
   if (routeInvalid) {
     return (
@@ -48,7 +53,7 @@ export function DayEditorScreen() {
   }
   if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
 
-  const target = resolveEditorTarget(entryId, existing);
+  const target = resolveEditorTarget(entryId, existing ?? deletingEntry);
   if (ready && target.kind === "MISSING") {
     return (
       <LoadFailureView
@@ -59,7 +64,7 @@ export function DayEditorScreen() {
       />
     );
   }
-  const session = resolveEditorSession(ready, `${date}:${entryId ?? "new"}:${requestedMode}`, () =>
+  const session = resolveEditorSession(ready, sessionKey, () =>
     target.kind === "EDIT" ? target.value : null,
   );
   if (session === null) return <LoadingView />;
@@ -68,6 +73,7 @@ export function DayEditorScreen() {
       key={session.key}
       date={date}
       existing={session.initialValue}
+      onDeletionChange={(entry) => setDeletion(entry ? { key: sessionKey, entry } : null)}
       requestedMode={requestedMode}
       sessionKey={session.key}
     />

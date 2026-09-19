@@ -41,11 +41,13 @@ type EditorMode = "SHIFT" | "APPOINTMENT";
 export function DayEditorForm({
   date,
   existing: loadedExisting,
+  onDeletionChange,
   requestedMode,
   sessionKey,
 }: {
   readonly date: string;
   readonly existing: CalendarEntry | null;
+  readonly onDeletionChange: (entry: CalendarEntry | null) => void;
   readonly requestedMode: EditorMode;
   readonly sessionKey: string;
 }) {
@@ -144,6 +146,7 @@ export function DayEditorForm({
   }
 
   async function save(closeAfterSave = true): Promise<boolean> {
+    if (savingRef.current) return false;
     const nextShiftTitleError =
       mode === "SHIFT" ? requiredFieldError(shiftTitle, "Bezeichnung") : null;
     const nextBreakError =
@@ -264,22 +267,30 @@ export function DayEditorForm({
   }
 
   async function deleteEntry() {
-    if (!existing) return;
+    if (!existing || savingRef.current) return;
     try {
       savingRef.current = true;
       setSaving(true);
       setError(null);
+      onDeletionChange(existing);
       await removeEntry(existing);
       deletionFeedback();
       allowRemovalRef.current = true;
       router.back();
     } catch (deleteError) {
+      onDeletionChange(null);
       warningFeedback();
       setError(userFacingErrorMessage(deleteError, "Eintrag konnte nicht gelöscht werden."));
-    } finally {
       savingRef.current = false;
       setSaving(false);
     }
+  }
+
+  function confirmDeleteEntry(title: string, message: string) {
+    Alert.alert(title, message, [
+      { text: "Abbrechen", style: "cancel" },
+      { text: "Löschen", style: "destructive", onPress: () => void deleteEntry() },
+    ]);
   }
 
   const saveFromDismiss = useEffectEvent(() => save(false));
@@ -338,12 +349,11 @@ export function DayEditorForm({
           }}
           onDelete={
             initialShift
-              ? () => {
-                  Alert.alert("Dienst löschen?", "Dieser Dienst wird aus dem Kalender entfernt.", [
-                    { text: "Abbrechen", style: "cancel" },
-                    { text: "Löschen", style: "destructive", onPress: () => void deleteEntry() },
-                  ]);
-                }
+              ? () =>
+                  confirmDeleteEntry(
+                    "Dienst löschen?",
+                    "Dieser Dienst wird aus dem Kalender entfernt.",
+                  )
               : undefined
           }
           onEndTimeChange={setEndTime}
@@ -425,22 +435,13 @@ export function DayEditorForm({
         onAllDayChange={setAllDay}
         onDelete={
           initialAppointment
-            ? () => {
-                Alert.alert(
+            ? () =>
+                confirmDeleteEntry(
                   isSeries ? "Terminserie löschen?" : "Termin löschen?",
                   isSeries
                     ? "Alle Termine dieser Serie werden gelöscht."
                     : "Dieser Termin wird aus dem Kalender entfernt.",
-                  [
-                    { text: "Abbrechen", style: "cancel" },
-                    {
-                      text: "Löschen",
-                      style: "destructive",
-                      onPress: () => void deleteEntry(),
-                    },
-                  ],
-                );
-              }
+                )
             : undefined
         }
         onDismiss={() => {
