@@ -355,13 +355,13 @@ function SetupCard() {
           justifyContent: "center",
           borderRadius: RADII.control,
           borderCurve: "continuous",
-          backgroundColor: palette.primary,
+          backgroundColor: palette.accent,
           opacity: pressed ? 0.75 : 1,
         })}
       >
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ color: palette.onPrimary, ...TYPOGRAPHY.button }}
+          style={{ color: palette.onAccent, ...TYPOGRAPHY.button }}
         >
           Gehalt einrichten
         </Text>

@@ -14,7 +14,7 @@ export function AppTabs() {
   return (
     <NativeTabs
       backgroundColor={palette.tabBar}
-      iconColor={{ default: palette.textMuted, selected: palette.primary }}
+      iconColor={{ default: palette.textMuted, selected: palette.accent }}
       labelStyle={{
         default: {
           color: palette.textMuted,
@@ -28,7 +28,7 @@ export function AppTabs() {
         },
       }}
       minimizeBehavior="never"
-      tintColor={palette.primary}
+      tintColor={palette.accent}
     >
       <NativeTabs.Trigger
         disableScrollToTop

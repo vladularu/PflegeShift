@@ -41,8 +41,13 @@ export function AppTabs() {
           title: "Kalender",
           // Keep external month changes positioned before this tab is revealed.
           freezeOnBlur: false,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons accessible={false} color={color} name="calendar-outline" size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              accessible={false}
+              color={focused ? palette.accent : color}
+              name="calendar-outline"
+              size={size}
+            />
           ),
         }}
       />
@@ -50,8 +55,13 @@ export function AppTabs() {
         name="(analysis)"
         options={{
           title: "Auswertung",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons accessible={false} color={color} name="stats-chart-outline" size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              accessible={false}
+              color={focused ? palette.accent : color}
+              name="stats-chart-outline"
+              size={size}
+            />
           ),
         }}
       />
@@ -59,8 +69,13 @@ export function AppTabs() {
         name="(templates)"
         options={{
           title: "Schichten",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons accessible={false} color={color} name="documents-outline" size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              accessible={false}
+              color={focused ? palette.accent : color}
+              name="documents-outline"
+              size={size}
+            />
           ),
         }}
       />
@@ -68,10 +83,10 @@ export function AppTabs() {
         name="(more)"
         options={{
           title: "Mehr",
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               accessible={false}
-              color={color}
+              color={focused ? palette.accent : color}
               name="ellipsis-horizontal-circle-outline"
               size={size}
             />

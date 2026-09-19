@@ -50,7 +50,7 @@ export function BlueprintIcon({
 export function FieldError({ message }: { readonly message?: string }) {
   const p = useOnboardingPalette();
   return message ? (
-    <Text accessibilityRole="alert" style={[s.error, { color: p.accent }]}>
+    <Text accessibilityRole="alert" style={[s.error, { color: p.error }]}>
       {message}
     </Text>
   ) : null;
@@ -77,7 +77,7 @@ export function Choice({
         s.choice,
         {
           backgroundColor: selected ? p.rose : p.surface,
-          borderColor: selected ? p.accent : p.border,
+          borderColor: selected ? p.selectionBorder : p.control,
           borderWidth: 1,
           opacity: pressed ? 0.7 : 1,
         },
@@ -87,9 +87,15 @@ export function Choice({
       <Text style={[s.body, { flex: 1, color: p.text }]}>{title}</Text>
       <View
         accessibilityElementsHidden
-        style={[s.radio, { borderColor: selected ? p.accent : p.control }]}
+        style={[
+          s.radio,
+          {
+            borderColor: selected ? p.selectionBorder : p.control,
+            backgroundColor: selected ? p.accent : "transparent",
+          },
+        ]}
       >
-        {selected ? <View style={[s.dot, { backgroundColor: p.accent }]} /> : null}
+        {selected ? <View style={[s.dot, { backgroundColor: p.onAccent }]} /> : null}
       </View>
     </Pressable>
   );
@@ -136,7 +142,7 @@ export function SelectField<T extends string | number>({
         }}
         style={[
           s.select,
-          { backgroundColor: p.surface, borderColor: error ? p.accent : p.border },
+          { backgroundColor: p.surface, borderColor: error ? p.error : p.control },
           compact && s.compactSelect,
         ]}
       >
@@ -184,7 +190,7 @@ export function SelectField<T extends string | number>({
                 onPress={() => setOpen(false)}
                 style={s.close}
               >
-                <Text style={[s.label, { color: p.accent }]}>Schließen</Text>
+                <Text style={[s.label, { color: p.accentText }]}>Schließen</Text>
               </Pressable>
             </View>
             <ScrollView
@@ -239,7 +245,7 @@ export function NumberField({
           large
             ? [
                 s.numericCard,
-                { backgroundColor: p.surface, borderColor: error ? p.accent : p.border },
+                { backgroundColor: p.surface, borderColor: error ? p.error : p.control },
               ]
             : undefined
         }
@@ -259,7 +265,7 @@ export function NumberField({
           style={[
             s.input,
             large && s.largeInput,
-            { color: p.text, backgroundColor: p.surface, borderColor: error ? p.accent : p.border },
+            { color: p.text, backgroundColor: p.surface, borderColor: error ? p.error : p.control },
           ]}
         />
         {large ? (

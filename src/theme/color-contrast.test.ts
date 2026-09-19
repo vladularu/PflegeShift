@@ -89,6 +89,21 @@ describe.each([
   ["light", LIGHT_PALETTE],
   ["dark", DARK_PALETTE],
 ] as const)("%s palette contrast", (_, palette) => {
+  it("uses the approved red with readable white labels in both modes", () => {
+    expect(palette.accent).toBe("#C93443");
+    expect(palette.calendarYearAccent).toBe("#C93443");
+    expect(palette.onAccent).toBe("#FFFFFF");
+    expect(colorContrastRatio(palette.onAccent, palette.accent)).toBeGreaterThanOrEqual(
+      MINIMUM_TEXT_CONTRAST,
+    );
+    expect(colorContrastRatio(palette.accent, palette.tabBar)).toBeGreaterThanOrEqual(
+      MINIMUM_UI_CONTRAST,
+    );
+    expect(palette.floatingAction).toBe(palette.accent);
+    expect(palette.onFloatingAction).toBe(palette.onAccent);
+    expect(palette.onboardingBackground).toBe(palette.background);
+  });
+
   it.each(TEXT_COLORS)("keeps %s readable on content surfaces", (foreground) => {
     for (const background of CONTENT_BACKGROUNDS) {
       expect(

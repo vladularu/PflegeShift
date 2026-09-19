@@ -240,10 +240,10 @@ export function RecurrenceSheet({
             alignItems: "center",
             justifyContent: "center",
             borderRadius: 25,
-            backgroundColor: palette.primary,
+            backgroundColor: palette.accent,
           }}
         >
-          <Text style={{ color: palette.onPrimary, fontSize: 16, fontWeight: "700" }}>Fertig</Text>
+          <Text style={{ color: palette.onAccent, fontSize: 16, fontWeight: "700" }}>Fertig</Text>
         </Pressable>
       </View>
     </SheetShell>
@@ -361,10 +361,10 @@ export function NotificationSheet({
             alignItems: "center",
             justifyContent: "center",
             borderRadius: 25,
-            backgroundColor: palette.primary,
+            backgroundColor: palette.accent,
           }}
         >
-          <Text style={{ color: palette.onPrimary, fontSize: 16, fontWeight: "700" }}>Fertig</Text>
+          <Text style={{ color: palette.onAccent, fontSize: 16, fontWeight: "700" }}>Fertig</Text>
         </Pressable>
       </View>
     </SheetShell>
@@ -422,10 +422,10 @@ export function PauseSheet({
           alignItems: "center",
           justifyContent: "center",
           borderRadius: 25,
-          backgroundColor: palette.primary,
+          backgroundColor: palette.accent,
         }}
       >
-        <Text style={{ color: palette.onPrimary, fontSize: 16, fontWeight: "700" }}>Fertig</Text>
+        <Text style={{ color: palette.onAccent, fontSize: 16, fontWeight: "700" }}>Fertig</Text>
       </Pressable>
     </SheetShell>
   );
