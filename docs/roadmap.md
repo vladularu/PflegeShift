@@ -1,6 +1,6 @@
 # LUNA Shift – Roadmap und Abschlussstand
 
-Stand: 12.09.2026. Konsolidierte Basis: `ef3f429` (9H-D, PR #71).
+Stand: 20.09.2026 (Europe/Berlin). Konsolidierte Basis: `45a12d5` (PR #80).
 Diese Datei ist der zentrale Statusindex. Paketdokumente enthalten historische
 Implementierungs- und Prüfnotizen; dortiges „offen“ oder „noch nicht freigegeben“
 ist ohne Datum kein aktueller Auftrag. Git-Merges belegen Integration,
@@ -40,7 +40,47 @@ Bestätigung aller Zustände auf jeder späteren OTA.
 | 9H-B1 / 9H-B2           | Referenzkern und isolierte Prüfung monatlicher Nachweise                                           | PR #68–69; kein vollständiger produktiver Anspruchsnachweis |
 | 9H-C / 9H-D             | Einfache Erklärung und gemeinsame automatische BT-K-Monatsschätzung                                | PR #70–71                                                   |
 
-### Zuletzt abgenommen: 9H-D
+### Seit dem Abschlussstand vom 12.09.2026 integriert
+
+Die PR-Zustände und Merge-Commits wurden am 20.09.2026 gegen GitHub geprüft.
+Die folgenden Zeilen ersetzen keine eigenständige Geräte- oder Store-Abnahme.
+
+| Paket                      | Ergebnis                                                                                                                                       | Integration / Nachweis                                                                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 9I – Dokumentation         | Zentraler Statusindex und historische Paketverweise integriert                                                                                 | [PR #72](https://github.com/vladularu/PflegeShift/pull/72), `8efa2ba`                                                                               |
+| Dialogthemen / Löschhaptik | Dialog-Farbschema aktualisiert und Löschhaptik abgeschwächt                                                                                    | [PR #73](https://github.com/vladularu/PflegeShift/pull/73), `35c0ab7`                                                                               |
+| SDK-57-Patches / Parser    | Metro-Patch, Entfernung von image-size und SDK-Patchabgleich                                                                                   | [PR #74](https://github.com/vladularu/PflegeShift/pull/74), `14a445c`; keine dauerhafte Sicherheitsgarantie                                         |
+| iOS-Produktionskennung     | LUNA-Shift-Produktions-Bundle-ID im Code übernommen                                                                                            | [PR #75](https://github.com/vladularu/PflegeShift/pull/75), `16e2987`; kein Beleg für Store-Veröffentlichung oder vollständige native Markenabnahme |
+| LUNA-Onboarding            | Reguläres Onboarding durch den LUNA-Ablauf ersetzt                                                                                             | [PR #76](https://github.com/vladularu/PflegeShift/pull/76), `bdc632e`; keine pauschale Geräteabnahme aller Erststartzustände                        |
+| UX-01                      | Gemeinsames Rot `#C93443` in App und Onboarding, Jahreszahl und tatsächlicher aktueller Monat rot                                              | [PR #77](https://github.com/vladularu/PflegeShift/pull/77), `9824298`; Farbkorrektur auf Preview Build 31 vom Nutzer bestätigt                      |
+| UX-02                      | Schließgeste löst nach Speicherfehler keine automatische Wiederholung aus                                                                      | [PR #78](https://github.com/vladularu/PflegeShift/pull/78), `31b660f`; Preview-Gerätetest vom Nutzer bestätigt                                      |
+| UX-03A                     | Eigener Löschvorgang bleibt bis zum Abschluss stabil; keine falsche Meldung „Eintrag nicht verfügbar“ und keine doppelte Lösch-/Speicheraktion | [PR #79](https://github.com/vladularu/PflegeShift/pull/79), `254828c`; Preview-Gerätetest vom Nutzer bestätigt                                      |
+| Windows-Testlauf           | Jest findet Komponententests ohne Sonderparameter, Suchbereich auf `src` begrenzt; Regressionstest ergänzt                                     | [PR #80](https://github.com/vladularu/PflegeShift/pull/80), `45a12d5`; keine App-Änderung und keine OTA nötig                                       |
+
+### Aktueller verifizierter Abschlussstand
+
+- UX-01, UX-02 und UX-03A sind integriert und im jeweils beschriebenen Umfang
+  durch Nutzerrückmeldung auf der Preview-App abgenommen. Zu UX-03A lautete
+  die Rückmeldung „bestanden und funktioniert“. Kein zusätzlicher Screenshot-
+  oder Videonachweis und keine vollständige App-Abnahme werden daraus abgeleitet.
+- Zuletzt in dieser Aufgabenfolge veröffentlicht und bestätigt:
+  [UX-03A-Preview-OTA](https://expo.dev/accounts/vladularu/projects/pflegeshift/updates/96aa1fef-7d04-41ac-8796-49a0780cd914),
+  `preview` / iOS / Build 31, Runtime `eac302484061dfb3fa63e2a74b8618ff6000861c`.
+  Das ist der dokumentierte Lieferstand, keine erneute Live-Abfrage von EAS.
+- Für PR #79 und PR #80 bestanden jeweils alle sieben PR-CI-Prüfungen.
+  [CI von PR #80](https://github.com/vladularu/PflegeShift/actions/runs/35475843932)
+  prüfte auch die Testsuche unter Linux; der lokale Windows-Lauf von
+  `npm.cmd run verify:fast` bestand ohne Zusatzparameter vollständig.
+- Teststand nach PR #80: 732 Unit-Tests in 105 Dateien und 368 Komponententests
+  in 73 Suites; zusätzlich neun Skript-Prüfgruppen. Der separate Komponenten-
+  Coverage-Lauf bestand mit unveränderten Grenzwerten.
+- Frühere Liefernotizen, etwa [UX-01](ux01-red-theme-delivery.md), dokumentieren
+  noch den damaligen Windows-Workaround. Dieser ist mit PR #80 auf der aktuellen
+  Entwicklungsbasis behoben; ältere separate Liefercheckouts ändern sich nicht automatisch.
+- Kein neuer nativer Build und kein Production-/TestFlight-Update durch UX-03A
+  oder das Windows-Testlauf-Paket. Ein Merge ist keine Veröffentlichung auf allen Geräten.
+
+### Historische Geräteabnahme: 9H-D
 
 - [PR #71](https://github.com/vladularu/PflegeShift/pull/71), Merge `ef3f4298800abc7c6f3f97baa76f7ce703e1b710`.
 - [Master-CI](https://github.com/vladularu/PflegeShift/actions/runs/34653521207): sieben erfolgreiche Checks im abgeschlossenen Auslieferungsschritt.
@@ -53,28 +93,27 @@ Bestätigung aller Zustände auf jeder späteren OTA.
 - Lokaler Jahresbenchmark: rund 5 % zusätzliche CPU-Zeit; kein Geräte-Framerate-
   Nachweis. Die anschließende Nutzerprüfung meldete keine neue Verzögerung.
 
-## 9I – aktueller Dokumentationsauftrag
+## 9I – integrierter Dokumentationsabschluss und verbleibende Prüfpunkte
 
-Ziel: einen belastbaren Abschlussstand und eine kleine Restliste schaffen.
-Scope: diese Roadmap, README-Verweis und Statushinweise in elf Paketdokumenten
-(13 Markdown-Dateien). Keine App-, Datenbank-, Tarif-, Test- oder Native-Änderung.
-Lokale Dokumentation und Prüfung sind freigegeben; Commit, Push, PR und Merge
-noch nicht. Ein Build oder eine OTA ist für diese Dokumentation nicht nötig.
+Der damalige Dokumentationsauftrag umfasste diese Roadmap, den README-Verweis
+und Statushinweise in elf Paketdokumenten (13 Markdown-Dateien). Er wurde mit
+PR #72 integriert und ist kein offener Git-Auftrag mehr. Seine Restliste ist
+keine Liste bestätigter Fehler und wird nicht pauschal als Geräteabnahme behandelt.
 
 ### Abgleich mit den ursprünglichen Wünschen
 
 | Wunsch / Restpunkt                                              | Einordnung und nächste Aktion                                                                                                                                                                                                                                               |
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Termine bei Dienstkürzeln nicht auf einen Buchstaben reduzieren | Im aktuellen `prototype-entry-content.tsx` wird der Termintitel unabhängig vom Dienstmodus ausgegeben. Einzeiliges Abschneiden bei Platzmangel bleibt normal. Keine erneute Implementierung eingeplant.                                                                     |
-| Harte Vibrationen appweit vermeiden                             | 9C belegt Kalender-Haptik, nicht jede Aktion der App. Nur verbleibende störende Aktionen benennen und gezielt prüfen; keine pauschale globale Änderung.                                                                                                                     |
-| Einheitliche Popup-Köpfe in Hell/Dunkel                         | Frühere Rückmeldung: nach erneutem Öffnen korrekt. Kein aktuell reproduzierter Fehler dokumentiert. Wechsel bei bereits offenem Sheet in der kurzen Abschlussprüfung berücksichtigen.                                                                                       |
+| Termine bei Dienstkürzeln nicht auf einen Buchstaben reduzieren | Der damalige Codeabgleich zu `prototype-entry-content.tsx` belegte Termintitel unabhängig vom Dienstmodus. Keine neue Abweichung in dieser Aufgabenfolge gemeldet; keine erneute Implementierung eingeplant.                                                                |
+| Harte Vibrationen appweit vermeiden                             | Kalender-Haptik in 9C und gezielte Löschhaptik in PR #73 bearbeitet. Nur noch konkret störende Aktionen benennen; keine pauschale globale Nachbesserung oder Abnahme behaupten.                                                                                             |
+| Einheitliche Popup-Köpfe in Hell/Dunkel                         | Gezielte Dialogthemen-Korrektur in PR #73 integriert, gemeinsame Farbrollen in UX-01 ergänzt. Eine umfassende Geräteprüfung aller bereits geöffneten Dialoge beim Farbschemawechsel bleibt davon getrennt.                                                                  |
 | TVöD-Prüfungen separat auswählbar                               | 9G dokumentiert einen Planungsschalter, keinen eigenständigen Tarifprüfungs-Schalter. Zulagenansicht aus 9H nicht damit gleichsetzen. Offen ist die Produktabgrenzung: Welche zusätzlichen Hinweise sollen optional sein? Keine neue Regelberechnung ohne konkreten Bedarf. |
 | 9H-D manuelle Priorität und Lesbarkeit                          | Lokal automatisiert geprüft; gezielte ergänzende Geräteprüfung möglich, ohne bereits bestätigte Neustart-/Jahres-/Dienständerungstests zu wiederholen.                                                                                                                      |
 
 Diese Liste enthält Prüflücken und eine offene Produktfrage, nicht fünf
 bestätigte App-Fehler. Daraus entstehen keine automatischen Reparaturpakete.
 
-### Kurze gemeinsame Abschlussprüfung auf bestehender OTA
+### Optionale, noch nicht vollständig belegte Restprüfungen
 
 1. **Darstellung:** Dienstmodus kurz auf Kürzel/Symbol stellen; ein Termin bleibt
    als Titel erkennbar. Gehalt/Schichtzulage und einen Mehr-Dialog in Hell/Dunkel
@@ -90,7 +129,7 @@ Fehler: Aktion, Monat, Farbschema und erwartetes Verhalten festhalten; Video
 nur bei bewegtem Fehlverhalten. Eine Rückmeldung sammeln, erst danach bündeln.
 Keine vorsorgliche OTA und keine weitere Kleinstkorrektur ohne Befund.
 
-### Abschlusskriterien für 9I
+### Historische Abschlusskriterien für 9I
 
 - Ein zentraler Roadmap-Verweis; alte Statusnotizen eindeutig als Historie markiert.
 - Abnahmen, technische Integration, offene Prüfungen und Produktfragen getrennt.
@@ -99,8 +138,10 @@ Keine vorsorgliche OTA und keine weitere Kleinstkorrektur ohne Befund.
 - Danach bleibt die aktuelle UI-/Logik-Runde geschlossen, soweit kein konkreter
   Restfehler oder eine ausdrücklich priorisierte neue Anforderung hinzukommt.
 
-Lokales Prüfergebnis 9I: Markdown-Verweise gültig und `verify:fast` erfolgreich.
-App-Code und unabhängige `.gitignore` unverändert. Kein Commit oder Upload.
+Damals dokumentiertes lokales Prüfergebnis: Markdown-Verweise gültig und
+`verify:fast` erfolgreich; App-Code und unabhängige `.gitignore` unverändert.
+Die anschließende Git-Integration ist durch PR #72 belegt. Das ersetzt keine
+nachträgliche Bestätigung der oben genannten optionalen Geräteprüfungen.
 
 ## Bewusst nicht als nächstes Umsetzungspaket eingeplant
 
@@ -117,10 +158,18 @@ App-Code und unabhängige `.gitignore` unverändert. Kein Commit oder Upload.
 
 ## Priorität und weiterer Ablauf
 
-1. 9I-Dokumentation bestätigen und bei Bedarf separat ins Repository übernehmen.
-2. Nur die kurzen Restprüfungen beziehungsweise die Tarif-Schalter-Produktfrage klären.
-3. Erst bei konkretem Befund ein kleines Folgepaket mit Ziel, Nicht-Zielen,
-   Dateiscope und Abnahme festlegen. Ansonsten nächste Nutzerpriorität abwarten.
+1. **Diese Statusaktualisierung abschließen:** ausschließlich `docs/roadmap.md`
+   auf Branch `codex/roadmap-status-september`. Akzeptanz: PRs und Abnahmen korrekt
+   zugeordnet, historische Freigaben nicht als aktuelle Aufträge dargestellt,
+   Links und Markdown geprüft, `verify:fast` bestanden. Lokale Bearbeitung,
+   Commit, Push und PR sind freigegeben; der Merge benötigt noch eine eigene Freigabe.
+2. **Kein neues UX-Reparaturpaket ohne Befund:** UX-01 bis UX-03A sind abgeschlossen.
+   Bei Bedarf nur die verbleibenden kurzen Geräteprüfungen bündeln; bereits
+   bestätigte Lösch-, Speicher- und Farbprüfungen nicht unnötig wiederholen.
+3. **Nächste Produktentscheidung ausdrücklich wählen:** offene Tarif-Schalter-
+   Abgrenzung oder eine neue Nutzerpriorität. Erst danach ein begrenztes Paket
+   mit Ziel, Nicht-Zielen, Dateiscope und Abnahme definieren. Die zurückgestellten
+   Themen oben bleiben ohne neue Freigabe zurückgestellt.
 
 Kein verbindliches „9J“ erfunden. Für künftige reine Status-/Dokumentationspflege
 genügt ein kleiner, gezielter Arbeitslauf; aufwendige Fach- oder Performanceanalyse
