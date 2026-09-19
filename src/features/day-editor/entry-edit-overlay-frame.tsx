@@ -77,6 +77,7 @@ export function EntryEditOverlayFrame({
   const exitAnimationFinishedRef = useRef(false);
   const saveSucceededRef = useRef<boolean | null>(null);
   const [gestureCloseRequest, setGestureCloseRequest] = useState(0);
+  const handledGestureCloseRequest = useRef(0);
 
   const finishDismissIfReady = useCallback(() => {
     if (!exitAnimationFinishedRef.current || saveSucceededRef.current !== true) return;
@@ -157,7 +158,9 @@ export function EntryEditOverlayFrame({
     setGestureCloseRequest((current) => current + 1);
   }, []);
   useEffect(() => {
-    if (gestureCloseRequest === 0) return;
+    if (gestureCloseRequest === handledGestureCloseRequest.current) return;
+    // Consume the gesture before saving: reopening after failure must not replay it.
+    handledGestureCloseRequest.current = gestureCloseRequest;
     requestClose();
   }, [gestureCloseRequest, requestClose]);
 

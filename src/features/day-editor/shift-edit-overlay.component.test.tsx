@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import * as Notifications from "expo-notifications";
 import { Linking } from "react-native";
@@ -271,6 +271,47 @@ describe("ShiftEditOverlay", () => {
     await waitFor(() => expect(onRequestClose).toHaveBeenCalledTimes(1));
     expect(onDismiss).not.toHaveBeenCalled();
   });
+
+  it.each(["false", "rejection"])(
+    "does not retry a failed gesture save (%s) without user action",
+    async (failure) => {
+      let finishSave!: (value: boolean) => void;
+      let rejectSave!: (reason: Error) => void;
+      const onRequestClose = jest.fn(
+        () =>
+          new Promise<boolean>((resolve, reject) => {
+            finishSave = resolve;
+            rejectSave = reject;
+          }),
+      );
+      const { screen, props } = await renderOverlay({ onRequestClose, note: "Meine Notiz" });
+      const drag = () =>
+        fireGestureHandler(getByGestureTestId("shift-edit-dismiss-gesture"), [
+          { state: State.BEGAN, translationY: 0, velocityY: 0 },
+          { state: State.ACTIVE, translationY: 104, velocityY: 280 },
+          { state: State.END, translationY: 104, velocityY: 280 },
+        ]);
+      await act(async () => {
+        drag();
+      });
+      expect(onRequestClose).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        if (failure === "false") finishSave(false);
+        else rejectSave(new Error("Speichern fehlgeschlagen"));
+      });
+      expect(onRequestClose).toHaveBeenCalledTimes(1);
+      expect(props.onDismiss).not.toHaveBeenCalled();
+      expect(screen.getByDisplayValue("Meine Notiz")).toBeTruthy();
+      await act(async () => {
+        drag();
+      });
+      expect(onRequestClose).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        finishSave(true);
+      });
+      await waitFor(() => expect(props.onDismiss).toHaveBeenCalledTimes(1));
+    },
+  );
 
   it("dismisses after a deliberate drag distance or downward fling", () => {
     expect(shouldDismissShiftEditOverlay(87, 899)).toBe(false);
