@@ -84,5 +84,7 @@ module.exports = {
     "^@expo/vector-icons/MaterialCommunityIcons$": "<rootDir>/src/testing/ionicons-mock.tsx",
     "^react-native-maps$": "<rootDir>/src/testing/react-native-maps-mock.tsx",
   },
-  testMatch: ["<rootDir>/src/**/*.component.test.tsx"],
+  // Keep the absolute Windows path out of the glob (e.g. an escaped .codex segment).
+  roots: ["<rootDir>/src"],
+  testMatch: ["**/*.component.test.tsx"],
 };
