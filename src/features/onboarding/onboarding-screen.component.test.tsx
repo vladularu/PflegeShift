@@ -76,6 +76,7 @@ describe("LUNA onboarding", () => {
     const screen = await render(onboarding(true));
     await salary(screen);
     await work(screen);
+    await select(screen, "100 % entsprechen", "40 h");
     const slider = screen.getByTestId("onboarding-percentage-slider");
     await fireEvent(slider, "layout", { nativeEvent: { layout: { width: 90 } } });
     await fireEvent(slider, "responderGrant", { nativeEvent: { locationX: 65, pageX: 65 } });
@@ -201,15 +202,43 @@ describe("LUNA onboarding", () => {
     }
     expect(mockUpdateProfile).not.toHaveBeenCalled();
   });
-  it("requires work hours and state without defaults and rejects scientific hours", async () => {
+  it.each([false, true])("starts with 38.5 hours at 100 percent (preview: %s)", async (preview) => {
+    const screen = await render(onboarding(preview));
+    await salary(screen);
+    await work(screen);
+    expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("38,5");
+    expect(screen.getByRole("button", { name: "100 % entsprechen: 38,5 h" })).toBeTruthy();
+    expect(screen.getByTestId("onboarding-percentage-value")).toHaveTextContent("100 %");
+    expect(screen.getByTestId("onboarding-percentage-slider")).toHaveProp("accessibilityValue", {
+      min: 10,
+      max: 100,
+      now: 100,
+      text: "100 %",
+    });
+    await select(screen, "Bundesland deines Arbeitsorts", "Berlin");
+    await press(screen, "Weiter");
+    expect(screen.getByText("38,5 h / Woche")).toBeTruthy();
+    await press(screen, "Ohne Konto starten");
+    if (preview) {
+      expect(mockUpdateProfile).not.toHaveBeenCalled();
+    } else {
+      await waitFor(() =>
+        expect(mockUpdateProfile).toHaveBeenCalledWith(
+          expect.objectContaining({ weeklyMinutes: 2310 }),
+        ),
+      );
+    }
+  });
+  it("requires a state and rejects cleared, scientific and out-of-range hours", async () => {
     const screen = await render(onboarding());
     await salary(screen);
     await work(screen);
-    expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("");
     await press(screen, "Weiter");
-    expect(screen.getAllByRole("alert")).toHaveLength(2);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Bitte wähle das Bundesland deines Arbeitsorts.",
+    );
     await select(screen, "Bundesland deines Arbeitsorts", "Berlin");
-    for (const value of ["1e1", "0,99", "80,01"]) {
+    for (const value of ["", "1e1", "0,99", "80,01"]) {
       await fireEvent.changeText(screen.getByTestId("onboarding-weekly-hours"), value);
       await press(screen, "Weiter");
       expect(screen.getByTestId("onboarding-weekly-hours")).toHaveProp("aria-invalid", true);
