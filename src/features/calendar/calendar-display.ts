@@ -14,11 +14,13 @@ interface CalendarEntryPreviewOptions {
 function calendarEntryRows(entry: CalendarEntry, detailedShifts: boolean): number {
   return detailedShifts &&
     entry.kind === "SHIFT" &&
-    !entry.allDay &&
-    entry.startTime !== null &&
-    entry.endTime !== null
+    (isAllDayShift(entry) || (entry.startTime !== null && entry.endTime !== null))
     ? 2
     : 1;
+}
+
+function isAllDayShift(entry: ShiftEntry): boolean {
+  return entry.allDay === true || (entry.startTime === null && entry.endTime === null);
 }
 
 export type CalendarDayPressAction = "OPEN_QUICK_ENTRY" | "STAMP" | "AWAIT_TOOL";
@@ -73,7 +75,10 @@ export function calendarShiftDetail(
     readonly timeZone: string;
   },
 ): string | null {
-  if (entry.allDay || entry.startTime === null || entry.endTime === null) return null;
+  if (isAllDayShift(entry)) {
+    return options.showShiftTimes || options.showShiftDuration ? "GT" : null;
+  }
+  if (entry.startTime === null || entry.endTime === null) return null;
   const parts: string[] = [];
   if (options.showShiftTimes) parts.push(entry.startTime);
   if (options.showShiftDuration) {

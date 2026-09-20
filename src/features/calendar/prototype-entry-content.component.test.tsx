@@ -83,7 +83,7 @@ describe("prototype real shift content", () => {
     expect(screen.queryByText("F")).toBeNull();
     expect(screen.getByText("7:30 h")).toBeTruthy();
   });
-  it("does not show a time row for all-day shifts", async () => {
+  it("shows GT instead of a time for all-day shifts", async () => {
     const screen = await render(
       <PrototypeEntryContent
         entry={{ ...shift, allDay: true, startTime: null, endTime: null }}
@@ -92,6 +92,7 @@ describe("prototype real shift content", () => {
       />,
     );
     expect(screen.getByText("Früh")).toBeTruthy();
+    expect(screen.getByText("GT")).toBeTruthy();
     expect(screen.queryByText(/07:00|7:30/)).toBeNull();
   });
 });

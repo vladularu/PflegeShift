@@ -23,6 +23,22 @@ const shift: CalendarEntry = {
   deletedAt: null,
 };
 describe("bounded prototype preview", () => {
+  it("reserves the GT detail row and overflow space for all-day shifts", () => {
+    const allDay = { ...shift, allDay: true, startTime: null, endTime: null };
+    expect(prototypeEntryPreview([allDay], 1, true)).toEqual({ entries: [], overflowCount: 1 });
+    expect(prototypeEntryPreview([allDay], 2, true)).toEqual({
+      entries: [allDay],
+      overflowCount: 0,
+    });
+    expect(prototypeEntryPreview([allDay, { ...allDay, id: "second" }], 3, true)).toEqual({
+      entries: [allDay],
+      overflowCount: 1,
+    });
+    expect(prototypeEntryPreview([allDay], 1, false)).toEqual({
+      entries: [allDay],
+      overflowCount: 0,
+    });
+  });
   it("shows a fitting two-line shift without reserving a needless overflow row", () => {
     expect(prototypeEntryPreview([shift], 2, true)).toEqual({ entries: [shift], overflowCount: 0 });
   });
