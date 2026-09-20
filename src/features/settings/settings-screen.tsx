@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState, type ComponentProps } from "react";
-import { Alert, Platform, View } from "react-native";
+import { Alert, Platform, View, useWindowDimensions } from "react-native";
 
 import { PRODUCT_NAME } from "@/brand";
 import {
@@ -37,6 +37,8 @@ import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
 export function SettingsScreen() {
   const palette = usePalette();
+  const { fontScale } = useWindowDimensions();
+  const subtitleBelow = fontScale >= 1.3;
   useThemeStatusBar();
   const db = useSQLiteContext();
   const { error, ready, reload } = usePflegeShiftStatus();
@@ -112,6 +114,7 @@ export function SettingsScreen() {
           <SectionHeader title="Profil & Berechnung" />
           <SurfaceCard>
             <RowButton
+              subtitleBelow={subtitleBelow}
               leading={<SettingsIcon name="time-outline" />}
               onPress={() => router.push(settingsEditorRoute("WORK"))}
               subtitle={workModelLabel}
@@ -119,6 +122,7 @@ export function SettingsScreen() {
             />
             <CardSeparator />
             <RowButton
+              subtitleBelow={subtitleBelow}
               leading={<SettingsIcon name="wallet-outline" />}
               onPress={() => router.push(settingsEditorRoute("TARIFF"))}
               subtitle={salaryLabel}
@@ -128,6 +132,7 @@ export function SettingsScreen() {
               <>
                 <CardSeparator />
                 <RowButton
+                  subtitleBelow={subtitleBelow}
                   leading={<SettingsIcon name="repeat-outline" />}
                   onPress={() => router.push(tariffAssessmentRoute(currentMonth(profile.timeZone)))}
                   subtitle={`${coverageLabel} · ${assignmentLabel}`}
@@ -137,6 +142,7 @@ export function SettingsScreen() {
             ) : null}
             <CardSeparator />
             <RowButton
+              subtitleBelow={subtitleBelow}
               leading={<SettingsIcon name="shield-checkmark-outline" />}
               onPress={() => router.push("/check-settings")}
               subtitle="Freiwillige Planungshinweise anzeigen"
@@ -149,6 +155,7 @@ export function SettingsScreen() {
           <SectionHeader title="Kalender" />
           <SurfaceCard>
             <RowButton
+              subtitleBelow={subtitleBelow}
               leading={<SettingsIcon name="calendar-outline" />}
               onPress={() => router.push("/calendar-view")}
               subtitle={calendarDisplayLabel}
@@ -157,12 +164,13 @@ export function SettingsScreen() {
           </SurfaceCard>
         </View>
 
-        <CalendarPerformanceControls />
+        <CalendarPerformanceControls subtitleBelow={subtitleBelow} />
         {DEV_TOOLS_AVAILABLE ? (
           <View style={{ gap: SPACING.sm }}>
             <SectionHeader title="Intern" />
             <SurfaceCard>
               <RowButton
+                subtitleBelow={subtitleBelow}
                 leading={<SettingsIcon name="sparkles-outline" />}
                 onPress={() => router.push({ pathname: "/onboarding", params: { preview: "1" } })}
                 subtitle="Ausprobieren, ohne deine Daten zu ändern"
@@ -172,6 +180,7 @@ export function SettingsScreen() {
                 <>
                   <CardSeparator />
                   <RowButton
+                    subtitleBelow={subtitleBelow}
                     leading={<SettingsIcon name="flask-outline" />}
                     onPress={() => router.push("/dev-tools")}
                     subtitle="Testdaten sicher erzeugen und zurücksetzen"
@@ -189,6 +198,7 @@ export function SettingsScreen() {
             {Platform.OS === "ios" ? (
               <>
                 <RowButton
+                  subtitleBelow={subtitleBelow}
                   leading={<SettingsIcon name="archive-outline" />}
                   onPress={() => router.push(localBackupRoute())}
                   subtitle="Backup-Datei erstellen und sicher ablegen"
@@ -198,6 +208,7 @@ export function SettingsScreen() {
               </>
             ) : null}
             <RowButton
+              subtitleBelow={subtitleBelow}
               leading={<SettingsIcon name="phone-portrait-outline" />}
               onPress={() => router.push(settingsInfoRoute("STORAGE"))}
               subtitle="SQLite · ausschließlich auf diesem Gerät"
@@ -205,6 +216,7 @@ export function SettingsScreen() {
             />
             <CardSeparator />
             <RowButton
+              subtitleBelow={subtitleBelow}
               leading={<SettingsIcon name="calculator-outline" />}
               onPress={() => router.push(settingsInfoRoute("CALCULATION"))}
               subtitle="Feiertage, Zuschläge und Arbeitszeit"
@@ -212,6 +224,7 @@ export function SettingsScreen() {
             />
             <CardSeparator />
             <RowButton
+              subtitleBelow={subtitleBelow}
               accessibilityHint={
                 DEV_TOOLS_AVAILABLE
                   ? "Fünf Sekunden gedrückt halten, um das interne Testlabor zu aktivieren."

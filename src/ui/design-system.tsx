@@ -153,6 +153,7 @@ export function RowButton({
   onLongPress,
   delayLongPress,
   accessibilityHint,
+  subtitleBelow = false,
 }: {
   readonly title: string;
   readonly subtitle?: string;
@@ -164,13 +165,14 @@ export function RowButton({
   readonly onLongPress?: () => void;
   readonly delayLongPress?: number;
   readonly accessibilityHint?: string;
+  readonly subtitleBelow?: boolean;
 }) {
   const palette = usePalette();
   const pressMotion = usePressMotion();
-  const content = (
+  const rowContent = (
     <>
       {leading}
-      <View style={{ flex: 1, gap: SPACING.xxs }}>
+      <View style={{ flex: 1, minWidth: 0, gap: SPACING.xxs }}>
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
@@ -181,7 +183,7 @@ export function RowButton({
         >
           {title}
         </Text>
-        {subtitle ? (
+        {subtitle && !subtitleBelow ? (
           <Text
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
             selectable
@@ -202,6 +204,24 @@ export function RowButton({
         ) : null)}
     </>
   );
+
+  const content =
+    subtitleBelow && subtitle ? (
+      <View style={{ flex: 1, minWidth: 0, gap: SPACING.sm }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.md }}>
+          {rowContent}
+        </View>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+        >
+          {subtitle}
+        </Text>
+      </View>
+    ) : (
+      rowContent
+    );
 
   if (!onPress && !onLongPress) {
     return (
