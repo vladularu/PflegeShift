@@ -24,7 +24,6 @@ const SINGLE_LINE_ALLOWLIST = new Set([
   "features/calendar/prototype-entry-content.tsx",
   "features/calendar/month-card.tsx",
   "features/calendar/year-overview.tsx",
-  "features/templates/shift-template-list.tsx",
   "ui/shift-symbol.tsx",
 ]);
 

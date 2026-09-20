@@ -87,14 +87,12 @@ export function ShiftTemplateListRow({
         <View style={styles.copy}>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            numberOfLines={1}
             style={[styles.title, { color: palette.text }]}
           >
             {title}
           </Text>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            numberOfLines={1}
             style={[styles.subtitle, { color: palette.textMuted }]}
           >
             {subtitle}
@@ -242,6 +240,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
   },
   addBadge: {
     width: 34,
@@ -251,6 +250,8 @@ const styles = StyleSheet.create({
     borderRadius: RADII.pill,
   },
   addText: {
+    minWidth: 0,
+    flex: 1,
     ...TYPOGRAPHY.body,
     fontWeight: "500",
   },
