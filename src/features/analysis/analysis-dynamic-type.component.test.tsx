@@ -127,33 +127,42 @@ describe("analysis Dynamic Type layout", () => {
     }
   });
 
-  it.each([0, 100])("lets the %s message badge grow and retains the toggle", async (count) => {
-    mockFontScale = 3.1;
-    const toggle = jest.fn();
-    const screen = await render(
-      <ExpandableHighlightCard
-        title="Prüfung"
-        value="Meldungen"
-        countBadge={count}
-        icon="warning-outline"
-        accent="#008000"
-        expanded={false}
-        onToggle={toggle}
-      >
-        <></>
-      </ExpandableHighlightCard>,
-    );
-    const badge = screen.getByText(String(count), { includeHiddenElements: true });
-    const style = StyleSheet.flatten(badge.parent?.props.style);
-    expect(style.minHeight).toBe(44);
-    expect(style.minWidth).toBe(44);
-    expect(style.height).toBeUndefined();
-    expect(style.width).toBeUndefined();
-    expect(badge.props.maxFontSizeMultiplier).toBe(0);
-    expect(screen.getByText("Meldungen").parent).toHaveStyle({ flexDirection: "column" });
-    await fireEvent.press(screen.getByRole("button", { name: `Prüfung, ${count} Meldungen` }));
-    expect(toggle).toHaveBeenCalledTimes(1);
-  });
+  it.each([
+    [0, 3.1],
+    [100, 3.1],
+    [0, 1],
+  ])(
+    "lets the %s message badge grow at scale %s and retains the toggle",
+    async (count, fontScale) => {
+      mockFontScale = fontScale;
+      const toggle = jest.fn();
+      const screen = await render(
+        <ExpandableHighlightCard
+          title="Prüfung"
+          value="Meldungen"
+          countBadge={count}
+          icon="warning-outline"
+          accent="#008000"
+          expanded={false}
+          onToggle={toggle}
+        >
+          <></>
+        </ExpandableHighlightCard>,
+      );
+      const badge = screen.getByText(String(count), { includeHiddenElements: true });
+      const style = StyleSheet.flatten(badge.parent?.props.style);
+      expect(style.minHeight).toBe(44);
+      expect(style.minWidth).toBe(44);
+      expect(style.height).toBeUndefined();
+      expect(style.width).toBeUndefined();
+      expect(badge.props.maxFontSizeMultiplier).toBe(0);
+      expect(screen.getByText("Meldungen").parent).toHaveStyle({
+        flexDirection: fontScale >= 1.3 ? "column" : "row",
+      });
+      await fireEvent.press(screen.getByRole("button", { name: `Prüfung, ${count} Meldungen` }));
+      expect(toggle).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("gives card titles a bounded full width and separates the clear-check message", async () => {
     mockFontScale = 3.1;
