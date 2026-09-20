@@ -1,4 +1,4 @@
-import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor, within } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import * as Notifications from "expo-notifications";
 import { Linking } from "react-native";
@@ -182,7 +182,13 @@ describe("ShiftEditOverlay", () => {
     expect(props.onShiftTypeChange).toHaveBeenCalledWith("NIGHT");
 
     await fireEvent.press(screen.getByRole("button", { name: "Ort: Station 3" }));
-    await fireEvent.press(screen.getByRole("button", { name: "Dienst löschen" }));
+    const deleteAction = screen.getByRole("button", { name: "Dienst löschen" });
+    expect(deleteAction).toHaveStyle({ minHeight: 44 });
+    expect(within(deleteAction).getByText("Dienst löschen")).toBeTruthy();
+    const notes = screen.getByLabelText("Notizen");
+    expect(notes).toHaveStyle({ minHeight: 88 });
+    expect(within(notes.parent!).queryByRole("button", { name: "Dienst löschen" })).toBeNull();
+    await fireEvent.press(deleteAction);
     expect(props.onLocationPress).toHaveBeenCalledTimes(1);
     expect(props.onDelete).toHaveBeenCalledTimes(1);
 

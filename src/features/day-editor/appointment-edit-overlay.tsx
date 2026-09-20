@@ -256,26 +256,29 @@ export function AppointmentEditOverlay({
                   {locationName ?? "Ort"}
                 </Text>
               </Pressable>
-              {onDelete ? (
-                <>
-                  <View style={[styles.locationDivider, { backgroundColor: palette.separator }]} />
-                  <Pressable
-                    accessibilityLabel="Termin löschen"
-                    accessibilityRole="button"
-                    hitSlop={8}
-                    onPress={onDelete}
-                    style={({ pressed }) => [
-                      styles.deleteButton,
-                      { backgroundColor: pressed ? `${palette.danger}18` : "transparent" },
-                    ]}
-                  >
-                    <Ionicons color={palette.text} name="trash-outline" size={23} />
-                  </Pressable>
-                </>
-              ) : null}
             </View>
           </View>
           {location ? <LocationPreview location={location} /> : null}
+          {onDelete ? (
+            <Pressable
+              accessibilityLabel="Termin löschen"
+              accessibilityRole="button"
+              disabled={busy}
+              onPress={onDelete}
+              style={({ pressed }) => [
+                styles.deleteButton,
+                { backgroundColor: pressed ? `${palette.danger}18` : "transparent" },
+              ]}
+            >
+              <Ionicons color={palette.danger} name="trash-outline" size={20} />
+              <Text
+                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                style={[styles.deleteLabel, { color: palette.danger }]}
+              >
+                Termin löschen
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       }
       date={date}
@@ -350,7 +353,7 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
   },
   noteInput: {
-    minHeight: 50,
+    minHeight: 88,
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
     paddingVertical: 11,
@@ -360,6 +363,15 @@ const styles = StyleSheet.create({
   locationActionsRow: { flexDirection: "row", alignItems: "stretch" },
   locationRow: { minHeight: 44, flex: 1, justifyContent: "center", paddingHorizontal: 12 },
   locationText: { fontSize: 15 },
-  locationDivider: { width: StyleSheet.hairlineWidth, marginVertical: 7 },
-  deleteButton: { width: 48, alignItems: "center", justifyContent: "center" },
+  deleteButton: {
+    minHeight: 44,
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+    padding: 10,
+    borderRadius: 12,
+  },
+  deleteLabel: { fontSize: 15, fontWeight: "500" },
 });

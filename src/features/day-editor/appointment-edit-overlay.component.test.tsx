@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native";
+import { fireEvent, render, within } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -125,7 +125,13 @@ describe("AppointmentEditOverlay", () => {
 
     await fireEvent.press(screen.getByRole("button", { name: "Ort: Nicht festgelegt" }));
     expect(props.onLocationPress).toHaveBeenCalledTimes(1);
-    await fireEvent.press(screen.getByRole("button", { name: "Termin löschen" }));
+    const deleteAction = screen.getByRole("button", { name: "Termin löschen" });
+    expect(deleteAction).toHaveStyle({ minHeight: 44 });
+    expect(within(deleteAction).getByText("Termin löschen")).toBeTruthy();
+    const notes = screen.getByLabelText("Notizen");
+    expect(notes).toHaveStyle({ minHeight: 88 });
+    expect(within(notes.parent!).queryByRole("button", { name: "Termin löschen" })).toBeNull();
+    await fireEvent.press(deleteAction);
     expect(props.onDelete).toHaveBeenCalledTimes(1);
     await fireEvent.press(screen.getByRole("button", { name: "Schließen und speichern" }));
     expect(props.onRequestClose).toHaveBeenCalledTimes(1);
