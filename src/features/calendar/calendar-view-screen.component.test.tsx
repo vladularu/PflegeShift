@@ -120,7 +120,7 @@ describe("CalendarViewScreen", () => {
     expect(screen.queryByText(/Bestimme, wie Dienste/)).toBeNull();
     expect(screen.getByText("Kalenderinhalte")).toBeTruthy();
     expect(screen.getByText("Dienstanzeige")).toBeTruthy();
-    expect(screen.queryByText("GT")).toBeNull();
+    expect(screen.getByText("GT")).toBeTruthy();
   });
 
   it("hides preview shifts when services are disabled", async () => {

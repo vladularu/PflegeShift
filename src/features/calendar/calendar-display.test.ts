@@ -67,6 +67,38 @@ describe("calendar display helpers", () => {
 });
 
 describe("calendar shift details", () => {
+  it.each(["VACATION", "FREE", "SICK", "CUSTOM"])(
+    "marks all-day %s without calculating hours",
+    (type) => {
+      for (const flags of [
+        [true, false],
+        [false, true],
+        [true, true],
+        [false, false],
+      ]) {
+        const [showShiftTimes, showShiftDuration] = flags;
+        for (const allDay of [true, undefined]) {
+          expect(
+            calendarShiftDetail({ type, allDay, startTime: null, endTime: null } as never, {
+              showShiftTimes,
+              showShiftDuration,
+              timeZone: "Europe/Berlin",
+            }),
+          ).toBe(showShiftTimes || showShiftDuration ? "GT" : null);
+        }
+      }
+    },
+  );
+
+  it("does not label a partially missing time as all-day", () => {
+    expect(
+      calendarShiftDetail({ startTime: "06:00", endTime: null } as never, {
+        showShiftTimes: true,
+        showShiftDuration: true,
+        timeZone: "Europe/Berlin",
+      }),
+    ).toBeNull();
+  });
   const shift = {
     date: "2026-08-01",
     startTime: "06:00",
