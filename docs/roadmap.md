@@ -1,6 +1,6 @@
 # LUNA Shift – Roadmap und Abschlussstand
 
-Stand: 20.09.2026 (Europe/Berlin). Konsolidierte Basis: `45a12d5` (PR #80).
+Stand: 20.09.2026 (Europe/Berlin). Konsolidierte Basis: `4f61b77` (PR #88).
 Diese Datei ist der zentrale Statusindex. Paketdokumente enthalten historische
 Implementierungs- und Prüfnotizen; dortiges „offen“ oder „noch nicht freigegeben“
 ist ohne Datum kein aktueller Auftrag. Git-Merges belegen Integration,
@@ -57,7 +57,34 @@ Die folgenden Zeilen ersetzen keine eigenständige Geräte- oder Store-Abnahme.
 | UX-03A                     | Eigener Löschvorgang bleibt bis zum Abschluss stabil; keine falsche Meldung „Eintrag nicht verfügbar“ und keine doppelte Lösch-/Speicheraktion | [PR #79](https://github.com/vladularu/PflegeShift/pull/79), `254828c`; Preview-Gerätetest vom Nutzer bestätigt                                      |
 | Windows-Testlauf           | Jest findet Komponententests ohne Sonderparameter, Suchbereich auf `src` begrenzt; Regressionstest ergänzt                                     | [PR #80](https://github.com/vladularu/PflegeShift/pull/80), `45a12d5`; keine App-Änderung und keine OTA nötig                                       |
 
-### Aktueller verifizierter Abschlussstand
+### Aktueller verifizierter Abschlussstand nach PR #88
+
+- PR #81: vorheriger Roadmap-Abschluss integriert (`29a3024`); kein offener Merge-Auftrag.
+- PR #82: Arbeitszeitstandard 38,5 Stunden bei 100 Prozent (`958bbc5`).
+- PR #83: aktuelle Kalendervorschau und GT bei ganztägigen Diensten (`f06456a`).
+- PR #84: Tastatur-/Editorlayout und getrennte Löschaktionen (`7f9bf94`).
+- PR #85: große Schrift in der Dienstliste (`541efc8`).
+- PR #86: Mehr-Header folgen dem Farbschema (`f6fd36a`), Nutzer: „ja funktioniert“.
+- PR #87: Mehr-Beschreibungen bei großer Schrift (`babcca7`), Nutzer: „abnahme erfolgreich“.
+- PR #88: Auswertung bei großer Schrift einschließlich kompakter Dienstzeilen
+  (`4f61b77`), Nutzer: „Ja passt“ nach dem letzten Preview-OTA.
+- Zuletzt abgenommene Preview-Gruppe: `b9c1c4a4-0b36-423f-868c-f317dcdf49b6`,
+  iOS Build 31, Runtime `eac302484061dfb3fa63e2a74b8618ff6000861c`.
+- PR #88: sieben CI-Prüfungen grün. Letzter Pakettest: 738 Unit-Tests,
+  410 Komponententests und unveränderte Coverage-Grenzwerte bestanden.
+- Abnahmen beziehen sich auf die beschriebenen Zustände auf dem iPhone 14 Pro Max,
+  nicht pauschal auf jede Ansicht, VoiceOver, kleinere Geräte oder Android.
+- TestFlight Build 3 ist am 20.09.2026 live bestätigt: VALID, intern und extern
+  IN_BETA_TESTING, nicht abgelaufen. Production-Kanal zeigt auf Branch production,
+  bisher ohne Update-Gruppen. Preview-Abnahmen sind keine TestFlight-Abnahme.
+- Lieferkandidat und verbleibende Freigaben: [TestFlight-Lieferkandidat](testflight-candidate-2026-09-20.md).
+- Lokales Release-Gate nach freigegebener Testaufteilung grün: verify:full vollständig
+  bestanden, 741 Unit-Tests, 410 Komponententests, beide Coverage-Läufe, Audit,
+  Release-Konfiguration und Plattform-Exporte. Der bisherige Jahres-Cache-Sammeltest
+  ist in vier isolierte Szenarien geteilt; Assertions und Grenzwerte unverändert.
+  Diese Test-/Dokumentationsänderungen sind noch nicht integriert oder veröffentlicht.
+
+### Historischer verifizierter Abschlussstand nach PR #80
 
 - UX-01, UX-02 und UX-03A sind integriert und im jeweils beschriebenen Umfang
   durch Nutzerrückmeldung auf der Preview-App abgenommen. Zu UX-03A lautete
@@ -158,12 +185,12 @@ nachträgliche Bestätigung der oben genannten optionalen Geräteprüfungen.
 
 ## Priorität und weiterer Ablauf
 
-1. **Diese Statusaktualisierung abschließen:** ausschließlich `docs/roadmap.md`
-   auf Branch `codex/roadmap-status-september`. Akzeptanz: PRs und Abnahmen korrekt
-   zugeordnet, historische Freigaben nicht als aktuelle Aufträge dargestellt,
-   Links und Markdown geprüft, `verify:fast` bestanden. Lokale Bearbeitung,
-   Commit, Push und PR sind freigegeben; der Merge benötigt noch eine eigene Freigabe.
-2. **Kein neues UX-Reparaturpaket ohne Befund:** UX-01 bis UX-03A sind abgeschlossen.
+1. **TestFlight-Lieferkandidat vorbereiten:** isolierter Checkout von `4f61b77`,
+   eigene Lockfile-Abhängigkeiten, vollständige lokale Prüfungen und Runtime-Abgleich.
+   Nur Roadmap und Lieferprotokoll ändern. Kein Commit, Push, PR, Merge, EAS-Build,
+   OTA oder Submit durch diese Vorbereitung freigegeben. Die frühere
+   Roadmap-Integration ist mit PR #81 bereits abgeschlossen.
+2. **Kein neues UX-Reparaturpaket ohne Befund:** die Runde bis PR #88 ist integriert.
    Bei Bedarf nur die verbleibenden kurzen Geräteprüfungen bündeln; bereits
    bestätigte Lösch-, Speicher- und Farbprüfungen nicht unnötig wiederholen.
 3. **Nächste Produktentscheidung ausdrücklich wählen:** offene Tarif-Schalter-
