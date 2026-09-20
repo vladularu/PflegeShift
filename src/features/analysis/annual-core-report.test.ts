@@ -100,6 +100,36 @@ function build(ruleResolver: ReturnType<typeof resolver>, activeProfile: UserPro
   }
 }
 
+function cacheScenario() {
+  const rules = resolver({});
+  const cache = createAnnualAvailableReportCache();
+  const initial = [shift("january", "2027-01-03"), shift("may", "2027-05-02")];
+  const changed = [initial[0]!, { ...initial[1]!, endTime: "18:00" }];
+  const run = (
+    entries: readonly CalendarEntry[],
+    reuse = true,
+    date = "2027-06-01",
+    activeProfile = profile,
+    activeRules = rules,
+  ) => {
+    const steps = buildAnnualAvailableReportSteps(
+      2027,
+      entries,
+      activeProfile,
+      [],
+      { workplaceCoverage: "UNKNOWN", assignment: "UNKNOWN", updatedAt: null },
+      date,
+      activeRules,
+      reuse ? { cache } : {},
+    );
+    for (;;) {
+      const next = steps.next();
+      if (next.done) return next.value;
+    }
+  };
+  return { rules, cache, initial, changed, run };
+}
+
 describe("available annual report", () => {
   it("retains category and informational counts for every fully calculated month", () => {
     const report = build(resolver({}));
@@ -138,32 +168,8 @@ describe("available annual report", () => {
     expect(() => steps.next()).toThrow("not yet");
   });
 
-  it("recomputes dependency windows after same-revision edits, additions and deletions", () => {
-    const rules = resolver({});
-    const cache = createAnnualAvailableReportCache();
-    const run = (
-      entries: readonly CalendarEntry[],
-      reuse = true,
-      date = "2027-06-01",
-      activeProfile = profile,
-      activeRules = rules,
-    ) => {
-      const steps = buildAnnualAvailableReportSteps(
-        2027,
-        entries,
-        activeProfile,
-        [],
-        { workplaceCoverage: "UNKNOWN", assignment: "UNKNOWN", updatedAt: null },
-        date,
-        activeRules,
-        reuse ? { cache } : {},
-      );
-      for (;;) {
-        const next = steps.next();
-        if (next.done) return next.value;
-      }
-    };
-    const initial = [shift("january", "2027-01-03"), shift("may", "2027-05-02")];
+  it("reuses unchanged entries and invalidates dependency windows after same-revision edits", () => {
+    const { rules, cache, initial, changed, run } = cacheScenario();
     const expected = run(initial);
     const january = { ...cache.get(rules)!.get("2027-01")! };
     const may = { ...cache.get(rules)!.get("2027-05")! };
@@ -171,19 +177,29 @@ describe("available annual report", () => {
     const fresh = JSON.parse(JSON.stringify(initial)) as CalendarEntry[];
     expect(run(fresh)).toEqual(expected);
     expect(cache.get(rules)!.get("2027-01")!.compliance!.value).toBe(january.compliance!.value);
-    const changed = [initial[0]!, { ...initial[1]!, endTime: "18:00" }];
     expect(run(changed)).toEqual(run(changed, false));
     expect(cache.get(rules)!.get("2027-01")!.summary!.value).toBe(january.summary!.value);
     expect(cache.get(rules)!.get("2027-05")!.summary!.value).not.toBe(may.summary!.value);
     // Legal annual coverage crosses month boundaries; December pay does not depend on May.
     expect(cache.get(rules)!.get("2027-01")!.compliance!.value).not.toBe(january.compliance!.value);
     expect(cache.get(rules)!.get("2027-12")!.pay!.value).toBe(december.pay!.value);
+  });
+
+  it("recomputes cached reports through additions, deletions and year-boundary changes", () => {
+    const { initial, changed, run } = cacheScenario();
+    run(initial);
+    run(changed);
     for (const entries of [
       [...changed, shift("new", "2027-06-01")],
       [changed[0]!, { ...changed[1]!, deletedAt: "2027-06-01T00:00:00Z" }],
       [...initial, shift("boundary", "2026-12-31")],
     ])
       expect(run(entries)).toEqual(run(entries, false));
+  });
+
+  it("recomputes cached reports when date and profile change", () => {
+    const { initial, run } = cacheScenario();
+    run(initial);
     for (const activeProfile of [
       { ...profile, weeklyMinutes: 1800 },
       { ...profile, timeZone: "UTC" },
@@ -192,6 +208,11 @@ describe("available annual report", () => {
         run(initial, false, "2027-07-01", activeProfile),
       );
     }
+  });
+
+  it("does not reuse a complete-rule report when holiday coverage changes", () => {
+    const { initial, run } = cacheScenario();
+    run(initial);
     const missing = resolver({ holiday: false });
     expect(run(initial, true, "2027-07-01", profile, missing)).toEqual(
       run(initial, false, "2027-07-01", profile, missing),
