@@ -1,13 +1,17 @@
 /* eslint-disable react-hooks/immutability -- Reanimated SharedValue.value is intentionally mutable on the UI thread. */
 import type { ReactNode } from "react";
+import type { KeyboardEvent } from "react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from "react-native";
@@ -33,6 +37,9 @@ import {
 import { MOTION } from "@/theme/motion";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
+
+// Leave room below the focused field, with matching scrollable space at the end.
+const FOCUSED_FIELD_CLEARANCE = 72;
 
 export function EntryEditOverlayFrame({
   busy,
@@ -70,6 +77,44 @@ export function EntryEditOverlayFrame({
   const { height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const [closing, setClosing] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
+  const fieldsRef = useRef<ScrollView>(null);
+  const toolbarHeight = useRef(44);
+  const revealFocusedField = useCallback(() => {
+    const input = TextInput.State.currentlyFocusedInput();
+    if (input && keyboardVisible) {
+      fieldsRef.current?.scrollResponderScrollNativeHandleToKeyboard(
+        input,
+        toolbarHeight.current + FOCUSED_FIELD_CLEARANCE,
+        true,
+      );
+    }
+  }, [keyboardVisible]);
+  useEffect(() => {
+    // Recheck after native keyboard geometry has settled; onLayout can run earlier.
+    const shown = Keyboard.addListener("keyboardDidShow", revealFocusedField);
+    return () => shown.remove();
+  }, [revealFocusedField]);
+  useEffect(() => {
+    const updateKeyboardVisibility = (visible: boolean, event: KeyboardEvent) => {
+      // Change toolbar height in the same layout animation as the iOS keyboard.
+      // Waiting for didHide leaves a second, unanimated jump after it has closed.
+      if (Platform.OS === "ios" && !reduceMotion) Keyboard.scheduleLayoutAnimation(event);
+      setKeyboardVisible(visible);
+    };
+    const show = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (event) => updateKeyboardVisibility(true, event),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      (event) => updateKeyboardVisibility(false, event),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, [reduceMotion]);
   const closedOffset = height + Math.max(insets.bottom, 24);
   const sheetTranslateY = useSharedValue(0);
   const backdropProgress = useSharedValue(1);
@@ -234,18 +279,20 @@ export function EntryEditOverlayFrame({
         onPress={onBackdropPress}
         style={StyleSheet.absoluteFill}
       />
-      <KeyboardAvoidingView behavior="padding" style={styles.keyboardLayer}>
-        <ScrollView
-          automaticallyAdjustKeyboardInsets
-          contentContainerStyle={[
+      <KeyboardAvoidingView
+        behavior="padding"
+        style={styles.keyboardLayer}
+        testID={`${testIDPrefix}-keyboard-layer`}
+      >
+        <View
+          testID={`${testIDPrefix}-safe-viewport`}
+          style={[
             styles.scrollContent,
             {
               paddingTop: Math.max(insets.top, 16),
-              paddingBottom: Math.max(insets.bottom, 12),
+              paddingBottom: keyboardVisible ? 0 : Math.max(insets.bottom, 12),
             },
           ]}
-          keyboardDismissMode="interactive"
-          keyboardShouldPersistTaps="handled"
         >
           <Animated.View
             entering={SlideInDown.duration(MOTION.duration.deliberate)
@@ -262,6 +309,7 @@ export function EntryEditOverlayFrame({
               <View
                 style={[
                   styles.card,
+                  keyboardVisible && styles.keyboardDockedCard,
                   {
                     backgroundColor: palette.surface,
                     borderColor: palette.border,
@@ -294,7 +342,51 @@ export function EntryEditOverlayFrame({
                     </Text>
                   </Animated.View>
                 </GestureDetector>
-                {cardContent}
+                <ScrollView
+                  ref={fieldsRef}
+                  testID={`${testIDPrefix}-fields`}
+                  style={styles.fields}
+                  contentContainerStyle={keyboardVisible ? styles.typingContent : undefined}
+                  automaticallyAdjustKeyboardInsets={false}
+                  contentInsetAdjustmentBehavior="never"
+                  keyboardDismissMode="interactive"
+                  keyboardShouldPersistTaps="handled"
+                  onFocus={revealFocusedField}
+                  onLayout={revealFocusedField}
+                >
+                  {cardContent}
+                </ScrollView>
+                {keyboardVisible && !closing ? (
+                  <View
+                    testID={`${testIDPrefix}-keyboard-toolbar`}
+                    onLayout={(event) => {
+                      toolbarHeight.current = event.nativeEvent.layout.height;
+                      revealFocusedField();
+                    }}
+                    style={[
+                      styles.keyboardToolbar,
+                      { backgroundColor: palette.surface, borderColor: palette.border },
+                    ]}
+                  >
+                    <Pressable
+                      accessibilityLabel="Fertig, Tastatur schließen"
+                      accessibilityHint="Schließt nur die Tastatur. Der Eintrag bleibt geöffnet."
+                      accessibilityRole="button"
+                      onPress={() => Keyboard.dismiss()}
+                      style={({ pressed }) => [
+                        styles.keyboardDone,
+                        { opacity: pressed ? 0.72 : 1 },
+                      ]}
+                    >
+                      <Text
+                        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                        style={[styles.closeLabel, { color: palette.primary }]}
+                      >
+                        Fertig
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null}
               </View>
 
               {error ? (
@@ -303,34 +395,36 @@ export function EntryEditOverlayFrame({
                 </View>
               ) : null}
 
-              <Pressable
-                accessibilityLabel="Schließen und speichern"
-                accessibilityRole="button"
-                disabled={busy || closing}
-                onPress={requestClose}
-                style={({ pressed }) => [
-                  styles.closeButton,
-                  {
-                    borderColor: palette.border,
-                    backgroundColor: palette.surface,
-                    opacity: busy || closing ? 0.55 : pressed ? 0.72 : 1,
-                  },
-                ]}
-              >
-                {busy ? (
-                  <ActivityIndicator color={palette.text} size="small" />
-                ) : (
-                  <Text
-                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    style={[styles.closeLabel, { color: palette.text }]}
-                  >
-                    Schließen
-                  </Text>
-                )}
-              </Pressable>
+              {!keyboardVisible ? (
+                <Pressable
+                  accessibilityLabel="Schließen und speichern"
+                  accessibilityRole="button"
+                  disabled={busy || closing}
+                  onPress={requestClose}
+                  style={({ pressed }) => [
+                    styles.closeButton,
+                    {
+                      borderColor: palette.border,
+                      backgroundColor: palette.surface,
+                      opacity: busy || closing ? 0.55 : pressed ? 0.72 : 1,
+                    },
+                  ]}
+                >
+                  {busy ? (
+                    <ActivityIndicator color={palette.text} size="small" />
+                  ) : (
+                    <Text
+                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                      style={[styles.closeLabel, { color: palette.text }]}
+                    >
+                      Schließen
+                    </Text>
+                  )}
+                </Pressable>
+              ) : null}
             </Animated.View>
           </Animated.View>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
       {overlay}
     </View>
@@ -340,14 +434,32 @@ export function EntryEditOverlayFrame({
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: "transparent" },
   keyboardLayer: { flex: 1 },
+  keyboardToolbar: {
+    flexShrink: 0,
+    alignItems: "flex-end",
+    paddingHorizontal: 20,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  keyboardDone: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
   scrollContent: {
-    flexGrow: 1,
+    flex: 1,
     justifyContent: "flex-end",
     paddingHorizontal: 20,
   },
-  shell: { width: "100%", maxWidth: 510, alignSelf: "center" },
-  sheetContent: { gap: 10 },
+  shell: { width: "100%", maxWidth: 510, alignSelf: "center", flexShrink: 1 },
+  sheetContent: { gap: 10, flexShrink: 1 },
+  fields: { flexGrow: 0, flexShrink: 1 },
+  typingContent: { paddingBottom: FOCUSED_FIELD_CLEARANCE },
+  keyboardDockedCard: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
   card: {
+    flexShrink: 1,
     position: "relative",
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
@@ -359,6 +471,7 @@ const styles = StyleSheet.create({
     elevation: 14,
   },
   header: {
+    flexShrink: 0,
     minHeight: 56,
     flexDirection: "row",
     alignItems: "center",
