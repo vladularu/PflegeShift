@@ -1,11 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { ComponentProps, ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { AnalysisCardDetails } from "@/features/analysis/analysis-card-details";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { AnalysisCountBadge } from "./analysis-count-badge";
 
 export function ExpandableHighlightCard({
   title,
@@ -29,6 +30,8 @@ export function ExpandableHighlightCard({
   readonly children: ReactNode;
 }) {
   const palette = usePalette();
+  const { fontScale } = useWindowDimensions();
+  const largeText = fontScale >= 1.3;
   const accessibleValue = countBadge === undefined ? value : `${countBadge} ${value}`;
   return (
     <View>
@@ -95,36 +98,21 @@ export function ExpandableHighlightCard({
                 {value}
               </Text>
             ) : (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.md }}>
-                <View
-                  accessibilityElementsHidden
-                  style={{
-                    width: 44,
-                    height: 44,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderWidth: 1,
-                    borderColor: `${accent}52`,
-                    borderRadius: RADII.pill,
-                    backgroundColor: `${accent}1F`,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: accent,
-                      ...TYPOGRAPHY.highlightCount,
-                      fontVariant: ["tabular-nums"],
-                    }}
-                  >
-                    {countBadge}
-                  </Text>
-                </View>
+              <View
+                style={{
+                  flexDirection: largeText ? "column" : "row",
+                  alignItems: largeText ? "flex-start" : "center",
+                  gap: SPACING.md,
+                }}
+              >
+                <AnalysisCountBadge count={countBadge} accent={accent} />
                 <Text
                   maxFontSizeMultiplier={TEXT_MAX_SCALE}
                   selectable
                   style={{
                     minWidth: 0,
-                    flex: 1,
+                    flex: largeText ? undefined : 1,
+                    alignSelf: largeText ? "stretch" : undefined,
                     color: palette.text,
                     ...TYPOGRAPHY.highlightCountLabel,
                   }}

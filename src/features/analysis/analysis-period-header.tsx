@@ -1,11 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, MINIMUM_TOUCH_TARGET, RADII, SPACING } from "@/theme/tokens";
 import { TabScreenHeader } from "@/ui/screen-layout";
+import { PeriodArrow } from "./analysis-period-arrow";
 
 export function formatMonthRangeLabel(month: string): string {
   const value = Temporal.PlainYearMonth.from(month);
@@ -102,6 +103,43 @@ function AnalysisPeriodHeader({
   readonly onToggle: () => void;
 }) {
   const palette = usePalette();
+  const { fontScale } = useWindowDimensions();
+  const largeText = fontScale >= 1.3;
+  const periodLabel = (
+    <View
+      style={{
+        minWidth: 0,
+        flex: largeText ? undefined : 1,
+        width: largeText ? "100%" : undefined,
+        gap: SPACING.xxs,
+      }}
+    >
+      <Text
+        accessibilityLiveRegion="polite"
+        dynamicTypeRamp="body"
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        selectable
+        style={{
+          color: palette.text,
+          textAlign: "center",
+          ...(secondaryLabel ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body),
+          fontVariant: ["tabular-nums"],
+        }}
+      >
+        {label}
+      </Text>
+      {secondaryLabel ? (
+        <Text
+          dynamicTypeRamp="caption1"
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.caption }}
+        >
+          {secondaryLabel}
+        </Text>
+      ) : null}
+    </View>
+  );
   return (
     <TabScreenHeader
       accessory={
@@ -133,41 +171,18 @@ function AnalysisPeriodHeader({
           style={{
             minHeight: MINIMUM_TOUCH_TARGET,
             flexDirection: "row",
+            flexWrap: largeText ? "wrap" : "nowrap",
             alignItems: "center",
             marginHorizontal: -SPACING.sm,
           }}
         >
+          {largeText ? periodLabel : null}
           <PeriodArrow
             accessibilityLabel={previousAccessibilityLabel}
             direction="back"
             onPress={onPrevious}
           />
-          <View style={{ minWidth: 0, flex: 1, alignItems: "center", gap: SPACING.xxs }}>
-            <Text
-              accessibilityLiveRegion="polite"
-              dynamicTypeRamp="body"
-              maxFontSizeMultiplier={TEXT_MAX_SCALE}
-              selectable
-              style={{
-                color: palette.text,
-                textAlign: "center",
-                ...(secondaryLabel ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body),
-                fontVariant: ["tabular-nums"],
-              }}
-            >
-              {label}
-            </Text>
-            {secondaryLabel ? (
-              <Text
-                dynamicTypeRamp="caption1"
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                selectable
-                style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.caption }}
-              >
-                {secondaryLabel}
-              </Text>
-            ) : null}
-          </View>
+          {largeText ? <View style={{ flex: 1 }} /> : periodLabel}
           <PeriodArrow
             accessibilityLabel={nextAccessibilityLabel}
             direction="forward"
@@ -176,41 +191,5 @@ function AnalysisPeriodHeader({
         </View>
       }
     />
-  );
-}
-
-function PeriodArrow({
-  accessibilityLabel,
-  direction,
-  onPress,
-}: {
-  readonly accessibilityLabel: string;
-  readonly direction: "back" | "forward";
-  readonly onPress: () => void;
-}) {
-  const palette = usePalette();
-  const previous = direction === "back";
-  return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      hitSlop={8}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        width: MINIMUM_TOUCH_TARGET,
-        height: MINIMUM_TOUCH_TARGET,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: RADII.control,
-        backgroundColor: pressed ? palette.primarySoft : "transparent",
-        opacity: pressed ? 0.72 : 1,
-      })}
-    >
-      <Ionicons
-        color={palette.textSecondary}
-        name={previous ? "chevron-back" : "chevron-forward"}
-        size={20}
-      />
-    </Pressable>
   );
 }

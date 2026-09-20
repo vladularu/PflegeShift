@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
 import { useMemo, useState, type ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import Animated, { FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
 import type {
   ComplianceIssue,
@@ -140,6 +140,7 @@ function ComplianceIssueList({
 }) {
   const palette = usePalette();
   const [expandedRule, setExpandedRule] = useState<string | null>(null);
+  const { fontScale } = useWindowDimensions();
   const groups = useMemo(() => groupComplianceIssues(compliance.issues), [compliance.issues]);
   const shiftsById = useMemo(() => new Map(shifts.map((shift) => [shift.id, shift])), [shifts]);
   if (compliance.issues.length === 0) {
@@ -150,7 +151,8 @@ function ComplianceIssueList({
           selectable
           style={{ color: palette.success, ...TYPOGRAPHY.sectionTitle }}
         >
-          {heading ?? "Arbeitszeitregeln"} · keine Auffälligkeiten
+          {heading ?? "Arbeitszeitregeln"}
+          {fontScale >= 1.3 ? "\n" : " · "}keine Auffälligkeiten
         </Text>
       </DetailContainer>
     );
