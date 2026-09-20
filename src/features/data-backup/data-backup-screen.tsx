@@ -130,7 +130,15 @@ export function DataBackupScreen() {
 
   return (
     <ScreenScrollView surface="groupedBackground">
-      <Stack.Screen options={{ title: "Datensicherung" }} />
+      <Stack.Screen
+        options={{
+          title: "Datensicherung",
+          headerStyle: { backgroundColor: palette.background },
+          headerTintColor: palette.text,
+          headerTitleStyle: { color: palette.text },
+          statusBarStyle: palette.dark ? "light" : "dark",
+        }}
+      />
 
       <View style={{ gap: SPACING.sm }}>
         <SectionHeader

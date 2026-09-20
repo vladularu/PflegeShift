@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
@@ -55,6 +55,24 @@ const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
 const CRITERION_ICON_SIZE = 28;
 
 export function TariffAssessmentScreen() {
+  const palette = usePalette();
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: "Schichtzulage",
+          headerStyle: { backgroundColor: palette.background },
+          headerTintColor: palette.text,
+          headerTitleStyle: { color: palette.text },
+          statusBarStyle: palette.dark ? "light" : "dark",
+        }}
+      />
+      <TariffAssessmentContent />
+    </>
+  );
+}
+
+function TariffAssessmentContent() {
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { error, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();

@@ -120,6 +120,7 @@ const mockActiveMonthCoordinator = {
 };
 
 jest.mock("expo-router", () => ({
+  Stack: { Screen: () => null },
   router: { back: jest.fn(), push: jest.fn() },
   useFocusEffect: (effect: () => void | (() => void)) =>
     MockReact.useEffect(() => (mockFocused ? effect() : undefined), [effect, mockFocused]),
