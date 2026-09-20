@@ -1,12 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { ScrollView, Text, View } from "react-native";
 
-import type { CalendarLabelMode } from "@/domain/types";
+import type { CalendarLabelMode, ShiftEntry } from "@/domain/types";
 import { useCalendarPreferences } from "@/features/calendar/calendar-preferences";
-import { calendarChipPalette, chipTextColor } from "@/theme/color-contrast";
+import { chipTextColor } from "@/theme/color-contrast";
 import { usePalette } from "@/theme/palette";
 import { APPOINTMENT_COLOR, HOLIDAY_COLOR, SHIFT_TYPE_COLORS } from "@/theme/shift-colors";
-import { COMPACT_TEXT_MAX_SCALE } from "@/theme/typography";
+import { CALENDAR_METRICS } from "@/theme/tokens";
 import {
   CardSeparator,
   InlineNotice,
@@ -17,158 +17,134 @@ import {
 } from "@/ui/design-system";
 import { PrimaryButton } from "@/ui/form-controls";
 import { LabeledSwitch } from "@/ui/labeled-switch";
-import { ShiftSymbol } from "@/ui/shift-symbol";
+import { PrototypeEntryContent } from "./prototype-entry-content";
+
+const PREVIEW_SHIFTS: readonly ShiftEntry[] = [
+  { title: "Früh", type: "EARLY", symbol: "rise", startTime: "06:00", endTime: "14:00" },
+  { title: "Spät", type: "LATE", symbol: "sun", startTime: "14:00", endTime: "22:00" },
+  { title: "Nacht", type: "NIGHT", symbol: "moon", startTime: "22:00", endTime: "06:00" },
+  { title: "Tag", type: "DAY", symbol: "home", startTime: "08:00", endTime: "16:00" },
+  { title: "Urlaub", type: "VACATION", symbol: "palm", startTime: null, endTime: null },
+].map((sample, index) => ({
+  ...sample,
+  type: sample.type as ShiftEntry["type"],
+  kind: "SHIFT",
+  id: `preview-${index}`,
+  date: `2026-07-${27 + index}`,
+  templateId: null,
+  color: SHIFT_TYPE_COLORS[sample.type as ShiftEntry["type"]],
+  allDay: sample.startTime === null,
+  breakMinutes: 0,
+  note: null,
+  overtimeMinutes: 0,
+  holidayPremiumMode: "WITH_TIME_OFF",
+  revision: 1,
+  createdAt: "2026-07-01T00:00:00Z",
+  updatedAt: "2026-07-01T00:00:00Z",
+  deletedAt: null,
+}));
 
 function CalendarDisplayPreview({
   labelMode,
   showShiftDuration,
   showShiftTimes,
+  showShifts,
 }: {
   readonly labelMode: CalendarLabelMode;
   readonly showShiftDuration: boolean;
   readonly showShiftTimes: boolean;
+  readonly showShifts: boolean;
 }) {
   const palette = usePalette();
-  const samples = [
-    {
-      day: "27",
-      title: "Früh",
-      symbol: "rise",
-      startTime: "06:00",
-      duration: "8:00 h",
-      color: SHIFT_TYPE_COLORS.EARLY,
-    },
-    {
-      day: "28",
-      title: "Spät",
-      symbol: "sun",
-      startTime: "14:00",
-      duration: "8:00 h",
-      color: SHIFT_TYPE_COLORS.LATE,
-    },
-    {
-      day: "29",
-      title: "Nacht",
-      symbol: "moon",
-      startTime: "22:00",
-      duration: "8:00 h",
-      color: SHIFT_TYPE_COLORS.NIGHT,
-    },
-    {
-      day: "30",
-      title: "Tag",
-      symbol: "home",
-      startTime: "08:00",
-      duration: "8:00 h",
-      color: SHIFT_TYPE_COLORS.DAY,
-    },
-    {
-      day: "31",
-      title: "Urlaub",
-      symbol: "palm",
-      startTime: null,
-      duration: null,
-      color: SHIFT_TYPE_COLORS.VACATION,
-    },
-  ];
-
   return (
     <View
-      accessible
       accessibilityLabel="Vorschau der Dienstanzeige"
-      style={{
-        height: 104,
-        flexDirection: "row",
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: palette.separator,
-        borderRadius: 18,
-        borderCurve: "continuous",
-        backgroundColor: palette.surface,
-      }}
+      testID="calendar-display-preview"
+      style={{ backgroundColor: palette.background, paddingVertical: 8 }}
     >
-      {samples.map((sample, index) => {
-        const colors = calendarChipPalette(sample.color, palette.dark);
-        const today = index === 1;
-        const detail =
-          sample.startTime === null
-            ? showShiftTimes || showShiftDuration
-              ? "GT"
-              : null
-            : [showShiftTimes ? sample.startTime : null, showShiftDuration ? sample.duration : null]
-                .filter((value): value is string => value !== null)
-                .join(" · ") || null;
-        return (
-          <View
-            key={sample.day}
+      <View style={{ flexDirection: "row" }}>
+        {["M", "D", "M", "D", "F", "S", "S"].map((weekday, index) => (
+          <Text
+            key={index}
             style={{
-              minWidth: 0,
               flex: 1,
-              alignItems: "stretch",
-              backgroundColor: today ? palette.calendarToday : "transparent",
-              paddingHorizontal: 2,
-              paddingTop: 7,
+              textAlign: "center",
+              color: palette.textMuted,
+              height: CALENDAR_METRICS.weekdayHeight,
+              fontSize: CALENDAR_METRICS.weekdayFontSize,
             }}
           >
-            <Text
-              maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
+            {weekday}
+          </Text>
+        ))}
+      </View>
+      <View
+        style={{
+          flexDirection: "row",
+          minHeight: 112,
+          borderTopWidth: 0.5,
+          borderBottomWidth: 0.5,
+          borderColor: palette.separator,
+        }}
+      >
+        {["27", "28", "29", "30", "31", "1", "2"].map((day, index) => {
+          const sample = PREVIEW_SHIFTS[index];
+          const isToday = index === 1;
+          return (
+            <View
+              key={index}
+              testID={`preview-day-${index}`}
               style={{
-                height: 28,
-                color: today ? palette.onCalendarToday : palette.textSecondary,
-                fontSize: 13,
-                fontWeight: "600",
-                textAlign: "center",
-                fontVariant: ["tabular-nums"],
+                flex: 1,
+                minWidth: 0,
+                paddingHorizontal: CALENDAR_METRICS.chipHorizontalInset,
               }}
             >
-              {sample.day}
-            </Text>
-            <View style={{ overflow: "hidden", borderRadius: 4 }}>
-              <View style={{ height: 19, justifyContent: "center", backgroundColor: colors.main }}>
-                {labelMode === "SYMBOL" ? (
-                  <ShiftSymbol color={colors.onMain} size={13} value={sample.symbol} />
-                ) : (
-                  <Text
-                    adjustsFontSizeToFit
-                    maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-                    minimumFontScale={0.72}
-                    numberOfLines={1}
-                    style={{
-                      color: colors.onMain,
-                      fontSize: 10,
-                      fontWeight: "700",
-                      textAlign: "center",
-                    }}
-                  >
-                    {labelMode === "SHORT" ? sample.title.slice(0, 1) : sample.title}
-                  </Text>
-                )}
-              </View>
-              {detail ? (
+              <View
+                style={{
+                  height: CALENDAR_METRICS.dayNumberHeight,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <View
-                  style={{ height: 19, justifyContent: "center", backgroundColor: colors.detail }}
+                  testID={`preview-date-marker-${index}`}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 15,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: isToday ? palette.primary : "transparent",
+                  }}
                 >
                   <Text
-                    adjustsFontSizeToFit
-                    maxFontSizeMultiplier={COMPACT_TEXT_MAX_SCALE}
-                    minimumFontScale={0.72}
-                    numberOfLines={1}
+                    allowFontScaling={false}
                     style={{
-                      color: colors.onDetail,
-                      fontSize: 10,
-                      fontWeight: "500",
-                      textAlign: "center",
-                      fontVariant: ["tabular-nums"],
+                      fontSize: CALENDAR_METRICS.dayNumberFontSize,
+                      fontWeight: isToday ? "700" : "500",
+                      color: isToday
+                        ? palette.onPrimary
+                        : index > 4
+                          ? palette.textMuted
+                          : palette.text,
                     }}
                   >
-                    {detail}
+                    {day}
                   </Text>
                 </View>
+              </View>
+              {showShifts && sample ? (
+                <PrototypeEntryContent
+                  entry={sample}
+                  display={{ labelMode, showShiftDuration, showShiftTimes }}
+                  timeZone="Europe/Berlin"
+                />
               ) : null}
             </View>
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -240,16 +216,14 @@ export function CalendarViewScreen({ notice }: { readonly notice?: string } = {}
       <View style={{ gap: 10 }}>
         <SectionHeader title="Vorschau" />
         <CalendarDisplayPreview
+          showShifts={preferences.showShifts}
           labelMode={preferences.labelMode}
           showShiftDuration={preferences.showShiftDuration}
           showShiftTimes={preferences.showShiftTimes}
         />
       </View>
       <View style={{ gap: 10 }}>
-        <SectionHeader
-          caption="Lege fest, welche Inhalte im Monats- und Jahreskalender sichtbar sind."
-          title="Kalenderinhalte"
-        />
+        <SectionHeader title="Kalenderinhalte" />
         <SurfaceCard>
           <VisibilitySwitch
             color={palette.primary}
@@ -280,10 +254,7 @@ export function CalendarViewScreen({ notice }: { readonly notice?: string } = {}
       </View>
 
       <View style={{ gap: 10 }}>
-        <SectionHeader
-          caption="Bestimme, wie Dienste innerhalb eines Kalendertags beschriftet werden."
-          title="Dienstanzeige"
-        />
+        <SectionHeader title="Dienstanzeige" />
         <SurfaceCard>
           <View style={{ gap: 10, padding: 14 }}>
             <Text style={{ color: palette.textSecondary, fontSize: 13, fontWeight: "700" }}>

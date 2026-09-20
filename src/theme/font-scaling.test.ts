@@ -6,7 +6,6 @@ import { describe, expect, it } from "vitest";
 import { COMPACT_TEXT_MAX_SCALE, TEXT_MAX_SCALE } from "@/theme/typography";
 
 const COMPACT_SCALE_ALLOWLIST = new Set([
-  "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
   "features/calendar/year-overview.tsx",
   "ui/shift-symbol.tsx",
@@ -15,7 +14,6 @@ const COMPACT_SCALE_ALLOWLIST = new Set([
 const TEXT_SHRINK_ALLOWLIST = new Set([
   // Opt-in stable calendar title only: full accessible label and font-scaled height.
   "ui/screen-layout.tsx",
-  "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
   "ui/shift-symbol.tsx",
 ]);
@@ -24,7 +22,6 @@ const SINGLE_LINE_ALLOWLIST = new Set([
   // Bounded prototype day cells; complete titles remain in each day's accessible label.
   "features/calendar/calendar-prototype-canvas.tsx",
   "features/calendar/prototype-entry-content.tsx",
-  "features/calendar/calendar-view-screen.tsx",
   "features/calendar/month-card.tsx",
   "features/calendar/year-overview.tsx",
   "features/templates/shift-template-list.tsx",
