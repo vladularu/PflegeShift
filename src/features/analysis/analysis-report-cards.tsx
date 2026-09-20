@@ -8,29 +8,9 @@ import { DEFAULT_SHIFT_SYMBOLS } from "@/theme/shift-symbols";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SPACING } from "@/theme/tokens";
 import { CardSeparator, ColorBadge, SurfaceCard } from "@/ui/design-system";
+import { ReportCardTitle } from "./report-card-title";
 
-export function ReportCardTitle({ title }: { readonly title: string }) {
-  const palette = usePalette();
-  return (
-    <View
-      style={{
-        minHeight: 54,
-        alignItems: "center",
-        justifyContent: "center",
-        paddingHorizontal: SPACING.lg,
-        paddingVertical: SPACING.sm,
-      }}
-    >
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        selectable
-        style={{ color: palette.text, textAlign: "center", ...TYPOGRAPHY.sectionTitle }}
-      >
-        {title}
-      </Text>
-    </View>
-  );
-}
+export { ReportCardTitle } from "./report-card-title";
 
 export function ShiftTypeCountCard({ analysis }: { readonly analysis: MonthlyShiftTypeAnalysis }) {
   return <ShiftTypeReportCard analysis={analysis} mode="COUNT" title="Schichten zählen" />;
@@ -51,6 +31,8 @@ function ShiftTypeReportCard({
 }) {
   const palette = usePalette();
   const items = analysis.items.filter((item) => mode === "COUNT" || item.minutes > 0);
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale >= 1.3;
   const totalValue =
     mode === "COUNT" ? String(analysis.totalCount) : `${formatMinutes(analysis.totalMinutes)} h`;
   return (
@@ -69,8 +51,10 @@ function ShiftTypeReportCard({
               style={{
                 minHeight: 56,
                 flexDirection: "row",
+                flexWrap: stacked ? "wrap" : "nowrap",
                 alignItems: "center",
                 gap: SPACING.md,
+                rowGap: SPACING.xs,
                 paddingVertical: SPACING.sm,
               }}
             >
@@ -82,7 +66,12 @@ function ShiftTypeReportCard({
               <Text
                 maxFontSizeMultiplier={TEXT_MAX_SCALE}
                 selectable
-                style={{ minWidth: 0, flex: 1, color: palette.text, ...TYPOGRAPHY.body }}
+                style={{
+                  minWidth: 0,
+                  flex: 1,
+                  color: palette.text,
+                  ...TYPOGRAPHY.body,
+                }}
               >
                 {SHIFT_TYPE_LABELS[item.type]}
               </Text>
@@ -90,6 +79,7 @@ function ShiftTypeReportCard({
                 maxFontSizeMultiplier={TEXT_MAX_SCALE}
                 selectable
                 style={{
+                  width: stacked ? "100%" : undefined,
                   color: palette.text,
                   ...TYPOGRAPHY.bodyStrong,
                   fontVariant: ["tabular-nums"],
@@ -107,8 +97,8 @@ function ShiftTypeReportCard({
         accessible
         style={{
           minHeight: 56,
-          flexDirection: "row",
-          alignItems: "center",
+          flexDirection: stacked ? "column" : "row",
+          alignItems: stacked ? "stretch" : "center",
           justifyContent: "space-between",
           gap: SPACING.md,
           paddingHorizontal: SPACING.lg,
@@ -147,7 +137,7 @@ export function WorktimeCard({
 }) {
   const palette = usePalette();
   const { fontScale } = useWindowDimensions();
-  const stacked = fontScale >= 1.6;
+  const stacked = fontScale >= 1.3;
   const values = [
     { label: "Soll", value: target, accent: palette.text },
     { label: "Ist", value: actual, accent: palette.text },
@@ -165,7 +155,7 @@ export function WorktimeCard({
             accessible
             style={{
               minWidth: 0,
-              flex: 1,
+              flex: stacked ? undefined : 1,
               gap: SPACING.xs,
               borderLeftWidth: !stacked && index > 0 ? 1 : 0,
               borderLeftColor: palette.separator,
