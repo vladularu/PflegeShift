@@ -163,7 +163,15 @@ export function SettingsInfoDetailsScreen() {
       style={{ backgroundColor: palette.groupedBackground }}
       contentContainerStyle={{ gap: 14, padding: 16, paddingBottom: 32 }}
     >
-      <Stack.Screen options={{ title: content.title }} />
+      <Stack.Screen
+        options={{
+          title: content.title,
+          headerStyle: { backgroundColor: palette.background },
+          headerTintColor: palette.text,
+          headerTitleStyle: { color: palette.text },
+          statusBarStyle: palette.dark ? "light" : "dark",
+        }}
+      />
       <Text selectable style={{ color: palette.textSecondary, fontSize: 14, lineHeight: 21 }}>
         {content.intro}
       </Text>
