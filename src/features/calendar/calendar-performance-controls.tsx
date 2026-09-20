@@ -9,7 +9,11 @@ import { DEV_TOOLS_AVAILABLE } from "@/infrastructure/dev-tools-policy";
 import { RowButton, SurfaceCard } from "@/ui/design-system";
 import { shareCalendarPerformanceFile } from "./share-calendar-performance";
 
-export function CalendarPerformanceControls() {
+export function CalendarPerformanceControls({
+  subtitleBelow = false,
+}: {
+  readonly subtitleBelow?: boolean;
+}) {
   const session = useSyncExternalStore(
     calendarPerformance.subscribe,
     calendarPerformance.getSnapshot,
@@ -56,11 +60,13 @@ export function CalendarPerformanceControls() {
   return (
     <SurfaceCard>
       <RowButton
+        subtitleBelow={subtitleBelow}
         title="Kalender-Prototyp öffnen"
         subtitle="Phase 2: neue Animation mit Beispieldiensten. Der Hauptkalender und deine Daten bleiben unverändert."
         onPress={() => router.push("/calendar-prototype")}
       />
       <RowButton
+        subtitleBelow={subtitleBelow}
         title={session ? "Kalenderdiagnose läuft – stoppen" : "Kalenderdiagnose starten"}
         subtitle="Nur lokale Zeiten und Anzahlen, keine Titel oder Gehälter. Maximal 10 Minuten; Neustart löscht den Bericht. Ein neuer Start ersetzt die vorige Messung."
         onPress={() =>
@@ -68,13 +74,18 @@ export function CalendarPerformanceControls() {
         }
       />
       <RowButton
+        subtitleBelow={subtitleBelow}
         title={busy ? "Diagnose wird geteilt …" : "Diagnosebericht teilen"}
         subtitle="Stoppt die Messung und öffnet das Teilen-Menü für eine JSON-Datei."
         onPress={() => {
           void share();
         }}
       />
-      <RowButton title="Diagnosebericht verwerfen" onPress={calendarPerformance.clear} />
+      <RowButton
+        subtitleBelow={subtitleBelow}
+        title="Diagnosebericht verwerfen"
+        onPress={calendarPerformance.clear}
+      />
     </SurfaceCard>
   );
 }

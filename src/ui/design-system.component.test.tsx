@@ -39,4 +39,34 @@ describe("design system accessibility", () => {
       alignItems: "center",
     });
   });
+
+  it("gives expanded descriptions the full row width without limiting text scaling", async () => {
+    const onPress = jest.fn();
+    const onLongPress = jest.fn();
+    const screen = await render(
+      <RowButton
+        leading={<></>}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        delayLongPress={5000}
+        subtitleBelow
+        subtitle="SQLite · ausschließlich auf diesem Gerät"
+        title="Lokale Datenspeicherung"
+      />,
+    );
+    const title = screen.getByText("Lokale Datenspeicherung");
+    const subtitle = screen.getByText("SQLite · ausschließlich auf diesem Gerät");
+    expect(subtitle.parent).not.toBe(title.parent);
+    expect(subtitle.parent).toHaveStyle({ flex: 1, minWidth: 0 });
+    expect(title.parent?.parent?.parent).toBe(subtitle.parent);
+    for (const text of [title, subtitle]) {
+      expect(text.props.numberOfLines).toBeUndefined();
+      expect(text.props.maxFontSizeMultiplier).toBe(0);
+      expect(text.props.adjustsFontSizeToFit).not.toBe(true);
+    }
+    await fireEvent.press(screen.getByRole("button"));
+    await fireEvent(screen.getByRole("button"), "longPress");
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(onLongPress).toHaveBeenCalledTimes(1);
+  });
 });
