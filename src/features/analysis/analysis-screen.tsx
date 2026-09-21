@@ -13,7 +13,8 @@ import {
 } from "@/application/pflegeshift-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import type { MonthlyComplianceResult, ShiftEntry } from "@/domain/types";
-import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
+import { AnalysisViewControls } from "./analysis-view-controls";
+import { MonthOverview } from "./month-overview";
 import { calculateMonthlyAnalysis } from "@/features/analysis/monthly-analysis";
 import { AnnualReportRuleFailure } from "@/features/analysis/annual-report-failure";
 import { AnalysisYearHeader } from "@/features/analysis/analysis-period-header";
@@ -22,11 +23,6 @@ import {
   AnalysisMonthHeader,
   ExpandableHighlightCard,
   formatMonthRangeLabel,
-  ReportCardTitle,
-  SalarySummaryCard,
-  ShiftTypeCountCard,
-  ShiftTypeHoursCard,
-  WorktimeCard,
 } from "@/features/analysis/analysis-overview-cards";
 import { AnnualReportScreen, type AnalysisPeriod } from "@/features/analysis/annual-report-view";
 import { useAnnualReportInputs } from "@/features/analysis/use-annual-report-inputs";
@@ -34,12 +30,11 @@ import { useDeferredAnnualReport } from "@/features/analysis/use-annual-report";
 import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-compliance";
 import { useCheckPreferences } from "@/features/settings/check-preferences";
 import { PLANNING_HIDDEN_NOTICE, selectVisibleCompliance } from "./check-visibility";
-import { settingsEditorRoute, tariffAssessmentRoute } from "@/navigation/routes";
+import { complianceDetailsRoute, salaryRoute } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
-import { CardSeparator, EmptyState, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { selectionFeedback } from "@/ui/haptics";
 import {
@@ -74,9 +69,6 @@ export function AnalysisScreen({
   const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
   const [period, setPeriod] = useState<AnalysisPeriod>("MONTH");
   const [year, setYear] = useState(() => Number(activeMonthCoordinator.getMonth().slice(0, 4)));
-  const [expandedCard, setExpandedCard] = useState<AnalysisExpandedCard | null>(
-    initialExpandedCard,
-  );
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
 
@@ -88,8 +80,15 @@ export function AnalysisScreen({
   }, [activeMonthCoordinator, routeMonth]);
 
   useEffect(() => {
-    setExpandedCard(initialExpandedCard);
-  }, [initialExpandedCard]);
+    if (initialExpandedCard) {
+      const targetMonth = routeMonth ?? activeMonthCoordinator.getMonth();
+      router.push(
+        initialExpandedCard === "PAY"
+          ? salaryRoute(targetMonth)
+          : complianceDetailsRoute(targetMonth),
+      );
+    }
+  }, [initialExpandedCard, routeMonth, activeMonthCoordinator]);
 
   useFocusEffect(
     useCallback(() => {
@@ -98,7 +97,6 @@ export function AnalysisScreen({
       setYear((current) =>
         current === Number(activeMonth.slice(0, 4)) ? current : Number(activeMonth.slice(0, 4)),
       );
-      return () => setExpandedCard(null);
     }, [activeMonthCoordinator]),
   );
 
@@ -163,13 +161,6 @@ export function AnalysisScreen({
     selectionFeedback();
   }
 
-  function selectAnnualMonth(nextMonth: string, nextExpandedCard?: "CHECK") {
-    activeMonthCoordinator.setMonth(nextMonth);
-    setMonth(nextMonth);
-    if (nextExpandedCard) setExpandedCard(nextExpandedCard);
-    setPeriod("MONTH");
-  }
-
   if (period === "YEAR") {
     if (annualReport.fatalError !== null) throw annualReport.fatalError;
     if (annualReport.ruleFailure !== null) {
@@ -212,33 +203,11 @@ export function AnalysisScreen({
         testMonths={testMonths}
         onBackToMonth={() => changePeriod("MONTH")}
         onMoveYear={moveYear}
-        onSelectMonth={selectAnnualMonth}
       />
     );
   }
 
-  if (monthlyCompliance.error) {
-    return (
-      <LoadFailureView
-        message={monthlyCompliance.error}
-        onRetry={monthlyCompliance.retry}
-        title="Arbeitszeitprüfung fehlgeschlagen"
-      />
-    );
-  }
-
-  if (
-    !ready ||
-    profile === null ||
-    monthlyData === null ||
-    (monthlyData.complianceShifts.ok && compliance === null)
-  ) {
-    return <LoadingView />;
-  }
-
-  const { complianceShifts, pay, shiftTypeAnalysis, summary } = monthlyData;
-  const actualMinutes = summary.ok ? summary.value.actualMinutes : shiftTypeAnalysis.totalMinutes;
-  const balanceMinutes = summary.ok ? summary.value.balanceMinutes : null;
+  if (!ready || profile === null || monthlyData === null) return <LoadingView />;
 
   function moveMonth(delta: number) {
     const nextMonth = Temporal.PlainDate.from(`${month}-01`)
@@ -256,11 +225,6 @@ export function AnalysisScreen({
     activeMonthCoordinator.setMonth(nextMonth);
     setMonth(nextMonth);
     setYear(nextYear);
-    selectionFeedback();
-  }
-
-  function toggleExpandedCard(nextCard: AnalysisExpandedCard) {
-    setExpandedCard((current) => (current === nextCard ? null : nextCard));
     selectionFeedback();
   }
 
@@ -289,65 +253,16 @@ export function AnalysisScreen({
               <AnalysisCoverageNote message="Prüfungseinstellungen werden geladen … Hinweise sind vorläufig vollständig sichtbar." />
             ) : null}
 
-            {complianceShifts.ok && compliance !== null ? (
-              <AssessmentSummaryCard
-                showPlanning={checkPreferences.enabled !== false}
-                compliance={compliance}
-                expanded={expandedCard === "CHECK"}
-                onToggle={() => toggleExpandedCard("CHECK")}
-                shifts={complianceShifts.value}
-              />
-            ) : (
-              <AnalysisCoverageNote message="Die Arbeitszeitprüfung benötigt gültige ArbZG- und Feiertagsstände. Erfasste Zeiten und Schichten bleiben sichtbar." />
-            )}
-
-            <SalarySummaryCard
-              expanded={expandedCard === "PAY"}
-              onOpenAllowance={() => router.push(tariffAssessmentRoute(month))}
-              onSetup={() => router.push(settingsEditorRoute("TARIFF"))}
-              onToggle={() => toggleExpandedCard("PAY")}
-              pay={pay.ok ? pay.value : null}
-              ruleFailure={pay.ok ? null : pay.failure}
-              salaryReady={profile.tariff !== null || profile.manualMonthlyGrossCents != null}
+            <MonthOverview
+              month={month}
+              data={monthlyData}
+              profile={profile}
+              compliance={compliance}
+              checkError={monthlyCompliance.error}
+              showPlanning={checkPreferences.enabled !== false}
             />
 
-            <WorktimeCard
-              actual={formatMinutes(actualMinutes)}
-              balance={
-                balanceMinutes === null ? "Nicht verfügbar" : formatSignedMinutes(balanceMinutes)
-              }
-              balanceAccent={
-                balanceMinutes === null
-                  ? palette.textMuted
-                  : balanceMinutes < 0
-                    ? palette.danger
-                    : palette.success
-              }
-              target={summary.ok ? formatMinutes(summary.value.targetMinutes) : "Nicht verfügbar"}
-            />
-
-            {!summary.ok ? (
-              <AnalysisCoverageNote message="Soll, Saldo und Abwesenheitsgutschriften benötigen einen gültigen Feiertagsstand. Angezeigt werden erfasste Arbeits- und Fortbildungszeiten." />
-            ) : null}
-
-            {shiftTypeAnalysis.totalCount === 0 ? (
-              <SurfaceCard>
-                <ReportCardTitle title="Schichten zählen" />
-                <CardSeparator inset={0} />
-                <EmptyState
-                  message="Trage Dienste ein, um den Monat auszuwerten."
-                  title="Noch keine Dienste"
-                />
-              </SurfaceCard>
-            ) : (
-              <>
-                <ShiftTypeCountCard analysis={shiftTypeAnalysis} />
-                {summary.ok || shiftTypeAnalysis.totalMinutes > 0 ? (
-                  <ShiftTypeHoursCard analysis={shiftTypeAnalysis} />
-                ) : null}
-              </>
-            )}
-
+            <AnalysisViewControls />
             <ReportFootnote>Unverbindliche Schätzung · keine Lohnabrechnung</ReportFootnote>
           </ReportPeriodContent>
         </Animated.View>

@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { CalendarEntry, ShiftEntry } from "@/domain/types";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
-import { buildMonthlyShiftTypeAnalysis } from "@/features/analysis/analysis-metrics";
+import {
+  buildMonthlyShiftTypeAnalysis,
+  combineShiftTypeAnalyses,
+} from "@/features/analysis/analysis-metrics";
 
 const profile = {
   federalState: "NW" as const,
@@ -78,4 +81,37 @@ describe("monthly shift type analysis", () => {
     expect(Object.isFrozen(result)).toBe(true);
     expect(Object.isFrozen(result.items)).toBe(true);
   });
+});
+
+it("preserves configured shift appearances across months without changing credited totals", () => {
+  const early = {
+    ...shift("one", "2026-07-01", "EARLY", "06:00", "14:00"),
+    title: "Früh A",
+    color: "#339966",
+    symbol: "sunny",
+  };
+  const second = {
+    ...early,
+    id: "two",
+    title: "Früh B",
+    color: "#663399",
+    symbol: "star",
+    startTime: "12:00",
+    endTime: "16:00",
+  };
+  const deleted = { ...early, id: "gone", title: "Gelöscht", deletedAt: "2026-07-02" };
+  const july = buildMonthlyShiftTypeAnalysis("2026-07", [early, second, deleted], profile);
+  const august = buildMonthlyShiftTypeAnalysis(
+    "2026-08",
+    [{ ...early, date: "2026-08-03" }],
+    profile,
+  );
+  const year = combineShiftTypeAnalyses([july, august]);
+  expect(july.items).toEqual([{ type: "EARLY", count: 2, minutes: 600 }]);
+  expect(year.appearances?.EARLY).toEqual([
+    { title: "Früh A", color: "#339966", symbol: "sunny" },
+    { title: "Früh B", color: "#663399", symbol: "star" },
+  ]);
+  expect(year.totalMinutes).toBe(july.totalMinutes + august.totalMinutes);
+  expect(year.totalCount).toBe(3);
 });

@@ -94,7 +94,7 @@ describe("local backup", () => {
 
     const changesAfter = testDb.database.prepare("SELECT total_changes() count").get();
     expect(changesAfter).toEqual(changesBefore);
-    expect(snapshot.databaseSchemaVersion).toBe(12);
+    expect(snapshot.databaseSchemaVersion).toBe(13);
     expect(snapshot.profile).toMatchObject({
       id: "singleton",
       industry: "HEALTHCARE",

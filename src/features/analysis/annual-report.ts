@@ -1,3 +1,8 @@
+import {
+  buildMonthlyShiftTypeAnalysis,
+  combineShiftTypeAnalyses,
+  type MonthlyShiftTypeAnalysis,
+} from "./analysis-metrics";
 import { Temporal } from "@js-temporal/polyfill";
 
 import type {
@@ -20,6 +25,7 @@ import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { classifyChecks, type ClassifiedCheckCounts } from "./check-visibility";
 
 export interface AnnualMonthReport {
+  readonly timePremiumAmount?: number | null;
   readonly checkCounts?: ClassifiedCheckCounts;
   readonly infoCount?: number;
   readonly month: string;
@@ -34,6 +40,8 @@ export interface AnnualMonthReport {
 }
 
 export interface AnnualReport {
+  readonly shiftTypeAnalysis?: MonthlyShiftTypeAnalysis;
+  readonly salarySource?: "MANUAL" | "TARIFF" | "UNSET";
   readonly infoCount?: number;
   readonly year: number;
   readonly months: readonly AnnualMonthReport[];
@@ -64,6 +72,7 @@ function roundMoney(value: number): number {
 }
 
 interface AnnualMonthContribution {
+  readonly shiftTypeAnalysis: MonthlyShiftTypeAnalysis;
   readonly report: AnnualMonthReport;
   readonly workMinutes: number;
   readonly trainingMinutes: number;
@@ -79,6 +88,11 @@ interface AnnualMonthContribution {
 }
 
 interface CachedAnnualMonth {
+  shiftTypeAnalysis?: {
+    readonly profile: UserProfile;
+    readonly entries: readonly CalendarEntry[];
+    readonly value: MonthlyShiftTypeAnalysis;
+  };
   summary?: {
     readonly shifts: readonly CalendarEntry[];
     readonly profile: UserProfile;
@@ -234,15 +248,32 @@ function* calculateAnnualMonthContribution(
     distribution = buildShiftTypeDistribution(month, window.monthEntries);
     cached.distribution = { entries: window.monthEntries, value: distribution };
   }
+  let shiftTypeAnalysis =
+    cached.shiftTypeAnalysis &&
+    cached.shiftTypeAnalysis.profile === profile &&
+    sameItems(cached.shiftTypeAnalysis.entries, window.monthEntries)
+      ? cached.shiftTypeAnalysis.value
+      : null;
+  if (shiftTypeAnalysis === null) {
+    shiftTypeAnalysis = buildMonthlyShiftTypeAnalysis(
+      month,
+      window.monthEntries,
+      profile,
+      ruleResolver,
+    );
+    cached.shiftTypeAnalysis = { profile, entries: window.monthEntries, value: shiftTypeAnalysis };
+  }
   const allowanceAmount = pay.allowanceAmount + pay.tvoedAllowanceAmount + pay.careAllowanceAmount;
 
   return Object.freeze({
+    shiftTypeAnalysis,
     report: Object.freeze({
       month,
       entryCount: window.monthEntries.length,
       targetMinutes: summary.targetMinutes,
       actualMinutes: summary.actualMinutes,
       balanceMinutes: summary.balanceMinutes,
+      timePremiumAmount: profile.tariff !== null && pay.available ? pay.timePremiumAmount : null,
       estimatedGrossAmount: pay.estimatedGrossAmount,
       premiumAmount: pay.timePremiumAmount + pay.overtimeAmount + allowanceAmount,
       criticalCount: compliance.criticalCount,
@@ -278,6 +309,7 @@ export function* buildAnnualReportSteps(
     throw new Error("Ungültiges Berichtsjahr.");
   }
 
+  const shiftAnalyses: MonthlyShiftTypeAnalysis[] = [];
   const distribution = new Map<ShiftType, number>();
   const months: AnnualMonthReport[] = [];
   let targetMinutes = 0;
@@ -329,6 +361,7 @@ export function* buildAnnualReportSteps(
       yield index;
     }
 
+    shiftAnalyses.push(contribution.shiftTypeAnalysis);
     for (const [type, count] of contribution.distribution) {
       distribution.set(type, (distribution.get(type) ?? 0) + count);
     }
@@ -358,6 +391,13 @@ export function* buildAnnualReportSteps(
 
   return Object.freeze({
     year,
+    shiftTypeAnalysis: combineShiftTypeAnalyses(shiftAnalyses),
+    salarySource:
+      profile.tariff !== null
+        ? ("TARIFF" as const)
+        : profile.manualMonthlyGrossCents != null
+          ? ("MANUAL" as const)
+          : ("UNSET" as const),
     months: Object.freeze(months),
     targetMinutes,
     actualMinutes,

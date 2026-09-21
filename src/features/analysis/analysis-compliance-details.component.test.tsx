@@ -118,9 +118,10 @@ describe("analysis compliance details", () => {
     expect(screen.getByText("2", { includeHiddenElements: true })).toHaveStyle({
       fontVariant: ["tabular-nums"],
     });
-    expect(screen.getByText("1", { includeHiddenElements: true })).toHaveStyle({
-      fontVariant: ["tabular-nums"],
-    });
+    expect(screen.queryByText("1", { includeHiddenElements: true })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Dienste überschneiden sich, 1 Meldung" }),
+    ).toBeTruthy();
     expect(screen.queryByText(/Tage? betroffen/)).toBeNull();
     expect(screen.queryByText(/ArbZG/)).toBeNull();
     expect(screen.queryByText("Zwischen den Diensten liegen nur 8 h Ruhezeit.")).toBeNull();
@@ -139,5 +140,12 @@ describe("analysis compliance details", () => {
     expect(screen.getAllByText("Früh").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/14:00–22:00/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/06:00–14:00/).length).toBeGreaterThan(0);
+    await fireEvent.press(
+      screen.getByRole("button", { name: "Dienste überschneiden sich, 1 Meldung" }),
+    );
+    expect(screen.queryByText("Zwischen den Diensten liegen nur 8 h Ruhezeit.")).toBeNull();
+    expect(
+      screen.getByText("Zwei arbeitszeitrelevante Einträge liegen zeitlich übereinander."),
+    ).toBeVisible();
   });
 });

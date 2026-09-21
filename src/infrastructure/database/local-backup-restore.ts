@@ -26,7 +26,7 @@ async function insertRows(
   const placeholders = columns.map(() => "?").join(",");
   const sql = `INSERT INTO ${table}(${columns.join(",")}) VALUES(${placeholders})`;
   for (const row of rows) {
-    await db.runAsync(sql, ...columns.map((column) => row[column]));
+    await db.runAsync(sql, ...columns.map((column) => row[column] ?? null));
   }
 }
 

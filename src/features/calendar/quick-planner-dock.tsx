@@ -24,7 +24,7 @@ import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { QuickEntryActionStrip } from "@/features/calendar/quick-entry-action-strip";
 import { QUICK_PLANNER_METRICS } from "@/features/calendar/quick-planner-appearance";
 import { MOTION } from "@/theme/motion";
-import { DARK_PALETTE, LIGHT_PALETTE, usePalette } from "@/theme/palette";
+import { useInversePalette, usePalette } from "@/theme/palette";
 import { CALENDAR_METRICS } from "@/theme/tokens";
 import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
 
@@ -66,8 +66,8 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   readonly onSelectAction: (action: QuickEntryAction) => void;
   readonly onClose: () => void;
 }) {
+  const dockPalette = useInversePalette();
   const palette = usePalette();
-  const dockPalette = palette.dark ? LIGHT_PALETTE : DARK_PALETTE;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const reduceMotion = useReducedMotion();

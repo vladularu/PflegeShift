@@ -2,6 +2,7 @@ import { fireEvent, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { StyleSheet } from "react-native";
 
+import { ShiftAnalysisDetails } from "./shift-analysis-details";
 import { AnalysisMonthHeader, AnalysisYearHeader } from "./analysis-period-header";
 import {
   ReportCardTitle,
@@ -56,11 +57,11 @@ describe("analysis Dynamic Type layout", () => {
       if (stacked) expect(period.parent).toHaveStyle({ width: "100%" });
       expect(period.props.numberOfLines).toBeUndefined();
       expect(period.props.maxFontSizeMultiplier).toBe(0);
-      expect(screen.getByLabelText("Soll: 169:24").parent).toHaveStyle({
+      expect(screen.getByTestId("worktime-values")).toHaveStyle({
         flexDirection: stacked ? "column" : "row",
       });
-      expect(screen.getByLabelText("Ist: 178:24")).toBeTruthy();
-      expect(screen.getByLabelText("Saldo: +9:00")).toBeTruthy();
+      expect(screen.getByLabelText("Ist: 178:24 h")).toBeTruthy();
+      expect(screen.getByLabelText("Stundensaldo: +9:00 h")).toBeTruthy();
       expect(screen.getByLabelText("Früh: 178:00 Stunden")).toHaveStyle({
         flexDirection: "row",
         flexWrap: stacked ? "wrap" : "nowrap",
@@ -78,6 +79,44 @@ describe("analysis Dynamic Type layout", () => {
       expect(year).toHaveBeenCalledTimes(1);
     },
   );
+
+  it.each([1, 1.3, 3.1])("shows shift counts and hours together at scale %s", async (fontScale) => {
+    mockFontScale = fontScale;
+    const screen = await render(
+      <ShiftAnalysisDetails
+        analysis={{
+          items: [
+            { type: "EARLY", count: 9, minutes: 4158 },
+            { type: "TRAINING", count: 3, minutes: 1386 },
+          ],
+          totalCount: 12,
+          totalMinutes: 5544,
+        }}
+      />,
+    );
+    expect(screen.getByLabelText("Früh, Anzahl 9, Stunden 69:18 h")).toBeTruthy();
+    expect(screen.getByLabelText("Fortbildung, Anzahl 3, Stunden 23:06 h")).toBeTruthy();
+    expect(screen.getByLabelText("Gesamt, Anzahl 12, Stunden 92:24 h")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Schichten: Anzahl" })).toBeNull();
+    expect(screen.getByTestId("shift-detail-EARLY")).toHaveStyle({
+      flexDirection: fontScale >= 1.3 ? "column" : "row",
+    });
+  });
+
+  it("keeps absence counts but does not invent hours without a holiday package", async () => {
+    const screen = await render(
+      <ShiftAnalysisDetails
+        creditsAvailable={false}
+        analysis={{
+          items: [{ type: "VACATION", count: 2, minutes: 0 }],
+          totalCount: 2,
+          totalMinutes: 0,
+        }}
+      />,
+    );
+    expect(screen.getByLabelText("Urlaub, Anzahl 2, Stunden Nicht verfügbar")).toBeTruthy();
+    expect(screen.getByText(/Stunden ohne Abwesenheitsgutschriften/)).toBeTruthy();
+  });
 
   it.each(["COUNT", "HOURS"])(
     "keeps icon and name together in %s rows when text changes",
@@ -187,8 +226,10 @@ describe("analysis Dynamic Type layout", () => {
     expect(title).toHaveStyle({ alignSelf: "stretch" });
     expect(title.props.numberOfLines).toBeUndefined();
     expect(title.props.maxFontSizeMultiplier).toBe(0);
-    const message = screen.getByText(/Gesetzliche Prüfung\s+keine Auffälligkeiten/);
-    expect(message.props.children.join("")).toContain("\n");
+    const message = screen.getByText("Keine Auffälligkeiten");
+    const label = screen.getByText("Gesetzliche Prüfung");
+    expect(label.props.maxFontSizeMultiplier).toBe(0);
+    expect(message.props.maxFontSizeMultiplier).toBe(0);
     expect(message.props.numberOfLines).toBeUndefined();
   });
 });

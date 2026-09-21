@@ -136,6 +136,8 @@ export const SHIFT_TYPE_LABELS: Readonly<Record<ShiftType, string>> = {
 };
 
 export interface UserProfile {
+  readonly displayName?: string | null;
+  readonly employerName?: string | null;
   readonly federalState: FederalState;
   readonly holidayRegion: HolidayRegion;
   readonly weeklyMinutes: number;
@@ -332,6 +334,8 @@ export interface SaveMonthlyTariffDecisionInput {
 }
 
 export interface SaveProfileInput {
+  readonly displayName?: string | null;
+  readonly employerName?: string | null;
   readonly federalState: FederalState;
   readonly holidayRegion?: HolidayRegion;
   readonly weeklyMinutes: number;

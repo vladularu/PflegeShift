@@ -11,6 +11,8 @@ import { defaultHolidayRegion } from "@/domain/employment-profile";
 import { validateProfile } from "@/domain/validation";
 
 export interface ProfileRow {
+  display_name: string | null;
+  employer_name: string | null;
   federal_state: UserProfile["federalState"];
   holiday_region: HolidayRegion;
   weekly_minutes: number;
@@ -52,6 +54,8 @@ export function mapProfileRow(row: ProfileRow): UserProfile {
         }
       : null;
   const validated = validateProfile({
+    displayName: row.display_name,
+    employerName: row.employer_name,
     federalState: row.federal_state,
     holidayRegion,
     weeklyMinutes: row.weekly_minutes,
@@ -64,6 +68,8 @@ export function mapProfileRow(row: ProfileRow): UserProfile {
     tariff,
   });
   return Object.freeze({
+    displayName: validated.displayName ?? null,
+    employerName: validated.employerName ?? null,
     federalState: validated.federalState,
     holidayRegion: validated.holidayRegion ?? defaultHolidayRegion(row.federal_state),
     weeklyMinutes: validated.weeklyMinutes,

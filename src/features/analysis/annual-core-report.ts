@@ -17,7 +17,12 @@ import {
   selectComplianceShifts,
   selectMonthlyAnalysisEntries,
 } from "@/features/analysis/analysis-data";
-import { buildMonthlyTimedShiftTypeAnalysis } from "@/features/analysis/analysis-metrics";
+import {
+  buildMonthlyShiftTypeAnalysis,
+  combineShiftTypeAnalyses,
+  type MonthlyShiftTypeAnalysis,
+  buildMonthlyTimedShiftTypeAnalysis,
+} from "@/features/analysis/analysis-metrics";
 import type { AnnualMonthReport, AnnualReport } from "@/features/analysis/annual-report";
 import { classifyChecks } from "./check-visibility";
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
@@ -47,6 +52,7 @@ export function buildAnnualCoreReport(
   entries: readonly CalendarEntry[],
   profile: Pick<UserProfile, "timeZone">,
 ): AnnualReport {
+  const shiftAnalyses: MonthlyShiftTypeAnalysis[] = [];
   const distribution = new Map<ShiftType, number>();
   const months: AnnualMonthReport[] = [];
   let actualMinutes = 0;
@@ -65,6 +71,7 @@ export function buildAnnualCoreReport(
     );
     const shifts = monthEntries.filter((entry): entry is ShiftEntry => entry.kind === "SHIFT");
     const timed = buildMonthlyTimedShiftTypeAnalysis(month, monthEntries, profile);
+    shiftAnalyses.push(timed);
     const monthDistribution = buildShiftTypeDistribution(month, monthEntries);
     for (const [type, count] of monthDistribution) {
       distribution.set(type, (distribution.get(type) ?? 0) + count);
@@ -91,6 +98,7 @@ export function buildAnnualCoreReport(
         actualMinutes: monthActualMinutes,
         balanceMinutes: null,
         estimatedGrossAmount: null,
+        timePremiumAmount: null,
         premiumAmount: 0,
         criticalCount: 0,
         warningCount: 0,
@@ -100,6 +108,7 @@ export function buildAnnualCoreReport(
 
   return Object.freeze({
     year,
+    shiftTypeAnalysis: combineShiftTypeAnalyses(shiftAnalyses),
     months: Object.freeze(months),
     targetMinutes: null,
     actualMinutes,
@@ -125,6 +134,7 @@ export function buildAnnualCoreReport(
 }
 
 interface AvailableMonthCalculation {
+  readonly shiftTypeAnalysis: MonthlyShiftTypeAnalysis | null;
   readonly compliance: MonthlyComplianceResult | null;
   readonly pay: MonthlyPayEstimate | null;
   readonly summary: MonthlySummary | null;
@@ -136,6 +146,7 @@ interface CachedPart<T> {
 }
 
 interface AvailableMonthCache {
+  shiftTypeAnalysis?: CachedPart<MonthlyShiftTypeAnalysis | null>;
   summary?: CachedPart<MonthlySummary | null>;
   compliance?: CachedPart<MonthlyComplianceResult | null>;
   pay?: CachedPart<MonthlyPayEstimate | null>;
@@ -181,6 +192,13 @@ function* calculateAvailableMonth(
           calculateMonthlySummary(month, monthlyEntries.monthShifts, profile, ruleResolver),
         );
   cached.summary = { key: summaryKey, value: summary };
+  const shiftTypeAnalysis =
+    cached.shiftTypeAnalysis?.key === summaryKey
+      ? cached.shiftTypeAnalysis.value
+      : summary === null
+        ? null
+        : buildMonthlyShiftTypeAnalysis(month, monthlyEntries.monthEntries, profile, ruleResolver);
+  cached.shiftTypeAnalysis = { key: summaryKey, value: shiftTypeAnalysis };
   yield 1;
 
   let compliance: MonthlyComplianceResult | null = null;
@@ -249,7 +267,7 @@ function* calculateAvailableMonth(
   cached.pay = { key: payKey, value: pay };
   yield 3;
 
-  return { compliance, pay, summary };
+  return { compliance, pay, summary, shiftTypeAnalysis };
 }
 
 export function* buildAnnualAvailableReportSteps(
@@ -272,6 +290,7 @@ export function* buildAnnualAvailableReportSteps(
   const monthsCache = options.cache?.get(ruleResolver) ?? new Map<string, AvailableMonthCache>();
   options.cache?.set(ruleResolver, monthsCache);
   const decisions = new Map(tariffDecisions.map((item) => [item.month, item]));
+  const shiftAnalyses: MonthlyShiftTypeAnalysis[] = [];
   const months: AnnualMonthReport[] = [];
   let targetMinutes = 0;
   let summaryActualMinutes = 0;
@@ -314,6 +333,7 @@ export function* buildAnnualAvailableReportSteps(
     worktimeCoverageComplete &&= available.summary !== null;
     complianceCoverageComplete &&= available.compliance !== null;
     if (available.summary !== null) {
+      if (available.shiftTypeAnalysis) shiftAnalyses.push(available.shiftTypeAnalysis);
       targetMinutes += available.summary.targetMinutes;
       summaryActualMinutes += available.summary.actualMinutes;
     }
@@ -336,6 +356,8 @@ export function* buildAnnualAvailableReportSteps(
     months.push(
       Object.freeze({
         ...coreMonth,
+        timePremiumAmount:
+          payAvailable && profile.tariff !== null ? available.pay!.timePremiumAmount : null,
         targetMinutes: available.summary?.targetMinutes ?? null,
         actualMinutes: available.summary?.actualMinutes ?? coreMonth.actualMinutes,
         balanceMinutes: available.summary?.balanceMinutes ?? null,
@@ -359,6 +381,15 @@ export function* buildAnnualAvailableReportSteps(
   const actualMinutes = worktimeCoverageComplete ? summaryActualMinutes : core.actualMinutes;
   return Object.freeze({
     ...core,
+    shiftTypeAnalysis: worktimeCoverageComplete
+      ? combineShiftTypeAnalyses(shiftAnalyses)
+      : core.shiftTypeAnalysis,
+    salarySource:
+      profile.tariff !== null
+        ? ("TARIFF" as const)
+        : profile.manualMonthlyGrossCents != null
+          ? ("MANUAL" as const)
+          : ("UNSET" as const),
     months: Object.freeze(months),
     targetMinutes: worktimeCoverageComplete ? targetMinutes : null,
     actualMinutes,

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("analysis native header", () => {
-  it("keeps one compact analysis screen and opens salary inline", () => {
+  it("keeps one compact analysis screen and forwards legacy salary links", () => {
     const layoutSource = readFileSync(
       join(process.cwd(), "app", "(tabs)", "(analysis)", "_layout.tsx"),
       "utf8",

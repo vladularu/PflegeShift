@@ -79,6 +79,7 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
               full_time_weekly_minutes,holiday_region,tariff_region,
               regular_rotating_night_work,sunday_holiday_work_eligible,
               all_employment_work_recorded,industry,manual_monthly_gross_cents,
+              display_name,employer_name,
               created_at,updated_at
          FROM user_profile
         WHERE id='singleton'`,

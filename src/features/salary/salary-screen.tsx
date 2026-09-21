@@ -150,7 +150,6 @@ export function SalaryScreen() {
     selectionFeedback();
   }
 
-  const hasPremiums = pay.shiftBreakdowns.some((item) => item.premiumLines.length > 0);
   const salaryProfileLabel = manualSalary
     ? "Manuell hinterlegt"
     : profile.tariff
@@ -164,7 +163,7 @@ export function SalaryScreen() {
           key: "premium",
           label: "Zeitzuschläge",
           value: euro(pay.timePremiumAmount),
-          onPress: hasPremiums ? () => router.push(premiumDetailsRoute(pay.month)) : undefined,
+          onPress: () => router.push(premiumDetailsRoute(pay.month)),
         },
         ...(pay.overtimeAmount > 0
           ? [{ key: "overtime", label: "Überstunden", value: euro(pay.overtimeAmount) }]
@@ -256,8 +255,6 @@ export function SalaryScreen() {
             <SurfaceCard
               style={{
                 gap: SPACING.md,
-                borderColor: `${palette.primary}2E`,
-                backgroundColor: palette.primarySoft,
                 padding: SPACING.xl,
               }}
             >
@@ -265,14 +262,14 @@ export function SalaryScreen() {
                 <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
                   <Ionicons
                     accessibilityElementsHidden
-                    color={palette.primary}
+                    color={palette.textMuted}
                     name="wallet-outline"
                     size={18}
                   />
                   <Text
                     maxFontSizeMultiplier={TEXT_MAX_SCALE}
                     selectable
-                    style={{ color: palette.primary, ...TYPOGRAPHY.overline }}
+                    style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}
                   >
                     {manualSalary ? "MONATSBRUTTO" : "BRUTTO-SCHÄTZUNG"}
                   </Text>

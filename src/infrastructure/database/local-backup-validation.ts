@@ -1,5 +1,7 @@
 import canonicalize from "canonicalize";
 import type { SQLiteDatabase } from "expo-sqlite";
+import { APPEARANCE_KEYS, isAppearanceMode, isThemeId } from "@/domain/appearance";
+import { ANALYSIS_VIEW_KEY, parseAnalysisView } from "@/domain/analysis-view";
 
 import type {
   EntryLocation,
@@ -36,7 +38,8 @@ export const MAX_LOCAL_BACKUP_CHARACTERS = 10 * 1024 * 1024;
 export type BackupRow = LocalBackupDocument["data"]["templates"][number];
 type JsonRecord = Readonly<Record<string, unknown>>;
 
-export const PROFILE_COLUMNS = [
+const PROFILE_IDENTITY_COLUMNS = ["display_name", "employer_name"] as const;
+const LEGACY_PROFILE_COLUMNS = [
   "id",
   "federal_state",
   "weekly_minutes",
@@ -55,6 +58,8 @@ export const PROFILE_COLUMNS = [
   "created_at",
   "updated_at",
 ] as const;
+
+export const PROFILE_COLUMNS = [...LEGACY_PROFILE_COLUMNS, ...PROFILE_IDENTITY_COLUMNS] as const;
 
 export const TEMPLATE_COLUMNS = [
   "id",
@@ -338,7 +343,12 @@ function frozenBackupRow(record: JsonRecord): BackupRow {
 }
 
 function validateProfileRow(value: unknown): BackupRow {
-  const row = exactRecord(value, PROFILE_COLUMNS);
+  // Keep absent legacy fields absent until after the original document's integrity check.
+  const row = allowedRecord(value, LEGACY_PROFILE_COLUMNS, PROFILE_IDENTITY_COLUMNS);
+  const displayName =
+    row.display_name === undefined ? null : nullableStringValue(row, "display_name");
+  const employerName =
+    row.employer_name === undefined ? null : nullableStringValue(row, "employer_name");
   if (stringValue(row, "id") !== "singleton") return invalid();
   const payGroup = nullableStringValue(row, "pay_group");
   const payLevel = nullableIntegerValue(row, "pay_level");
@@ -355,6 +365,8 @@ function validateProfileRow(value: unknown): BackupRow {
   const manualMonthlyGrossCents = nullableIntegerValue(row, "manual_monthly_gross_cents");
 
   const validated = validateProfile({
+    displayName,
+    employerName,
     federalState: stringValue(row, "federal_state") as never,
     weeklyMinutes: integerValue(row, "weekly_minutes"),
     timeZone: stringValue(row, "time_zone"),
@@ -378,6 +390,8 @@ function validateProfileRow(value: unknown): BackupRow {
       : null,
   });
   if (
+    validated.displayName !== displayName ||
+    validated.employerName !== employerName ||
     validated.timeZone !== stringValue(row, "time_zone") ||
     validated.weeklyMinutes !== integerValue(row, "weekly_minutes") ||
     validated.industry !== (nullableStringValue(row, "industry") as Industry | null) ||
@@ -566,6 +580,15 @@ function validateTariffDecisionRow(value: unknown): BackupRow {
 }
 
 function validatePreferenceValue(key: string, value: string): void {
+  if (key === ANALYSIS_VIEW_KEY) {
+    try {
+      parseAnalysisView(value);
+    } catch {
+      return invalid();
+    }
+  }
+  if (key === APPEARANCE_KEYS.themeId && !isThemeId(value)) return invalid();
+  if (key === APPEARANCE_KEYS.mode && !isAppearanceMode(value)) return invalid();
   const booleans = [
     "check_show_planning_hints",
     "calendar_show_shifts",

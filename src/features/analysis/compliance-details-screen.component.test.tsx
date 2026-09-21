@@ -1,9 +1,8 @@
-import { render } from "@testing-library/react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import type { MonthlyComplianceResult } from "@/domain/types";
 import { ComplianceDetailsScreen } from "@/features/analysis/compliance-details-screen";
-import { LIGHT_PALETTE } from "@/theme/palette";
 
 const mockCompliance: MonthlyComplianceResult = {
   month: "2026-08",
@@ -23,6 +22,7 @@ const mockCompliance: MonthlyComplianceResult = {
   })),
 };
 let mockPlanning = true;
+let mockResult: MonthlyComplianceResult | null = mockCompliance;
 jest.mock("@/features/settings/check-preferences", () => ({
   useCheckPreferences: () => ({ enabled: mockPlanning, error: null }),
 }));
@@ -56,38 +56,65 @@ jest.mock("@/application/rule-catalog-runtime-provider", () => {
 jest.mock("@/features/analysis/use-monthly-compliance", () => ({
   useDeferredMonthlyCompliance: () => ({
     error: null,
-    result: mockCompliance,
+    result: mockResult,
     retry: jest.fn(),
   }),
 }));
 
-jest.mock("@/features/analysis/analysis-screen", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  const { Text } = jest.requireActual<typeof import("react-native")>("react-native");
-  return {
-    ComplianceDetails: ({ heading }: { readonly heading?: string }) =>
-      React.createElement(Text, null, heading),
-  };
-});
-
 describe("ComplianceDetailsScreen", () => {
   beforeEach(() => {
     mockPlanning = true;
+    mockResult = mockCompliance;
   });
   it("filters the detail summary but keeps legal critical findings", async () => {
     mockPlanning = false;
     const screen = await render(<ComplianceDetailsScreen />);
-    expect(screen.getByRole("header", { name: "2 Meldungen" })).toHaveStyle({
-      color: LIGHT_PALETTE.danger,
-    });
+    expect(screen.queryByRole("header", { name: /Meldungen/ })).toBeNull();
+    expect(screen.queryByText("Freiwillige Planung")).toBeNull();
+    expect(screen.getByText(/Planungshinweise ausgeblendet/)).toBeVisible();
   });
   it("shows one neutral total and reserves color for its severity", async () => {
     const screen = await render(<ComplianceDetailsScreen />);
 
-    expect(screen.getByRole("header", { name: "3 Meldungen" })).toHaveStyle({
-      color: LIGHT_PALETTE.danger,
-    });
-    expect(screen.queryByText(/kritisch/i)).toBeNull();
-    expect(screen.getByText("Meldungen")).toBeVisible();
+    expect(screen.queryByRole("header", { name: /Meldungen/ })).toBeNull();
+    expect(screen.queryByText("0 Hinweise")).toBeNull();
+    expect(screen.getAllByText("Gesetzlich")).toHaveLength(2);
+    expect(screen.getByText("Planung")).toBeVisible();
+  });
+
+  it("shows a single quiet legal status for a planning-only result", async () => {
+    mockResult = {
+      ...mockCompliance,
+      issues: mockCompliance.issues.filter((issue) => issue.kind === "PLANNING"),
+    };
+    const screen = await render(<ComplianceDetailsScreen />);
+    expect(screen.queryByRole("header", { name: "1 Meldung" })).toBeNull();
+    expect(screen.queryByText("Gesetzliche Prüfung")).toBeNull();
+    expect(screen.getByRole("button", { name: /Hinweis, Planung, Warnung/ })).toBeVisible();
+  });
+
+  it("keeps the explanation reachable without repeating it in the summary", async () => {
+    const screen = await render(<ComplianceDetailsScreen />);
+    expect(screen.queryByText(/ersetzen keine Rechtsberatung/)).toBeNull();
+    const disclosure = screen.getByRole("button", { name: "Über die Prüfung" });
+    expect(disclosure.props.accessibilityState.expanded).toBe(false);
+    await fireEvent.press(disclosure);
+    expect(
+      screen.getByRole("button", { name: "Über die Prüfung" }).props.accessibilityState.expanded,
+    ).toBe(true);
+    expect(screen.getByText(/ersetzen keine Rechtsberatung/)).toBeVisible();
+    await fireEvent.press(disclosure);
+    expect(screen.queryByText(/ersetzen keine Rechtsberatung/)).toBeNull();
+  });
+
+  it("does not announce a clear check before the calculation has completed", async () => {
+    mockResult = null;
+    const screen = await render(<ComplianceDetailsScreen />);
+    expect(screen.queryByText("Keine Meldungen")).toBeNull();
+    expect(screen.queryByText("Keine Auffälligkeiten")).toBeNull();
+    expect(screen.queryByText("Keine sichtbaren Auffälligkeiten")).toBeNull();
+    mockResult = { ...mockCompliance, issues: [] };
+    await screen.rerender(<ComplianceDetailsScreen />);
+    expect(screen.getByText("Keine Auffälligkeiten")).toBeVisible();
   });
 });
