@@ -110,3 +110,24 @@ prüfen; kein Löschen der App als Standard-Rollback. Ein Runtime-Wechsel wird n
 durch Rückveröffentlichung einer inkompatiblen OTA-Gruppe aufgehoben.
 
 Android-Veröffentlichung bleibt pausiert; ein Android-Export ist keine Abnahme.
+
+## Statusfortschreibung am 21.09.2026
+
+Die in diesem Dokument vorbereitete Testaufteilung und Dokumentation wurden mit
+PR #89 (`8014390`) integriert. Danach veränderten PR #90 (`40532e3`) und PR #91
+(`0df84c6`) den App-Stand erneut. Dieses Dokument bleibt der Nachweis für die
+damalige Kandidatenprüfung, ist aber kein aktueller, unverändert auslieferbarer
+Release-Kandidat für den Stand nach PR #91.
+
+Auf der vorhandenen Preview-App wurden Darstellung und Einstellungsspeicherung,
+Backup-Erstellung, Offline-Nutzung einschließlich Schreiben über Neustarts,
+Erinnerungen und Terminserien vom Nutzer bestätigt. Diese Ergebnisse sind in
+[iPhone-Abnahme 21.09.2026](iphone-acceptance-2026-09-21.md) abgegrenzt. Sie sind
+keine Geräteabnahme von TestFlight Build 3 und ersetzen keinen neuen vollständigen
+Release-Lauf für einen späteren nativen Build.
+
+Der Nutzer hat entschieden, weitere Änderungen zu sammeln. Daher sind aktuell kein
+neuer EAS-Build, kein Submit und keine TestFlight-Verteilung freigegeben. Sobald ein
+neuer Build gewünscht ist, wird ein frischer Kandidat vom dann aktuellen Master
+erstellt; Runtime, Release-Gates, Backup-/Rollback-Plan und Zielgerät werden erneut
+geprüft.
