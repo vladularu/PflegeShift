@@ -66,7 +66,7 @@ describe("form controls", () => {
       width: "100%",
       minHeight: 52,
       borderWidth: 0,
-      backgroundColor: LIGHT_PALETTE.primary,
+      backgroundColor: LIGHT_PALETTE.accent,
       opacity: 1,
     });
     expect(screen.getByRole("button", { name: "Abbrechen" })).toHaveStyle({
@@ -75,6 +75,8 @@ describe("form controls", () => {
       borderWidth: 1,
     });
     expect(screen.getByText("Abbrechen")).toHaveProp("dynamicTypeRamp", "headline");
+    expect(screen.getByText("Abbrechen")).toHaveStyle({ color: LIGHT_PALETTE.primary });
+    expect(screen.getByText("Speichern")).toHaveStyle({ color: LIGHT_PALETTE.onAccent });
   });
 
   it("announces a busy primary action and blocks repeated submission", async () => {

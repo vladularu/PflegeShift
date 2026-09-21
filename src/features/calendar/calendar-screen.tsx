@@ -507,7 +507,7 @@ export function CalendarScreen() {
   if (profile === null) return <LoadingView />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: palette.background }}>
+    <View style={{ flex: 1, backgroundColor: palette.calendarBackground }}>
       <CalendarHeader
         synchronized
         notice={

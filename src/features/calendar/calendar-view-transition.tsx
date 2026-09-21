@@ -356,7 +356,7 @@ export function CalendarTransitionHost({
         <View
           ref={root}
           collapsable={false}
-          style={[styles.host, { backgroundColor: palette.background }]}
+          style={[styles.host, { backgroundColor: palette.calendarBackground }]}
           testID="calendar-transition-host"
         >
           <Animated.View

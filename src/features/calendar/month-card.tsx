@@ -533,6 +533,7 @@ export const MonthCard = memo(function MonthCard({
   showShiftDuration = false,
 }: MonthCardProps) {
   const palette = usePalette();
+  const backgroundColor = palette.calendarBackground;
   const internalStampProgress = useSharedValue(stampMode ? 1 : 0);
   const stampProgress = stampTransitionProgress ?? internalStampProgress;
   const { width } = useWindowDimensions();
@@ -574,13 +575,13 @@ export const MonthCard = memo(function MonthCard({
       accessibilityElementsHidden={!accessibilityVisible}
       aria-hidden={!accessibilityVisible}
       importantForAccessibility={accessibilityVisible ? "auto" : "no-hide-descendants"}
-      style={{ height: pageHeight, alignItems: "center", backgroundColor: palette.background }}
+      style={{ height: pageHeight, alignItems: "center", backgroundColor }}
     >
       <View
         style={{
           width: contentWidth,
           overflow: "hidden",
-          backgroundColor: palette.background,
+          backgroundColor,
           marginTop: 0,
         }}
       >
