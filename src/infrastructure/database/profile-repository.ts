@@ -10,7 +10,7 @@ export async function loadProfile(db: SQLiteDatabase): Promise<UserProfile | nul
     `SELECT federal_state,holiday_region,weekly_minutes,time_zone,pay_group,pay_level,
       tariff_sector,tariff_region,full_time_weekly_minutes,industry,manual_monthly_gross_cents,
       regular_rotating_night_work,sunday_holiday_work_eligible,all_employment_work_recorded,
-      created_at,updated_at
+      display_name,employer_name,created_at,updated_at
      FROM user_profile WHERE id='singleton'`,
   );
   return row === null ? null : mapProfileRow(row);
@@ -20,12 +20,13 @@ export async function saveProfile(
   db: SQLiteDatabase,
   rawInput: SaveProfileInput,
 ): Promise<UserProfile> {
-  const current =
-    rawInput.industry === undefined || rawInput.manualMonthlyGrossCents === undefined
-      ? await loadProfile(db)
-      : null;
+  const current = await loadProfile(db);
   const input = validateProfile({
     ...rawInput,
+    displayName:
+      rawInput.displayName === undefined ? (current?.displayName ?? null) : rawInput.displayName,
+    employerName:
+      rawInput.employerName === undefined ? (current?.employerName ?? null) : rawInput.employerName,
     industry: rawInput.industry === undefined ? (current?.industry ?? null) : rawInput.industry,
     manualMonthlyGrossCents:
       rawInput.manualMonthlyGrossCents === undefined
@@ -38,8 +39,8 @@ export async function saveProfile(
        id,federal_state,holiday_region,weekly_minutes,time_zone,pay_group,pay_level,
        tariff_sector,tariff_region,full_time_weekly_minutes,industry,manual_monthly_gross_cents,
        regular_rotating_night_work,sunday_holiday_work_eligible,all_employment_work_recorded,
-       created_at,updated_at
-     ) VALUES('singleton',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       display_name,employer_name,created_at,updated_at
+     ) VALUES('singleton',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        federal_state=excluded.federal_state,
        holiday_region=excluded.holiday_region,
@@ -51,6 +52,8 @@ export async function saveProfile(
        tariff_region=excluded.tariff_region,
        full_time_weekly_minutes=excluded.full_time_weekly_minutes,
        industry=excluded.industry,
+       display_name=excluded.display_name,
+       employer_name=excluded.employer_name,
        manual_monthly_gross_cents=excluded.manual_monthly_gross_cents,
        regular_rotating_night_work=excluded.regular_rotating_night_work,
        sunday_holiday_work_eligible=excluded.sunday_holiday_work_eligible,
@@ -70,6 +73,8 @@ export async function saveProfile(
     input.regularRotatingNightWork === null ? null : input.regularRotatingNightWork ? 1 : 0,
     input.sundayHolidayWorkEligible === null ? null : input.sundayHolidayWorkEligible ? 1 : 0,
     input.allEmploymentWorkRecorded === null ? null : input.allEmploymentWorkRecorded ? 1 : 0,
+    input.displayName ?? null,
+    input.employerName ?? null,
     now,
     now,
   );

@@ -1,3 +1,5 @@
+import { ANALYSIS_VIEW_KEY, DEFAULT_ANALYSIS_VIEW } from "@/domain/analysis-view";
+import { loadAnalysisView, saveAnalysisView } from "./analysis-view-repository";
 import { createHash } from "node:crypto";
 
 import canonicalize from "canonicalize";
@@ -19,6 +21,10 @@ import {
   type LocalBackupDocument,
 } from "@/infrastructure/database/local-backup";
 import { migrateDatabase } from "@/infrastructure/database/migrations";
+import {
+  loadAppearancePreferences,
+  saveAppearancePreferences,
+} from "@/infrastructure/database/appearance-repository";
 import {
   loadPlanningHintsPreference,
   savePlanningHintsPreference,
@@ -130,6 +136,55 @@ async function signedSerialized(
 }
 
 describe("local backup restore", () => {
+  it("round-trips dashboard order, visibility and metric, and resets them for older backups", async () => {
+    const view = {
+      ...DEFAULT_ANALYSIS_VIEW,
+      order: ["PAY", "WORK", "CHECK", "SHIFTS"] as const,
+      hidden: ["SHIFTS"] as const,
+      shiftMetric: "COUNT" as const,
+    };
+    await saveAnalysisView(sourceDb, view);
+    const backup = await createLocalBackupDocument(await loadLocalBackupSnapshot(sourceDb), {
+      appVersion: "0.1.0",
+      createdAt: new Date("2026-09-21T10:00:00Z"),
+      sha256,
+    });
+    const validated = await validateLocalBackup(backup.serialized, {
+      maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(destinationDb),
+      sha256,
+    });
+    await restoreLocalBackup(destinationDb, validated);
+    expect(await loadAnalysisView(destinationDb)).toEqual(view);
+    const legacy = await validateLocalBackup(JSON.stringify(document), {
+      maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(destinationDb),
+      sha256,
+    });
+    await restoreLocalBackup(destinationDb, legacy);
+    expect(await loadAnalysisView(destinationDb)).toEqual(DEFAULT_ANALYSIS_VIEW);
+  });
+
+  it("rejects duplicate or unknown dashboard cards in a correctly signed backup", async () => {
+    for (const order of [
+      ["WORK", "WORK", "PAY", "SHIFTS"],
+      ["WORK", "CHECK", "PAY", "UNKNOWN"],
+    ]) {
+      const serialized = await signedSerialized(document, (unsigned) => {
+        const data = unsigned.data as { preferences: unknown[] };
+        data.preferences.push({
+          key: ANALYSIS_VIEW_KEY,
+          value: JSON.stringify({ ...DEFAULT_ANALYSIS_VIEW, order }),
+          updated_at: "2026-09-21T10:00:00Z",
+        });
+      });
+      await expect(
+        validateLocalBackup(serialized, {
+          maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(destinationDb),
+          sha256,
+        }),
+      ).rejects.toBeInstanceOf(LocalBackupValidationError);
+    }
+  });
+
   let source: TestDatabase;
   let destination: TestDatabase;
   let sourceDb: SQLiteDatabase;
@@ -170,6 +225,57 @@ describe("local backup restore", () => {
   afterEach(() => {
     source.database.close();
     destination.database.close();
+  });
+
+  it("round-trips identity and appearance together", async () => {
+    await sourceDb.runAsync(
+      "UPDATE user_profile SET display_name=?,employer_name=?",
+      "Alex",
+      "Klinikum am Park",
+    );
+    await saveAppearancePreferences(sourceDb, { themeId: "sea", mode: "dark" });
+    const exported = await createLocalBackupDocument(await loadLocalBackupSnapshot(sourceDb), {
+      appVersion: "test",
+      createdAt: new Date(),
+      sha256,
+    });
+    const backup = await validateLocalBackup(exported.serialized, {
+      maxDatabaseSchemaVersion: 13,
+      sha256,
+    });
+    await restoreLocalBackup(destinationDb, backup);
+    expect(
+      await destinationDb.getFirstAsync("SELECT display_name,employer_name FROM user_profile"),
+    ).toEqual({ display_name: "Alex", employer_name: "Klinikum am Park" });
+    expect(await loadAppearancePreferences(destinationDb)).toEqual({
+      themeId: "sea",
+      mode: "dark",
+    });
+  });
+
+  it("verifies an original version 12 backup before filling absent identity and appearance defaults", async () => {
+    const serialized = await signedSerialized(document, (unsigned) => {
+      unsigned.databaseSchemaVersion = 12;
+      const data = unsigned.data as { profile: Record<string, unknown> };
+      delete data.profile.display_name;
+      delete data.profile.employer_name;
+    });
+    await saveAppearancePreferences(destinationDb, { themeId: "mint", mode: "dark" });
+    const backup = await validateLocalBackup(serialized, { maxDatabaseSchemaVersion: 13, sha256 });
+    await restoreLocalBackup(destinationDb, backup);
+    expect(
+      await destinationDb.getFirstAsync("SELECT display_name,employer_name FROM user_profile"),
+    ).toEqual({ display_name: null, employer_name: null });
+    expect(await loadAppearancePreferences(destinationDb)).toEqual({
+      themeId: "standard",
+      mode: "system",
+    });
+    await expect(
+      validateLocalBackup(serialized.replace("345000", "345001"), {
+        maxDatabaseSchemaVersion: 13,
+        sha256,
+      }),
+    ).rejects.toThrow("Prüfwert");
   });
 
   it("persists planning settings and restores them through a validated backup", async () => {
@@ -237,7 +343,7 @@ describe("local backup restore", () => {
     expect(backup.preview).toMatchObject({
       createdAt: "2026-09-02T12:00:00.000Z",
       appVersion: "0.1.0",
-      databaseSchemaVersion: 12,
+      databaseSchemaVersion: 13,
       profileIncluded: true,
       templateCount: 7,
       shiftCount: 1,
@@ -252,7 +358,7 @@ describe("local backup restore", () => {
 
   it("replaces only exported user data and preserves internal state", async () => {
     const backup = await validateLocalBackup(JSON.stringify(document), {
-      maxDatabaseSchemaVersion: 12,
+      maxDatabaseSchemaVersion: 13,
       sha256,
     });
 
@@ -273,12 +379,12 @@ describe("local backup restore", () => {
     ).toEqual({ count: 0 });
     expect(
       destination.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get(),
-    ).toEqual({ count: 12 });
+    ).toEqual({ count: 13 });
   });
 
   it("rolls the complete replacement back when an insert fails", async () => {
     const backup = await validateLocalBackup(JSON.stringify(document), {
-      maxDatabaseSchemaVersion: 12,
+      maxDatabaseSchemaVersion: 13,
       sha256,
     });
     const before = await loadLocalBackupSnapshot(destinationDb);
@@ -301,24 +407,24 @@ describe("local backup restore", () => {
     const changed = JSON.parse(JSON.stringify(document)) as LocalBackupDocument;
     Object.assign(changed, { appVersion: "tampered" });
     await expect(
-      validateLocalBackup(JSON.stringify(changed), { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(JSON.stringify(changed), { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toThrow("Prüfwert");
 
     const future = await signedSerialized(document, (unsigned) => {
-      unsigned.databaseSchemaVersion = 13;
+      unsigned.databaseSchemaVersion = 14;
     });
     await expect(
-      validateLocalBackup(future, { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(future, { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toThrow("neueren LUNA-Shift-Version");
   });
 
   it("rejects empty and oversized serialized input before parsing", async () => {
-    await expect(validateLocalBackup("", { maxDatabaseSchemaVersion: 12, sha256 })).rejects.toThrow(
+    await expect(validateLocalBackup("", { maxDatabaseSchemaVersion: 13, sha256 })).rejects.toThrow(
       "leer oder zu groß",
     );
     await expect(
       validateLocalBackup("x".repeat(MAX_LOCAL_BACKUP_CHARACTERS + 1), {
-        maxDatabaseSchemaVersion: 12,
+        maxDatabaseSchemaVersion: 13,
         sha256,
       }),
     ).rejects.toThrow("leer oder zu groß");
@@ -330,7 +436,7 @@ describe("local backup restore", () => {
       data.shifts.push(data.shifts[0]);
     });
     await expect(
-      validateLocalBackup(duplicate, { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(duplicate, { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toBeInstanceOf(LocalBackupValidationError);
 
     const missingTemplate = await signedSerialized(document, (unsigned) => {
@@ -338,7 +444,7 @@ describe("local backup restore", () => {
       Object.assign(data.shifts[0] ?? {}, { template_id: "missing-template" });
     });
     await expect(
-      validateLocalBackup(missingTemplate, { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(missingTemplate, { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toBeInstanceOf(LocalBackupValidationError);
 
     const invalidNestedJson = await signedSerialized(document, (unsigned) => {
@@ -346,7 +452,7 @@ describe("local backup restore", () => {
       Object.assign(data.shifts[0] ?? {}, { notification_json: "{" });
     });
     await expect(
-      validateLocalBackup(invalidNestedJson, { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(invalidNestedJson, { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toBeInstanceOf(LocalBackupValidationError);
 
     const unknownNestedField = await signedSerialized(document, (unsigned) => {
@@ -362,7 +468,7 @@ describe("local backup restore", () => {
       });
     });
     await expect(
-      validateLocalBackup(unknownNestedField, { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(unknownNestedField, { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toBeInstanceOf(LocalBackupValidationError);
 
     const inconsistentAllDay = await signedSerialized(document, (unsigned) => {
@@ -370,7 +476,7 @@ describe("local backup restore", () => {
       Object.assign(data.shifts[0] ?? {}, { all_day: 1 });
     });
     await expect(
-      validateLocalBackup(inconsistentAllDay, { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(inconsistentAllDay, { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toBeInstanceOf(LocalBackupValidationError);
 
     const missingDefaultTemplate = await signedSerialized(document, (unsigned) => {
@@ -378,20 +484,20 @@ describe("local backup restore", () => {
       data.templates = data.templates.filter((template) => template.id !== "default-free");
     });
     await expect(
-      validateLocalBackup(missingDefaultTemplate, { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(missingDefaultTemplate, { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toBeInstanceOf(LocalBackupValidationError);
 
     const unknownField = await signedSerialized(document, (unsigned) => {
       unsigned.unexpected = "value";
     });
     await expect(
-      validateLocalBackup(unknownField, { maxDatabaseSchemaVersion: 12, sha256 }),
+      validateLocalBackup(unknownField, { maxDatabaseSchemaVersion: 13, sha256 }),
     ).rejects.toBeInstanceOf(LocalBackupValidationError);
   });
 
   it("blocks restore while the test laboratory owns an original backup", async () => {
     const backup = await validateLocalBackup(JSON.stringify(document), {
-      maxDatabaseSchemaVersion: 12,
+      maxDatabaseSchemaVersion: 13,
       sha256,
     });
     const before = await loadLocalBackupSnapshot(destinationDb);

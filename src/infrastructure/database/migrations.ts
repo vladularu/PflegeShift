@@ -502,4 +502,22 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     );
     await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 12, now);
   }
+  const migration13 = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version=13",
+  );
+  if (migration13 === null) {
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "display_name",
+      "TEXT CHECK (length(display_name) <= 80)",
+    );
+    await addColumnIfMissing(
+      db,
+      "user_profile",
+      "employer_name",
+      "TEXT CHECK (length(employer_name) <= 160)",
+    );
+    await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 13, now);
+  }
 }

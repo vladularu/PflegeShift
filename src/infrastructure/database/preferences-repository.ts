@@ -1,4 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
+import { APPEARANCE_KEYS } from "@/domain/appearance";
+import { ANALYSIS_VIEW_KEY } from "@/domain/analysis-view";
 
 import type {
   CalendarPreferencesData,
@@ -55,6 +57,8 @@ const CALENDAR_PREFERENCE_KEYS = {
 } as const;
 
 export const USER_DATA_PREFERENCE_KEYS = Object.freeze([
+  ANALYSIS_VIEW_KEY,
+  ...Object.values(APPEARANCE_KEYS),
   PLANNING_HINTS_PREFERENCE_KEY,
   TVOED_COVERAGE_KEY,
   TVOED_ASSIGNMENT_KEY,

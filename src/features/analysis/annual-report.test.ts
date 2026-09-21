@@ -1,3 +1,4 @@
+import { buildMonthlyShiftTypeAnalysis, combineShiftTypeAnalyses } from "./analysis-metrics";
 import { describe, expect, it } from "vitest";
 
 import type {
@@ -290,4 +291,23 @@ describe("buildAnnualReport", () => {
     expect(alternate.report.criticalCount).toBeLessThan(legacy.report.criticalCount);
     expect(alternate.yields).toBeGreaterThan(12);
   });
+});
+
+it("retains per-shift credited minutes across months and repeated cached reports", () => {
+  const entries = [
+    shift("night", "2026-08-03", "NIGHT", { startTime: "21:00", endTime: "07:00" }),
+    shift("vacation", "2026-08-04", "VACATION"),
+    shift("training", "2026-09-03", "TRAINING"),
+    shift("deleted", "2026-09-04", "EARLY", { deletedAt: "2026-09-05T00:00:00Z" }),
+  ];
+  const cache = createAnnualReportComputationCache();
+  const first = drainAnnualReport(entries, cache).report;
+  const second = drainAnnualReport(entries, cache).report;
+  const expected = combineShiftTypeAnalyses(
+    ["2026-08", "2026-09"].map((month) => buildMonthlyShiftTypeAnalysis(month, entries, profile)),
+  );
+  expect(first.shiftTypeAnalysis).toEqual(expected);
+  expect(first.shiftTypeAnalysis?.totalMinutes).toBe(first.actualMinutes);
+  expect(second.shiftTypeAnalysis).toEqual(expected);
+  expect(first.shiftTypeAnalysis?.totalCount).toBe(3);
 });

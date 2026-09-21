@@ -264,3 +264,17 @@ describe("available annual report", () => {
     expect(report.allowanceAmount).toBe(0);
   });
 });
+
+it("keeps shift hours consistent with complete and missing holiday coverage", () => {
+  const complete = build(resolver({}));
+  const partial = build(resolver({ holiday: false }));
+  expect(complete.shiftTypeAnalysis?.totalMinutes).toBe(complete.actualMinutes);
+  expect(partial.shiftTypeAnalysis?.totalMinutes).toBe(partial.actualMinutes);
+  expect(
+    complete.shiftTypeAnalysis?.items.find((item) => item.type === "VACATION")?.minutes,
+  ).toBeGreaterThan(0);
+  expect(partial.shiftTypeAnalysis?.items.find((item) => item.type === "VACATION")?.minutes).toBe(
+    0,
+  );
+  expect(partial.targetMinutes).toBeNull();
+});

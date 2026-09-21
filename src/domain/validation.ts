@@ -162,6 +162,18 @@ export function requireTimeZone(value: string): string {
   }
 }
 
+export function requireProfileText(
+  value: unknown,
+  label: string,
+  maxLength: number,
+): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string" || value.trim().length > maxLength) {
+    throw new ValidationError(`${label} darf höchstens ${maxLength} Zeichen enthalten.`);
+  }
+  return value.trim() || null;
+}
+
 export function validateProfile(input: SaveProfileInput): SaveProfileInput {
   const federalState = requireFederalState(input.federalState);
   const industry = requireIndustry(input.industry);
@@ -202,6 +214,12 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
   }
   return {
     federalState,
+    ...(input.displayName !== undefined
+      ? { displayName: requireProfileText(input.displayName, "Name", 80) }
+      : {}),
+    ...(input.employerName !== undefined
+      ? { employerName: requireProfileText(input.employerName, "Arbeitgeber", 160) }
+      : {}),
     holidayRegion,
     weeklyMinutes: requireWeeklyMinutes(input.weeklyMinutes),
     timeZone: requireTimeZone(input.timeZone.trim() || "Europe/Berlin"),

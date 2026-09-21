@@ -104,7 +104,6 @@ it("updates already mounted month and year cards from the same saved selection",
         testMonths={[]}
         onBackToMonth={() => {}}
         onMoveYear={() => {}}
-        onSelectMonth={() => {}}
       />
     </>,
   );

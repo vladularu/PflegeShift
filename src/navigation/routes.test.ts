@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   TAB_ROUTES,
   analysisRoute,
+  annualDetailsRoute,
   calendarRoute,
   complianceDetailsRoute,
   dayDetailsRoute,
@@ -14,6 +15,7 @@ import {
   settingsEditorRoute,
   settingsInfoRoute,
   shiftSelectionRoute,
+  shiftAnalysisRoute,
   tariffAssessmentRoute,
   templateEditorRoute,
 } from "@/navigation/routes";
@@ -37,6 +39,34 @@ describe("navigation contracts", () => {
       pathname: "/quick-add",
       params: { date: "2026-08-13" },
     });
+  });
+
+  it("passes the year and detail section without report data", () => {
+    expect(annualDetailsRoute(2027, "CHECK")).toEqual({
+      pathname: "/annual-details",
+      params: { month: "2027-01", section: "CHECK" },
+    });
+    expect(() => annualDetailsRoute(2027.5, "WORK")).toThrow();
+    expect(() => annualDetailsRoute(99, "PAY")).toThrow();
+  });
+
+  it("keeps year and premium details distinct from the salary overview", () => {
+    expect(annualDetailsRoute(2026, "PREMIUM")).toEqual({
+      pathname: "/annual-details",
+      params: { month: "2026-01", section: "PREMIUM" },
+    });
+  });
+
+  it("opens simultaneous shift counts and hours for the chosen period", () => {
+    expect(shiftAnalysisRoute("2026-09")).toEqual({
+      pathname: "/worktime-details",
+      params: { month: "2026-09", section: "SHIFTS" },
+    });
+    expect(annualDetailsRoute(2026, "SHIFTS")).toEqual({
+      pathname: "/annual-details",
+      params: { month: "2026-01", section: "SHIFTS" },
+    });
+    expect(() => shiftAnalysisRoute("2026-13")).toThrow();
   });
 
   it("includes entryId only for editing", () => {

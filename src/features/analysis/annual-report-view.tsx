@@ -1,5 +1,6 @@
+import { router } from "expo-router";
+import { annualDetailsRoute } from "@/navigation/routes";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 
@@ -13,17 +14,23 @@ import { useCheckPreferences } from "@/features/settings/check-preferences";
 import { PLANNING_HIDDEN_NOTICE, selectAnnualCheckDisplay } from "./check-visibility";
 import {
   AnalysisYearHeader,
-  ExpandableHighlightCard,
   formatEuro,
   ReportCardTitle,
   WorktimeCard,
 } from "@/features/analysis/analysis-overview-cards";
+import { AnalysisViewControls } from "./analysis-view-controls";
+import { ShiftAnalysisDetails } from "./shift-analysis-details";
+import { AnalysisListCard, AnalysisValueRow } from "./analysis-list-card";
+import { AnnualPremiumReport } from "./annual-premium-report";
+import { AnnualOverview } from "./annual-overview";
+import { AnalysisDetailSummaryCard } from "./analysis-detail-layout";
+import { CheckExplanation, CheckPeriod } from "./check-summary-card";
+import type { AnnualDetailSection } from "@/navigation/routes";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, SurfaceCard } from "@/ui/design-system";
-import { selectionFeedback } from "@/ui/haptics";
 import { ReportFootnote, ReportPeriodContent, ReportScrollView } from "@/ui/report-layout";
 
 export type AnalysisPeriod = "MONTH" | "YEAR";
@@ -34,26 +41,18 @@ export function AnnualReportScreen({
   testMonths,
   onBackToMonth,
   onMoveYear,
-  onSelectMonth,
 }: {
   readonly report: AnnualReport;
   readonly pending?: boolean;
   readonly testMonths: readonly string[];
   readonly onBackToMonth: () => void;
   readonly onMoveYear: (delta: number) => void;
-  readonly onSelectMonth: (month: string, expandedCard?: "CHECK") => void;
 }) {
   const palette = usePalette();
   const preferences = useCheckPreferences();
   const showPlanning = preferences.enabled !== false;
   const report = selectAnnualCheckDisplay(sourceReport, showPlanning);
-  const [expandedCard, setExpandedCard] = useState<"CHECK" | "PAY" | null>(null);
   const testMonthCount = report.months.filter((item) => testMonths.includes(item.month)).length;
-
-  function toggleExpandedCard(nextCard: "CHECK" | "PAY") {
-    setExpandedCard((current) => (current === nextCard ? null : nextCard));
-    selectionFeedback();
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
@@ -73,65 +72,8 @@ export function AnnualReportScreen({
             <AnalysisCoverageNote message="Prüfungseinstellungen werden geladen … Hinweise sind vorläufig vollständig sichtbar." />
           ) : null}
 
-          {pending ? (
-            <AnalysisCoverageNote message="Prüfung und Gehalt werden berechnet … Erfasste Dienste und Zeiten sind bereits sichtbar; Abwesenheitsgutschriften folgen." />
-          ) : report.complianceCoverageComplete ? (
-            <AnnualCheckCard
-              showPlanning={showPlanning}
-              expanded={expandedCard === "CHECK"}
-              onSelectMonth={(month) => onSelectMonth(month, "CHECK")}
-              onToggle={() => toggleExpandedCard("CHECK")}
-              report={report}
-            />
-          ) : (
-            <AnalysisCoverageNote message="Die Jahresprüfung benötigt vollständige Regelstände. Erfasste Zeiten und Schichten bleiben sichtbar." />
-          )}
-
-          {!pending ? (
-            <AnnualSalaryCard
-              expanded={expandedCard === "PAY"}
-              onToggle={() => toggleExpandedCard("PAY")}
-              report={report}
-            />
-          ) : null}
-
-          <WorktimeCard
-            actual={formatMinutes(report.actualMinutes)}
-            balance={
-              pending
-                ? "Wird berechnet"
-                : report.balanceMinutes === null
-                  ? "Nicht verfügbar"
-                  : formatSignedMinutes(report.balanceMinutes)
-            }
-            balanceAccent={
-              report.balanceMinutes === null
-                ? palette.textMuted
-                : report.balanceMinutes < 0
-                  ? palette.danger
-                  : palette.success
-            }
-            target={
-              pending
-                ? "Wird berechnet"
-                : report.targetMinutes === null
-                  ? "Nicht verfügbar"
-                  : formatMinutes(report.targetMinutes)
-            }
-          />
-
-          {!pending && !report.worktimeCoverageComplete ? (
-            <AnalysisCoverageNote message="Soll, Saldo und Abwesenheitsgutschriften sind ohne vollständigen Feiertagsstand nicht verfügbar. Angezeigt werden sicher berechenbare Arbeits- und Fortbildungszeiten." />
-          ) : null}
-
-          <MonthlyBars
-            report={report}
-            pending={pending}
-            testMonths={testMonths}
-            onSelectMonth={onSelectMonth}
-          />
-
-          <DistributionList distribution={report.distribution} />
+          <AnnualOverview report={report} pending={pending} />
+          <AnalysisViewControls />
 
           <ReportFootnote>
             Unverbindliche Schätzung · automatische Prüfung · keine Rechtsberatung
@@ -139,6 +81,168 @@ export function AnnualReportScreen({
         </ReportPeriodContent>
       </ReportScrollView>
     </View>
+  );
+}
+
+export function AnnualReportDetails({
+  report: sourceReport,
+  pending = false,
+  section,
+  testMonths,
+  onSelectMonth,
+}: {
+  readonly report: AnnualReport;
+  readonly pending?: boolean;
+  readonly section: AnnualDetailSection;
+  readonly testMonths: readonly string[];
+  readonly onSelectMonth: (month: string) => void;
+}) {
+  const palette = usePalette();
+  const preferences = useCheckPreferences();
+  const showPlanning = preferences.enabled !== false;
+  const report = selectAnnualCheckDisplay(sourceReport, showPlanning);
+  const testMonthCount = report.months.filter((item) => testMonths.includes(item.month)).length;
+  if (section === "PREMIUM")
+    return <AnnualPremiumReport report={report} pending={pending} onSelectMonth={onSelectMonth} />;
+  if (section === "SHIFTS")
+    return (
+      <ReportScrollView>
+        <AnalysisDetailSummaryCard
+          title="Deine Schichten"
+          period={String(report.year)}
+          caption="Anzahl und Stunden pro Schichtart."
+        />
+        {report.shiftTypeAnalysis ? (
+          <ShiftAnalysisDetails
+            analysis={report.shiftTypeAnalysis}
+            creditsAvailable={!pending && report.worktimeCoverageComplete}
+          />
+        ) : (
+          <AnalysisCoverageNote message="Schichtstunden sind noch nicht verfügbar." />
+        )}
+        <AnalysisListCard
+          title="Monate"
+          caption={
+            pending || !report.worktimeCoverageComplete
+              ? "Erfasste Stunden ohne Abwesenheitsgutschriften."
+              : undefined
+          }
+        >
+          {report.months.map((month, index) => (
+            <AnalysisValueRow
+              key={month.month}
+              first={index === 0}
+              label={formatMonthTitle(month.month)}
+              value={formatMinutes(month.actualMinutes) + " h"}
+              onPress={() => onSelectMonth(month.month)}
+            />
+          ))}
+        </AnalysisListCard>
+      </ReportScrollView>
+    );
+
+  return (
+    <ReportScrollView>
+      <ReportPeriodContent>
+        {section === "CHECK" ? (
+          <>
+            <CheckPeriod period={String(report.year)} />
+            {pending || !report.complianceCoverageComplete ? (
+              <AnalysisCoverageNote
+                message={
+                  pending
+                    ? "Die Jahresprüfung wird berechnet …"
+                    : "Die Jahresprüfung benötigt vollständige Regelstände."
+                }
+              />
+            ) : null}
+          </>
+        ) : (
+          <AnalysisDetailSummaryCard
+            title={section === "WORK" ? "Deine Stunden" : "Dein Jahresgehalt"}
+            period={String(report.year)}
+            caption={
+              section === "WORK"
+                ? "Arbeitszeit und Schichten im Jahresverlauf."
+                : "Brutto-Schätzungen nach Monaten · antippen für Details."
+            }
+          />
+        )}
+        {testMonthCount > 0 ? <AnnualTestBadge count={testMonthCount} /> : null}
+        {section === "CHECK" ? (
+          <>
+            {!showPlanning ? <AnalysisCoverageNote message={PLANNING_HIDDEN_NOTICE} /> : null}
+            {preferences.error ? <AnalysisCoverageNote message={preferences.error} /> : null}
+            {preferences.enabled === null && !preferences.error ? (
+              <AnalysisCoverageNote message="Prüfungseinstellungen werden geladen … Hinweise sind vorläufig vollständig sichtbar." />
+            ) : null}
+            {!pending && report.complianceCoverageComplete ? (
+              <AnnualCheckDetails report={report} onSelectMonth={onSelectMonth} />
+            ) : null}
+          </>
+        ) : section === "PAY" ? (
+          pending ? (
+            <AnalysisCoverageNote message="Das Jahresgehalt wird berechnet …" />
+          ) : (
+            <AnnualSalaryDetails report={report} onSelectMonth={onSelectMonth} />
+          )
+        ) : (
+          <>
+            <WorktimeCard
+              actual={formatMinutes(report.actualMinutes)}
+              balance={
+                pending
+                  ? "Wird berechnet"
+                  : report.balanceMinutes === null
+                    ? "Nicht verfügbar"
+                    : formatSignedMinutes(report.balanceMinutes)
+              }
+              balanceAccent={
+                report.balanceMinutes === null
+                  ? palette.textMuted
+                  : report.balanceMinutes < 0
+                    ? palette.danger
+                    : palette.success
+              }
+              target={
+                pending
+                  ? "Wird berechnet"
+                  : report.targetMinutes === null
+                    ? "Nicht verfügbar"
+                    : formatMinutes(report.targetMinutes)
+              }
+            />
+
+            {!pending && !report.worktimeCoverageComplete ? (
+              <AnalysisCoverageNote message="Soll, Saldo und Abwesenheitsgutschriften sind ohne vollständigen Feiertagsstand nicht verfügbar. Angezeigt werden sicher berechenbare Arbeits- und Fortbildungszeiten." />
+            ) : null}
+
+            <MonthlyBars
+              report={report}
+              pending={pending}
+              testMonths={testMonths}
+              onSelectMonth={onSelectMonth}
+            />
+
+            {report.shiftTypeAnalysis ? (
+              <ShiftAnalysisDetails
+                analysis={report.shiftTypeAnalysis}
+                creditsAvailable={!pending && report.worktimeCoverageComplete}
+              />
+            ) : (
+              <DistributionList distribution={report.distribution} />
+            )}
+          </>
+        )}
+        {section === "CHECK" ? (
+          <CheckExplanation />
+        ) : (
+          <ReportFootnote>
+            Unverbindliche Schätzung · automatische Prüfung · keine Rechtsberatung
+          </ReportFootnote>
+        )}
+      </ReportPeriodContent>
+    </ReportScrollView>
   );
 }
 
@@ -166,135 +270,115 @@ function AnnualTestBadge({ count }: { readonly count: number }) {
   );
 }
 
-function AnnualCheckCard({
+function AnnualCheckDetails({
   report,
-  showPlanning,
-  expanded,
-  onToggle,
   onSelectMonth,
 }: {
   readonly report: AnnualReport;
-  readonly showPlanning: boolean;
-  readonly expanded: boolean;
-  readonly onToggle: () => void;
   readonly onSelectMonth: (month: string) => void;
 }) {
   const palette = usePalette();
   const issueMonths = report.months.filter(
     (item) => item.criticalCount + item.warningCount + (item.infoCount ?? 0) > 0,
   );
-  const messageCount = report.criticalCount + report.warningCount + (report.infoCount ?? 0);
-  const clear = messageCount === 0;
-  const accent = clear
-    ? palette.success
-    : report.criticalCount > 0
-      ? palette.danger
-      : report.warningCount > 0
-        ? palette.warning
-        : palette.primary;
-  const legalReport = selectAnnualCheckDisplay(report, false);
-  const legalCount =
-    legalReport.criticalCount + legalReport.warningCount + (legalReport.infoCount ?? 0);
-
+  if (issueMonths.length === 0)
+    return (
+      <AnalysisCoverageNote message="Keine Auffälligkeiten in den eingeblendeten Prüfungen." />
+    );
   return (
-    <ExpandableHighlightCard
-      accent={accent}
-      countBadge={messageCount}
-      expanded={expanded}
-      icon={clear ? "shield-checkmark-outline" : "warning-outline"}
-      onToggle={onToggle}
-      title="Prüfung"
-      value={messageCount === 1 ? "Meldung" : "Meldungen"}
-    >
-      <View style={{ padding: SPACING.lg, gap: SPACING.sm }}>
-        <Text style={{ color: palette.text, ...TYPOGRAPHY.body }}>
-          Gesetzliche Prüfung: {legalCount}
-        </Text>
-        {showPlanning ? (
-          <Text style={{ color: palette.text, ...TYPOGRAPHY.body }}>
-            Freiwillige Planung: {messageCount - legalCount}
-          </Text>
-        ) : null}
-      </View>
-      {issueMonths.length === 0 ? (
-        <View style={{ padding: SPACING.lg }}>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            selectable
-            style={{ color: palette.success, ...TYPOGRAPHY.bodyStrong }}
-          >
-            In den sichtbaren Prüfungen wurden keine Auffälligkeiten erkannt.
-          </Text>
-        </View>
-      ) : (
-        <View style={{ paddingHorizontal: SPACING.lg }}>
-          {issueMonths.map((item, index) => (
+    <View style={{ gap: SPACING.md }}>
+      <Text
+        accessibilityRole="header"
+        maxFontSizeMultiplier={TEXT_MAX_SCALE}
+        style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
+      >
+        Monate mit Meldungen
+      </Text>
+      <SurfaceCard style={{ paddingHorizontal: SPACING.lg }}>
+        {issueMonths.map((item, index) => {
+          const count = item.criticalCount + item.warningCount + (item.infoCount ?? 0);
+          const countLabel = `${count} ${count === 1 ? "Meldung" : "Meldungen"}`;
+          const monthLabel = formatMonthTitle(item.month);
+          const severity =
+            item.criticalCount > 0
+              ? "Kritische Meldung enthalten"
+              : item.warningCount > 0
+                ? "Warnung enthalten"
+                : "Hinweis enthalten";
+          return (
             <View key={item.month}>
               {index > 0 ? <CardSeparator inset={0} /> : null}
               <Pressable
-                accessibilityHint="Öffnet den Monat mit der aufgeklappten Monatsauswertung"
+                accessibilityLabel={`${monthLabel}, ${countLabel}, ${severity}`}
+                accessibilityHint="Öffnet die Prüfung für diesen Monat"
                 accessibilityRole="button"
                 onPress={() => onSelectMonth(item.month)}
                 style={({ pressed }) => ({
-                  minHeight: 58,
+                  minHeight: 64,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: SPACING.md,
                   backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                  opacity: pressed ? 0.72 : 1,
-                  paddingVertical: SPACING.sm,
+                  paddingVertical: SPACING.md,
                 })}
               >
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor:
-                      item.criticalCount > 0
-                        ? palette.danger
-                        : item.warningCount > 0
-                          ? palette.warning
-                          : palette.primary,
-                  }}
-                />
                 <View style={{ minWidth: 0, flex: 1, gap: SPACING.xxs }}>
                   <Text
                     maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    selectable
                     style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
                   >
-                    {formatMonthTitle(item.month)}
+                    {monthLabel.replace(` ${report.year}`, "")}
                   </Text>
-                  <Text
-                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    selectable
-                    style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-                  >
-                    {item.criticalCount + item.warningCount + (item.infoCount ?? 0)}{" "}
-                    {item.criticalCount + item.warningCount + (item.infoCount ?? 0) === 1
-                      ? "Meldung"
-                      : "Meldungen"}
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "flex-start", gap: SPACING.xs }}>
+                    <Ionicons
+                      name={
+                        item.criticalCount > 0
+                          ? "alert-circle-outline"
+                          : item.warningCount > 0
+                            ? "warning-outline"
+                            : "information-circle-outline"
+                      }
+                      size={15}
+                      color={
+                        item.criticalCount > 0
+                          ? palette.danger
+                          : item.warningCount > 0
+                            ? palette.warning
+                            : palette.primary
+                      }
+                      accessibilityElementsHidden
+                      importantForAccessibility="no"
+                    />
+                    <Text
+                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                      style={{ flexShrink: 1, color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                    >
+                      {countLabel}
+                    </Text>
+                  </View>
                 </View>
-                <Ionicons color={palette.textMuted} name="chevron-forward" size={18} />
+                <Ionicons
+                  color={palette.textMuted}
+                  name="chevron-forward"
+                  size={18}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                />
               </Pressable>
             </View>
-          ))}
-        </View>
-      )}
-    </ExpandableHighlightCard>
+          );
+        })}
+      </SurfaceCard>
+    </View>
   );
 }
 
-function AnnualSalaryCard({
+function AnnualSalaryDetails({
   report,
-  expanded,
-  onToggle,
+  onSelectMonth,
 }: {
   readonly report: AnnualReport;
-  readonly expanded: boolean;
-  readonly onToggle: () => void;
+  readonly onSelectMonth: (month: string) => void;
 }) {
   const palette = usePalette();
   const available = report.availablePayMonthCount > 0;
@@ -303,59 +387,47 @@ function AnnualSalaryCard({
       label: "Berücksichtigte Monate",
       value: `${report.availablePayMonthCount} von 12`,
     },
-    { label: "Zeitzuschläge", value: formatEuro(report.premiumAmount) },
-    { label: "Überstunden", value: formatEuro(report.overtimeAmount) },
-    { label: "Zulagen", value: formatEuro(report.allowanceAmount) },
+    ...(report.salarySource === "MANUAL"
+      ? []
+      : [
+          { label: "Zeitzuschläge", value: formatEuro(report.premiumAmount) },
+          { label: "Überstunden", value: formatEuro(report.overtimeAmount) },
+          { label: "Zulagen", value: formatEuro(report.allowanceAmount) },
+        ]),
   ];
   return (
-    <ExpandableHighlightCard
-      accent={palette.primary}
-      expanded={expanded}
-      icon="wallet-outline"
-      onToggle={onToggle}
-      summary={
-        available
-          ? `Summe aus ${report.availablePayMonthCount} von 12 Monatsschätzungen`
-          : "Keine unterstützte Monatsschätzung verfügbar"
-      }
-      title="Gehalt"
-      value={available ? formatEuro(report.estimatedGrossAmount) : "Nicht verfügbar"}
-    >
+    <SurfaceCard>
+      <View style={{ padding: SPACING.lg, gap: SPACING.sm }}>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.text, ...TYPOGRAPHY.screenTitle, fontVariant: ["tabular-nums"] }}
+        >
+          {available ? formatEuro(report.estimatedGrossAmount) : "Nicht verfügbar"}
+        </Text>
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+        >
+          {available
+            ? `Summe aus ${report.availablePayMonthCount} von 12 Monatsschätzungen`
+            : "Keine unterstützte Monatsschätzung verfügbar"}
+        </Text>
+      </View>
       {available ? (
         <View style={{ paddingHorizontal: SPACING.lg }}>
           {rows.map((row, index) => (
-            <View key={row.label}>
-              {index > 0 ? <CardSeparator inset={0} /> : null}
-              <View
-                style={{
-                  minHeight: 56,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: SPACING.md,
-                  paddingVertical: SPACING.sm,
-                }}
-              >
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ minWidth: 0, flex: 1, color: palette.textMuted, ...TYPOGRAPHY.label }}
-                >
-                  {row.label}
-                </Text>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{
-                    color: palette.text,
-                    ...TYPOGRAPHY.bodyStrong,
-                    fontVariant: ["tabular-nums"],
-                  }}
-                >
-                  {row.value}
-                </Text>
-              </View>
-            </View>
+            <AnalysisValueRow
+              key={row.label}
+              first={index === 0}
+              label={row.label}
+              value={row.value}
+              reserveDisclosure
+              onPress={
+                row.label === "Zeitzuschläge"
+                  ? () => router.push(annualDetailsRoute(report.year, "PREMIUM"))
+                  : undefined
+              }
+            />
           ))}
         </View>
       ) : (
@@ -369,7 +441,47 @@ function AnnualSalaryCard({
           </Text>
         </View>
       )}
-    </ExpandableHighlightCard>
+      <CardSeparator inset={0} />
+      <View style={{ paddingHorizontal: SPACING.lg }}>
+        {report.months.map((item, index) => (
+          <View key={item.month}>
+            {index > 0 ? <CardSeparator inset={0} /> : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${formatMonthTitle(item.month)}, ${item.estimatedGrossAmount === null ? "Nicht verfügbar" : formatEuro(item.estimatedGrossAmount)}`}
+              accessibilityHint="Öffnet Gehalt und Zeitzuschläge für diesen Monat"
+              onPress={() => onSelectMonth(item.month)}
+              style={({ pressed }) => ({
+                minHeight: 56,
+                paddingVertical: SPACING.md,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: SPACING.md,
+                opacity: pressed ? 0.72 : 1,
+              })}
+            >
+              <View style={{ flex: 1, minWidth: 0, gap: SPACING.xs }}>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                >
+                  {formatMonthTitle(item.month)}
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                  style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
+                >
+                  {item.estimatedGrossAmount === null
+                    ? "Nicht verfügbar"
+                    : formatEuro(item.estimatedGrossAmount)}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" color={palette.textMuted} size={18} />
+            </Pressable>
+          </View>
+        ))}
+      </View>
+    </SurfaceCard>
   );
 }
 
@@ -385,78 +497,84 @@ function MonthlyBars({
   readonly onSelectMonth: (month: string) => void;
 }) {
   const palette = usePalette();
-  const maximum = Math.max(
-    1,
-    ...report.months.map((item) => Math.max(item.actualMinutes, item.targetMinutes ?? 0)),
-  );
+  const maximum = Math.max(1, ...report.months.map((item) => item.actualMinutes));
   return (
     <SurfaceCard>
       <ReportCardTitle title="Jahresverlauf" />
       <CardSeparator inset={0} />
-      <View style={{ gap: SPACING.md, padding: SPACING.lg }}>
+      <View style={{ gap: SPACING.sm, padding: SPACING.lg }}>
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
           style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
         >
-          Monat antippen, um die Monatsauswertung zu öffnen.
+          Monat antippen, um die Stunden im Detail zu öffnen.
         </Text>
-        <View style={{ height: 112, flexDirection: "row", alignItems: "flex-end", gap: 4 }}>
-          {report.months.map((item, index) => {
-            const height = Math.max(3, (item.actualMinutes / maximum) * 82);
-            const hasIssue = item.criticalCount > 0 || item.warningCount > 0;
-            const isTest = testMonths.includes(item.month);
-            return (
-              <Pressable
-                key={item.month}
-                accessibilityLabel={`${formatMonthTitle(item.month)}, ${formatMinutes(item.actualMinutes)} ${pending ? "erfasst; Prüfung ausstehend" : "Ist"}`}
-                accessibilityRole="button"
-                onPress={() => onSelectMonth(item.month)}
-                style={({ pressed }) => ({
-                  minWidth: 0,
-                  flex: 1,
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  gap: 5,
-                  opacity: pressed ? 0.58 : 1,
-                })}
+        {report.months.map((item, index) => (
+          <View key={item.month}>
+            {index > 0 ? <CardSeparator inset={0} /> : null}
+            <Pressable
+              accessibilityLabel={`${formatMonthTitle(item.month)}, ${formatMinutes(item.actualMinutes)} ${pending ? "erfasst; Prüfung ausstehend" : "Ist"}${testMonths.includes(item.month) ? ", Testdaten" : ""}`}
+              accessibilityRole="button"
+              onPress={() => onSelectMonth(item.month)}
+              style={({ pressed }) => ({
+                minHeight: 56,
+                gap: SPACING.sm,
+                paddingVertical: SPACING.md,
+                opacity: pressed ? 0.72 : 1,
+              })}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.md }}>
+                <View style={{ flex: 1, minWidth: 0, gap: SPACING.xs }}>
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                  >
+                    {formatMonthTitle(item.month)}
+                  </Text>
+                  <Text
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                    style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                  >
+                    {formatMinutes(item.actualMinutes)} h {pending ? "erfasst" : "Ist"} · Soll{" "}
+                    {pending
+                      ? "Wird berechnet"
+                      : item.targetMinutes === null
+                        ? "Nicht verfügbar"
+                        : `${formatMinutes(item.targetMinutes)} h`}
+                  </Text>
+                  {testMonths.includes(item.month) ? (
+                    <Text
+                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                      style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                    >
+                      Testdaten
+                    </Text>
+                  ) : null}
+                </View>
+                <Ionicons color={palette.textMuted} name="chevron-forward" size={18} />
+              </View>
+              <View
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={{
+                  height: 6,
+                  backgroundColor: palette.primarySoft,
+                  borderRadius: RADII.pill,
+                  overflow: "hidden",
+                }}
               >
-                <Animated.View
-                  entering={FadeInUp.delay(index * 24)
-                    .duration(MOTION.duration.normal)
-                    .reduceMotion(MOTION.reduceMotion)}
+                <View
                   style={{
-                    width: "72%",
-                    height,
-                    minHeight: 3,
-                    borderRadius: 5,
-                    backgroundColor: hasIssue
-                      ? item.criticalCount > 0
-                        ? palette.danger
-                        : palette.warning
-                      : palette.primary,
+                    height: "100%",
+                    width: `${(item.actualMinutes / maximum) * 100}%`,
+                    backgroundColor: palette.primary,
+                    borderRadius: RADII.pill,
                   }}
                 />
-                <Text
-                  selectable
-                  style={{
-                    color: isTest ? palette.primary : palette.textMuted,
-                    fontSize: 11,
-                    fontWeight: isTest ? "700" : "500",
-                  }}
-                >
-                  {new Intl.DateTimeFormat("de-DE", { month: "narrow", timeZone: "UTC" }).format(
-                    new Date(`${item.month}-01T00:00:00Z`),
-                  )}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <View style={{ flexDirection: "row", gap: 14 }}>
-          <LegendDot color={palette.primary} label="Arbeitszeit" />
-          {!pending ? <LegendDot color={palette.warning} label="mit Hinweis" /> : null}
-        </View>
+              </View>
+            </Pressable>
+          </View>
+        ))}
       </View>
     </SurfaceCard>
   );
@@ -606,17 +724,5 @@ function DistributionList({
         ) : null}
       </View>
     </SurfaceCard>
-  );
-}
-
-function LegendDot({ color, label }: { readonly color: string; readonly label: string }) {
-  const palette = usePalette();
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-      <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: color }} />
-      <Text selectable style={{ color: palette.textMuted, fontSize: 12 }}>
-        {label}
-      </Text>
-    </View>
   );
 }

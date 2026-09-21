@@ -1,3 +1,4 @@
+import { AnalysisViewControls } from "./analysis-view-controls";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
@@ -143,24 +144,27 @@ function AnalysisPeriodHeader({
   return (
     <TabScreenHeader
       accessory={
-        <Pressable
-          accessibilityLabel={toggleAccessibilityLabel}
-          accessibilityRole="button"
-          onPress={onToggle}
-          style={({ pressed }) => ({
-            width: CONTROL_HEIGHT.compact,
-            height: CONTROL_HEIGHT.compact,
-            alignItems: "center",
-            justifyContent: "center",
-            borderWidth: 1,
-            borderColor: palette.separator,
-            borderRadius: RADII.pill,
-            backgroundColor: pressed ? palette.surfaceMuted : palette.surface,
-            opacity: pressed ? 0.72 : 1,
-          })}
-        >
-          <Ionicons accessible={false} color={palette.text} name="calendar-outline" size={21} />
-        </Pressable>
+        <View style={{ flexDirection: "row", gap: SPACING.sm }}>
+          <AnalysisViewControls compact />
+          <Pressable
+            accessibilityLabel={toggleAccessibilityLabel}
+            accessibilityRole="button"
+            onPress={onToggle}
+            style={({ pressed }) => ({
+              width: CONTROL_HEIGHT.compact,
+              height: CONTROL_HEIGHT.compact,
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor: palette.separator,
+              borderRadius: RADII.pill,
+              backgroundColor: pressed ? palette.surfaceMuted : palette.surface,
+              opacity: pressed ? 0.72 : 1,
+            })}
+          >
+            <Ionicons accessible={false} color={palette.text} name="calendar-outline" size={21} />
+          </Pressable>
+        </View>
       }
       surface="groupedBackground"
       title="Auswertung"

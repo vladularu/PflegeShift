@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CalendarLabelMode } from "@/domain/types";
 import { migrateDatabase } from "@/infrastructure/database/migrations";
 import {
+  loadAppearancePreferences,
+  saveAppearancePreferences,
+} from "@/infrastructure/database/appearance-repository";
+import {
   deleteCalendarEntry,
   deleteTemplate,
   listCalendarEntries,
@@ -65,13 +69,82 @@ describe("SQLite repository", () => {
     testDb.database.close();
   });
 
+  it("preserves identity when legacy profile editors omit it and allows explicit clearing", async () => {
+    const input = {
+      federalState: "NW" as const,
+      weeklyMinutes: 2310,
+      timeZone: "Europe/Berlin",
+      manualMonthlyGrossCents: 345000,
+    };
+    await saveProfile(db, { ...input, displayName: "  Alex  ", employerName: "Klinikum am Park" });
+    await saveProfile(db, { ...input, weeklyMinutes: 1920 });
+    expect(await loadProfile(db)).toMatchObject({
+      displayName: "Alex",
+      employerName: "Klinikum am Park",
+      weeklyMinutes: 1920,
+      manualMonthlyGrossCents: 345000,
+    });
+    await saveProfile(db, { ...input, displayName: "", employerName: null });
+    expect(await loadProfile(db)).toMatchObject({ displayName: null, employerName: null });
+  });
+
+  it("adds optional identity fields to a version 12 profile without changing its calculation data", async () => {
+    await saveProfile(db, {
+      federalState: "NW",
+      weeklyMinutes: 2310,
+      timeZone: "Europe/Berlin",
+      manualMonthlyGrossCents: 345000,
+    });
+    await db.execAsync(
+      "ALTER TABLE user_profile DROP COLUMN display_name; ALTER TABLE user_profile DROP COLUMN employer_name; DELETE FROM schema_migrations WHERE version=13;",
+    );
+    await migrateDatabase(db);
+    await migrateDatabase(db);
+    expect(await loadProfile(db)).toMatchObject({
+      displayName: null,
+      employerName: null,
+      weeklyMinutes: 2310,
+      manualMonthlyGrossCents: 345000,
+    });
+    expect(
+      await db.getFirstAsync("SELECT COUNT(*) AS count FROM schema_migrations WHERE version=13"),
+    ).toEqual({ count: 1 });
+  });
+
+  it("persists independent appearance selections and defaults older databases to LUNA/system", async () => {
+    expect(await loadAppearancePreferences(db)).toEqual({ themeId: "standard", mode: "system" });
+    await saveAppearancePreferences(db, { themeId: "mint", mode: "dark" });
+    expect(await loadAppearancePreferences(db)).toEqual({ themeId: "mint", mode: "dark" });
+    await saveAppearancePreferences(db, { themeId: "mint", mode: "system" });
+    expect(await loadAppearancePreferences(db)).toEqual({ themeId: "mint", mode: "system" });
+  });
+
+  it("recovers unsupported appearance values without overwriting other preferences", async () => {
+    await db.runAsync(
+      "INSERT INTO app_preferences VALUES(?,?,?)",
+      "appearance_theme",
+      "unknown",
+      "2026-09-20T00:00:00Z",
+    );
+    await db.runAsync(
+      "INSERT INTO app_preferences VALUES(?,?,?)",
+      "appearance_mode",
+      "unknown",
+      "2026-09-20T00:00:00Z",
+    );
+    expect(await loadAppearancePreferences(db)).toEqual({ themeId: "standard", mode: "system" });
+    await expect(
+      saveAppearancePreferences(db, { themeId: "unknown" as never, mode: "dark" }),
+    ).rejects.toThrow();
+  });
+
   it("runs migrations and seed data idempotently", async () => {
     await migrateDatabase(db);
     const templates = await listTemplates(db);
     expect(templates).toHaveLength(7);
     expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("star");
     expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({
-      count: 12,
+      count: 13,
     });
     expect(testDb.database.pragma("secure_delete", { simple: true })).toBe(1);
   });

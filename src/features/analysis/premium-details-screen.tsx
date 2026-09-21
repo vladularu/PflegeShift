@@ -1,6 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Text, useWindowDimensions, View } from "react-native";
 
 import {
   usePflegeShiftEntries,
@@ -9,9 +8,9 @@ import {
   usePflegeShiftTariff,
 } from "@/application/pflegeshift-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
-import { currentMonth, formatDateTitle, formatMonthTitle } from "@/engine/calendar";
+import { currentMonth, formatMonthTitle } from "@/engine/calendar";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import { formatMinutes } from "@/engine/working-time";
+import { PremiumBreakdownList } from "./premium-breakdown-list";
 import {
   selectAllowanceShifts,
   selectMonthlyAnalysisEntries,
@@ -23,23 +22,10 @@ import {
   RuleComputationNotice,
 } from "@/features/analysis/rule-computation";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
-import { usePalette } from "@/theme/palette";
-import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
-import { CardSeparator, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { ReportScrollView } from "@/ui/report-layout";
 
-function euro(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value);
-}
-
 export function PremiumDetailsScreen() {
-  const palette = usePalette();
-  const { fontScale } = useWindowDimensions();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { error, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
@@ -55,7 +41,10 @@ export function PremiumDetailsScreen() {
     if (parsedMonth.status !== "valid" || !ready || error || profile === null) return null;
     return captureRuleComputation(() => {
       const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts = selectAllowanceShifts(entries, month, ruleResolver);
+      const allowanceShifts =
+        profile.tariff === null
+          ? monthlyEntries.monthShifts
+          : selectAllowanceShifts(entries, month, ruleResolver);
       const decision = tariffDecisions.find((item) => item.month === month) ?? null;
       return {
         monthShifts: monthlyEntries.monthShifts,
@@ -115,6 +104,16 @@ export function PremiumDetailsScreen() {
   if (!ready || profile === null || calculation === null) return <LoadingView />;
 
   const { monthShifts, pay } = calculation.value;
+  if (profile.tariff === null)
+    return (
+      <ReportScrollView>
+        <AnalysisDetailSummaryCard
+          title="Keine tarifliche Berechnung"
+          period={formatMonthTitle(month)}
+          caption="Für manuell hinterlegtes Gehalt werden keine Zeitzuschläge berechnet."
+        />
+      </ReportScrollView>
+    );
   if (!pay.available) {
     return (
       <ReportScrollView>
@@ -127,106 +126,9 @@ export function PremiumDetailsScreen() {
       </ReportScrollView>
     );
   }
-  const shiftsById = new Map(monthShifts.map((shift) => [shift.id, shift]));
-  const premiumShifts = pay.shiftBreakdowns.filter((item) => item.premiumLines.length > 0);
-  const lineCount = premiumShifts.reduce((sum, item) => sum + item.premiumLines.length, 0);
-  const stackAmounts = fontScale >= SCREEN_LAYOUT.headerAccessoryStackFontScale;
-
   return (
     <ReportScrollView>
-      <AnalysisDetailSummaryCard
-        caption={`${lineCount} ${lineCount === 1 ? "Zuschlagsposition" : "Zuschlagspositionen"} aus ${premiumShifts.length} ${premiumShifts.length === 1 ? "Dienst" : "Diensten"}`}
-        emphasis="metric"
-        period={formatMonthTitle(month)}
-        title={euro(pay.timePremiumAmount)}
-      />
-
-      <View style={{ gap: SCREEN_LAYOUT.sectionGap }}>
-        <SectionHeader
-          title="Aufschlüsselung"
-          caption="Jeder Betrag wird nur einmal ausgewiesen."
-        />
-        {premiumShifts.length === 0 ? (
-          <SurfaceCard style={{ padding: SPACING.xl }}>
-            <Text
-              maxFontSizeMultiplier={TEXT_MAX_SCALE}
-              selectable
-              style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
-            >
-              In diesem Monat wurden keine Zeitzuschläge berechnet.
-            </Text>
-          </SurfaceCard>
-        ) : (
-          premiumShifts.map((item) => {
-            const shift = shiftsById.get(item.shiftId);
-            return (
-              <SurfaceCard key={item.shiftId} style={{ gap: SPACING.md, padding: SPACING.lg }}>
-                <View style={{ gap: SPACING.xxs }}>
-                  <Text
-                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    selectable
-                    style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
-                  >
-                    {formatDateTitle(item.date)}
-                  </Text>
-                  <Text
-                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    selectable
-                    style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-                  >
-                    {shift?.title ?? "Dienst"}
-                    {shift?.startTime
-                      ? ` · ${shift.startTime}${shift.endTime ? `–${shift.endTime}` : ""}`
-                      : ""}
-                  </Text>
-                </View>
-                <CardSeparator inset={0} />
-                {item.premiumLines.map((line) => (
-                  <View
-                    key={line.key}
-                    style={{
-                      minHeight: CONTROL_HEIGHT.regular,
-                      flexDirection: stackAmounts ? "column" : "row",
-                      alignItems: stackAmounts ? "stretch" : "center",
-                      gap: SPACING.md,
-                    }}
-                  >
-                    <View style={{ minWidth: 0, flex: 1, gap: SPACING.xxs }}>
-                      <Text
-                        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                        selectable
-                        style={{ color: palette.textSecondary, ...TYPOGRAPHY.label }}
-                      >
-                        {line.label}
-                      </Text>
-                      <Text
-                        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                        selectable
-                        style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-                      >
-                        {formatMinutes(line.minutes)} × {line.percentage} % ×{" "}
-                        {euro(line.hourlyRate)}/h
-                      </Text>
-                    </View>
-                    <Text
-                      selectable
-                      style={{
-                        alignSelf: stackAmounts ? "flex-end" : undefined,
-                        color: palette.primary,
-                        ...TYPOGRAPHY.label,
-                        fontWeight: "700",
-                        fontVariant: ["tabular-nums"],
-                      }}
-                    >
-                      {euro(line.amount)}
-                    </Text>
-                  </View>
-                ))}
-              </SurfaceCard>
-            );
-          })
-        )}
-      </View>
+      <PremiumBreakdownList key={month} pay={pay} shifts={monthShifts} />
     </ReportScrollView>
   );
 }

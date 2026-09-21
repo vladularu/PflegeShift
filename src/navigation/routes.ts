@@ -55,6 +55,36 @@ export function shiftSelectionRoute(date: string) {
   });
 }
 
+export function worktimeDetailsRoute(month: string) {
+  return Object.freeze({
+    pathname: "/worktime-details" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function shiftAnalysisRoute(month: string) {
+  return Object.freeze({
+    pathname: "/worktime-details" as const,
+    params: Object.freeze({ month: requireMonth(month), section: "SHIFTS" }),
+  });
+}
+
+export type AnnualDetailSection = "WORK" | "CHECK" | "PAY" | "PREMIUM" | "SHIFTS";
+
+export function annualDetailsRoute(year: number, section: AnnualDetailSection) {
+  return Object.freeze({
+    pathname: "/annual-details" as const,
+    params: Object.freeze({ month: requireMonth(`${year}-01`), section }),
+  });
+}
+
+export function salaryRoute(month: string) {
+  return Object.freeze({
+    pathname: "/salary" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
 export function premiumDetailsRoute(month: string) {
   const normalizedMonth = requireMonth(month);
   return Object.freeze({

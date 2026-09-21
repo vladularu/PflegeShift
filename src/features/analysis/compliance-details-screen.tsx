@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import {
   usePflegeShiftEntries,
@@ -8,20 +8,24 @@ import {
 } from "@/application/pflegeshift-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
-import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-layout";
-import { selectAnalysisEntryWindow } from "@/features/analysis/analysis-data";
-import { ComplianceDetails } from "@/features/analysis/analysis-screen";
+import { selectComplianceShifts } from "@/features/analysis/analysis-data";
+import { captureRuleComputation, RuleComputationNotice } from "./rule-computation";
+import { requireResolvedPackage } from "@/rules/rule-resolver";
+import type { ShiftEntry } from "@/domain/types";
+import { ComplianceDayList } from "./compliance-day-list";
 import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-compliance";
 import { useCheckPreferences } from "@/features/settings/check-preferences";
 import { selectVisibleCompliance } from "./check-visibility";
 import { AnalysisCoverageNote } from "./analysis-coverage-note";
+import { CheckExplanation, CheckPeriod } from "./check-summary-card";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
-import { usePalette } from "@/theme/palette";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { ScreenScrollView } from "@/ui/screen-layout";
 import { ReportScrollView } from "@/ui/report-layout";
 
+const EMPTY_SHIFTS: readonly ShiftEntry[] = Object.freeze([]);
+
 export function ComplianceDetailsScreen() {
-  const palette = usePalette();
   const preferences = useCheckPreferences();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { error, ready, reload } = usePflegeShiftStatus();
@@ -31,16 +35,21 @@ export function ComplianceDetailsScreen() {
   const parsedMonth = parseMonthRouteParam(params.month);
   const month =
     parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);
-  const window = useMemo(
-    () => selectAnalysisEntryWindow(entries, month, ruleResolver),
-    [entries, month, ruleResolver],
-  );
+  const [retryRevision, setRetryRevision] = useState(0);
+  const window = useMemo(() => {
+    void retryRevision;
+    if (!ready || error || !profile || parsedMonth.status !== "valid") return null;
+    return captureRuleComputation(() => {
+      requireResolvedPackage(ruleResolver.resolveHoliday(`${month}-01`));
+      return selectComplianceShifts(entries, month, ruleResolver);
+    });
+  }, [entries, month, ruleResolver, retryRevision, ready, error, profile, parsedMonth.status]);
   const monthlyCompliance = useDeferredMonthlyCompliance({
-    enabled: true,
+    enabled: window?.ok === true,
     month,
     profile,
     ruleResolver,
-    shifts: window.complianceShifts,
+    shifts: window?.ok ? window.value : EMPTY_SHIFTS,
   });
   const sourceCompliance = monthlyCompliance.result;
   const compliance =
@@ -61,6 +70,17 @@ export function ComplianceDetailsScreen() {
   if (ready && error) {
     return <LoadFailureView message={error} onRetry={() => void reload()} />;
   }
+  if (window && !window.ok)
+    return (
+      <ReportScrollView>
+        <CheckPeriod period={formatMonthTitle(month)} />
+        <RuleComputationNotice
+          failure={window}
+          onRetry={() => setRetryRevision((value) => value + 1)}
+          title="Arbeitszeitprüfung nicht verfügbar"
+        />
+      </ReportScrollView>
+    );
   if (monthlyCompliance.error) {
     return (
       <LoadFailureView
@@ -71,38 +91,24 @@ export function ComplianceDetailsScreen() {
     );
   }
   if (!ready || profile === null || compliance === null) return <LoadingView />;
-  const messageCount = compliance.criticalCount + compliance.warningCount + compliance.infoCount;
-  const accent =
-    messageCount === 0
-      ? palette.success
-      : compliance.criticalCount > 0
-        ? palette.danger
-        : compliance.warningCount > 0
-          ? palette.warning
-          : palette.primary;
 
   return (
-    <ReportScrollView>
+    <ScreenScrollView
+      surface="groupedBackground"
+      style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
       {preferences.error ? <AnalysisCoverageNote message={preferences.error} /> : null}
       {preferences.enabled === null && !preferences.error ? (
         <AnalysisCoverageNote message="Prüfungseinstellungen werden geladen … Hinweise sind vorläufig vollständig sichtbar." />
       ) : null}
-      <AnalysisDetailSummaryCard
-        accent={accent}
-        caption="Automatische Prüfung deiner Dienste. Die Hinweise ersetzen keine Rechtsberatung."
-        period={formatMonthTitle(month)}
-        title={
-          messageCount === 0
-            ? "Keine sichtbaren Auffälligkeiten"
-            : `${messageCount} ${messageCount === 1 ? "Meldung" : "Meldungen"}`
-        }
-      />
-      <ComplianceDetails
+      <CheckPeriod period={formatMonthTitle(month)} />
+      <ComplianceDayList
         compliance={sourceCompliance!}
         showPlanning={preferences.enabled !== false}
-        heading="Meldungen"
-        shifts={window.complianceShifts}
+        shifts={window?.ok ? window.value : EMPTY_SHIFTS}
       />
-    </ReportScrollView>
+      <CheckExplanation />
+    </ScreenScrollView>
   );
 }

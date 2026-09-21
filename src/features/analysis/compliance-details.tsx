@@ -1,8 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
 import { useMemo, useState, type ReactNode } from "react";
-import { Pressable, Text, View, useWindowDimensions } from "react-native";
-import Animated, { FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
+import { Pressable, Text, View } from "react-native";
+import Animated, { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
 import type {
   ComplianceIssue,
   ComplianceSeverity,
@@ -11,11 +11,12 @@ import type {
 } from "@/domain/types";
 import { AnalysisCoverageNote } from "./analysis-coverage-note";
 import { PLANNING_HIDDEN_NOTICE, selectVisibleCompliance } from "./check-visibility";
+import { CheckClearStatus } from "./check-summary-card";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
-import { CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { CardSeparator } from "@/ui/design-system";
 import { selectionFeedback } from "@/ui/haptics";
 
 interface ComplianceIssueGroup {
@@ -92,29 +93,35 @@ export function ComplianceDetails({
   shifts,
   embedded = false,
   showPlanning = true,
+  hideEmptyLegal = false,
 }: {
   readonly compliance: MonthlyComplianceResult;
   readonly heading?: string;
   readonly shifts: readonly ShiftEntry[];
   readonly embedded?: boolean;
   readonly showPlanning?: boolean;
+  readonly hideEmptyLegal?: boolean;
 }) {
   const legal = selectVisibleCompliance(compliance, false);
   const planning = selectVisibleCompliance(
     { ...compliance, issues: compliance.issues.filter((issue) => issue.kind === "PLANNING") },
     true,
   );
+  if (hideEmptyLegal && legal.issues.length === 0 && showPlanning && planning.issues.length === 0)
+    return null;
   return (
-    <View>
+    <View style={{ gap: SPACING.xl }}>
       {!showPlanning && !embedded ? (
         <AnalysisCoverageNote message={PLANNING_HIDDEN_NOTICE} />
       ) : null}
-      <ComplianceIssueList
-        compliance={legal}
-        heading="Gesetzliche Prüfung"
-        shifts={shifts}
-        embedded={embedded}
-      />
+      {legal.issues.length > 0 || !hideEmptyLegal ? (
+        <ComplianceIssueList
+          compliance={legal}
+          heading="Gesetzliche Prüfung"
+          shifts={shifts}
+          embedded={embedded}
+        />
+      ) : null}
       {showPlanning && planning.issues.length > 0 ? (
         <ComplianceIssueList
           compliance={planning}
@@ -140,26 +147,19 @@ function ComplianceIssueList({
 }) {
   const palette = usePalette();
   const [expandedRule, setExpandedRule] = useState<string | null>(null);
-  const { fontScale } = useWindowDimensions();
   const groups = useMemo(() => groupComplianceIssues(compliance.issues), [compliance.issues]);
   const shiftsById = useMemo(() => new Map(shifts.map((shift) => [shift.id, shift])), [shifts]);
   if (compliance.issues.length === 0) {
     return (
       <DetailContainer embedded={embedded}>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.success, ...TYPOGRAPHY.sectionTitle }}
-        >
-          {heading ?? "Arbeitszeitregeln"}
-          {fontScale >= 1.3 ? "\n" : " · "}keine Auffälligkeiten
-        </Text>
+        <CheckClearStatus title={heading ?? "Arbeitszeitregeln"} />
       </DetailContainer>
     );
   }
   return (
     <DetailContainer embedded={embedded}>
       <Text
+        accessibilityRole="header"
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
         style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
@@ -187,16 +187,24 @@ function ComplianceIssueList({
               )}
               style={{
                 overflow: "hidden",
-                borderWidth: 1,
+                borderWidth: embedded ? 0 : 1,
                 borderColor: palette.separator,
-                borderRadius: RADII.control,
-                backgroundColor: palette.surface,
+                borderRadius: embedded ? 0 : RADII.card,
+                borderCurve: "continuous",
+                backgroundColor: embedded ? "transparent" : palette.surface,
               }}
             >
               <Pressable
                 accessibilityLabel={`${displayTitle}, ${accessibleCountLabel}`}
                 accessibilityRole="button"
                 accessibilityState={{ expanded }}
+                accessibilityHint={
+                  group.severity === "critical"
+                    ? "Kritische Meldung. Öffnet die betroffenen Dienste."
+                    : group.severity === "warning"
+                      ? "Warnung. Öffnet die betroffenen Dienste."
+                      : "Hinweis. Öffnet die betroffenen Dienste."
+                }
                 onPress={() => {
                   setExpandedRule((current) => (current === group.rule ? null : group.rule));
                   selectionFeedback();
@@ -208,29 +216,23 @@ function ComplianceIssueList({
                   gap: SPACING.sm,
                   backgroundColor: pressed ? palette.surfaceMuted : "transparent",
                   opacity: pressed ? 0.78 : 1,
-                  paddingHorizontal: SPACING.md,
-                  paddingVertical: 10,
+                  paddingHorizontal: SPACING.lg,
+                  paddingVertical: SPACING.lg,
                 })}
               >
-                <View
+                <Ionicons
                   accessibilityElementsHidden
-                  style={{
-                    width: 28,
-                    height: 28,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: RADII.small,
-                    backgroundColor: `${accent}1F`,
-                  }}
-                >
-                  <Ionicons
-                    color={accent}
-                    name={
-                      group.severity === "critical" ? "alert-circle-outline" : "warning-outline"
-                    }
-                    size={16}
-                  />
-                </View>
+                  importantForAccessibility="no"
+                  color={accent}
+                  name={
+                    group.severity === "critical"
+                      ? "alert-circle-outline"
+                      : group.severity === "warning"
+                        ? "warning-outline"
+                        : "information-circle-outline"
+                  }
+                  size={20}
+                />
                 <View style={{ minWidth: 0, flex: 1 }}>
                   <Text
                     maxFontSizeMultiplier={TEXT_MAX_SCALE}
@@ -240,28 +242,20 @@ function ComplianceIssueList({
                     {displayTitle}
                   </Text>
                 </View>
-                <View
-                  accessibilityElementsHidden
-                  style={{
-                    minWidth: 28,
-                    height: 24,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: RADII.pill,
-                    backgroundColor: `${accent}1F`,
-                    paddingHorizontal: SPACING.xs,
-                  }}
-                >
+                {group.issues.length > 1 ? (
                   <Text
+                    accessibilityElementsHidden
+                    importantForAccessibility="no"
+                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
                     style={{
-                      color: accent,
+                      color: palette.textMuted,
                       ...TYPOGRAPHY.label,
                       fontVariant: ["tabular-nums"],
                     }}
                   >
                     {group.issues.length}
                   </Text>
-                </View>
+                ) : null}
                 <Ionicons
                   accessibilityElementsHidden
                   color={palette.textMuted}
@@ -271,15 +265,13 @@ function ComplianceIssueList({
               </Pressable>
               {expanded ? (
                 <Animated.View
-                  entering={FadeInDown.duration(MOTION.duration.fast).reduceMotion(
-                    MOTION.reduceMotion,
-                  )}
+                  entering={FadeIn.duration(MOTION.duration.fast).reduceMotion(MOTION.reduceMotion)}
                   exiting={FadeOut.duration(MOTION.duration.instant).reduceMotion(
                     MOTION.reduceMotion,
                   )}
                 >
-                  <CardSeparator inset={0} />
-                  <View style={{ paddingHorizontal: SPACING.md }}>
+                  <CardSeparator inset={SPACING.lg} />
+                  <View style={{ paddingHorizontal: SPACING.lg }}>
                     {group.issues.map((item, index) => {
                       const relatedShifts = item.relatedShiftIds
                         .map((id) => shiftsById.get(id))
@@ -311,39 +303,54 @@ function ComplianceIssueList({
                           {relatedShifts.length > 0 ? (
                             <View
                               style={{
-                                gap: SPACING.xs,
-                                borderRadius: RADII.small,
-                                backgroundColor: palette.surfaceMuted,
-                                padding: 10,
+                                marginTop: SPACING.sm,
                               }}
                             >
-                              {relatedShifts.map((shift) => (
+                              <Text
+                                maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                                style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                              >
+                                Betroffene Dienste
+                              </Text>
+                              {relatedShifts.map((shift, shiftIndex) => (
                                 <View
                                   key={shift.id}
                                   style={{
                                     flexDirection: "row",
                                     flexWrap: "wrap",
                                     justifyContent: "space-between",
+                                    alignItems: "center",
                                     gap: SPACING.sm,
+                                    minHeight: 56,
+                                    paddingVertical: SPACING.md,
+                                    borderTopWidth: shiftIndex > 0 ? 1 : 0,
+                                    borderTopColor: palette.separator,
                                   }}
                                 >
-                                  <Text
-                                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                                    selectable
-                                    style={{ color: palette.text, ...TYPOGRAPHY.caption }}
-                                  >
-                                    {shift.title}
-                                  </Text>
+                                  <View style={{ gap: SPACING.xxs, flexShrink: 1 }}>
+                                    <Text
+                                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                                      selectable
+                                      style={{ color: palette.text, ...TYPOGRAPHY.label }}
+                                    >
+                                      {shift.title}
+                                    </Text>
+                                    <Text
+                                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+                                      style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+                                    >
+                                      {formatComplianceDate(shift.date)}
+                                    </Text>
+                                  </View>
                                   <Text
                                     maxFontSizeMultiplier={TEXT_MAX_SCALE}
                                     selectable
                                     style={{
                                       color: palette.textMuted,
-                                      ...TYPOGRAPHY.footnote,
+                                      ...TYPOGRAPHY.label,
                                       fontVariant: ["tabular-nums"],
                                     }}
                                   >
-                                    {formatComplianceDate(shift.date)} ·{" "}
                                     {shift.startTime ?? "ganztägig"}
                                     {shift.endTime ? `–${shift.endTime}` : ""}
                                   </Text>
@@ -372,10 +379,9 @@ function DetailContainer({
   readonly embedded: boolean;
   readonly children: ReactNode;
 }) {
-  if (!embedded) return <Card>{children}</Card>;
-  return <View style={{ gap: SPACING.md, padding: SPACING.lg }}>{children}</View>;
-}
-
-function Card({ children }: { readonly children: ReactNode }) {
-  return <SurfaceCard style={{ gap: SPACING.lg, padding: SPACING.lg }}>{children}</SurfaceCard>;
+  return (
+    <View style={{ gap: SPACING.md, ...(embedded ? { padding: SPACING.lg } : {}) }}>
+      {children}
+    </View>
+  );
 }

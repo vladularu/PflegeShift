@@ -78,6 +78,13 @@ jest.mock("@/infrastructure/dev-tools-policy", () => ({
 }));
 
 describe("SettingsScreen production gates", () => {
+  it("opens the personal profile and appearance selection", async () => {
+    const screen = await render(<SettingsScreen />);
+    await fireEvent.press(screen.getByRole("button", { name: "Arbeitsprofil bearbeiten" }));
+    expect(router.push).toHaveBeenCalledWith("/work-profile");
+    await fireEvent.press(screen.getByText("Darstellung"));
+    expect(router.push).toHaveBeenCalledWith("/appearance");
+  });
   beforeEach(() => {
     mockProfile = { ...mockBaseProfile };
     mockDevToolsAvailable = false;
@@ -101,7 +108,7 @@ describe("SettingsScreen production gates", () => {
         expect(texts[1].parent).toHaveStyle({ gap: fontScale >= 1.3 ? SPACING.sm : SPACING.xxs });
       }
     }
-    expect(descriptionsChecked).toBeGreaterThan(10);
+    expect(descriptionsChecked).toBeGreaterThanOrEqual(9);
     expect(screen.getByText("Testlabor")).toBeTruthy();
     expect(screen.getByText("Kalenderdiagnose starten")).toBeTruthy();
   });
@@ -131,7 +138,7 @@ describe("SettingsScreen production gates", () => {
     expect(setDeveloperMode).not.toHaveBeenCalled();
     expect(screen.getByText("Über LUNA Shift")).toBeTruthy();
     expect(screen.getByText("Datensicherung")).toBeTruthy();
-    expect(screen.getByText("Gehalt")).toBeTruthy();
+    expect(screen.getByText("Dein Arbeitsprofil")).toBeTruthy();
     expect(screen.queryByText("Schichtmodell")).toBeNull();
   });
 

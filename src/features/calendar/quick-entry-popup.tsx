@@ -18,8 +18,7 @@ import {
 } from "@/features/calendar/calendar-layout";
 import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
-import { usePalette } from "@/theme/palette";
-import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
+import { usePalette, useInversePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
@@ -81,7 +80,7 @@ export const QuickEntryPopup = memo(function QuickEntryPopup({
   readonly onSelectAction: (action: QuickEntryAction, date: string) => void;
 }) {
   const appPalette = usePalette();
-  const palette = appPalette.dark ? LIGHT_PALETTE : DARK_PALETTE;
+  const palette = useInversePalette();
   const insets = useSafeAreaInsets();
   const { width, height, fontScale } = useWindowDimensions();
   const dialogHeadingRef = useRef<View>(null);
