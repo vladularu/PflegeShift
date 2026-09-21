@@ -133,7 +133,7 @@ export function CalendarPrototypeScreen() {
     <View
       style={[
         styles.root,
-        { backgroundColor: palette.background, paddingBottom: Math.max(8, insets.bottom) },
+        { backgroundColor: palette.calendarBackground, paddingBottom: Math.max(8, insets.bottom) },
       ]}
     >
       <Text style={{ color: palette.textMuted, paddingHorizontal: SPACING.md }}>

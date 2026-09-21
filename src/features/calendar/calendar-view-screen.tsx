@@ -60,7 +60,7 @@ function CalendarDisplayPreview({
     <View
       accessibilityLabel="Vorschau der Dienstanzeige"
       testID="calendar-display-preview"
-      style={{ backgroundColor: palette.background, paddingVertical: 8 }}
+      style={{ backgroundColor: palette.calendarBackground, paddingVertical: 8 }}
     >
       <View style={{ flexDirection: "row" }}>
         {["M", "D", "M", "D", "F", "S", "S"].map((weekday, index) => (

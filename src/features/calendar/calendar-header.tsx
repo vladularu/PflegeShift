@@ -113,6 +113,7 @@ export const CalendarHeader = memo(function CalendarHeader({
 
   return (
     <TabScreenHeader
+      surface="calendarBackground"
       accessory={
         <Animated.View
           accessibilityElementsHidden={plannerActive}

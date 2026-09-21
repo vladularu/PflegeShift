@@ -137,7 +137,7 @@ describe("CalendarViewScreen", () => {
       mockPalette = palette;
       await screen.rerender(<CalendarViewScreen />);
       expect(screen.getByTestId("calendar-display-preview")).toHaveStyle({
-        backgroundColor: palette.background,
+        backgroundColor: palette.calendarBackground,
       });
       expect(screen.getByTestId("preview-date-marker-1")).toHaveStyle({
         backgroundColor: palette.primary,

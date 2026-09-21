@@ -15,7 +15,7 @@ import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 
-export type ScreenSurface = "background" | "groupedBackground";
+export type ScreenSurface = "background" | "groupedBackground" | "calendarBackground";
 
 export function ScreenScrollView({
   bottomPadding = SCREEN_LAYOUT.contentBottomPadding,
