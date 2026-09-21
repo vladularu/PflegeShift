@@ -1,6 +1,6 @@
 # LUNA Shift – Roadmap und Abschlussstand
 
-Stand: 20.09.2026 (Europe/Berlin). Konsolidierte Basis: `4f61b77` (PR #88).
+Stand: 21.09.2026 (Europe/Berlin). Konsolidierte Basis: `0df84c6` (PR #91).
 Diese Datei ist der zentrale Statusindex. Paketdokumente enthalten historische
 Implementierungs- und Prüfnotizen; dortiges „offen“ oder „noch nicht freigegeben“
 ist ohne Datum kein aktueller Auftrag. Git-Merges belegen Integration,
@@ -57,7 +57,7 @@ Die folgenden Zeilen ersetzen keine eigenständige Geräte- oder Store-Abnahme.
 | UX-03A                     | Eigener Löschvorgang bleibt bis zum Abschluss stabil; keine falsche Meldung „Eintrag nicht verfügbar“ und keine doppelte Lösch-/Speicheraktion | [PR #79](https://github.com/vladularu/PflegeShift/pull/79), `254828c`; Preview-Gerätetest vom Nutzer bestätigt                                      |
 | Windows-Testlauf           | Jest findet Komponententests ohne Sonderparameter, Suchbereich auf `src` begrenzt; Regressionstest ergänzt                                     | [PR #80](https://github.com/vladularu/PflegeShift/pull/80), `45a12d5`; keine App-Änderung und keine OTA nötig                                       |
 
-### Aktueller verifizierter Abschlussstand nach PR #88
+### Aktueller verifizierter Abschlussstand nach PR #91
 
 - PR #81: vorheriger Roadmap-Abschluss integriert (`29a3024`); kein offener Merge-Auftrag.
 - PR #82: Arbeitszeitstandard 38,5 Stunden bei 100 Prozent (`958bbc5`).
@@ -68,10 +68,16 @@ Die folgenden Zeilen ersetzen keine eigenständige Geräte- oder Store-Abnahme.
 - PR #87: Mehr-Beschreibungen bei großer Schrift (`babcca7`), Nutzer: „abnahme erfolgreich“.
 - PR #88: Auswertung bei großer Schrift einschließlich kompakter Dienstzeilen
   (`4f61b77`), Nutzer: „Ja passt“ nach dem letzten Preview-OTA.
-- Zuletzt abgenommene Preview-Gruppe: `b9c1c4a4-0b36-423f-868c-f317dcdf49b6`,
+- PR #89: Jahres-Cache-Szenarien für stabile Release-Prüfungen isoliert
+  (`8014390`); `verify:full` bestand mit unveränderten Coverage-Grenzwerten.
+- PR #90: fünf LUNA-Themes, Arbeitsprofil sowie verfeinerte Monats- und
+  Jahresauswertung integriert (`40532e3`).
+- PR #91: neutrale App- und Kalenderflächen über alle Themes vereinheitlicht
+  (`0df84c6`).
+- Zuletzt dokumentierte Preview-Gruppe: `57272d0b-e2ed-4343-9b33-f40bed65c147`,
   iOS Build 31, Runtime `eac302484061dfb3fa63e2a74b8618ff6000861c`.
-- PR #88: sieben CI-Prüfungen grün. Letzter Pakettest: 738 Unit-Tests,
-  410 Komponententests und unveränderte Coverage-Grenzwerte bestanden.
+- Für PR #90 und PR #91 bestanden jeweils alle sieben CI-Prüfungen. Der letzte
+  Paketstand dokumentiert 768 Unit-Tests und 463 Komponententests.
 - Abnahmen beziehen sich auf die beschriebenen Zustände auf dem iPhone 14 Pro Max,
   nicht pauschal auf jede Ansicht, VoiceOver, kleinere Geräte oder Android.
 - TestFlight Build 3 ist am 20.09.2026 live bestätigt: VALID, intern und extern
@@ -82,7 +88,23 @@ Die folgenden Zeilen ersetzen keine eigenständige Geräte- oder Store-Abnahme.
   bestanden, 741 Unit-Tests, 410 Komponententests, beide Coverage-Läufe, Audit,
   Release-Konfiguration und Plattform-Exporte. Der bisherige Jahres-Cache-Sammeltest
   ist in vier isolierte Szenarien geteilt; Assertions und Grenzwerte unverändert.
-  Diese Test-/Dokumentationsänderungen sind noch nicht integriert oder veröffentlicht.
+  Diese Test-/Dokumentationsänderungen wurden mit PR #89 integriert. PR #90 und
+  PR #91 kamen danach hinzu und benötigen vor einem künftigen TestFlight-Build einen
+  neuen vollständigen Release-Lauf auf dem dann aktuellen Master.
+
+### Geräteabnahme vom 21.09.2026
+
+Auf der vorhandenen iOS-Preview-App bestätigte der Nutzer Darstellung und
+Einstellungsspeicherung, Backup-Erstellung, Offline-Start und -Navigation,
+offline angelegte/bearbeitete/gelöschte Termine über Neustarts, Erinnerungen sowie
+eine zweiwöchige Terminserie. Die genaue Abgrenzung und die offenen Punkte stehen in
+[iPhone-Abnahme 21.09.2026](iphone-acceptance-2026-09-21.md).
+
+VoiceOver wurde ausdrücklich auf später verschoben. Eine Backup-Wiederherstellung
+mit Originaldaten wurde nicht durchgeführt; sie bleibt einer sicheren separaten
+Testinstallation vorbehalten. Auch ein kleineres iPhone und Android sind nicht
+abgenommen. Diese Preview-Nachweise sind keine Abnahme von TestFlight Build 3 oder
+eines künftigen nativen Builds.
 
 ### Historischer verifizierter Abschlussstand nach PR #80
 
@@ -185,15 +207,18 @@ nachträgliche Bestätigung der oben genannten optionalen Geräteprüfungen.
 
 ## Priorität und weiterer Ablauf
 
-1. **TestFlight-Lieferkandidat vorbereiten:** isolierter Checkout von `4f61b77`,
-   eigene Lockfile-Abhängigkeiten, vollständige lokale Prüfungen und Runtime-Abgleich.
-   Nur Roadmap und Lieferprotokoll ändern. Kein Commit, Push, PR, Merge, EAS-Build,
-   OTA oder Submit durch diese Vorbereitung freigegeben. Die frühere
-   Roadmap-Integration ist mit PR #81 bereits abgeschlossen.
-2. **Kein neues UX-Reparaturpaket ohne Befund:** die Runde bis PR #88 ist integriert.
-   Bei Bedarf nur die verbleibenden kurzen Geräteprüfungen bündeln; bereits
-   bestätigte Lösch-, Speicher- und Farbprüfungen nicht unnötig wiederholen.
-3. **Nächste Produktentscheidung ausdrücklich wählen:** offene Tarif-Schalter-
+1. **Änderungen für den nächsten TestFlight-Build sammeln:** Der Nutzer hat am
+   20.09.2026 entschieden, vorerst keinen neuen Build zu starten. Ein neuer
+   Lieferkandidat wird erst nach weiteren abgenommenen Änderungen auf dem dann
+   aktuellen Master erstellt. Build, Submit und Tester-Verteilung bleiben getrennte
+   Freigaben.
+2. **Offene Geräteprüfungen gezielt nachholen:** VoiceOver später, Wiederherstellung
+   nur in einer sicheren Testinstallation und ein kleineres iPhone bei Verfügbarkeit.
+   Bereits bestätigte Darstellung, Persistenz, Offline-Funktion, Erinnerungen und
+   Terminserien nicht ohne konkreten Befund wiederholen.
+3. **Kein neues UX-Reparaturpaket ohne Befund:** die Runde bis PR #91 ist integriert.
+   Neue Korrekturen beginnen mit einem reproduzierbaren Problem und begrenztem Scope.
+4. **Nächste Produktentscheidung ausdrücklich wählen:** offene Tarif-Schalter-
    Abgrenzung oder eine neue Nutzerpriorität. Erst danach ein begrenztes Paket
    mit Ziel, Nicht-Zielen, Dateiscope und Abnahme definieren. Die zurückgestellten
    Themen oben bleiben ohne neue Freigabe zurückgestellt.

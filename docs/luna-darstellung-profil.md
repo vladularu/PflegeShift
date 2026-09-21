@@ -298,3 +298,22 @@ Ziel: Meldungen direkt aufklappen, Dienste mit gespeicherten Farben/Symbolen zei
 ## Git-Auslieferung am 21.09.2026
 
 Der Nutzer hat den aktuellen Preview-Stand mit „ja passt vorerst so“ akzeptiert und anschließend Commit, Push, PR und Merge ausdrücklich freigegeben. Grundlage ist das Preview-Update 77935090-c8ca-4f65-9097-58005bbd4429. Die dokumentierte vollständige Geräte-Matrix bleibt getrennt von dieser Nutzerfreigabe; zusätzliche Abschluss-Screenshots liegen nicht vor. Scope: Themes, Arbeitsprofil, Monats-/Jahresauswertung, Prüfung, Zeitzuschläge, Datenspeicherung und Tests. Lokale Graft-Konfiguration und der ursprüngliche Arbeitsordner bleiben unberührt. Merge nur nach erfolgreicher PR-CI.
+
+## Status nach PR #90 und PR #91
+
+- Die Gesamtumsetzung wurde mit PR #90 (`40532e3`) integriert; alle sieben
+  PR-Prüfungen waren erfolgreich.
+- Die anschließende Vereinheitlichung neutraler App- und Kalenderflächen wurde mit
+  PR #91 (`0df84c6`) integriert; auch dort waren alle sieben PR-Prüfungen erfolgreich.
+- Letzte dokumentierte Preview-Auslieferung: Gruppe
+  `57272d0b-e2ed-4343-9b33-f40bed65c147`, iOS Build 31, Runtime
+  `eac302484061dfb3fa63e2a74b8618ff6000861c`.
+- Der Nutzer bestätigte am 21.09.2026 Darstellung in Hell/Dunkel, Theme-Wechsel,
+  Kalender, Arbeitsprofil, große Schrift sowie den Erhalt von Arbeitsprofil- und
+  Auswertungsoptionen nach einem Neustart mit „alles passt“ beziehungsweise „passt“.
+- Zusätzlich bestanden Backup-Erstellung, Offline-Navigation, Offline-Schreiben über
+  Neustarts, Erinnerung und zweiwöchige Terminserie. Details und Grenzen stehen in
+  [iPhone-Abnahme 21.09.2026](iphone-acceptance-2026-09-21.md).
+- Nicht daraus abgeleitet werden eine vollständige VoiceOver-Abnahme, ein Test auf
+  kleinerem iPhone, eine sichere Backup-Wiederherstellung oder die Abnahme eines
+  künftigen nativen/TestFlight-Builds.
