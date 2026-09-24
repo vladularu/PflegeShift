@@ -202,6 +202,11 @@ export interface RuleTariffRules {
    * @maxItems 100
    */
   employmentWorkingTimeRules?: [RuleEmploymentWorkingTimeRule, ...RuleEmploymentWorkingTimeRule[]];
+  /**
+   * @minItems 1
+   * @maxItems 200
+   */
+  caritasCareAllowanceRates?: [RuleCaritasCareAllowanceRate, ...RuleCaritasCareAllowanceRate[]];
   hourlyCalculation?: RuleHourlyCalculation;
   premiumRules: RulePremiumRule[];
   allowanceRules: RuleAllowanceRule[];
@@ -355,6 +360,19 @@ export interface RuleEmploymentWorkingTimeRule {
   validFrom: RuleIsoDate;
   validTo: RuleNullableDate;
   fullTimeWeeklyMinutes: number;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 14: sourced monthly care allowance rate for a provision, annex, territory and date range. A rate is not an individual entitlement or an activated calculation.
+ */
+export interface RuleCaritasCareAllowanceRate {
+  id: RuleIdentifier;
+  provisionId: "SECTION_12_3" | "SECTION_12_4";
+  variantId: RuleSelectionIdentifier;
+  regionId: RuleSelectionIdentifier;
+  validFrom: RuleIsoDate;
+  validTo: RuleIsoDate;
+  monthlyCents: number;
   sourceIds: RuleSourceIds;
 }
 export interface RuleHourlyCalculation {
