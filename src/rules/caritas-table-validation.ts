@@ -1,3 +1,4 @@
+import { Temporal } from "@js-temporal/polyfill";
 import type { RuleTariffPackage } from "./contracts.generated";
 import type { ValidationIssue } from "./validation";
 
@@ -10,6 +11,7 @@ const allowedRuleKeys = new Set([
   "selection",
   "selector",
   "payTables",
+  "employmentWorkingTimeRules",
   "premiumRules",
   "allowanceRules",
   "combinationRules",
@@ -17,7 +19,21 @@ const allowedRuleKeys = new Set([
   "workPatternPolicy",
 ]);
 
-/** Contract 14 accepts sourced P tables only. It does not authorize pay calculation. */
+function realDate(value: string): boolean {
+  try {
+    return Temporal.PlainDate.from(value).toString() === value;
+  } catch {
+    return false;
+  }
+}
+
+function expectedWorkingMinutes(variantId: string, regionId: string, date: string): number {
+  if (variantId === "ANLAGE_32" || regionId === "BW" || regionId === "MITTE") return 2340;
+  if (regionId === "OST_TARIF_WEST_BERLIN" && date < "2025-07-01") return 2340;
+  return 2310;
+}
+
+/** Contract 14 holds sourced P tables and optional dated working time; pay remains unsupported. */
 export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
   const { rules } = pkg;
   const issues: ValidationIssue[] = [];
@@ -29,6 +45,13 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
   if (pkg.engineContractVersion !== 14) {
     if (claimsCaritas) {
       add("CARITAS_CONTRACT", "/engineContractVersion", "Caritas P tables require contract 14.");
+    }
+    if (rules.employmentWorkingTimeRules !== undefined) {
+      add(
+        "CARITAS_WORKING_TIME_CONTRACT",
+        "/rules/employmentWorkingTimeRules",
+        "Dated employment working time requires contract 14.",
+      );
     }
     return issues;
   }
@@ -168,6 +191,68 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
         `/rules/payTables/${index}/entries`,
         "All 62 printed P values are required.",
       );
+    }
+  }
+  const workingTimes = rules.employmentWorkingTimeRules;
+  if (workingTimes !== undefined) {
+    const root = "/rules/employmentWorkingTimeRules";
+    const pairs = new Set(
+      variants.flatMap((variant) => variant.regions.map((item) => `${variant.id}:${item.id}`)),
+    );
+    const knownSources = new Set(pkg.sources.map((source) => source.id));
+    const ids = new Set<string>();
+    let invalidRange = !realDate(pkg.validFrom) || pkg.validTo === null || !realDate(pkg.validTo);
+    for (const [index, rule] of workingTimes.entries()) {
+      const path = `${root}/${index}`;
+      if (ids.has(rule.id)) add("CARITAS_WORKING_TIME_ID", path, "Duplicate working-time id.");
+      ids.add(rule.id);
+      const pair = `${rule.variantId}:${rule.regionId}`;
+      if (!pairs.has(pair)) {
+        add("CARITAS_WORKING_TIME_SELECTION", path, "Unknown annex or tariff territory.");
+      } else if (realDate(rule.validFrom) && rule.validTo !== null && realDate(rule.validTo)) {
+        const start = expectedWorkingMinutes(rule.variantId, rule.regionId, rule.validFrom);
+        const end = expectedWorkingMinutes(rule.variantId, rule.regionId, rule.validTo);
+        if (start !== end || rule.fullTimeWeeklyMinutes !== start) {
+          add(
+            "CARITAS_WORKING_TIME_VALUE",
+            path,
+            "Unexpected full-time weekly minutes or an unsplit dated change.",
+          );
+        }
+      }
+      for (const sourceId of rule.sourceIds) {
+        if (!knownSources.has(sourceId)) {
+          add("UNKNOWN_SOURCE_ID", `${path}/sourceIds`, sourceId);
+        }
+      }
+      if (
+        !realDate(rule.validFrom) ||
+        rule.validTo === null ||
+        !realDate(rule.validTo) ||
+        rule.validTo < rule.validFrom ||
+        rule.validFrom < pkg.validFrom ||
+        (pkg.validTo !== null && rule.validTo > pkg.validTo)
+      ) {
+        invalidRange = true;
+        add("CARITAS_WORKING_TIME_RANGE", path, "Invalid or out-of-package date range.");
+      }
+    }
+    if (!invalidRange) {
+      for (const pair of pairs) {
+        const dated = workingTimes
+          .filter((rule) => `${rule.variantId}:${rule.regionId}` === pair)
+          .sort((a, b) => a.validFrom.localeCompare(b.validFrom));
+        let next = pkg.validFrom;
+        for (const rule of dated) {
+          if (rule.validFrom !== next) {
+            add("CARITAS_WORKING_TIME_COVERAGE", root, `Gap or overlap in ${pair}.`);
+          }
+          next = Temporal.PlainDate.from(rule.validTo!).add({ days: 1 }).toString();
+        }
+        if (next !== Temporal.PlainDate.from(pkg.validTo!).add({ days: 1 }).toString()) {
+          add("CARITAS_WORKING_TIME_COVERAGE", root, `Incomplete coverage for ${pair}.`);
+        }
+      }
     }
   }
   return issues;
