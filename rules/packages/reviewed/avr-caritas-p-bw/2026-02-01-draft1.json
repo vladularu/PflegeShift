@@ -36,6 +36,22 @@
       "documentDate": "2026-08-28",
       "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
       "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "caritas-dgs-west-hospital-time-2026",
+      "title": "Caritas-Dienstgeber, P7 Krankenhaus Regionen West 2026",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P7-KH-Faktenblatt_Verguetung_West_2026.pdf",
+      "documentDate": "2026-02-01",
+      "section": "Stand Februar 2026: Anlage 31, 38,5 h bzw. 39 h in RK BW und RK Mitte",
+      "sha256": "6ed4d632987966d783dd4f9128bd24ca9fd911f7c084545fe748fdc1da020f49"
+    },
+    {
+      "id": "caritas-dgs-west-care-time-2026",
+      "title": "Caritas-Dienstgeber, P6 Altenhilfe Regionen West 2026",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+      "documentDate": "2026-02-01",
+      "section": "Stand Februar 2026: Anlage 32, 39 h",
+      "sha256": "76f9728de35bd5b50ac68ee34866c13f13f97d2337438b2b48858ca35b65ebfd"
     }
   ],
   "review": {
@@ -413,6 +429,26 @@
             "monthlyCents": 693770
           }
         ]
+      }
+    ],
+    "employmentWorkingTimeRules": [
+      {
+        "id": "caritas-bw-31-2026-02-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "BW",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["caritas-dgs-west-hospital-time-2026"]
+      },
+      {
+        "id": "caritas-bw-32-2026-02-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "BW",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["caritas-dgs-west-care-time-2026"]
       }
     ],
     "premiumRules": [],
