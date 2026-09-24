@@ -36,6 +36,14 @@
       "documentDate": "2026-08-28",
       "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
       "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "caritas-dgs-west-factsheets-2025",
+      "title": "Caritas-Dienstgeber, Faktenblätter Vergütung Regionen West 2025",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+      "documentDate": "2025-07-01",
+      "section": "Stand Juli 2025: P7-KH (Anlage 31) und P6-AH (Anlage 32)",
+      "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
     }
   ],
   "review": {
@@ -413,6 +421,26 @@
             "monthlyCents": 674874
           }
         ]
+      }
+    ],
+    "employmentWorkingTimeRules": [
+      {
+        "id": "caritas-nrw-31-2025-07-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "NRW",
+        "validFrom": "2025-07-01",
+        "validTo": "2026-01-31",
+        "fullTimeWeeklyMinutes": 2310,
+        "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+      },
+      {
+        "id": "caritas-nrw-32-2025-07-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "NRW",
+        "validFrom": "2025-07-01",
+        "validTo": "2026-01-31",
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["caritas-dgs-west-factsheets-2025"]
       }
     ],
     "premiumRules": [],

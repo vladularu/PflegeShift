@@ -56,6 +56,9 @@ describe("West Caritas P-table DRAFT candidates", () => {
           "caritas-bk-2025-02-corrected",
           `caritas-rk-${region}-2025`,
           "pflegeshift-tariff-assessment-v1",
+          ...(start === "2025-07-01"
+            ? ["caritas-dgs-west-factsheets-2025"]
+            : ["caritas-dgs-west-hospital-time-2026", "caritas-dgs-west-care-time-2026"]),
         ].sort(),
       );
       expect(pkg.rules.selection?.variants.map((variant) => variant.id)).toEqual([
@@ -72,6 +75,36 @@ describe("West Caritas P-table DRAFT candidates", () => {
         ),
       ).toBe(true);
       expect(pkg.rules.workPatternPolicy.sourceIds).toEqual(["pflegeshift-tariff-assessment-v1"]);
+      const workingTimes = pkg.rules.employmentWorkingTimeRules ?? [];
+      expect(workingTimes).toHaveLength(2);
+      for (const annex of [31, 32] as const) {
+        const rule = workingTimes.find((item) => item.variantId === `ANLAGE_${annex}`);
+        expect(rule).toEqual({
+          id: `caritas-${region}-${annex}-${start}`,
+          variantId: `ANLAGE_${annex}`,
+          regionId: region.toUpperCase(),
+          validFrom: start,
+          validTo: end,
+          fullTimeWeeklyMinutes:
+            annex === 32 || region === "bw" || region === "mitte" ? 2340 : 2310,
+          sourceIds: [
+            start === "2025-07-01"
+              ? "caritas-dgs-west-factsheets-2025"
+              : annex === 31
+                ? "caritas-dgs-west-hospital-time-2026"
+                : "caritas-dgs-west-care-time-2026",
+          ],
+        });
+        for (const sourceId of rule?.sourceIds ?? []) {
+          expect(pkg.sources.find((source) => source.id === sourceId)?.sha256).toBe(
+            start === "2025-07-01"
+              ? "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+              : annex === 31
+                ? "6ed4d632987966d783dd4f9128bd24ca9fd911f7c084545fe748fdc1da020f49"
+                : "76f9728de35bd5b50ac68ee34866c13f13f97d2337438b2b48858ca35b65ebfd",
+          );
+        }
+      }
       const printed = sourceValues(start);
       expect(printed.size).toBe(62);
       const actual = new Map(
