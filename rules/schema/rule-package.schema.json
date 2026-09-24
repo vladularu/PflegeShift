@@ -548,6 +548,31 @@
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
+    "caritasCareAllowanceRate": {
+      "description": "Contract 14: sourced monthly care allowance rate for a provision, annex, territory and date range. A rate is not an individual entitlement or an activated calculation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "provisionId",
+        "variantId",
+        "regionId",
+        "validFrom",
+        "validTo",
+        "monthlyCents",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "provisionId": { "enum": ["SECTION_12_3", "SECTION_12_4"] },
+        "variantId": { "$ref": "#/$defs/selectionIdentifier" },
+        "regionId": { "$ref": "#/$defs/selectionIdentifier" },
+        "validFrom": { "$ref": "#/$defs/isoDate" },
+        "validTo": { "$ref": "#/$defs/isoDate" },
+        "monthlyCents": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
     "hourlyCalculation": {
       "type": "object",
       "additionalProperties": false,
@@ -832,6 +857,12 @@
           "minItems": 1,
           "maxItems": 100,
           "items": { "$ref": "#/$defs/employmentWorkingTimeRule" }
+        },
+        "caritasCareAllowanceRates": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": { "$ref": "#/$defs/caritasCareAllowanceRate" }
         },
         "hourlyCalculation": { "$ref": "#/$defs/hourlyCalculation" },
         "premiumRules": {

@@ -12,6 +12,7 @@ const allowedRuleKeys = new Set([
   "selector",
   "payTables",
   "employmentWorkingTimeRules",
+  "caritasCareAllowanceRates",
   "premiumRules",
   "allowanceRules",
   "combinationRules",
@@ -51,6 +52,13 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
         "CARITAS_WORKING_TIME_CONTRACT",
         "/rules/employmentWorkingTimeRules",
         "Dated employment working time requires contract 14.",
+      );
+    }
+    if (rules.caritasCareAllowanceRates !== undefined) {
+      add(
+        "CARITAS_RATE_CONTRACT",
+        "/rules/caritasCareAllowanceRates",
+        "Caritas care allowance rates require contract 14.",
       );
     }
     return issues;
@@ -251,6 +259,76 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
         }
         if (next !== Temporal.PlainDate.from(pkg.validTo!).add({ days: 1 }).toString()) {
           add("CARITAS_WORKING_TIME_COVERAGE", root, `Incomplete coverage for ${pair}.`);
+        }
+      }
+    }
+  }
+  const careRates = rules.caritasCareAllowanceRates;
+  if (careRates !== undefined) {
+    const root = "/rules/caritasCareAllowanceRates";
+    const pairs = new Set(
+      variants.flatMap((variant) => variant.regions.map((item) => `${variant.id}:${item.id}`)),
+    );
+    const knownSources = new Set(pkg.sources.map((source) => source.id));
+    const regionalSource =
+      region === "ost" ? "caritas-rk-ost-2025-allowances" : `caritas-rk-${region}-2025`;
+    const ids = new Set<string>();
+
+    for (const [index, rate] of careRates.entries()) {
+      const path = `${root}/${index}`;
+      if (ids.has(rate.id)) add("CARITAS_RATE_ID", path, "Duplicate care-allowance rate id.");
+      ids.add(rate.id);
+      if (!pairs.has(`${rate.variantId}:${rate.regionId}`)) {
+        add("CARITAS_RATE_SELECTION", path, "Unknown annex or regional territory.");
+      }
+      if (
+        !realDate(rate.validFrom) ||
+        !realDate(rate.validTo) ||
+        rate.validTo < rate.validFrom ||
+        rate.validFrom < pkg.validFrom ||
+        (pkg.validTo !== null && rate.validTo > pkg.validTo)
+      ) {
+        add("CARITAS_RATE_RANGE", path, "Invalid or out-of-package allowance-rate range.");
+      }
+      if (rate.provisionId === "SECTION_12_4") {
+        if (
+          !rate.sourceIds.includes("caritas-bk-2025-02-corrected") ||
+          !rate.sourceIds.includes(regionalSource)
+        ) {
+          add("CARITAS_RATE_SOURCE", path, "§ 12(4) needs federal and regional sources.");
+        }
+      } else if (!rate.sourceIds.includes("caritas-dg-2024-care-allowances")) {
+        add("CARITAS_RATE_SOURCE", path, "§ 12(3) needs the regional-rate source.");
+      }
+      for (const sourceId of rate.sourceIds) {
+        if (!knownSources.has(sourceId)) add("UNKNOWN_SOURCE_ID", `${path}/sourceIds`, sourceId);
+      }
+    }
+
+    if (realDate(pkg.validFrom) && pkg.validTo !== null && realDate(pkg.validTo)) {
+      for (const provisionId of ["SECTION_12_3", "SECTION_12_4"] as const) {
+        for (const pair of pairs) {
+          const coverageFrom =
+            provisionId === "SECTION_12_4" && pkg.validFrom < "2025-07-01"
+              ? "2025-07-01"
+              : pkg.validFrom;
+          const dated = careRates
+            .filter(
+              (rate) =>
+                rate.provisionId === provisionId && `${rate.variantId}:${rate.regionId}` === pair,
+            )
+            .sort((a, b) => a.validFrom.localeCompare(b.validFrom));
+          let next = coverageFrom;
+          for (const rate of dated) {
+            if (!realDate(rate.validFrom) || !realDate(rate.validTo)) continue;
+            if (rate.validFrom !== next) {
+              add("CARITAS_RATE_COVERAGE", root, `Gap or overlap in ${provisionId}:${pair}.`);
+            }
+            next = Temporal.PlainDate.from(rate.validTo).add({ days: 1 }).toString();
+          }
+          if (next !== Temporal.PlainDate.from(pkg.validTo).add({ days: 1 }).toString()) {
+            add("CARITAS_RATE_COVERAGE", root, `Incomplete coverage for ${provisionId}:${pair}.`);
+          }
         }
       }
     }
