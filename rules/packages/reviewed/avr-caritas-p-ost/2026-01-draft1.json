@@ -22,6 +22,30 @@
       "sha256": "2b64d9893f09df91e4daae412ec315795135c3f482e837642983ff4fb0b1a733"
     },
     {
+      "id": "caritas-bk-2025-02-corrected",
+      "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+      "documentDate": "2025-07-30",
+      "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+      "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+    },
+    {
+      "id": "caritas-rk-ost-2025-allowances",
+      "title": "Caritas Regionalkommission Ost, weitere Verguetungsbestandteile 2025",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Ost/2025-06-26_Beschluss_Erhoehung_Werte_weitere_Verguetungsbestandteile_gez.pdf",
+      "documentDate": "2025-06-26",
+      "section": "I: Anlage 31/32 Paragraph 12 Absatz 4, Bundesmittelwerte in gleicher Hoehe zu gleichen Zeitpunkten",
+      "sha256": "6bfe23a0a45a5ee269ddd452a96ec213a07ca111dd7fc2f6b05a817db8a74993"
+    },
+    {
+      "id": "caritas-dg-2024-care-allowances",
+      "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+      "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+      "documentDate": "2024-12-17",
+      "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+      "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+    },
+    {
       "id": "pflegeshift-tariff-assessment-v1",
       "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
       "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
@@ -501,6 +525,188 @@
         "validTo": "2026-12-31",
         "fullTimeWeeklyMinutes": 2340,
         "sourceIds": ["caritas-rk-ost-time-2022"]
+      }
+    ],
+    "caritasCareAllowanceRates": [
+      {
+        "id": "caritas-ost-ost-tarif-ost-31-care-3-2026",
+        "provisionId": "SECTION_12_3",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 2500,
+        "sourceIds": ["caritas-dg-2024-care-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-ost-31-care-4-2026-01-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-01-31",
+        "monthlyCents": 13796,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-ost-31-care-4-2026-02-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 14182,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-berlin-31-care-3-2026",
+        "provisionId": "SECTION_12_3",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 2500,
+        "sourceIds": ["caritas-dg-2024-care-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-berlin-31-care-4-2026-01-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-01-31",
+        "monthlyCents": 13796,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-berlin-31-care-4-2026-02-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 14182,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-hamburg-31-care-3-2026",
+        "provisionId": "SECTION_12_3",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 2500,
+        "sourceIds": ["caritas-dg-2024-care-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-hamburg-31-care-4-2026-01-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-01-31",
+        "monthlyCents": 13796,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-hamburg-31-care-4-2026-02-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 14182,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-ost-32-care-3-2026",
+        "provisionId": "SECTION_12_3",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 2500,
+        "sourceIds": ["caritas-dg-2024-care-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-ost-32-care-4-2026-01-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-01-31",
+        "monthlyCents": 13796,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-ost-32-care-4-2026-02-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 14182,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-berlin-32-care-3-2026",
+        "provisionId": "SECTION_12_3",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 2500,
+        "sourceIds": ["caritas-dg-2024-care-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-berlin-32-care-4-2026-01-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-01-31",
+        "monthlyCents": 13796,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-berlin-32-care-4-2026-02-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 14182,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-hamburg-32-care-3-2026",
+        "provisionId": "SECTION_12_3",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 2500,
+        "sourceIds": ["caritas-dg-2024-care-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-hamburg-32-care-4-2026-01-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-01-31",
+        "monthlyCents": 13796,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-ost-tarif-west-hamburg-32-care-4-2026-02-01",
+        "provisionId": "SECTION_12_4",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "monthlyCents": 14182,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
       }
     ],
     "premiumRules": [],
