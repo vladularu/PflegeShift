@@ -5,6 +5,8 @@ import type {
   RulePackage,
   Track,
 } from "./contracts.generated";
+import { annualPaymentRuleIssues } from "./annual-payment-rule-validation";
+import { tariffSelectionIssues } from "./tariff-selection";
 import {
   validateManifestSchema as generatedManifestValidator,
   validateRuleCatalogPublicationRequestSchema as generatedPublicationRequestValidator,
@@ -135,6 +137,8 @@ function validateTariffPackage(
   issues: ValidationIssue[],
 ): void {
   const { rules } = rulePackage;
+  issues.push(...tariffSelectionIssues(rulePackage));
+  issues.push(...annualPaymentRuleIssues(rulePackage));
   reportDuplicates(
     rules.payTables.map((table) => table.id),
     "/rules/payTables",
