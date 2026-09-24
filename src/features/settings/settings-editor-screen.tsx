@@ -10,7 +10,7 @@ import {
   INDUSTRIES,
   INDUSTRY_LABELS,
   PAY_GROUPS,
-  PAY_LEVELS,
+  payLevelsForGroup,
   TARIFF_REGION_LABELS,
   type FederalState,
   type HolidayRegion,
@@ -104,7 +104,7 @@ function SettingsEditorForm({
     initialValues.allEmploymentWorkRecorded,
   );
   const [payGroup, setPayGroup] = useState<PayGroup>(initialValues.payGroup);
-  const [payLevel, setPayLevel] = useState<PayLevel>(initialValues.payLevel);
+  const [payLevel, setPayLevel] = useState<PayLevel | "UNSET">(initialValues.payLevel);
   const [sector, setSector] = useState<TariffSector>(initialValues.sector);
   const [tariffRegion, setTariffRegion] = useState<TariffRegion>(initialValues.tariffRegion);
   const [weeklyHoursError, setWeeklyHoursError] = useState<string | null>(null);
@@ -149,6 +149,11 @@ function SettingsEditorForm({
       focusInvalidField(manualMonthlyGrossRef, salaryFieldError);
       return;
     }
+    if (section === "TARIFF" && salaryMode === "TVOED_P" && payLevel === "UNSET") {
+      setError("Bitte eine gültige Stufe für die gewählte Gruppe wählen.");
+      setMessage(null);
+      return;
+    }
     try {
       setSaving(true);
       setError(null);
@@ -160,7 +165,7 @@ function SettingsEditorForm({
         salaryMode,
         {
           payGroup,
-          payLevel,
+          payLevel: payLevel === "UNSET" ? initialValues.payLevel : payLevel,
           sector,
           tariffRegion,
           fullTimeWeeklyMinutes,
@@ -324,14 +329,27 @@ function SettingsEditorForm({
               />
               <DropdownField
                 label="Entgeltgruppe"
-                onChange={setPayGroup}
+                onChange={(group) => {
+                  setPayGroup(group);
+                  if (payLevel !== "UNSET" && !payLevelsForGroup(group).includes(payLevel)) {
+                    setPayLevel("UNSET");
+                  }
+                }}
                 options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
                 value={payGroup}
               />
               <DropdownField
                 label="Stufe"
                 onChange={setPayLevel}
-                options={PAY_LEVELS.map((level) => ({ value: level, label: `Stufe ${level}` }))}
+                options={[
+                  ...(payLevel === "UNSET"
+                    ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
+                    : []),
+                  ...payLevelsForGroup(payGroup).map((level) => ({
+                    value: level,
+                    label: `Stufe ${level}`,
+                  })),
+                ]}
                 value={payLevel}
               />
               <Field editable={false} label="Tarifliche Vollzeit pro Woche" value={fullTimeHours} />

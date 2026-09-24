@@ -31,7 +31,7 @@ import {
   INDUSTRIES,
   INDUSTRY_LABELS,
   PAY_GROUPS,
-  PAY_LEVELS,
+  payLevelsForGroup,
   type FederalState,
   type HolidayRegion,
   type Industry,
@@ -389,13 +389,19 @@ export function OnboardingScreen({ preview = false }: { readonly preview?: boole
                       error={errors.group}
                       onChange={(value) => {
                         setPayGroup(value);
+                        if (payLevel !== null && !payLevelsForGroup(value).includes(payLevel)) {
+                          setPayLevel(null);
+                        }
                         clearError("group");
                       }}
                     />
                     <SelectField
                       label="Stufe"
                       value={payLevel}
-                      options={PAY_LEVELS.map((value) => ({ value, label: `Stufe ${value}` }))}
+                      options={(payGroup ? payLevelsForGroup(payGroup) : []).map((value) => ({
+                        value,
+                        label: `Stufe ${value}`,
+                      }))}
                       error={errors.level}
                       onChange={(value) => {
                         setPayLevel(value);
