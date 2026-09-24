@@ -251,6 +251,7 @@ export function createSupabaseRuleCatalogStorage({
     try {
       return await fetchImplementation(`${origin}/storage/v1${pathname}`, {
         ...init,
+        redirect: "error",
         headers: { ...authorizationHeaders, ...init.headers },
         signal: AbortSignal.timeout(requestTimeoutMilliseconds),
       });
