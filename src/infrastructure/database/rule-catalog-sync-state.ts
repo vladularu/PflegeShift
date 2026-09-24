@@ -73,11 +73,22 @@ export async function claimRuleCatalogCheck(
   now: Date,
   failureRetryMilliseconds: number,
   force = false,
+  requiredGeneration: number | null = null,
 ): Promise<boolean> {
   if (!Number.isSafeInteger(failureRetryMilliseconds) || failureRetryMilliseconds <= 0) {
     throw new Error("The rule catalog failure retry interval must be positive.");
   }
+  if (
+    requiredGeneration !== null &&
+    (!Number.isSafeInteger(requiredGeneration) || requiredGeneration <= 0)
+  ) {
+    throw new Error("The required rule catalog generation must be positive.");
+  }
   const stateKey = ruleCatalogSyncStateKey(channel);
+  const upgradeKey =
+    requiredGeneration === null
+      ? null
+      : stateKey + "_generation_" + requiredGeneration + "_claimed";
   let claimed = false;
   await withImmediateTransaction(db, async (transaction) => {
     const row = await transaction.getFirstAsync<PreferenceRow>(
@@ -85,10 +96,26 @@ export async function claimRuleCatalogCheck(
       stateKey,
     );
     const state = parseState(row?.value);
+    const upgradeClaim =
+      upgradeKey === null
+        ? null
+        : await transaction.getFirstAsync<PreferenceRow>(
+            "SELECT value FROM app_preferences WHERE key=?",
+            upgradeKey,
+          );
+    const firstUpgradeClaim = upgradeKey !== null && upgradeClaim === null;
     const nextCheck = state === null ? null : Date.parse(state.nextCheckAt);
     const implausiblyFuture =
       nextCheck !== null && nextCheck > now.getTime() + MAXIMUM_REASONABLE_SCHEDULE_DELAY_MS;
-    if (!force && nextCheck !== null && nextCheck > now.getTime() && !implausiblyFuture) return;
+    if (
+      !force &&
+      !firstUpgradeClaim &&
+      nextCheck !== null &&
+      nextCheck > now.getTime() &&
+      !implausiblyFuture
+    ) {
+      return;
+    }
 
     const retryAt = new Date(now.getTime() + failureRetryMilliseconds);
     await writeState(
@@ -97,6 +124,9 @@ export async function claimRuleCatalogCheck(
       stateJson(retryAt, state?.lastSuccessfulGeneration ?? null),
       now,
     );
+    if (firstUpgradeClaim) {
+      await writeState(transaction, upgradeKey, "1", now);
+    }
     claimed = true;
   });
   return claimed;
