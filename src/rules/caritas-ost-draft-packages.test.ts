@@ -57,6 +57,9 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
         `caritas-rk-ost-${year}-p`,
         "pflegeshift-tariff-assessment-v1",
         "caritas-rk-ost-time-2022",
+        "caritas-bk-2025-02-corrected",
+        "caritas-rk-ost-2025-allowances",
+        "caritas-dg-2024-care-allowances",
         ...(year === 2026 ? ["caritas-dgs-ost-hospital-time-2026"] : []),
       ].sort(),
     );
@@ -151,4 +154,60 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
       ).toBe(true);
     }
   });
+
+  it.each([2025, 2026] as const)(
+    "binds dated care allowances for every Ost annex and territory in %s",
+    (year) => {
+      const candidate = pkg(year);
+      const rates = candidate.rules.caritasCareAllowanceRates ?? [];
+      expect(rates).toHaveLength(year === 2025 ? 12 : 18);
+      expect(
+        candidate.sources.find((source) => source.id === "caritas-rk-ost-2025-allowances")?.sha256,
+      ).toBe("6bfe23a0a45a5ee269ddd452a96ec213a07ca111dd7fc2f6b05a817db8a74993");
+      for (const variant of candidate.rules.selection?.variants ?? []) {
+        for (const region of variant.regions) {
+          const entries = rates.filter(
+            (rate) => rate.variantId === variant.id && rate.regionId === region.id,
+          );
+          expect(
+            entries
+              .filter((rate) => rate.provisionId === "SECTION_12_3")
+              .map((rate) => [rate.validFrom, rate.validTo, rate.monthlyCents, rate.sourceIds]),
+          ).toEqual([
+            [`${year}-01-01`, `${year}-12-31`, 2500, ["caritas-dg-2024-care-allowances"]],
+          ]);
+          expect(
+            entries
+              .filter((rate) => rate.provisionId === "SECTION_12_4")
+              .map((rate) => [rate.validFrom, rate.validTo, rate.monthlyCents, rate.sourceIds]),
+          ).toEqual(
+            year === 2025
+              ? [
+                  [
+                    "2025-07-01",
+                    "2025-12-31",
+                    13796,
+                    ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"],
+                  ],
+                ]
+              : [
+                  [
+                    "2026-01-01",
+                    "2026-01-31",
+                    13796,
+                    ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"],
+                  ],
+                  [
+                    "2026-02-01",
+                    "2026-12-31",
+                    14182,
+                    ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"],
+                  ],
+                ],
+          );
+        }
+      }
+      expect(candidate.rules.selection?.capabilities.allowances).toBe("UNSUPPORTED");
+    },
+  );
 });
