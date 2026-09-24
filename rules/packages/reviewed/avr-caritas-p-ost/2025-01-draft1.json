@@ -28,6 +28,14 @@
       "documentDate": "2026-08-28",
       "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
       "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "caritas-rk-ost-time-2022",
+      "title": "Caritas RK Ost, Arbeitszeitregelung für Anlagen 31 und 32",
+      "url": "https://www.caritas.de/cms/contents/caritas.de/medien/dokumente/arbeitsrechtliche-ko/beschluesse/beschluesse-regional/2022-01-25-beschluss/2022_01_25_beschluss_rkost_nderung_der_anlagen_5_31bis33_redaktionell_bearbeitet_gez.pdf?d=a&f=pdf",
+      "documentDate": "2022-01-25",
+      "section": "Nr. 2 und 3: Anlage 31 ab Januar bzw. Juli 2025; Anlage 32 ab Juli 2023",
+      "sha256": "b8b3eff8f6c35445db0fc3e766bf1791b60989331d65ac4c7c37a01aefea0fcb"
     }
   ],
   "review": {
@@ -745,6 +753,71 @@
             "monthlyCents": 668321
           }
         ]
+      }
+    ],
+    "employmentWorkingTimeRules": [
+      {
+        "id": "caritas-ost-31-ost-tarif-ost-2025-01-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2025-01-01",
+        "validTo": "2025-12-31",
+        "fullTimeWeeklyMinutes": 2310,
+        "sourceIds": ["caritas-rk-ost-time-2022"]
+      },
+      {
+        "id": "caritas-ost-31-ost-tarif-west-berlin-2025-01-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2025-01-01",
+        "validTo": "2025-06-30",
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["caritas-rk-ost-time-2022"]
+      },
+      {
+        "id": "caritas-ost-31-ost-tarif-west-berlin-2025-07-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "fullTimeWeeklyMinutes": 2310,
+        "sourceIds": ["caritas-rk-ost-time-2022"]
+      },
+      {
+        "id": "caritas-ost-31-ost-tarif-west-hamburg-2025-01-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2025-01-01",
+        "validTo": "2025-12-31",
+        "fullTimeWeeklyMinutes": 2310,
+        "sourceIds": ["caritas-rk-ost-time-2022"]
+      },
+      {
+        "id": "caritas-ost-32-ost-tarif-ost-2025-01-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2025-01-01",
+        "validTo": "2025-12-31",
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["caritas-rk-ost-time-2022"]
+      },
+      {
+        "id": "caritas-ost-32-ost-tarif-west-berlin-2025-01-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2025-01-01",
+        "validTo": "2025-12-31",
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["caritas-rk-ost-time-2022"]
+      },
+      {
+        "id": "caritas-ost-32-ost-tarif-west-hamburg-2025-01-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2025-01-01",
+        "validTo": "2025-12-31",
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["caritas-rk-ost-time-2022"]
       }
     ],
     "premiumRules": [],
