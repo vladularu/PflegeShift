@@ -84,6 +84,31 @@ describe("rule catalog sync state", () => {
     await expect(claimRuleCatalogCheck(db, preview, forcedAt, hour)).resolves.toBe(false);
   });
 
+  it("bypasses an old generation schedule once, then respects failure retry and normal checks", async () => {
+    const now = new Date("2026-08-29T10:00:00.000Z");
+    await claimRuleCatalogCheck(db, preview, now, hour);
+    await completeRuleCatalogCheck(db, preview, 4, now, day);
+
+    const upgradeAt = new Date(now.getTime() + 10 * 60_000);
+    await expect(claimRuleCatalogCheck(db, preview, upgradeAt, hour, false, 5)).resolves.toBe(true);
+    await expect(
+      claimRuleCatalogCheck(db, preview, new Date(upgradeAt.getTime() + hour - 1), hour, false, 5),
+    ).resolves.toBe(false);
+    await expect(
+      claimRuleCatalogCheck(db, preview, new Date(upgradeAt.getTime() + hour), hour, false, 5),
+    ).resolves.toBe(true);
+
+    const checkedAt = new Date(upgradeAt.getTime() + hour);
+    await completeRuleCatalogCheck(db, preview, 4, checkedAt, day);
+    const beforeNextCheck = new Date(checkedAt.getTime() + 10 * 60_000);
+    await expect(claimRuleCatalogCheck(db, preview, beforeNextCheck, hour, false, 5)).resolves.toBe(
+      false,
+    );
+    await expect(claimRuleCatalogCheck(db, preview, beforeNextCheck, hour, false, 6)).resolves.toBe(
+      true,
+    );
+  });
+
   it("isolates Preview and Production scheduling metadata", async () => {
     const now = new Date("2026-08-29T10:00:00.000Z");
     await claimRuleCatalogCheck(db, "PREVIEW", now, hour);

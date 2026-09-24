@@ -57,23 +57,21 @@ export function buildRuleCatalogRuntimePort(
     }
     const activeRemoteConfig = remoteConfig;
     const activeVerificationPolicy = verificationPolicy;
+    const requiredGeneration =
+      activeGeneration === null || activeGeneration < activeRemoteConfig.requiredGeneration
+        ? activeRemoteConfig.requiredGeneration
+        : null;
     return synchronizeRuleCatalog(activeGeneration, {
       remote,
       claimCheck: () =>
-        syncOptions.force === true
-          ? claimRuleCatalogCheck(
-              db,
-              activeVerificationPolicy.expectedChannel,
-              now(),
-              activeRemoteConfig.failureRetryMilliseconds,
-              true,
-            )
-          : claimRuleCatalogCheck(
-              db,
-              activeVerificationPolicy.expectedChannel,
-              now(),
-              activeRemoteConfig.failureRetryMilliseconds,
-            ),
+        claimRuleCatalogCheck(
+          db,
+          activeVerificationPolicy.expectedChannel,
+          now(),
+          activeRemoteConfig.failureRetryMilliseconds,
+          syncOptions.force === true,
+          requiredGeneration,
+        ),
       completeCheck: (generation) =>
         completeRuleCatalogCheck(
           db,

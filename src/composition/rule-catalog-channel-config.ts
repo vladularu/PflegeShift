@@ -10,11 +10,13 @@ import { isRuleCatalogRuntimeCompatible } from "@/rules/rule-resolver";
 
 export const RULE_CATALOG_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1_000;
 export const RULE_CATALOG_FAILURE_RETRY_MS = 60 * 60 * 1_000;
+export const PREVIEW_REQUIRED_CATALOG_GENERATION = 5;
 
 export interface RuleCatalogRemoteConfig {
   readonly baseUrl: string;
   readonly checkIntervalMilliseconds: number;
   readonly failureRetryMilliseconds: number;
+  readonly requiredGeneration: number;
 }
 
 export interface RuleCatalogChannelConfig {
@@ -29,6 +31,7 @@ function previewRemoteConfig(): RuleCatalogRemoteConfig {
     baseUrl: PREVIEW_RULE_CATALOG_TRUST.baseUrl,
     checkIntervalMilliseconds: RULE_CATALOG_CHECK_INTERVAL_MS,
     failureRetryMilliseconds: RULE_CATALOG_FAILURE_RETRY_MS,
+    requiredGeneration: PREVIEW_REQUIRED_CATALOG_GENERATION,
   });
 }
 

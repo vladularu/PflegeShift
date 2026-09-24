@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createRuleCatalogRuntimePort } from "@/composition/create-rule-catalog-runtime-port";
 import {
   createRuleCatalogChannelConfig,
+  PREVIEW_REQUIRED_CATALOG_GENERATION,
   type RuleCatalogChannelConfig,
 } from "@/composition/rule-catalog-channel-config";
 import { PREVIEW_RULE_CATALOG_TRUST } from "@/composition/rule-catalog-preview-trust";
@@ -47,6 +48,7 @@ function previewConfig(): RuleCatalogChannelConfig {
       baseUrl: "https://example.supabase.co/rules/preview",
       checkIntervalMilliseconds: 86_400_000,
       failureRetryMilliseconds: 3_600_000,
+      requiredGeneration: 5,
     },
     acceptsStoredCatalog: vi.fn(() => true),
   };
@@ -140,6 +142,7 @@ describe("createRuleCatalogRuntimePort", () => {
         baseUrl: "https://example.supabase.co/rules/production",
         checkIntervalMilliseconds: 86_400_000,
         failureRetryMilliseconds: 3_600_000,
+        requiredGeneration: 5,
       },
       acceptsStoredCatalog: () => false,
     };
@@ -164,7 +167,7 @@ describe("createRuleCatalogRuntimePort", () => {
     httpMocks.createRuleCatalogHttpClient.mockReturnValue(remote);
     syncMocks.synchronizeRuleCatalog.mockResolvedValue({
       status: "UP_TO_DATE",
-      generation: 1,
+      generation: 5,
     });
     const config = previewConfig();
     const remoteConfig = config.remote!;
@@ -175,22 +178,22 @@ describe("createRuleCatalogRuntimePort", () => {
       now: () => currentTime,
     });
 
-    await expect(port.synchronizeCatalog(1)).resolves.toEqual({
+    await expect(port.synchronizeCatalog(5)).resolves.toEqual({
       status: "UP_TO_DATE",
-      generation: 1,
+      generation: 5,
     });
     expect(httpMocks.createRuleCatalogHttpClient).toHaveBeenCalledWith({
       baseUrl: remoteConfig.baseUrl,
       fetchImplementation,
     });
     expect(syncMocks.synchronizeRuleCatalog).toHaveBeenCalledWith(
-      1,
+      5,
       expect.objectContaining({ remote }),
     );
 
     const dependencies = syncMocks.synchronizeRuleCatalog.mock.calls[0][1];
     await dependencies.claimCheck();
-    await dependencies.completeCheck(1);
+    await dependencies.completeCheck(5);
     await dependencies.verifyManifest("manifest");
     await dependencies.verifyArtifacts({ manifestJson: "manifest", packageJson: [] });
     await dependencies.activate({});
@@ -200,11 +203,13 @@ describe("createRuleCatalogRuntimePort", () => {
       "PREVIEW",
       currentTime,
       remoteConfig.failureRetryMilliseconds,
+      false,
+      null,
     );
     expect(stateMocks.completeRuleCatalogCheck).toHaveBeenCalledWith(
       database,
       "PREVIEW",
-      1,
+      5,
       currentTime,
       remoteConfig.checkIntervalMilliseconds,
     );
@@ -218,15 +223,37 @@ describe("createRuleCatalogRuntimePort", () => {
     );
     expect(catalogMocks.activateRuleCatalog).toHaveBeenCalledWith(database, {});
 
-    await port.synchronizeCatalog(1, { force: true });
-    const forcedDependencies = syncMocks.synchronizeRuleCatalog.mock.calls[1][1];
-    await forcedDependencies.claimCheck();
+    await port.synchronizeCatalog(4);
+    await syncMocks.synchronizeRuleCatalog.mock.calls[1][1].claimCheck();
+    expect(stateMocks.claimRuleCatalogCheck).toHaveBeenLastCalledWith(
+      database,
+      "PREVIEW",
+      currentTime,
+      remoteConfig.failureRetryMilliseconds,
+      false,
+      5,
+    );
+
+    await port.synchronizeCatalog(null);
+    await syncMocks.synchronizeRuleCatalog.mock.calls[2][1].claimCheck();
+    expect(stateMocks.claimRuleCatalogCheck).toHaveBeenLastCalledWith(
+      database,
+      "PREVIEW",
+      currentTime,
+      remoteConfig.failureRetryMilliseconds,
+      false,
+      5,
+    );
+
+    await port.synchronizeCatalog(5, { force: true });
+    await syncMocks.synchronizeRuleCatalog.mock.calls[3][1].claimCheck();
     expect(stateMocks.claimRuleCatalogCheck).toHaveBeenLastCalledWith(
       database,
       "PREVIEW",
       currentTime,
       remoteConfig.failureRetryMilliseconds,
       true,
+      null,
     );
   });
 
@@ -252,6 +279,7 @@ describe("createRuleCatalogRuntimePort", () => {
     expect(disabled.verificationPolicy).toBeNull();
     expect(disabled.remote).toBeNull();
     expect(previewRemote.baseUrl).toBe(PREVIEW_RULE_CATALOG_TRUST.baseUrl);
+    expect(previewRemote.requiredGeneration).toBe(PREVIEW_REQUIRED_CATALOG_GENERATION);
     expect([...previewPolicy.supportedEngineContractVersions]).toEqual([
       ...RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS,
     ]);
