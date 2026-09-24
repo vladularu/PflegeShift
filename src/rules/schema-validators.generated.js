@@ -80,7 +80,7 @@ const schema31 = {
         packageId: { $ref: "#/$defs/identifier" },
         versionId: { $ref: "#/$defs/versionIdentifier" },
         kind: { $ref: "#/$defs/kind" },
-        engineContractVersion: { enum: [1, 2, 3, 4, 5, 6, 7, 11] },
+        engineContractVersion: { enum: [1, 2, 3, 4, 5, 6, 7, 11, 14] },
         validFrom: { $ref: "#/$defs/isoDate" },
         validTo: { oneOf: [{ type: "null" }, { $ref: "#/$defs/isoDate" }] },
         path: {
@@ -521,7 +521,7 @@ const schema38 = {
     packageId: { $ref: "#/$defs/identifier" },
     versionId: { $ref: "#/$defs/versionIdentifier" },
     kind: { $ref: "#/$defs/kind" },
-    engineContractVersion: { enum: [1, 2, 3, 4, 5, 6, 7, 11] },
+    engineContractVersion: { enum: [1, 2, 3, 4, 5, 6, 7, 11, 14] },
     validFrom: { $ref: "#/$defs/isoDate" },
     validTo: { oneOf: [{ type: "null" }, { $ref: "#/$defs/isoDate" }] },
     path: {
@@ -866,7 +866,8 @@ function validate23(
         data3 === 5 ||
         data3 === 6 ||
         data3 === 7 ||
-        data3 === 11
+        data3 === 11 ||
+        data3 === 14
       )) {
         const err19 = {
           instancePath: instancePath + "/engineContractVersion",
@@ -2133,7 +2134,7 @@ const schema46 = {
       ],
       properties: {
         schemaVersion: { const: 1 },
-        engineContractVersion: { enum: [1, 2, 3, 4, 5, 6, 7, 11] },
+        engineContractVersion: { enum: [1, 2, 3, 4, 5, 6, 7, 11, 14] },
         packageId: { $ref: "#/$defs/identifier" },
         versionId: { $ref: "#/$defs/versionIdentifier" },
         kind: { enum: ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -2666,7 +2667,7 @@ const schema46 = {
           type: "object",
           required: ["kind", "rules"],
           properties: {
-            engineContractVersion: { enum: [1, 2, 3, 11] },
+            engineContractVersion: { enum: [1, 2, 3, 11, 14] },
             kind: { const: "TARIFF" },
             rules: { $ref: "#/$defs/tariffRules" },
           },
@@ -2976,7 +2977,7 @@ const schema47 = {
       type: "object",
       required: ["kind", "rules"],
       properties: {
-        engineContractVersion: { enum: [1, 2, 3, 11] },
+        engineContractVersion: { enum: [1, 2, 3, 11, 14] },
         kind: { const: "TARIFF" },
         rules: { $ref: "#/$defs/tariffRules" },
       },
@@ -3004,7 +3005,7 @@ const schema48 = {
   ],
   properties: {
     schemaVersion: { const: 1 },
-    engineContractVersion: { enum: [1, 2, 3, 4, 5, 6, 7, 11] },
+    engineContractVersion: { enum: [1, 2, 3, 4, 5, 6, 7, 11, 14] },
     packageId: { $ref: "#/$defs/identifier" },
     versionId: { $ref: "#/$defs/versionIdentifier" },
     kind: { enum: ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -4902,7 +4903,8 @@ function validate29(
         data1 === 5 ||
         data1 === 6 ||
         data1 === 7 ||
-        data1 === 11
+        data1 === 11 ||
+        data1 === 14
       )) {
         const err16 = {
           instancePath: instancePath + "/engineContractVersion",
@@ -15596,7 +15598,7 @@ function validate28(
     }
     if (data.engineContractVersion !== undefined) {
       let data0 = data.engineContractVersion;
-      if (!(data0 === 1 || data0 === 2 || data0 === 3 || data0 === 11)) {
+      if (!(data0 === 1 || data0 === 2 || data0 === 3 || data0 === 11 || data0 === 14)) {
         const err2 = {
           instancePath: instancePath + "/engineContractVersion",
           schemaPath: "#/allOf/1/properties/engineContractVersion/enum",

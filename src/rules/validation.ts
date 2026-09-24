@@ -6,6 +6,7 @@ import type {
   Track,
 } from "./contracts.generated";
 import { annualPaymentRuleIssues } from "./annual-payment-rule-validation";
+import { caritasTableIssues } from "./caritas-table-validation";
 import { tariffSelectionIssues } from "./tariff-selection";
 import {
   validateManifestSchema as generatedManifestValidator,
@@ -139,6 +140,7 @@ function validateTariffPackage(
   const { rules } = rulePackage;
   issues.push(...tariffSelectionIssues(rulePackage));
   issues.push(...annualPaymentRuleIssues(rulePackage));
+  issues.push(...caritasTableIssues(rulePackage));
   reportDuplicates(
     rules.payTables.map((table) => table.id),
     "/rules/payTables",
@@ -195,7 +197,11 @@ function validateTariffPackage(
   }
 
   const overtimeBaseRule = rules.overtimeBaseRule;
-  if (rulePackage.engineContractVersion >= 2 && overtimeBaseRule === undefined) {
+  if (
+    rulePackage.engineContractVersion >= 2 &&
+    rulePackage.engineContractVersion !== 14 &&
+    overtimeBaseRule === undefined
+  ) {
     issues.push(
       issue(
         "MISSING_OVERTIME_BASE_RULE",
@@ -244,7 +250,7 @@ function validateTariffPackage(
 
   const weeklyWorkingTimeRules = rules.weeklyWorkingTimeRules;
   const hourlyCalculation = rules.hourlyCalculation;
-  if (rulePackage.engineContractVersion >= 3) {
+  if (rulePackage.engineContractVersion >= 3 && rulePackage.engineContractVersion !== 14) {
     if (weeklyWorkingTimeRules === undefined) {
       issues.push(
         issue(
