@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { createServer } from "node:http";
 import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -29,6 +30,55 @@ const deliveryCliPath = path.join(repositoryRoot, "scripts", "deliver-rule-catal
 const require = createRequire(import.meta.url);
 const tsxImport = pathToFileURL(require.resolve("tsx")).href;
 const secretKey = "sb_secret_delivery_test_key_123456789";
+
+for (const status of [301, 302, 303, 307, 308]) {
+  test(`administrative storage never forwards credentials through HTTP ${status}`, async (t) => {
+    let redirectedRequests = 0;
+    const target = createServer((_request, response) => {
+      redirectedRequests += 1;
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end("{}");
+    });
+    const origin = createServer((request, response) => {
+      assert.equal(request.headers.apikey, secretKey);
+      response.writeHead(status, {
+        Location: `http://127.0.0.1:${target.address().port}/redirect-target`,
+      });
+      response.end();
+    });
+    for (const server of [target, origin]) {
+      await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+      t.after(
+        () =>
+          new Promise((resolve) => {
+            server.closeAllConnections();
+            server.close(resolve);
+          }),
+      );
+    }
+    const storage = createSupabaseRuleCatalogStorage({
+      channel: "PREVIEW",
+      supabaseUrl: `http://127.0.0.1:${origin.address().port}`,
+      secretKey,
+    });
+    for (const operation of [
+      () => storage.readObject("preview/current.json"),
+      () =>
+        storage.replaceCurrent({
+          objectPath: "preview/current.json",
+          contents: "{}",
+          cacheControl: "no-store",
+        }),
+    ]) {
+      await assert.rejects(operation, (error) => {
+        assert.equal(error.code, "NETWORK_FAILURE");
+        assert.equal(error.message.includes(secretKey), false);
+        return true;
+      });
+      assert.equal(redirectedRequests, 0);
+    }
+  });
+}
 
 test("delivery channel contract keeps only Preview remotely enabled", () => {
   const preview = ruleCatalogDeliveryChannel("PREVIEW");
