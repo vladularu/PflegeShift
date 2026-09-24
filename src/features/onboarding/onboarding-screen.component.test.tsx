@@ -49,6 +49,48 @@ async function summary(screen: Screen, hours = "38,5") {
 }
 
 describe("LUNA onboarding", () => {
+  it.each(["P5", "P6"])("saves %s stage 1 through onboarding", async (payGroup) => {
+    const screen = await render(onboarding());
+    await salary(screen);
+    await fireEvent.press(screen.getByRole("radio", { name: "TVöD-P" }));
+    await select(screen, "Entgeltgruppe", payGroup);
+    await select(screen, "Stufe", "Stufe 1");
+    await select(screen, "Tarifbereich", "Krankenhäuser · BT-K");
+    await press(screen, "Weiter");
+    await summary(screen);
+    await press(screen, "Ohne Konto starten");
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ tariff: expect.objectContaining({ payGroup, payLevel: 1 }) }),
+      ),
+    );
+  });
+
+  it("requires a new stage after switching from P5/1 to P7", async () => {
+    const screen = await render(onboarding());
+    await salary(screen);
+    await fireEvent.press(screen.getByRole("radio", { name: "TVöD-P" }));
+    await select(screen, "Entgeltgruppe", "P5");
+    await select(screen, "Stufe", "Stufe 1");
+    await select(screen, "Entgeltgruppe", "P7");
+    await select(screen, "Tarifbereich", "Krankenhäuser · BT-K");
+    await press(screen, "Weiter");
+    expect(screen.getByText("Bitte wähle deine Stufe.")).toBeTruthy();
+    await press(screen, /^Stufe:/);
+    expect(screen.queryByRole("radio", { name: "Stufe 1" })).toBeNull();
+    await fireEvent.press(screen.getByRole("radio", { name: "Stufe 2" }));
+    await press(screen, "Weiter");
+    await summary(screen);
+    await press(screen, "Ohne Konto starten");
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tariff: expect.objectContaining({ payGroup: "P7", payLevel: 2 }),
+        }),
+      ),
+    );
+  });
+
   it("keeps the main action outside the scroll area and uses the centered blueprint welcome", async () => {
     const screen = await render(onboarding());
     expect(screen.getByText("Dein Dienstplan.\nDein Rhythmus.")).toHaveStyle({

@@ -476,7 +476,8 @@ export function calculateMonthlyPayEstimate(
     assessTvoedPattern([], workPatternSettings, ruleResolver, dateKey);
   const version = getTariffVersion(dateKey, ruleResolver);
   const tariff = profile.tariff;
-  if (version === null || tariff === null || rulePackage === null) {
+  const fullTimeTableAmount = tariff ? getMonthlyTableAmount(tariff, dateKey, ruleResolver) : null;
+  if (version === null || tariff === null || rulePackage === null || fullTimeTableAmount === null) {
     return {
       month,
       tariffLabel: version?.label ?? null,
@@ -501,7 +502,6 @@ export function calculateMonthlyPayEstimate(
   if (fullTimeWeeklyMinutes === null) {
     throw new Error(`No tariff weekly working time is available for ${dateKey}.`);
   }
-  const fullTimeTableAmount = getMonthlyTableAmount(tariff, dateKey, ruleResolver)!;
   const personalBaseAmount = roundMoney(
     fullTimeTableAmount * (profile.weeklyMinutes / fullTimeWeeklyMinutes),
   );

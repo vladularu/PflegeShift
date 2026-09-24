@@ -80,6 +80,58 @@ function shift(overrides: Partial<ShiftEntry> = {}): ShiftEntry {
 }
 
 describe("TVöD-P pay engine", () => {
+  it.each(["P5", "P6"] as const)("calculates %s stage 1 part-time pay and overtime", (payGroup) => {
+    const lowGroupProfile: UserProfile = {
+      ...profile,
+      tariff: { ...profile.tariff!, payGroup, payLevel: 1 },
+    };
+    const monthly = calculateMonthlyPayEstimate("2026-07", [], lowGroupProfile, null);
+    expect(monthly.available).toBe(true);
+    expect(monthly.fullTimeTableAmount).toBe(payGroup === "P5" ? 2907.18 : 3012.49);
+    expect(monthly.personalBaseAmount).toBe(payGroup === "P5" ? 1453.59 : 1506.25);
+    const overtime = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-07-06",
+        type: "DAY",
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 0,
+      }),
+      lowGroupProfile,
+    );
+    expect(overtime.overtimeBaseAmount).toBe(payGroup === "P5" ? 17.37 : 18);
+    expect(overtime.overtimePremiumAmount).toBe(payGroup === "P5" ? 5.77 : 6.03);
+  });
+
+  it("marks pay unavailable when a compatible catalog lacks the selected group", () => {
+    const incomplete = structuredClone(BUNDLED_TARIFF_RULES[1]);
+    for (const table of incomplete.rules.payTables) {
+      table.entries = table.entries.filter(
+        (entry) => entry.groupId !== "p5",
+      ) as typeof table.entries;
+    }
+    const resolver = createRuleResolver(
+      {
+        tariff: [incomplete],
+        legal: BUNDLED_LEGAL_RULES,
+        holiday: BUNDLED_HOLIDAY_RULES,
+      },
+      LEGACY_RULE_PACKAGE_IDS,
+    );
+    const result = calculateMonthlyPayEstimate(
+      "2026-07",
+      [],
+      { ...profile, tariff: { ...profile.tariff!, payGroup: "P5", payLevel: 1 } },
+      null,
+      undefined,
+      undefined,
+      resolver,
+    );
+    expect(result.available).toBe(false);
+    expect(result.personalBaseAmount).toBeNull();
+    expect(result.estimatedGrossAmount).toBeNull();
+  });
+
   it("uses a manual monthly gross without resolving or inventing TVöD additions", () => {
     const unreachableRuleResolver = new Proxy({} as RuleResolver, {
       get() {

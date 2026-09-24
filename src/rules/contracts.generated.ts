@@ -37,7 +37,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 11;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -59,7 +59,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2 | 3;
+  engineContractVersion?: 1 | 2 | 3 | 11;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -113,10 +113,12 @@ export type RuleReview1 =
       reviewedAt?: RuleUtcTimestamp;
       gitCommit?: string;
     };
+export type RuleSelectionIdentifier = string;
 /**
  * @minItems 1
  */
 export type RuleSourceIds = [RuleIdentifier, ...RuleIdentifier[]];
+export type RuleCapabilityStatus = "SUPPORTED" | "UNSUPPORTED" | "NOT_APPLICABLE";
 export type RuleNullableIdentifier = null | RuleIdentifier;
 export type RuleLegalPackage = RulePackageBase & {
   engineContractVersion?: 1 | 3 | 4 | 5 | 6;
@@ -131,7 +133,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 11;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -166,6 +168,12 @@ export interface RuleRounding {
   stage: "PER_LINE" | "AFTER_SUM";
 }
 export interface RuleTariffRules {
+  selection?: RuleTariffSelection;
+  /**
+   * @minItems 1
+   * @maxItems 200
+   */
+  annualPaymentRules?: [RuleAnnualPaymentRule, ...RuleAnnualPaymentRule[]];
   selector:
     | {
         agreementId: RuleIdentifier;
@@ -195,6 +203,111 @@ export interface RuleTariffRules {
   combinationRules: RuleCombinationRule[];
   workPatternRules: RuleWorkPatternRule[];
   workPatternPolicy: RuleWorkPatternPolicy;
+}
+export interface RuleTariffSelection {
+  familyId: RuleIdentifier;
+  engineId: RuleIdentifier;
+  employmentKind: "EMPLOYEE" | "APPRENTICE";
+  /**
+   * @minItems 1
+   * @maxItems 100
+   */
+  variants: [
+    {
+      id: RuleSelectionIdentifier;
+      label: string;
+      specialPartId: RuleIdentifier;
+      sourceIds: RuleSourceIds;
+      /**
+       * @minItems 1
+       * @maxItems 100
+       */
+      regions: [
+        {
+          id: RuleSelectionIdentifier;
+          label: string;
+          payTableId?: RuleIdentifier;
+          sourceIds: RuleSourceIds;
+        },
+        ...{
+          id: RuleSelectionIdentifier;
+          label: string;
+          payTableId?: RuleIdentifier;
+          sourceIds: RuleSourceIds;
+        }[],
+      ];
+    },
+    ...{
+      id: RuleSelectionIdentifier;
+      label: string;
+      specialPartId: RuleIdentifier;
+      sourceIds: RuleSourceIds;
+      /**
+       * @minItems 1
+       * @maxItems 100
+       */
+      regions: [
+        {
+          id: RuleSelectionIdentifier;
+          label: string;
+          payTableId?: RuleIdentifier;
+          sourceIds: RuleSourceIds;
+        },
+        ...{
+          id: RuleSelectionIdentifier;
+          label: string;
+          payTableId?: RuleIdentifier;
+          sourceIds: RuleSourceIds;
+        }[],
+      ];
+    }[],
+  ];
+  capabilities: {
+    basePay: RuleCapabilityStatus;
+    timePremiums: RuleCapabilityStatus;
+    allowances: RuleCapabilityStatus;
+    overtime: RuleCapabilityStatus;
+    annualPayment: RuleCapabilityStatus;
+  };
+}
+/**
+ * Contracts 11 (VKA) and 12 (TV-L): declarative annual payment terms. Personal confirmations are not public catalog data. Policies identify bundled algorithms, never remote code.
+ */
+export interface RuleAnnualPaymentRule {
+  id: RuleIdentifier;
+  variantId: RuleSelectionIdentifier;
+  /**
+   * @minItems 1
+   * @maxItems 100
+   */
+  regionIds: [RuleSelectionIdentifier, ...RuleSelectionIdentifier[]];
+  /**
+   * @minItems 1
+   * @maxItems 100
+   */
+  payGroups: [RuleIdentifier, ...RuleIdentifier[]];
+  firstEntitlementYear: number;
+  lastEntitlementYear: number;
+  rateBasisPoints: number;
+  /**
+   * Three reference months, or November only for TVA-L Pflege §16; semantic validation enforces the policy.
+   *
+   * @minItems 1
+   * @maxItems 3
+   */
+  referenceMonths: [number] | [number, number] | [number, number, number];
+  lateEntryAfterMonth: number;
+  basisPolicy: "TVOED_VKA_20" | "TVAOED_PFLEGE_14" | "TVL_20" | "TVAL_PFLEGE_16";
+  eligibilityPolicy:
+    | "EMPLOYED_DECEMBER_1"
+    | "BT_K_EARLY_EXIT"
+    | "TRAINING_OR_DIRECT_TAKEOVER_DECEMBER_1"
+    | "TVAL_TRAINING_OR_DIRECT_TAKEOVER_DECEMBER_1"
+    | "TVL_DECEMBER_1_OR_LEGACY_ATZ";
+  reductionPolicy: "TVOED_VKA_20" | "TVAOED_PFLEGE_14" | "TVL_20" | "TVAL_PFLEGE_16";
+  earlyExitBasis: "NONE" | "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES" | "LAST_THREE_MONTHS_TVL";
+  payoutMonth: number;
+  sourceIds: RuleSourceIds;
 }
 export interface RulePayTable {
   id: RuleIdentifier;

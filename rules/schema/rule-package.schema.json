@@ -169,7 +169,7 @@
       ],
       "properties": {
         "schemaVersion": { "const": 1 },
-        "engineContractVersion": { "enum": [1, 2, 3, 4, 5, 6, 7] },
+        "engineContractVersion": { "enum": [1, 2, 3, 4, 5, 6, 7, 11] },
         "packageId": { "$ref": "#/$defs/identifier" },
         "versionId": { "$ref": "#/$defs/versionIdentifier" },
         "kind": { "enum": ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -535,6 +535,211 @@
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
+    "selectionIdentifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$"
+    },
+    "capabilityStatus": {
+      "enum": ["SUPPORTED", "UNSUPPORTED", "NOT_APPLICABLE"]
+    },
+    "tariffSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["familyId", "engineId", "employmentKind", "variants", "capabilities"],
+      "properties": {
+        "familyId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "engineId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "employmentKind": {
+          "enum": ["EMPLOYEE", "APPRENTICE"]
+        },
+        "variants": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "specialPartId", "regions", "sourceIds"],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/selectionIdentifier"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              },
+              "specialPartId": {
+                "$ref": "#/$defs/identifier"
+              },
+              "sourceIds": {
+                "$ref": "#/$defs/sourceIds"
+              },
+              "regions": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["id", "label", "sourceIds"],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/$defs/selectionIdentifier"
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 160
+                    },
+                    "payTableId": {
+                      "$ref": "#/$defs/identifier"
+                    },
+                    "sourceIds": {
+                      "$ref": "#/$defs/sourceIds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["basePay", "timePremiums", "allowances", "overtime", "annualPayment"],
+          "properties": {
+            "basePay": {
+              "$ref": "#/$defs/capabilityStatus"
+            },
+            "timePremiums": {
+              "$ref": "#/$defs/capabilityStatus"
+            },
+            "allowances": {
+              "$ref": "#/$defs/capabilityStatus"
+            },
+            "overtime": {
+              "$ref": "#/$defs/capabilityStatus"
+            },
+            "annualPayment": {
+              "$ref": "#/$defs/capabilityStatus"
+            }
+          }
+        }
+      }
+    },
+    "annualPaymentRule": {
+      "description": "Contracts 11 (VKA) and 12 (TV-L): declarative annual payment terms. Personal confirmations are not public catalog data. Policies identify bundled algorithms, never remote code.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "variantId",
+        "regionIds",
+        "payGroups",
+        "firstEntitlementYear",
+        "lastEntitlementYear",
+        "rateBasisPoints",
+        "referenceMonths",
+        "lateEntryAfterMonth",
+        "basisPolicy",
+        "eligibilityPolicy",
+        "reductionPolicy",
+        "earlyExitBasis",
+        "payoutMonth",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "variantId": {
+          "$ref": "#/$defs/selectionIdentifier"
+        },
+        "regionIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/selectionIdentifier"
+          }
+        },
+        "payGroups": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "firstEntitlementYear": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 4099
+        },
+        "lastEntitlementYear": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 4099
+        },
+        "rateBasisPoints": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "referenceMonths": {
+          "description": "Three reference months, or November only for TVA-L Pflege §16; semantic validation enforces the policy.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12
+          }
+        },
+        "lateEntryAfterMonth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "basisPolicy": {
+          "enum": ["TVOED_VKA_20", "TVAOED_PFLEGE_14", "TVL_20", "TVAL_PFLEGE_16"]
+        },
+        "eligibilityPolicy": {
+          "enum": [
+            "EMPLOYED_DECEMBER_1",
+            "BT_K_EARLY_EXIT",
+            "TRAINING_OR_DIRECT_TAKEOVER_DECEMBER_1",
+            "TVAL_TRAINING_OR_DIRECT_TAKEOVER_DECEMBER_1",
+            "TVL_DECEMBER_1_OR_LEGACY_ATZ"
+          ]
+        },
+        "reductionPolicy": {
+          "enum": ["TVOED_VKA_20", "TVAOED_PFLEGE_14", "TVL_20", "TVAL_PFLEGE_16"]
+        },
+        "earlyExitBasis": {
+          "enum": ["NONE", "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES", "LAST_THREE_MONTHS_TVL"]
+        },
+        "payoutMonth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
     "tariffRules": {
       "type": "object",
       "additionalProperties": false,
@@ -548,6 +753,17 @@
         "workPatternPolicy"
       ],
       "properties": {
+        "selection": {
+          "$ref": "#/$defs/tariffSelection"
+        },
+        "annualPaymentRules": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/$defs/annualPaymentRule"
+          }
+        },
         "selector": {
           "oneOf": [
             {
@@ -615,7 +831,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
-            "engineContractVersion": { "enum": [1, 2, 3] },
+            "engineContractVersion": { "enum": [1, 2, 3, 11] },
             "kind": { "const": "TARIFF" },
             "rules": { "$ref": "#/$defs/tariffRules" }
           }

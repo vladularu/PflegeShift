@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "engineContractVersion": 2,
-  "packageId": "tvoed-p-vka-legacy",
-  "versionId": "2026-05",
+  "engineContractVersion": 11,
+  "packageId": "tvoed-vka-bt-k",
+  "versionId": "2026-05-r3",
   "kind": "TARIFF",
-  "label": "TVöD-P VKA · 01.05.2026–31.03.2027",
-  "status": "LEGACY_EMBEDDED",
+  "label": "TVöD-VKA BT-K/BT-B Pflege · P5/P6 und Tarifregion · 01.05.2026–31.03.2027 · Jahresregeln 2026",
+  "status": "REVIEWED",
   "validFrom": "2026-05-01",
   "validTo": "2027-03-31",
   "jurisdiction": {
@@ -14,43 +14,51 @@
   },
   "sources": [
     {
-      "id": "legacy-tariff-code",
-      "title": "Legacy-Codebestand der TVoeD-P-Tabellen",
-      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/tariff.ts",
-      "documentDate": "2026-08-28",
-      "section": "src/engine/tariff.ts vor WP2",
-      "sha256": "c4957fd9fd399f1cd414af39abdd161377e9a29d753729960b6100d1eea2ba11"
-    },
-    {
-      "id": "legacy-pay-code",
-      "title": "Legacy-Codebestand der Gehalts- und Zuschlagslogik",
-      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
-      "documentDate": "2026-08-28",
-      "section": "src/engine/pay.ts vor WP2",
-      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
-    },
-    {
       "id": "vka-tvoed-hospitals-2026",
       "title": "VKA Lesefassung TVöD Krankenhäuser einschließlich BT-K",
       "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf",
-      "documentDate": "2026-05-19",
-      "section": "TVöD-AT § 8 und Protokollerklärung zu Absatz 1 Satz 1",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7, 8, 24; BT-K §§ 44, 48, 50, 52; Anlage E Entgelttabelle Pflege",
       "sha256": "00e831fefffb833b689c1355c58e87cf25bdd6c585ab4693f41a187604b0ef6e"
     },
     {
       "id": "vka-tvoed-care-2026",
       "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
       "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
-      "documentDate": "2026-05-19",
-      "section": "TVöD-AT § 8 und Protokollerklärung zu Absatz 1 Satz 1",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7, 8, 24; BT-B §§ 6, 49a, 51a; Anlage E Entgelttabelle Pflege",
+      "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
+    },
+    {
+      "id": "pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "vka-tvoed-annual-bt-k-2026",
+      "title": "VKA Lesefassung TVöD Krankenhäuser einschließlich BT-K",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT § 20 (VKA) und § 39 Abs. 4 j; BT-K § 54 Abs. 1 und 3, Anspruchsjahr 2026",
+      "sha256": "00e831fefffb833b689c1355c58e87cf25bdd6c585ab4693f41a187604b0ef6e"
+    },
+    {
+      "id": "vka-tvoed-annual-bt-b-2026",
+      "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT § 20 (VKA) und § 39 Abs. 4 j; BT-B § 52a, Anspruchsjahr 2026",
       "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
     }
   ],
   "review": {
-    "status": "LEGACY_EMBEDDED",
-    "reviewedBy": null,
-    "reviewedAt": null,
-    "gitCommit": null
+    "status": "REVIEWED",
+    "reviewedBy": "project-owner",
+    "reviewedAt": "2026-09-24T06:49:10Z",
+    "gitCommit": "957fbce18d918f508de9ff4c973aea48604fc484"
   },
   "rounding": {
     "moneyScale": 2,
@@ -58,9 +66,59 @@
     "stage": "PER_LINE"
   },
   "rules": {
+    "selection": {
+      "familyId": "tvoed-p",
+      "engineId": "tvoed-p-v3",
+      "employmentKind": "EMPLOYEE",
+      "variants": [
+        {
+          "id": "BT_K",
+          "label": "Krankenhaus · BT-K",
+          "specialPartId": "bt-k",
+          "sourceIds": ["vka-tvoed-hospitals-2026"],
+          "regions": [
+            {
+              "id": "OTHER",
+              "label": "Übrige VKA-Tarifgebiete",
+              "sourceIds": ["vka-tvoed-hospitals-2026"]
+            },
+            {
+              "id": "KAV_BW",
+              "label": "KAV Baden-Württemberg",
+              "sourceIds": ["vka-tvoed-hospitals-2026"]
+            }
+          ]
+        },
+        {
+          "id": "BT_B",
+          "label": "Pflege und Betreuung · BT-B",
+          "specialPartId": "bt-b",
+          "sourceIds": ["vka-tvoed-care-2026"],
+          "regions": [
+            {
+              "id": "OTHER",
+              "label": "Übrige VKA-Tarifgebiete",
+              "sourceIds": ["vka-tvoed-care-2026"]
+            },
+            {
+              "id": "KAV_BW",
+              "label": "KAV Baden-Württemberg",
+              "sourceIds": ["vka-tvoed-care-2026"]
+            }
+          ]
+        }
+      ],
+      "capabilities": {
+        "basePay": "SUPPORTED",
+        "timePremiums": "SUPPORTED",
+        "allowances": "SUPPORTED",
+        "overtime": "SUPPORTED",
+        "annualPayment": "SUPPORTED"
+      }
+    },
     "selector": {
       "agreementId": "tvoed-vka",
-      "specialPartId": "bt-p",
+      "specialPartIds": ["bt-k", "bt-b"],
       "payTableId": "p-2026-05"
     },
     "payTables": [
@@ -70,377 +128,315 @@
           {
             "groupId": "p5",
             "stepId": "s1",
-            "monthlyCents": 290718,
-            "hourlyCents": 1714
+            "monthlyCents": 290718
           },
           {
             "groupId": "p5",
             "stepId": "s2",
-            "monthlyCents": 314633,
-            "hourlyCents": 1855
+            "monthlyCents": 314633
           },
           {
             "groupId": "p5",
             "stepId": "s3",
-            "monthlyCents": 321662,
-            "hourlyCents": 1897
+            "monthlyCents": 321662
           },
           {
             "groupId": "p5",
             "stepId": "s4",
-            "monthlyCents": 333409,
-            "hourlyCents": 1966
+            "monthlyCents": 333409
           },
           {
             "groupId": "p5",
             "stepId": "s5",
-            "monthlyCents": 342222,
-            "hourlyCents": 2018
+            "monthlyCents": 342222
           },
           {
             "groupId": "p5",
             "stepId": "s6",
-            "monthlyCents": 362925,
-            "hourlyCents": 2140
+            "monthlyCents": 362925
           },
           {
             "groupId": "p6",
             "stepId": "s1",
-            "monthlyCents": 301249,
-            "hourlyCents": 1777
+            "monthlyCents": 301249
           },
           {
             "groupId": "p6",
             "stepId": "s2",
-            "monthlyCents": 318741,
-            "hourlyCents": 1880
+            "monthlyCents": 318741
           },
           {
             "groupId": "p6",
             "stepId": "s3",
-            "monthlyCents": 336347,
-            "hourlyCents": 1984
+            "monthlyCents": 336347
           },
           {
             "groupId": "p6",
             "stepId": "s4",
-            "monthlyCents": 373795,
-            "hourlyCents": 2204
+            "monthlyCents": 373795
           },
           {
             "groupId": "p6",
             "stepId": "s5",
-            "monthlyCents": 383341,
-            "hourlyCents": 2261
+            "monthlyCents": 383341
           },
           {
             "groupId": "p6",
             "stepId": "s6",
-            "monthlyCents": 401341,
-            "hourlyCents": 2367
+            "monthlyCents": 401341
           },
           {
             "groupId": "p7",
             "stepId": "s2",
-            "monthlyCents": 351030,
-            "hourlyCents": 2070
+            "monthlyCents": 351030
           },
           {
             "groupId": "p7",
             "stepId": "s3",
-            "monthlyCents": 370121,
-            "hourlyCents": 2183
+            "monthlyCents": 370121
           },
           {
             "groupId": "p7",
             "stepId": "s4",
-            "monthlyCents": 399833,
-            "hourlyCents": 2358
+            "monthlyCents": 399833
           },
           {
             "groupId": "p7",
             "stepId": "s5",
-            "monthlyCents": 414959,
-            "hourlyCents": 2447
+            "monthlyCents": 414959
           },
           {
             "groupId": "p7",
             "stepId": "s6",
-            "monthlyCents": 430540,
-            "hourlyCents": 2539
+            "monthlyCents": 430540
           },
           {
             "groupId": "p8",
             "stepId": "s2",
-            "monthlyCents": 370121,
-            "hourlyCents": 2183
+            "monthlyCents": 370121
           },
           {
             "groupId": "p8",
             "stepId": "s3",
-            "monthlyCents": 386280,
-            "hourlyCents": 2278
+            "monthlyCents": 386280
           },
           {
             "groupId": "p8",
             "stepId": "s4",
-            "monthlyCents": 407558,
-            "hourlyCents": 2403
+            "monthlyCents": 407558
           },
           {
             "groupId": "p8",
             "stepId": "s5",
-            "monthlyCents": 424792,
-            "hourlyCents": 2505
+            "monthlyCents": 424792
           },
           {
             "groupId": "p8",
             "stepId": "s6",
-            "monthlyCents": 448898,
-            "hourlyCents": 2647
+            "monthlyCents": 448898
           },
           {
             "groupId": "p9",
             "stepId": "s2",
-            "monthlyCents": 399239,
-            "hourlyCents": 2354
+            "monthlyCents": 399239
           },
           {
             "groupId": "p9",
             "stepId": "s3",
-            "monthlyCents": 418440,
-            "hourlyCents": 2468
+            "monthlyCents": 418440
           },
           {
             "groupId": "p9",
             "stepId": "s4",
-            "monthlyCents": 431238,
-            "hourlyCents": 2543
+            "monthlyCents": 431238
           },
           {
             "groupId": "p9",
             "stepId": "s5",
-            "monthlyCents": 455859,
-            "hourlyCents": 2688
+            "monthlyCents": 455859
           },
           {
             "groupId": "p9",
             "stepId": "s6",
-            "monthlyCents": 466242,
-            "hourlyCents": 2750
+            "monthlyCents": 466242
           },
           {
             "groupId": "p10",
             "stepId": "s2",
-            "monthlyCents": 418440,
-            "hourlyCents": 2468
+            "monthlyCents": 418440
           },
           {
             "groupId": "p10",
             "stepId": "s3",
-            "monthlyCents": 431238,
-            "hourlyCents": 2543
+            "monthlyCents": 431238
           },
           {
             "groupId": "p10",
             "stepId": "s4",
-            "monthlyCents": 467542,
-            "hourlyCents": 2757
+            "monthlyCents": 467542
           },
           {
             "groupId": "p10",
             "stepId": "s5",
-            "monthlyCents": 485063,
-            "hourlyCents": 2861
+            "monthlyCents": 485063
           },
           {
             "groupId": "p10",
             "stepId": "s6",
-            "monthlyCents": 496096,
-            "hourlyCents": 2926
+            "monthlyCents": 496096
           },
           {
             "groupId": "p11",
             "stepId": "s2",
-            "monthlyCents": 441971,
-            "hourlyCents": 2606
+            "monthlyCents": 441971
           },
           {
             "groupId": "p11",
             "stepId": "s3",
-            "monthlyCents": 455730,
-            "hourlyCents": 2688
+            "monthlyCents": 455730
           },
           {
             "groupId": "p11",
             "stepId": "s4",
-            "monthlyCents": 490127,
-            "hourlyCents": 2890
+            "monthlyCents": 490127
           },
           {
             "groupId": "p11",
             "stepId": "s5",
-            "monthlyCents": 512969,
-            "hourlyCents": 3025
+            "monthlyCents": 512969
           },
           {
             "groupId": "p11",
             "stepId": "s6",
-            "monthlyCents": 523354,
-            "hourlyCents": 3086
+            "monthlyCents": 523354
           },
           {
             "groupId": "p12",
             "stepId": "s2",
-            "monthlyCents": 465722,
-            "hourlyCents": 2746
+            "monthlyCents": 465722
           },
           {
             "groupId": "p12",
             "stepId": "s3",
-            "monthlyCents": 480261,
-            "hourlyCents": 2832
+            "monthlyCents": 480261
           },
           {
             "groupId": "p12",
             "stepId": "s4",
-            "monthlyCents": 516604,
-            "hourlyCents": 3047
+            "monthlyCents": 516604
           },
           {
             "groupId": "p12",
             "stepId": "s5",
-            "monthlyCents": 538929,
-            "hourlyCents": 3178
+            "monthlyCents": 538929
           },
           {
             "groupId": "p12",
             "stepId": "s6",
-            "monthlyCents": 549313,
-            "hourlyCents": 3239
+            "monthlyCents": 549313
           },
           {
             "groupId": "p13",
             "stepId": "s2",
-            "monthlyCents": 489478,
-            "hourlyCents": 2887
+            "monthlyCents": 489478
           },
           {
             "groupId": "p13",
             "stepId": "s3",
-            "monthlyCents": 504794,
-            "hourlyCents": 2977
+            "monthlyCents": 504794
           },
           {
             "groupId": "p13",
             "stepId": "s4",
-            "monthlyCents": 543082,
-            "hourlyCents": 3203
+            "monthlyCents": 543082
           },
           {
             "groupId": "p13",
             "stepId": "s5",
-            "monthlyCents": 570728,
-            "hourlyCents": 3366
+            "monthlyCents": 570728
           },
           {
             "groupId": "p13",
             "stepId": "s6",
-            "monthlyCents": 577868,
-            "hourlyCents": 3408
+            "monthlyCents": 577868
           },
           {
             "groupId": "p14",
             "stepId": "s2",
-            "monthlyCents": 501353,
-            "hourlyCents": 2957
+            "monthlyCents": 501353
           },
           {
             "groupId": "p14",
             "stepId": "s3",
-            "monthlyCents": 517059,
-            "hourlyCents": 3049
+            "monthlyCents": 517059
           },
           {
             "groupId": "p14",
             "stepId": "s4",
-            "monthlyCents": 556322,
-            "hourlyCents": 3281
+            "monthlyCents": 556322
           },
           {
             "groupId": "p14",
             "stepId": "s5",
-            "monthlyCents": 609668,
-            "hourlyCents": 3595
+            "monthlyCents": 609668
           },
           {
             "groupId": "p14",
             "stepId": "s6",
-            "monthlyCents": 619402,
-            "hourlyCents": 3653
+            "monthlyCents": 619402
           },
           {
             "groupId": "p15",
             "stepId": "s2",
-            "monthlyCents": 513229,
-            "hourlyCents": 3027
+            "monthlyCents": 513229
           },
           {
             "groupId": "p15",
             "stepId": "s3",
-            "monthlyCents": 529323,
-            "hourlyCents": 3122
+            "monthlyCents": 529323
           },
           {
             "groupId": "p15",
             "stepId": "s4",
-            "monthlyCents": 569560,
-            "hourlyCents": 3359
+            "monthlyCents": 569560
           },
           {
             "groupId": "p15",
             "stepId": "s5",
-            "monthlyCents": 617716,
-            "hourlyCents": 3643
+            "monthlyCents": 617716
           },
           {
             "groupId": "p15",
             "stepId": "s6",
-            "monthlyCents": 636106,
-            "hourlyCents": 3751
+            "monthlyCents": 636106
           },
           {
             "groupId": "p16",
             "stepId": "s2",
-            "monthlyCents": 524004,
-            "hourlyCents": 3090
+            "monthlyCents": 524004
           },
           {
             "groupId": "p16",
             "stepId": "s3",
-            "monthlyCents": 541590,
-            "hourlyCents": 3194
+            "monthlyCents": 541590
           },
           {
             "groupId": "p16",
             "stepId": "s4",
-            "monthlyCents": 598376,
-            "hourlyCents": 3529
+            "monthlyCents": 598376
           },
           {
             "groupId": "p16",
             "stepId": "s5",
-            "monthlyCents": 664571,
-            "hourlyCents": 3919
+            "monthlyCents": 664571
           },
           {
             "groupId": "p16",
             "stepId": "s6",
-            "monthlyCents": 693770,
-            "hourlyCents": 4091
+            "monthlyCents": 693770
           }
         ],
-        "sourceIds": ["legacy-tariff-code", "vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       }
     ],
     "overtimeBaseRule": {
@@ -469,7 +465,7 @@
           "allowanceStatuses": null,
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "sunday",
@@ -489,7 +485,7 @@
           "allowanceStatuses": null,
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "holiday-with-time-off",
@@ -509,7 +505,7 @@
           "allowanceStatuses": null,
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "holiday-without-time-off",
@@ -529,7 +525,7 @@
           "allowanceStatuses": null,
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "saturday",
@@ -552,7 +548,7 @@
           "allowanceStatuses": null,
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "pre-holiday",
@@ -575,7 +571,7 @@
           "allowanceStatuses": null,
           "monthDays": ["12-24", "12-31"]
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "overtime-p5-p11",
@@ -637,7 +633,7 @@
           "allowanceStatuses": ["SHIFT_MONTHLY"],
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "alternating-monthly-current",
@@ -657,7 +653,7 @@
           "allowanceStatuses": ["ALTERNATING_MONTHLY"],
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "shift-hourly-bt-k-non-bw-current",
@@ -672,28 +668,13 @@
           "excludesShiftTypes": [],
           "payGroups": null,
           "sectors": ["BT_K"],
-          "federalStates": [
-            "BY",
-            "BE",
-            "BB",
-            "HB",
-            "HH",
-            "HE",
-            "MV",
-            "NI",
-            "NW",
-            "RP",
-            "SL",
-            "SN",
-            "ST",
-            "SH",
-            "TH"
-          ],
+          "federalStates": null,
+          "tariffRegions": ["OTHER"],
           "holidayPremiumModes": null,
           "allowanceStatuses": ["SHIFT_HOURLY"],
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
       },
       {
         "id": "shift-hourly-other-current",
@@ -708,12 +689,13 @@
           "excludesShiftTypes": [],
           "payGroups": null,
           "sectors": ["BT_K"],
-          "federalStates": ["BW"],
+          "federalStates": null,
+          "tariffRegions": ["KAV_BW"],
           "holidayPremiumModes": null,
           "allowanceStatuses": ["SHIFT_HOURLY"],
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
       },
       {
         "id": "shift-hourly-bt-b-current",
@@ -733,7 +715,7 @@
           "allowanceStatuses": ["SHIFT_HOURLY"],
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-care-2026"]
       },
       {
         "id": "alternating-hourly-bt-k-non-bw-current",
@@ -748,28 +730,13 @@
           "excludesShiftTypes": [],
           "payGroups": null,
           "sectors": ["BT_K"],
-          "federalStates": [
-            "BY",
-            "BE",
-            "BB",
-            "HB",
-            "HH",
-            "HE",
-            "MV",
-            "NI",
-            "NW",
-            "RP",
-            "SL",
-            "SN",
-            "ST",
-            "SH",
-            "TH"
-          ],
+          "federalStates": null,
           "holidayPremiumModes": null,
           "allowanceStatuses": ["ALTERNATING_HOURLY"],
-          "monthDays": null
+          "monthDays": null,
+          "tariffRegions": ["OTHER"]
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
       },
       {
         "id": "alternating-hourly-other-current",
@@ -784,12 +751,13 @@
           "excludesShiftTypes": [],
           "payGroups": null,
           "sectors": ["BT_K"],
-          "federalStates": ["BW"],
+          "federalStates": null,
           "holidayPremiumModes": null,
           "allowanceStatuses": ["ALTERNATING_HOURLY"],
-          "monthDays": null
+          "monthDays": null,
+          "tariffRegions": ["KAV_BW"]
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
       },
       {
         "id": "alternating-hourly-bt-b-current",
@@ -809,7 +777,7 @@
           "allowanceStatuses": ["ALTERNATING_HOURLY"],
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-care-2026"]
       },
       {
         "id": "care-monthly",
@@ -829,7 +797,7 @@
           "allowanceStatuses": null,
           "monthDays": null
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "tvoed-monthly-bw",
@@ -844,12 +812,13 @@
           "excludesShiftTypes": [],
           "payGroups": null,
           "sectors": null,
-          "federalStates": ["BW"],
+          "federalStates": null,
           "holidayPremiumModes": null,
           "allowanceStatuses": null,
-          "monthDays": null
+          "monthDays": null,
+          "tariffRegions": ["KAV_BW"]
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       },
       {
         "id": "tvoed-monthly-other",
@@ -864,28 +833,13 @@
           "excludesShiftTypes": [],
           "payGroups": null,
           "sectors": null,
-          "federalStates": [
-            "BY",
-            "BE",
-            "BB",
-            "HB",
-            "HH",
-            "HE",
-            "MV",
-            "NI",
-            "NW",
-            "RP",
-            "SL",
-            "SN",
-            "ST",
-            "SH",
-            "TH"
-          ],
+          "federalStates": null,
           "holidayPremiumModes": null,
           "allowanceStatuses": null,
-          "monthDays": null
+          "monthDays": null,
+          "tariffRegions": ["OTHER"]
         },
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       }
     ],
     "combinationRules": [
@@ -906,7 +860,7 @@
           "sunday",
           "saturday"
         ],
-        "sourceIds": ["legacy-pay-code"]
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       }
     ],
     "workPatternRules": [],
@@ -930,7 +884,109 @@
         "dayEndMinute": 900,
         "nightStartMinute": 1200
       },
-      "sourceIds": ["legacy-pay-code"]
-    }
+      "sourceIds": [
+        "vka-tvoed-hospitals-2026",
+        "vka-tvoed-care-2026",
+        "pflegeshift-tariff-assessment-v1"
+      ]
+    },
+    "weeklyWorkingTimeRules": [
+      {
+        "id": "bt-k-kav-bw",
+        "sectors": ["BT_K"],
+        "tariffRegions": ["KAV_BW"],
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "bt-k-other",
+        "sectors": ["BT_K"],
+        "tariffRegions": ["OTHER"],
+        "fullTimeWeeklyMinutes": 2310,
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "bt-b",
+        "sectors": ["BT_B"],
+        "tariffRegions": ["KAV_BW", "OTHER"],
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["vka-tvoed-care-2026"]
+      }
+    ],
+    "hourlyCalculation": {
+      "monthlyFactorThousandths": 4348,
+      "rounding": "HALF_UP",
+      "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+    },
+    "annualPaymentRules": [
+      {
+        "id": "bt-k-annual-0",
+        "variantId": "BT_K",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["p5", "p6", "p7", "p8"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 9000,
+        "referenceMonths": [7, 8, 9],
+        "lateEntryAfterMonth": 9,
+        "basisPolicy": "TVOED_VKA_20",
+        "eligibilityPolicy": "BT_K_EARLY_EXIT",
+        "reductionPolicy": "TVOED_VKA_20",
+        "earlyExitBasis": "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvoed-annual-bt-k-2026"]
+      },
+      {
+        "id": "bt-k-annual-1",
+        "variantId": "BT_K",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 8500,
+        "referenceMonths": [7, 8, 9],
+        "lateEntryAfterMonth": 9,
+        "basisPolicy": "TVOED_VKA_20",
+        "eligibilityPolicy": "BT_K_EARLY_EXIT",
+        "reductionPolicy": "TVOED_VKA_20",
+        "earlyExitBasis": "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvoed-annual-bt-k-2026"]
+      },
+      {
+        "id": "bt-b-annual-0",
+        "variantId": "BT_B",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["p5", "p6", "p7", "p8"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 9000,
+        "referenceMonths": [7, 8, 9],
+        "lateEntryAfterMonth": 9,
+        "basisPolicy": "TVOED_VKA_20",
+        "eligibilityPolicy": "EMPLOYED_DECEMBER_1",
+        "reductionPolicy": "TVOED_VKA_20",
+        "earlyExitBasis": "NONE",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvoed-annual-bt-b-2026"]
+      },
+      {
+        "id": "bt-b-annual-1",
+        "variantId": "BT_B",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 8500,
+        "referenceMonths": [7, 8, 9],
+        "lateEntryAfterMonth": 9,
+        "basisPolicy": "TVOED_VKA_20",
+        "eligibilityPolicy": "EMPLOYED_DECEMBER_1",
+        "reductionPolicy": "TVOED_VKA_20",
+        "earlyExitBasis": "NONE",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvoed-annual-bt-b-2026"]
+      }
+    ]
   }
 }
