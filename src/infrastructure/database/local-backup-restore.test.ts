@@ -21,6 +21,7 @@ import {
   type LocalBackupDocument,
 } from "@/infrastructure/database/local-backup";
 import { migrateDatabase } from "@/infrastructure/database/migrations";
+import { loadProfile, saveProfile } from "@/infrastructure/database/profile-repository";
 import {
   loadAppearancePreferences,
   saveAppearancePreferences,
@@ -252,6 +253,49 @@ describe("local backup restore", () => {
       mode: "dark",
     });
   });
+
+  it.each(["P5", "P6"] as const)(
+    "persists and restores %s stage 1 without a schema migration",
+    async (payGroup) => {
+      await saveProfile(sourceDb, {
+        federalState: "NW",
+        weeklyMinutes: 2310,
+        timeZone: "Europe/Berlin",
+        manualMonthlyGrossCents: null,
+        tariff: {
+          payGroup,
+          payLevel: 1,
+          sector: "BT_K",
+          tariffRegion: "OTHER",
+          fullTimeWeeklyMinutes: 2310,
+        },
+      });
+      expect((await loadProfile(sourceDb))?.tariff).toMatchObject({ payGroup, payLevel: 1 });
+      const exported = await createLocalBackupDocument(await loadLocalBackupSnapshot(sourceDb), {
+        appVersion: "test",
+        createdAt: new Date(),
+        sha256,
+      });
+      const validated = await validateLocalBackup(exported.serialized, {
+        maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(destinationDb),
+        sha256,
+      });
+      await restoreLocalBackup(destinationDb, validated);
+      expect((await loadProfile(destinationDb))?.tariff).toMatchObject({ payGroup, payLevel: 1 });
+
+      const invalid = await signedSerialized(exported.document, (unsigned) => {
+        const data = unsigned.data as { profile: Record<string, unknown> };
+        data.profile.pay_group = "P7";
+      });
+      await expect(
+        validateLocalBackup(invalid, {
+          maxDatabaseSchemaVersion: await loadCurrentDatabaseSchemaVersion(destinationDb),
+          sha256,
+        }),
+      ).rejects.toBeInstanceOf(LocalBackupValidationError);
+      expect((await loadProfile(destinationDb))?.tariff).toMatchObject({ payGroup, payLevel: 1 });
+    },
+  );
 
   it("verifies an original version 12 backup before filling absent identity and appearance defaults", async () => {
     const serialized = await signedSerialized(document, (unsigned) => {

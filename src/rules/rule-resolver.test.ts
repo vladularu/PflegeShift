@@ -5,7 +5,7 @@ import holidayPackageFixture from "../../rules/examples/holiday-package.valid.js
 import legalPackageFixture from "../../rules/examples/legal-package.valid.json";
 import manifestFixture from "../../rules/examples/manifest.valid.json";
 import tariffPackageFixture from "../../rules/examples/tariff-package.valid.json";
-import { FEDERAL_STATES, PAY_GROUPS, PAY_LEVELS, type TariffProfile } from "../domain/types";
+import { FEDERAL_STATES, PAY_GROUPS, payLevelsForGroup, type TariffProfile } from "../domain/types";
 import { easterSunday, getPublicHolidays } from "../engine/holidays";
 import {
   getIndividualHourlyRate,
@@ -94,13 +94,13 @@ describe("bundled legacy rule resolver", () => {
     for (const date of ["2025-04-01", "2026-04-30", "2026-05-01", "2027-03-31"]) {
       const rulePackage = requireResolvedPackage(bundledRuleResolver.resolveTariff(date));
       for (const payGroup of PAY_GROUPS) {
-        for (const payLevel of PAY_LEVELS) {
+        for (const payLevel of payLevelsForGroup(payGroup)) {
           const profile: TariffProfile = {
             payGroup,
             payLevel,
             sector: "BT_K",
             tariffRegion: "OTHER",
-            fullTimeWeeklyMinutes: 2310,
+            fullTimeWeeklyMinutes: 2340,
           };
           const entry = rulePackage.rules.payTables[0].entries.find(
             (candidate) =>
@@ -120,7 +120,7 @@ describe("bundled legacy rule resolver", () => {
           payLevel: 2,
           sector: "BT_K",
           tariffRegion: "OTHER",
-          fullTimeWeeklyMinutes: 2310,
+          fullTimeWeeklyMinutes: 2340,
         };
         expect(premiumEntry!.hourlyCents).toBe(
           Math.round(getPremiumHourlyRate(profile, date)! * 100),

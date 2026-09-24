@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PAY_GROUPS, PAY_LEVELS } from "@/domain/types";
 
 import {
   ValidationError,
@@ -10,6 +11,30 @@ import {
 } from "@/domain/validation";
 
 describe("domain validation", () => {
+  it("accepts stage 1 only in P5/P6 and retains all existing group/stage combinations", () => {
+    for (const payGroup of PAY_GROUPS) {
+      for (const payLevel of PAY_LEVELS) {
+        const input = {
+          federalState: "NW" as const,
+          weeklyMinutes: 2310,
+          timeZone: "Europe/Berlin",
+          tariff: {
+            payGroup,
+            payLevel,
+            sector: "BT_K" as const,
+            tariffRegion: "OTHER" as const,
+            fullTimeWeeklyMinutes: 2310,
+          },
+        };
+        if (payLevel === 1 && payGroup !== "P5" && payGroup !== "P6") {
+          expect(() => validateProfile(input)).toThrow("Stufe für die gewählte Gruppe");
+        } else {
+          expect(validateProfile(input).tariff).toEqual(input.tariff);
+        }
+      }
+    }
+  });
+
   it("normalizes a template", () => {
     expect(
       validateTemplate({

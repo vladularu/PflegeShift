@@ -1,6 +1,6 @@
 import {
   PAY_GROUPS,
-  PAY_LEVELS,
+  payLevelsForGroup,
   type PayGroup,
   type PayLevel,
   type TariffProfile,
@@ -9,7 +9,7 @@ import { BUNDLED_TARIFF_RULES } from "@/rules/bundled-rules";
 import type { RulePayTable, RuleTariffPackage } from "@/rules/contracts.generated";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
-type TariffValues = Readonly<Record<PayLevel, number>>;
+type TariffValues = Readonly<Partial<Record<PayLevel, number | null>>>;
 type TariffTable = Readonly<Record<PayGroup, TariffValues>>;
 
 export interface TariffVersion {
@@ -65,11 +65,11 @@ function materializeMonthlyTable(rulePackage: RuleTariffPackage): TariffTable {
         payGroup,
         Object.freeze(
           Object.fromEntries(
-            PAY_LEVELS.map((payLevel) => [
+            payLevelsForGroup(payGroup).map((payLevel) => [
               payLevel,
-              tableAmount(rulePackage, payGroup, `s${payLevel}`) ?? 0,
+              tableAmount(rulePackage, payGroup, `s${payLevel}`),
             ]),
-          ) as Record<PayLevel, number>,
+          ),
         ),
       ]),
     ) as Record<PayGroup, TariffValues>,
@@ -122,7 +122,13 @@ function hourlyTableAmount(
   profile: TariffProfile,
   stepId: string,
 ): number | null {
-  if (rulePackage.engineContractVersion < 3) {
+  // Preserve the frozen P7–P16 legacy estimates. Newly supported P5/P6 use
+  // the contractual weekly hours, as v3 packages already do for every group.
+  if (
+    rulePackage.engineContractVersion < 3 &&
+    profile.payGroup !== "P5" &&
+    profile.payGroup !== "P6"
+  ) {
     return hourlyEntryAmount(rulePackage, profile.payGroup, stepId);
   }
   const monthlyAmount = tableAmount(rulePackage, profile.payGroup, stepId);

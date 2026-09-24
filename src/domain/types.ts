@@ -54,6 +54,8 @@ export type ShiftType = (typeof SHIFT_TYPES)[number];
 export type TimedShiftType = Exclude<ShiftType, "VACATION" | "SICK" | "FREE">;
 
 export const PAY_GROUPS = [
+  "P5",
+  "P6",
   "P7",
   "P8",
   "P9",
@@ -66,8 +68,14 @@ export const PAY_GROUPS = [
   "P16",
 ] as const;
 export type PayGroup = (typeof PAY_GROUPS)[number];
-export const PAY_LEVELS = [2, 3, 4, 5, 6] as const;
+export const PAY_LEVELS = [1, 2, 3, 4, 5, 6] as const;
 export type PayLevel = (typeof PAY_LEVELS)[number];
+const QUALIFIED_PAY_LEVELS = [2, 3, 4, 5, 6] as const;
+
+export function payLevelsForGroup(group: PayGroup): readonly PayLevel[] {
+  return group === "P5" || group === "P6" ? PAY_LEVELS : QUALIFIED_PAY_LEVELS;
+}
+
 export type TariffSector = "BT_K" | "BT_B";
 export const TARIFF_REGIONS = ["KAV_BW", "OTHER"] as const;
 export type TariffRegion = (typeof TARIFF_REGIONS)[number];

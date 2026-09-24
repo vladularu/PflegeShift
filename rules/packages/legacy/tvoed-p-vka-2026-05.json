@@ -68,6 +68,78 @@
         "id": "p-2026-05",
         "entries": [
           {
+            "groupId": "p5",
+            "stepId": "s1",
+            "monthlyCents": 290718,
+            "hourlyCents": 1714
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s2",
+            "monthlyCents": 314633,
+            "hourlyCents": 1855
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s3",
+            "monthlyCents": 321662,
+            "hourlyCents": 1897
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s4",
+            "monthlyCents": 333409,
+            "hourlyCents": 1966
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s5",
+            "monthlyCents": 342222,
+            "hourlyCents": 2018
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s6",
+            "monthlyCents": 362925,
+            "hourlyCents": 2140
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s1",
+            "monthlyCents": 301249,
+            "hourlyCents": 1777
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s2",
+            "monthlyCents": 318741,
+            "hourlyCents": 1880
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s3",
+            "monthlyCents": 336347,
+            "hourlyCents": 1984
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s4",
+            "monthlyCents": 373795,
+            "hourlyCents": 2204
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s5",
+            "monthlyCents": 383341,
+            "hourlyCents": 2261
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s6",
+            "monthlyCents": 401341,
+            "hourlyCents": 2367
+          },
+          {
             "groupId": "p7",
             "stepId": "s2",
             "monthlyCents": 351030,
@@ -368,7 +440,7 @@
             "hourlyCents": 4091
           }
         ],
-        "sourceIds": ["legacy-tariff-code"]
+        "sourceIds": ["legacy-tariff-code", "vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
       }
     ],
     "overtimeBaseRule": {
@@ -506,8 +578,8 @@
         "sourceIds": ["legacy-pay-code"]
       },
       {
-        "id": "overtime-p7-p11",
-        "label": "Ueberstunden P7-P11",
+        "id": "overtime-p5-p11",
+        "label": "Ueberstunden P5-P11",
         "premiumType": "OVERTIME",
         "percentageBasisPoints": 3000,
         "rateBasis": "TABLE_STEP",
@@ -516,7 +588,7 @@
         "conditions": {
           "requiresShiftTypes": [],
           "excludesShiftTypes": [],
-          "payGroups": ["p7", "p8", "p9", "p10", "p11"],
+          "payGroups": ["p5", "p6", "p7", "p8", "p9", "p10", "p11"],
           "sectors": null,
           "federalStates": null,
           "holidayPremiumModes": null,

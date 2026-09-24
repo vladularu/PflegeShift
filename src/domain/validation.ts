@@ -5,7 +5,7 @@ import {
   FEDERAL_STATES,
   INDUSTRIES,
   PAY_GROUPS,
-  PAY_LEVELS,
+  payLevelsForGroup,
   NOTIFICATION_UNITS,
   RECURRENCE_FREQUENCIES,
   SHIFT_TYPES,
@@ -196,8 +196,8 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
     if (!PAY_GROUPS.includes(tariff.payGroup)) {
       throw new ValidationError("Bitte eine gültige TVöD-P-Gruppe wählen.");
     }
-    if (!PAY_LEVELS.includes(tariff.payLevel)) {
-      throw new ValidationError("Bitte eine gültige TVöD-P-Stufe wählen.");
+    if (!payLevelsForGroup(tariff.payGroup).includes(tariff.payLevel)) {
+      throw new ValidationError("Bitte eine gültige TVöD-P-Stufe für die gewählte Gruppe wählen.");
     }
     if (tariff.sector !== "BT_K" && tariff.sector !== "BT_B") {
       throw new ValidationError("Bitte einen gültigen TVöD-Bereich wählen.");
