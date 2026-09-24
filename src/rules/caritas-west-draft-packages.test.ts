@@ -35,7 +35,7 @@ function sourceValues(date: string): Map<string, number> {
 
 describe("West Caritas P-table DRAFT candidates", () => {
   it.each(regions.flatMap((region) => periods.map((period) => ({ region, ...period }))))(
-    "binds every printed P value for $region at $start",
+    "binds every printed P value and sourced care rate for $region at $start",
     ({ region, start, end }) => {
       const pkg = JSON.parse(
         readFileSync(
@@ -54,6 +54,7 @@ describe("West Caritas P-table DRAFT candidates", () => {
       expect(pkg.sources.map((source) => source.id).sort()).toEqual(
         [
           "caritas-bk-2025-02-corrected",
+          "caritas-dg-2024-care-allowances",
           `caritas-rk-${region}-2025`,
           "pflegeshift-tariff-assessment-v1",
           ...(start === "2025-07-01"
@@ -75,6 +76,36 @@ describe("West Caritas P-table DRAFT candidates", () => {
         ),
       ).toBe(true);
       expect(pkg.rules.workPatternPolicy.sourceIds).toEqual(["pflegeshift-tariff-assessment-v1"]);
+      expect(
+        pkg.sources.find((source) => source.id === "caritas-dg-2024-care-allowances"),
+      ).toMatchObject({
+        url: "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+        sha256: "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4",
+      });
+      const careRates = pkg.rules.caritasCareAllowanceRates ?? [];
+      expect(careRates).toHaveLength(4);
+      for (const annex of [31, 32] as const) {
+        expect(careRates).toContainEqual({
+          id: `caritas-${region}-care-3-${annex}-${start}`,
+          provisionId: "SECTION_12_3",
+          variantId: `ANLAGE_${annex}`,
+          regionId: region.toUpperCase(),
+          validFrom: start,
+          validTo: end,
+          monthlyCents: region === "bw" ? 3500 : 2500,
+          sourceIds: ["caritas-dg-2024-care-allowances"],
+        });
+        expect(careRates).toContainEqual({
+          id: `caritas-${region}-care-4-${annex}-${start}`,
+          provisionId: "SECTION_12_4",
+          variantId: `ANLAGE_${annex}`,
+          regionId: region.toUpperCase(),
+          validFrom: start,
+          validTo: end,
+          monthlyCents: start === "2025-07-01" ? 13796 : 14182,
+          sourceIds: ["caritas-bk-2025-02-corrected", `caritas-rk-${region}-2025`],
+        });
+      }
       const workingTimes = pkg.rules.employmentWorkingTimeRules ?? [];
       expect(workingTimes).toHaveLength(2);
       for (const annex of [31, 32] as const) {
