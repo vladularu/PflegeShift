@@ -7,7 +7,7 @@ import { validateRulePackage } from "./validation";
 
 const groups = [4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as const;
 const regions = ["bw", "bayern", "mitte", "nord", "nrw", "ost"] as const;
-const sourceIds = [prior.sources[0].id];
+const sourceIds: [string, ...string[]] = [prior.sources[0].id];
 
 function table(id: string) {
   return {
@@ -79,6 +79,42 @@ function fixture(region: (typeof regions)[number] = "bw"): RuleTariffPackage {
       workPatternPolicy: structuredClone(prior.rules.workPatternPolicy),
     },
   } as RuleTariffPackage;
+}
+
+function withWorkingTimes(pkg: RuleTariffPackage): RuleTariffPackage {
+  const workingTimes = pkg.rules.selection!.variants.flatMap((variant) =>
+    variant.regions.flatMap((region) => {
+      const berlinChange =
+        variant.id === "ANLAGE_31" &&
+        region.id === "OST_TARIF_WEST_BERLIN" &&
+        pkg.validFrom === "2025-01-01";
+      const periods = berlinChange
+        ? ([
+            ["2025-01-01", "2025-06-30", 2340],
+            ["2025-07-01", "2025-12-31", 2310],
+          ] as const)
+        : ([
+            [
+              pkg.validFrom,
+              pkg.validTo!,
+              variant.id === "ANLAGE_32" || region.id === "BW" || region.id === "MITTE"
+                ? 2340
+                : 2310,
+            ],
+          ] as const);
+      return periods.map(([validFrom, validTo, fullTimeWeeklyMinutes], index) => ({
+        id: `weekly-${variant.id.toLowerCase().replaceAll("_", "-")}-${region.id.toLowerCase().replaceAll("_", "-")}-${index}`,
+        variantId: variant.id,
+        regionId: region.id,
+        validFrom,
+        validTo,
+        fullTimeWeeklyMinutes,
+        sourceIds,
+      }));
+    }),
+  );
+  pkg.rules.employmentWorkingTimeRules = [workingTimes[0], ...workingTimes.slice(1)];
+  return pkg;
 }
 
 function issueCodes(pkg: RuleTariffPackage): string[] {
@@ -167,5 +203,72 @@ describe("Caritas P table-only contract 14", () => {
     const pkg = fixture();
     pkg.engineContractVersion = 11;
     expect(issueCodes(pkg)).toContain("CARITAS_CONTRACT");
+  });
+});
+
+describe("Caritas P dated full-time basis in contract 14", () => {
+  it.each(regions)("accepts complete sourced working-time coverage for %s", (region) => {
+    const pkg = withWorkingTimes(fixture(region));
+    expect(validateRulePackage(pkg)).toEqual({ ok: true, value: pkg });
+    expect(pkg.rules.selection?.capabilities.basePay).toBe("UNSUPPORTED");
+  });
+
+  it("accepts the 2026 Ost period without a Berlin split", () => {
+    const pkg = fixture("ost");
+    pkg.validFrom = "2026-01-01";
+    pkg.validTo = "2026-12-31";
+    withWorkingTimes(pkg);
+    expect(validateRulePackage(pkg)).toEqual({ ok: true, value: pkg });
+  });
+
+  it("rejects a wrong weekly basis and an unsplit Berlin transition", () => {
+    const wrong = withWorkingTimes(fixture("bw"));
+    wrong.rules.employmentWorkingTimeRules![0].fullTimeWeeklyMinutes = 2310;
+    expect(issueCodes(wrong)).toContain("CARITAS_WORKING_TIME_VALUE");
+
+    const unsplit = withWorkingTimes(fixture("ost"));
+    const remaining = unsplit.rules.employmentWorkingTimeRules!.filter(
+      (rule) => !(rule.variantId === "ANLAGE_31" && rule.regionId === "OST_TARIF_WEST_BERLIN"),
+    );
+    unsplit.rules.employmentWorkingTimeRules = [remaining[0], ...remaining.slice(1)];
+    unsplit.rules.employmentWorkingTimeRules.push({
+      id: "berlin-unsplit",
+      variantId: "ANLAGE_31",
+      regionId: "OST_TARIF_WEST_BERLIN",
+      validFrom: "2025-01-01",
+      validTo: "2025-12-31",
+      fullTimeWeeklyMinutes: 2340,
+      sourceIds,
+    });
+    expect(issueCodes(unsplit)).toContain("CARITAS_WORKING_TIME_VALUE");
+  });
+
+  it("rejects gaps, duplicate ids, unknown territories and unknown sources", () => {
+    const gap = withWorkingTimes(fixture("ost"));
+    const berlin = gap.rules.employmentWorkingTimeRules!.find(
+      (rule) => rule.variantId === "ANLAGE_31" && rule.regionId === "OST_TARIF_WEST_BERLIN",
+    )!;
+    berlin.validTo = "2025-06-29";
+    expect(issueCodes(gap)).toContain("CARITAS_WORKING_TIME_COVERAGE");
+
+    const invalid = withWorkingTimes(fixture("nrw"));
+    const first = invalid.rules.employmentWorkingTimeRules![0];
+    invalid.rules.employmentWorkingTimeRules![1].id = first.id;
+    first.regionId = "OST_TARIF_OST";
+    first.sourceIds = ["unknown-source"];
+    expect(issueCodes(invalid)).toEqual(
+      expect.arrayContaining([
+        "CARITAS_WORKING_TIME_ID",
+        "CARITAS_WORKING_TIME_SELECTION",
+        "UNKNOWN_SOURCE_ID",
+      ]),
+    );
+  });
+
+  it("rejects employment working-time rules in an older tariff contract", () => {
+    const older = structuredClone(prior) as RuleTariffPackage;
+    older.rules.employmentWorkingTimeRules =
+      withWorkingTimes(fixture()).rules.employmentWorkingTimeRules;
+    expect(issueCodes(older)).toContain("CARITAS_WORKING_TIME_CONTRACT");
   });
 });

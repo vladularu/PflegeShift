@@ -197,6 +197,11 @@ export interface RuleTariffRules {
    * @minItems 1
    */
   weeklyWorkingTimeRules?: [RuleWeeklyWorkingTimeRule, ...RuleWeeklyWorkingTimeRule[]];
+  /**
+   * @minItems 1
+   * @maxItems 100
+   */
+  employmentWorkingTimeRules?: [RuleEmploymentWorkingTimeRule, ...RuleEmploymentWorkingTimeRule[]];
   hourlyCalculation?: RuleHourlyCalculation;
   premiumRules: RulePremiumRule[];
   allowanceRules: RuleAllowanceRule[];
@@ -337,6 +342,18 @@ export interface RuleWeeklyWorkingTimeRule {
    * @minItems 1
    */
   tariffRegions: ["KAV_BW" | "OTHER", ...("KAV_BW" | "OTHER")[]];
+  fullTimeWeeklyMinutes: number;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Dated full-time basis for one explicit variant and tariff territory.
+ */
+export interface RuleEmploymentWorkingTimeRule {
+  id: RuleIdentifier;
+  variantId: RuleSelectionIdentifier;
+  regionId: RuleSelectionIdentifier;
+  validFrom: RuleIsoDate;
+  validTo: RuleNullableDate;
   fullTimeWeeklyMinutes: number;
   sourceIds: RuleSourceIds;
 }

@@ -525,6 +525,29 @@
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
+    "employmentWorkingTimeRule": {
+      "description": "Dated full-time basis for one explicit variant and tariff territory.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "variantId",
+        "regionId",
+        "validFrom",
+        "validTo",
+        "fullTimeWeeklyMinutes",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "variantId": { "$ref": "#/$defs/selectionIdentifier" },
+        "regionId": { "$ref": "#/$defs/selectionIdentifier" },
+        "validFrom": { "$ref": "#/$defs/isoDate" },
+        "validTo": { "$ref": "#/$defs/nullableDate" },
+        "fullTimeWeeklyMinutes": { "type": "integer", "minimum": 60, "maximum": 4800 },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
     "hourlyCalculation": {
       "type": "object",
       "additionalProperties": false,
@@ -803,6 +826,12 @@
           "type": "array",
           "minItems": 1,
           "items": { "$ref": "#/$defs/weeklyWorkingTimeRule" }
+        },
+        "employmentWorkingTimeRules": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/employmentWorkingTimeRule" }
         },
         "hourlyCalculation": { "$ref": "#/$defs/hourlyCalculation" },
         "premiumRules": {
