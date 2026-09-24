@@ -53,7 +53,12 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
     expect(candidate.status).toBe("DRAFT");
     expect([candidate.validFrom, candidate.validTo]).toEqual([`${year}-01-01`, `${year}-12-31`]);
     expect(candidate.sources.map((source) => source.id).sort()).toEqual(
-      [`caritas-rk-ost-${year}-p`, "pflegeshift-tariff-assessment-v1"].sort(),
+      [
+        `caritas-rk-ost-${year}-p`,
+        "pflegeshift-tariff-assessment-v1",
+        "caritas-rk-ost-time-2022",
+        ...(year === 2026 ? ["caritas-dgs-ost-hospital-time-2026"] : []),
+      ].sort(),
     );
     expect(candidate.rules.selection?.variants.map((variant) => variant.id)).toEqual([
       "ANLAGE_31",
@@ -75,6 +80,47 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
       expect(special.size).toBe(62);
       expect(packageValues(candidate, "caritas-ost-p-2025-annex32-east")).toEqual(special);
       expect(special.get("p6:1")).not.toBe(common.get("p6:1"));
+    }
+  });
+
+  it.each([2025, 2026] as const)("binds dated working time and sources for %s", (year) => {
+    const candidate = pkg(year);
+    const workingTimes = candidate.rules.employmentWorkingTimeRules ?? [];
+    expect(workingTimes).toHaveLength(year === 2025 ? 7 : 6);
+    expect(
+      candidate.sources.find((source) => source.id === "caritas-rk-ost-time-2022")?.sha256,
+    ).toBe("b8b3eff8f6c35445db0fc3e766bf1791b60989331d65ac4c7c37a01aefea0fcb");
+    if (year === 2026) {
+      expect(
+        candidate.sources.find((source) => source.id === "caritas-dgs-ost-hospital-time-2026")
+          ?.sha256,
+      ).toBe("a5616c3563657de77c4dad24c8f14861ad70a3537a5c5194d773848e8ba22c9b");
+    }
+    for (const variant of candidate.rules.selection?.variants ?? []) {
+      for (const region of variant.regions) {
+        const rules = workingTimes.filter(
+          (rule) => rule.variantId === variant.id && rule.regionId === region.id,
+        );
+        const berlinTransition =
+          year === 2025 && variant.id === "ANLAGE_31" && region.id === "OST_TARIF_WEST_BERLIN";
+        expect(
+          rules.map((rule) => [rule.validFrom, rule.validTo, rule.fullTimeWeeklyMinutes]),
+        ).toEqual(
+          berlinTransition
+            ? [
+                ["2025-01-01", "2025-06-30", 2340],
+                ["2025-07-01", "2025-12-31", 2310],
+              ]
+            : [[`${year}-01-01`, `${year}-12-31`, variant.id === "ANLAGE_32" ? 2340 : 2310]],
+        );
+        for (const rule of rules) {
+          expect(rule.sourceIds).toEqual(
+            year === 2026 && variant.id === "ANLAGE_31" && region.id === "OST_TARIF_OST"
+              ? ["caritas-rk-ost-time-2022", "caritas-dgs-ost-hospital-time-2026"]
+              : ["caritas-rk-ost-time-2022"],
+          );
+        }
+      }
     }
   });
 
