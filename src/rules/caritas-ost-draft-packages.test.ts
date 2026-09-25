@@ -210,4 +210,38 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
       expect(candidate.rules.selection?.capabilities.allowances).toBe("UNSUPPORTED");
     },
   );
+
+  it.each([2025, 2026] as const)(
+    "binds sourced shift rates for both annexes and all three Ost territories in %s",
+    (year) => {
+      const candidate = pkg(year);
+      expect(validateRulePackage(candidate)).toEqual({ ok: true, value: candidate });
+      const rates = candidate.rules.caritasShiftAllowanceRates ?? [];
+      expect(rates).toHaveLength(6);
+      for (const annex of [31, 32] as const) {
+        for (const territory of [
+          "OST_TARIF_OST",
+          "OST_TARIF_WEST_BERLIN",
+          "OST_TARIF_WEST_HAMBURG",
+        ] as const) {
+          expect(rates).toContainEqual({
+            id: `caritas-ost-shift-${annex}-${territory.toLowerCase().replaceAll("_", "-")}-${year}`,
+            variantId: `ANLAGE_${annex}`,
+            regionId: territory,
+            validFrom: year === 2025 ? "2025-07-01" : "2026-01-01",
+            validTo: `${year}-12-31`,
+            alternatingMonthlyCents: 25000,
+            alternatingHourlyCents: annex === 31 ? 149 : 147,
+            shiftMonthlyCents: 10000,
+            shiftHourlyCents: 59,
+            sourceIds: ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"],
+          });
+        }
+      }
+      if (year === 2025) {
+        expect(rates.every((rate) => rate.validFrom >= "2025-07-01")).toBe(true);
+      }
+      expect(candidate.rules.selection?.capabilities.allowances).toBe("UNSUPPORTED");
+    },
+  );
 });

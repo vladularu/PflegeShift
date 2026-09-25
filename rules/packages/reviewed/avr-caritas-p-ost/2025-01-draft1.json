@@ -34,7 +34,7 @@
       "title": "Caritas Regionalkommission Ost, weitere Verguetungsbestandteile 2025",
       "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Ost/2025-06-26_Beschluss_Erhoehung_Werte_weitere_Verguetungsbestandteile_gez.pdf",
       "documentDate": "2025-06-26",
-      "section": "I: Anlage 31/32 Paragraph 12 Absatz 4, Bundesmittelwerte in gleicher Hoehe zu gleichen Zeitpunkten",
+      "section": "I: Anlagen 31/32 Paragraph 6 Absaetze 5 und 6 sowie Paragraph 12 Absatz 4, Bundesmittelwerte in gleicher Hoehe zu gleichen Zeitpunkten",
       "sha256": "6bfe23a0a45a5ee269ddd452a96ec213a07ca111dd7fc2f6b05a817db8a74993"
     },
     {
@@ -963,6 +963,80 @@
         "validFrom": "2025-07-01",
         "validTo": "2025-12-31",
         "monthlyCents": 13796,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      }
+    ],
+    "caritasShiftAllowanceRates": [
+      {
+        "id": "caritas-ost-shift-31-ost-tarif-ost-2025",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "alternatingMonthlyCents": 25000,
+        "alternatingHourlyCents": 149,
+        "shiftMonthlyCents": 10000,
+        "shiftHourlyCents": 59,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-shift-31-ost-tarif-west-berlin-2025",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "alternatingMonthlyCents": 25000,
+        "alternatingHourlyCents": 149,
+        "shiftMonthlyCents": 10000,
+        "shiftHourlyCents": 59,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-shift-31-ost-tarif-west-hamburg-2025",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "alternatingMonthlyCents": 25000,
+        "alternatingHourlyCents": 149,
+        "shiftMonthlyCents": 10000,
+        "shiftHourlyCents": 59,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-shift-32-ost-tarif-ost-2025",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "alternatingMonthlyCents": 25000,
+        "alternatingHourlyCents": 147,
+        "shiftMonthlyCents": 10000,
+        "shiftHourlyCents": 59,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-shift-32-ost-tarif-west-berlin-2025",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "alternatingMonthlyCents": 25000,
+        "alternatingHourlyCents": 147,
+        "shiftMonthlyCents": 10000,
+        "shiftHourlyCents": 59,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      },
+      {
+        "id": "caritas-ost-shift-32-ost-tarif-west-hamburg-2025",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "alternatingMonthlyCents": 25000,
+        "alternatingHourlyCents": 147,
+        "shiftMonthlyCents": 10000,
+        "shiftHourlyCents": 59,
         "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
       }
     ],
