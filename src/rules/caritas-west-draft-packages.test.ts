@@ -35,7 +35,7 @@ function sourceValues(date: string): Map<string, number> {
 
 describe("West Caritas P-table DRAFT candidates", () => {
   it.each(regions.flatMap((region) => periods.map((period) => ({ region, ...period }))))(
-    "binds every printed P value and sourced care rate for $region at $start",
+    "binds every printed P value, care rate and shift rate for $region at $start",
     ({ region, start, end }) => {
       const pkg = JSON.parse(
         readFileSync(
@@ -84,6 +84,8 @@ describe("West Caritas P-table DRAFT candidates", () => {
       });
       const careRates = pkg.rules.caritasCareAllowanceRates ?? [];
       expect(careRates).toHaveLength(4);
+      const shiftRates = pkg.rules.caritasShiftAllowanceRates ?? [];
+      expect(shiftRates).toHaveLength(2);
       for (const annex of [31, 32] as const) {
         expect(careRates).toContainEqual({
           id: `caritas-${region}-care-3-${annex}-${start}`,
@@ -103,6 +105,18 @@ describe("West Caritas P-table DRAFT candidates", () => {
           validFrom: start,
           validTo: end,
           monthlyCents: start === "2025-07-01" ? 13796 : 14182,
+          sourceIds: ["caritas-bk-2025-02-corrected", `caritas-rk-${region}-2025`],
+        });
+        expect(shiftRates).toContainEqual({
+          id: `caritas-${region}-shift-${annex}-${start}`,
+          variantId: `ANLAGE_${annex}`,
+          regionId: region.toUpperCase(),
+          validFrom: start,
+          validTo: end,
+          alternatingMonthlyCents: 25000,
+          alternatingHourlyCents: annex === 31 ? 149 : 147,
+          shiftMonthlyCents: 10000,
+          shiftHourlyCents: 59,
           sourceIds: ["caritas-bk-2025-02-corrected", `caritas-rk-${region}-2025`],
         });
       }

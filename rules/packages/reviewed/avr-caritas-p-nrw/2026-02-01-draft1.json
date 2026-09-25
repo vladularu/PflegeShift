@@ -501,6 +501,32 @@
         "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-nrw-2025"]
       }
     ],
+    "caritasShiftAllowanceRates": [
+      {
+        "id": "caritas-nrw-shift-31-2026-02-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "NRW",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "alternatingMonthlyCents": 25000,
+        "alternatingHourlyCents": 149,
+        "shiftMonthlyCents": 10000,
+        "shiftHourlyCents": 59,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-nrw-2025"]
+      },
+      {
+        "id": "caritas-nrw-shift-32-2026-02-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "NRW",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "alternatingMonthlyCents": 25000,
+        "alternatingHourlyCents": 147,
+        "shiftMonthlyCents": 10000,
+        "shiftHourlyCents": 59,
+        "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-nrw-2025"]
+      }
+    ],
     "premiumRules": [],
     "allowanceRules": [],
     "combinationRules": [],
