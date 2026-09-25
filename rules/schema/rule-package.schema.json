@@ -573,6 +573,35 @@
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
+    "caritasShiftAllowanceRate": {
+      "description": "Contract 14: sourced section 6(5)/(6) rate quartet for one care annex, territory and date range. A rate is not an individual entitlement or an activated calculation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "variantId",
+        "regionId",
+        "validFrom",
+        "validTo",
+        "alternatingMonthlyCents",
+        "alternatingHourlyCents",
+        "shiftMonthlyCents",
+        "shiftHourlyCents",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "variantId": { "$ref": "#/$defs/selectionIdentifier" },
+        "regionId": { "$ref": "#/$defs/selectionIdentifier" },
+        "validFrom": { "$ref": "#/$defs/isoDate" },
+        "validTo": { "$ref": "#/$defs/isoDate" },
+        "alternatingMonthlyCents": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "alternatingHourlyCents": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "shiftMonthlyCents": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "shiftHourlyCents": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
     "hourlyCalculation": {
       "type": "object",
       "additionalProperties": false,
@@ -863,6 +892,12 @@
           "minItems": 1,
           "maxItems": 200,
           "items": { "$ref": "#/$defs/caritasCareAllowanceRate" }
+        },
+        "caritasShiftAllowanceRates": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": { "$ref": "#/$defs/caritasShiftAllowanceRate" }
         },
         "hourlyCalculation": { "$ref": "#/$defs/hourlyCalculation" },
         "premiumRules": {

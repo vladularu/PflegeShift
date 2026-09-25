@@ -13,6 +13,7 @@ const allowedRuleKeys = new Set([
   "payTables",
   "employmentWorkingTimeRules",
   "caritasCareAllowanceRates",
+  "caritasShiftAllowanceRates",
   "premiumRules",
   "allowanceRules",
   "combinationRules",
@@ -59,6 +60,13 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
         "CARITAS_RATE_CONTRACT",
         "/rules/caritasCareAllowanceRates",
         "Caritas care allowance rates require contract 14.",
+      );
+    }
+    if (rules.caritasShiftAllowanceRates !== undefined) {
+      add(
+        "CARITAS_SHIFT_CONTRACT",
+        "/rules/caritasShiftAllowanceRates",
+        "Caritas shift allowance rates require contract 14.",
       );
     }
     return issues;
@@ -329,6 +337,65 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
           if (next !== Temporal.PlainDate.from(pkg.validTo).add({ days: 1 }).toString()) {
             add("CARITAS_RATE_COVERAGE", root, `Incomplete coverage for ${provisionId}:${pair}.`);
           }
+        }
+      }
+    }
+  }
+  const shiftRates = rules.caritasShiftAllowanceRates;
+  if (shiftRates !== undefined) {
+    const root = "/rules/caritasShiftAllowanceRates";
+    const pairs = new Set(
+      variants.flatMap((variant) => variant.regions.map((item) => `${variant.id}:${item.id}`)),
+    );
+    const knownSources = new Set(pkg.sources.map((source) => source.id));
+    const regionalSource =
+      region === "ost" ? "caritas-rk-ost-2025-allowances" : `caritas-rk-${region}-2025`;
+    const ids = new Set<string>();
+
+    for (const [index, rate] of shiftRates.entries()) {
+      const path = `${root}/${index}`;
+      if (ids.has(rate.id)) add("CARITAS_SHIFT_ID", path, "Duplicate shift-rate id.");
+      ids.add(rate.id);
+      if (!pairs.has(`${rate.variantId}:${rate.regionId}`)) {
+        add("CARITAS_SHIFT_SELECTION", path, "Unknown annex or regional territory.");
+      }
+      if (
+        !realDate(rate.validFrom) ||
+        !realDate(rate.validTo) ||
+        rate.validTo < rate.validFrom ||
+        rate.validFrom < pkg.validFrom ||
+        rate.validFrom < "2025-07-01" ||
+        (pkg.validTo !== null && rate.validTo > pkg.validTo)
+      ) {
+        add("CARITAS_SHIFT_RANGE", path, "Invalid or out-of-package shift-rate range.");
+      }
+      if (
+        !rate.sourceIds.includes("caritas-bk-2025-02-corrected") ||
+        !rate.sourceIds.includes(regionalSource)
+      ) {
+        add("CARITAS_SHIFT_SOURCE", path, "Federal rate and regional adoption required.");
+      }
+      for (const sourceId of rate.sourceIds) {
+        if (!knownSources.has(sourceId)) add("UNKNOWN_SOURCE_ID", `${path}/sourceIds`, sourceId);
+      }
+    }
+
+    if (pkg.validTo !== null && realDate(pkg.validTo)) {
+      const coverageFrom = pkg.validFrom >= "2025-07-01" ? pkg.validFrom : "2025-07-01";
+      for (const pair of pairs) {
+        const dated = shiftRates
+          .filter((rate) => `${rate.variantId}:${rate.regionId}` === pair)
+          .sort((a, b) => a.validFrom.localeCompare(b.validFrom));
+        let next = coverageFrom;
+        for (const rate of dated) {
+          if (!realDate(rate.validFrom) || !realDate(rate.validTo)) continue;
+          if (rate.validFrom !== next) {
+            add("CARITAS_SHIFT_COVERAGE", root, `Gap or overlap in ${pair}.`);
+          }
+          next = Temporal.PlainDate.from(rate.validTo).add({ days: 1 }).toString();
+        }
+        if (next !== Temporal.PlainDate.from(pkg.validTo).add({ days: 1 }).toString()) {
+          add("CARITAS_SHIFT_COVERAGE", root, `Incomplete coverage for ${pair}.`);
         }
       }
     }

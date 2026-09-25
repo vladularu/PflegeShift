@@ -207,6 +207,11 @@ export interface RuleTariffRules {
    * @maxItems 200
    */
   caritasCareAllowanceRates?: [RuleCaritasCareAllowanceRate, ...RuleCaritasCareAllowanceRate[]];
+  /**
+   * @minItems 1
+   * @maxItems 200
+   */
+  caritasShiftAllowanceRates?: [RuleCaritasShiftAllowanceRate, ...RuleCaritasShiftAllowanceRate[]];
   hourlyCalculation?: RuleHourlyCalculation;
   premiumRules: RulePremiumRule[];
   allowanceRules: RuleAllowanceRule[];
@@ -373,6 +378,21 @@ export interface RuleCaritasCareAllowanceRate {
   validFrom: RuleIsoDate;
   validTo: RuleIsoDate;
   monthlyCents: number;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 14: sourced section 6(5)/(6) rate quartet for one care annex, territory and date range. A rate is not an individual entitlement or an activated calculation.
+ */
+export interface RuleCaritasShiftAllowanceRate {
+  id: RuleIdentifier;
+  variantId: RuleSelectionIdentifier;
+  regionId: RuleSelectionIdentifier;
+  validFrom: RuleIsoDate;
+  validTo: RuleIsoDate;
+  alternatingMonthlyCents: number;
+  alternatingHourlyCents: number;
+  shiftMonthlyCents: number;
+  shiftHourlyCents: number;
   sourceIds: RuleSourceIds;
 }
 export interface RuleHourlyCalculation {
