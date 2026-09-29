@@ -602,6 +602,45 @@
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
+    "caritasTimePremiumRate": {
+      "description": "Contract 14: sourced section 6(1)(b-f) base percentages for one care annex, territory and date range. This does not determine payable hours or activate salary calculation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "variantId",
+        "regionId",
+        "validFrom",
+        "validTo",
+        "referenceStepId",
+        "nightBasisPoints",
+        "sundayBasisPoints",
+        "holidayWithTimeOffBasisPoints",
+        "holidayWithoutTimeOffBasisPoints",
+        "preHolidayBasisPoints",
+        "saturdayBasisPoints",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "variantId": { "$ref": "#/$defs/selectionIdentifier" },
+        "regionId": { "$ref": "#/$defs/selectionIdentifier" },
+        "validFrom": { "$ref": "#/$defs/isoDate" },
+        "validTo": { "$ref": "#/$defs/isoDate" },
+        "referenceStepId": { "const": "3" },
+        "nightBasisPoints": { "type": "integer", "minimum": 2000, "maximum": 100000 },
+        "sundayBasisPoints": { "type": "integer", "minimum": 2500, "maximum": 100000 },
+        "holidayWithTimeOffBasisPoints": { "type": "integer", "minimum": 3500, "maximum": 100000 },
+        "holidayWithoutTimeOffBasisPoints": {
+          "type": "integer",
+          "minimum": 13500,
+          "maximum": 100000
+        },
+        "preHolidayBasisPoints": { "type": "integer", "minimum": 3500, "maximum": 100000 },
+        "saturdayBasisPoints": { "type": "integer", "minimum": 2000, "maximum": 100000 },
+        "sourceIds": { "$ref": "#/$defs/sourceIds" }
+      }
+    },
     "hourlyCalculation": {
       "type": "object",
       "additionalProperties": false,
@@ -898,6 +937,12 @@
           "minItems": 1,
           "maxItems": 200,
           "items": { "$ref": "#/$defs/caritasShiftAllowanceRate" }
+        },
+        "caritasTimePremiumRates": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": { "$ref": "#/$defs/caritasTimePremiumRate" }
         },
         "hourlyCalculation": { "$ref": "#/$defs/hourlyCalculation" },
         "premiumRules": {
