@@ -52,6 +52,22 @@
       "documentDate": "2025-07-01",
       "section": "Stand Juli 2025: P7-KH (Anlage 31) und P6-AH (Anlage 32)",
       "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+    },
+    {
+      "id": "caritas-dcv-premiums-2025",
+      "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2025",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+      "documentDate": "2025-09-03",
+      "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+      "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+    },
+    {
+      "id": "caritas-dcv-premiums-2026",
+      "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+      "documentDate": "2025-10-31",
+      "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+      "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
     }
   ],
   "review": {
@@ -517,6 +533,68 @@
         "shiftMonthlyCents": 10000,
         "shiftHourlyCents": 59,
         "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-mitte-2025"]
+      }
+    ],
+    "caritasTimePremiumRates": [
+      {
+        "id": "caritas-mitte-premium-31-2025-07-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "MITTE",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2025"]
+      },
+      {
+        "id": "caritas-mitte-premium-31-2026-01-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "MITTE",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-01-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
+      },
+      {
+        "id": "caritas-mitte-premium-32-2025-07-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "MITTE",
+        "validFrom": "2025-07-01",
+        "validTo": "2025-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2025"]
+      },
+      {
+        "id": "caritas-mitte-premium-32-2026-01-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "MITTE",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-01-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
       }
     ],
     "premiumRules": [],
