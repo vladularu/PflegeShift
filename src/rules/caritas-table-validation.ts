@@ -14,6 +14,7 @@ const allowedRuleKeys = new Set([
   "employmentWorkingTimeRules",
   "caritasCareAllowanceRates",
   "caritasShiftAllowanceRates",
+  "caritasTimePremiumRates",
   "premiumRules",
   "allowanceRules",
   "combinationRules",
@@ -67,6 +68,13 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
         "CARITAS_SHIFT_CONTRACT",
         "/rules/caritasShiftAllowanceRates",
         "Caritas shift allowance rates require contract 14.",
+      );
+    }
+    if (rules.caritasTimePremiumRates !== undefined) {
+      add(
+        "CARITAS_PREMIUM_CONTRACT",
+        "/rules/caritasTimePremiumRates",
+        "Caritas time premium rates require contract 14.",
       );
     }
     return issues;
@@ -396,6 +404,75 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
         }
         if (next !== Temporal.PlainDate.from(pkg.validTo).add({ days: 1 }).toString()) {
           add("CARITAS_SHIFT_COVERAGE", root, `Incomplete coverage for ${pair}.`);
+        }
+      }
+    }
+  }
+  const premiumRates = rules.caritasTimePremiumRates;
+  if (premiumRates !== undefined) {
+    const root = "/rules/caritasTimePremiumRates";
+    const pairs = new Set(
+      variants.flatMap((variant) => variant.regions.map((item) => `${variant.id}:${item.id}`)),
+    );
+    const knownSources = new Set(pkg.sources.map((source) => source.id));
+    const ids = new Set<string>();
+    const baseRates = {
+      nightBasisPoints: 2000,
+      sundayBasisPoints: 2500,
+      holidayWithTimeOffBasisPoints: 3500,
+      holidayWithoutTimeOffBasisPoints: 13500,
+      preHolidayBasisPoints: 3500,
+      saturdayBasisPoints: 2000,
+    } as const;
+
+    for (const [index, rate] of premiumRates.entries()) {
+      const path = `${root}/${index}`;
+      if (ids.has(rate.id)) add("CARITAS_PREMIUM_ID", path, "Duplicate time-premium rate id.");
+      ids.add(rate.id);
+      if (!pairs.has(`${rate.variantId}:${rate.regionId}`)) {
+        add("CARITAS_PREMIUM_SELECTION", path, "Unknown annex or regional territory.");
+      }
+      const year = rate.validFrom.slice(0, 4);
+      if (
+        !realDate(rate.validFrom) ||
+        !realDate(rate.validTo) ||
+        rate.validTo < rate.validFrom ||
+        rate.validFrom < pkg.validFrom ||
+        (pkg.validTo !== null && rate.validTo > pkg.validTo) ||
+        year !== rate.validTo.slice(0, 4) ||
+        (year !== "2025" && year !== "2026")
+      ) {
+        add("CARITAS_PREMIUM_RANGE", path, "Invalid or out-of-package premium-rate range.");
+      }
+      if (!rate.sourceIds.includes(`caritas-dcv-premiums-${year}`)) {
+        add("CARITAS_PREMIUM_SOURCE", path, "The matching annual DCV premium table is required.");
+      }
+      const elevated = (Object.keys(baseRates) as (keyof typeof baseRates)[]).some(
+        (key) => rate[key] > baseRates[key],
+      );
+      if (elevated && rate.sourceIds.length < 2) {
+        add("CARITAS_PREMIUM_SOURCE", path, "An increased rate needs an additional source.");
+      }
+      for (const sourceId of rate.sourceIds) {
+        if (!knownSources.has(sourceId)) add("UNKNOWN_SOURCE_ID", `${path}/sourceIds`, sourceId);
+      }
+    }
+
+    if (pkg.validTo !== null && realDate(pkg.validFrom) && realDate(pkg.validTo)) {
+      for (const pair of pairs) {
+        const dated = premiumRates
+          .filter((rate) => `${rate.variantId}:${rate.regionId}` === pair)
+          .sort((a, b) => a.validFrom.localeCompare(b.validFrom));
+        let next = pkg.validFrom;
+        for (const rate of dated) {
+          if (!realDate(rate.validFrom) || !realDate(rate.validTo)) continue;
+          if (rate.validFrom !== next) {
+            add("CARITAS_PREMIUM_COVERAGE", root, `Gap or overlap in ${pair}.`);
+          }
+          next = Temporal.PlainDate.from(rate.validTo).add({ days: 1 }).toString();
+        }
+        if (next !== Temporal.PlainDate.from(pkg.validTo).add({ days: 1 }).toString()) {
+          add("CARITAS_PREMIUM_COVERAGE", root, `Incomplete coverage for ${pair}.`);
         }
       }
     }

@@ -212,6 +212,11 @@ export interface RuleTariffRules {
    * @maxItems 200
    */
   caritasShiftAllowanceRates?: [RuleCaritasShiftAllowanceRate, ...RuleCaritasShiftAllowanceRate[]];
+  /**
+   * @minItems 1
+   * @maxItems 200
+   */
+  caritasTimePremiumRates?: [RuleCaritasTimePremiumRate, ...RuleCaritasTimePremiumRate[]];
   hourlyCalculation?: RuleHourlyCalculation;
   premiumRules: RulePremiumRule[];
   allowanceRules: RuleAllowanceRule[];
@@ -393,6 +398,24 @@ export interface RuleCaritasShiftAllowanceRate {
   alternatingHourlyCents: number;
   shiftMonthlyCents: number;
   shiftHourlyCents: number;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 14: sourced section 6(1)(b-f) base percentages for one care annex, territory and date range. This does not determine payable hours or activate salary calculation.
+ */
+export interface RuleCaritasTimePremiumRate {
+  id: RuleIdentifier;
+  variantId: RuleSelectionIdentifier;
+  regionId: RuleSelectionIdentifier;
+  validFrom: RuleIsoDate;
+  validTo: RuleIsoDate;
+  referenceStepId: "3";
+  nightBasisPoints: number;
+  sundayBasisPoints: number;
+  holidayWithTimeOffBasisPoints: number;
+  holidayWithoutTimeOffBasisPoints: number;
+  preHolidayBasisPoints: number;
+  saturdayBasisPoints: number;
   sourceIds: RuleSourceIds;
 }
 export interface RuleHourlyCalculation {
