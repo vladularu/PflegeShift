@@ -68,6 +68,14 @@
       "documentDate": "2026-01-01",
       "section": "Stand Januar 2026: Anlage 31 im Tarifgebiet Ost, 38,5 h",
       "sha256": "a5616c3563657de77c4dad24c8f14861ad70a3537a5c5194d773848e8ba22c9b"
+    },
+    {
+      "id": "caritas-dcv-premiums-2026",
+      "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+      "documentDate": "2025-10-31",
+      "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+      "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
     }
   ],
   "review": {
@@ -781,6 +789,98 @@
         "shiftMonthlyCents": 10000,
         "shiftHourlyCents": 59,
         "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
+      }
+    ],
+    "caritasTimePremiumRates": [
+      {
+        "id": "caritas-ost-premium-anlage-31-ost-tarif-ost-2026",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
+      },
+      {
+        "id": "caritas-ost-premium-anlage-31-ost-tarif-west-berlin-2026",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
+      },
+      {
+        "id": "caritas-ost-premium-anlage-31-ost-tarif-west-hamburg-2026",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
+      },
+      {
+        "id": "caritas-ost-premium-anlage-32-ost-tarif-ost-2026",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_OST",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
+      },
+      {
+        "id": "caritas-ost-premium-anlage-32-ost-tarif-west-berlin-2026",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
+      },
+      {
+        "id": "caritas-ost-premium-anlage-32-ost-tarif-west-hamburg-2026",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "validFrom": "2026-01-01",
+        "validTo": "2026-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
       }
     ],
     "premiumRules": [],

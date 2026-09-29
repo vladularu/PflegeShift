@@ -60,6 +60,7 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
         "caritas-bk-2025-02-corrected",
         "caritas-rk-ost-2025-allowances",
         "caritas-dg-2024-care-allowances",
+        `caritas-dcv-premiums-${year}`,
         ...(year === 2026 ? ["caritas-dgs-ost-hospital-time-2026"] : []),
       ].sort(),
     );
@@ -242,6 +243,49 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
         expect(rates.every((rate) => rate.validFrom >= "2025-07-01")).toBe(true);
       }
       expect(candidate.rules.selection?.capabilities.allowances).toBe("UNSUPPORTED");
+    },
+  );
+
+  it.each([2025, 2026] as const)(
+    "binds sourced time-premium rates for both annexes and all three Ost territories in %s",
+    (year) => {
+      const candidate = pkg(year);
+      expect(validateRulePackage(candidate)).toEqual({ ok: true, value: candidate });
+      const rates = candidate.rules.caritasTimePremiumRates ?? [];
+      expect(rates).toHaveLength(6);
+      expect(
+        candidate.sources.find((source) => source.id === `caritas-dcv-premiums-${year}`),
+      ).toMatchObject({
+        sha256:
+          year === 2025
+            ? "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+            : "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4",
+      });
+      for (const annex of [31, 32] as const) {
+        for (const territory of [
+          "OST_TARIF_OST",
+          "OST_TARIF_WEST_BERLIN",
+          "OST_TARIF_WEST_HAMBURG",
+        ] as const) {
+          expect(rates).toContainEqual({
+            id: `caritas-ost-premium-anlage-${annex}-${territory.toLowerCase().replaceAll("_", "-")}-${year}`,
+            variantId: `ANLAGE_${annex}`,
+            regionId: territory,
+            validFrom: `${year}-01-01`,
+            validTo: `${year}-12-31`,
+            referenceStepId: "3",
+            nightBasisPoints: 2000,
+            sundayBasisPoints: 2500,
+            holidayWithTimeOffBasisPoints: 3500,
+            holidayWithoutTimeOffBasisPoints: 13500,
+            preHolidayBasisPoints: 3500,
+            saturdayBasisPoints: 2000,
+            sourceIds: [`caritas-dcv-premiums-${year}`],
+          });
+        }
+      }
+      expect(candidate.rules.selection?.capabilities.timePremiums).toBe("UNSUPPORTED");
+      expect(candidate.rules.premiumRules).toEqual([]);
     },
   );
 });
