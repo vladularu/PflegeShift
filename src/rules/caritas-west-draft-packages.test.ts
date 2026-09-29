@@ -35,7 +35,7 @@ function sourceValues(date: string): Map<string, number> {
 
 describe("West Caritas P-table DRAFT candidates", () => {
   it.each(regions.flatMap((region) => periods.map((period) => ({ region, ...period }))))(
-    "binds every printed P value, care rate and shift rate for $region at $start",
+    "binds every printed P value, care rate, shift rate and time premium for $region at $start",
     ({ region, start, end }) => {
       const pkg = JSON.parse(
         readFileSync(
@@ -55,6 +55,8 @@ describe("West Caritas P-table DRAFT candidates", () => {
         [
           "caritas-bk-2025-02-corrected",
           "caritas-dg-2024-care-allowances",
+          "caritas-dcv-premiums-2026",
+          ...(start === "2025-07-01" ? ["caritas-dcv-premiums-2025"] : []),
           `caritas-rk-${region}-2025`,
           "pflegeshift-tariff-assessment-v1",
           ...(start === "2025-07-01"
@@ -86,6 +88,25 @@ describe("West Caritas P-table DRAFT candidates", () => {
       expect(careRates).toHaveLength(4);
       const shiftRates = pkg.rules.caritasShiftAllowanceRates ?? [];
       expect(shiftRates).toHaveLength(2);
+      const premiumRates = pkg.rules.caritasTimePremiumRates ?? [];
+      const premiumPeriods =
+        start === "2025-07-01"
+          ? ([
+              ["2025-07-01", "2025-12-31", "2025"],
+              ["2026-01-01", "2026-01-31", "2026"],
+            ] as const)
+          : ([["2026-02-01", "2026-12-31", "2026"]] as const);
+      expect(premiumRates).toHaveLength(premiumPeriods.length * 2);
+      for (const year of new Set(premiumPeriods.map((period) => period[2]))) {
+        expect(
+          pkg.sources.find((source) => source.id === `caritas-dcv-premiums-${year}`),
+        ).toMatchObject({
+          sha256:
+            year === "2025"
+              ? "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+              : "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4",
+        });
+      }
       for (const annex of [31, 32] as const) {
         expect(careRates).toContainEqual({
           id: `caritas-${region}-care-3-${annex}-${start}`,
@@ -119,6 +140,23 @@ describe("West Caritas P-table DRAFT candidates", () => {
           shiftHourlyCents: 59,
           sourceIds: ["caritas-bk-2025-02-corrected", `caritas-rk-${region}-2025`],
         });
+        for (const [validFrom, validTo, year] of premiumPeriods) {
+          expect(premiumRates).toContainEqual({
+            id: `caritas-${region}-premium-${annex}-${validFrom}`,
+            variantId: `ANLAGE_${annex}`,
+            regionId: region.toUpperCase(),
+            validFrom,
+            validTo,
+            referenceStepId: "3",
+            nightBasisPoints: 2000,
+            sundayBasisPoints: 2500,
+            holidayWithTimeOffBasisPoints: 3500,
+            holidayWithoutTimeOffBasisPoints: 13500,
+            preHolidayBasisPoints: 3500,
+            saturdayBasisPoints: 2000,
+            sourceIds: [`caritas-dcv-premiums-${year}`],
+          });
+        }
       }
       const workingTimes = pkg.rules.employmentWorkingTimeRules ?? [];
       expect(workingTimes).toHaveLength(2);

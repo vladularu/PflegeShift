@@ -60,6 +60,14 @@
       "documentDate": "2026-02-01",
       "section": "Stand Februar 2026: Anlage 32, 39 h",
       "sha256": "76f9728de35bd5b50ac68ee34866c13f13f97d2337438b2b48858ca35b65ebfd"
+    },
+    {
+      "id": "caritas-dcv-premiums-2026",
+      "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+      "documentDate": "2025-10-31",
+      "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+      "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
     }
   ],
   "review": {
@@ -525,6 +533,38 @@
         "shiftMonthlyCents": 10000,
         "shiftHourlyCents": 59,
         "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-mitte-2025"]
+      }
+    ],
+    "caritasTimePremiumRates": [
+      {
+        "id": "caritas-mitte-premium-31-2026-02-01",
+        "variantId": "ANLAGE_31",
+        "regionId": "MITTE",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
+      },
+      {
+        "id": "caritas-mitte-premium-32-2026-02-01",
+        "variantId": "ANLAGE_32",
+        "regionId": "MITTE",
+        "validFrom": "2026-02-01",
+        "validTo": "2026-12-31",
+        "referenceStepId": "3",
+        "nightBasisPoints": 2000,
+        "sundayBasisPoints": 2500,
+        "holidayWithTimeOffBasisPoints": 3500,
+        "holidayWithoutTimeOffBasisPoints": 13500,
+        "preHolidayBasisPoints": 3500,
+        "saturdayBasisPoints": 2000,
+        "sourceIds": ["caritas-dcv-premiums-2026"]
       }
     ],
     "premiumRules": [],

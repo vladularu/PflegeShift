@@ -45,7 +45,8 @@ function withRates(region = "bw", version = "2026-02-01"): RuleTariffPackage {
         ] as const)
       : ([[pkg.validFrom, pkg.validTo!, pkg.validFrom.slice(0, 4)]] as const);
   for (const year of new Set(periods.map((period) => period[2]))) {
-    pkg.sources.push(annualSources[year as "2025" | "2026"]);
+    const source = annualSources[year as "2025" | "2026"];
+    if (!pkg.sources.some((item) => item.id === source.id)) pkg.sources.push(source);
   }
   const rates = pkg.rules.selection!.variants.flatMap((variant) =>
     variant.regions.flatMap((territory) =>
