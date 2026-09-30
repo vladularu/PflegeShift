@@ -19,6 +19,7 @@ import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
 import { selectionFeedback } from "@/ui/haptics";
 import { ShiftSymbol } from "@/ui/shift-symbol";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 
 const COLUMN_COUNT = 10;
 
@@ -84,7 +85,7 @@ export function ShiftColorPickerSheet({
     <Modal
       animationType="slide"
       onRequestClose={onClose}
-      presentationStyle="pageSheet"
+      presentationStyle="fullScreen"
       visible={visible}
     >
       <View style={[styles.screen, { backgroundColor: palette.groupedBackground }]}>
@@ -152,27 +153,9 @@ export function ShiftColorPickerSheet({
             },
           ]}
         >
-          <Pressable
-            accessibilityRole="button"
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.doneButton,
-              {
-                width: cardWidth,
-                borderColor: palette.separator,
-                backgroundColor: palette.surfaceRaised,
-                opacity: pressed ? 0.72 : 1,
-                boxShadow: palette.dark ? undefined : `0 8px 22px ${palette.shadow}`,
-              },
-            ]}
-          >
-            <Text
-              maxFontSizeMultiplier={TEXT_MAX_SCALE}
-              style={{ color: palette.text, ...TYPOGRAPHY.body }}
-            >
-              Fertig
-            </Text>
-          </Pressable>
+          <View style={{ width: cardWidth }}>
+            <SheetBackFooter onPress={onClose} />
+          </View>
         </View>
       </View>
     </Modal>
@@ -251,13 +234,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
-  },
-  doneButton: {
-    minHeight: 52,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderRadius: 26,
-    borderCurve: "continuous",
   },
 });

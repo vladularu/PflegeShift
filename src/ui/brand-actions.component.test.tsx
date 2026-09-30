@@ -10,7 +10,7 @@ jest.mock("@/theme/palette", () => ({ usePalette: () => mockPalette }));
 
 describe("shared brand actions", () => {
   it.each([LIGHT_PALETTE, DARK_PALETTE])(
-    "keeps red fills, white labels and readable secondary text in dark=$dark",
+    "keeps theme fills, readable labels and secondary text in dark=$dark",
     async (palette) => {
       mockPalette = palette;
       const onPress = jest.fn();
@@ -22,10 +22,10 @@ describe("shared brand actions", () => {
         </>,
       );
       expect(screen.getByRole("button", { name: "Speichern" })).toHaveStyle({
-        backgroundColor: "#C93443",
+        backgroundColor: palette.accent,
       });
       for (const name of ["Speichern", "Fertig"]) {
-        expect(screen.getByText(name)).toHaveStyle({ color: "#FFFFFF" });
+        expect(screen.getByText(name)).toHaveStyle({ color: palette.onAccent });
         await fireEvent.press(screen.getByRole("button", { name }));
       }
       expect(screen.getByText("Abbrechen")).toHaveStyle({ color: palette.primary });

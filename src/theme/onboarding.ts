@@ -2,7 +2,6 @@ import { type TextStyle } from "react-native";
 import { usePalette } from "./palette";
 import { TYPOGRAPHY } from "./typography";
 
-// Share functional colors with the app; pastels remain decorative onboarding assets.
 export function useOnboardingPalette() {
   const palette = usePalette();
   const { dark } = palette;
@@ -15,14 +14,14 @@ export function useOnboardingPalette() {
     accent: palette.accent,
     onAccent: palette.onAccent,
     accentText: palette.primary,
-    selectionBorder: dark ? palette.border : palette.accent,
+    selectionBorder: dark ? palette.border : palette.primary,
     error: palette.danger,
     border: palette.separator,
     control: palette.border,
     overlay: palette.overlay,
-    rose: dark ? "#39252A" : "#F7DFE2",
-    apricot: dark ? "#352C25" : "#F5E5D5",
-    lavender: dark ? "#2D293A" : "#E8E3F3",
+    rose: palette.surfaceMuted,
+    apricot: palette.surfaceMuted,
+    lavender: palette.surfaceMuted,
   };
 }
 export const ONBOARDING_TYPOGRAPHY = {

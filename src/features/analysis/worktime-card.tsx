@@ -3,7 +3,7 @@ import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SPACING } from "@/theme/tokens";
-import { CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { CardFooterLine, CardHeader, SurfaceCard } from "@/ui/design-system";
 import { selectionFeedback } from "@/ui/haptics";
 import { ReportCardTitle } from "./report-card-title";
 
@@ -23,6 +23,7 @@ export function WorktimeCard({
   readonly caption?: string;
 }) {
   const palette = usePalette();
+  const secondaryText = palette.dark ? palette.text : palette.textMuted;
   const { fontScale } = useWindowDimensions();
   const stacked = fontScale >= 1.3;
   const withUnit = (value: string) => (/[0-9]/u.test(value) ? value + " h" : value);
@@ -41,27 +42,16 @@ export function WorktimeCard({
             selectionFeedback();
             onPress();
           }}
-          style={({ pressed }) => ({
-            minHeight: 54,
-            flexDirection: "row",
-            alignItems: "center",
-            opacity: pressed ? 0.65 : 1,
-          })}
+          style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}
         >
-          <View style={{ flex: 1 }}>
-            <ReportCardTitle title="Arbeitszeit" />
-          </View>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={palette.textMuted}
-            style={{ marginRight: SPACING.lg }}
+          <CardHeader
+            title="Arbeitszeit"
+            action={<Ionicons name="ellipsis-horizontal-circle" size={20} color={secondaryText} />}
           />
         </Pressable>
       ) : (
         <ReportCardTitle title="Arbeitszeit" />
       )}
-      <CardSeparator inset={0} />
       <View
         testID="worktime-values"
         style={{ flexDirection: stacked ? "column" : "row", paddingVertical: SPACING.md }}
@@ -76,9 +66,9 @@ export function WorktimeCard({
               flex: stacked ? undefined : 1,
               gap: SPACING.xs,
               borderLeftWidth: !stacked && index > 0 ? 1 : 0,
-              borderLeftColor: palette.separator,
+              borderLeftColor: palette.cardSeparator,
               borderTopWidth: stacked && index > 0 ? 1 : 0,
-              borderTopColor: palette.separator,
+              borderTopColor: palette.cardSeparator,
               paddingHorizontal: SPACING.md,
               paddingVertical: stacked ? SPACING.sm : 0,
             }}
@@ -86,7 +76,7 @@ export function WorktimeCard({
             <Text
               maxFontSizeMultiplier={TEXT_MAX_SCALE}
               selectable
-              style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
+              style={{ color: secondaryText, ...TYPOGRAPHY.caption }}
             >
               {item.label}
             </Text>
@@ -108,13 +98,14 @@ export function WorktimeCard({
           style={{
             paddingHorizontal: SPACING.lg,
             paddingBottom: SPACING.md,
-            color: palette.textMuted,
+            color: secondaryText,
             ...TYPOGRAPHY.caption,
           }}
         >
           {caption}
         </Text>
       ) : null}
+      <CardFooterLine />
     </SurfaceCard>
   );
 }

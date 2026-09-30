@@ -34,6 +34,7 @@ export function TemplatesManagerScreen() {
   const { error: loadError, ready, reload } = usePflegeShiftStatus();
   const { templates, removeTemplate, moveTemplate } = usePflegeShiftTemplates();
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [sorting, setSorting] = useState(false);
   const [busyTemplateId, setBusyTemplateId] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
 
@@ -73,7 +74,41 @@ export function TemplatesManagerScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.groupedBackground }}>
-      <TabRootHeader surface="groupedBackground" title="Schichten" />
+      <TabRootHeader
+        accessory={
+          <Pressable
+            accessibilityLabel={sorting ? "Sortieren beenden" : "Schichten sortieren"}
+            accessibilityRole="button"
+            accessibilityState={{ selected: sorting }}
+            onPress={() => {
+              selectionFeedback();
+              setSorting((current) => !current);
+              setActiveTemplateId(null);
+            }}
+            testID="template-manager-sort-button"
+            style={({ pressed }) => ({
+              width: 48,
+              height: 48,
+              borderRadius: RADII.pill,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: sorting ? palette.sortAction : palette.surface,
+              borderWidth: sorting ? 0 : 1,
+              borderColor: palette.separator,
+              opacity: pressed ? 0.65 : 1,
+            })}
+          >
+            <Ionicons
+              accessibilityElementsHidden
+              name="swap-vertical"
+              size={23}
+              color={sorting ? palette.onSortAction : palette.text}
+            />
+          </Pressable>
+        }
+        surface="groupedBackground"
+        title="Schichten"
+      />
       <ScreenScrollView
         contentContainerStyle={{ width: "100%", maxWidth: 560, alignSelf: "center" }}
         surface="groupedBackground"
@@ -81,16 +116,6 @@ export function TemplatesManagerScreen() {
       >
         <FormStatus error={operationError} />
         <View style={{ gap: SPACING.md }}>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            style={{
-              color: palette.text,
-              ...TYPOGRAPHY.sectionTitle,
-              paddingHorizontal: SPACING.sm,
-            }}
-          >
-            Meine Dienste
-          </Text>
           <ShiftTemplateListCard testID="template-manager-list">
             {templates.length === 0 ? (
               <EmptyState
@@ -104,16 +129,29 @@ export function TemplatesManagerScreen() {
                   <View key={template.id}>
                     {index > 0 ? <ShiftTemplateListSeparator /> : null}
                     <ShiftTemplateListRow
-                      accessibilityLabel={`${template.name}, ${subtitle}, Vorlage bearbeiten`}
+                      accessibilityLabel={
+                        sorting
+                          ? `${template.name}, Sortieroptionen öffnen`
+                          : `${template.name}, ${subtitle}, Vorlage bearbeiten`
+                      }
                       color={template.color}
                       disabled={busyTemplateId !== null}
-                      moreAccessibilityLabel={`${template.name} verwalten`}
+                      moreAccessibilityLabel={
+                        sorting ? `${template.name} sortieren` : `${template.name} verwalten`
+                      }
                       onMorePress={() =>
                         setActiveTemplateId((current) =>
                           current === template.id ? null : template.id,
                         )
                       }
-                      onPress={() => router.push(templateEditorRoute(template.id))}
+                      onPress={() =>
+                        sorting
+                          ? setActiveTemplateId((current) =>
+                              current === template.id ? null : template.id,
+                            )
+                          : router.push(templateEditorRoute(template.id))
+                      }
+                      sorting={sorting}
                       subtitle={subtitle}
                       symbol={template.symbol}
                       testID={`template-manager-row-${template.id}`}
@@ -131,48 +169,57 @@ export function TemplatesManagerScreen() {
                           padding: SPACING.sm,
                         }}
                       >
-                        <ManagerButton
-                          disabled={busyTemplateId !== null || index === 0}
-                          icon="arrow-up"
-                          label="Nach oben"
-                          onPress={() =>
-                            void runTemplateAction(
-                              template,
-                              "Vorlage konnte nicht verschoben werden.",
-                              () => moveTemplate(template, -1),
-                            )
-                          }
-                        />
-                        <ManagerButton
-                          disabled={busyTemplateId !== null || index === templates.length - 1}
-                          icon="arrow-down"
-                          label="Nach unten"
-                          onPress={() =>
-                            void runTemplateAction(
-                              template,
-                              "Vorlage konnte nicht verschoben werden.",
-                              () => moveTemplate(template, 1),
-                            )
-                          }
-                        />
-                        <ManagerButton
-                          danger
-                          disabled={busyTemplateId !== null}
-                          label="Löschen"
-                          onPress={() => confirmDelete(template)}
-                        />
+                        {sorting ? (
+                          <>
+                            <ManagerButton
+                              disabled={busyTemplateId !== null || index === 0}
+                              icon="arrow-up"
+                              label="Nach oben"
+                              onPress={() =>
+                                void runTemplateAction(
+                                  template,
+                                  "Vorlage konnte nicht verschoben werden.",
+                                  () => moveTemplate(template, -1),
+                                )
+                              }
+                            />
+                            <ManagerButton
+                              disabled={busyTemplateId !== null || index === templates.length - 1}
+                              icon="arrow-down"
+                              label="Nach unten"
+                              onPress={() =>
+                                void runTemplateAction(
+                                  template,
+                                  "Vorlage konnte nicht verschoben werden.",
+                                  () => moveTemplate(template, 1),
+                                )
+                              }
+                            />
+                          </>
+                        ) : (
+                          <ManagerButton
+                            danger
+                            disabled={busyTemplateId !== null}
+                            label="Löschen"
+                            onPress={() => confirmDelete(template)}
+                          />
+                        )}
                       </View>
                     ) : null}
                   </View>
                 );
               })
             )}
-            {templates.length > 0 ? <ShiftTemplateListSeparator /> : null}
-            <ShiftTemplateAddRow
-              accessibilityLabel="Neue Dienstvorlage erstellen"
-              onPress={() => router.push("/template-editor")}
-              testID="template-manager-add-row"
-            />
+            {!sorting ? (
+              <>
+                {templates.length > 0 ? <ShiftTemplateListSeparator /> : null}
+                <ShiftTemplateAddRow
+                  accessibilityLabel="Neue Dienstvorlage erstellen"
+                  onPress={() => router.push("/template-editor")}
+                  testID="template-manager-add-row"
+                />
+              </>
+            ) : null}
           </ShiftTemplateListCard>
         </View>
       </ScreenScrollView>

@@ -145,7 +145,7 @@ describe("LUNA onboarding", () => {
     mockUpdateProfile.mockReset();
     mockUpdateProfile.mockResolvedValue(undefined);
   });
-  it("keeps the same red action and entered choices through a live theme change", async () => {
+  it("keeps theme-matched actions and entered choices through a live theme change", async () => {
     const screen = await render(onboarding(true));
     await salary(screen);
     await work(screen);
@@ -154,9 +154,9 @@ describe("LUNA onboarding", () => {
       mockPalette = palette;
       await screen.rerender(onboarding(true));
       expect(screen.getByTestId("onboarding-primary-action")).toHaveStyle({
-        backgroundColor: "#C93443",
+        backgroundColor: palette.accent,
       });
-      expect(screen.getByText("Weiter")).toHaveStyle({ color: "#FFFFFF" });
+      expect(screen.getByText("Weiter")).toHaveStyle({ color: palette.onAccent });
       expect(screen.getByTestId("onboarding-weekly-hours")).toHaveDisplayValue("32");
       expect(screen.getByTestId("onboarding-percentage-value")).toHaveStyle({
         color: palette.primary,
@@ -169,7 +169,7 @@ describe("LUNA onboarding", () => {
     expect(screen.getByText("Dein Dienstplan.\nDein Rhythmus.")).toBeTruthy();
     expect(screen.getByLabelText("LUNA Shift Logo")).toBeTruthy();
     expect(screen.getByTestId("onboarding-primary-action")).toHaveStyle({
-      backgroundColor: "#C93443",
+      backgroundColor: LIGHT_PALETTE.accent,
       minHeight: 52,
     });
     await press(screen, "Los geht’s");

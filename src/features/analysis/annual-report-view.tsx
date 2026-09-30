@@ -30,8 +30,8 @@ import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
-import { CardSeparator, SurfaceCard } from "@/ui/design-system";
-import { ReportFootnote, ReportPeriodContent, ReportScrollView } from "@/ui/report-layout";
+import { CardFooterLine, CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { ReportPeriodContent, ReportScrollView } from "@/ui/report-layout";
 
 export type AnalysisPeriod = "MONTH" | "YEAR";
 
@@ -74,10 +74,6 @@ export function AnnualReportScreen({
 
           <AnnualOverview report={report} pending={pending} />
           <AnalysisViewControls />
-
-          <ReportFootnote>
-            Unverbindliche Schätzung · automatische Prüfung · keine Rechtsberatung
-          </ReportFootnote>
         </ReportPeriodContent>
       </ReportScrollView>
     </View>
@@ -234,13 +230,7 @@ export function AnnualReportDetails({
             )}
           </>
         )}
-        {section === "CHECK" ? (
-          <CheckExplanation />
-        ) : (
-          <ReportFootnote>
-            Unverbindliche Schätzung · automatische Prüfung · keine Rechtsberatung
-          </ReportFootnote>
-        )}
+        {section === "CHECK" ? <CheckExplanation /> : null}
       </ReportPeriodContent>
     </ReportScrollView>
   );
@@ -318,7 +308,7 @@ function AnnualCheckDetails({
                   flexDirection: "row",
                   alignItems: "center",
                   gap: SPACING.md,
-                  backgroundColor: pressed ? palette.surfaceMuted : "transparent",
+                  opacity: pressed ? 0.72 : 1,
                   paddingVertical: SPACING.md,
                 })}
               >
@@ -359,7 +349,7 @@ function AnnualCheckDetails({
                 </View>
                 <Ionicons
                   color={palette.textMuted}
-                  name="chevron-forward"
+                  name="ellipsis-horizontal-circle"
                   size={18}
                   accessibilityElementsHidden
                   importantForAccessibility="no"
@@ -368,6 +358,9 @@ function AnnualCheckDetails({
             </View>
           );
         })}
+        <View style={{ paddingBottom: SPACING.lg }}>
+          <CardSeparator inset={0} />
+        </View>
       </SurfaceCard>
     </View>
   );
@@ -476,11 +469,12 @@ function AnnualSalaryDetails({
                     : formatEuro(item.estimatedGrossAmount)}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" color={palette.textMuted} size={18} />
+              <Ionicons name="ellipsis-horizontal-circle" color={palette.textMuted} size={20} />
             </Pressable>
           </View>
         ))}
       </View>
+      <CardFooterLine />
     </SurfaceCard>
   );
 }
@@ -501,7 +495,6 @@ function MonthlyBars({
   return (
     <SurfaceCard>
       <ReportCardTitle title="Jahresverlauf" />
-      <CardSeparator inset={0} />
       <View style={{ gap: SPACING.sm, padding: SPACING.lg }}>
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
@@ -551,7 +544,7 @@ function MonthlyBars({
                     </Text>
                   ) : null}
                 </View>
-                <Ionicons color={palette.textMuted} name="chevron-forward" size={18} />
+                <Ionicons color={palette.textMuted} name="ellipsis-horizontal-circle" size={20} />
               </View>
               <View
                 accessibilityElementsHidden
@@ -576,6 +569,7 @@ function MonthlyBars({
           </View>
         ))}
       </View>
+      <CardFooterLine />
     </SurfaceCard>
   );
 }
@@ -591,7 +585,6 @@ function DistributionList({
   return (
     <SurfaceCard>
       <ReportCardTitle title="Dienstverteilung" />
-      <CardSeparator inset={0} />
       <View style={{ gap: 14, padding: SPACING.lg }}>
         {!hasEntries ? (
           <Text selectable style={{ color: palette.textMuted, fontSize: 13 }}>
@@ -723,6 +716,7 @@ function DistributionList({
           </View>
         ) : null}
       </View>
+      <CardFooterLine />
     </SurfaceCard>
   );
 }

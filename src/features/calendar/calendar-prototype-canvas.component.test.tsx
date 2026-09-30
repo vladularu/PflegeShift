@@ -83,7 +83,7 @@ describe("calendar orientation", () => {
       const palette = dark ? DARK_PALETTE : LIGHT_PALETTE;
       const screen = await render(<Year />);
       expect(screen.getByText("September", { includeHiddenElements: true })).toHaveStyle({
-        color: "#C93443",
+        color: palette.calendarYearAccent,
       });
       expect(screen.getByText("Januar", { includeHiddenElements: true })).toHaveStyle({
         color: palette.text,
@@ -125,6 +125,29 @@ const holidayShift: ShiftEntry = {
   updatedAt: "2026-01-01T00:00:00Z",
   deletedAt: null,
 };
+
+describe("adjacent month shifts", () => {
+  it("shows previous and next month services at 30% opacity without adding edit targets", async () => {
+    const previous = { ...holidayShift, id: "previous", date: "2025-12-31" };
+    const next = { ...holidayShift, id: "next", date: "2026-02-01" };
+    const screen = await render(
+      <Month
+        entriesByDate={
+          new Map([
+            [previous.date, [previous]],
+            [next.date, [next]],
+          ])
+        }
+      />,
+    );
+    for (const date of [previous.date, next.date]) {
+      const layer = screen.getByTestId(`calendar-adjacent-entry-layer-${date}`);
+      expect(layer).toHaveStyle({ opacity: 0.3 });
+      expect(within(layer).getByText("Spät")).toBeTruthy();
+    }
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+});
 
 describe("holiday entry alignment", () => {
   it.each([false, true])("keeps the first shift above the holiday in dark=%s", async (dark) => {

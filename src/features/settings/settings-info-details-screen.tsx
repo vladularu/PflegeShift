@@ -8,6 +8,7 @@ import { parseEnumRouteParam, type RouteParam } from "@/navigation/route-params"
 import { usePalette } from "@/theme/palette";
 import { SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView } from "@/ui/loading-view";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 
 interface InfoContent {
   readonly title: string;
@@ -161,7 +162,7 @@ export function SettingsInfoDetailsScreen() {
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={{ backgroundColor: palette.groupedBackground }}
-      contentContainerStyle={{ gap: 14, padding: 16, paddingBottom: 32 }}
+      contentContainerStyle={{ flexGrow: 1, gap: 14, padding: 16, paddingBottom: 32 }}
     >
       <Stack.Screen
         options={{
@@ -196,6 +197,8 @@ export function SettingsInfoDetailsScreen() {
           </View>
         ))}
       </SurfaceCard>
+      <View style={{ flex: 1 }} />
+      <SheetBackFooter onPress={() => router.back()} />
     </ScrollView>
   );
 }

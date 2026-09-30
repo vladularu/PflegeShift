@@ -32,6 +32,7 @@ import {
 import { PrimaryButton, SecondaryButton } from "@/ui/form-controls";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { ScreenScrollView } from "@/ui/screen-layout";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 
 function timeLabel(entry: CalendarEntry): string {
   if (entry.kind === "APPOINTMENT") {
@@ -88,7 +89,7 @@ export function DayDetailsScreen() {
   if (!ready || profile === null) return <LoadingView />;
 
   return (
-    <ScreenScrollView testID="day-details-screen">
+    <ScreenScrollView contentContainerStyle={{ flexGrow: 1 }} testID="day-details-screen">
       <Stack.Screen options={{ title: formatDateTitle(date) }} />
       {holiday ? (
         <SurfaceCard style={{ padding: SPACING.lg, backgroundColor: palette.primarySoft }}>
@@ -154,6 +155,8 @@ export function DayDetailsScreen() {
           Termin hinzufügen
         </SecondaryButton>
       </View>
+      <View style={{ flex: 1 }} />
+      <SheetBackFooter onPress={() => router.back()} />
     </ScreenScrollView>
   );
 }

@@ -33,7 +33,10 @@ export function ShiftTemplateListCard({
   const palette = usePalette();
   return (
     <View
-      style={[styles.card, { borderColor: palette.separator, backgroundColor: palette.surface }]}
+      style={[
+        styles.card,
+        { borderColor: palette.cardSeparator, backgroundColor: palette.surface },
+      ]}
       testID={testID}
     >
       {children}
@@ -48,6 +51,7 @@ export function ShiftTemplateListRow({
   moreAccessibilityLabel,
   onMorePress,
   onPress,
+  sorting = false,
   subtitle,
   symbol,
   testID,
@@ -59,6 +63,7 @@ export function ShiftTemplateListRow({
   readonly moreAccessibilityLabel: string;
   readonly onMorePress: () => void;
   readonly onPress: () => void;
+  readonly sorting?: boolean;
   readonly subtitle: string;
   readonly symbol: string;
   readonly testID?: string;
@@ -93,7 +98,7 @@ export function ShiftTemplateListRow({
           </Text>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            style={[styles.subtitle, { color: palette.textMuted }]}
+            style={[styles.subtitle, { color: palette.dark ? palette.text : palette.textMuted }]}
           >
             {subtitle}
           </Text>
@@ -108,17 +113,12 @@ export function ShiftTemplateListRow({
         onPress={onMorePress}
         style={({ pressed }) => [styles.moreButton, { opacity: pressed ? 0.58 : 1 }]}
       >
-        <View
-          style={[styles.moreCircle, { borderColor: palette.textMuted }]}
-          testID={testID ? `${testID}-more-circle` : undefined}
-        >
-          <Ionicons
-            accessibilityElementsHidden
-            color={palette.textMuted}
-            name="ellipsis-horizontal"
-            size={13}
-          />
-        </View>
+        <Ionicons
+          accessibilityElementsHidden
+          color={palette.dark ? palette.text : palette.textMuted}
+          name={sorting ? "reorder-three-outline" : "ellipsis-horizontal-circle"}
+          size={sorting ? 26 : 22}
+        />
       </Pressable>
     </View>
   );
@@ -126,7 +126,7 @@ export function ShiftTemplateListRow({
 
 export function ShiftTemplateListSeparator() {
   const palette = usePalette();
-  return <View style={[styles.separator, { backgroundColor: palette.separator }]} />;
+  return <View style={[styles.separator, { backgroundColor: palette.cardSeparator }]} />;
 }
 
 export function ShiftTemplateAddRow({
@@ -221,14 +221,6 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-  },
-  moreCircle: {
-    width: 22,
-    height: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderRadius: RADII.pill,
   },
   separator: {
     height: StyleSheet.hairlineWidth,

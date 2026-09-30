@@ -1,6 +1,8 @@
+import { LUNA_LIGHT_BLUE } from "@/theme/palette-values";
+
 export const QUICK_PLANNER_COLORS = Object.freeze({
   onColor: "#FFFFFF",
-  active: "#007AFF",
+  active: LUNA_LIGHT_BLUE,
 });
 
 export const QUICK_PLANNER_METRICS = Object.freeze({

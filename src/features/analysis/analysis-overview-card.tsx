@@ -57,7 +57,7 @@ export function OverviewCard({
           {title}
         </Text>
         <Ionicons
-          name="chevron-forward"
+          name="ellipsis-horizontal-circle"
           size={18}
           color={palette.textMuted}
           accessibilityElementsHidden

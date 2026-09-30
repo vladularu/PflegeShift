@@ -7,7 +7,7 @@ import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { DEFAULT_SHIFT_SYMBOLS } from "@/theme/shift-symbols";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SPACING } from "@/theme/tokens";
-import { CardSeparator, ColorBadge, SurfaceCard } from "@/ui/design-system";
+import { CardFooterLine, CardSeparator, ColorBadge, SurfaceCard } from "@/ui/design-system";
 import { ReportCardTitle } from "./report-card-title";
 
 export { ReportCardTitle } from "./report-card-title";
@@ -30,6 +30,7 @@ function ShiftTypeReportCard({
   readonly title: string;
 }) {
   const palette = usePalette();
+  const secondaryText = palette.dark ? palette.text : palette.textMuted;
   const items = analysis.items.filter((item) => mode === "COUNT" || item.minutes > 0);
   const { fontScale } = useWindowDimensions();
   const stacked = fontScale >= 1.3;
@@ -38,7 +39,6 @@ function ShiftTypeReportCard({
   return (
     <SurfaceCard accessibilityLabel={`${title}, Gesamt ${totalValue}`}>
       <ReportCardTitle title={title} />
-      <CardSeparator inset={0} />
       <View style={{ paddingHorizontal: SPACING.lg }}>
         {items.map((item, index) => (
           <View key={item.type}>
@@ -61,7 +61,7 @@ function ShiftTypeReportCard({
               <ColorBadge
                 color={SHIFT_TYPE_COLORS[item.type]}
                 label={DEFAULT_SHIFT_SYMBOLS[item.type]}
-                size={28}
+                size={24}
               />
               <Text
                 maxFontSizeMultiplier={TEXT_MAX_SCALE}
@@ -69,7 +69,7 @@ function ShiftTypeReportCard({
                 style={{
                   minWidth: 0,
                   flex: 1,
-                  color: palette.text,
+                  color: secondaryText,
                   ...TYPOGRAPHY.body,
                 }}
               >
@@ -81,7 +81,7 @@ function ShiftTypeReportCard({
                 style={{
                   width: stacked ? "100%" : undefined,
                   color: palette.text,
-                  ...TYPOGRAPHY.bodyStrong,
+                  ...TYPOGRAPHY.body,
                   fontVariant: ["tabular-nums"],
                 }}
               >
@@ -108,18 +108,19 @@ function ShiftTypeReportCard({
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
-          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+          style={{ color: secondaryText, ...TYPOGRAPHY.body }}
         >
           Gesamt
         </Text>
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
-          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}
+          style={{ color: palette.text, ...TYPOGRAPHY.body, fontVariant: ["tabular-nums"] }}
         >
           {totalValue}
         </Text>
       </View>
+      <CardFooterLine />
     </SurfaceCard>
   );
 }

@@ -33,16 +33,11 @@ import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import { CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { CardFooterLine, CardHeader, CardSeparator, SurfaceCard } from "@/ui/design-system";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
 import { selectionFeedback } from "@/ui/haptics";
-import {
-  ReportFootnote,
-  ReportPeriodContent,
-  ReportScrollView,
-  ReportTestBadge,
-} from "@/ui/report-layout";
+import { ReportPeriodContent, ReportScrollView, ReportTestBadge } from "@/ui/report-layout";
 
 function euro(value: number | null): string {
   if (value === null) return "–";
@@ -288,36 +283,18 @@ export function SalaryScreen() {
               </View>
             </SurfaceCard>
 
-            <SurfaceCard style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md }}>
-              <View style={{ gap: SPACING.xxs, paddingBottom: SPACING.md }}>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
-                >
-                  Zusammensetzung
-                </Text>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-                >
-                  {salaryProfileLabel}
-                </Text>
+            <SurfaceCard>
+              <CardHeader title="Zusammensetzung" caption={salaryProfileLabel ?? undefined} />
+              <View style={{ paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm }}>
+                {compositionRows.map((row, index) => (
+                  <View key={row.key}>
+                    {index > 0 ? <CardSeparator inset={0} /> : null}
+                    <ValueRow label={row.label} onPress={row.onPress} value={row.value} />
+                  </View>
+                ))}
               </View>
-              {compositionRows.map((row, index) => (
-                <View key={row.key}>
-                  {index > 0 ? <CardSeparator inset={0} /> : null}
-                  <ValueRow label={row.label} onPress={row.onPress} value={row.value} />
-                </View>
-              ))}
+              <CardFooterLine />
             </SurfaceCard>
-
-            <ReportFootnote>
-              {manualSalary
-                ? "Manuell hinterlegter Monatswert · keine Zuschläge · keine Lohnabrechnung"
-                : "Unverbindliche Schätzung · Pausenzeiten werden mangels Lageangabe mittig angesetzt · keine Lohnabrechnung"}
-            </ReportFootnote>
           </>
         )}
       </ReportPeriodContent>
@@ -384,7 +361,7 @@ function ValueRow({
       <Text
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
-        style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
+        style={{ color: palette.dark ? palette.text : palette.textMuted, ...TYPOGRAPHY.label }}
       >
         {label}
       </Text>
@@ -400,7 +377,7 @@ function ValueRow({
           <Ionicons
             accessibilityElementsHidden
             color={palette.textMuted}
-            name="chevron-forward"
+            name="ellipsis-horizontal-circle"
             size={17}
           />
         ) : null}

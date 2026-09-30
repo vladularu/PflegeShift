@@ -89,7 +89,7 @@ const MiniMonth = memo(function MiniMonth({
     mutedColor: palette.textMuted,
     today: currentDate,
     todayColor: palette.onPrimary,
-    todayBackground: palette.primary,
+    todayBackground: palette.calendarYearAccent,
   });
 
   return (
@@ -153,7 +153,7 @@ const MiniMonth = memo(function MiniMonth({
                     borderRadius: MINI_MONTH_MOTION_METRICS.daySize / 2,
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: isToday ? palette.primary : "transparent",
+                    backgroundColor: isToday ? palette.calendarYearAccent : "transparent",
                   }}
                 >
                   <Text

@@ -42,7 +42,8 @@ import { FormStatus } from "@/ui/form-layout";
 import { PrimaryButton } from "@/ui/form-controls";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { successFeedback } from "@/ui/haptics";
-import { ReportFootnote, ReportScrollView } from "@/ui/report-layout";
+import { ReportScrollView } from "@/ui/report-layout";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 
 const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
   NONE: "Keine Zulage",
@@ -161,6 +162,7 @@ function TariffAssessmentForm({
           onRetry={() => setRuleRetryRevision((value) => value + 1)}
           title="Tarifprüfung nicht verfügbar"
         />
+        <SheetBackFooter onPress={() => router.back()} />
       </ReportScrollView>
     );
   }
@@ -174,6 +176,7 @@ function TariffAssessmentForm({
           title="Nicht verfügbar"
         />
         <AnalysisCoverageNote message="Die Tarifprüfung ist für diesen Monat ohne gültigen Tarifstand deaktiviert." />
+        <SheetBackFooter onPress={() => router.back()} />
       </ReportScrollView>
     );
   }
@@ -439,10 +442,7 @@ function TariffAssessmentForm({
           </View>
         </SurfaceCard>
       ) : null}
-
-      <ReportFootnote>
-        Automatische Plausibilitätsprüfung · keine Rechts- oder Lohnberatung
-      </ReportFootnote>
+      <SheetBackFooter disabled={saving} onPress={() => router.back()} />
     </ReportScrollView>
   );
 }

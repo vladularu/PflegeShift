@@ -4,6 +4,7 @@ import type { ShiftMetric } from "@/domain/analysis-view";
 import { SHIFT_TYPE_LABELS } from "@/domain/types";
 import { formatMinutes } from "@/engine/working-time";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
+import { DEFAULT_SHIFT_SYMBOLS } from "@/theme/shift-symbols";
 import { SPACING, RADII } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
 import { ColorBadge } from "@/ui/design-system";
@@ -57,7 +58,12 @@ export function ShiftAnalysisCard({
               opacity: pressed ? 0.65 : 1,
             })}
           >
-            <Text style={{ color: metric === value ? p.text : p.textMuted, ...TYPOGRAPHY.caption }}>
+            <Text
+              style={{
+                color: p.dark || metric === value ? p.text : p.textMuted,
+                ...TYPOGRAPHY.caption,
+              }}
+            >
               {value === "COUNT" ? "Anzahl" : "Stunden"}
             </Text>
           </Pressable>
@@ -88,10 +94,13 @@ export function ShiftAnalysisCard({
                     />
                   ))}
                 </View>
-              ) : undefined
-            }
-            dot={
-              analysis.appearances?.[item.type]?.length ? undefined : SHIFT_TYPE_COLORS[item.type]
+              ) : (
+                <ColorBadge
+                  color={SHIFT_TYPE_COLORS[item.type]}
+                  label={DEFAULT_SHIFT_SYMBOLS[item.type]}
+                  size={24}
+                />
+              )
             }
           />
         ))

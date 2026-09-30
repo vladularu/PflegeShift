@@ -22,6 +22,7 @@ import {
 } from "@/features/location/use-location-search";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE } from "@/theme/typography";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 
 type PickerRow =
   | { readonly id: "custom"; readonly kind: "CUSTOM"; readonly query: string }
@@ -244,6 +245,9 @@ export function LocationPickerScreen() {
         renderItem={renderRow}
         style={styles.results}
       />
+      <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20 }}>
+        <SheetBackFooter disabled={resolvingId !== null} onPress={() => router.back()} />
+      </View>
     </View>
   );
 }

@@ -121,8 +121,8 @@ function AnalysisPeriodHeader({
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
         style={{
-          color: palette.text,
-          textAlign: "center",
+          color: palette.textMuted,
+          textAlign: "left",
           ...(secondaryLabel ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body),
           fontVariant: ["tabular-nums"],
         }}
@@ -134,7 +134,7 @@ function AnalysisPeriodHeader({
           dynamicTypeRamp="caption1"
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           selectable
-          style={{ color: palette.textMuted, textAlign: "center", ...TYPOGRAPHY.caption }}
+          style={{ color: palette.textMuted, textAlign: "left", ...TYPOGRAPHY.caption }}
         >
           {secondaryLabel}
         </Text>

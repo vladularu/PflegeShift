@@ -396,7 +396,7 @@ const DayCell = memo(
               minHeight: stampMode
                 ? CALENDAR_METRICS.entryRowHeight * (detailed ? 2 : 1)
                 : undefined,
-              opacity: !cell.inMonth && !isToday && !isSelected ? 0.2 : 1,
+              opacity: cell.inMonth ? 1 : 0.3,
               gap: 1,
               overflow: "hidden",
               borderRadius: 4,
