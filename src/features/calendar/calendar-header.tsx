@@ -184,7 +184,7 @@ export const CalendarHeader = memo(function CalendarHeader({
                 width: 6,
                 height: 6,
                 borderRadius: RADII.pill,
-                backgroundColor: palette.primary,
+                backgroundColor: palette.accent,
               }}
             />
           ) : null}

@@ -113,7 +113,7 @@ function ThemedApp() {
                             title: "Tagesdetails",
                             presentation: "formSheet",
                             contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [0.64, 0.92],
+                            sheetAllowedDetents: [1],
                             sheetGrabberVisible: true,
                           }}
                         />
@@ -141,7 +141,7 @@ function ThemedApp() {
                             title: "Information",
                             presentation: "formSheet",
                             contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [0.52, 0.78],
+                            sheetAllowedDetents: [1],
                             sheetGrabberVisible: true,
                           }}
                         />
@@ -175,7 +175,7 @@ function ThemedApp() {
                             title: "Schichtzulage",
                             presentation: "formSheet",
                             contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [0.78, 1],
+                            sheetAllowedDetents: [1],
                             sheetGrabberVisible: true,
                           }}
                         />
@@ -185,7 +185,7 @@ function ThemedApp() {
                             title: "Einstellungen",
                             presentation: "formSheet",
                             contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [0.72, 1],
+                            sheetAllowedDetents: [1],
                             sheetGrabberVisible: true,
                           }}
                         />
@@ -194,7 +194,7 @@ function ThemedApp() {
                           options={{
                             headerShown: false,
                             presentation: "formSheet",
-                            sheetAllowedDetents: [0.85, 1],
+                            sheetAllowedDetents: [1],
                             sheetGrabberVisible: true,
                             contentStyle: { backgroundColor: palette.background },
                           }}
@@ -213,7 +213,7 @@ function ThemedApp() {
                             headerShown: false,
                             presentation: "formSheet",
                             contentStyle: { backgroundColor: palette.surface },
-                            sheetAllowedDetents: [0.72, 0.92],
+                            sheetAllowedDetents: [1],
                             sheetCornerRadius: 28,
                             sheetExpandsWhenScrolledToEdge: false,
                             sheetGrabberVisible: false,

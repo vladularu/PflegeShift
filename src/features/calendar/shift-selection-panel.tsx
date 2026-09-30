@@ -21,6 +21,7 @@ import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
 import { InlineNotice } from "@/ui/design-system";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 
 function longDate(date: string): string {
   return new Intl.DateTimeFormat("de-DE", {
@@ -177,6 +178,17 @@ export const ShiftSelectionPanel = memo(function ShiftSelectionPanel({
           </ShiftTemplateListCard>
         </View>
       </ScrollView>
+      {inNativeSheet ? (
+        <View
+          style={{
+            paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
+            paddingTop: SPACING.sm,
+            paddingBottom: Math.max(insets.bottom, SPACING.md),
+          }}
+        >
+          <SheetBackFooter disabled={busy} onPress={onClose} />
+        </View>
+      ) : null}
     </Animated.View>
   );
 });
@@ -188,7 +200,7 @@ export function ShiftSelectionErrorNotice({ message }: { readonly message: strin
     <View
       style={[
         styles.errorNotice,
-        { bottom: Math.max(insets.bottom, SCREEN_LAYOUT.contentTopPadding) },
+        { bottom: Math.max(insets.bottom, SCREEN_LAYOUT.contentTopPadding) + 64 },
       ]}
     >
       <InlineNotice message={message} tone="error" />

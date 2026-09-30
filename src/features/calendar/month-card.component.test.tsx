@@ -301,7 +301,7 @@ describe("MonthCard", () => {
       opacity: 1,
     });
     expect(within(outsideDay).getByTestId(`calendar-entry-layer-${outsideDate}`)).toHaveStyle({
-      opacity: 0.2,
+      opacity: 0.3,
     });
     expect(within(outsideDay).getByText("Frühdienst")).toBeTruthy();
   });
@@ -394,7 +394,7 @@ describe("MonthCard", () => {
       opacity: 1,
     });
     expect(within(sixthWeekDay).getByTestId("calendar-entry-layer-2026-10-05")).toHaveStyle({
-      opacity: 0.2,
+      opacity: 0.3,
     });
   });
 

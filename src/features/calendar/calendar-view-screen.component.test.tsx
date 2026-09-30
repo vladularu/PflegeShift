@@ -140,9 +140,9 @@ describe("CalendarViewScreen", () => {
         backgroundColor: palette.calendarBackground,
       });
       expect(screen.getByTestId("preview-date-marker-1")).toHaveStyle({
-        backgroundColor: palette.primary,
+        backgroundColor: palette.calendarToday,
       });
-      expect(screen.getByText("28")).toHaveStyle({ color: palette.onPrimary });
+      expect(screen.getByText("28")).toHaveStyle({ color: palette.onCalendarToday });
     }
   });
 

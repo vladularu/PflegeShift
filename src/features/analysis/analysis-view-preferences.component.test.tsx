@@ -161,7 +161,7 @@ describe("analysis view preferences", () => {
     });
     await fireEvent.press(screen.getByRole("button", { name: "Standard wiederherstellen" }));
     expect(read(screen)).toEqual(DEFAULT_ANALYSIS_VIEW);
-    await fireEvent.press(screen.getByRole("button", { name: "Fertig" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Zurück" }));
     expect(screen.queryByText("Deine Karten für Monat und Jahr.")).toBeNull();
   });
 });

@@ -62,9 +62,7 @@ type Errors = Partial<
     string
   >
 >;
-const ICON = require("../../../assets/brand/lunashift/onboarding-icon-red.png");
-const WORDMARK_LIGHT = require("../../../assets/brand/lunashift/onboarding-wordmark-light.png");
-const WORDMARK_DARK = require("../../../assets/brand/lunashift/onboarding-wordmark-dark.png");
+const ONBOARDING_LOGO = require("../../../assets/brand/lunashift/onboarding-logo-user.png");
 
 /** Shared settings conversion, retaining decimal-comma and decimal-point compatibility. */
 export function parseWeeklyHours(value: string): number {
@@ -278,11 +276,10 @@ export function OnboardingScreen({ preview = false }: { readonly preview?: boole
           >
             {step === 1 ? (
               <View style={s.brand}>
-                <Image source={ICON} accessibilityLabel="LUNA Shift Logo" style={s.icon} />
                 <Image
-                  source={p.dark ? WORDMARK_DARK : WORDMARK_LIGHT}
-                  accessibilityLabel="LUNA Shift"
-                  style={s.wordmark}
+                  source={ONBOARDING_LOGO}
+                  accessibilityLabel="LUNA Shift Logo"
+                  style={s.logo}
                   resizeMode="contain"
                 />
               </View>
@@ -610,8 +607,7 @@ const s = StyleSheet.create({
   content: { gap: SPACING.xl },
   welcome: { flexGrow: 1, justifyContent: "center", paddingVertical: SPACING.md },
   brand: { gap: SPACING.xl, alignItems: "center" },
-  icon: { width: 108, height: 108, borderRadius: RADII.card },
-  wordmark: { width: 255, maxWidth: "100%", height: 55 },
+  logo: { width: 260, maxWidth: "100%", height: 260, borderRadius: RADII.card },
   titleGroup: { gap: SPACING.sm },
   title: { ...ONBOARDING_TYPOGRAPHY.title, textAlign: "center" },
   display: { ...ONBOARDING_TYPOGRAPHY.display, textAlign: "center" },

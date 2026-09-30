@@ -12,7 +12,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
+import { CARD_HEADER_INSET, CONTROL_HEIGHT, RADII, SHADOWS, SPACING } from "@/theme/tokens";
 import { accessibleChipBackgroundColor, chipTextColor } from "@/theme/color-contrast";
 import { AnimatedPressable, usePressMotion } from "@/ui/press-motion";
 import { ShiftSymbol } from "@/ui/shift-symbol";
@@ -35,14 +35,70 @@ export function SurfaceCard({
       style={{
         overflow: "hidden",
         borderWidth: 1,
-        borderColor: palette.separator,
+        borderColor: palette.surface,
         borderRadius: RADII.card,
         borderCurve: "continuous",
         backgroundColor: palette.surface,
+        boxShadow: SHADOWS.card,
         ...style,
       }}
     >
       {children}
+    </View>
+  );
+}
+
+export function CardHeader({
+  title,
+  caption,
+  action,
+}: {
+  readonly title: string;
+  readonly caption?: string;
+  readonly action?: ReactNode;
+}) {
+  const palette = usePalette();
+  return (
+    <View
+      style={{
+        minHeight: palette.dark ? 56 : 50,
+        justifyContent: "center",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: SPACING.sm,
+        paddingHorizontal: palette.dark ? SPACING.lg : SPACING.lg - CARD_HEADER_INSET,
+        paddingVertical: palette.dark ? SPACING.sm : SPACING.xs,
+        marginHorizontal: palette.dark ? 0 : CARD_HEADER_INSET,
+        marginTop: palette.dark ? 0 : CARD_HEADER_INSET,
+        borderTopLeftRadius: palette.dark ? 0 : RADII.card - CARD_HEADER_INSET,
+        borderTopRightRadius: palette.dark ? 0 : RADII.card - CARD_HEADER_INSET,
+        backgroundColor: palette.cardHeader,
+        borderBottomWidth: 1,
+        borderBottomColor: palette.cardSeparator,
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <Text
+          accessibilityRole="header"
+          maxFontSizeMultiplier={TEXT_MAX_SCALE}
+          selectable
+          style={{ alignSelf: "stretch", color: palette.text, ...TYPOGRAPHY.sectionTitle }}
+        >
+          {title}
+        </Text>
+        {caption ? (
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{
+              color: palette.dark ? palette.text : palette.textMuted,
+              ...TYPOGRAPHY.caption,
+            }}
+          >
+            {caption}
+          </Text>
+        ) : null}
+      </View>
+      {action}
     </View>
   );
 }
@@ -270,7 +326,15 @@ export function RowButton({
 
 export function CardSeparator({ inset = SPACING.lg }: { readonly inset?: number }) {
   const palette = usePalette();
-  return <View style={{ height: 1, backgroundColor: palette.separator, marginLeft: inset }} />;
+  return <View style={{ height: 1, backgroundColor: palette.cardSeparator, marginLeft: inset }} />;
+}
+
+export function CardFooterLine() {
+  return (
+    <View style={{ marginHorizontal: SPACING.lg, paddingBottom: SPACING.lg }}>
+      <CardSeparator inset={0} />
+    </View>
+  );
 }
 
 export function EmptyState({

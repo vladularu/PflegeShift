@@ -5,7 +5,7 @@ import { AnalysisCardDetails } from "@/features/analysis/analysis-card-details";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { RADII, SPACING } from "@/theme/tokens";
-import { CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { CardFooterLine, CardSeparator, SurfaceCard } from "@/ui/design-system";
 import { AnalysisCountBadge } from "./analysis-count-badge";
 
 export function ExpandableHighlightCard({
@@ -35,12 +35,7 @@ export function ExpandableHighlightCard({
   const accessibleValue = countBadge === undefined ? value : `${countBadge} ${value}`;
   return (
     <View>
-      <SurfaceCard
-        style={{
-          borderColor: `${accent}52`,
-          backgroundColor: `${accent}10`,
-        }}
-      >
+      <SurfaceCard>
         <Pressable
           accessibilityHint={expanded ? "Blendet die Details aus" : "Blendet die Details ein"}
           accessibilityLabel={[title, accessibleValue, summary].filter(Boolean).join(", ")}
@@ -50,7 +45,7 @@ export function ExpandableHighlightCard({
           style={({ pressed }) => ({
             minHeight: 100,
             gap: SPACING.sm,
-            backgroundColor: pressed ? `${accent}18` : "transparent",
+            backgroundColor: palette.cardHeader,
             opacity: pressed ? 0.78 : 1,
             paddingHorizontal: SPACING.xl,
             paddingVertical: SPACING.md,
@@ -73,7 +68,7 @@ export function ExpandableHighlightCard({
             <Text
               maxFontSizeMultiplier={TEXT_MAX_SCALE}
               selectable
-              style={{ minWidth: 0, flex: 1, color: accent, ...TYPOGRAPHY.highlightTitle }}
+              style={{ minWidth: 0, flex: 1, color: palette.text, ...TYPOGRAPHY.highlightTitle }}
             >
               {title}
             </Text>
@@ -125,7 +120,10 @@ export function ExpandableHighlightCard({
               <Text
                 maxFontSizeMultiplier={TEXT_MAX_SCALE}
                 selectable
-                style={{ color: palette.textMuted, ...TYPOGRAPHY.highlightSummary }}
+                style={{
+                  color: palette.dark ? palette.text : palette.textMuted,
+                  ...TYPOGRAPHY.highlightSummary,
+                }}
               >
                 {summary}
               </Text>
@@ -135,6 +133,7 @@ export function ExpandableHighlightCard({
         <AnalysisCardDetails expanded={expanded}>
           <CardSeparator inset={0} />
           {children}
+          <CardFooterLine />
         </AnalysisCardDetails>
       </SurfaceCard>
     </View>

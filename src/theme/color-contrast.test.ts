@@ -89,18 +89,26 @@ describe.each([
   ["light", LIGHT_PALETTE],
   ["dark", DARK_PALETTE],
 ] as const)("%s palette contrast", (_, palette) => {
-  it("uses the approved red with readable white labels in both modes", () => {
-    expect(palette.accent).toBe("#C93443");
-    expect(palette.calendarYearAccent).toBe("#C93443");
-    expect(palette.onAccent).toBe("#FFFFFF");
+  it("uses readable mode-specific accents and calendar controls", () => {
+    expect(palette.accent).toBe(palette.dark ? "#FFE637" : "#0088FF");
+    expect(palette.calendarYearAccent).toBe(palette.dark ? palette.primary : palette.accent);
+    expect(palette.onAccent).toBe("#0D0D0D");
     expect(colorContrastRatio(palette.onAccent, palette.accent)).toBeGreaterThanOrEqual(
       MINIMUM_TEXT_CONTRAST,
     );
-    expect(colorContrastRatio(palette.accent, palette.tabBar)).toBeGreaterThanOrEqual(
+    expect(colorContrastRatio(palette.primary, palette.tabBar)).toBeGreaterThanOrEqual(
       MINIMUM_UI_CONTRAST,
     );
-    expect(palette.floatingAction).toBe(palette.accent);
-    expect(palette.onFloatingAction).toBe(palette.onAccent);
+    expect(palette.calendarToday).toBe(palette.dark ? "#FFE637" : "#0D0D0D");
+    expect(palette.floatingAction).toBe(palette.dark ? palette.accent : "#0D0D0D");
+    expect(palette.onFloatingAction).toBe(palette.onCalendarToday);
+    expect(
+      colorContrastRatio(palette.onCalendarToday, palette.calendarToday),
+    ).toBeGreaterThanOrEqual(MINIMUM_TEXT_CONTRAST);
+    expect(
+      colorContrastRatio(palette.onFloatingAction, palette.floatingAction),
+    ).toBeGreaterThanOrEqual(MINIMUM_TEXT_CONTRAST);
+    expect(palette.cardSeparator).toBe(palette.dark ? "#111113" : "#E5E5E5");
     expect(palette.onboardingBackground).toBe(palette.background);
   });
 

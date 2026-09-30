@@ -44,6 +44,7 @@ import { DropdownField, Field } from "@/ui/form-controls";
 import { FormScreen, FormSection, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { focusInvalidField, weeklyHoursFieldError } from "@/ui/form-validation";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 
 type SettingsSection = "WORK" | "TARIFF";
 
@@ -359,6 +360,7 @@ function SettingsEditorForm({
       )}
 
       <FormStatus error={error} message={message} />
+      <SheetBackFooter disabled={saving} onPress={() => router.back()} />
     </FormScreen>
   );
 }

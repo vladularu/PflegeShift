@@ -119,7 +119,7 @@ export function SalarySummaryCard({
           >
             Gehalt einrichten
           </Text>
-          <Ionicons color={palette.textMuted} name="chevron-forward" size={18} />
+          <Ionicons color={palette.textMuted} name="ellipsis-horizontal-circle" size={20} />
         </Pressable>
       ) : pay === null ? (
         <SalaryRuleUnavailableContent ruleFailure={ruleFailure} />
@@ -164,12 +164,13 @@ function SalaryDetailRowView({
   readonly row: SalaryDetailRow;
   readonly palette: ReturnType<typeof usePalette>;
 }) {
+  const secondaryText = palette.dark ? palette.text : palette.textMuted;
   const content = (
     <>
       <Text
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         selectable
-        style={{ minWidth: 0, flex: 1, color: palette.textMuted, ...TYPOGRAPHY.label }}
+        style={{ minWidth: 0, flex: 1, color: secondaryText, ...TYPOGRAPHY.label }}
       >
         {row.label}
       </Text>
@@ -189,7 +190,7 @@ function SalaryDetailRowView({
           <Ionicons
             accessibilityElementsHidden
             color={palette.textMuted}
-            name="chevron-forward"
+            name="ellipsis-horizontal-circle"
             size={17}
           />
         ) : null}

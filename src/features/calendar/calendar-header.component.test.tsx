@@ -7,6 +7,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
 import { CALENDAR_VIEW_ZOOM } from "@/features/calendar/calendar-view-transition";
 import { MOTION } from "@/theme/motion";
+import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 
 function PlannerHeader({
   direction = "NEXT",
@@ -131,7 +132,7 @@ describe("CalendarHeader", () => {
   });
 
   it.each([false, true])(
-    "keeps the year red through a transform-free crossfade (dark=%s)",
+    "keeps the year accent through a transform-free crossfade (dark=%s)",
     async (dark) => {
       const scheme = jest
         .spyOn(jest.requireActual<typeof import("react-native")>("react-native"), "useColorScheme")
@@ -143,7 +144,9 @@ describe("CalendarHeader", () => {
         const title = screen.getByRole("header", { name: "2026" });
 
         expect(title.props.entering.durationV).toBe(CALENDAR_VIEW_ZOOM.duration);
-        expect(title).toHaveStyle({ color: "#C93443" });
+        expect(title).toHaveStyle({
+          color: (dark ? DARK_PALETTE : LIGHT_PALETTE).calendarYearAccent,
+        });
         expect(title.props.entering.initialValues).toBeUndefined();
         expect(title.props.exiting.durationV).toBe(MOTION.duration.normal);
         expect(title.props.exiting.targetValues).toBeUndefined();

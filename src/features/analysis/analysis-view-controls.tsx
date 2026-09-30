@@ -21,6 +21,7 @@ import { usePalette } from "@/theme/palette";
 import { SPACING, RADII } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
 import { SurfaceCard } from "@/ui/design-system";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 import { selectionFeedback } from "@/ui/haptics";
 import { useAnalysisView } from "./analysis-view-preferences";
 
@@ -88,7 +89,7 @@ export function AnalysisViewControls({ compact = false }: { readonly compact?: b
       </Pressable>
       <Modal
         visible={open}
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
         animationType={reduced ? "none" : "slide"}
         onRequestClose={() => setOpen(false)}
       >
@@ -308,23 +309,9 @@ export function AnalysisViewControls({ compact = false }: { readonly compact?: b
                 </Text>
               </Pressable>
             </ScrollView>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setOpen(false)}
-              style={({ pressed }) => ({
-                minHeight: 48,
-                margin: SPACING.lg,
-                padding: SPACING.md,
-                borderRadius: RADII.control,
-                alignItems: "center",
-                backgroundColor: p.surface,
-                borderColor: p.separator,
-                borderWidth: 1,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <Text style={{ color: p.text, ...TYPOGRAPHY.bodyStrong }}>Fertig</Text>
-            </Pressable>
+            <View style={{ padding: SPACING.lg }}>
+              <SheetBackFooter onPress={() => setOpen(false)} />
+            </View>
           </SafeAreaView>
         </SafeAreaProvider>
       </Modal>

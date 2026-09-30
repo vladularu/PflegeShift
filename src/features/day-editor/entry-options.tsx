@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type {
@@ -12,6 +12,7 @@ import type {
   RecurrenceRule,
 } from "@/domain/types";
 import { usePalette } from "@/theme/palette";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 
 export function recurrenceLabel(rule: RecurrenceRule | null | undefined): string {
   if (!rule) return "Nie";
@@ -76,7 +77,7 @@ function SheetShell({
   const palette = usePalette();
   const insets = useSafeAreaInsets();
   return (
-    <Modal animationType="slide" onRequestClose={onClose} presentationStyle="pageSheet" visible>
+    <Modal animationType="slide" onRequestClose={onClose} presentationStyle="fullScreen" visible>
       <View
         style={{
           flex: 1,
@@ -109,7 +110,14 @@ function SheetShell({
           </Text>
           <View style={{ width: 48 }} />
         </View>
-        {children}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={{ flex: 1 }}
+          contentContainerStyle={{ gap: 18, paddingBottom: 18 }}
+        >
+          {children}
+        </ScrollView>
+        <SheetBackFooter onPress={onClose} />
       </View>
     </Modal>
   );

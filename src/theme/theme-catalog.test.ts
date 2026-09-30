@@ -23,11 +23,15 @@ describe("theme catalog", () => {
       ] as const) {
         expect(palette[key], `${id}: ${key}`).toBe(standard[key]);
       }
-      expect(palette.calendarBackground).toBe(dark ? "#000000" : "#FFFFFF");
-      expect(palette.background).toBe(dark ? "#000000" : "#F5F5F7");
-      expect(palette.surface).toBe(dark ? "#1C1C1E" : "#FFFFFF");
-      expect(palette.primary).toBe(palette.text);
+      expect(palette.calendarBackground).toBe(dark ? "#030303" : "#FFFFFF");
+      expect(palette.background).toBe(dark ? "#030303" : "#F3F2F8");
+      expect(palette.surface).toBe(dark ? "#262628" : "#FFFFFF");
+      expect(palette.primary).toBe(standard.primary);
       expect(colorContrastRatio(palette.onPrimary, palette.primary)).toBeGreaterThanOrEqual(4.5);
+      expect(palette.sortAction).toBe(dark ? "#FFE637" : "#0088FF");
+      expect(colorContrastRatio(palette.onSortAction, palette.sortAction)).toBeGreaterThanOrEqual(
+        3,
+      );
       expect(colorContrastRatio(palette.text, palette.calendarBackground)).toBeGreaterThanOrEqual(
         4.5,
       );
@@ -37,7 +41,7 @@ describe("theme catalog", () => {
   it("retains the current LUNA default and offers the four agreed themes", () => {
     expect(resolvePalette("standard", false)).toBe(LIGHT_PALETTE);
     expect(resolvePalette("standard", true)).toBe(DARK_PALETTE);
-    expect(resolvePalette("standard", false).secondarySoft).toBe("#F9E9EB");
+    expect(resolvePalette("standard", false).secondarySoft).toBe("#E5E5E5");
     expect(THEME_OPTIONS.map((theme) => theme.name)).toEqual([
       "LUNA Standard",
       "Minzbrise",

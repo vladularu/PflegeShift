@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { RADII, SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
+import { RADII, REPORT_CARD_GAP, SPACING } from "@/theme/tokens";
 import { ScreenScrollView } from "@/ui/screen-layout";
 
 export function ReportScrollView({ children }: PropsWithChildren) {
@@ -34,24 +34,6 @@ export function ReportTestBadge() {
   );
 }
 
-export function ReportFootnote({ children }: PropsWithChildren) {
-  const palette = usePalette();
-  return (
-    <Text
-      maxFontSizeMultiplier={TEXT_MAX_SCALE}
-      selectable
-      style={{
-        color: palette.textMuted,
-        paddingHorizontal: SPACING.xs,
-        textAlign: "center",
-        ...TYPOGRAPHY.footnote,
-      }}
-    >
-      {children}
-    </Text>
-  );
-}
-
 export function ReportPeriodContent({ children }: PropsWithChildren) {
-  return <View style={{ gap: SCREEN_LAYOUT.sectionGap }}>{children}</View>;
+  return <View style={{ gap: REPORT_CARD_GAP }}>{children}</View>;
 }

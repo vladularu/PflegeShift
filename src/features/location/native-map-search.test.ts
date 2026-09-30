@@ -94,7 +94,7 @@ describe("native MapKit location search", () => {
     expect(swift).toContain("if exportedResults.count == resultLimit");
     expect(swift).toContain("latitude: 51.1657, longitude: 10.4515");
     expect(rootLayout).toMatch(
-      /name="location-picker"[\s\S]*sheetAllowedDetents: \[0\.72, 0\.92\][\s\S]*sheetExpandsWhenScrolledToEdge: false/,
+      /name="location-picker"[\s\S]*sheetAllowedDetents: \[1\][\s\S]*sheetExpandsWhenScrolledToEdge: false/,
     );
   });
 });

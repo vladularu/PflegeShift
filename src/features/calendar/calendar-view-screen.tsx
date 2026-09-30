@@ -115,7 +115,7 @@ function CalendarDisplayPreview({
                     borderRadius: 15,
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: isToday ? palette.primary : "transparent",
+                    backgroundColor: isToday ? palette.calendarToday : "transparent",
                   }}
                 >
                   <Text
@@ -124,7 +124,7 @@ function CalendarDisplayPreview({
                       fontSize: CALENDAR_METRICS.dayNumberFontSize,
                       fontWeight: isToday ? "700" : "500",
                       color: isToday
-                        ? palette.onPrimary
+                        ? palette.onCalendarToday
                         : index > 4
                           ? palette.textMuted
                           : palette.text,

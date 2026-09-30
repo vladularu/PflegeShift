@@ -43,7 +43,7 @@ const MovingDay = memo(function MovingDay({
         styles.day,
         {
           backgroundColor: isToday
-            ? palette.primary
+            ? palette.calendarToday
             : isSelected
               ? palette.calendarSelection
               : "transparent",
@@ -57,7 +57,7 @@ const MovingDay = memo(function MovingDay({
           fontSize: CALENDAR_METRICS.dayNumberFontSize,
           fontWeight: isToday ? "700" : "500",
           color: isToday
-            ? palette.onPrimary
+            ? palette.onCalendarToday
             : isSelected
               ? palette.onCalendarSelection
               : day.weekend
@@ -212,30 +212,70 @@ export function PrototypeMonthContent({
           </Text>
         ))}
       </View>
-      {layout.adjacentDays.map((day) => (
-        <Text
-          key={day.date}
-          testID={`calendar-adjacent-${day.date}`}
-          accessible={visible}
-          accessibilityLabel={`${day.date}, Nachbarmonat`}
-          allowFontScaling={false}
-          style={{
-            position: "absolute",
-            left: day.toX - 15,
-            top: day.toY - 15,
-            width: 30,
-            height: 30,
-            textAlign: "center",
-            textAlignVertical: "center",
-            lineHeight: TYPOGRAPHY.screenTitle.lineHeight,
-            fontSize: CALENDAR_METRICS.dayNumberFontSize,
-            color: palette.textMuted,
-            opacity: 0.5,
-          }}
-        >
-          {day.day}
-        </Text>
-      ))}
+      {layout.adjacentDays.map((day) => {
+        const entries = entriesByDate.get(day.date) ?? [];
+        const rows = Math.max(
+          0,
+          Math.floor(
+            (layout.weekHeight - CALENDAR_METRICS.dayNumberHeight - 2) /
+              (CALENDAR_METRICS.entryRowHeight + CALENDAR_METRICS.chipGap),
+          ),
+        );
+        const preview = prototypeEntryPreview(
+          entries,
+          rows,
+          display.showShiftTimes || display.showShiftDuration,
+        );
+        return (
+          <View
+            key={day.date}
+            style={{
+              position: "absolute",
+              left: day.toX - layout.cellWidth / 2,
+              top: day.toY - 20,
+              width: layout.cellWidth,
+              height: layout.weekHeight,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderColor: palette.separator,
+            }}
+          >
+            <Text
+              testID={`calendar-adjacent-${day.date}`}
+              accessible={visible}
+              accessibilityLabel={`${day.date}, Nachbarmonat`}
+              allowFontScaling={false}
+              style={{
+                height: CALENDAR_METRICS.dayNumberHeight,
+                paddingLeft: 5,
+                paddingTop: 5,
+                fontSize: CALENDAR_METRICS.dayNumberFontSize,
+                color: palette.textMuted,
+                opacity: 0.5,
+              }}
+            >
+              {day.day}
+            </Text>
+            <View
+              testID={`calendar-adjacent-entry-layer-${day.date}`}
+              style={{
+                marginHorizontal: CALENDAR_METRICS.chipHorizontalInset,
+                gap: CALENDAR_METRICS.chipGap,
+                opacity: 0.3,
+                overflow: "hidden",
+              }}
+            >
+              {preview.entries.map((entry) => (
+                <PrototypeEntryContent
+                  key={`${entry.kind}:${entry.id}:${entry.date}`}
+                  entry={entry}
+                  display={display}
+                  timeZone={timeZone}
+                />
+              ))}
+            </View>
+          </View>
+        );
+      })}
       {layout.days.map((day) => {
         const entries = entriesByDate.get(day.date) ?? [];
         const holiday = holidays.get(day.date)?.name;

@@ -4,6 +4,7 @@ import { Text, View } from "react-native";
 import type { AnalysisCardId } from "@/domain/analysis-view";
 import { usePalette } from "@/theme/palette";
 import { TYPOGRAPHY } from "@/theme/typography";
+import { REPORT_CARD_GAP } from "@/theme/tokens";
 import { AnalysisListCard, AnalysisValueRow } from "./analysis-list-card";
 import { useAnalysisView } from "./analysis-view-preferences";
 import { type CheckCounts, type ClassifiedCheckCounts } from "./check-visibility";
@@ -18,11 +19,11 @@ export function AnalysisDashboard({
   const p = usePalette();
   const shown = preferences.order.filter((id) => !preferences.hidden.includes(id));
   return shown.length ? (
-    <>
+    <View style={{ gap: REPORT_CARD_GAP }}>
       {shown.map((id) => (
         <View key={id}>{cards[id]}</View>
       ))}
-    </>
+    </View>
   ) : (
     <Text style={{ color: p.textMuted, ...TYPOGRAPHY.body }}>
       Deine Karten sind ausgeblendet. Über „Ansicht anpassen“ kannst du sie wieder anzeigen.

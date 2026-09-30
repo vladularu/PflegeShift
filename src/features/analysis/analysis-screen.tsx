@@ -37,12 +37,7 @@ import { usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { selectionFeedback } from "@/ui/haptics";
-import {
-  ReportFootnote,
-  ReportPeriodContent,
-  ReportScrollView,
-  ReportTestBadge,
-} from "@/ui/report-layout";
+import { ReportPeriodContent, ReportScrollView, ReportTestBadge } from "@/ui/report-layout";
 
 import { ComplianceDetails } from "./compliance-details";
 export type AnalysisExpandedCard = "CHECK" | "PAY";
@@ -263,7 +258,6 @@ export function AnalysisScreen({
             />
 
             <AnalysisViewControls />
-            <ReportFootnote>Unverbindliche Schätzung · keine Lohnabrechnung</ReportFootnote>
           </ReportPeriodContent>
         </Animated.View>
       </ReportScrollView>

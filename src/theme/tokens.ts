@@ -11,7 +11,7 @@ export const SPACING = {
 export const RADII = {
   small: 10,
   control: 12,
-  card: 20,
+  card: 28,
   sheet: 24,
   large: 24,
   pill: 999,
@@ -37,8 +37,12 @@ export const SCREEN_LAYOUT = {
   headerAccessoryStackFontScale: 1.6,
 } as const;
 
+export const REPORT_CARD_GAP = 32;
+
+export const CARD_HEADER_INSET = SPACING.xs;
+
 export const SHADOWS = {
-  card: "0 1px 2px rgba(22, 34, 30, 0.04)",
+  card: "0 8px 24px rgba(22, 34, 30, 0.08)",
   raised: "0 8px 24px rgba(22, 34, 30, 0.08)",
   overlay: "0 18px 42px rgba(12, 20, 17, 0.16)",
 } as const;

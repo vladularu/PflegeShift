@@ -2,9 +2,9 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { usePalette } from "@/theme/palette";
-import { RADII, SPACING } from "@/theme/tokens";
+import { CARD_HEADER_INSET, RADII, SPACING } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
-import { SurfaceCard } from "@/ui/design-system";
+import { CardFooterLine, SurfaceCard } from "@/ui/design-system";
 import { selectionFeedback } from "@/ui/haptics";
 
 export function AnalysisListCard({
@@ -20,26 +20,39 @@ export function AnalysisListCard({
   readonly caption?: string;
 }>) {
   const p = usePalette();
+  const secondaryText = p.dark ? p.text : p.textMuted;
   const heading = (
     <>
-      {onPress ? <View style={{ width: 18 }} /> : null}
       <Text
         accessibilityRole="header"
-        style={{ flex: 1, textAlign: "center", color: p.text, ...TYPOGRAPHY.sectionTitle }}
+        style={{
+          flex: 1,
+          textAlign: "left",
+          color: p.text,
+          ...TYPOGRAPHY.sectionTitle,
+        }}
       >
         {title}
       </Text>
-      {onPress ? <Ionicons name="chevron-forward" size={18} color={p.textMuted} /> : null}
+      {onPress ? (
+        <Ionicons name="ellipsis-horizontal-circle" size={22} color={secondaryText} />
+      ) : null}
     </>
   );
   const headerStyle = {
-    minHeight: 56,
-    padding: SPACING.lg,
+    minHeight: p.dark ? 56 : 50,
+    paddingHorizontal: p.dark ? SPACING.lg : SPACING.lg - CARD_HEADER_INSET,
+    paddingVertical: p.dark ? SPACING.sm : SPACING.xs,
+    marginHorizontal: p.dark ? 0 : CARD_HEADER_INSET,
+    marginTop: p.dark ? 0 : CARD_HEADER_INSET,
+    borderTopLeftRadius: p.dark ? 0 : RADII.card - CARD_HEADER_INSET,
+    borderTopRightRadius: p.dark ? 0 : RADII.card - CARD_HEADER_INSET,
     gap: SPACING.sm,
     flexDirection: "row" as const,
     alignItems: "center" as const,
     borderBottomWidth: 1,
-    borderBottomColor: p.separator,
+    borderBottomColor: p.cardSeparator,
+    backgroundColor: p.cardHeader,
   };
   return (
     <SurfaceCard>
@@ -64,13 +77,14 @@ export function AnalysisListCard({
           style={{
             paddingHorizontal: SPACING.lg,
             paddingBottom: SPACING.md,
-            color: p.textMuted,
+            color: secondaryText,
             ...TYPOGRAPHY.caption,
           }}
         >
           {caption}
         </Text>
       ) : null}
+      <CardFooterLine />
     </SurfaceCard>
   );
 }
@@ -98,6 +112,7 @@ export function AnalysisValueRow({
   readonly reserveDisclosure?: boolean;
 }) {
   const p = usePalette();
+  const secondaryText = p.dark ? p.text : p.textMuted;
   const { fontScale } = useWindowDimensions();
   const stacked = fontScale >= 1.3;
   const style = {
@@ -105,7 +120,7 @@ export function AnalysisValueRow({
     paddingVertical: SPACING.md,
     gap: SPACING.sm,
     borderTopWidth: first ? 0 : 1,
-    borderTopColor: p.separator,
+    borderTopColor: p.cardSeparator,
     flexDirection: stacked ? ("column" as const) : ("row" as const),
     alignItems: stacked ? ("stretch" as const) : ("center" as const),
   };
@@ -121,15 +136,15 @@ export function AnalysisValueRow({
         }}
       >
         {leading}
-        {icon ? <Ionicons name={icon} color={iconColor ?? p.textMuted} size={18} /> : null}
+        {icon ? <Ionicons name={icon} color={iconColor ?? secondaryText} size={18} /> : null}
         {dot ? (
           <View style={{ width: 8, height: 8, borderRadius: RADII.pill, backgroundColor: dot }} />
         ) : null}
         <Text
           style={{
             flex: 1,
-            color: total ? p.text : p.textMuted,
-            ...(total ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body),
+            color: secondaryText,
+            ...TYPOGRAPHY.body,
           }}
         >
           {label}
@@ -162,7 +177,9 @@ export function AnalysisValueRow({
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
-            {onPress ? <Ionicons name="chevron-forward" size={16} color={p.textMuted} /> : null}
+            {onPress ? (
+              <Ionicons name="ellipsis-horizontal-circle" size={16} color={secondaryText} />
+            ) : null}
           </View>
         ) : null}
       </View>
