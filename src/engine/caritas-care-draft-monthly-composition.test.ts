@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
 import type { CaritasConfirmedTimePremiumLine } from "./caritas-care-draft-monthly-with-time-premiums";
 import type { CaritasConfirmedOvertimeLine } from "./caritas-care-draft-monthly-with-overtime";
+import type { CaritasConfirmedHourlyShiftLine } from "./caritas-care-draft-monthly-with-hourly-shift";
 import {
   calculateCaritasCareDraftMonthlyComposition,
   type CaritasCareDraftMonthlyCompositionInput,
@@ -54,6 +55,24 @@ function overtime(
   };
 }
 
+function hourlyShift(
+  lineId: string,
+  serviceDate: string,
+  allowanceType: CaritasConfirmedHourlyShiftLine["allowanceType"],
+  payableWholeHours: number,
+): CaritasConfirmedHourlyShiftLine {
+  return {
+    lineId,
+    serviceDate,
+    allowanceType,
+    payableWholeHours,
+    entitlement: "CONFIRMED_NONPERMANENT",
+    hoursConfirmed: true,
+    monthlyAllocationConfirmed: true,
+    categoryAndOverlapConfirmed: true,
+  };
+}
+
 function input(
   overrides: Partial<CaritasCareDraftMonthlyCompositionInput> = {},
 ): CaritasCareDraftMonthlyCompositionInput {
@@ -74,6 +93,7 @@ function input(
       shiftEntitlement: "CONFIRMED_FULL_MONTH",
       fullMonthWeeklyTimeConfirmed: true,
     },
+    confirmedHourlyShift: [],
     confirmedPremiums: [
       premium("svc-02", "2025-10-02", "NIGHT", 8),
       premium("svc-05", "2025-10-05", "SUNDAY", 4),
@@ -344,5 +364,171 @@ describe("Caritas DRAFT composition of known monthly positions", () => {
     expect(
       run({ fixedAllowanceEntitlement: "NOT_ENTITLED", careAllowanceEntitlement: "NOT_ENTITLED" }),
     ).toMatchObject({ knownBaseAndCareSubtotalCents: 327186, knownSubtotalCents: 369742 });
+  });
+  it("combines hourly shift, time and overtime with one sourced monthly basis", () => {
+    const result = run({
+      monthlyShift: null,
+      confirmedHourlyShift: [
+        hourlyShift("svc-02", "2025-10-02", "ALTERNATING_HOURLY", 8),
+        hourlyShift("svc-05", "2025-10-05", "SHIFT_HOURLY", 4),
+      ],
+    });
+    expect(result).toMatchObject({
+      kind: "draft-known-monthly-composition",
+      completeGross: false,
+      knownBaseAndCareSubtotalCents: 344482,
+      knownMonthlyShiftSubtotalCents: 0,
+      knownHourlyShiftSubtotalCents: 1412,
+      knownTimePremiumSubtotalCents: 5016,
+      knownOvertimeSubtotalCents: 12540,
+      knownSubtotalCents: 363450,
+    });
+    if (result.kind === "unavailable") throw new Error(result.reason);
+    expect(result.positions.filter((p) => p.component === "table-base")).toHaveLength(1);
+    expect(result.positions.filter((p) => p.component === "monthly-shift-allowance")).toHaveLength(
+      0,
+    );
+    expect(
+      result.positions.filter((p) => p.component === "confirmed-hourly-shift-allowance"),
+    ).toMatchObject([
+      {
+        lineId: "svc-02",
+        amountCents: 1176,
+        rateCentsPerHour: 147,
+        rateId: "caritas-bw-shift-32-2025-07-01",
+      },
+      { lineId: "svc-05", amountCents: 236, rateCentsPerHour: 59 },
+    ]);
+    expect(result.positions.reduce((sum, p) => sum + p.amountCents, 0)).toBe(363450);
+    expect(result.excludedComponents[0]).toBe("OTHER_SHIFT_ALLOWANCES");
+    for (const p of result.positions) expect(p.sourceIds.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ["bw", "BW", "2025-07-01", 363450],
+    ["bayern", "BAYERN", "2025-07-01", 362450],
+    ["mitte", "MITTE", "2025-07-01", 362450],
+    ["nord", "NORD", "2025-07-01", 362450],
+    ["nrw", "NRW", "2025-07-01", 362450],
+    ["ost", "OST_TARIF_OST", "2025-01", 357527],
+  ] as const)(
+    "matches the hourly-shift composition reference for RK %s",
+    (region, regionId, version, total) => {
+      expect(
+        run({
+          pkg: load(region, version),
+          regionId,
+          monthlyShift: null,
+          confirmedHourlyShift: [
+            hourlyShift("svc-02", "2025-10-02", "ALTERNATING_HOURLY", 8),
+            hourlyShift("svc-05", "2025-10-05", "SHIFT_HOURLY", 4),
+          ],
+        }),
+      ).toMatchObject({ knownHourlyShiftSubtotalCents: 1412, knownSubtotalCents: total });
+    },
+  );
+
+  it("keeps hourly allowances unprorated and selects Anlage 31's distinct rate", () => {
+    const additions = {
+      monthlyShift: null,
+      confirmedHourlyShift: [
+        hourlyShift("svc-02", "2025-10-02", "ALTERNATING_HOURLY", 8),
+        hourlyShift("svc-05", "2025-10-05", "SHIFT_HOURLY", 4),
+      ],
+    };
+    expect(run({ ...additions, weeklyMinutes: 1170 })).toMatchObject({
+      knownBaseAndCareSubtotalCents: 172241,
+      knownHourlyShiftSubtotalCents: 1412,
+      knownSubtotalCents: 191209,
+    });
+    expect(
+      run({
+        ...additions,
+        pkg: load("bayern"),
+        regionId: "BAYERN",
+        variantId: "ANLAGE_31",
+        weeklyMinutes: 2310,
+      }),
+    ).toMatchObject({
+      knownHourlyShiftSubtotalCents: 1428,
+      knownTimePremiumSubtotalCents: 5084,
+      knownOvertimeSubtotalCents: 12710,
+      knownSubtotalCents: 362704,
+    });
+  });
+
+  it("leaves mixed monthly and hourly shift forms outside this DRAFT contract", () => {
+    for (const monthlyType of ["ALTERNATING_MONTHLY", "SHIFT_MONTHLY"] as const) {
+      for (const hourlyType of ["ALTERNATING_HOURLY", "SHIFT_HOURLY"] as const) {
+        const result = run({
+          monthlyShift: {
+            shiftAllowanceType: monthlyType,
+            shiftEntitlement: "CONFIRMED_FULL_MONTH",
+            fullMonthWeeklyTimeConfirmed: true,
+          },
+          confirmedHourlyShift: [hourlyShift("svc-02", "2025-10-02", hourlyType, 8)],
+        });
+        expect(result).toMatchObject({
+          kind: "unavailable",
+          reason: "MIXED_SHIFT_FORMS_UNSUPPORTED",
+        });
+        expect(result).not.toHaveProperty("positions");
+        expect(result).not.toHaveProperty("knownSubtotalCents");
+      }
+    }
+  });
+
+  it("rejects implicit omissions and unavailable hourly claims without partial success", () => {
+    for (const value of [undefined, null, {}]) {
+      expect(
+        run({ confirmedHourlyShift: value as unknown as CaritasConfirmedHourlyShiftLine[] }),
+      ).toMatchObject({
+        kind: "unavailable",
+        reason: "INVALID_COMPONENT_LINES",
+      });
+    }
+    const good = hourlyShift("svc-02", "2025-10-02", "ALTERNATING_HOURLY", 8);
+    const cases: readonly CaritasConfirmedHourlyShiftLine[][] = [
+      [good, { ...good, lineId: "bad", categoryAndOverlapConfirmed: false }],
+      [good, { ...good, lineId: "bad", monthlyAllocationConfirmed: false }],
+      [good, { ...good, lineId: "bad", entitlement: "UNKNOWN" }],
+      [good, { ...good, lineId: " svc-02 ", allowanceType: "SHIFT_HOURLY" }],
+      [good, { ...good, lineId: "bad", serviceDate: "2025-11-02" }],
+    ];
+    for (const lines of cases) {
+      const result = run({ monthlyShift: null, confirmedHourlyShift: lines });
+      expect(result.kind).toBe("unavailable");
+      expect(result).not.toHaveProperty("positions");
+      expect(result).not.toHaveProperty("knownSubtotalCents");
+    }
+    expect(run()).toMatchObject({ knownHourlyShiftSubtotalCents: 0, knownSubtotalCents: 387038 });
+  });
+
+  it("binds hourly positions to the outer selection and preserves caller data", () => {
+    const injected = {
+      ...hourlyShift(" svc-02 ", "2025-10-02", "ALTERNATING_HOURLY", 8),
+      pkg: load("ost", "2025-01"),
+      regionId: "OST_TARIF_OST",
+      variantId: "ANLAGE_31",
+      month: "2025-11",
+    };
+    const selection = input({ monthlyShift: null, confirmedHourlyShift: [injected] });
+    const snapshot = structuredClone(selection);
+    const result = calculateCaritasCareDraftMonthlyComposition(selection);
+    expect(result).toMatchObject({
+      packageId: "avr-caritas-p-bw",
+      month: "2025-10",
+      knownHourlyShiftSubtotalCents: 1176,
+      knownSubtotalCents: 363214,
+    });
+    if (result.kind === "unavailable") throw new Error(result.reason);
+    expect(
+      result.positions.find((p) => p.component === "confirmed-hourly-shift-allowance"),
+    ).toMatchObject({
+      lineId: "svc-02",
+      rateCentsPerHour: 147,
+      rateId: "caritas-bw-shift-32-2025-07-01",
+    });
+    expect(selection).toEqual(snapshot);
   });
 });

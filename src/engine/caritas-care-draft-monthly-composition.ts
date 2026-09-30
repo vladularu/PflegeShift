@@ -18,6 +18,11 @@ import {
   type CaritasConfirmedOvertimeLine,
   type CaritasCareDraftMonthlyWithOvertimeResult,
 } from "./caritas-care-draft-monthly-with-overtime";
+import {
+  calculateCaritasCareDraftMonthlyWithHourlyShift,
+  type CaritasConfirmedHourlyShiftLine,
+  type CaritasCareDraftMonthlyWithHourlyShiftResult,
+} from "./caritas-care-draft-monthly-with-hourly-shift";
 
 export interface CaritasCareDraftMonthlyCompositionInput extends CaritasCareDraftMonthlyComponentsInput {
   /** null explicitly omits monthly shift allowances from this incomplete subtotal. */
@@ -25,6 +30,8 @@ export interface CaritasCareDraftMonthlyCompositionInput extends CaritasCareDraf
     CaritasCareDraftMonthlyWithShiftInput,
     "shiftAllowanceType" | "shiftEntitlement" | "fullMonthWeeklyTimeConfirmed"
   > | null;
+  /** An empty list explicitly omits hourly shift allowances; it does not establish zero entitlement. */
+  readonly confirmedHourlyShift: readonly CaritasConfirmedHourlyShiftLine[];
   /** An empty list explicitly omits time premiums; it does not establish zero entitlement. */
   readonly confirmedPremiums: readonly CaritasConfirmedTimePremiumLine[];
   /** An empty list explicitly omits overtime; it does not establish zero entitlement. */
@@ -49,16 +56,22 @@ type OvertimeSuccess = Extract<
   CaritasCareDraftMonthlyWithOvertimeResult,
   { kind: "draft-known-monthly-components-with-overtime" }
 >;
+type HourlyShiftSuccess = Extract<
+  CaritasCareDraftMonthlyWithHourlyShiftResult,
+  { kind: "draft-known-monthly-components-with-hourly-shift" }
+>;
 type Position =
   | BaseSuccess["positions"][number]
   | ShiftSuccess["positions"][number]
   | TimeSuccess["positions"][number]
-  | OvertimeSuccess["positions"][number];
+  | OvertimeSuccess["positions"][number]
+  | HourlyShiftSuccess["positions"][number];
 type PartialResult =
   | CaritasCareDraftMonthlyComponentsResult
   | CaritasCareDraftMonthlyWithShiftResult
   | CaritasCareDraftMonthlyWithTimePremiumsResult
-  | CaritasCareDraftMonthlyWithOvertimeResult;
+  | CaritasCareDraftMonthlyWithOvertimeResult
+  | CaritasCareDraftMonthlyWithHourlyShiftResult;
 
 export type CaritasCareDraftMonthlyCompositionResult =
   | {
@@ -70,6 +83,7 @@ export type CaritasCareDraftMonthlyCompositionResult =
       readonly knownSubtotalCents: number;
       readonly knownBaseAndCareSubtotalCents: number;
       readonly knownMonthlyShiftSubtotalCents: number;
+      readonly knownHourlyShiftSubtotalCents: number;
       readonly knownTimePremiumSubtotalCents: number;
       readonly knownOvertimeBaseSubtotalCents: number;
       readonly knownOvertimePremiumSubtotalCents: number;
@@ -90,6 +104,7 @@ export type CaritasCareDraftMonthlyCompositionResult =
         | "MONTHLY_COMPOSITION_UNCONFIRMED"
         | "INVALID_COMPONENT_LINES"
         | "INVALID_MONTHLY_SHIFT"
+        | "MIXED_SHIFT_FORMS_UNSUPPORTED"
         | "INVALID_PREMIUM_LINE"
         | "INVALID_DATE";
       readonly component: "monthly-composition" | "confirmed-time-premium";
@@ -106,7 +121,11 @@ export function calculateCaritasCareDraftMonthlyComposition(
       reason: "MONTHLY_COMPOSITION_UNCONFIRMED",
       component: "monthly-composition",
     };
-  if (!Array.isArray(input.confirmedPremiums) || !Array.isArray(input.confirmedOvertime))
+  if (
+    !Array.isArray(input.confirmedPremiums) ||
+    !Array.isArray(input.confirmedOvertime) ||
+    !Array.isArray(input.confirmedHourlyShift)
+  )
     return {
       kind: "unavailable",
       reason: "INVALID_COMPONENT_LINES",
@@ -121,6 +140,14 @@ export function calculateCaritasCareDraftMonthlyComposition(
     return {
       kind: "unavailable",
       reason: "INVALID_MONTHLY_SHIFT",
+      component: "monthly-composition",
+    };
+
+  // Mixed monthly/hourly forms need a separately reviewed contract, not an inferred legal rule.
+  if (input.monthlyShift !== null && input.confirmedHourlyShift.length > 0)
+    return {
+      kind: "unavailable",
+      reason: "MIXED_SHIFT_FORMS_UNSUPPORTED",
       component: "monthly-composition",
     };
 
@@ -161,6 +188,11 @@ export function calculateCaritasCareDraftMonthlyComposition(
           fullMonthWeeklyTimeConfirmed: input.monthlyShift.fullMonthWeeklyTimeConfirmed,
         });
   if (shift?.kind === "unavailable") return shift;
+  const hourlyShift =
+    input.confirmedHourlyShift.length === 0
+      ? null
+      : calculateCaritasCareDraftMonthlyWithHourlyShift(input);
+  if (hourlyShift?.kind === "unavailable") return hourlyShift;
   const time =
     normalizedPremiums.length === 0
       ? null
@@ -178,6 +210,10 @@ export function calculateCaritasCareDraftMonthlyComposition(
   // Each partial helper repeats the monthly basis. Keep it once and append only its additional family.
   const shiftPositions =
     shift?.positions.filter((position) => position.component === "monthly-shift-allowance") ?? [];
+  const hourlyShiftPositions =
+    hourlyShift?.positions.filter(
+      (position) => position.component === "confirmed-hourly-shift-allowance",
+    ) ?? [];
   const timePositions =
     time?.positions.filter((position) => position.component === "confirmed-time-premium") ?? [];
   const overtimePositions =
@@ -189,6 +225,7 @@ export function calculateCaritasCareDraftMonthlyComposition(
   const positions: Position[] = [
     ...base.positions,
     ...shiftPositions,
+    ...hourlyShiftPositions,
     ...timePositions,
     ...overtimePositions,
   ];
@@ -211,13 +248,14 @@ export function calculateCaritasCareDraftMonthlyComposition(
     knownSubtotalCents,
     knownBaseAndCareSubtotalCents: base.knownSubtotalCents,
     knownMonthlyShiftSubtotalCents,
+    knownHourlyShiftSubtotalCents: hourlyShift?.knownHourlyShiftSubtotalCents ?? 0,
     knownTimePremiumSubtotalCents: time?.knownTimePremiumSubtotalCents ?? 0,
     knownOvertimeBaseSubtotalCents: overtime?.knownOvertimeBaseSubtotalCents ?? 0,
     knownOvertimePremiumSubtotalCents: overtime?.knownOvertimePremiumSubtotalCents ?? 0,
     knownOvertimeSubtotalCents: overtime?.knownOvertimeSubtotalCents ?? 0,
     positions,
     excludedComponents: [
-      shift === null ? "SHIFT_ALLOWANCES" : "OTHER_SHIFT_ALLOWANCES",
+      shift === null && hourlyShift === null ? "SHIFT_ALLOWANCES" : "OTHER_SHIFT_ALLOWANCES",
       time === null ? "TIME_PREMIUMS" : "OTHER_TIME_PREMIUMS",
       overtime === null ? "OVERTIME" : "OTHER_OVERTIME",
       "ANNUAL_PAYMENT",
