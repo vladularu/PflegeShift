@@ -641,6 +641,91 @@
         "sourceIds": { "$ref": "#/$defs/sourceIds" }
       }
     },
+    "caritasAnnualPaymentRule": {
+      "description": "Contract 14: sourced care-P annual-payment metadata for entitlement years 2025/2026. This neither establishes personal entitlement nor computes a basis or annual amount.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "variantId",
+        "regionId",
+        "entitlementYear",
+        "payGroups",
+        "rateBasisPoints",
+        "referenceMonths",
+        "groupReferenceMonth",
+        "groupReferenceDay",
+        "payoutMonth",
+        "basisPolicy",
+        "eligibilityPolicy",
+        "reductionPolicy",
+        "basisRegionId",
+        "basisTablePolicy",
+        "sourceIds"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "variantId": {
+          "$ref": "#/$defs/selectionIdentifier"
+        },
+        "regionId": {
+          "$ref": "#/$defs/selectionIdentifier"
+        },
+        "entitlementYear": {
+          "type": "integer",
+          "enum": [2025, 2026]
+        },
+        "payGroups": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["p4", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"]
+          }
+        },
+        "rateBasisPoints": {
+          "type": "integer",
+          "enum": [7600, 8600]
+        },
+        "referenceMonths": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "type": "integer", "enum": [7, 8, 9] }
+        },
+        "groupReferenceMonth": {
+          "const": 9
+        },
+        "groupReferenceDay": {
+          "const": 1
+        },
+        "payoutMonth": {
+          "const": 11
+        },
+        "basisPolicy": {
+          "const": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS"
+        },
+        "eligibilityPolicy": {
+          "enum": ["ANLAGE_31_SECTION_16_1_AND_6", "ANLAGE_32_SECTION_16_1"]
+        },
+        "reductionPolicy": {
+          "const": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS"
+        },
+        "basisRegionId": {
+          "$ref": "#/$defs/selectionIdentifier"
+        },
+        "basisTablePolicy": {
+          "enum": ["SELECTED_TERRITORY", "RK_OST_WEST_TABLE_2025"]
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
     "hourlyCalculation": {
       "type": "object",
       "additionalProperties": false,
@@ -943,6 +1028,12 @@
           "minItems": 1,
           "maxItems": 200,
           "items": { "$ref": "#/$defs/caritasTimePremiumRate" }
+        },
+        "caritasAnnualPaymentRules": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": { "$ref": "#/$defs/caritasAnnualPaymentRule" }
         },
         "hourlyCalculation": { "$ref": "#/$defs/hourlyCalculation" },
         "premiumRules": {

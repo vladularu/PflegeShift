@@ -6,6 +6,7 @@ import type {
   Track,
 } from "./contracts.generated";
 import { annualPaymentRuleIssues } from "./annual-payment-rule-validation";
+import { caritasAnnualPaymentIssues } from "./caritas-annual-payment-validation";
 import { caritasTableIssues } from "./caritas-table-validation";
 import { tariffSelectionIssues } from "./tariff-selection";
 import {
@@ -141,6 +142,7 @@ function validateTariffPackage(
   issues.push(...tariffSelectionIssues(rulePackage));
   issues.push(...annualPaymentRuleIssues(rulePackage));
   issues.push(...caritasTableIssues(rulePackage));
+  issues.push(...caritasAnnualPaymentIssues(rulePackage));
   reportDuplicates(
     rules.payTables.map((table) => table.id),
     "/rules/payTables",

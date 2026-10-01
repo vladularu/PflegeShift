@@ -15,6 +15,7 @@ const allowedRuleKeys = new Set([
   "caritasCareAllowanceRates",
   "caritasShiftAllowanceRates",
   "caritasTimePremiumRates",
+  "caritasAnnualPaymentRules",
   "premiumRules",
   "allowanceRules",
   "combinationRules",
