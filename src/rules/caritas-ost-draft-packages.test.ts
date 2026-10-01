@@ -55,6 +55,14 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
     expect(candidate.sources.map((source) => source.id).sort()).toEqual(
       [
         `caritas-rk-ost-${year}-p`,
+        `caritas-avr-jsz-${year}`,
+        ...(year === 2025
+          ? ["caritas-dgs-ost-east-annual-facts-2025"]
+          : [
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026",
+            ]),
         "pflegeshift-tariff-assessment-v1",
         "caritas-rk-ost-time-2022",
         "caritas-bk-2025-02-corrected",

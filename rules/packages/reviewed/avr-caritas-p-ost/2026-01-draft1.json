@@ -76,6 +76,38 @@
       "documentDate": "2025-10-31",
       "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
       "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+    },
+    {
+      "id": "caritas-avr-jsz-2026",
+      "title": "AVR-Anlagen 31/32: Jahreszahlung RK Ost 2026, Textstand 19.03.2026",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+      "documentDate": "2026-03-19",
+      "section": "Anlagen 31/32 § 12 Abs. 1 und § 16; Druckseiten 255-256/291-292, Absatz 3 weggefallen",
+      "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+    },
+    {
+      "id": "caritas-bk-2025-03-jsz-ost",
+      "title": "Bundeskommission 09.10.2025: Wegfall der RK-Ost-Sonderregel für die Jahreszahlung ab 2026",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/BK_2025-03_Beschluss_Berechnung_JSZ_und_Weihnachtsgeld_fuer_die_RK_Ost_gez.pdf",
+      "documentDate": "2025-10-09",
+      "section": "A.II und A.IV, Seite 1: § 16 Abs. 3 Anlagen 31/32 entfällt zum 01.01.2026; B, Seite 2: Vergütungsangleichung",
+      "sha256": "cb16c87710b42662d49e59666cee82c74d406f2da7569b6cfc7b9b9937c596c3"
+    },
+    {
+      "id": "caritas-dgs-ost-annual-p6-2026",
+      "title": "Caritas-Dienstgeber: P6 Altenhilfe Ost, Jahreszahlung 2026",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Region_Ost/P6-AH-Faktenblatt_Verguetung_Ost_2026.pdf",
+      "documentDate": "2026-01-01",
+      "section": "Jahressonderzahlung 86 Prozent; Ausgabe Region Ost, Stand Januar 2026",
+      "sha256": "b1fab89be20d3c0d6109b3447bab8bb9be9b4f47f14314e288803143caf90da5"
+    },
+    {
+      "id": "caritas-dgs-ost-annual-p12-2026",
+      "title": "Caritas-Dienstgeber: P12 Altenhilfe Ost, Jahreszahlung 2026",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Region_Ost/P12-AH-Faktenblatt_Verguetung_Ost_2026.pdf",
+      "documentDate": "2026-01-01",
+      "section": "Jahressonderzahlung 76 Prozent; Ausgabe Region Ost, Stand Januar 2026",
+      "sha256": "35c49650f31b590bbf1fec1c5505c589c3c7aa05f8ae120b0c77c3443824f849"
     }
   ],
   "review": {
@@ -908,6 +940,296 @@
         "nightStartMinute": 1200
       },
       "sourceIds": ["pflegeshift-tariff-assessment-v1"]
-    }
+    },
+    "caritasAnnualPaymentRules": [
+      {
+        "id": "jsz-anlage-31-ost-tarif-ost-2026-0",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_OST",
+        "entitlementYear": 2026,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_OST",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-31-ost-tarif-ost-2026-1",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_OST",
+        "entitlementYear": 2026,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_OST",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-31-ost-tarif-west-berlin-2026-0",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "entitlementYear": 2026,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_WEST_BERLIN",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-31-ost-tarif-west-berlin-2026-1",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "entitlementYear": 2026,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_WEST_BERLIN",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-31-ost-tarif-west-hamburg-2026-0",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "entitlementYear": 2026,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-31-ost-tarif-west-hamburg-2026-1",
+        "variantId": "ANLAGE_31",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "entitlementYear": 2026,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-ost-tarif-ost-2026-0",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_OST",
+        "entitlementYear": 2026,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_OST",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-ost-tarif-ost-2026-1",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_OST",
+        "entitlementYear": 2026,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_OST",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-ost-tarif-west-berlin-2026-0",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "entitlementYear": 2026,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_WEST_BERLIN",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-ost-tarif-west-berlin-2026-1",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_BERLIN",
+        "entitlementYear": 2026,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_WEST_BERLIN",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-ost-tarif-west-hamburg-2026-0",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "entitlementYear": 2026,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-ost-tarif-west-hamburg-2026-1",
+        "variantId": "ANLAGE_32",
+        "regionId": "OST_TARIF_WEST_HAMBURG",
+        "entitlementYear": 2026,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-rk-ost-2026-p",
+          "caritas-bk-2025-03-jsz-ost",
+          "caritas-dgs-ost-annual-p6-2026",
+          "caritas-dgs-ost-annual-p12-2026"
+        ]
+      }
+    ]
   }
 }
