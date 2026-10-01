@@ -68,6 +68,22 @@
       "documentDate": "2025-10-31",
       "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
       "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+    },
+    {
+      "id": "caritas-avr-jsz-2025",
+      "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2025, Textstand 19.03.2026",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+      "documentDate": "2026-03-19",
+      "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+      "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+    },
+    {
+      "id": "caritas-dgs-west-annual-facts-2025",
+      "title": "Caritas-Dienstgeber: westliche Jahreszahlung, Faktenblätter Juli 2025",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+      "documentDate": "2025-07-01",
+      "section": "P4/P6/P7/P8 86 Prozent; P9/P10/P11/P12 76 Prozent; abweichende P11-KH-Beschriftung siehe Quellenbeleg",
+      "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
     }
   ],
   "review": {
@@ -622,6 +638,100 @@
         "nightStartMinute": 1200
       },
       "sourceIds": ["pflegeshift-tariff-assessment-v1"]
-    }
+    },
+    "caritasAnnualPaymentRules": [
+      {
+        "id": "jsz-anlage-31-bw-2025-0",
+        "variantId": "ANLAGE_31",
+        "regionId": "BW",
+        "entitlementYear": 2025,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "BW",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2025",
+          "caritas-bk-2025-02-corrected",
+          "caritas-rk-bw-2025",
+          "caritas-dgs-west-annual-facts-2025"
+        ]
+      },
+      {
+        "id": "jsz-anlage-31-bw-2025-1",
+        "variantId": "ANLAGE_31",
+        "regionId": "BW",
+        "entitlementYear": 2025,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "BW",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2025",
+          "caritas-bk-2025-02-corrected",
+          "caritas-rk-bw-2025",
+          "caritas-dgs-west-annual-facts-2025"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-bw-2025-0",
+        "variantId": "ANLAGE_32",
+        "regionId": "BW",
+        "entitlementYear": 2025,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "BW",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2025",
+          "caritas-bk-2025-02-corrected",
+          "caritas-rk-bw-2025",
+          "caritas-dgs-west-annual-facts-2025"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-bw-2025-1",
+        "variantId": "ANLAGE_32",
+        "regionId": "BW",
+        "entitlementYear": 2025,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "BW",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2025",
+          "caritas-bk-2025-02-corrected",
+          "caritas-rk-bw-2025",
+          "caritas-dgs-west-annual-facts-2025"
+        ]
+      }
+    ]
   }
 }

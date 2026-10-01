@@ -17,10 +17,13 @@ export function caritasAnnualPaymentFixture(
       "utf8",
     ),
   ) as RuleTariffPackage;
+  delete pkg.rules.caritasAnnualPaymentRules;
   if (!withAnnualRules) return pkg;
   const normId = `caritas-avr-jsz-${year}`;
   const repealId = "caritas-bk-2025-03-jsz-ost";
   for (const id of region === "ost" && year === 2026 ? [normId, repealId] : [normId]) {
+    const existingIndex = pkg.sources.findIndex((source) => source.id === id);
+    if (existingIndex >= 0) pkg.sources.splice(existingIndex, 1);
     pkg.sources.push({
       id,
       title: "SYNTHETIC TEST FIXTURE - no normative evidence",

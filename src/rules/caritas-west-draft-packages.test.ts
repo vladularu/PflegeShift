@@ -54,6 +54,10 @@ describe("West Caritas P-table DRAFT candidates", () => {
       expect(pkg.sources.map((source) => source.id).sort()).toEqual(
         [
           "caritas-bk-2025-02-corrected",
+          `caritas-avr-jsz-${start.slice(0, 4)}`,
+          ...(start === "2025-07-01"
+            ? ["caritas-dgs-west-annual-facts-2025"]
+            : ["caritas-dgs-west-annual-p6-2026", "caritas-dgs-west-annual-p12-2026"]),
           "caritas-dg-2024-care-allowances",
           "caritas-dcv-premiums-2026",
           ...(start === "2025-07-01" ? ["caritas-dcv-premiums-2025"] : []),

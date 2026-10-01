@@ -68,6 +68,30 @@
       "documentDate": "2025-10-31",
       "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
       "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+    },
+    {
+      "id": "caritas-avr-jsz-2026",
+      "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2026, Textstand 19.03.2026",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+      "documentDate": "2026-03-19",
+      "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+      "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+    },
+    {
+      "id": "caritas-dgs-west-annual-p6-2026",
+      "title": "Caritas-Dienstgeber: P6 Altenhilfe West, Jahreszahlung Februar 2026",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+      "documentDate": "2026-02-01",
+      "section": "Jahressonderzahlung 86 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+      "sha256": "1d5d55787e2a94af24b48371d744669411407395b5ebafa89782b58dbbe0b1ca"
+    },
+    {
+      "id": "caritas-dgs-west-annual-p12-2026",
+      "title": "Caritas-Dienstgeber: P12 Altenhilfe West, Jahreszahlung Februar 2026",
+      "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P12-AH-Faktenblatt_Verguetung_West_2026.pdf",
+      "documentDate": "2026-02-01",
+      "section": "Jahressonderzahlung 76 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+      "sha256": "936b9abdbed1d15c645dde2934eaf3b75bbbcf67eaadec8508f0aa13255c6428"
     }
   ],
   "review": {
@@ -592,6 +616,104 @@
         "nightStartMinute": 1200
       },
       "sourceIds": ["pflegeshift-tariff-assessment-v1"]
-    }
+    },
+    "caritasAnnualPaymentRules": [
+      {
+        "id": "jsz-anlage-31-bayern-2026-0",
+        "variantId": "ANLAGE_31",
+        "regionId": "BAYERN",
+        "entitlementYear": 2026,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "BAYERN",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-bk-2025-02-corrected",
+          "caritas-rk-bayern-2025",
+          "caritas-dgs-west-annual-p6-2026",
+          "caritas-dgs-west-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-31-bayern-2026-1",
+        "variantId": "ANLAGE_31",
+        "regionId": "BAYERN",
+        "entitlementYear": 2026,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "BAYERN",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-bk-2025-02-corrected",
+          "caritas-rk-bayern-2025",
+          "caritas-dgs-west-annual-p6-2026",
+          "caritas-dgs-west-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-bayern-2026-0",
+        "variantId": "ANLAGE_32",
+        "regionId": "BAYERN",
+        "entitlementYear": 2026,
+        "payGroups": ["p4", "p6", "p7", "p8"],
+        "rateBasisPoints": 8600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "BAYERN",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-bk-2025-02-corrected",
+          "caritas-rk-bayern-2025",
+          "caritas-dgs-west-annual-p6-2026",
+          "caritas-dgs-west-annual-p12-2026"
+        ]
+      },
+      {
+        "id": "jsz-anlage-32-bayern-2026-1",
+        "variantId": "ANLAGE_32",
+        "regionId": "BAYERN",
+        "entitlementYear": 2026,
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "rateBasisPoints": 7600,
+        "referenceMonths": [7, 8, 9],
+        "groupReferenceMonth": 9,
+        "groupReferenceDay": 1,
+        "payoutMonth": 11,
+        "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+        "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+        "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+        "basisRegionId": "BAYERN",
+        "basisTablePolicy": "SELECTED_TERRITORY",
+        "sourceIds": [
+          "caritas-avr-jsz-2026",
+          "caritas-bk-2025-02-corrected",
+          "caritas-rk-bayern-2025",
+          "caritas-dgs-west-annual-p6-2026",
+          "caritas-dgs-west-annual-p12-2026"
+        ]
+      }
+    ]
   }
 }
