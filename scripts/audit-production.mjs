@@ -1,5 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import {
+  NODE_FORGE_ADVISORY_URL,
+  isVerifiedNodeForgeHardening,
+  verifyNodeForgeHardening,
+} from "./node-forge-hardening.mjs";
 
 const severityRank = {
   info: 0,
@@ -74,13 +79,32 @@ function findingKey(finding) {
   return `${finding.source ?? "unknown"}:${finding.name}:${finding.url ?? ""}`;
 }
 
-export function evaluateAuditReport(report) {
+function hasVerifiedMitigation(finding, vulnerabilities, proof) {
+  const nodes = vulnerabilities["node-forge"]?.nodes;
+  return (
+    isVerifiedNodeForgeHardening(proof) &&
+    finding.name === "node-forge" &&
+    finding.dependency === "node-forge" &&
+    finding.source === 1240912 &&
+    finding.severity === "high" &&
+    finding.url === NODE_FORGE_ADVISORY_URL &&
+    finding.range === "<=1.4.0" &&
+    finding.title ===
+      "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements" &&
+    Array.isArray(nodes) &&
+    nodes.length === proof.nodes.length &&
+    nodes.every((node, index) => node === proof.nodes[index])
+  );
+}
+
+export function evaluateAuditReport(report, hardeningProof) {
   const vulnerabilities = report?.vulnerabilities;
   if (!vulnerabilities || typeof vulnerabilities !== "object") {
     throw new Error("npm audit lieferte keinen auswertbaren Vulnerability-Report.");
   }
 
   const blocking = new Map();
+  const mitigated = new Map();
 
   for (const [packageName, vulnerability] of Object.entries(vulnerabilities)) {
     if (!isAtLeastHigh(vulnerability.severity)) {
@@ -99,12 +123,16 @@ export function evaluateAuditReport(report) {
     }
 
     for (const finding of findings) {
-      blocking.set(findingKey(finding), finding);
+      const target = hasVerifiedMitigation(finding, vulnerabilities, hardeningProof)
+        ? mitigated
+        : blocking;
+      target.set(findingKey(finding), finding);
     }
   }
 
   return {
     approved: [],
+    mitigated: [...mitigated.values()],
     blocking: [...blocking.values()],
   };
 }
@@ -153,18 +181,18 @@ export function runProductionAudit() {
 
   let evaluation;
   try {
-    evaluation = evaluateAuditReport(report);
+    evaluation = evaluateAuditReport(report, verifyNodeForgeHardening());
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
 
-  for (const finding of evaluation.approved) {
-    printFinding("Voruebergehend freigegeben:", finding);
+  for (const finding of evaluation.mitigated) {
+    printFinding("Installierte RSA-Haertung verifiziert:", finding);
   }
 
   if (evaluation.blocking.length > 0) {
-    console.error("Nicht freigegebene hohe oder kritische Advisories:");
+    console.error("Nicht behobene hohe oder kritische Advisories:");
     for (const finding of evaluation.blocking) {
       printFinding("-", finding);
     }
@@ -173,8 +201,8 @@ export function runProductionAudit() {
 
   const counts = report.metadata?.vulnerabilities ?? {};
   console.log(
-    `Produktions-Audit bestanden: keine nicht freigegebenen hohen oder kritischen Advisories ` +
-      `(${counts.high ?? 0} betroffene Meta-Pakete, ${evaluation.approved.length} befristete Upstream-Ausnahmen).`,
+    `Produktions-Audit bestanden: keine unbehobenen hohen oder kritischen Advisories ` +
+      `(${counts.high ?? 0} von npm gemeldete hohe Meta-Pakete, ${evaluation.mitigated.length} installierte Backports verifiziert).`,
   );
   return 0;
 }
