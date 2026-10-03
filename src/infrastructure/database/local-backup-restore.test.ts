@@ -309,10 +309,12 @@ describe("local backup restore", () => {
         remunerationProfiles?: unknown;
         allowanceDecisions?: unknown;
         overtimeAllocations?: unknown;
+        paidAbsences?: unknown;
       };
       delete data.remunerationProfiles;
       delete data.allowanceDecisions;
       delete data.overtimeAllocations;
+      delete data.paidAbsences;
       delete data.profile.display_name;
       delete data.profile.employer_name;
     });

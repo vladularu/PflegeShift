@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { withImmediateTransaction } from "./transaction";
 
-export const LATEST_DATABASE_SCHEMA_VERSION = 17;
+export const LATEST_DATABASE_SCHEMA_VERSION = 18;
 
 const MIGRATION_1 = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -610,6 +610,30 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     await transaction.runAsync(
       "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
       17,
+      now,
+    );
+  });
+  await withImmediateTransaction(db, async (transaction) => {
+    const applied = await transaction.getFirstAsync<{ version: number }>(
+      "SELECT version FROM schema_migrations WHERE version=18",
+    );
+    if (applied !== null) return;
+    await transaction.execAsync(`
+      CREATE TABLE paid_absences (
+        shift_id TEXT PRIMARY KEY NOT NULL REFERENCES shift_entries(id) ON DELETE CASCADE,
+        shift_revision INTEGER NOT NULL CHECK (shift_revision >= 1),
+        shift_date TEXT NOT NULL,
+        shift_updated_at TEXT NOT NULL,
+        time_zone TEXT NOT NULL,
+        paid_minutes INTEGER CHECK (paid_minutes IS NULL OR (typeof(paid_minutes)='integer' AND paid_minutes BETWEEN 0 AND 1500)),
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        confirmed_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `);
+    await transaction.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      18,
       now,
     );
   });

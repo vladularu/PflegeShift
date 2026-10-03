@@ -1,3 +1,7 @@
+import {
+  validateDevRemunerationBackup,
+  type DevRemunerationBackup,
+} from "./dev-remuneration-backup";
 export interface RawShiftRow {
   id: string;
   date: string;
@@ -53,7 +57,7 @@ export interface RawDecisionRow {
 }
 
 export interface BackupPayload {
-  version: 3;
+  version: 5;
   month: string;
   counts: {
     appointments: number;
@@ -63,6 +67,7 @@ export interface BackupPayload {
   shifts: RawShiftRow[];
   appointments: RawAppointmentRow[];
   decision: RawDecisionRow | null;
+  remuneration: DevRemunerationBackup;
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -257,7 +262,12 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
   if (!Array.isArray(sourceShifts) || !Array.isArray(sourceAppointments)) {
     invalid("Datensatzlisten");
   }
-  const currentPayload = payload.version === 3;
+  const hasVersion = (minimum: number) =>
+    typeof payload.version === "number" &&
+    Number.isInteger(payload.version) &&
+    payload.version >= minimum &&
+    payload.version <= 5;
+  const currentPayload = hasVersion(3);
   const shifts = sourceShifts.map((row) => validateShift(row, expectedMonth, currentPayload));
   const appointments = sourceAppointments.map((row) =>
     validateAppointment(row, expectedMonth, currentPayload),
@@ -267,10 +277,7 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
   assertUniqueIds(appointments, "doppelte Termin-ID");
 
   if (payload.version !== undefined) {
-    if (
-      (payload.version !== 1 && payload.version !== 2 && payload.version !== 3) ||
-      payload.month !== expectedMonth
-    ) {
+    if (!hasVersion(1) || payload.month !== expectedMonth) {
       invalid("Version oder Monat");
     }
     const counts = record(payload.counts, "Zeilenanzahlen");
@@ -283,8 +290,17 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
     }
   }
 
+  if (!hasVersion(4) && payload.remuneration !== undefined)
+    invalid("Vergütungsformat passt nicht zur Version");
+  if (payload.training !== undefined) invalid("Schul-/Pausenformat passt nicht zur Version");
+  const remuneration = validateDevRemunerationBackup(
+    hasVersion(4) ? payload.remuneration : { allowanceDecision: null, overtimeAllocations: [] },
+    shifts,
+    expectedMonth,
+    hasVersion(5),
+  );
   return {
-    version: 3,
+    version: 5,
     month: expectedMonth,
     counts: {
       appointments: appointments.length,
@@ -294,12 +310,13 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
     shifts,
     appointments,
     decision,
+    remuneration,
   };
 }
 
 export function createDevBackupPayload(
   month: string,
-  data: Pick<BackupPayload, "appointments" | "decision" | "shifts">,
+  data: Pick<BackupPayload, "appointments" | "decision" | "shifts" | "remuneration">,
 ): BackupPayload {
   return normalizePayload(
     {
@@ -310,7 +327,7 @@ export function createDevBackupPayload(
         shifts: data.shifts.length,
       },
       month,
-      version: 3,
+      version: 5,
     },
     month,
   );

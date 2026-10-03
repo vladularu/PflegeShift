@@ -1,3 +1,11 @@
+import { shift as shiftFixture } from "@/engine/remuneration-test-fixtures";
+import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
+import {
+  saveMonthlyAllowanceDecisions,
+  loadMonthlyAllowanceDecisions,
+} from "./allowance-decision-repository";
+import { saveOvertimeAllocation, listOvertimeAllocations } from "./overtime-allocation-repository";
+import { saveShift } from "./calendar-entry-repository";
 import Database from "better-sqlite3";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -322,10 +330,12 @@ describe("test lab repository", () => {
       .get() as { payload: string };
     const legacy = JSON.parse(backup.payload) as {
       version: number;
+      remuneration?: unknown;
       shifts: Record<string, unknown>[];
       appointments: Record<string, unknown>[];
     };
     legacy.version = 1;
+    delete legacy.remuneration;
     for (const row of legacy.shifts) {
       delete row.all_day;
       delete row.notification_json;
@@ -372,7 +382,7 @@ describe("test lab repository", () => {
       .prepare("SELECT payload FROM dev_test_backups WHERE month='2026-08'")
       .get() as { payload: string };
     expect(JSON.parse(firstBackup.payload)).toMatchObject({
-      version: 3,
+      version: 5,
       month: "2026-08",
       counts: { appointments: 1, decisions: 0 },
     });
@@ -418,4 +428,99 @@ describe("test lab repository", () => {
     ).toEqual(before);
     expect(await listTestBackupMonths(db)).toEqual(["2026-08"]);
   });
+
+  async function seedDatedConfirmations() {
+    const profile = await saveProfile(db, {
+      federalState: "NW",
+      weeklyMinutes: 2310,
+      timeZone: "Europe/Berlin",
+    });
+    const tariff = { packageId: "tvoed-vka-bt-k", variant: "BT_K", region: "OTHER" } as const;
+    await saveDatedRemunerationProfile(db, {
+      effectiveFrom: "2026-01-01",
+      expectedRevision: 0,
+      data: {
+        version: 1,
+        weeklyMinutes: 2310,
+        selection: {
+          kind: "tariff",
+          ...tariff,
+          group: "P5",
+          level: "1",
+          fullTimeWeeklyMinutes: 2310,
+        },
+      },
+    });
+    const allowances = await saveMonthlyAllowanceDecisions(db, {
+      month: "2026-09",
+      expectedRevision: 0,
+      decisions: [
+        { from: "2026-09-01", through: "2026-09-30", tariff, allowanceStatus: "SHIFT_MONTHLY" },
+      ],
+    });
+    const shift = await saveShift(db, {
+      ...shiftFixture({
+        date: "2026-09-30",
+        startTime: "23:00",
+        endTime: "02:00",
+        breakMinutes: 0,
+        overtimeMinutes: 90,
+        tariffOvertimeConfirmed: true,
+      }),
+      id: undefined,
+    });
+    const overtime = await saveOvertimeAllocation(db, {
+      shiftId: shift.id,
+      expectedShiftRevision: shift.revision,
+      timeZone: profile.timeZone,
+      expectedRevision: 0,
+      allocations: [
+        { date: "2026-09-30", minutes: 60 },
+        { date: "2026-10-01", minutes: 30 },
+      ],
+    });
+    await setDeveloperMode(db, true);
+    return { profile, allowances, overtime, shift };
+  }
+  it("restores dated allowance decisions and cross-month overtime without reconfirmation", async () => {
+    const original = await seedDatedConfirmations();
+    const request = { startMonth: "2026-09", range: 1, scenario: "NORMAL_ROTATION" } as const;
+    await generateTestRun(db, request, original.profile);
+    expect((await loadMonthlyAllowanceDecisions(db, "2026-09")).revision).toBe(0);
+    expect(await listOvertimeAllocations(db)).toEqual([]);
+    await generateTestRun(db, request, original.profile);
+    await restoreTestBackup(db, ["2026-09"]);
+    expect(await loadMonthlyAllowanceDecisions(db, "2026-09")).toEqual(original.allowances);
+    expect(await listOvertimeAllocations(db)).toEqual([original.overtime]);
+  });
+  it.each(["missing-decision", "future-overtime", "duplicate-overtime"] as const)(
+    "rejects %s confirmation payload before replacing generated shifts",
+    async (mutation) => {
+      const original = await seedDatedConfirmations();
+      await generateTestRun(
+        db,
+        { startMonth: "2026-09", range: 1, scenario: "NORMAL_ROTATION" },
+        original.profile,
+      );
+      const row = await db.getFirstAsync<{ payload: string }>(
+        "SELECT payload FROM dev_test_backups WHERE month='2026-09'",
+      );
+      const value = JSON.parse(row!.payload);
+      if (mutation === "missing-decision") delete value.remuneration.allowanceDecision;
+      if (mutation === "future-overtime")
+        value.remuneration.overtimeAllocations[0].shift_revision = 999;
+      if (mutation === "duplicate-overtime")
+        value.remuneration.overtimeAllocations.push(value.remuneration.overtimeAllocations[0]);
+      await db.runAsync(
+        "UPDATE dev_test_backups SET payload=? WHERE month='2026-09'",
+        JSON.stringify(value),
+      );
+      const before = await db.getAllAsync("SELECT * FROM shift_entries ORDER BY id");
+      await expect(restoreTestBackup(db, ["2026-09"])).rejects.toThrow();
+      expect(await db.getAllAsync("SELECT * FROM shift_entries ORDER BY id")).toEqual(before);
+      expect(
+        await db.getFirstAsync("SELECT month FROM dev_test_backups WHERE month='2026-09'"),
+      ).toEqual({ month: "2026-09" });
+    },
+  );
 });

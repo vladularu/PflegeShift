@@ -1,3 +1,8 @@
+import {
+  snapshotDevRemuneration,
+  clearDevRemuneration,
+  restoreDevRemuneration,
+} from "./dev-remuneration-backup";
 import type { SQLiteDatabase, SQLiteStatement } from "expo-sqlite";
 
 import type {
@@ -80,7 +85,8 @@ async function snapshotMonth(db: SQLiteDatabase, month: string): Promise<BackupP
     "SELECT * FROM monthly_tariff_decisions WHERE month=?",
     month,
   );
-  return createDevBackupPayload(month, { appointments, decision, shifts });
+  const remuneration = await snapshotDevRemuneration(db, month);
+  return createDevBackupPayload(month, { appointments, decision, shifts, remuneration });
 }
 
 export async function previewTestRun(
@@ -134,8 +140,8 @@ export async function generateTestRun(
   await transaction(db, async (tx) => {
     await assertDeveloperModeEnabled(tx);
     for (const month of plan.months) {
-      const existingBackup = await tx.getFirstAsync<{ month: string }>(
-        "SELECT month FROM dev_test_backups WHERE month=?",
+      const existingBackup = await tx.getFirstAsync<{ month: string; payload: string }>(
+        "SELECT month,payload FROM dev_test_backups WHERE month=?",
         month,
       );
       if (!existingBackup) {
@@ -147,7 +153,10 @@ export async function generateTestRun(
           runId,
           now,
         );
+      } else {
+        parseDevBackupPayload(existingBackup.payload, month);
       }
+      await clearDevRemuneration(tx, month);
       await tx.runAsync("DELETE FROM shift_entries WHERE substr(date,1,7)=?", month);
       await tx.runAsync("DELETE FROM appointments WHERE substr(date,1,7)=?", month);
       await tx.runAsync("DELETE FROM monthly_tariff_decisions WHERE month=?", month);
@@ -285,6 +294,7 @@ export async function restoreTestBackup(
       );
       if (!backup) throw new Error(`Für ${month} ist kein Backup vorhanden.`);
       const payload = parseDevBackupPayload(backup.payload, month);
+      await clearDevRemuneration(tx, month);
       await tx.runAsync("DELETE FROM shift_entries WHERE substr(date,1,7)=?", month);
       await tx.runAsync("DELETE FROM appointments WHERE substr(date,1,7)=?", month);
       await tx.runAsync("DELETE FROM monthly_tariff_decisions WHERE month=?", month);
@@ -316,6 +326,7 @@ export async function restoreTestBackup(
           row.test_run_id,
         );
       }
+      await restoreDevRemuneration(tx, payload.remuneration);
       for (const row of payload.appointments) {
         await tx.runAsync(
           `INSERT INTO appointments(${APPOINTMENT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,

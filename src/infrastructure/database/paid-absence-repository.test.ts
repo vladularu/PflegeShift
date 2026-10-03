@@ -12,7 +12,6 @@ import { migrateDatabase } from "./migrations";
 import { saveProfile } from "./profile-repository";
 import { saveShift, deleteCalendarEntry } from "./calendar-entry-repository";
 import { savePaidAbsence, loadPaidAbsence, listPaidAbsences } from "./paid-absence-repository";
-import { loadRemunerationSnapshot } from "./remuneration-snapshot-repository";
 import {
   generateTestRun,
   restoreTestBackup,
@@ -120,7 +119,7 @@ describe("persisted paid absence confirmations", () => {
   it("saves immutable values and preserves them after closing/reopening SQLite", async () => {
     const saved = await savePaidAbsence(db, input);
     expect(saved.paidMinutes).toBe(462);
-    expect((await loadRemunerationSnapshot(db)).paidAbsences).toEqual([saved]);
+    expect(await listPaidAbsences(db)).toEqual([saved]);
     expect(Object.isFrozen(saved)).toBe(true);
     expect(isCurrentPaidAbsence(saved, shift, work.timeZone)).toBe(true);
     expect(Object.isFrozen(await listPaidAbsences(db))).toBe(true);

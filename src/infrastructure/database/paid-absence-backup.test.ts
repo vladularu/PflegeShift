@@ -5,11 +5,15 @@ import type { SQLiteDatabase } from "expo-sqlite";
 import { beforeEach, afterEach, describe, it, expect } from "vitest";
 import { isCurrentPaidAbsence } from "@/domain/paid-absence";
 import { shift as fixture, work } from "@/engine/remuneration-test-fixtures";
-import { migrateDatabase } from "./migrations";
+import { migrateDatabase, LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { saveProfile } from "./profile-repository";
 import { saveShift } from "./calendar-entry-repository";
 import { savePaidAbsence, listPaidAbsences } from "./paid-absence-repository";
-import { loadLocalBackupSnapshot, createLocalBackupDocument } from "./local-backup";
+import {
+  loadLocalBackupSnapshot,
+  createLocalBackupDocument,
+  LOCAL_BACKUP_VERSION,
+} from "./local-backup";
 import { validateLocalBackup } from "./local-backup-validation";
 import { restoreLocalBackup } from "./local-backup-restore";
 
@@ -33,7 +37,10 @@ class TestDatabase {
 }
 const sha256 = async (value: string) => createHash("sha256").update(value).digest("hex");
 const validate = (serialized: string) =>
-  validateLocalBackup(serialized, { maxDatabaseSchemaVersion: 31, sha256 });
+  validateLocalBackup(serialized, {
+    maxDatabaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    sha256,
+  });
 interface MutableDocument {
   version: number;
   databaseSchemaVersion: number;
@@ -108,8 +115,8 @@ describe("paid absence local backup v5", () => {
     async (minutes) => {
       const saved = await save(minutes);
       const exported = await backup();
-      expect(exported.document.version).toBe(19);
-      expect(exported.document.databaseSchemaVersion).toBe(31);
+      expect(exported.document.version).toBe(LOCAL_BACKUP_VERSION);
+      expect(exported.document.databaseSchemaVersion).toBe(LATEST_DATABASE_SCHEMA_VERSION);
       expect(exported.document.data.paidAbsences).toHaveLength(1);
       await save(999, 1);
       await restoreLocalBackup(db, await validate(exported.serialized));

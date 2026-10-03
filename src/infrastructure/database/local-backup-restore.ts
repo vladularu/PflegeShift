@@ -1,3 +1,4 @@
+import { PAID_ABSENCE_COLUMNS } from "./paid-absence-repository";
 import { ALLOWANCE_DECISION_COLUMNS } from "./allowance-decision-repository";
 import { OVERTIME_ALLOCATION_COLUMNS } from "./overtime-allocation-repository";
 import type { SQLiteDatabase } from "expo-sqlite";
@@ -60,6 +61,7 @@ export async function restoreLocalBackup(
     }
 
     await transaction.runAsync("DELETE FROM scheduled_entry_notifications");
+    await transaction.runAsync("DELETE FROM paid_absences");
     await transaction.runAsync("DELETE FROM overtime_allocations");
     await transaction.runAsync("DELETE FROM scoped_allowance_decisions");
     await transaction.runAsync("DELETE FROM shift_entries");
@@ -98,6 +100,12 @@ export async function restoreLocalBackup(
       "overtime_allocations",
       OVERTIME_ALLOCATION_COLUMNS,
       document.data.overtimeAllocations,
+    );
+    await insertRows(
+      transaction,
+      "paid_absences",
+      PAID_ABSENCE_COLUMNS,
+      document.data.paidAbsences,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(
