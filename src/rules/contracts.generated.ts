@@ -43,7 +43,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 11 | 14;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 14;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -65,7 +65,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2 | 3 | 11 | 14;
+  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 14;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -139,7 +139,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 11 | 14;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 14;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -175,6 +175,7 @@ export interface RuleRounding {
 }
 export interface RuleTariffRules {
   selection?: RuleTariffSelection;
+  trainingPay?: RuleTrainingPay;
   /**
    * @minItems 1
    * @maxItems 200
@@ -300,6 +301,1945 @@ export interface RuleTariffSelection {
     overtime: RuleCapabilityStatus;
     annualPayment: RuleCapabilityStatus;
   };
+}
+export interface RuleTrainingPay {
+  /**
+   * @minItems 1
+   * @maxItems 20
+   */
+  categories:
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          /**
+           * @minItems 1
+           */
+          years: [number, ...number[]];
+          sourceIds: RuleSourceIds;
+        },
+      ];
+  minimumNightHourlyCents: number;
+  sourceIds: RuleSourceIds;
 }
 /**
  * Contracts 11 (VKA) and 12 (TV-L): declarative annual payment terms. Personal confirmations are not public catalog data. Policies identify bundled algorithms, never remote code.

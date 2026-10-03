@@ -9,6 +9,7 @@ import { annualPaymentRuleIssues } from "./annual-payment-rule-validation";
 import { caritasAnnualPaymentIssues } from "./caritas-annual-payment-validation";
 import { caritasTableIssues } from "./caritas-table-validation";
 import { tariffSelectionIssues } from "./tariff-selection";
+import { trainingPayIssues } from "./training-pay-validation";
 import {
   validateManifestSchema as generatedManifestValidator,
   validateRuleCatalogPublicationRequestSchema as generatedPublicationRequestValidator,
@@ -140,6 +141,7 @@ function validateTariffPackage(
 ): void {
   const { rules } = rulePackage;
   issues.push(...tariffSelectionIssues(rulePackage));
+  issues.push(...trainingPayIssues(rulePackage));
   issues.push(...annualPaymentRuleIssues(rulePackage));
   issues.push(...caritasTableIssues(rulePackage));
   issues.push(...caritasAnnualPaymentIssues(rulePackage));
@@ -202,6 +204,10 @@ function validateTariffPackage(
   if (
     rulePackage.engineContractVersion >= 2 &&
     rulePackage.engineContractVersion !== 14 &&
+    rulePackage.engineContractVersion !== 10 &&
+    !(
+      rulePackage.engineContractVersion === 11 && rules.selection?.employmentKind === "APPRENTICE"
+    ) &&
     overtimeBaseRule === undefined
   ) {
     issues.push(
