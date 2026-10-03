@@ -1,4 +1,9 @@
 import {
+  PAID_ABSENCE_COLUMNS,
+  mapPaidAbsenceRow,
+  requirePaidAbsenceParent,
+} from "./paid-absence-repository";
+import {
   ALLOWANCE_DECISION_COLUMNS,
   mapAllowanceDecisionRow,
 } from "./allowance-decision-repository";
@@ -676,6 +681,22 @@ function validateOvertimeAllocationRow(value: unknown): BackupRow {
   return frozenBackupRow(row);
 }
 
+function validatePaidAbsenceRow(value: unknown): BackupRow {
+  const row = exactRecord(value, PAID_ABSENCE_COLUMNS);
+  mapPaidAbsenceRow({
+    shift_id: stringValue(row, "shift_id"),
+    shift_revision: integerValue(row, "shift_revision"),
+    shift_date: stringValue(row, "shift_date"),
+    shift_updated_at: stringValue(row, "shift_updated_at"),
+    time_zone: stringValue(row, "time_zone"),
+    paid_minutes: nullableIntegerValue(row, "paid_minutes"),
+    revision: integerValue(row, "revision"),
+    confirmed_at: stringValue(row, "confirmed_at"),
+    updated_at: stringValue(row, "updated_at"),
+  });
+  return frozenBackupRow(row);
+}
+
 function uniqueValues(rows: readonly BackupRow[], field: string): void {
   const values = new Set<string>();
   for (const row of rows) {
@@ -755,6 +776,7 @@ export async function validateLocalBackup(
       root.version !== 1 &&
       root.version !== 2 &&
       root.version !== 3 &&
+      root.version !== 4 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -776,6 +798,7 @@ export async function validateLocalBackup(
       ...(root.version >= 2 ? ["remunerationProfiles"] : []),
       ...(root.version >= 3 ? ["allowanceDecisions"] : []),
       ...(root.version >= 4 ? ["overtimeAllocations"] : []),
+      ...(root.version >= 5 ? ["paidAbsences"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -836,6 +859,25 @@ export async function validateLocalBackup(
       }
     }
 
+    const paidAbsences =
+      root.version >= 5
+        ? Object.freeze(asArray(data.paidAbsences).map(validatePaidAbsenceRow))
+        : Object.freeze([]);
+    if (root.version >= 5) {
+      if ((databaseSchemaVersion as number) < 18 || (profile === null && paidAbsences.length > 0))
+        return invalid();
+      uniqueValues(paidAbsences, "shift_id");
+      const shiftById = new Map(shifts.map((row) => [row.id, row]));
+      for (const row of paidAbsences) {
+        const shift = shiftById.get(row.shift_id);
+        if (!shift) return invalid();
+        requirePaidAbsenceParent(
+          mapPaidAbsenceRow(row as unknown as Parameters<typeof mapPaidAbsenceRow>[0]),
+          mapShift(shift as unknown as Parameters<typeof mapShift>[0]),
+        );
+      }
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -869,6 +911,7 @@ export async function validateLocalBackup(
         remunerationProfiles,
         allowanceDecisions,
         overtimeAllocations,
+        paidAbsences,
         templates,
         shifts,
         appointments,
@@ -893,7 +936,8 @@ export async function validateLocalBackup(
           ([key]) =>
             !(document.version < 2 && key === "remunerationProfiles") &&
             !(document.version < 3 && key === "allowanceDecisions") &&
-            !(document.version < 4 && key === "overtimeAllocations"),
+            !(document.version < 4 && key === "overtimeAllocations") &&
+            !(document.version < 5 && key === "paidAbsences"),
         ),
       ),
     });

@@ -1,3 +1,4 @@
+import { PAID_ABSENCE_COLUMNS } from "./paid-absence-repository";
 import { ALLOWANCE_DECISION_COLUMNS } from "./allowance-decision-repository";
 import { OVERTIME_ALLOCATION_COLUMNS } from "./overtime-allocation-repository";
 import canonicalize from "canonicalize";
@@ -8,7 +9,7 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 import { REMUNERATION_PROFILE_COLUMNS } from "./remuneration-profile-repository";
 
 export const LOCAL_BACKUP_FORMAT = "lunashift-local-backup";
-export const LOCAL_BACKUP_VERSION = 4;
+export const LOCAL_BACKUP_VERSION = 5;
 
 type BackupScalar = string | number | null;
 type BackupRow = Readonly<Record<string, BackupScalar>>;
@@ -19,6 +20,7 @@ export interface LocalBackupSnapshot {
   readonly remunerationProfiles: readonly BackupRow[];
   readonly allowanceDecisions: readonly BackupRow[];
   readonly overtimeAllocations: readonly BackupRow[];
+  readonly paidAbsences: readonly BackupRow[];
   readonly templates: readonly BackupRow[];
   readonly shifts: readonly BackupRow[];
   readonly appointments: readonly BackupRow[];
@@ -28,7 +30,7 @@ export interface LocalBackupSnapshot {
 
 interface UnsignedLocalBackupDocument {
   readonly format: typeof LOCAL_BACKUP_FORMAT;
-  readonly version: 1 | 2 | 3 | typeof LOCAL_BACKUP_VERSION;
+  readonly version: 1 | 2 | 3 | 4 | typeof LOCAL_BACKUP_VERSION;
   readonly createdAt: string;
   readonly appVersion: string | null;
   readonly databaseSchemaVersion: number;
@@ -37,6 +39,7 @@ interface UnsignedLocalBackupDocument {
     readonly remunerationProfiles: readonly BackupRow[];
     readonly allowanceDecisions: readonly BackupRow[];
     readonly overtimeAllocations: readonly BackupRow[];
+    readonly paidAbsences: readonly BackupRow[];
     readonly templates: readonly BackupRow[];
     readonly shifts: readonly BackupRow[];
     readonly appointments: readonly BackupRow[];
@@ -108,6 +111,9 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
         OVERTIME_ALLOCATION_COLUMNS.join(",") +
         " FROM overtime_allocations ORDER BY shift_id",
     );
+    const paidAbsences = await transaction.getAllAsync<BackupRow>(
+      "SELECT " + PAID_ABSENCE_COLUMNS.join(",") + " FROM paid_absences ORDER BY shift_id",
+    );
     const templates = await transaction.getAllAsync<BackupRow>(
       `SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
               all_day,notification_json,location_json,revision,created_at,updated_at,deleted_at
@@ -149,6 +155,7 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
       remunerationProfiles: Object.freeze(remunerationProfiles.map(Object.freeze)),
       allowanceDecisions: Object.freeze(allowanceDecisions.map(Object.freeze)),
       overtimeAllocations: Object.freeze(overtimeAllocations.map(Object.freeze)),
+      paidAbsences: Object.freeze(paidAbsences.map(Object.freeze)),
       templates: Object.freeze(templates.map(Object.freeze)),
       shifts: Object.freeze(shifts.map(Object.freeze)),
       appointments: Object.freeze(appointments.map(Object.freeze)),
@@ -178,6 +185,7 @@ export async function createLocalBackupDocument(
       remunerationProfiles: snapshot.remunerationProfiles,
       allowanceDecisions: snapshot.allowanceDecisions,
       overtimeAllocations: snapshot.overtimeAllocations,
+      paidAbsences: snapshot.paidAbsences,
       templates: snapshot.templates,
       shifts: snapshot.shifts,
       appointments: snapshot.appointments,
