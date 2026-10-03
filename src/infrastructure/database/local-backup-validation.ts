@@ -1,3 +1,8 @@
+import {
+  mapTvlShiftWorkRow,
+  requireTvlShiftWorkParents,
+  requireTvlBurnCareCollection,
+} from "./tvl-shift-work-repository";
 import { mapTariffAnnualClaimRow } from "./tariff-annual-claim-repository";
 import { validateSavedTariffAnnualClaims } from "@/domain/saved-tariff-annual-claim";
 import { mapAnnualPaymentRow } from "./annual-payment-repository";
@@ -786,6 +791,7 @@ export async function validateLocalBackup(
       root.version !== 5 &&
       root.version !== 6 &&
       root.version !== 7 &&
+      root.version !== 8 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -811,6 +817,7 @@ export async function validateLocalBackup(
       ...(root.version >= 6 ? ["trainingProfiles", "shiftTrainingDetails"] : []),
       ...(root.version >= 7 ? ["actualAnnualPayments"] : []),
       ...(root.version >= 8 ? ["tariffAnnualClaims"] : []),
+      ...(root.version >= 9 ? ["tvlShiftWork"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -966,6 +973,42 @@ export async function validateLocalBackup(
       if (root.version < 12 && claims.some((row) => row.claim.version === 3)) return invalid();
     }
 
+    const tvlShiftWork =
+      root.version >= 9
+        ? Object.freeze(
+            asArray(data.tvlShiftWork).map((value) => {
+              mapTvlShiftWorkRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 9) {
+      if ((databaseSchemaVersion as number) < 22 || (profile === null && tvlShiftWork.length > 0))
+        return invalid();
+      const seen = new Set<string>();
+      const shiftById = new Map(
+        shifts.map((row) => [row.id, mapShift(row as unknown as Parameters<typeof mapShift>[0])]),
+      );
+      const profiles = (remunerationProfiles ?? []).map((row) =>
+        mapRemunerationProfileRow(
+          row as unknown as Parameters<typeof mapRemunerationProfileRow>[0],
+        ),
+      );
+      const tvlByShift = new Map<string, ReturnType<typeof mapTvlShiftWorkRow>[]>();
+      for (const row of tvlShiftWork) {
+        const parsed = mapTvlShiftWorkRow(row);
+        const key = JSON.stringify([parsed.shiftId, parsed.profileEffectiveFrom]);
+        if (seen.has(key)) return invalid();
+        seen.add(key);
+        requireTvlShiftWorkParents(parsed, shiftById.get(parsed.shiftId), profiles);
+        const siblings = tvlByShift.get(parsed.shiftId) ?? [];
+        siblings.push(parsed);
+        tvlByShift.set(parsed.shiftId, siblings);
+      }
+      for (const [id, values] of tvlByShift)
+        requireTvlBurnCareCollection(values, shiftById.get(id)!, profiles);
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -1004,6 +1047,7 @@ export async function validateLocalBackup(
         shiftTrainingDetails,
         actualAnnualPayments,
         tariffAnnualClaims,
+        tvlShiftWork,
         templates,
         shifts,
         appointments,
@@ -1035,7 +1079,8 @@ export async function validateLocalBackup(
               (key === "trainingProfiles" || key === "shiftTrainingDetails")
             ) &&
             !(document.version < 7 && key === "actualAnnualPayments") &&
-            !(document.version < 8 && key === "tariffAnnualClaims"),
+            !(document.version < 8 && key === "tariffAnnualClaims") &&
+            !(document.version < 9 && key === "tvlShiftWork"),
         ),
       ),
     });

@@ -1,3 +1,11 @@
+import {
+  TVL_SHIFT_WORK_COLUMNS,
+  mapTvlShiftWorkRow,
+  requireTvlShiftWorkParents,
+  requireTvlBurnCareCollection,
+  type TvlShiftWorkRow,
+} from "./tvl-shift-work-repository";
+import { listRemunerationProfiles } from "./remuneration-profile-repository";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { mapShift } from "./calendar-entry-repository";
 import type { RawShiftRow } from "./dev-backup-payload";
@@ -22,6 +30,7 @@ export interface DevRemunerationBackup {
   readonly allowanceDecision: AllowanceDecisionRow | null;
   readonly overtimeAllocations: readonly OvertimeAllocationRow[];
   readonly paidAbsences: readonly PaidAbsenceRow[];
+  readonly tvlShiftWork: readonly TvlShiftWorkRow[];
 }
 
 function exact(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -38,11 +47,13 @@ export function validateDevRemunerationBackup(
   shifts: readonly RawShiftRow[],
   month: string,
   includesPaidAbsences = true,
+  includesTvlShiftWork = false,
 ): DevRemunerationBackup {
   const data = exact(value, [
     "allowanceDecision",
     "overtimeAllocations",
     ...(includesPaidAbsences ? ["paidAbsences"] : []),
+    ...(includesTvlShiftWork ? ["tvlShiftWork"] : []),
   ]);
   let allowanceDecision: AllowanceDecisionRow | null = null;
   if (data.allowanceDecision !== null) {
@@ -88,10 +99,25 @@ export function validateDevRemunerationBackup(
     paidIds.add(parsed.shiftId);
     return Object.freeze({ ...row });
   });
+  const rawTvl = includesTvlShiftWork ? data.tvlShiftWork : [];
+  if (!Array.isArray(rawTvl))
+    throw new Error("TV-L-Dienstbestätigungen fehlen im Testlabor-Backup.");
+  const tvlIds = new Set<string>();
+  const tvlShiftWork = rawTvl.map((value) => {
+    const row = exact(value, TVL_SHIFT_WORK_COLUMNS) as unknown as TvlShiftWorkRow;
+    const parsed = mapTvlShiftWorkRow(row);
+    const shift = byId.get(parsed.shiftId);
+    const key = JSON.stringify([parsed.shiftId, parsed.profileEffectiveFrom]);
+    if (!shift || parsed.shiftRevision > shift.revision || tvlIds.has(key))
+      throw new Error("Ungültige TV-L-Dienstzuordnung im Testlabor-Backup.");
+    tvlIds.add(key);
+    return Object.freeze({ ...row });
+  });
   return Object.freeze({
     allowanceDecision,
     overtimeAllocations: Object.freeze(overtimeAllocations),
     paidAbsences: Object.freeze(paidAbsences),
+    tvlShiftWork: Object.freeze(tvlShiftWork),
   });
 }
 export async function snapshotDevRemuneration(
@@ -112,10 +138,16 @@ export async function snapshotDevRemuneration(
     FROM paid_absences p JOIN shift_entries s ON s.id=p.shift_id WHERE substr(s.date,1,7)=? ORDER BY p.shift_id`,
     month,
   );
-  return { allowanceDecision, overtimeAllocations, paidAbsences };
+  const tvlShiftWork = await db.getAllAsync<TvlShiftWorkRow>(
+    `SELECT ${TVL_SHIFT_WORK_COLUMNS.map((key) => "t." + key).join(",")}
+      FROM tvl_shift_work t JOIN shift_entries s ON s.id=t.shift_id
+      WHERE substr(s.date,1,7)=? ORDER BY t.shift_id,t.profile_effective_from`,
+    month,
+  );
+  return { allowanceDecision, overtimeAllocations, paidAbsences, tvlShiftWork };
 }
 export async function clearDevRemuneration(db: SQLiteDatabase, month: string): Promise<void> {
-  for (const table of ["paid_absences", "overtime_allocations"])
+  for (const table of ["tvl_shift_work", "paid_absences", "overtime_allocations"])
     await db.runAsync(
       "DELETE FROM " +
         table +
@@ -128,6 +160,33 @@ export async function restoreDevRemuneration(
   db: SQLiteDatabase,
   data: DevRemunerationBackup,
 ): Promise<void> {
+  const profiles = data.tvlShiftWork.length ? await listRemunerationProfiles(db) : [];
+  const tvlByShift = new Map<string, ReturnType<typeof mapTvlShiftWorkRow>[]>();
+  for (const row of data.tvlShiftWork) {
+    const parsed = mapTvlShiftWorkRow(row);
+    const siblings = tvlByShift.get(parsed.shiftId) ?? [];
+    siblings.push(parsed);
+    tvlByShift.set(parsed.shiftId, siblings);
+  }
+  for (const row of data.tvlShiftWork) {
+    const parent = await db.getFirstAsync<Parameters<typeof mapShift>[0]>(
+      "SELECT * FROM shift_entries WHERE id=?",
+      row.shift_id,
+    );
+    requireTvlShiftWorkParents(
+      mapTvlShiftWorkRow(row),
+      parent ? mapShift(parent) : undefined,
+      profiles,
+    );
+    if (parent && tvlByShift.has(row.shift_id)) {
+      requireTvlBurnCareCollection(tvlByShift.get(row.shift_id)!, mapShift(parent), profiles);
+      tvlByShift.delete(row.shift_id);
+    }
+    await db.runAsync(
+      "INSERT INTO tvl_shift_work(shift_id,profile_effective_from,confirmation_json) VALUES(?,?,?)",
+      ...TVL_SHIFT_WORK_COLUMNS.map((key) => row[key]),
+    );
+  }
   if (data.allowanceDecision !== null)
     await db.runAsync(
       "INSERT INTO scoped_allowance_decisions(" +
