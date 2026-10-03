@@ -25,3 +25,7 @@ Die direkte Freigabe des Nutzers für die restlichen Aufträge umfasst diese Git
 
 Die Beträge in Tests sind synthetische persönliche Angaben aus own-remuneration-test-fixtures.ts. Sie sind keine Tarifdaten oder Rechtsauskunft.
 Expo-Dokumentation: https://docs.expo.dev/versions/v57.0.0/
+
+## Gepruefter Lieferstand
+
+Integration auf master 697aa31: 29 gezielte Tests und verify:fast (2229 Unit-/Integrationstests, 472 Komponententests) erfolgreich.
