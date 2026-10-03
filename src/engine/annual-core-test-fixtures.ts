@@ -8,10 +8,10 @@ function nonempty<T>(values: readonly T[]): [T, ...T[]] {
 export function annualPaymentCandidate(training = false): RuleTariffPackage {
   const pkg = structuredClone(employeeValue) as RuleTariffPackage;
   if (training) {
-    pkg.packageId = "synthetic-training-annual";
+    pkg.packageId = "tvaoed-pflege-vka";
     pkg.versionId = "synthetic-2026";
     pkg.status = "DRAFT";
-    pkg.review.status = "DRAFT";
+    pkg.review = { status: "DRAFT", reviewedBy: null, reviewedAt: null, gitCommit: null };
     pkg.rules.selector.agreementId = "tvaoed-vka";
     pkg.rules.selection = {
       ...pkg.rules.selection!,
@@ -19,7 +19,7 @@ export function annualPaymentCandidate(training = false): RuleTariffPackage {
       engineId: "tvaoed-pflege-v1",
       employmentKind: "APPRENTICE",
       capabilities: {
-        basePay: "UNSUPPORTED",
+        basePay: "SUPPORTED",
         timePremiums: "UNSUPPORTED",
         allowances: "UNSUPPORTED",
         overtime: "UNSUPPORTED",

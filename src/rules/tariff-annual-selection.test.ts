@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { tariffAnnualFixture } from "@/engine/tariff-annual-test-fixtures";
 import { resolver } from "@/engine/remuneration-test-fixtures";
-import { selectAnnualTariff } from "./tariff-annual-selection";
+import { caritasAnnualPaymentFixture } from "@/testing/caritas-annual-payment-fixture";
+import { selectCaritasAnnualDraft, selectAnnualTariff } from "./tariff-annual-selection";
 import type { RuleResolver } from "./rule-resolver";
 
 describe("annual tariff selection from the active catalog", () => {
@@ -71,5 +72,56 @@ describe("annual tariff selection from the active catalog", () => {
     expect(Object.isFrozen(active.annualTariffCandidates!(pkg.packageId, 2026))).toBe(true);
     pkg.rules.annualPaymentRules![0].rateBasisPoints = -1;
     expect(selectAnnualTariff(claim, active)).toEqual({ ok: false, code: "ANNUAL_RULE_INVALID" });
+  });
+});
+
+describe("current Caritas annual DRAFT selection", () => {
+  it("uses the existing sourced rule contract without enabling a gross payment", () => {
+    const pkg = caritasAnnualPaymentFixture();
+    const claim = {
+      version: 3 as const,
+      year: 2026,
+      selection: {
+        packageId: pkg.packageId,
+        variant: "ANLAGE_31",
+        region: "BW",
+        group: "p6",
+        confirmed: true,
+      },
+    };
+    const selected = selectCaritasAnnualDraft(claim, resolver([pkg]));
+    expect(selected.ok).toBe(true);
+    if (selected.ok) expect(selected.package.status).toBe("DRAFT");
+    expect(selectAnnualTariff(claim, resolver([pkg]))).toEqual({
+      ok: false,
+      code: "ANNUAL_RULE_MISSING",
+    });
+    expect(selectCaritasAnnualDraft({ ...claim, year: 2027 }, resolver([pkg]))).toEqual({
+      ok: false,
+      code: "CARITAS_ANNUAL_RULE_MISSING",
+    });
+  });
+  it("rejects incomplete annual declarations instead of ignoring the invalid candidate", () => {
+    const pkg = caritasAnnualPaymentFixture();
+    const next = structuredClone(pkg);
+    next.versionId = "synthetic-other-year-terms";
+    const claim = {
+      version: 3 as const,
+      year: 2026,
+      selection: {
+        packageId: pkg.packageId,
+        variant: "ANLAGE_31",
+        region: "BW",
+        group: "p6",
+        confirmed: true,
+      },
+    };
+    next.rules.caritasAnnualPaymentRules = next.rules.caritasAnnualPaymentRules!.filter(
+      (rule) => rule.variantId !== "ANLAGE_31",
+    ) as typeof next.rules.caritasAnnualPaymentRules;
+    expect(selectCaritasAnnualDraft(claim, resolver([pkg, next]))).toEqual({
+      ok: false,
+      code: "CARITAS_ANNUAL_RULE_INVALID",
+    });
   });
 });

@@ -311,7 +311,7 @@ describe("tariff annual payment claim calculation", () => {
     claim.selection.region = "UNKNOWN";
     expect(calculate(pkg, claim).missing).toEqual(["ruleSelection"]);
     claim.selection.region = "OTHER";
-    pkg.engineContractVersion = 8;
+    Object.assign(pkg, { engineContractVersion: 8 });
     expect(calculate(pkg, claim).missing).toEqual(["rulePackage"]);
   });
   it("does not mutate supplied data and contains no input in validation failures", () => {

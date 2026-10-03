@@ -96,37 +96,38 @@ export function selectCaritasAnnualDraft(
       valid.value.kind !== "TARIFF" ||
       valid.value.packageId !== claim.selection.packageId ||
       valid.value.engineContractVersion !== 14 ||
-      valid.value.status !== "DRAFT" ||
-      !valid.value.rules.caritasAnnualPaymentPolicy
+      valid.value.status !== "DRAFT"
     )
       return { ok: false, code: "CARITAS_ANNUAL_RULE_INVALID" };
-    const policy = valid.value.rules.caritasAnnualPaymentPolicy;
-    const payoutDate = `${claim.year}-${String(policy.payoutMonth).padStart(2, "0")}-01`;
-    if (
-      pkg.validFrom > payoutDate ||
-      (pkg.validTo !== null && pkg.validTo < payoutDate) ||
-      policy.validFrom > payoutDate ||
-      policy.validTo < payoutDate
-    )
+    const referenceDate = claim.year + "-09-01";
+    if (pkg.validFrom > referenceDate || (pkg.validTo !== null && pkg.validTo < referenceDate))
       continue;
     const selection = resolveTariffSelection(pkg, claim.selection.variant, claim.selection.region);
     if (!selection?.groups.some((group) => group.id === claim.selection.group)) continue;
-    const bands = policy.rateBands.filter((band) => band.groupIds.includes(claim.selection.group));
-    if (bands.length !== 1) return { ok: false, code: "CARITAS_ANNUAL_RULE_INVALID" };
+    const rules =
+      valid.value.rules.caritasAnnualPaymentRules?.filter(
+        (rule) =>
+          rule.entitlementYear === claim.year &&
+          rule.variantId === claim.selection.variant &&
+          rule.regionId === claim.selection.region &&
+          rule.payGroups.some((group) => group === claim.selection.group),
+      ) ?? [];
+    if (rules.length === 0) continue;
+    if (rules.length !== 1) return { ok: false, code: "CARITAS_ANNUAL_RULE_AMBIGUOUS" };
+    const policy = rules[0];
     matches.push({
       package: pkg,
       terms: JSON.stringify([
-        bands[0].rateBasisPoints,
+        policy.rateBasisPoints,
         policy.referenceMonths,
-        policy.rateDateMonthDay,
-        policy.claimDateMonthDay,
+        policy.groupReferenceMonth,
+        policy.groupReferenceDay,
         policy.payoutMonth,
         policy.basisPolicy,
-        policy.lateEntryBasis,
+        policy.eligibilityPolicy,
         policy.reductionPolicy,
-        policy.earlyExitVariantId,
-        policy.earlyExitBasis,
-        policy.eastTariff2025UsesWestTable,
+        policy.basisRegionId,
+        policy.basisTablePolicy,
       ]),
     });
   }
