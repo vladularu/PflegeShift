@@ -71,7 +71,9 @@ function installedTargets(root) {
     if (!entry.dependencies?.braces) continue;
     const parentFile = join(root, parent, "package.json");
     if (!existsSync(parentFile)) throw new Error("BRACES_PARENT_MISSING");
-    const require = createRequire(parentFile);
+    const parentLocation = parent ? parent + "/package.json" : "package.json";
+    const verifiedParentFile = contained(root, parentFile, parentLocation);
+    const require = createRequire(verifiedParentFile);
     if (
       realpathSync(require.resolve("braces")) !== index ||
       realpathSync(require.resolve("braces/lib/parse.js")) !== parse
