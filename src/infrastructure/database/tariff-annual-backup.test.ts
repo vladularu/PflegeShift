@@ -1,3 +1,4 @@
+import { rewindRemunerationMigrations } from "./remuneration-migration-test-fixture";
 import { createHash } from "node:crypto";
 import canonicalize from "canonicalize";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -135,9 +136,7 @@ describe("tariff annual claim backup v8", () => {
   it("activates additive migration 21 through normal bootstrap and rolls back failure", async () => {
     const profile = await adapter.db.getFirstAsync("SELECT * FROM user_profile");
     // Only this isolated in-memory fixture is rewound to simulate a schema-20 installation.
-    adapter.database.exec(
-      "DROP TABLE tariff_annual_claims; DELETE FROM schema_migrations WHERE version>=21",
-    );
+    rewindRemunerationMigrations(adapter.database, 21);
     adapter.fail = "VALUES(21,?)";
     await expect(migrateDatabase(adapter.db)).rejects.toThrow("injected");
     expect(adapter.database.inTransaction).toBe(false);

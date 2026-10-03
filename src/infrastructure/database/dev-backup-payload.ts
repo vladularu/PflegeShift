@@ -4,6 +4,8 @@ import {
   validateDevRemunerationBackup,
   type DevRemunerationBackup,
 } from "./dev-remuneration-backup";
+export const DEV_BACKUP_VERSION = 6;
+
 export interface RawShiftRow {
   id: string;
   date: string;
@@ -59,7 +61,7 @@ export interface RawDecisionRow {
 }
 
 export interface BackupPayload {
-  version: 6;
+  version: typeof DEV_BACKUP_VERSION;
   month: string;
   counts: {
     appointments: number;
@@ -269,7 +271,7 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
     typeof payload.version === "number" &&
     Number.isInteger(payload.version) &&
     payload.version >= minimum &&
-    payload.version <= 6;
+    payload.version <= DEV_BACKUP_VERSION;
   const currentPayload = hasVersion(3);
   const shifts = sourceShifts.map((row) => validateShift(row, expectedMonth, currentPayload));
   const appointments = sourceAppointments.map((row) =>
@@ -305,7 +307,7 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
   );
   const training = validateDevTraining(hasVersion(6) ? payload.training : [], shifts);
   return {
-    version: 6,
+    version: DEV_BACKUP_VERSION,
     month: expectedMonth,
     counts: {
       appointments: appointments.length,
@@ -333,7 +335,7 @@ export function createDevBackupPayload(
         shifts: data.shifts.length,
       },
       month,
-      version: 6,
+      version: DEV_BACKUP_VERSION,
     },
     month,
   );
