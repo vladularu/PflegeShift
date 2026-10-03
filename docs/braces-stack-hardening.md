@@ -34,3 +34,11 @@ Normale Muster bleiben kompatibel. Tiefe Muster/ASTs werden kontrolliert über b
 - `npm.cmd run audit:production`: bestanden; zwei exakt geprüfte installierte Backports, keine unbehobenen hohen/kritischen Advisories.
 - `npm.cmd run release:check`, Format und `git diff --check`: bestanden.
 - Sieben erfolgreiche PR-Prüfungen bleiben das verbindliche Merge-Gate; CI-Nachweis im zugehörigen Pull Request.
+
+## Folgepaket: realer Elternpfad
+
+- Ziel/Scope: genau drei Dateien (Härtung, Regressionstest, Beleg); Node-Buildwerkzeuge, unverändert Expo SDK 57. Keine App-/Native-Änderung.
+- Reproduziert: ein außerhalb liegendes verlinktes Elternpaket konnte am lexikalischen Pfad die verifizierte Installation auflösen; der tatsächliche Node-Elternpfad löste stattdessen eine ungepatchte externe Kopie auf.
+- Korrektur: auch jede aufgezeichnete Eltern-Paketdatei muss vor Auflösung exakt im Checkout liegen. `createRequire` verwendet anschließend den geprüften realen Elternpfad.
+- Abnahme: dieser reproduzierte Fall muss vor Verifikation und Anwendung gesperrt werden; normale Elternauflösung und alle bisherigen Integritäts-/Angriffsprüfungen müssen bestehen. `verify:fast`, Audit/Release und sieben erfolgreiche CI-Gates; bestehende ausdrückliche Git-Freigabe.
+- Verifikation: 53 Audit-/Härtungstests sowie `verify:fast` (1.606 Unit-, 472 Komponententests), Produktions-Audit, `release:check`, Format und Diffprüfung bestanden. Sieben erfolgreiche PR-Prüfungen bleiben das Merge-Gate.

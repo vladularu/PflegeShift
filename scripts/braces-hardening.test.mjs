@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, symlinkSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  symlinkSync,
+  realpathSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -155,6 +162,33 @@ test("rejects parents resolving braces to an external private installation", () 
   fake.packages["node_modules/parent"] = { dependencies: { braces: "3.0.3" } };
   writeFileSync(join(dir, "package-lock.json"), JSON.stringify(fake));
   assert.throws(() => verifyBracesHardening(dir), /BRACES_PARENT_RESOLUTION/);
+});
+
+test("rejects a junctioned parent whose real Node resolution reaches an unpatched external copy", () => {
+  const dir = fixture(),
+    outside = fixture({ original: true });
+  mkdirSync(join(outside, "parent"));
+  writeFileSync(join(outside, "parent/package.json"), "{}");
+  symlinkSync(
+    join(outside, "parent"),
+    join(dir, "node_modules/parent"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
+  const lock = JSON.parse(readFileSync(join(dir, "package-lock.json")));
+  lock.packages["node_modules/parent"] = { dependencies: { braces: "3.0.3" } };
+  writeFileSync(join(dir, "package-lock.json"), JSON.stringify(lock));
+  const parentFile = join(dir, "node_modules/parent/package.json");
+  // The lexical path would falsely resolve to the verified copy; Node loads a parent's real path.
+  assert.equal(
+    createRequire(parentFile).resolve("braces"),
+    join(dir, "node_modules/braces/index.js"),
+  );
+  assert.equal(
+    createRequire(realpathSync(parentFile)).resolve("braces"),
+    join(outside, "node_modules/braces/index.js"),
+  );
+  assert.throws(() => verifyBracesHardening(dir), /BRACES_TARGET_OUTSIDE_CHECKOUT/);
+  assert.throws(() => applyBracesHardening(dir), /BRACES_TARGET_OUTSIDE_CHECKOUT/);
 });
 
 test("requires every recorded parent and accepts the expected hoisted resolution", () => {
