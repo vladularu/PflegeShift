@@ -172,3 +172,83 @@ test("a verified node-forge backport never exempts unrelated high advisories", (
   assert.deepEqual(result.mitigated, [forgeAdvisory]);
   assert.deepEqual(result.approved, []);
 });
+
+import { BRACES_ADVISORY_URL, verifyBracesHardening } from "./braces-hardening.mjs";
+const bracesAdvisory = {
+  source: 1240992,
+  name: "braces",
+  dependency: "braces",
+  severity: "high",
+  title: "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+  url: BRACES_ADVISORY_URL,
+  range: "<=3.0.3",
+};
+const bracesReport = (advisory = bracesAdvisory, nodes = ["node_modules/braces"]) =>
+  report({ braces: { severity: "high", via: [advisory], nodes } });
+
+test("blocks braces without an authentic proof of this installed checkout", () => {
+  const proof = verifyBracesHardening();
+  for (const fake of [
+    undefined,
+    true,
+    { nodes: proof.nodes },
+    JSON.parse(JSON.stringify(proof)),
+    verifyNodeForgeHardening(),
+  ])
+    assert.deepEqual(evaluateAuditReport(bracesReport(), undefined, fake).blocking, [
+      bracesAdvisory,
+    ]);
+});
+
+test("records only the exact braces finding and propagates its cyclic meta chain", () => {
+  const input = bracesReport();
+  input.vulnerabilities.micromatch = { severity: "high", via: ["braces", "expo"] };
+  input.vulnerabilities.expo = { severity: "high", via: ["micromatch"] };
+  const result = evaluateAuditReport(input, undefined, verifyBracesHardening());
+  assert.deepEqual(result.blocking, []);
+  assert.deepEqual(result.mitigated, [bracesAdvisory]);
+  assert.deepEqual(result.approved, []);
+});
+
+test("blocks altered braces advisory identity, severity, range, URL and title", () => {
+  const proof = verifyBracesHardening();
+  for (const change of [
+    { source: 1 },
+    { name: "other" },
+    { dependency: "other" },
+    { severity: "critical" },
+    { range: "<=3.0.4" },
+    { url: "https://example.invalid" },
+    { title: "other issue" },
+  ]) {
+    const advisory = { ...bracesAdvisory, ...change };
+    assert.deepEqual(evaluateAuditReport(bracesReport(advisory), undefined, proof).blocking, [
+      advisory,
+    ]);
+  }
+});
+
+test("blocks missing, unexpected, extra and malformed braces audit nodes", () => {
+  const proof = verifyBracesHardening();
+  for (const nodes of [
+    [],
+    undefined,
+    "node_modules/braces",
+    ["node_modules/other/node_modules/braces"],
+    ["node_modules/braces", "node_modules/other/node_modules/braces"],
+  ]) {
+    const input = bracesReport();
+    input.vulnerabilities.braces.nodes = nodes;
+    assert.deepEqual(evaluateAuditReport(input, undefined, proof).blocking, [bracesAdvisory]);
+  }
+});
+
+test("supports independent installed backports while still blocking unrelated findings", () => {
+  const input = forgeReport();
+  input.vulnerabilities.braces = bracesReport().vulnerabilities.braces;
+  input.vulnerabilities["image-size"] = { severity: "high", via: [allowedImageSizeAdvisory] };
+  const result = evaluateAuditReport(input, verifyNodeForgeHardening(), verifyBracesHardening());
+  assert.deepEqual(result.blocking, [allowedImageSizeAdvisory]);
+  assert.deepEqual(result.mitigated, [forgeAdvisory, bracesAdvisory]);
+  assert.deepEqual(result.approved, []);
+});

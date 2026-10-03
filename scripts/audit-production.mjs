@@ -1,3 +1,8 @@
+import {
+  BRACES_ADVISORY_URL,
+  isVerifiedBracesHardening,
+  verifyBracesHardening,
+} from "./braces-hardening.mjs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
@@ -79,7 +84,23 @@ function findingKey(finding) {
   return `${finding.source ?? "unknown"}:${finding.name}:${finding.url ?? ""}`;
 }
 
-function hasVerifiedMitigation(finding, vulnerabilities, proof) {
+function hasVerifiedMitigation(finding, vulnerabilities, proof, bracesProof) {
+  const bracesNodes = vulnerabilities.braces?.nodes;
+  if (
+    isVerifiedBracesHardening(bracesProof) &&
+    finding.name === "braces" &&
+    finding.dependency === "braces" &&
+    finding.source === 1240992 &&
+    finding.severity === "high" &&
+    finding.url === BRACES_ADVISORY_URL &&
+    finding.range === "<=3.0.3" &&
+    finding.title ===
+      "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns" &&
+    Array.isArray(bracesNodes) &&
+    bracesNodes.length === bracesProof.nodes.length &&
+    bracesNodes.every((node, index) => node === bracesProof.nodes[index])
+  )
+    return true;
   const nodes = vulnerabilities["node-forge"]?.nodes;
   return (
     isVerifiedNodeForgeHardening(proof) &&
@@ -97,7 +118,7 @@ function hasVerifiedMitigation(finding, vulnerabilities, proof) {
   );
 }
 
-export function evaluateAuditReport(report, hardeningProof) {
+export function evaluateAuditReport(report, hardeningProof, bracesProof) {
   const vulnerabilities = report?.vulnerabilities;
   if (!vulnerabilities || typeof vulnerabilities !== "object") {
     throw new Error("npm audit lieferte keinen auswertbaren Vulnerability-Report.");
@@ -123,7 +144,7 @@ export function evaluateAuditReport(report, hardeningProof) {
     }
 
     for (const finding of findings) {
-      const target = hasVerifiedMitigation(finding, vulnerabilities, hardeningProof)
+      const target = hasVerifiedMitigation(finding, vulnerabilities, hardeningProof, bracesProof)
         ? mitigated
         : blocking;
       target.set(findingKey(finding), finding);
@@ -181,14 +202,14 @@ export function runProductionAudit() {
 
   let evaluation;
   try {
-    evaluation = evaluateAuditReport(report, verifyNodeForgeHardening());
+    evaluation = evaluateAuditReport(report, verifyNodeForgeHardening(), verifyBracesHardening());
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
 
   for (const finding of evaluation.mitigated) {
-    printFinding("Installierte RSA-Haertung verifiziert:", finding);
+    printFinding("Installierte Haertung verifiziert:", finding);
   }
 
   if (evaluation.blocking.length > 0) {
