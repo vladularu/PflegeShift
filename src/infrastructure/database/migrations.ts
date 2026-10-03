@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { withImmediateTransaction } from "./transaction";
 
-export const LATEST_DATABASE_SCHEMA_VERSION = 18;
+export const LATEST_DATABASE_SCHEMA_VERSION = 19;
 
 const MIGRATION_1 = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -634,6 +634,35 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     await transaction.runAsync(
       "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
       18,
+      now,
+    );
+  });
+  await withImmediateTransaction(db, async (transaction) => {
+    const applied = await transaction.getFirstAsync<{ version: number }>(
+      "SELECT version FROM schema_migrations WHERE version=19",
+    );
+    if (applied !== null) return;
+    await transaction.execAsync(`
+      CREATE TABLE training_profiles (
+        effective_from TEXT PRIMARY KEY NOT NULL,
+        data_json TEXT NOT NULL CHECK (json_valid(data_json)),
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE shift_training_details (
+        shift_id TEXT PRIMARY KEY NOT NULL REFERENCES shift_entries(id) ON DELETE CASCADE,
+        shift_revision INTEGER NOT NULL CHECK (shift_revision >= 1),
+        shift_date TEXT NOT NULL,
+        shift_updated_at TEXT NOT NULL,
+        time_zone TEXT NOT NULL,
+        data_json TEXT NOT NULL CHECK (json_valid(data_json)),
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        updated_at TEXT NOT NULL
+      );
+    `);
+    await transaction.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      19,
       now,
     );
   });

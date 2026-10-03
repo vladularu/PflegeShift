@@ -331,11 +331,13 @@ describe("test lab repository", () => {
     const legacy = JSON.parse(backup.payload) as {
       version: number;
       remuneration?: unknown;
+      training?: unknown;
       shifts: Record<string, unknown>[];
       appointments: Record<string, unknown>[];
     };
     legacy.version = 1;
     delete legacy.remuneration;
+    delete legacy.training;
     for (const row of legacy.shifts) {
       delete row.all_day;
       delete row.notification_json;
@@ -382,7 +384,7 @@ describe("test lab repository", () => {
       .prepare("SELECT payload FROM dev_test_backups WHERE month='2026-08'")
       .get() as { payload: string };
     expect(JSON.parse(firstBackup.payload)).toMatchObject({
-      version: 5,
+      version: 6,
       month: "2026-08",
       counts: { appointments: 1, decisions: 0 },
     });

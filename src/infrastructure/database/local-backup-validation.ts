@@ -1,3 +1,5 @@
+import { mapTrainingProfileRow, mapShiftTrainingRow } from "./training-repository";
+import { requireShiftTrainingParent } from "@/domain/training-data";
 import {
   PAID_ABSENCE_COLUMNS,
   mapPaidAbsenceRow,
@@ -777,6 +779,7 @@ export async function validateLocalBackup(
       root.version !== 2 &&
       root.version !== 3 &&
       root.version !== 4 &&
+      root.version !== 5 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -799,6 +802,7 @@ export async function validateLocalBackup(
       ...(root.version >= 3 ? ["allowanceDecisions"] : []),
       ...(root.version >= 4 ? ["overtimeAllocations"] : []),
       ...(root.version >= 5 ? ["paidAbsences"] : []),
+      ...(root.version >= 6 ? ["trainingProfiles", "shiftTrainingDetails"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -878,6 +882,43 @@ export async function validateLocalBackup(
       }
     }
 
+    const trainingProfiles =
+      root.version >= 6
+        ? Object.freeze(
+            asArray(data.trainingProfiles).map((value) => {
+              mapTrainingProfileRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    const shiftTrainingDetails =
+      root.version >= 6
+        ? Object.freeze(
+            asArray(data.shiftTrainingDetails).map((value) => {
+              mapShiftTrainingRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 6) {
+      if (
+        (databaseSchemaVersion as number) < 19 ||
+        (profile === null && (trainingProfiles.length > 0 || shiftTrainingDetails.length > 0))
+      )
+        return invalid();
+      uniqueValues(trainingProfiles, "effective_from");
+      uniqueValues(shiftTrainingDetails, "shift_id");
+      const shiftById = new Map(shifts.map((row) => [row.id, row]));
+      for (const row of shiftTrainingDetails) {
+        const shift = shiftById.get(row.shift_id);
+        if (!shift) return invalid();
+        requireShiftTrainingParent(
+          mapShiftTrainingRow(row),
+          mapShift(shift as unknown as Parameters<typeof mapShift>[0]),
+        );
+      }
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -912,6 +953,8 @@ export async function validateLocalBackup(
         allowanceDecisions,
         overtimeAllocations,
         paidAbsences,
+        trainingProfiles,
+        shiftTrainingDetails,
         templates,
         shifts,
         appointments,
@@ -937,7 +980,11 @@ export async function validateLocalBackup(
             !(document.version < 2 && key === "remunerationProfiles") &&
             !(document.version < 3 && key === "allowanceDecisions") &&
             !(document.version < 4 && key === "overtimeAllocations") &&
-            !(document.version < 5 && key === "paidAbsences"),
+            !(document.version < 5 && key === "paidAbsences") &&
+            !(
+              document.version < 6 &&
+              (key === "trainingProfiles" || key === "shiftTrainingDetails")
+            ),
         ),
       ),
     });
