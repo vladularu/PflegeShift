@@ -11,9 +11,9 @@
     "ios": {
       "supportsTablet": false,
       "icon": {
-        "light": "./assets/images/icon.png",
-        "dark": "./assets/images/icon-dark.png",
-        "tinted": "./assets/images/icon-tinted.png"
+        "light": "./assets/brand/lunashift/app-icon-user.png",
+        "dark": "./assets/brand/lunashift/app-icon-user.png",
+        "tinted": "./assets/brand/lunashift/app-icon-user.png"
       },
       "bundleIdentifier": "com.lunashift.app",
       "buildNumber": "1",
