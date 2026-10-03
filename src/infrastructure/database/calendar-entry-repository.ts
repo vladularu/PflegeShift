@@ -62,7 +62,7 @@ interface AppointmentRow {
   deleted_at: string | null;
 }
 
-function mapShift(row: ShiftRow): ShiftEntry {
+export function mapShift(row: ShiftRow): ShiftEntry {
   if (!Number.isInteger(row.revision)) {
     throw new ValidationError("Gespeicherte Dienstdaten sind ungültig.");
   }

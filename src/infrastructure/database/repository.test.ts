@@ -3,7 +3,10 @@ import type { SQLiteDatabase } from "expo-sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CalendarLabelMode } from "@/domain/types";
-import { migrateDatabase } from "@/infrastructure/database/migrations";
+import {
+  migrateDatabase,
+  LATEST_DATABASE_SCHEMA_VERSION,
+} from "@/infrastructure/database/migrations";
 import {
   loadAppearancePreferences,
   saveAppearancePreferences,
@@ -144,7 +147,7 @@ describe("SQLite repository", () => {
     expect(templates).toHaveLength(7);
     expect(templates.find((template) => template.id === "default-free")?.symbol).toBe("star");
     expect(testDb.database.prepare("SELECT COUNT(*) count FROM schema_migrations").get()).toEqual({
-      count: 15,
+      count: LATEST_DATABASE_SCHEMA_VERSION,
     });
     expect(testDb.database.pragma("secure_delete", { simple: true })).toBe(1);
   });

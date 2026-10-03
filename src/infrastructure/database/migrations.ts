@@ -1,6 +1,8 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { withImmediateTransaction } from "./transaction";
 
+export const LATEST_DATABASE_SCHEMA_VERSION = 17;
+
 const MIGRATION_1 = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
   version INTEGER PRIMARY KEY NOT NULL,
@@ -567,6 +569,47 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     await transaction.runAsync(
       "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
       15,
+      now,
+    );
+  });
+  await withImmediateTransaction(db, async (transaction) => {
+    const migration16 = await transaction.getFirstAsync<{ version: number }>(
+      "SELECT version FROM schema_migrations WHERE version=16",
+    );
+    if (migration16 !== null) return;
+    await transaction.execAsync(`
+      CREATE TABLE scoped_allowance_decisions (
+        month TEXT PRIMARY KEY NOT NULL,
+        decisions_json TEXT NOT NULL CHECK (json_valid(decisions_json)),
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        updated_at TEXT NOT NULL
+      );
+    `);
+    await transaction.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      16,
+      now,
+    );
+  });
+  await withImmediateTransaction(db, async (transaction) => {
+    const applied = await transaction.getFirstAsync<{ version: number }>(
+      "SELECT version FROM schema_migrations WHERE version=17",
+    );
+    if (applied !== null) return;
+    await transaction.execAsync(`
+      CREATE TABLE overtime_allocations (
+        shift_id TEXT PRIMARY KEY NOT NULL REFERENCES shift_entries(id) ON DELETE CASCADE,
+        shift_revision INTEGER NOT NULL CHECK (shift_revision >= 1),
+        time_zone TEXT NOT NULL,
+        allocations_json TEXT NOT NULL CHECK (json_valid(allocations_json)),
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        confirmed_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `);
+    await transaction.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      17,
       now,
     );
   });
