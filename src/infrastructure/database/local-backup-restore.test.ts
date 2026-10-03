@@ -312,6 +312,7 @@ describe("local backup restore", () => {
         paidAbsences?: unknown;
         trainingProfiles?: unknown;
         shiftTrainingDetails?: unknown;
+        actualAnnualPayments?: unknown;
       };
       delete data.remunerationProfiles;
       delete data.allowanceDecisions;
@@ -319,6 +320,7 @@ describe("local backup restore", () => {
       delete data.paidAbsences;
       delete data.trainingProfiles;
       delete data.shiftTrainingDetails;
+      delete data.actualAnnualPayments;
       delete data.profile.display_name;
       delete data.profile.employer_name;
     });

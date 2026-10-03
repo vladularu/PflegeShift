@@ -12,9 +12,13 @@ import {
   validateSavedActualOwnAnnualPayments,
 } from "@/domain/saved-annual-payment";
 import { work } from "@/engine/remuneration-test-fixtures";
-import { migrateDatabase } from "./migrations";
+import { migrateDatabase, LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { saveProfile } from "./profile-repository";
-import { createLocalBackupDocument, loadLocalBackupSnapshot } from "./local-backup";
+import {
+  createLocalBackupDocument,
+  loadLocalBackupSnapshot,
+  LOCAL_BACKUP_VERSION,
+} from "./local-backup";
 import { validateLocalBackup } from "./local-backup-validation";
 import { restoreLocalBackup } from "./local-backup-restore";
 import {
@@ -97,7 +101,10 @@ describe("actual annual payment persistence", () => {
       sha256,
     });
   const validate = (serialized: string) =>
-    validateLocalBackup(serialized, { maxDatabaseSchemaVersion: 31, sha256 });
+    validateLocalBackup(serialized, {
+      maxDatabaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+      sha256,
+    });
   it("blocks new confirmations, updates and revocation while a test run is open", async () => {
     const saved = await saveActualOwnAnnualPayment(db, { payment, expected: null });
     await db.runAsync(
@@ -122,7 +129,7 @@ describe("actual annual payment persistence", () => {
     await db.runAsync("DELETE FROM dev_test_backups");
     await expect(revokeActualOwnAnnualPayment(db, saved)).resolves.toMatchObject({ revoked: true });
   });
-  it("round-trips v8 actual, zero and revoked payments without changing identity or confirmation", async () => {
+  it("round-trips v7 actual, zero and revoked payments without changing identity or confirmation", async () => {
     const paid = await saveActualOwnAnnualPayment(db, {
       payment: { ...payment, payoutMonth: "2027-01" },
       expected: null,
@@ -138,7 +145,7 @@ describe("actual annual payment persistence", () => {
     await revokeActualOwnAnnualPayment(db, withdrawn);
     const before = await loadLocalBackupSnapshot(db);
     const exported = await backup();
-    expect(exported.document.version).toBe(19);
+    expect(exported.document.version).toBe(LOCAL_BACKUP_VERSION);
     expect(exported.document.data.actualAnnualPayments).toHaveLength(3);
     await revokeActualOwnAnnualPayment(db, paid);
     await restoreLocalBackup(db, await validate(exported.serialized));
@@ -192,7 +199,7 @@ describe("actual annual payment persistence", () => {
     "date",
     "profile",
     "schema",
-  ])("rejects corrupted v8 %s before any database write", async (mutation) => {
+  ])("rejects corrupted v7 %s before any database write", async (mutation) => {
     await saveActualOwnAnnualPayment(db, { payment, expected: null });
     const before = await loadLocalBackupSnapshot(db);
     const corrupted = await resign((await backup()).serialized, (root) => {
@@ -261,7 +268,7 @@ describe("actual annual payment persistence", () => {
   });
   it("rolls back a failed additive migration, preserving a large existing shift history", async () => {
     adapter.database.exec(
-      "DROP TABLE tariff_annual_claims; DROP TABLE actual_annual_payments; DELETE FROM schema_migrations WHERE version=20;",
+      "DROP TABLE IF EXISTS tariff_annual_claims; DROP TABLE actual_annual_payments; DELETE FROM schema_migrations WHERE version>=20;",
     );
     const insert = adapter.database
       .prepare(`INSERT INTO shift_entries(id,date,title,type,start_time,end_time,break_minutes,color,symbol,revision,created_at,updated_at)
