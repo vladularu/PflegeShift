@@ -1,4 +1,5 @@
 import type { SQLiteDatabase } from "expo-sqlite";
+import { withImmediateTransaction } from "./transaction";
 
 const MIGRATION_1 = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -520,4 +521,53 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
     );
     await db.runAsync("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 13, now);
   }
+  await withImmediateTransaction(db, async (transaction) => {
+    const migration14 = await transaction.getFirstAsync<{ version: number }>(
+      "SELECT version FROM schema_migrations WHERE version=14",
+    );
+    if (migration14 !== null) return;
+    await transaction.execAsync(`
+      CREATE TABLE remuneration_profiles (
+        id TEXT PRIMARY KEY NOT NULL,
+        effective_from TEXT UNIQUE,
+        data_json TEXT NOT NULL CHECK (json_valid(data_json)),
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        CHECK ((id='legacy' AND effective_from IS NULL) OR
+          (effective_from IS NOT NULL AND id='from:' || effective_from))
+      );
+    `);
+    await transaction.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      14,
+      now,
+    );
+  });
+  await withImmediateTransaction(db, async (transaction) => {
+    const migration15 = await transaction.getFirstAsync<{ version: number }>(
+      "SELECT version FROM schema_migrations WHERE version=15",
+    );
+    if (migration15 !== null) return;
+    // Frozen data migration: unknown start stays NULL, not created_at or today's date.
+    await transaction.runAsync(`
+      INSERT INTO remuneration_profiles(id,effective_from,data_json,revision,created_at,updated_at)
+      SELECT 'legacy',NULL,
+        json_object('version',1,'weeklyMinutes',weekly_minutes,'selection',json(
+          CASE WHEN pay_group IS NOT NULL THEN
+            json_object('kind','tariff','packageId','tvoed-vka-bt-k',
+              'variant',tariff_sector,'region',tariff_region,'group',pay_group,
+              'level',CAST(pay_level AS TEXT),'fullTimeWeeklyMinutes',full_time_weekly_minutes)
+          WHEN manual_monthly_gross_cents IS NOT NULL THEN
+            json_object('kind','own-monthly','monthlyGrossCents',manual_monthly_gross_cents)
+          ELSE json_object('kind','unconfigured') END)),
+        1,created_at,updated_at
+      FROM user_profile WHERE id='singleton'
+    `);
+    await transaction.runAsync(
+      "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+      15,
+      now,
+    );
+  });
 }

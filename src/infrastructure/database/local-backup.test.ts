@@ -94,7 +94,7 @@ describe("local backup", () => {
 
     const changesAfter = testDb.database.prepare("SELECT total_changes() count").get();
     expect(changesAfter).toEqual(changesBefore);
-    expect(snapshot.databaseSchemaVersion).toBe(13);
+    expect(snapshot.databaseSchemaVersion).toBe(15);
     expect(snapshot.profile).toMatchObject({
       id: "singleton",
       industry: "HEALTHCARE",
@@ -130,8 +130,9 @@ describe("local backup", () => {
 
   it("creates deterministic versioned JSON with a checksum over the unsigned document", async () => {
     const snapshot: LocalBackupSnapshot = {
-      databaseSchemaVersion: 12,
+      databaseSchemaVersion: 15,
       profile: null,
+      remunerationProfiles: [],
       templates: [],
       shifts: [],
       appointments: [],
@@ -152,7 +153,7 @@ describe("local backup", () => {
       version: LOCAL_BACKUP_VERSION,
       createdAt: "2026-09-02T08:09:10.123Z",
       appVersion: "1.0.0",
-      databaseSchemaVersion: 12,
+      databaseSchemaVersion: 15,
       integrity: {
         algorithm: "SHA-256",
         canonicalization: "RFC8785",
@@ -192,8 +193,9 @@ describe("local backup", () => {
 
   it("rejects a malformed checksum", async () => {
     const emptySnapshot: LocalBackupSnapshot = {
-      databaseSchemaVersion: 12,
+      databaseSchemaVersion: 15,
       profile: null,
+      remunerationProfiles: [],
       templates: [],
       shifts: [],
       appointments: [],

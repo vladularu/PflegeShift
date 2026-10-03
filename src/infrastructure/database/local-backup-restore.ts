@@ -16,6 +16,10 @@ import {
 import { LocalBackupBlockedError } from "@/infrastructure/database/local-backup";
 import { USER_DATA_PREFERENCE_KEYS } from "@/infrastructure/database/preferences-repository";
 import { withImmediateTransaction } from "@/infrastructure/database/transaction";
+import {
+  REMUNERATION_PROFILE_COLUMNS,
+  initializeLegacyRemunerationProfile,
+} from "./remuneration-profile-repository";
 
 async function insertRows(
   db: SQLiteDatabase,
@@ -58,6 +62,7 @@ export async function restoreLocalBackup(
     await transaction.runAsync("DELETE FROM appointments");
     await transaction.runAsync("DELETE FROM monthly_tariff_decisions");
     await transaction.runAsync("DELETE FROM shift_templates");
+    await transaction.runAsync("DELETE FROM remuneration_profiles");
     await transaction.runAsync("DELETE FROM user_profile");
     const preferencePlaceholders = USER_DATA_PREFERENCE_KEYS.map(() => "?").join(",");
     await transaction.runAsync(
@@ -68,6 +73,14 @@ export async function restoreLocalBackup(
     if (document.data.profile !== null) {
       await insertRows(transaction, "user_profile", PROFILE_COLUMNS, [document.data.profile]);
     }
+    if (document.version === 1) await initializeLegacyRemunerationProfile(transaction);
+    else
+      await insertRows(
+        transaction,
+        "remuneration_profiles",
+        REMUNERATION_PROFILE_COLUMNS,
+        document.data.remunerationProfiles,
+      );
     await insertRows(transaction, "shift_templates", TEMPLATE_COLUMNS, document.data.templates);
     await insertRows(transaction, "shift_entries", SHIFT_COLUMNS, document.data.shifts);
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);

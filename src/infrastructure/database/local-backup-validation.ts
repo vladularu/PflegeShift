@@ -32,6 +32,10 @@ import {
   type LocalBackupDocument,
 } from "@/infrastructure/database/local-backup";
 import { USER_DATA_PREFERENCE_KEYS } from "@/infrastructure/database/preferences-repository";
+import {
+  mapRemunerationProfileRow,
+  REMUNERATION_PROFILE_COLUMNS,
+} from "./remuneration-profile-repository";
 
 export const MAX_LOCAL_BACKUP_CHARACTERS = 10 * 1024 * 1024;
 
@@ -622,6 +626,20 @@ function validatePreferenceRow(value: unknown): BackupRow {
   return frozenBackupRow(row);
 }
 
+function validateRemunerationProfileRow(value: unknown): BackupRow {
+  const row = exactRecord(value, REMUNERATION_PROFILE_COLUMNS);
+  mapRemunerationProfileRow({
+    id: stringValue(row, "id"),
+    effective_from: nullableStringValue(row, "effective_from"),
+    data_json: stringValue(row, "data_json"),
+    revision: integerValue(row, "revision"),
+    created_at: instantValue(row, "created_at"),
+    updated_at: instantValue(row, "updated_at"),
+  });
+  // Keep original JSON bytes in the checksum, not a re-serialized payload.
+  return frozenBackupRow(row);
+}
+
 function uniqueValues(rows: readonly BackupRow[], field: string): void {
   const values = new Set<string>();
   for (const row of rows) {
@@ -697,7 +715,7 @@ export async function validateLocalBackup(
   try {
     const root = exactRecord(parsed, TOP_LEVEL_KEYS);
     if (root.format !== LOCAL_BACKUP_FORMAT) return invalid();
-    if (root.version !== LOCAL_BACKUP_VERSION) {
+    if (root.version !== 1 && root.version !== LOCAL_BACKUP_VERSION) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
     }
     const createdAt = requireInstant(root.createdAt, "Backup-Zeitpunkt");
@@ -711,9 +729,23 @@ export async function validateLocalBackup(
       return invalid("Das Backup stammt aus einer neueren LUNA-Shift-Version.");
     }
 
-    const data = exactRecord(root.data, DATA_KEYS);
+    if (root.version === 2 && (databaseSchemaVersion as number) < 14) return invalid();
+    const data = exactRecord(
+      root.data,
+      root.version === 1 ? DATA_KEYS : [...DATA_KEYS, "remunerationProfiles"],
+    );
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
+    const remunerationProfiles =
+      root.version === 1
+        ? Object.freeze([])
+        : Object.freeze(asArray(data.remunerationProfiles).map(validateRemunerationProfileRow));
+    if (profile === null && remunerationProfiles.length > 0) return invalid();
+    uniqueValues(remunerationProfiles, "id");
+    uniqueValues(
+      remunerationProfiles.filter((row) => row.effective_from !== null),
+      "effective_from",
+    );
     const templates = Object.freeze(asArray(data.templates).map(validateTemplateRow));
     const shifts = Object.freeze(asArray(data.shifts).map(validateShiftRow));
     const appointments = Object.freeze(asArray(data.appointments).map(validateAppointmentRow));
@@ -746,12 +778,13 @@ export async function validateLocalBackup(
 
     const document: LocalBackupDocument = Object.freeze({
       format: LOCAL_BACKUP_FORMAT,
-      version: LOCAL_BACKUP_VERSION,
+      version: root.version,
       createdAt,
       appVersion: appVersion as string | null,
       databaseSchemaVersion: databaseSchemaVersion as number,
       data: Object.freeze({
         profile,
+        remunerationProfiles,
         templates,
         shifts,
         appointments,
@@ -771,7 +804,12 @@ export async function validateLocalBackup(
       createdAt: document.createdAt,
       appVersion: document.appVersion,
       databaseSchemaVersion: document.databaseSchemaVersion,
-      data: document.data,
+      data:
+        root.version === 1
+          ? Object.fromEntries(
+              Object.entries(document.data).filter(([key]) => key !== "remunerationProfiles"),
+            )
+          : document.data,
     });
     if (canonical === undefined) return invalid();
     const calculated = await input.sha256(canonical);
