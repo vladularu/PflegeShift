@@ -1,3 +1,4 @@
+import { LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { createHash } from "node:crypto";
 import canonicalize from "canonicalize";
 import type { SaveTvlShiftWorkInput } from "@/domain/saved-tvl-shift-work";
@@ -49,7 +50,10 @@ export async function setupTvlShiftWork() {
 export type TvlShiftWorkFixture = Awaited<ReturnType<typeof setupTvlShiftWork>>;
 export const tvlSha256 = async (value: string) => createHash("sha256").update(value).digest("hex");
 export const validateTvlBackup = (serialized: string) =>
-  validateLocalBackup(serialized, { maxDatabaseSchemaVersion: 31, sha256: tvlSha256 });
+  validateLocalBackup(serialized, {
+    maxDatabaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    sha256: tvlSha256,
+  });
 export const exportTvlBackup = async (fixture: TvlShiftWorkFixture) =>
   createLocalBackupDocument(await loadLocalBackupSnapshot(fixture.db), {
     appVersion: "0.1.0",

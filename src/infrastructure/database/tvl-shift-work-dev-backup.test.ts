@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, it, expect } from "vitest";
 import { saveTvlShiftWork, listTvlShiftWork } from "./tvl-shift-work-repository";
 import { generateTestRun, restoreTestBackup, setDeveloperMode } from "./dev-tools-repository";
-import { parseDevBackupPayload } from "./dev-backup-payload";
+import { DEV_BACKUP_VERSION, parseDevBackupPayload } from "./dev-backup-payload";
 import { setupTvlShiftWork, type TvlShiftWorkFixture } from "./tvl-shift-work-test-fixtures";
 import { work } from "@/engine/remuneration-test-fixtures";
 
@@ -23,7 +23,7 @@ describe("TV-L confirmation test-lab preservation", () => {
         "SELECT payload FROM dev_test_backups WHERE month='2026-09'",
       );
       const parsed = parseDevBackupPayload(stored!.payload, "2026-09");
-      expect(parsed.version).toBe(16);
+      expect(parsed.version).toBe(DEV_BACKUP_VERSION);
       expect(parsed.remuneration.tvlShiftWork).toHaveLength(1);
       expect(await listTvlShiftWork(f.db)).toEqual([]);
       await generate();

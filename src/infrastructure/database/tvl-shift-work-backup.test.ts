@@ -1,8 +1,9 @@
+import { LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { beforeEach, afterEach, describe, it, expect } from "vitest";
 import { saveShift } from "./calendar-entry-repository";
 import { saveTvlShiftWork, listTvlShiftWork } from "./tvl-shift-work-repository";
 import { restoreLocalBackup } from "./local-backup-restore";
-import { loadLocalBackupSnapshot } from "./local-backup";
+import { LOCAL_BACKUP_VERSION, loadLocalBackupSnapshot } from "./local-backup";
 import {
   setupTvlShiftWork,
   exportTvlBackup,
@@ -23,7 +24,10 @@ describe("TV-L service confirmation across backup versions", () => {
       const saved = await saveTvlShiftWork(f.db, { ...f.input, shiftWork });
       await saveShift(f.db, { ...f.shift, expectedRevision: f.shift.revision, endTime: "20:00" });
       const exported = await exportTvlBackup(f);
-      expect(exported.document).toMatchObject({ version: 19, databaseSchemaVersion: 31 });
+      expect(exported.document).toMatchObject({
+        version: LOCAL_BACKUP_VERSION,
+        databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+      });
       expect(exported.document.data.tvlShiftWork).toHaveLength(1);
       const before = await loadLocalBackupSnapshot(f.db);
       const verified = await validateTvlBackup(exported.serialized);
@@ -59,7 +63,7 @@ describe("TV-L service confirmation across backup versions", () => {
         if (version < 2) delete root.data.remunerationProfiles;
       });
       const checked = await validateTvlBackup(old);
-      expect(checked.document.data.tvlShiftWork).toEqual(version === 9 ? [] : undefined);
+      expect(checked.document.data.tvlShiftWork).toEqual([]);
       await saveTvlShiftWork(f.db, f.input);
       await restoreLocalBackup(f.db, checked);
       expect(await listTvlShiftWork(f.db)).toEqual([]);
