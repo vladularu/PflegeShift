@@ -11,6 +11,7 @@ export function annualPaymentCandidate(training = false): RuleTariffPackage {
     pkg.packageId = "synthetic-training-annual";
     pkg.versionId = "synthetic-2026";
     pkg.status = "DRAFT";
+    pkg.review.status = "DRAFT";
     pkg.rules.selector.agreementId = "tvaoed-vka";
     pkg.rules.selection = {
       ...pkg.rules.selection!,

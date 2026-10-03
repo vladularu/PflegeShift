@@ -30,3 +30,7 @@ Tests prüfen Beschäftigungsgrenzen, bestätigte Bemessungsmonate, Zwölftel, d
 Der Katalog verwendet die [VKA-Lesefassung AT/BT-K](https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf) und die [VKA-Lesefassung AT/BT-B](https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf). Die Dokumente wurden erneut geöffnet; §20 AT und §54 BT-K enthalten den Bemessungs- und Novemberpfad. Das ist ein technischer Quellenabgleich, keine unabhängige fachliche Endabnahme.
 
 Expo-Dokumentation: https://docs.expo.dev/versions/v57.0.0/
+
+## Integrationsabhaengigkeit
+
+Die 62 Tests sind im erhaltenen Gesamtcheckout gruen. Auf aktuellem master fehlen die Ausbildungsfelder und der APPRENTICE-Zweig des Vertrags 11. Dieses Paket bleibt lokal, bis der getrennte Ausbildungskatalog-Vertrag geliefert ist. Es gibt noch keinen PR und keinen Merge.

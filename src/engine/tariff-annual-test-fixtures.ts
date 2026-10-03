@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { AnnualBasisMonth, TariffAnnualClaim } from "@/domain/tariff-annual-claim";
-import { annualPaymentCandidate } from "@/rules/annual-payment-test-fixtures";
+import { annualPaymentCandidate } from "./annual-core-test-fixtures";
 
 export type Mutable<T> = T extends readonly (infer U)[]
   ? Mutable<U>[]
