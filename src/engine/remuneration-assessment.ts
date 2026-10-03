@@ -25,11 +25,8 @@ import {
   type RemunerationPeriod,
 } from "./remuneration-context";
 import { bindRemunerationTariffResolver } from "./remuneration-tariff-adapter";
-import { hasTvalShiftAllowances } from "./remuneration-tval-allowances";
 import { assessTvoedKCalendarMonth } from "./tvoed-k-calendar-assessment";
 import { assessTvoedPattern, isPayWorkShift } from "./tvoed-pattern";
-import { hasTrainingShiftAllowances } from "./remuneration-training-allowances";
-import { hasTvlShiftAllowances } from "./remuneration-tvl-allowances";
 
 export interface DatedAllowanceAssessmentInput {
   readonly month: string;
@@ -75,8 +72,7 @@ function validateDecisions(
 function observationWindow(period: RemunerationPeriod, input: DatedAllowanceAssessmentInput) {
   const first = remunerationMonthStart(input.month);
   const context = period.context;
-  if (context.kind !== "tariff" && context.kind !== "training-tariff")
-    throw new Error("Tarifkontext fehlt.");
+  if (context.kind !== "tariff") throw new Error("Tarifkontext fehlt.");
   const wanted = identityAt(input.history, period.from);
   const minimum = first
     .subtract({ months: context.rulePackage.rules.workPatternPolicy.assessmentLookbackMonths })
@@ -148,48 +144,6 @@ function assessPeriod(
     issue: null,
   };
   if (context.kind === "unavailable") return { ...base, issue: context.issue };
-  if (context.kind === "tvoed-annex-a-draft")
-    return {
-      ...base,
-      issue: {
-        code: "TARIFF_UNSUPPORTED",
-        message: "Für TVöD-Anlage A ist noch keine vollständige Schichtzulagenprüfung verfügbar.",
-      },
-    };
-  if (context.kind === "tvoed-sue-draft")
-    return {
-      ...base,
-      issue: {
-        code: "TARIFF_UNSUPPORTED",
-        message: "Für SuE ist noch keine vollständige Schichtzulagenprüfung verfügbar.",
-      },
-    };
-  if (context.kind === "tval-training")
-    return {
-      ...base,
-      issue: {
-        code: "TARIFF_UNSUPPORTED",
-        message:
-          "TVA-L-Pflege-Schichtzulagen werden nicht aus TVöD-Arbeitsmustern abgeleitet. Bitte den Anspruch für den Zeitraum ausdrücklich bestätigen.",
-      },
-    };
-  if (context.kind === "tvl-kr")
-    return {
-      ...base,
-      issue: {
-        code: "TARIFF_UNSUPPORTED",
-        message: "Für TV-L/KR ist noch keine vollständige Schichtzulagenprüfung verfügbar.",
-      },
-    };
-  if (context.kind === "training-tariff" && !hasTrainingShiftAllowances(context, from))
-    return {
-      ...base,
-      issue: {
-        code: "TARIFF_UNSUPPORTED",
-        message:
-          "Für diesen historischen Zeitraum fehlen noch geprüfte Ausbildungs-Schichtzulagenregeln.",
-      },
-    };
   if (context.kind === "own-monthly" || context.kind === "own-configured")
     return {
       ...base,
@@ -266,16 +220,7 @@ export function deriveDatedAllowanceAssessments(input: DatedAllowanceAssessmentI
             through,
             entitlement: automatic.entitlement ? { ...automatic.entitlement, from, through } : null,
           };
-          if (
-            period.context.kind !== "tariff" &&
-            period.context.kind !== "training-tariff" &&
-            !(period.context.kind === "tvl-kr" && hasTvlShiftAllowances(period.context, from)) &&
-            !(
-              period.context.kind === "tval-training" &&
-              hasTvalShiftAllowances(period.context, from)
-            )
-          )
-            return result;
+          if (period.context.kind !== "tariff") return result;
           if (decision) {
             if (identityKey(decision.tariff) !== identityAt(input.history, from))
               return {
