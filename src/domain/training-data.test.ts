@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shift } from "@/engine/remuneration-test-fixtures";
+import { shift } from "./training-test-fixtures";
 import {
   validateTrainingProfile,
   validateShiftTrainingData,
@@ -408,6 +408,42 @@ describe("explicit training and school contracts", () => {
         saved(data, { ...night, startTime: "02:15", date: "2026-10-25" }),
         { ...night, startTime: "02:15", date: "2026-10-25" },
       ),
+    ).toThrow();
+  });
+});
+
+describe("training profile selection boundaries", () => {
+  const savedProfile = { data: profile, revision: 1, updatedAt: "2026-09-01T00:00:00Z" };
+
+  it("rejects duplicate dates, including future duplicates, independently of input order", () => {
+    const future = { ...savedProfile, data: { ...profile, effectiveFrom: "2027-09-01" } };
+    for (const history of [
+      [savedProfile, savedProfile],
+      [future, savedProfile, future],
+      [future, future, savedProfile],
+    ]) {
+      expect(() => trainingProfileForDate(history, "2026-09-15")).toThrow(/eindeutige/);
+    }
+  });
+  it("returns a detached immutable selected profile while preserving the confirmed training year", () => {
+    const raw = structuredClone(savedProfile);
+    const selected = trainingProfileForDate([raw], "2028-01-01")!;
+    expect(selected.data.training?.year).toBe(1);
+    expect(selected).not.toBe(raw);
+    expect(Object.isFrozen(selected)).toBe(true);
+    expect(Object.isFrozen(selected.data.training)).toBe(true);
+    Object.assign(raw.data.training!, { profession: "changed" });
+    expect(selected.data.training?.profession).toBe("Pflegefachperson");
+  });
+  it.each([
+    { revision: 0 },
+    { revision: Number.MAX_SAFE_INTEGER + 1 },
+    { updatedAt: "invalid" },
+    { data: { ...profile, effectiveFrom: "2026-02-30" } },
+    { inferred: true },
+  ])("rejects malformed saved history %#", (change) => {
+    expect(() =>
+      trainingProfileForDate([{ ...savedProfile, ...change } as typeof savedProfile], "2026-09-15"),
     ).toThrow();
   });
 });

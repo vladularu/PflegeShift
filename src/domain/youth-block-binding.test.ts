@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { service } from "@/engine/youth-test-fixtures";
-import { work } from "@/engine/remuneration-test-fixtures";
+import { service, work } from "./training-test-fixtures";
 import { youthBlockShiftBinding } from "./youth-block-binding";
 
 describe("school-block extra-training confirmation binding", () => {

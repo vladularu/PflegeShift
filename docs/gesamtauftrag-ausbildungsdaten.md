@@ -20,4 +20,4 @@
 
 ## Nachweis
 
-Prüfergebnisse werden im Lieferbranch ergänzt. AZ-01/AZ-02 bleiben bis zur Datenbank-/UI-Anbindung und Abnahme offen.
+03.10.2026: 59 gezielte Tests und verify:fast mit Exit 0 (2.131 Unit-/Integrationstests, 472 Komponententests; alle Script-Gates). Quellcommit 756c4b7 auf dem gemergten master 3a89a49 integriert. Doppelte Profilbeginne einschließlich zukünftiger Dubletten und fehlerhafte gespeicherte Metadaten werden zusätzlich abgewiesen; die Auswahl liefert eine unabhängige eingefrorene Kopie. AZ-01/AZ-02 bleiben bis zur Datenbank-/UI-Anbindung und Abnahme offen.

@@ -214,13 +214,25 @@ export function trainingProfileForDate(
   date: string,
 ): SavedTrainingProfile | null {
   requireRemunerationDate(date);
-  return profiles
-    .filter((p) => p.data.effectiveFrom <= date)
-    .reduce<SavedTrainingProfile | null>(
-      (latest, p) =>
-        latest === null || p.data.effectiveFrom > latest.data.effectiveFrom ? p : latest,
-      null,
-    );
+  const seen = new Set<string>();
+  let latest: SavedTrainingProfile | null = null;
+  for (const profile of profiles) {
+    const raw = exactTrainingRecord(profile, ["data", "revision", "updatedAt"]);
+    const candidate: SavedTrainingProfile = Object.freeze({
+      data: validateTrainingProfile(raw.data),
+      revision: trainingRevision(raw.revision),
+      updatedAt: requireInstant(raw.updatedAt, "Ausbildungsprofil"),
+    });
+    if (seen.has(candidate.data.effectiveFrom))
+      throw new Error("Ausbildungsprofile benötigen eindeutige Gültigkeitsbeginne.");
+    seen.add(candidate.data.effectiveFrom);
+    if (
+      candidate.data.effectiveFrom <= date &&
+      (latest === null || candidate.data.effectiveFrom > latest.data.effectiveFrom)
+    )
+      latest = candidate;
+  }
+  return latest;
 }
 
 function intervals(value: unknown, allowEmpty: boolean): readonly TrainingInterval[] {

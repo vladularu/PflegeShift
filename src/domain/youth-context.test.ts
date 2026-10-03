@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { UNKNOWN_YOUTH_CONTEXT, validateYouthContext } from "./youth-context";
 import { validateTrainingProfile } from "./training-data";
-import { youthProfile } from "@/engine/youth-test-fixtures";
+import { youthProfile } from "./training-test-fixtures";
 
 describe("versioned youth confirmations", () => {
   it("preserves old profiles byte-for-byte semantically and does not assume confirmations", () => {
