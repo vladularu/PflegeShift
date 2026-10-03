@@ -10,7 +10,6 @@ import type {
   TvoedAssessment,
   UserProfile,
 } from "@/domain/types";
-import { getPublicHolidays } from "@/engine/holidays";
 import { calculateMonthlyAllowanceAmounts } from "@/engine/pay-allowances";
 import { assessTvoedKCalendarMonth } from "@/engine/tvoed-k-calendar-assessment";
 import type { NightSequenceExplanation } from "@/engine/tvoed-k-calendar-nights";
@@ -32,14 +31,10 @@ import {
 } from "@/engine/tvoed-pattern";
 import { calculateTimedShiftMinutes } from "@/engine/working-time";
 import { getTariffAssessmentLookbackMonths } from "@/rules/calculation-windows";
-import type {
-  RulePremiumRule,
-  RuleTariffPackage,
-  RuleTimeWindow,
-} from "@/rules/contracts.generated";
+import type { RulePremiumRule } from "@/rules/contracts.generated";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 
-const HOLIDAY_DATE_CACHE = new WeakMap<RuleResolver, Map<string, ReadonlySet<string>>>();
+import { countPremiumMinutes, type PremiumMinuteInterval } from "./pay-premium-minutes";
 
 export { assessTvoedPattern, DEFAULT_TVOED_WORK_PATTERN_SETTINGS };
 
@@ -50,229 +45,12 @@ export interface MonthlyTvoedAssessmentResult {
   readonly tariffLabel: string | null;
 }
 
-interface PremiumMinuteBuckets {
-  readonly byRuleId: Map<string, number>;
-}
-
-interface PremiumDayContext {
-  readonly holiday: boolean;
-  readonly sunday: boolean;
-  readonly saturday: boolean;
-}
-
 function roundMoney(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
-function zonedStart(shift: ShiftEntry, timeZone: string): Temporal.ZonedDateTime {
-  const date = Temporal.PlainDate.from(shift.date);
-  const time = Temporal.PlainTime.from(shift.startTime!);
-  return Temporal.ZonedDateTime.from(
-    {
-      timeZone,
-      year: date.year,
-      month: date.month,
-      day: date.day,
-      hour: time.hour,
-      minute: time.minute,
-    },
-    { disambiguation: "earlier" },
-  );
-}
-
 function grossMinutes(shift: ShiftEntry, timeZone: string): number {
   return calculateTimedShiftMinutes({ ...shift, breakMinutes: 0 }, timeZone);
-}
-
-function holidayDates(
-  year: number,
-  federalState: UserProfile["federalState"],
-  holidayRegion: UserProfile["holidayRegion"],
-  ruleResolver: RuleResolver,
-): ReadonlySet<string> {
-  const key = `${federalState}-${holidayRegion}-${year}`;
-  const resolverCache = HOLIDAY_DATE_CACHE.get(ruleResolver);
-  const cached = resolverCache?.get(key);
-  if (cached) return cached;
-  const dates = new Set(
-    getPublicHolidays(year, federalState, ruleResolver, holidayRegion).map(
-      (holiday) => holiday.date,
-    ),
-  );
-  const nextCache = resolverCache ?? new Map<string, ReadonlySet<string>>();
-  nextCache.set(key, dates);
-  if (!resolverCache) HOLIDAY_DATE_CACHE.set(ruleResolver, nextCache);
-  return dates;
-}
-
-function premiumDayContext(
-  date: Temporal.PlainDate,
-  federalState: UserProfile["federalState"],
-  holidayRegion: UserProfile["holidayRegion"],
-  ruleResolver: RuleResolver,
-): PremiumDayContext {
-  return {
-    holiday: holidayDates(date.year, federalState, holidayRegion, ruleResolver).has(
-      date.toString(),
-    ),
-    sunday: date.dayOfWeek === 7,
-    saturday: date.dayOfWeek === 6,
-  };
-}
-
-function timeWindowContains(window: RuleTimeWindow | null, minuteOfDay: number): boolean {
-  if (window === null) return true;
-  if (window.startMinute < window.endMinute) {
-    return minuteOfDay >= window.startMinute && minuteOfDay < window.endMinute;
-  }
-  return minuteOfDay >= window.startMinute || minuteOfDay < window.endMinute;
-}
-
-function premiumAppliesOnDay(rule: RulePremiumRule, day: PremiumDayContext): boolean {
-  switch (rule.premiumType) {
-    case "NIGHT":
-      return true;
-    case "SUNDAY":
-      return day.sunday;
-    case "HOLIDAY_WITH_TIME_OFF":
-    case "HOLIDAY_WITHOUT_TIME_OFF":
-      return day.holiday;
-    case "SATURDAY":
-      return day.saturday;
-    case "PRE_HOLIDAY":
-      return true;
-    case "OVERTIME":
-      return false;
-  }
-}
-
-function applyCombinationRules(
-  candidates: readonly RulePremiumRule[],
-  rulePackage: RuleTariffPackage,
-): readonly RulePremiumRule[] {
-  const selected = new Map(candidates.map((rule) => [rule.id, rule]));
-  for (const combination of rulePackage.rules.combinationRules) {
-    const members = combination.memberRuleIds
-      .map((ruleId) => selected.get(ruleId))
-      .filter((rule): rule is RulePremiumRule => rule !== undefined);
-    if (members.length <= 1 || combination.mode === "STACK") continue;
-    const winner =
-      combination.mode === "PRIORITY"
-        ? combination.priorityRuleIds
-            .map((ruleId) => selected.get(ruleId))
-            .find((rule): rule is RulePremiumRule => rule !== undefined)
-        : members.reduce((left, right) =>
-            left.percentageBasisPoints >= right.percentageBasisPoints ? left : right,
-          );
-    if (!winner) {
-      throw new Error(`Combination rule ${combination.id} has no active priority winner.`);
-    }
-    for (const member of members) {
-      if (member !== winner) selected.delete(member.id);
-    }
-  }
-  return [...selected.values()];
-}
-
-function countPremiumMinute(
-  buckets: PremiumMinuteBuckets,
-  day: PremiumDayContext,
-  date: string,
-  minuteOfDay: number,
-  shift: ShiftEntry,
-  profile: UserProfile,
-  rulePackage: RuleTariffPackage,
-): void {
-  const candidates = rulePackage.rules.premiumRules.filter(
-    (rule) =>
-      premiumAppliesOnDay(rule, day) &&
-      timeWindowContains(rule.timeWindow, minuteOfDay) &&
-      conditionsMatch(rule.conditions, profile, date, shift, null),
-  );
-  for (const rule of applyCombinationRules(candidates, rulePackage)) {
-    buckets.byRuleId.set(rule.id, (buckets.byRuleId.get(rule.id) ?? 0) + 1);
-  }
-}
-
-function countPremiumMinutes(
-  shift: ShiftEntry,
-  profile: UserProfile,
-  gross: number,
-  breakStart: number,
-  breakEnd: number,
-  rulePackage: RuleTariffPackage,
-  ruleResolver: RuleResolver,
-): PremiumMinuteBuckets {
-  const buckets: PremiumMinuteBuckets = {
-    byRuleId: new Map(),
-  };
-  if (gross <= 0) return buckets;
-
-  const start = zonedStart(shift, profile.timeZone);
-  const lastMinute = start.add({ minutes: gross - 1 });
-  const crossesOffsetTransition = start.offsetNanoseconds !== lastMinute.offsetNanoseconds;
-
-  if (crossesOffsetTransition) {
-    const dayContexts = new Map<string, PremiumDayContext>();
-    for (let index = 0; index < gross; index++) {
-      if (index >= breakStart && index < breakEnd) continue;
-      const cursor = start.add({ minutes: index });
-      const date = cursor.toPlainDate();
-      const dateKey = date.toString();
-      let day = dayContexts.get(dateKey);
-      if (!day) {
-        day = premiumDayContext(date, profile.federalState, profile.holidayRegion, ruleResolver);
-        dayContexts.set(dateKey, day);
-      }
-      countPremiumMinute(
-        buckets,
-        day,
-        dateKey,
-        cursor.hour * 60 + cursor.minute,
-        shift,
-        profile,
-        rulePackage,
-      );
-    }
-    return buckets;
-  }
-
-  const startDate = start.toPlainDate();
-  const startMinuteOfDay = start.hour * 60 + start.minute;
-  let cachedDayOffset = 0;
-  let cachedDate = startDate;
-  let cachedDay = premiumDayContext(
-    startDate,
-    profile.federalState,
-    profile.holidayRegion,
-    ruleResolver,
-  );
-
-  for (let index = 0; index < gross; index++) {
-    if (index >= breakStart && index < breakEnd) continue;
-    const localMinute = startMinuteOfDay + index;
-    const dayOffset = Math.floor(localMinute / (24 * 60));
-    if (dayOffset !== cachedDayOffset) {
-      cachedDayOffset = dayOffset;
-      cachedDate = dayOffset === 0 ? startDate : startDate.add({ days: dayOffset });
-      cachedDay = premiumDayContext(
-        cachedDate,
-        profile.federalState,
-        profile.holidayRegion,
-        ruleResolver,
-      );
-    }
-    countPremiumMinute(
-      buckets,
-      cachedDay,
-      cachedDate.toString(),
-      localMinute % (24 * 60),
-      shift,
-      profile,
-      rulePackage,
-    );
-  }
-  return buckets;
 }
 
 function premiumLine(
@@ -328,9 +106,12 @@ function calculateShiftPremiumBreakdownUncached(
   shift: ShiftEntry,
   profile: UserProfile,
   ruleResolver: RuleResolver,
+  interval?: PremiumMinuteInterval & { readonly date: string },
 ): ShiftPremiumBreakdown {
   const tariff = profile.tariff;
-  const rulePackage = getTariffRulePackage(shift.date, ruleResolver);
+  const referenceDate = interval?.date ?? shift.date;
+  const rulePackage = getTariffRulePackage(referenceDate, ruleResolver);
+  if (interval && (tariff === null || rulePackage === null)) throw new PremiumRuleDataError();
   if (!isWorkShift(shift) || tariff === null || rulePackage === null) {
     return {
       shiftId: shift.id,
@@ -343,7 +124,8 @@ function calculateShiftPremiumBreakdownUncached(
     };
   }
 
-  const individualRate = getIndividualHourlyRate(tariff, shift.date, ruleResolver) ?? 0;
+  const individualRateValue = getIndividualHourlyRate(tariff, referenceDate, ruleResolver);
+  const individualRate = individualRateValue ?? 0;
   const gross = grossMinutes(shift, profile.timeZone);
   const breakStart = Math.floor((gross - Math.min(gross, shift.breakMinutes)) / 2);
   const breakEnd = breakStart + Math.min(gross, shift.breakMinutes);
@@ -355,6 +137,7 @@ function calculateShiftPremiumBreakdownUncached(
     breakEnd,
     rulePackage,
     ruleResolver,
+    interval,
   );
   const premiumKey = (rule: RulePremiumRule): string => {
     switch (rule.premiumType) {
@@ -368,25 +151,54 @@ function calculateShiftPremiumBreakdownUncached(
     }
   };
   const hourlyRateFor = (rule: RulePremiumRule): number => {
-    if (rule.rateBasis === "INDIVIDUAL_HOURLY") return individualRate;
+    if (rule.rateBasis === "INDIVIDUAL_HOURLY") {
+      if (interval && individualRateValue === null) throw new PremiumRuleDataError();
+      return individualRate;
+    }
     if (rule.referenceStepId === null) {
       throw new Error(`Premium rule ${rule.id} requires a reference step.`);
     }
-    return getHourlyTableAmountForStep(tariff, shift.date, rule.referenceStepId, ruleResolver) ?? 0;
+    const rate = getHourlyTableAmountForStep(
+      tariff,
+      referenceDate,
+      rule.referenceStepId,
+      ruleResolver,
+    );
+    if (interval && rate === null) throw new PremiumRuleDataError();
+    return rate ?? 0;
   };
   const lines = rulePackage.rules.premiumRules
-    .filter((rule) => rule.premiumType !== "OVERTIME")
-    .map((rule) =>
-      premiumLine(
+    .filter(
+      (rule) =>
+        rule.premiumType !== "OVERTIME" && (!interval || (buckets.byRuleId.get(rule.id) ?? 0) > 0),
+    )
+    .map((rule) => {
+      const line = premiumLine(
         premiumKey(rule),
         rule.label,
         buckets.byRuleId.get(rule.id) ?? 0,
         rule.percentageBasisPoints / 100,
         hourlyRateFor(rule),
-      ),
-    )
+      );
+      return line && interval ? { ...line, ruleId: rule.id } : line;
+    })
     .filter((line): line is PremiumLine => line !== null);
   const netMinutes = calculateTimedShiftMinutes(shift, profile.timeZone);
+  if (interval) {
+    const breakOverlap = Math.max(
+      0,
+      Math.min(interval.until, breakEnd) - Math.max(interval.from, breakStart),
+    );
+    return {
+      shiftId: shift.id,
+      date: interval.date,
+      netMinutes: interval.until - interval.from - breakOverlap,
+      premiumLines: lines,
+      overtimeBaseAmount: 0,
+      overtimePremiumAmount: 0,
+      totalAmount: roundMoney(lines.reduce((sum, line) => sum + line.amount, 0)),
+    };
+  }
   const overtimeMinutes = shift.tariffOvertimeConfirmed
     ? Math.min(shift.overtimeMinutes, netMinutes)
     : 0;
@@ -442,6 +254,23 @@ export function calculateShiftPremiumBreakdown(
   if (!cachedByInput) nextResolverCache.set(ruleResolver, nextCache);
   if (!cachedByResolver) SHIFT_PREMIUM_CACHE.set(shift, nextResolverCache);
   return result;
+}
+
+export class PremiumRuleDataError extends Error {
+  constructor() {
+    super("Die Stundenbasis für den Zeitzuschlag ist nicht verfügbar.");
+    this.name = "PremiumRuleDataError";
+  }
+}
+
+/** Uses the original shift's pause estimate; never duplicates or allocates overtime. */
+export function calculateShiftTimePremiumInterval(
+  shift: ShiftEntry,
+  profile: UserProfile,
+  ruleResolver: RuleResolver,
+  interval: PremiumMinuteInterval & { readonly date: string },
+): Pick<ShiftPremiumBreakdown, "premiumLines" | "netMinutes"> {
+  return calculateShiftPremiumBreakdownUncached(shift, profile, ruleResolver, interval);
 }
 
 export function calculateMonthlyPayEstimate(
