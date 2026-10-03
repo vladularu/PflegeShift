@@ -17,4 +17,8 @@ Nicht verfügbare Geldbeträge bleiben null mit Grund; ausdrücklich bestätigte
 
 ## Verifikation
 
-Wird nach dem erfolgreichen Integrationscheck ergänzt.
+- Quellcheckout: vollständiges `verify:fast` mit 4.419 Fach-/Integrationstests und 805 Komponententests bestanden.
+- 114 gezielte Vertrags- und Rundungstests auf Quell- und aktuellem master-Stand bestanden.
+- Aktueller master-Integrationscheck: `verify:fast` mit 1.877 Fach-/Integrationstests, 472 Komponententests und 53 Audit-/Härtungsfällen bestanden.
+- Produktions-Audit, `release:check`, Format und `git diff --check` grün.
+- Vor Merge sind alle sieben PR-CI-Gates erforderlich.
