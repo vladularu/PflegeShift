@@ -1,3 +1,4 @@
+import { TVL_SHIFT_WORK_COLUMNS } from "./tvl-shift-work-repository";
 import { TARIFF_ANNUAL_CLAIM_COLUMNS } from "./tariff-annual-claim-repository";
 import { ANNUAL_PAYMENT_COLUMNS } from "./annual-payment-repository";
 import { TRAINING_PROFILE_COLUMNS, SHIFT_TRAINING_COLUMNS } from "./training-repository";
@@ -64,6 +65,7 @@ export async function restoreLocalBackup(
     }
 
     await transaction.runAsync("DELETE FROM scheduled_entry_notifications");
+    await transaction.runAsync("DELETE FROM tvl_shift_work");
     await transaction.runAsync("DELETE FROM tariff_annual_claims");
     await transaction.runAsync("DELETE FROM actual_annual_payments");
     await transaction.runAsync("DELETE FROM shift_training_details");
@@ -137,6 +139,12 @@ export async function restoreLocalBackup(
       "tariff_annual_claims",
       TARIFF_ANNUAL_CLAIM_COLUMNS,
       document.data.tariffAnnualClaims,
+    );
+    await insertRows(
+      transaction,
+      "tvl_shift_work",
+      TVL_SHIFT_WORK_COLUMNS,
+      document.data.tvlShiftWork,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(
