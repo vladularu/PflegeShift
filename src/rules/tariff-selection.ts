@@ -23,7 +23,44 @@ export function tariffSelectionIssues(rulePackage: RuleTariffPackage): Validatio
     );
     return issues;
   }
-  if (rulePackage.engineContractVersion === 11) {
+  if (
+    rulePackage.engineContractVersion === 10 ||
+    (rulePackage.engineContractVersion === 11 && selection.employmentKind === "APPRENTICE")
+  ) {
+    const parts = new Map([
+      ["BT_K", "bt-k"],
+      ["BT_B", "bt-b"],
+    ]);
+    const supported =
+      rulePackage.packageId === "tvaoed-pflege-vka" &&
+      selection.familyId === "tvaoed-pflege" &&
+      selection.engineId === "tvaoed-pflege-v1" &&
+      selection.employmentKind === "APPRENTICE" &&
+      rulePackage.rules.selector.agreementId === "tvaoed-vka" &&
+      rulePackage.rules.payTables.length === 1 &&
+      selection.variants.length === parts.size &&
+      selection.variants.every(
+        (variant) =>
+          parts.get(variant.id) === variant.specialPartId &&
+          variant.regions.length === 2 &&
+          ["OTHER", "KAV_BW"].every((id) => variant.regions.some((region) => region.id === id)) &&
+          variant.regions.every(
+            (region) =>
+              region.payTableId === undefined ||
+              region.payTableId === rulePackage.rules.selector.payTableId,
+          ),
+      ) &&
+      selection.capabilities.basePay === "SUPPORTED" &&
+      selection.capabilities.annualPayment ===
+        (rulePackage.engineContractVersion === 11 ? "SUPPORTED" : "UNSUPPORTED");
+    if (!supported)
+      add(
+        "UNSUPPORTED_TARIFF_SELECTION",
+        "/rules/selection",
+        "Training contracts 10 and 11 require explicit TVAöD-Pflege VKA BT-K/BT-B identity and capabilities.",
+      );
+  }
+  if (rulePackage.engineContractVersion === 11 && selection.employmentKind !== "APPRENTICE") {
     const expectedParts = new Map([
       ["BT_K", "bt-k"],
       ["BT_B", "bt-b"],
