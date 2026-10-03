@@ -6,6 +6,7 @@ TVöD-P und eigene persönliche Vergütung erhalten datierte Zulagen- und Übers
 
 ## Dateiscope
 
+- src/engine/pay-allowances.ts: bestehende Zulagenregeln als gemeinsame API
 - src/engine/remuneration-allowances.ts
 - src/engine/remuneration-allowances.test.ts
 - src/engine/remuneration-overtime.ts
