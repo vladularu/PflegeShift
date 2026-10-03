@@ -1,3 +1,4 @@
+import { TARIFF_ANNUAL_CLAIM_COLUMNS } from "./tariff-annual-claim-repository";
 import { ANNUAL_PAYMENT_COLUMNS } from "./annual-payment-repository";
 import { TRAINING_PROFILE_COLUMNS, SHIFT_TRAINING_COLUMNS } from "./training-repository";
 import { PAID_ABSENCE_COLUMNS } from "./paid-absence-repository";
@@ -63,6 +64,7 @@ export async function restoreLocalBackup(
     }
 
     await transaction.runAsync("DELETE FROM scheduled_entry_notifications");
+    await transaction.runAsync("DELETE FROM tariff_annual_claims");
     await transaction.runAsync("DELETE FROM actual_annual_payments");
     await transaction.runAsync("DELETE FROM shift_training_details");
     await transaction.runAsync("DELETE FROM training_profiles");
@@ -129,6 +131,12 @@ export async function restoreLocalBackup(
       "actual_annual_payments",
       ANNUAL_PAYMENT_COLUMNS,
       document.data.actualAnnualPayments,
+    );
+    await insertRows(
+      transaction,
+      "tariff_annual_claims",
+      TARIFF_ANNUAL_CLAIM_COLUMNS,
+      document.data.tariffAnnualClaims,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(

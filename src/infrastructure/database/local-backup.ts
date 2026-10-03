@@ -1,3 +1,8 @@
+import {
+  TARIFF_ANNUAL_CLAIM_COLUMNS,
+  mapTariffAnnualClaimRow,
+} from "./tariff-annual-claim-repository";
+import { validateSavedTariffAnnualClaims } from "@/domain/saved-tariff-annual-claim";
 import { ANNUAL_PAYMENT_COLUMNS, mapAnnualPaymentRow } from "./annual-payment-repository";
 import { validateSavedActualOwnAnnualPayments } from "@/domain/saved-annual-payment";
 import { TRAINING_PROFILE_COLUMNS, SHIFT_TRAINING_COLUMNS } from "./training-repository";
@@ -12,7 +17,7 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 import { REMUNERATION_PROFILE_COLUMNS } from "./remuneration-profile-repository";
 
 export const LOCAL_BACKUP_FORMAT = "lunashift-local-backup";
-export const LOCAL_BACKUP_VERSION = 7;
+export const LOCAL_BACKUP_VERSION = 8;
 
 type BackupScalar = string | number | null;
 type BackupRow = Readonly<Record<string, BackupScalar>>;
@@ -27,6 +32,7 @@ export interface LocalBackupSnapshot {
   readonly trainingProfiles: readonly BackupRow[];
   readonly shiftTrainingDetails: readonly BackupRow[];
   readonly actualAnnualPayments: readonly BackupRow[];
+  readonly tariffAnnualClaims: readonly BackupRow[];
   readonly templates: readonly BackupRow[];
   readonly shifts: readonly BackupRow[];
   readonly appointments: readonly BackupRow[];
@@ -36,7 +42,7 @@ export interface LocalBackupSnapshot {
 
 interface UnsignedLocalBackupDocument {
   readonly format: typeof LOCAL_BACKUP_FORMAT;
-  readonly version: 1 | 2 | 3 | 4 | 5 | 6 | typeof LOCAL_BACKUP_VERSION;
+  readonly version: 1 | 2 | 3 | 4 | 5 | 6 | 7 | typeof LOCAL_BACKUP_VERSION;
   readonly createdAt: string;
   readonly appVersion: string | null;
   readonly databaseSchemaVersion: number;
@@ -49,6 +55,7 @@ interface UnsignedLocalBackupDocument {
     readonly trainingProfiles: readonly BackupRow[];
     readonly shiftTrainingDetails: readonly BackupRow[];
     readonly actualAnnualPayments: readonly BackupRow[];
+    readonly tariffAnnualClaims: readonly BackupRow[];
     readonly templates: readonly BackupRow[];
     readonly shifts: readonly BackupRow[];
     readonly appointments: readonly BackupRow[];
@@ -139,6 +146,12 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
         " FROM actual_annual_payments ORDER BY entitlement_year,payment_id",
     );
     validateSavedActualOwnAnnualPayments(actualAnnualPayments.map(mapAnnualPaymentRow));
+    const tariffAnnualClaims = await transaction.getAllAsync<BackupRow>(
+      "SELECT " +
+        TARIFF_ANNUAL_CLAIM_COLUMNS.join(",") +
+        " FROM tariff_annual_claims ORDER BY entitlement_year,claim_id",
+    );
+    validateSavedTariffAnnualClaims(tariffAnnualClaims.map(mapTariffAnnualClaimRow));
     const templates = await transaction.getAllAsync<BackupRow>(
       `SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
               all_day,notification_json,location_json,revision,created_at,updated_at,deleted_at
@@ -184,6 +197,7 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
       trainingProfiles: Object.freeze(trainingProfiles.map(Object.freeze)),
       shiftTrainingDetails: Object.freeze(shiftTrainingDetails.map(Object.freeze)),
       actualAnnualPayments: Object.freeze(actualAnnualPayments.map(Object.freeze)),
+      tariffAnnualClaims: Object.freeze(tariffAnnualClaims.map(Object.freeze)),
       templates: Object.freeze(templates.map(Object.freeze)),
       shifts: Object.freeze(shifts.map(Object.freeze)),
       appointments: Object.freeze(appointments.map(Object.freeze)),
@@ -217,6 +231,7 @@ export async function createLocalBackupDocument(
       trainingProfiles: snapshot.trainingProfiles,
       shiftTrainingDetails: snapshot.shiftTrainingDetails,
       actualAnnualPayments: snapshot.actualAnnualPayments,
+      tariffAnnualClaims: snapshot.tariffAnnualClaims,
       templates: snapshot.templates,
       shifts: snapshot.shifts,
       appointments: snapshot.appointments,

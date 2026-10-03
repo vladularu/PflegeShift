@@ -3,13 +3,14 @@ import canonicalize from "canonicalize";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ConcurrencyError } from "@/domain/errors";
 import { tariffAnnualFixture } from "@/engine/tariff-annual-test-fixtures";
-import tvlRaw from "../../../rules/packages/reviewed/tvl-kr-tdl/2026-04.json";
-import type { RuleTariffPackage } from "@/rules/contracts.generated";
-import { calculateTariffAnnualClaim } from "@/engine/tariff-annual-payment";
-import { createLocalBackupDocument, loadLocalBackupSnapshot } from "./local-backup";
+import {
+  createLocalBackupDocument,
+  loadLocalBackupSnapshot,
+  LOCAL_BACKUP_VERSION,
+} from "./local-backup";
 import { validateLocalBackup } from "./local-backup-validation";
 import { restoreLocalBackup } from "./local-backup-restore";
-import { migrateDatabase } from "./migrations";
+import { migrateDatabase, LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { loadProfile } from "./profile-repository";
 import { generateTestRun, restoreTestBackup, setDeveloperMode } from "./dev-tools-repository";
 import {
@@ -57,7 +58,10 @@ describe("tariff annual claim backup v8", () => {
       sha256,
     });
   const validate = (serialized: string) =>
-    validateLocalBackup(serialized, { maxDatabaseSchemaVersion: 31, sha256 });
+    validateLocalBackup(serialized, {
+      maxDatabaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+      sha256,
+    });
 
   it("retains the V2 TV-L confirmation through database reload and backup restoration", async () => {
     const { claim } = tariffAnnualFixture();
@@ -81,9 +85,7 @@ describe("tariff annual claim backup v8", () => {
     const restored = (await listTariffAnnualClaims(adapter.db))[0];
     expect(restored).toEqual(initial);
     expect(restored.claim.exceptions.tvlLegacyRetirementExit).toBe(false);
-    expect(
-      calculateTariffAnnualClaim(tvlRaw as RuleTariffPackage, restored.claim).amountCents,
-    ).toBe(223050);
+    expect(restored.claim.selection).toEqual(claim.selection);
     const malformed = await resign(exported.serialized, (root) => {
       const rows = root.data.tariffAnnualClaims as { claim_json: string }[];
       const payload = JSON.parse(rows[0].claim_json) as { exceptions: Record<string, unknown> };
@@ -94,7 +96,7 @@ describe("tariff annual claim backup v8", () => {
     expect(await listTariffAnnualClaims(adapter.db)).toEqual([initial]);
   });
 
-  it("round-trips a V3 Caritas confirmation in backup v12 without relabeling it as v11", async () => {
+  it("blocks Caritas V3 storage until the coordinated backup v12 package is integrated", async () => {
     const { claim } = tariffAnnualFixture();
     claim.version = 3;
     claim.selection = {
@@ -105,39 +107,28 @@ describe("tariff annual claim backup v8", () => {
       confirmed: true,
       groupAtSeptember1Confirmed: true,
     };
-    const initial = await saveTariffAnnualClaim(adapter.db, {
-      claim,
-      actualPayment: null,
-      expected: null,
-    });
-    const exported = await backup();
-    expect(exported.document.version).toBe(19);
-    const mislabeled = await resign(exported.serialized, (root) => {
-      root.version = 11;
-      root.databaseSchemaVersion = 24;
-      delete root.data.caritasOvertime;
-      delete root.data.tvoedAnnexAMonthConfirmations;
-      delete root.data.tvoedSueMonthConfirmations;
-      delete root.data.tvoedSueAllowanceConfirmations;
-    });
-    await expect(validate(mislabeled)).rejects.toThrow();
-    await revokeTariffAnnualClaim(adapter.db, initial);
-    await restoreLocalBackup(adapter.db, await validate(exported.serialized));
-    expect(await listTariffAnnualClaims(adapter.db)).toEqual([initial]);
+    await expect(
+      saveTariffAnnualClaim(adapter.db, { claim, actualPayment: null, expected: null }),
+    ).rejects.toThrow("Speicherformat");
+    expect(await listTariffAnnualClaims(adapter.db)).toEqual([]);
   });
-
-  it("continues to import a genuine v11 backup with unchanged V1 claims", async () => {
-    const initial = await save("previous-version", null);
-    const legacy = await resign((await backup()).serialized, (root) => {
-      root.version = 11;
-      root.databaseSchemaVersion = 24;
-      delete root.data.caritasOvertime;
-      delete root.data.tvoedAnnexAMonthConfirmations;
-      delete root.data.tvoedSueMonthConfirmations;
-      delete root.data.tvoedSueAllowanceConfirmations;
+  it("rejects a valid Caritas V3 payload mislabeled as backup v8", async () => {
+    const initial = await save("old-format");
+    const malformed = await resign((await backup()).serialized, (root) => {
+      const row = (root.data.tariffAnnualClaims as { claim_json: string }[])[0];
+      const claim = JSON.parse(row.claim_json);
+      claim.version = 3;
+      claim.selection = {
+        packageId: "avr-caritas-p-bw",
+        variant: "ANLAGE_31",
+        region: "BW",
+        group: "p7",
+        confirmed: true,
+        groupAtSeptember1Confirmed: true,
+      };
+      row.claim_json = JSON.stringify(claim);
     });
-    await revokeTariffAnnualClaim(adapter.db, initial);
-    await restoreLocalBackup(adapter.db, await validate(legacy));
+    await expect(validate(malformed)).rejects.toThrow();
     expect(await listTariffAnnualClaims(adapter.db)).toEqual([initial]);
   });
 
@@ -145,7 +136,7 @@ describe("tariff annual claim backup v8", () => {
     const profile = await adapter.db.getFirstAsync("SELECT * FROM user_profile");
     // Only this isolated in-memory fixture is rewound to simulate a schema-20 installation.
     adapter.database.exec(
-      "DROP TABLE drk_training_month_confirmations; DROP TABLE drk_employee_month_confirmations; DROP TABLE tvoed_annex_a_premium_facts; DROP TABLE tvoed_sue_allowance_confirmations; DROP TABLE tvoed_sue_month_confirmations; DROP TABLE tvoed_annex_a_month_confirmations; DROP TABLE caritas_overtime; DROP TABLE caritas_month_facts; DROP TABLE caritas_work_days; DROP TABLE tvl_shift_work; DROP TABLE tariff_annual_claims; DELETE FROM schema_migrations WHERE version>=21",
+      "DROP TABLE tariff_annual_claims; DELETE FROM schema_migrations WHERE version>=21",
     );
     adapter.fail = "VALUES(21,?)";
     await expect(migrateDatabase(adapter.db)).rejects.toThrow("injected");
@@ -176,7 +167,10 @@ describe("tariff annual claim backup v8", () => {
     const before = await loadLocalBackupSnapshot(adapter.db);
     const rows = await listTariffAnnualClaims(adapter.db);
     const exported = await backup();
-    expect(exported.document).toMatchObject({ version: 19, databaseSchemaVersion: 31 });
+    expect(exported.document).toMatchObject({
+      version: LOCAL_BACKUP_VERSION,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    });
     expect(exported.document.data.tariffAnnualClaims).toHaveLength(4);
     await revokeTariffAnnualClaim(adapter.db, paid);
     await save("destination-only", 1);
@@ -211,7 +205,7 @@ describe("tariff annual claim backup v8", () => {
         if (version < 2) delete root.data.remunerationProfiles;
       });
       const checked = await validate(legacy);
-      expect(checked.document.data.tariffAnnualClaims).toBeUndefined();
+      expect(checked.document.data.tariffAnnualClaims).toEqual([]);
       await restoreLocalBackup(adapter.db, checked);
       expect(await listTariffAnnualClaims(adapter.db)).toEqual([]);
       await expect(
