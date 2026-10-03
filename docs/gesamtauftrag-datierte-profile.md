@@ -17,4 +17,8 @@ Das Profil hält bestätigte persönliche Angaben getrennt von Tariftabellen. Es
 
 ## Verifikation
 
-Quellcheckout: vollständiges verify:fast mit 4.419 Fach-/Integrationstests und 805 Komponententests grün. Gezielte Profilprüfung und aktueller master-Integrationscheck werden ergänzt.
+- Quellcheckout: vollständiges `verify:fast` mit 4.419 Fach-/Integrationstests und 805 Komponententests grün.
+- 96 gezielte Profil-/Bestätigungstests auf Quell- und aktuellem master-Stand bestanden.
+- Aktueller master-Integrationscheck: `verify:fast` mit 1.973 Fach-/Integrationstests, 472 Komponententests und 53 Audit-/Härtungsfällen bestanden.
+- Keine Native-, UI- oder Datenbankänderung; Speicherung und App-Anbindung folgen separat.
+- Vor Merge sind sieben grüne PR-CI-Gates erforderlich.
