@@ -23,3 +23,7 @@ Die vorhandenen TVöD-P-Tests prüfen Quellen, zeitliche Entscheidungen, Rundung
 Die Nutzerfreigabe für den Gesamtauftrag umfasst dieses Paket. Die unabhängige Fachabnahme bleibt ein eigener tatsächlicher Nachweis.
 
 Expo-Dokumentation: https://docs.expo.dev/versions/v57.0.0/
+
+## Gepruefter Lieferstand
+
+Integration auf master 69e5f02: 68 gezielte Tests und verify:fast (2300 Unit-/Integrationstests, 472 Komponententests) erfolgreich.
