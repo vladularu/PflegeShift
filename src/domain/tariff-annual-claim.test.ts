@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateTariffAnnualClaim } from "./tariff-annual-claim";
-import { tariffAnnualFixture } from "@/engine/tariff-annual-test-fixtures";
+import { tariffAnnualFixture } from "./confirmation-test-fixtures";
 import { ValidationError } from "./validation";
 
 describe("personal tariff annual claim contract", () => {

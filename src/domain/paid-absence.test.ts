@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isCurrentPaidAbsence, validatePaidAbsence, type SavedPaidAbsence } from "./paid-absence";
-import { shift, work } from "@/engine/remuneration-test-fixtures";
+import { shift, work } from "./confirmation-test-fixtures";
 
 const entry = shift({ type: "VACATION", allDay: true, startTime: null, endTime: null });
 const record: SavedPaidAbsence = {

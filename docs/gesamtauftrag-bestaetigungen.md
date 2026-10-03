@@ -20,4 +20,4 @@
 
 ## Nachweis
 
-Prüfergebnisse werden im Lieferbranch ergänzt. Die VG-Hauptaufträge bleiben bis zur vollständigen Anbindung und fachlichen Abnahme offen.
+03.10.2026: 81 fokussierte Vertragsfälle und verify:fast mit Exit 0 (2.072 Unit-/Integrationstests, 472 Komponententests; alle Script-Gates). Basis ist der gemergte Katalog-V2-Stand b619fac; Quellcommit 8352db0 wurde ohne Kopieren oder Zurücksetzen des ursprünglichen Checkouts integriert. Die VG-Hauptaufträge bleiben bis zur vollständigen Anbindung und fachlichen Abnahme offen.
