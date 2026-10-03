@@ -1,3 +1,5 @@
+import { mapTariffAnnualClaimRow } from "./tariff-annual-claim-repository";
+import { validateSavedTariffAnnualClaims } from "@/domain/saved-tariff-annual-claim";
 import { mapAnnualPaymentRow } from "./annual-payment-repository";
 import { validateSavedActualOwnAnnualPayments } from "@/domain/saved-annual-payment";
 import { mapTrainingProfileRow, mapShiftTrainingRow } from "./training-repository";
@@ -783,6 +785,7 @@ export async function validateLocalBackup(
       root.version !== 4 &&
       root.version !== 5 &&
       root.version !== 6 &&
+      root.version !== 7 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -807,6 +810,7 @@ export async function validateLocalBackup(
       ...(root.version >= 5 ? ["paidAbsences"] : []),
       ...(root.version >= 6 ? ["trainingProfiles", "shiftTrainingDetails"] : []),
       ...(root.version >= 7 ? ["actualAnnualPayments"] : []),
+      ...(root.version >= 8 ? ["tariffAnnualClaims"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -941,6 +945,27 @@ export async function validateLocalBackup(
       validateSavedActualOwnAnnualPayments(actualAnnualPayments.map(mapAnnualPaymentRow));
     }
 
+    const tariffAnnualClaims =
+      root.version >= 8
+        ? Object.freeze(
+            asArray(data.tariffAnnualClaims).map((value) => {
+              mapTariffAnnualClaimRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 8) {
+      if (
+        (databaseSchemaVersion as number) < 21 ||
+        (profile === null && tariffAnnualClaims.length > 0)
+      )
+        return invalid();
+      const claims = validateSavedTariffAnnualClaims(
+        tariffAnnualClaims.map(mapTariffAnnualClaimRow),
+      );
+      if (root.version < 12 && claims.some((row) => row.claim.version === 3)) return invalid();
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -978,6 +1003,7 @@ export async function validateLocalBackup(
         trainingProfiles,
         shiftTrainingDetails,
         actualAnnualPayments,
+        tariffAnnualClaims,
         templates,
         shifts,
         appointments,
@@ -1008,7 +1034,8 @@ export async function validateLocalBackup(
               document.version < 6 &&
               (key === "trainingProfiles" || key === "shiftTrainingDetails")
             ) &&
-            !(document.version < 7 && key === "actualAnnualPayments"),
+            !(document.version < 7 && key === "actualAnnualPayments") &&
+            !(document.version < 8 && key === "tariffAnnualClaims"),
         ),
       ),
     });
