@@ -112,8 +112,8 @@ describe("Caritas care allowance rate contract, not an entitlement", () => {
 
   it("rejects the rate field outside Caritas contract 14", () => {
     const pkg = withRates();
-    Reflect.set(pkg, "engineContractVersion", 12); // Deliberately invalid schema input.
-    expect(codes(pkg)).toContain("SCHEMA_ENUM");
+    Reflect.set(pkg, "engineContractVersion", 12); // Deliberately mismatched tariff-family identity.
+    expect(codes(pkg)).toContain("TVL_KR_IDENTITY");
     expect(caritasTableIssues(pkg).map((issue) => issue.code)).toContain("CARITAS_RATE_CONTRACT");
   });
 });

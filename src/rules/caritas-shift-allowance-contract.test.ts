@@ -115,7 +115,7 @@ describe("Caritas section 6 shift allowance rate contract", () => {
   it("keeps the rate field within Caritas contract 14", () => {
     const pkg = withRates();
     Reflect.set(pkg, "engineContractVersion", 12);
-    expect(codes(pkg)).toContain("SCHEMA_ENUM");
+    expect(codes(pkg)).toContain("TVL_KR_IDENTITY");
     expect(caritasTableIssues(pkg).map((issue) => issue.code)).toContain("CARITAS_SHIFT_CONTRACT");
   });
 });

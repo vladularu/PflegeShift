@@ -6,6 +6,7 @@ import type {
   Track,
 } from "./contracts.generated";
 import { annualPaymentRuleIssues } from "./annual-payment-rule-validation";
+import { tvlKrIssues } from "./tvl-kr-validation";
 import { caritasAnnualPaymentIssues } from "./caritas-annual-payment-validation";
 import { caritasTableIssues } from "./caritas-table-validation";
 import { tariffSelectionIssues } from "./tariff-selection";
@@ -143,6 +144,7 @@ function validateTariffPackage(
   issues.push(...tariffSelectionIssues(rulePackage));
   issues.push(...trainingPayIssues(rulePackage));
   issues.push(...annualPaymentRuleIssues(rulePackage));
+  issues.push(...tvlKrIssues(rulePackage));
   issues.push(...caritasTableIssues(rulePackage));
   issues.push(...caritasAnnualPaymentIssues(rulePackage));
   reportDuplicates(
@@ -204,6 +206,7 @@ function validateTariffPackage(
   if (
     rulePackage.engineContractVersion >= 2 &&
     rulePackage.engineContractVersion !== 14 &&
+    rulePackage.engineContractVersion !== 12 &&
     rulePackage.engineContractVersion !== 10 &&
     !(
       rulePackage.engineContractVersion === 11 && rules.selection?.employmentKind === "APPRENTICE"
@@ -258,7 +261,11 @@ function validateTariffPackage(
 
   const weeklyWorkingTimeRules = rules.weeklyWorkingTimeRules;
   const hourlyCalculation = rules.hourlyCalculation;
-  if (rulePackage.engineContractVersion >= 3 && rulePackage.engineContractVersion !== 14) {
+  if (
+    rulePackage.engineContractVersion >= 3 &&
+    rulePackage.engineContractVersion !== 14 &&
+    rulePackage.engineContractVersion !== 12
+  ) {
     if (weeklyWorkingTimeRules === undefined) {
       issues.push(
         issue(
