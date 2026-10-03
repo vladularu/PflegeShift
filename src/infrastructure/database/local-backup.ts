@@ -1,3 +1,5 @@
+import { ALLOWANCE_DECISION_COLUMNS } from "./allowance-decision-repository";
+import { OVERTIME_ALLOCATION_COLUMNS } from "./overtime-allocation-repository";
 import canonicalize from "canonicalize";
 import type { SQLiteDatabase } from "expo-sqlite";
 
@@ -6,7 +8,7 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 import { REMUNERATION_PROFILE_COLUMNS } from "./remuneration-profile-repository";
 
 export const LOCAL_BACKUP_FORMAT = "lunashift-local-backup";
-export const LOCAL_BACKUP_VERSION = 2;
+export const LOCAL_BACKUP_VERSION = 4;
 
 type BackupScalar = string | number | null;
 type BackupRow = Readonly<Record<string, BackupScalar>>;
@@ -15,6 +17,8 @@ export interface LocalBackupSnapshot {
   readonly databaseSchemaVersion: number;
   readonly profile: BackupRow | null;
   readonly remunerationProfiles: readonly BackupRow[];
+  readonly allowanceDecisions: readonly BackupRow[];
+  readonly overtimeAllocations: readonly BackupRow[];
   readonly templates: readonly BackupRow[];
   readonly shifts: readonly BackupRow[];
   readonly appointments: readonly BackupRow[];
@@ -24,13 +28,15 @@ export interface LocalBackupSnapshot {
 
 interface UnsignedLocalBackupDocument {
   readonly format: typeof LOCAL_BACKUP_FORMAT;
-  readonly version: 1 | typeof LOCAL_BACKUP_VERSION;
+  readonly version: 1 | 2 | 3 | typeof LOCAL_BACKUP_VERSION;
   readonly createdAt: string;
   readonly appVersion: string | null;
   readonly databaseSchemaVersion: number;
   readonly data: {
     readonly profile: BackupRow | null;
     readonly remunerationProfiles: readonly BackupRow[];
+    readonly allowanceDecisions: readonly BackupRow[];
+    readonly overtimeAllocations: readonly BackupRow[];
     readonly templates: readonly BackupRow[];
     readonly shifts: readonly BackupRow[];
     readonly appointments: readonly BackupRow[];
@@ -92,6 +98,16 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
         REMUNERATION_PROFILE_COLUMNS.join(",") +
         " FROM remuneration_profiles ORDER BY effective_from",
     );
+    const allowanceDecisions = await transaction.getAllAsync<BackupRow>(
+      "SELECT " +
+        ALLOWANCE_DECISION_COLUMNS.join(",") +
+        " FROM scoped_allowance_decisions ORDER BY month",
+    );
+    const overtimeAllocations = await transaction.getAllAsync<BackupRow>(
+      "SELECT " +
+        OVERTIME_ALLOCATION_COLUMNS.join(",") +
+        " FROM overtime_allocations ORDER BY shift_id",
+    );
     const templates = await transaction.getAllAsync<BackupRow>(
       `SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
               all_day,notification_json,location_json,revision,created_at,updated_at,deleted_at
@@ -131,6 +147,8 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
       databaseSchemaVersion: schema.version,
       profile: profile === null ? null : Object.freeze(profile),
       remunerationProfiles: Object.freeze(remunerationProfiles.map(Object.freeze)),
+      allowanceDecisions: Object.freeze(allowanceDecisions.map(Object.freeze)),
+      overtimeAllocations: Object.freeze(overtimeAllocations.map(Object.freeze)),
       templates: Object.freeze(templates.map(Object.freeze)),
       shifts: Object.freeze(shifts.map(Object.freeze)),
       appointments: Object.freeze(appointments.map(Object.freeze)),
@@ -158,6 +176,8 @@ export async function createLocalBackupDocument(
     data: Object.freeze({
       profile: snapshot.profile,
       remunerationProfiles: snapshot.remunerationProfiles,
+      allowanceDecisions: snapshot.allowanceDecisions,
+      overtimeAllocations: snapshot.overtimeAllocations,
       templates: snapshot.templates,
       shifts: snapshot.shifts,
       appointments: snapshot.appointments,

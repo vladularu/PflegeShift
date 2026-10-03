@@ -10,7 +10,10 @@ import {
   loadLocalBackupSnapshot,
   type LocalBackupSnapshot,
 } from "@/infrastructure/database/local-backup";
-import { migrateDatabase } from "@/infrastructure/database/migrations";
+import {
+  migrateDatabase,
+  LATEST_DATABASE_SCHEMA_VERSION,
+} from "@/infrastructure/database/migrations";
 import { exportLocalBackup } from "@/features/data-backup/local-backup-export";
 
 class TestDatabase {
@@ -94,7 +97,7 @@ describe("local backup", () => {
 
     const changesAfter = testDb.database.prepare("SELECT total_changes() count").get();
     expect(changesAfter).toEqual(changesBefore);
-    expect(snapshot.databaseSchemaVersion).toBe(15);
+    expect(snapshot.databaseSchemaVersion).toBe(LATEST_DATABASE_SCHEMA_VERSION);
     expect(snapshot.profile).toMatchObject({
       id: "singleton",
       industry: "HEALTHCARE",
@@ -130,9 +133,11 @@ describe("local backup", () => {
 
   it("creates deterministic versioned JSON with a checksum over the unsigned document", async () => {
     const snapshot: LocalBackupSnapshot = {
-      databaseSchemaVersion: 15,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
       profile: null,
       remunerationProfiles: [],
+      allowanceDecisions: [],
+      overtimeAllocations: [],
       templates: [],
       shifts: [],
       appointments: [],
@@ -153,7 +158,7 @@ describe("local backup", () => {
       version: LOCAL_BACKUP_VERSION,
       createdAt: "2026-09-02T08:09:10.123Z",
       appVersion: "1.0.0",
-      databaseSchemaVersion: 15,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
       integrity: {
         algorithm: "SHA-256",
         canonicalization: "RFC8785",
@@ -193,9 +198,11 @@ describe("local backup", () => {
 
   it("rejects a malformed checksum", async () => {
     const emptySnapshot: LocalBackupSnapshot = {
-      databaseSchemaVersion: 15,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
       profile: null,
       remunerationProfiles: [],
+      allowanceDecisions: [],
+      overtimeAllocations: [],
       templates: [],
       shifts: [],
       appointments: [],

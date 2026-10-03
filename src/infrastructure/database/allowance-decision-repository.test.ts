@@ -1,3 +1,8 @@
+import {
+  LOCAL_BACKUP_VERSION,
+  createLocalBackupDocument,
+  loadLocalBackupSnapshot,
+} from "./local-backup";
 import { createHash, randomUUID } from "node:crypto";
 import { unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -15,10 +20,9 @@ import {
   loadMonthlyAllowanceDecisions,
   saveMonthlyAllowanceDecisions,
 } from "./allowance-decision-repository";
-import { migrateDatabase } from "./migrations";
+import { migrateDatabase, LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { saveProfile } from "./profile-repository";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
-import { createLocalBackupDocument, loadLocalBackupSnapshot } from "./local-backup";
 import { validateLocalBackup } from "./local-backup-validation";
 import { restoreLocalBackup } from "./local-backup-restore";
 
@@ -96,7 +100,10 @@ async function resign(serialized: string, mutate: (root: Record<string, unknown>
   });
 }
 const validate = (serialized: string) =>
-  validateLocalBackup(serialized, { maxDatabaseSchemaVersion: 31, sha256 });
+  validateLocalBackup(serialized, {
+    maxDatabaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    sha256,
+  });
 
 describe("scoped allowance decision persistence", () => {
   let adapter: TestDatabase;
@@ -319,7 +326,7 @@ describe("scoped allowance decision persistence", () => {
     });
     const before = await loadLocalBackupSnapshot(db);
     const exported = await backup(db);
-    expect(exported.document.version).toBe(19);
+    expect(exported.document.version).toBe(LOCAL_BACKUP_VERSION);
     await save(db, 1, []);
     await restoreLocalBackup(db, await validate(exported.serialized));
     expect(await loadLocalBackupSnapshot(db)).toEqual(before);

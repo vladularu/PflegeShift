@@ -1,11 +1,15 @@
+import {
+  LOCAL_BACKUP_VERSION,
+  createLocalBackupDocument,
+  loadLocalBackupSnapshot,
+} from "./local-backup";
 import { createHash } from "node:crypto";
 import Database from "better-sqlite3";
 import canonicalize from "canonicalize";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { migrateDatabase } from "./migrations";
+import { migrateDatabase, LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { loadProfile, saveProfile } from "./profile-repository";
-import { createLocalBackupDocument, loadLocalBackupSnapshot } from "./local-backup";
 import { validateLocalBackup } from "./local-backup-validation";
 import { restoreLocalBackup } from "./local-backup-restore";
 import {
@@ -56,7 +60,10 @@ const data = {
 const sha256 = async (value: string) => createHash("sha256").update(value).digest("hex");
 const input = (expectedRevision = 0) => ({ effectiveFrom: "2026-10-01", data, expectedRevision });
 const validate = (serialized: string) =>
-  validateLocalBackup(serialized, { maxDatabaseSchemaVersion: 15, sha256 });
+  validateLocalBackup(serialized, {
+    maxDatabaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    sha256,
+  });
 async function exportBackup(db: SQLiteDatabase) {
   return createLocalBackupDocument(await loadLocalBackupSnapshot(db), {
     appVersion: "synthetic",
@@ -94,7 +101,7 @@ describe("dated profile storage and backup compatibility", () => {
   });
   function downgradeTo13() {
     source.raw.exec(
-      "DROP TABLE remuneration_profiles; DELETE FROM schema_migrations WHERE version>=14",
+      "DROP TABLE overtime_allocations; DROP TABLE scoped_allowance_decisions; DROP TABLE remuneration_profiles; DELETE FROM schema_migrations WHERE version>=14",
     );
   }
   it("keeps an unknown historical beginning null during the frozen legacy migration", async () => {
@@ -111,7 +118,7 @@ describe("dated profile storage and backup compatibility", () => {
       },
     ]);
     expect(source.raw.prepare("SELECT COUNT(*) AS count FROM schema_migrations").get()).toEqual({
-      count: 15,
+      count: LATEST_DATABASE_SCHEMA_VERSION,
     });
   });
   it.each([14, 15])(
@@ -191,7 +198,7 @@ describe("dated profile storage and backup compatibility", () => {
       .prepare("UPDATE remuneration_profiles SET data_json=? WHERE effective_from=?")
       .run(JSON.stringify(data, null, 2), "2026-10-01");
     const file = await exportBackup(source.db);
-    expect(file.document.version).toBe(2);
+    expect(file.document.version).toBe(LOCAL_BACKUP_VERSION);
     const checked = await validate(file.serialized);
     await restoreLocalBackup(destination.db, checked);
     expect(await loadLocalBackupSnapshot(destination.db)).toEqual(
@@ -237,6 +244,8 @@ describe("dated profile storage and backup compatibility", () => {
       root.version = 1;
       root.databaseSchemaVersion = 13;
       delete (root.data as Record<string, unknown>).remunerationProfiles;
+      delete (root.data as Record<string, unknown>).allowanceDecisions;
+      delete (root.data as Record<string, unknown>).overtimeAllocations;
     });
     await saveProfile(destination.db, { ...legacy, manualMonthlyGrossCents: 999000 });
     await saveDatedRemunerationProfile(destination.db, input());

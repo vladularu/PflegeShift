@@ -1,3 +1,8 @@
+import {
+  LOCAL_BACKUP_VERSION,
+  loadLocalBackupSnapshot,
+  createLocalBackupDocument,
+} from "./local-backup";
 import { createHash, randomUUID } from "node:crypto";
 import { unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -12,7 +17,7 @@ import {
   type SaveOvertimeAllocationInput,
 } from "@/domain/overtime-allocation";
 import { shift as fixture } from "@/engine/remuneration-test-fixtures";
-import { migrateDatabase } from "./migrations";
+import { migrateDatabase, LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { saveProfile } from "./profile-repository";
 import { saveShift, deleteCalendarEntry } from "./calendar-entry-repository";
 import {
@@ -20,7 +25,6 @@ import {
   loadOvertimeAllocation,
   listOvertimeAllocations,
 } from "./overtime-allocation-repository";
-import { loadLocalBackupSnapshot, createLocalBackupDocument } from "./local-backup";
 import { validateLocalBackup } from "./local-backup-validation";
 import { restoreLocalBackup } from "./local-backup-restore";
 
@@ -47,7 +51,10 @@ class TestDatabase {
 }
 const sha256 = async (value: string) => createHash("sha256").update(value).digest("hex");
 const validate = (serialized: string) =>
-  validateLocalBackup(serialized, { maxDatabaseSchemaVersion: 31, sha256 });
+  validateLocalBackup(serialized, {
+    maxDatabaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    sha256,
+  });
 async function backup(db: SQLiteDatabase) {
   return createLocalBackupDocument(await loadLocalBackupSnapshot(db), {
     appVersion: "0.1.0",
@@ -318,7 +325,7 @@ describe("persisted overtime day allocations", () => {
     const prior = await saveOvertimeAllocation(db, input);
     await saveShift(db, { ...shift, expectedRevision: shift.revision, endTime: "02:00" });
     const exported = await backup(db);
-    expect(exported.document.version).toBe(19);
+    expect(exported.document.version).toBe(LOCAL_BACKUP_VERSION);
     await restoreLocalBackup(db, await validate(exported.serialized));
     expect(await loadOvertimeAllocation(db, shift.id)).toEqual(prior);
     const changed = await db.getFirstAsync<{ revision: number }>(

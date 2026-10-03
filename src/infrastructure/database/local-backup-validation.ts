@@ -1,3 +1,13 @@
+import {
+  ALLOWANCE_DECISION_COLUMNS,
+  mapAllowanceDecisionRow,
+} from "./allowance-decision-repository";
+import {
+  OVERTIME_ALLOCATION_COLUMNS,
+  mapOvertimeAllocationRow,
+  requireOvertimeAllocationMatchesShift,
+} from "./overtime-allocation-repository";
+import { mapShift } from "./calendar-entry-repository";
 import canonicalize from "canonicalize";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { APPEARANCE_KEYS, isAppearanceMode, isThemeId } from "@/domain/appearance";
@@ -640,6 +650,32 @@ function validateRemunerationProfileRow(value: unknown): BackupRow {
   return frozenBackupRow(row);
 }
 
+function validateAllowanceDecisionRow(value: unknown): BackupRow {
+  const row = exactRecord(value, ALLOWANCE_DECISION_COLUMNS);
+  mapAllowanceDecisionRow({
+    month: stringValue(row, "month"),
+    decisions_json: stringValue(row, "decisions_json"),
+    revision: integerValue(row, "revision"),
+    updated_at: instantValue(row, "updated_at"),
+  });
+  // Do not normalize JSON bytes before validating the original checksum.
+  return frozenBackupRow(row);
+}
+
+function validateOvertimeAllocationRow(value: unknown): BackupRow {
+  const row = exactRecord(value, OVERTIME_ALLOCATION_COLUMNS);
+  mapOvertimeAllocationRow({
+    shift_id: stringValue(row, "shift_id"),
+    shift_revision: integerValue(row, "shift_revision"),
+    time_zone: stringValue(row, "time_zone"),
+    allocations_json: stringValue(row, "allocations_json"),
+    revision: integerValue(row, "revision"),
+    confirmed_at: stringValue(row, "confirmed_at"),
+    updated_at: stringValue(row, "updated_at"),
+  });
+  return frozenBackupRow(row);
+}
+
 function uniqueValues(rows: readonly BackupRow[], field: string): void {
   const values = new Set<string>();
   for (const row of rows) {
@@ -715,7 +751,12 @@ export async function validateLocalBackup(
   try {
     const root = exactRecord(parsed, TOP_LEVEL_KEYS);
     if (root.format !== LOCAL_BACKUP_FORMAT) return invalid();
-    if (root.version !== 1 && root.version !== LOCAL_BACKUP_VERSION) {
+    if (
+      root.version !== 1 &&
+      root.version !== 2 &&
+      root.version !== 3 &&
+      root.version !== LOCAL_BACKUP_VERSION
+    ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
     }
     const createdAt = requireInstant(root.createdAt, "Backup-Zeitpunkt");
@@ -729,11 +770,13 @@ export async function validateLocalBackup(
       return invalid("Das Backup stammt aus einer neueren LUNA-Shift-Version.");
     }
 
-    if (root.version === 2 && (databaseSchemaVersion as number) < 14) return invalid();
-    const data = exactRecord(
-      root.data,
-      root.version === 1 ? DATA_KEYS : [...DATA_KEYS, "remunerationProfiles"],
-    );
+    if (root.version >= 2 && (databaseSchemaVersion as number) < 14) return invalid();
+    const data = exactRecord(root.data, [
+      ...DATA_KEYS,
+      ...(root.version >= 2 ? ["remunerationProfiles"] : []),
+      ...(root.version >= 3 ? ["allowanceDecisions"] : []),
+      ...(root.version >= 4 ? ["overtimeAllocations"] : []),
+    ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
     const remunerationProfiles =
@@ -753,6 +796,45 @@ export async function validateLocalBackup(
       asArray(data.monthlyTariffDecisions).map(validateTariffDecisionRow),
     );
     const preferences = Object.freeze(asArray(data.preferences).map(validatePreferenceRow));
+
+    const allowanceDecisions =
+      root.version >= 3
+        ? Object.freeze(asArray(data.allowanceDecisions).map(validateAllowanceDecisionRow))
+        : Object.freeze([]);
+    if (root.version >= 3) {
+      if (
+        (databaseSchemaVersion as number) < 16 ||
+        (profile === null && allowanceDecisions.length > 0)
+      )
+        return invalid();
+      uniqueValues(allowanceDecisions, "month");
+    }
+
+    const overtimeAllocations =
+      root.version >= 4
+        ? Object.freeze(asArray(data.overtimeAllocations).map(validateOvertimeAllocationRow))
+        : Object.freeze([]);
+    if (root.version >= 4) {
+      if (
+        (databaseSchemaVersion as number) < 17 ||
+        (profile === null && overtimeAllocations.length > 0)
+      )
+        return invalid();
+      uniqueValues(overtimeAllocations, "shift_id");
+      const shiftById = new Map(shifts.map((row) => [row.id, row]));
+      for (const row of overtimeAllocations) {
+        const shift = shiftById.get(row.shift_id);
+        if (!shift || (row.shift_revision as number) > (shift.revision as number)) return invalid();
+        if (row.shift_revision === shift.revision && row.time_zone === profile?.time_zone) {
+          requireOvertimeAllocationMatchesShift(
+            mapOvertimeAllocationRow(
+              row as unknown as Parameters<typeof mapOvertimeAllocationRow>[0],
+            ),
+            mapShift(shift as unknown as Parameters<typeof mapShift>[0]),
+          );
+        }
+      }
+    }
 
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
@@ -785,6 +867,8 @@ export async function validateLocalBackup(
       data: Object.freeze({
         profile,
         remunerationProfiles,
+        allowanceDecisions,
+        overtimeAllocations,
         templates,
         shifts,
         appointments,
@@ -804,12 +888,14 @@ export async function validateLocalBackup(
       createdAt: document.createdAt,
       appVersion: document.appVersion,
       databaseSchemaVersion: document.databaseSchemaVersion,
-      data:
-        root.version === 1
-          ? Object.fromEntries(
-              Object.entries(document.data).filter(([key]) => key !== "remunerationProfiles"),
-            )
-          : document.data,
+      data: Object.fromEntries(
+        Object.entries(document.data).filter(
+          ([key]) =>
+            !(document.version < 2 && key === "remunerationProfiles") &&
+            !(document.version < 3 && key === "allowanceDecisions") &&
+            !(document.version < 4 && key === "overtimeAllocations"),
+        ),
+      ),
     });
     if (canonical === undefined) return invalid();
     const calculated = await input.sha256(canonical);
