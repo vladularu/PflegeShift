@@ -14,7 +14,7 @@ import {
   isCurrentShiftTraining,
 } from "@/domain/training-data";
 import { shift as fixture, work } from "@/engine/remuneration-test-fixtures";
-import { migrateDatabase } from "./migrations";
+import { migrateDatabase, LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { saveProfile } from "./profile-repository";
 import { saveShift, deleteCalendarEntry } from "./calendar-entry-repository";
 import {
@@ -24,7 +24,11 @@ import {
   listShiftTraining,
   type SaveShiftTrainingInput,
 } from "./training-repository";
-import { createLocalBackupDocument, loadLocalBackupSnapshot } from "./local-backup";
+import {
+  createLocalBackupDocument,
+  loadLocalBackupSnapshot,
+  LOCAL_BACKUP_VERSION,
+} from "./local-backup";
 import { validateLocalBackup } from "./local-backup-validation";
 import { restoreLocalBackup } from "./local-backup-restore";
 import { setDeveloperMode, generateTestRun, restoreTestBackup } from "./dev-tools-repository";
@@ -88,7 +92,7 @@ const details: ShiftTrainingData = {
 };
 const sha256 = async (value: string) => createHash("sha256").update(value).digest("hex");
 const validate = (value: string) =>
-  validateLocalBackup(value, { maxDatabaseSchemaVersion: 31, sha256 });
+  validateLocalBackup(value, { maxDatabaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION, sha256 });
 
 describe("persisted training profiles, school and actual pauses", () => {
   let adapter: TestDatabase, db: SQLiteDatabase;
@@ -431,7 +435,7 @@ describe("persisted training profiles, school and actual pauses", () => {
       await saveShiftTraining(db, input);
       const source = await loadLocalBackupSnapshot(db);
       const document = await backup();
-      expect(document.document.version).toBe(19);
+      expect(document.document.version).toBe(LOCAL_BACKUP_VERSION);
       const path = join(tmpdir(), "luna-training-" + randomUUID() + ".sqlite");
       let target = new TestDatabase(path);
       try {

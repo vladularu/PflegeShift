@@ -101,7 +101,7 @@ describe("dated profile storage and backup compatibility", () => {
   });
   function downgradeTo13() {
     source.raw.exec(
-      "DROP TABLE paid_absences; DROP TABLE overtime_allocations; DROP TABLE scoped_allowance_decisions; DROP TABLE remuneration_profiles; DELETE FROM schema_migrations WHERE version>=14",
+      "DROP TABLE shift_training_details; DROP TABLE training_profiles; DROP TABLE paid_absences; DROP TABLE overtime_allocations; DROP TABLE scoped_allowance_decisions; DROP TABLE remuneration_profiles; DELETE FROM schema_migrations WHERE version>=14",
     );
   }
   it("keeps an unknown historical beginning null during the frozen legacy migration", async () => {
@@ -247,6 +247,8 @@ describe("dated profile storage and backup compatibility", () => {
       delete (root.data as Record<string, unknown>).allowanceDecisions;
       delete (root.data as Record<string, unknown>).overtimeAllocations;
       delete (root.data as Record<string, unknown>).paidAbsences;
+      delete (root.data as Record<string, unknown>).trainingProfiles;
+      delete (root.data as Record<string, unknown>).shiftTrainingDetails;
     });
     await saveProfile(destination.db, { ...legacy, manualMonthlyGrossCents: 999000 });
     await saveDatedRemunerationProfile(destination.db, input());

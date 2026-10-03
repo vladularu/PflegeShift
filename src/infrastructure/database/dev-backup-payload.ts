@@ -1,3 +1,5 @@
+import { validateDevTraining } from "./dev-training-backup";
+import type { ShiftTrainingRow } from "./training-repository";
 import {
   validateDevRemunerationBackup,
   type DevRemunerationBackup,
@@ -57,7 +59,7 @@ export interface RawDecisionRow {
 }
 
 export interface BackupPayload {
-  version: 5;
+  version: 6;
   month: string;
   counts: {
     appointments: number;
@@ -68,6 +70,7 @@ export interface BackupPayload {
   appointments: RawAppointmentRow[];
   decision: RawDecisionRow | null;
   remuneration: DevRemunerationBackup;
+  training: readonly ShiftTrainingRow[];
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -266,7 +269,7 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
     typeof payload.version === "number" &&
     Number.isInteger(payload.version) &&
     payload.version >= minimum &&
-    payload.version <= 5;
+    payload.version <= 6;
   const currentPayload = hasVersion(3);
   const shifts = sourceShifts.map((row) => validateShift(row, expectedMonth, currentPayload));
   const appointments = sourceAppointments.map((row) =>
@@ -292,15 +295,17 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
 
   if (!hasVersion(4) && payload.remuneration !== undefined)
     invalid("Vergütungsformat passt nicht zur Version");
-  if (payload.training !== undefined) invalid("Schul-/Pausenformat passt nicht zur Version");
+  if (!hasVersion(6) && payload.training !== undefined)
+    invalid("Schul-/Pausenformat passt nicht zur Version");
   const remuneration = validateDevRemunerationBackup(
     hasVersion(4) ? payload.remuneration : { allowanceDecision: null, overtimeAllocations: [] },
     shifts,
     expectedMonth,
     hasVersion(5),
   );
+  const training = validateDevTraining(hasVersion(6) ? payload.training : [], shifts);
   return {
-    version: 5,
+    version: 6,
     month: expectedMonth,
     counts: {
       appointments: appointments.length,
@@ -311,12 +316,13 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
     appointments,
     decision,
     remuneration,
+    training,
   };
 }
 
 export function createDevBackupPayload(
   month: string,
-  data: Pick<BackupPayload, "appointments" | "decision" | "shifts" | "remuneration">,
+  data: Pick<BackupPayload, "appointments" | "decision" | "shifts" | "remuneration" | "training">,
 ): BackupPayload {
   return normalizePayload(
     {
@@ -327,7 +333,7 @@ export function createDevBackupPayload(
         shifts: data.shifts.length,
       },
       month,
-      version: 5,
+      version: 6,
     },
     month,
   );

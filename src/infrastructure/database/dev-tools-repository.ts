@@ -1,3 +1,4 @@
+import { snapshotDevTraining, restoreDevTraining } from "./dev-training-backup";
 import {
   snapshotDevRemuneration,
   clearDevRemuneration,
@@ -86,7 +87,8 @@ async function snapshotMonth(db: SQLiteDatabase, month: string): Promise<BackupP
     month,
   );
   const remuneration = await snapshotDevRemuneration(db, month);
-  return createDevBackupPayload(month, { appointments, decision, shifts, remuneration });
+  const training = await snapshotDevTraining(db, month);
+  return createDevBackupPayload(month, { appointments, decision, shifts, remuneration, training });
 }
 
 export async function previewTestRun(
@@ -327,6 +329,7 @@ export async function restoreTestBackup(
         );
       }
       await restoreDevRemuneration(tx, payload.remuneration);
+      await restoreDevTraining(tx, payload.training);
       for (const row of payload.appointments) {
         await tx.runAsync(
           `INSERT INTO appointments(${APPOINTMENT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,

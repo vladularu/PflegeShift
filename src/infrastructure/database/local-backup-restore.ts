@@ -1,3 +1,4 @@
+import { TRAINING_PROFILE_COLUMNS, SHIFT_TRAINING_COLUMNS } from "./training-repository";
 import { PAID_ABSENCE_COLUMNS } from "./paid-absence-repository";
 import { ALLOWANCE_DECISION_COLUMNS } from "./allowance-decision-repository";
 import { OVERTIME_ALLOCATION_COLUMNS } from "./overtime-allocation-repository";
@@ -61,6 +62,8 @@ export async function restoreLocalBackup(
     }
 
     await transaction.runAsync("DELETE FROM scheduled_entry_notifications");
+    await transaction.runAsync("DELETE FROM shift_training_details");
+    await transaction.runAsync("DELETE FROM training_profiles");
     await transaction.runAsync("DELETE FROM paid_absences");
     await transaction.runAsync("DELETE FROM overtime_allocations");
     await transaction.runAsync("DELETE FROM scoped_allowance_decisions");
@@ -106,6 +109,18 @@ export async function restoreLocalBackup(
       "paid_absences",
       PAID_ABSENCE_COLUMNS,
       document.data.paidAbsences,
+    );
+    await insertRows(
+      transaction,
+      "training_profiles",
+      TRAINING_PROFILE_COLUMNS,
+      document.data.trainingProfiles,
+    );
+    await insertRows(
+      transaction,
+      "shift_training_details",
+      SHIFT_TRAINING_COLUMNS,
+      document.data.shiftTrainingDetails,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(
