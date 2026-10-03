@@ -26,4 +26,4 @@ Bestehende unveränderliche Legacy-Pakete werden nicht umgeschrieben. Die TVöD-
 
 ## Nachweis
 
-Prüfergebnisse werden im Lieferbranch ergänzt. Der Grundbetrag ist kein Nachweis eines vollständigen Bruttos; die VG-Hauptaufträge bleiben offen.
+03.10.2026: 69 gezielte Grundbetrags-/Stundenlohnfälle und verify:fast mit Exit 0 (2.200 Unit-/Integrationstests, 472 Komponententests; alle Script-Gates). Quellcommit 046157d auf master ac80411 integriert; die Stufe beschränkt den Kontext ausdrücklich auf eigene Vergütung und die bereits gelieferten TVöD-P-Verträge. Referenztest verwendet 2026-05-r3, die eingebetteten 62-Werte-Pakete bleiben unverändert. Der Grundbetrag ist kein Nachweis eines vollständigen Bruttos; die VG-Hauptaufträge bleiben offen.

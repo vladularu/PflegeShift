@@ -12,11 +12,7 @@ import { LEGACY_RULE_PACKAGE_IDS } from "@/rules/bundled-rules";
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
 import { resolveTariffSelection } from "@/rules/tariff-selection";
 import { annualPaymentRuleIssues } from "@/rules/annual-payment-rule-validation";
-import { validateRulePackage } from "@/rules/validation";
 import type { OwnRemunerationConfiguration } from "@/domain/own-remuneration";
-import { resolveTrainingPay, type TrainingPayContext } from "./remuneration-training-context";
-import { resolveTvlKrPay, type TvlKrPayContext } from "./remuneration-tvl-context";
-import { resolveTvalTrainingPay, type TvalTrainingPayContext } from "./remuneration-tval-context";
 
 interface ContextBase {
   readonly profile: DatedRemunerationProfile | null;
@@ -24,26 +20,6 @@ interface ContextBase {
 }
 export type RemunerationContext = ContextBase &
   (
-    | TrainingPayContext
-    | TvlKrPayContext
-    | TvalTrainingPayContext
-    | {
-        readonly kind: "tvoed-annex-a-draft";
-        readonly rulePackage: RuleTariffPackage;
-        readonly weeklyMinutes: number;
-        readonly fullTimeWeeklyMinutes: number;
-        readonly variant: "BT_K" | "BT_B";
-        readonly groupId: string;
-        readonly stepId: string;
-      }
-    | {
-        readonly kind: "tvoed-sue-draft";
-        readonly rulePackage: RuleTariffPackage;
-        readonly weeklyMinutes: number;
-        readonly fullTimeWeeklyMinutes: 2340;
-        readonly groupId: string;
-        readonly stepId: string;
-      }
     | { readonly kind: "unavailable"; readonly issue: RemunerationIssue }
     | {
         readonly kind: "own-configured";
@@ -177,100 +153,21 @@ export function resolveRemunerationContext(
       "Das Tarifregelwerk passt nicht zur Auswahl oder zum Zeitraum.",
       rulePackage,
     );
-  if (rulePackage.engineContractVersion === 16) {
-    const declared = resolveTariffSelection(rulePackage, selection.variant, selection.region);
-    if (
-      selection.packageId !== "tvoed-vka-anlage-a" ||
-      rulePackage.status !== "DRAFT" ||
-      !validateRulePackage(rulePackage).ok ||
-      declared?.familyId !== "tvoed-vka-annex-a" ||
-      declared.engineId !== "tvoed-annex-a-v1" ||
-      !["BT_K", "BT_B"].includes(selection.variant) ||
-      selection.region !== "VKA" ||
-      !/^EG(?:[1-9]|1[0-5])(?:[ABC])?$/u.test(selection.group) ||
-      !/^[1-6]$/u.test(selection.level) ||
-      !declared.groups.some(
-        (group) =>
-          group.id === selection.group.toLowerCase() &&
-          group.levels.includes(`s${selection.level}`),
-      )
-    )
-      return unavailable(
-        profile,
-        "TARIFF_UNSUPPORTED",
-        "Die TVöD-Anlage-A-Auswahl ist nicht als sicherer Tabellenentwurf verfügbar.",
-        rulePackage,
-      );
-    return {
-      kind: "tvoed-annex-a-draft",
+  // Additional tariff families receive their own adapter; matching table shapes do not establish support.
+  if (!["tvoed-vka-bt-k", LEGACY_RULE_PACKAGE_IDS.tariff].includes(selection.packageId))
+    return unavailable(
       profile,
-      source: sourceFor(profile, rulePackage),
+      "TARIFF_UNSUPPORTED",
+      "Für diesen Tarif fehlt noch die geprüfte Berechnungsanbindung.",
       rulePackage,
-      weeklyMinutes: data.weeklyMinutes,
-      fullTimeWeeklyMinutes: selection.fullTimeWeeklyMinutes,
-      variant: selection.variant as "BT_K" | "BT_B",
-      groupId: selection.group.toLowerCase(),
-      stepId: `s${selection.level}`,
-    };
-  }
-  if (rulePackage.engineContractVersion === 18) {
-    const declared = resolveTariffSelection(rulePackage, selection.variant, selection.region);
-    if (
-      selection.packageId !== "tvoed-vka-sue-bt-b" ||
-      rulePackage.status !== "DRAFT" ||
-      !validateRulePackage(rulePackage).ok ||
-      declared?.familyId !== "tvoed-vka-sue" ||
-      declared.engineId !== "tvoed-sue-bt-b-table-draft-v1" ||
-      selection.variant !== "BT_B" ||
-      selection.region !== "VKA" ||
-      selection.fullTimeWeeklyMinutes !== 2340 ||
-      data.weeklyMinutes > 2340 ||
-      !/^[1-6]$/u.test(selection.level) ||
-      !declared.groups.some(
-        (group) =>
-          group.id === selection.group.toLowerCase() &&
-          group.levels.includes(`s${selection.level}`),
-      )
-    )
-      return unavailable(
-        profile,
-        "TARIFF_UNSUPPORTED",
-        "Die SuE-Auswahl ist nicht als sicherer BT-B-Tabellenentwurf verfügbar.",
-        rulePackage,
-      );
-    return {
-      kind: "tvoed-sue-draft",
+    );
+  if (![1, 2, 3, 11].includes(rulePackage.engineContractVersion))
+    return unavailable(
       profile,
-      source: sourceFor(profile, rulePackage),
+      "TARIFF_UNSUPPORTED",
+      "Für diesen Tarifvertrag fehlt noch die geprüfte Berechnungsanbindung.",
       rulePackage,
-      weeklyMinutes: data.weeklyMinutes,
-      fullTimeWeeklyMinutes: 2340,
-      groupId: selection.group.toLowerCase(),
-      stepId: `s${selection.level}`,
-    };
-  }
-  if (rulePackage.engineContractVersion === 13) {
-    const training = resolveTvalTrainingPay(date, rulePackage, selection, data.weeklyMinutes);
-    return training.ok
-      ? { ...training.context, profile, source: sourceFor(profile, rulePackage) }
-      : unavailable(profile, training.issue.code, training.issue.message, rulePackage);
-  }
-  if (rulePackage.engineContractVersion === 12) {
-    const tvl = resolveTvlKrPay(date, rulePackage, selection, data.weeklyMinutes);
-    return tvl.ok
-      ? { ...tvl.context, profile, source: sourceFor(profile, rulePackage) }
-      : unavailable(profile, tvl.issue.code, tvl.issue.message, rulePackage);
-  }
-  if (
-    rulePackage.engineContractVersion === 10 ||
-    (rulePackage.engineContractVersion === 11 &&
-      rulePackage.rules.selection?.employmentKind === "APPRENTICE")
-  ) {
-    const training = resolveTrainingPay(rulePackage, selection, data.weeklyMinutes);
-    return training.ok
-      ? { ...training.context, profile, source: sourceFor(profile, rulePackage) }
-      : unavailable(profile, training.issue.code, training.issue.message, rulePackage);
-  }
+    );
   if (rulePackage.engineContractVersion === 11 && annualPaymentRuleIssues(rulePackage).length > 0)
     return unavailable(
       profile,
@@ -278,7 +175,7 @@ export function resolveRemunerationContext(
       "Die Jahresregeln des Tarifpakets sind unvollständig oder widersprüchlich.",
       rulePackage,
     );
-  if (rulePackage.engineContractVersion === 8 || rulePackage.rules.selection !== undefined) {
+  if (rulePackage.rules.selection !== undefined) {
     const declared = resolveTariffSelection(rulePackage, selection.variant, selection.region);
     if (declared === null)
       return unavailable(
@@ -312,14 +209,6 @@ export function resolveRemunerationContext(
         rulePackage,
       );
   }
-  // Additional tariff families receive their own adapter; matching table shapes do not establish support.
-  if (!["tvoed-vka-bt-k", LEGACY_RULE_PACKAGE_IDS.tariff].includes(selection.packageId))
-    return unavailable(
-      profile,
-      "TARIFF_UNSUPPORTED",
-      "Für diesen Tarif fehlt noch die geprüfte Berechnungsanbindung.",
-      rulePackage,
-    );
   if (
     !/^P[1-9]\d*$/u.test(selection.group) ||
     !TARIFF_REGIONS.includes(selection.region as TariffRegion) ||
@@ -408,21 +297,6 @@ function sameContext(left: RemunerationContext, right: RemunerationContext): boo
     );
   if (left.kind === "tariff" && right.kind === "tariff")
     return left.rulePackage === right.rulePackage;
-  if (left.kind === "tvoed-annex-a-draft" && right.kind === "tvoed-annex-a-draft")
-    return left.rulePackage === right.rulePackage;
-  if (left.kind === "tvoed-sue-draft" && right.kind === "tvoed-sue-draft")
-    return left.rulePackage === right.rulePackage;
-  if (left.kind === "training-tariff" && right.kind === "training-tariff")
-    return left.rulePackage === right.rulePackage;
-  if (
-    (left.kind === "tvl-kr" && right.kind === "tvl-kr") ||
-    (left.kind === "tval-training" && right.kind === "tval-training")
-  )
-    return (
-      left.rulePackage === right.rulePackage &&
-      left.monthlyCents === right.monthlyCents &&
-      left.fullTimeWeeklyMinutes === right.fullTimeWeeklyMinutes
-    );
   return (
     (left.kind === "own-monthly" && right.kind === "own-monthly") ||
     (left.kind === "own-configured" && right.kind === "own-configured")

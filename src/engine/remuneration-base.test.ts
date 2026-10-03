@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import candidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05-r2.json";
+import candidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05-r3.json";
 import type {
   DatedRemunerationProfile,
   RemunerationProfileData,
@@ -263,6 +263,10 @@ describe("dated monthly base remuneration", () => {
   );
   it("uses declared table entries rather than a global stage list", () => {
     const extended = structuredClone(candidate);
+    // Synthetic metadata-free v3 isolates the table lookup; contract 11 also binds annual terms.
+    extended.engineContractVersion = 3;
+    delete extended.rules.selection;
+    delete extended.rules.annualPaymentRules;
     extended.rules.payTables[0].entries.push({
       groupId: "p17",
       stepId: "s7",

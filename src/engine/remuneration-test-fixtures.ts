@@ -1,4 +1,4 @@
-import candidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05-r2.json";
+import candidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05-r3.json";
 import type { DatedRemunerationProfile } from "@/domain/remuneration-profile";
 import type { ShiftEntry, UserProfile } from "@/domain/types";
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
