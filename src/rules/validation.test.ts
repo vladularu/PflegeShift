@@ -293,3 +293,58 @@ describe("rule contract validation", () => {
     ).toContain("DESCRIPTOR_PACKAGE_MISMATCH");
   });
 });
+
+describe("manifest v2 tariff selection", () => {
+  function manifestWithTwoTariffs(schemaVersion: 1 | 2 = 2) {
+    const manifest = clone(manifestFixture) as Record<string, unknown> & typeof manifestFixture;
+    manifest.schemaVersion = schemaVersion;
+    if (schemaVersion === 2) manifest.legacyTariffPackageId = tariffPackageFixture.packageId;
+    manifest.tracks.push({ ...clone(manifest.tracks[0]), packageId: "other-tariff" });
+    manifest.packages.push({
+      ...clone(manifest.packages[0]),
+      packageId: "other-tariff",
+      path: "packages/other-tariff/2026-05.json",
+    });
+    return manifest;
+  }
+
+  it("accepts two tariff tracks with an explicit legacy selection only in v2", () => {
+    expect(validateManifest(manifestWithTwoTariffs()).ok).toBe(true);
+    expect(issueCodes(validateManifest(manifestWithTwoTariffs(1)))).toContain(
+      "MULTI_TARIFF_REQUIRES_V2",
+    );
+  });
+
+  it.each(["missing-tariff", "de-arbzg-care", "de-holidays"])(
+    "rejects legacy selection %s that is not a tariff track",
+    (packageId) => {
+      const manifest = manifestWithTwoTariffs();
+      manifest.legacyTariffPackageId = packageId;
+      expect(issueCodes(validateManifest(manifest))).toContain("INVALID_LEGACY_TARIFF");
+    },
+  );
+
+  it("requires the v2 selection and forbids it in v1", () => {
+    const v2 = manifestWithTwoTariffs();
+    delete v2.legacyTariffPackageId;
+    expect(issueCodes(validateManifest(v2))).toContain("SCHEMA_REQUIRED");
+    const v1 = clone(manifestFixture) as Record<string, unknown>;
+    v1.legacyTariffPackageId = tariffPackageFixture.packageId;
+    expect(validateManifest(v1).ok).toBe(false);
+  });
+
+  it("still rejects incomplete secondary tariff coverage", () => {
+    const manifest = manifestWithTwoTariffs();
+    manifest.packages.at(-1)!.validFrom = "2026-06-01";
+    expect(issueCodes(validateManifest(manifest))).toContain("INCOMPLETE_TRACK_START");
+  });
+
+  it("still rejects duplicate tracks and unsupported descriptor contracts", () => {
+    const duplicate = manifestWithTwoTariffs();
+    duplicate.tracks.push(clone(duplicate.tracks[0]));
+    expect(validateManifest(duplicate).ok).toBe(false);
+    const unsupported = manifestWithTwoTariffs();
+    unsupported.packages.at(-1)!.engineContractVersion = 999;
+    expect(validateManifest(unsupported).ok).toBe(false);
+  });
+});

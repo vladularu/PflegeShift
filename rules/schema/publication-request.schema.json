@@ -15,12 +15,29 @@
     "signing"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "generation": { "type": "integer", "minimum": 1 },
-    "channel": { "enum": ["PREVIEW", "PRODUCTION"] },
-    "publishedAt": { "$ref": "#/$defs/utcTimestamp" },
+    "schemaVersion": {
+      "enum": [1, 2]
+    },
+    "generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "channel": {
+      "enum": ["PREVIEW", "PRODUCTION"]
+    },
+    "publishedAt": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
     "rollbackOfGeneration": {
-      "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 1 }]
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ]
     },
     "packageSources": {
       "type": "array",
@@ -33,7 +50,13 @@
         "pattern": "^rules/packages/reviewed/[a-z0-9.-]+/[0-9A-Za-z._-]+\\.json$"
       }
     },
-    "signing": { "$ref": "#/$defs/signing" }
+    "signing": {
+      "$ref": "#/$defs/signing"
+    },
+    "legacyTariffPackageId": {
+      "description": "Schema v2: explicit tariff track for existing profiles without a tariff identifier; never a fallback for an explicitly requested tariff.",
+      "$ref": "#/$defs/identifier"
+    }
   },
   "$defs": {
     "identifier": {
@@ -51,10 +74,40 @@
       "additionalProperties": false,
       "required": ["algorithm", "canonicalization", "keyId"],
       "properties": {
-        "algorithm": { "const": "ED25519" },
-        "canonicalization": { "const": "RFC8785" },
-        "keyId": { "$ref": "#/$defs/identifier" }
+        "algorithm": {
+          "const": "ED25519"
+        },
+        "canonicalization": {
+          "const": "RFC8785"
+        },
+        "keyId": {
+          "$ref": "#/$defs/identifier"
+        }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "const": 2
+          }
+        }
+      },
+      "then": {
+        "required": ["legacyTariffPackageId"],
+        "properties": {
+          "legacyTariffPackageId": {
+            "$ref": "#/$defs/identifier"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "legacyTariffPackageId": false
+        }
+      }
+    }
+  ]
 }

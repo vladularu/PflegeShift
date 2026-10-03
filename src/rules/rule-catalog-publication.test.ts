@@ -496,3 +496,168 @@ describe("rule catalog publication", () => {
     );
   });
 });
+
+describe("signed catalog v2 selection", () => {
+  function multiTariffSources() {
+    return [
+      ...sources(),
+      reviewedSource({
+        ...clone(tariffPackageFixture),
+        packageId: "other-tariff",
+      }),
+    ];
+  }
+
+  function v2Request(
+    packageSources: readonly RuleCatalogPublicationSource[],
+    overrides: Partial<RuleCatalogPublicationRequest> = {},
+  ) {
+    return request(packageSources, {
+      schemaVersion: 2,
+      legacyTariffPackageId: tariffPackageFixture.packageId,
+      ...overrides,
+    });
+  }
+
+  it("publishes and verifies a deterministic signature binding the legacy selection", async () => {
+    const packageSources = multiTariffSources();
+    const publicationRequest = v2Request(packageSources);
+    const publication = await createRuleCatalogPublication({
+      request: publicationRequest,
+      sources: packageSources,
+      signer: testSigner,
+    });
+    const repeated = await createRuleCatalogPublication({
+      request: publicationRequest,
+      sources: [...packageSources].reverse(),
+      signer: testSigner,
+    });
+    expect(publication.manifestJson).toBe(repeated.manifestJson);
+    expect(publication.manifest).toMatchObject({
+      schemaVersion: 2,
+      legacyTariffPackageId: tariffPackageFixture.packageId,
+    });
+    const policy = {
+      expectedChannel: "PREVIEW" as const,
+      supportedEngineContractVersions: new Set([1]),
+      trustedPublicKeys: new Map([["preview-test-2026", publicKey]]),
+    };
+    expect(
+      isVerifiedRuleCatalogArtifacts(
+        await verifyRuleCatalogArtifacts(publication, policy, testCryptography),
+      ),
+    ).toBe(true);
+    const tampered = clone(publication.manifest);
+    tampered.legacyTariffPackageId = "other-tariff";
+    await expect(
+      verifyRuleCatalogArtifacts(
+        { manifestJson: JSON.stringify(tampered), packageJson: publication.packageJson },
+        policy,
+        testCryptography,
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_SIGNATURE" });
+    const idempotent = await createRuleCatalogPublication({
+      request: publicationRequest,
+      sources: packageSources,
+      signer: testSigner,
+      verifiedPreviousManifest: publication.manifest,
+    });
+    expect(idempotent.manifestJson).toBe(publication.manifestJson);
+  });
+
+  it("migrates v1 to v2 while preserving the existing profiles tariff", async () => {
+    const legacySources = sources();
+    const first = await createRuleCatalogPublication({
+      request: request(legacySources),
+      sources: legacySources,
+      signer: testSigner,
+    });
+    const packageSources = multiTariffSources();
+    const next = await createRuleCatalogPublication({
+      request: v2Request(packageSources, { generation: 2, publishedAt: "2026-08-28T13:00:00Z" }),
+      sources: packageSources,
+      signer: testSigner,
+      verifiedPreviousManifest: first.manifest,
+    });
+    expect(next.manifest.schemaVersion).toBe(2);
+    expect(next.manifest.legacyTariffPackageId).toBe(tariffPackageFixture.packageId);
+    await expectPublicationError(
+      createRuleCatalogPublication({
+        request: v2Request(packageSources, {
+          generation: 3,
+          publishedAt: "2026-08-28T14:00:00Z",
+          legacyTariffPackageId: "other-tariff",
+        }),
+        sources: packageSources,
+        signer: testSigner,
+        verifiedPreviousManifest: next.manifest,
+      }),
+      "LEGACY_TARIFF_REASSIGNMENT",
+    );
+  });
+
+  it("binds rollback selection and schema to the exact verified target", async () => {
+    const packageSources = multiTariffSources();
+    const first = await createRuleCatalogPublication({
+      request: v2Request(packageSources),
+      sources: packageSources,
+      signer: testSigner,
+    });
+    const second = await createRuleCatalogPublication({
+      request: v2Request(packageSources, { generation: 2, publishedAt: "2026-08-28T13:00:00Z" }),
+      sources: packageSources,
+      signer: testSigner,
+      verifiedPreviousManifest: first.manifest,
+    });
+    const rollbackRequest = v2Request(packageSources, {
+      generation: 3,
+      publishedAt: "2026-08-28T14:00:00Z",
+      rollbackOfGeneration: 1,
+    });
+    const rollback = await createRuleCatalogPublication({
+      request: rollbackRequest,
+      sources: packageSources,
+      signer: testSigner,
+      verifiedPreviousManifest: second.manifest,
+      verifiedRollbackManifest: first.manifest,
+    });
+    expect(rollback.manifest.legacyTariffPackageId).toBe(first.manifest.legacyTariffPackageId);
+    await expectPublicationError(
+      createRuleCatalogPublication({
+        request: { ...rollbackRequest, legacyTariffPackageId: "other-tariff" },
+        sources: packageSources,
+        signer: testSigner,
+        verifiedPreviousManifest: second.manifest,
+        verifiedRollbackManifest: first.manifest,
+      }),
+      "ROLLBACK_TARGET_MISMATCH",
+    );
+
+    const legacySources = sources();
+    const legacy = await createRuleCatalogPublication({
+      request: request(legacySources),
+      sources: legacySources,
+      signer: testSigner,
+    });
+    const upgraded = await createRuleCatalogPublication({
+      request: v2Request(legacySources, { generation: 2, publishedAt: "2026-08-28T13:00:00Z" }),
+      sources: legacySources,
+      signer: testSigner,
+      verifiedPreviousManifest: legacy.manifest,
+    });
+    await expectPublicationError(
+      createRuleCatalogPublication({
+        request: v2Request(legacySources, {
+          generation: 3,
+          publishedAt: "2026-08-28T14:00:00Z",
+          rollbackOfGeneration: 1,
+        }),
+        sources: legacySources,
+        signer: testSigner,
+        verifiedPreviousManifest: upgraded.manifest,
+        verifiedRollbackManifest: legacy.manifest,
+      }),
+      "ROLLBACK_TARGET_MISMATCH",
+    );
+  });
+});

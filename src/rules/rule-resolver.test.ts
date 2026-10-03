@@ -283,3 +283,95 @@ describe("bundled legacy rule resolver", () => {
     );
   });
 });
+
+describe("explicit tariff resolution", () => {
+  function catalogFixture() {
+    const manifest = structuredClone(manifestFixture) as RuleManifest;
+    manifest.schemaVersion = 2;
+    manifest.legacyTariffPackageId = tariffPackageFixture.packageId;
+    const secondary = { ...structuredClone(tariffPackageFixture), packageId: "other-tariff" };
+    manifest.tracks.push({
+      ...structuredClone(manifest.tracks[0]),
+      packageId: secondary.packageId,
+    });
+    manifest.packages.push({
+      ...structuredClone(manifest.packages[0]),
+      packageId: secondary.packageId,
+      path: "packages/other-tariff/2026-05.json",
+    });
+    const validation = validateRuleCatalog(manifest, [
+      secondary,
+      tariffPackageFixture,
+      legalPackageFixture,
+      holidayPackageFixture,
+    ]);
+    if (!validation.ok) throw new Error(JSON.stringify(validation.issues));
+    return validation.value;
+  }
+
+  it("selects a requested tariff and keeps legacy selection stable under reordering", () => {
+    const catalog = catalogFixture();
+    catalog.manifest.tracks.reverse();
+    const resolver = createRuleResolverFromCatalog(catalog);
+    expect(isRuleCatalogRuntimeCompatible(catalog)).toBe(true);
+    expect(requireResolvedPackage(resolver.resolveTariff("2026-07-01"))).toMatchObject({
+      packageId: tariffPackageFixture.packageId,
+    });
+    expect(
+      requireResolvedPackage(resolver.resolveTariff("2026-07-01", "other-tariff")),
+    ).toMatchObject({
+      packageId: "other-tariff",
+    });
+    expect(Object.isFrozen(resolver.tariffPackageIds)).toBe(true);
+    expect(new Set(resolver.tariffPackageIds).size).toBe(2);
+  });
+
+  it.each(["missing-tariff", "de-arbzg-care", "", "OTHER-TARIFF"])(
+    "never falls back to the legacy tariff for explicit selection %s",
+    (packageId) => {
+      const resolver = createRuleResolverFromCatalog(catalogFixture());
+      expect(resolver.resolveTariff("2026-07-01", packageId)).toMatchObject({
+        ok: false,
+        error: { code: "RULE_PACKAGE_NOT_FOUND", packageId },
+      });
+    },
+  );
+
+  it("applies validity and ambiguity to the requested identity only", () => {
+    const catalog = catalogFixture();
+    const resolver = createRuleResolverFromCatalog(catalog);
+    expect(resolver.resolveTariff("2026-04-30", "other-tariff").ok).toBe(false);
+    expect(resolver.resolveTariff("2027-04-01", "other-tariff").ok).toBe(false);
+    const tariffs = catalog.packages.filter((item) => item.kind === "TARIFF");
+    const secondary = tariffs.find((item) => item.packageId === "other-tariff")!;
+    const duplicate = createRuleResolver({
+      tariff: [...tariffs, secondary],
+      legal: [],
+      holiday: [],
+    });
+    expect(duplicate.resolveTariff("2026-07-01", "other-tariff")).toMatchObject({
+      ok: false,
+      error: { code: "RULE_PACKAGE_AMBIGUOUS" },
+    });
+    expect(duplicate.resolveTariff("2026-07-01", tariffPackageFixture.packageId).ok).toBe(true);
+  });
+
+  it("rejects a forged topology without an unambiguous legacy tariff", () => {
+    const catalog = catalogFixture();
+    catalog.manifest.legacyTariffPackageId = "de-arbzg-care";
+    expect(isRuleCatalogRuntimeCompatible(catalog)).toBe(false);
+    expect(() => createRuleResolverFromCatalog(catalog)).toThrow(RuleCatalogCompatibilityError);
+  });
+
+  it("lists dated annual candidates without inventing a package or entitlement", () => {
+    const resolver = createRuleResolverFromCatalog(catalogFixture());
+    const candidates = resolver.annualTariffCandidates!("other-tariff", 2027);
+    expect(candidates.map((item) => item.packageId)).toEqual(["other-tariff"]);
+    expect(Object.isFrozen(candidates)).toBe(true);
+    expect(resolver.annualTariffCandidates!("other-tariff", 2025)).toEqual([]);
+    expect(resolver.annualTariffCandidates!("missing-tariff", 2026)).toEqual([]);
+    for (const year of [1899, 4100, 2026.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(resolver.annualTariffCandidates!("other-tariff", year)).toEqual([]);
+    }
+  });
+});

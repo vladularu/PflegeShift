@@ -844,6 +844,28 @@ function descriptorIdentity(
 
 function manifestSemanticIssues(manifest: RuleManifest): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+  const tariffTracks = manifest.tracks.filter((track) => track.kind === "TARIFF");
+  if (manifest.schemaVersion === 1 && tariffTracks.length > 1) {
+    issues.push(
+      issue(
+        "MULTI_TARIFF_REQUIRES_V2",
+        "/tracks",
+        "Multiple tariff tracks require manifest schema v2.",
+      ),
+    );
+  }
+  if (
+    manifest.schemaVersion === 2 &&
+    !tariffTracks.some((track) => track.packageId === manifest.legacyTariffPackageId)
+  ) {
+    issues.push(
+      issue(
+        "INVALID_LEGACY_TARIFF",
+        "/legacyTariffPackageId",
+        "The legacy tariff must reference a tariff track in this manifest.",
+      ),
+    );
+  }
   if (!isRealUtcTimestamp(manifest.publishedAt)) {
     issues.push(
       issue("INVALID_TIMESTAMP", "/publishedAt", "publishedAt must be a real UTC timestamp."),

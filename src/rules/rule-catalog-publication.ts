@@ -70,6 +70,7 @@ export type RuleCatalogPublicationErrorCode =
   | "GENERATION_CONFLICT"
   | "PUBLICATION_TIME_CONFLICT"
   | "TRACK_COVERAGE_REGRESSION"
+  | "LEGACY_TARIFF_REASSIGNMENT"
   | "ROLLBACK_TARGET_MISMATCH";
 
 export class RuleCatalogPublicationError extends Error {
@@ -363,6 +364,17 @@ function assertGenerationTransition(
       "publishedAt must be later than the verified previous manifest.",
     );
   }
+  if (manifest.rollbackOfGeneration === null) {
+    const legacyTariffId = (value: RuleManifest) =>
+      value.legacyTariffPackageId ??
+      value.tracks.find((track) => track.kind === "TARIFF")?.packageId;
+    if (legacyTariffId(manifest) !== legacyTariffId(previousManifest)) {
+      throw new RuleCatalogPublicationError(
+        "LEGACY_TARIFF_REASSIGNMENT",
+        "A normal catalog update must not reassign existing profiles to a different tariff track.",
+      );
+    }
+  }
   return false;
 }
 
@@ -415,12 +427,14 @@ function assertRollbackTarget(manifest: RuleManifest, rollbackManifest: RuleMani
     rollbackManifest === null ||
     rollbackManifest.channel !== manifest.channel ||
     rollbackManifest.generation !== manifest.rollbackOfGeneration ||
+    rollbackManifest.schemaVersion !== manifest.schemaVersion ||
+    rollbackManifest.legacyTariffPackageId !== manifest.legacyTariffPackageId ||
     !sameCanonicalValue(rollbackManifest.tracks, manifest.tracks) ||
     !sameCanonicalValue(rollbackManifest.packages, manifest.packages)
   ) {
     throw new RuleCatalogPublicationError(
       "ROLLBACK_TARGET_MISMATCH",
-      "A rollback must reproduce the tracks and package descriptors of its verified target generation.",
+      "A rollback must reproduce the schema, legacy tariff selection, tracks and package descriptors of its verified target generation.",
     );
   }
 }
@@ -460,7 +474,10 @@ export async function createRuleCatalogPublication(
     (artifact) => artifact.descriptor,
   ) as RuleManifest["packages"];
   const manifest: RuleManifest = {
-    schemaVersion: 1,
+    schemaVersion: request.schemaVersion,
+    ...(request.legacyTariffPackageId === undefined
+      ? {}
+      : { legacyTariffPackageId: request.legacyTariffPackageId }),
     generation: request.generation,
     channel: request.channel,
     publishedAt: request.publishedAt,
