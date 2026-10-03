@@ -1,3 +1,4 @@
+import { ANNUAL_PAYMENT_COLUMNS } from "./annual-payment-repository";
 import { TRAINING_PROFILE_COLUMNS, SHIFT_TRAINING_COLUMNS } from "./training-repository";
 import { PAID_ABSENCE_COLUMNS } from "./paid-absence-repository";
 import { ALLOWANCE_DECISION_COLUMNS } from "./allowance-decision-repository";
@@ -62,6 +63,7 @@ export async function restoreLocalBackup(
     }
 
     await transaction.runAsync("DELETE FROM scheduled_entry_notifications");
+    await transaction.runAsync("DELETE FROM actual_annual_payments");
     await transaction.runAsync("DELETE FROM shift_training_details");
     await transaction.runAsync("DELETE FROM training_profiles");
     await transaction.runAsync("DELETE FROM paid_absences");
@@ -121,6 +123,12 @@ export async function restoreLocalBackup(
       "shift_training_details",
       SHIFT_TRAINING_COLUMNS,
       document.data.shiftTrainingDetails,
+    );
+    await insertRows(
+      transaction,
+      "actual_annual_payments",
+      ANNUAL_PAYMENT_COLUMNS,
+      document.data.actualAnnualPayments,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(

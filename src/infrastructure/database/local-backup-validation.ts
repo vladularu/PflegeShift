@@ -1,3 +1,5 @@
+import { mapAnnualPaymentRow } from "./annual-payment-repository";
+import { validateSavedActualOwnAnnualPayments } from "@/domain/saved-annual-payment";
 import { mapTrainingProfileRow, mapShiftTrainingRow } from "./training-repository";
 import { requireShiftTrainingParent } from "@/domain/training-data";
 import {
@@ -780,6 +782,7 @@ export async function validateLocalBackup(
       root.version !== 3 &&
       root.version !== 4 &&
       root.version !== 5 &&
+      root.version !== 6 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -803,6 +806,7 @@ export async function validateLocalBackup(
       ...(root.version >= 4 ? ["overtimeAllocations"] : []),
       ...(root.version >= 5 ? ["paidAbsences"] : []),
       ...(root.version >= 6 ? ["trainingProfiles", "shiftTrainingDetails"] : []),
+      ...(root.version >= 7 ? ["actualAnnualPayments"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -919,6 +923,24 @@ export async function validateLocalBackup(
       }
     }
 
+    const actualAnnualPayments =
+      root.version >= 7
+        ? Object.freeze(
+            asArray(data.actualAnnualPayments).map((value) => {
+              mapAnnualPaymentRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 7) {
+      if (
+        (databaseSchemaVersion as number) < 20 ||
+        (profile === null && actualAnnualPayments.length > 0)
+      )
+        return invalid();
+      validateSavedActualOwnAnnualPayments(actualAnnualPayments.map(mapAnnualPaymentRow));
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -955,6 +977,7 @@ export async function validateLocalBackup(
         paidAbsences,
         trainingProfiles,
         shiftTrainingDetails,
+        actualAnnualPayments,
         templates,
         shifts,
         appointments,
@@ -984,7 +1007,8 @@ export async function validateLocalBackup(
             !(
               document.version < 6 &&
               (key === "trainingProfiles" || key === "shiftTrainingDetails")
-            ),
+            ) &&
+            !(document.version < 7 && key === "actualAnnualPayments"),
         ),
       ),
     });
