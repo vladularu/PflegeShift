@@ -43,7 +43,16 @@ export interface RuleResolverPackageIds {
 }
 
 export interface RuleResolver {
-  readonly resolveTariff: (effectiveDate: string) => RuleResolution<RuleTariffPackage>;
+  /** Optional for legacy custom adapters; absence never authorizes a fallback. */
+  readonly tariffPackageIds?: readonly string[];
+  readonly annualTariffCandidates?: (
+    packageId: string,
+    year: number,
+  ) => readonly RuleTariffPackage[];
+  readonly resolveTariff: (
+    effectiveDate: string,
+    packageId?: string,
+  ) => RuleResolution<RuleTariffPackage>;
   readonly resolveLegal: (effectiveDate: string) => RuleResolution<RuleLegalPackage>;
   readonly resolveHoliday: (effectiveDate: string) => RuleResolution<RuleHolidayPackage>;
 }
@@ -71,12 +80,18 @@ export const BUNDLED_RULE_CATALOG: RuleResolverCatalog = Object.freeze({
   holiday: BUNDLED_HOLIDAY_RULES,
 });
 
-function packageIdsFromTracks(tracks: RuleManifest["tracks"]): RuleResolverPackageIds | null {
+function packageIdsFromManifest(manifest: RuleManifest): RuleResolverPackageIds | null {
+  const { tracks } = manifest;
   const packageIdFor = (kind: RulePackage["kind"]): string | null => {
     const matches = tracks.filter((track) => track.kind === kind);
     return matches.length === 1 ? matches[0].packageId : null;
   };
-  const tariff = packageIdFor("TARIFF");
+  const tariff =
+    manifest.schemaVersion === 2
+      ? (manifest.legacyTariffPackageId ?? null)
+      : packageIdFor("TARIFF");
+  if (tracks.filter((track) => track.kind === "TARIFF" && track.packageId === tariff).length !== 1)
+    return null;
   const legal = packageIdFor("LEGAL");
   const holiday = packageIdFor("HOLIDAY");
   return tariff !== null && legal !== null && holiday !== null
@@ -85,7 +100,7 @@ function packageIdsFromTracks(tracks: RuleManifest["tracks"]): RuleResolverPacka
 }
 
 export function isRuleCatalogRuntimeCompatible(catalog: ValidatedRuleCatalog): boolean {
-  return packageIdsFromTracks(catalog.manifest.tracks) !== null;
+  return packageIdsFromManifest(catalog.manifest) !== null;
 }
 
 function isValidDate(value: string): boolean {
@@ -144,8 +159,20 @@ export function createRuleResolver(
   packageIds: RuleResolverPackageIds = LEGACY_RULE_PACKAGE_IDS,
 ): RuleResolver {
   return Object.freeze({
-    resolveTariff: (effectiveDate: string) =>
-      resolvePackage(catalog.tariff, "TARIFF", packageIds.tariff, effectiveDate),
+    tariffPackageIds: Object.freeze([...new Set(catalog.tariff.map((item) => item.packageId))]),
+    annualTariffCandidates: (packageId: string, year: number) =>
+      Object.freeze(
+        Number.isInteger(year) && year >= 1900 && year <= 4099
+          ? catalog.tariff.filter(
+              (item) =>
+                item.packageId === packageId &&
+                item.validFrom <= year + "-12-31" &&
+                (item.validTo === null || item.validTo >= year + "-01-01"),
+            )
+          : [],
+      ),
+    resolveTariff: (effectiveDate: string, packageId: string = packageIds.tariff) =>
+      resolvePackage(catalog.tariff, "TARIFF", packageId, effectiveDate),
     resolveLegal: (effectiveDate: string) =>
       resolvePackage(catalog.legal, "LEGAL", packageIds.legal, effectiveDate),
     resolveHoliday: (effectiveDate: string) =>
@@ -154,10 +181,10 @@ export function createRuleResolver(
 }
 
 export function createRuleResolverFromCatalog(catalog: ValidatedRuleCatalog): RuleResolver {
-  const packageIds = packageIdsFromTracks(catalog.manifest.tracks);
+  const packageIds = packageIdsFromManifest(catalog.manifest);
   if (packageIds === null) {
     throw new RuleCatalogCompatibilityError(
-      "The rule resolver requires exactly one tariff, legal, and holiday track.",
+      "The rule resolver requires an unambiguous legacy tariff selection and exactly one legal and holiday track.",
     );
   }
   return createRuleResolver(
