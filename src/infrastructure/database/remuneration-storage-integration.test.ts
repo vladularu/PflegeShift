@@ -1,3 +1,4 @@
+import { rewindRemunerationMigrations } from "./remuneration-migration-test-fixture";
 import {
   LOCAL_BACKUP_VERSION,
   createLocalBackupDocument,
@@ -100,9 +101,7 @@ describe("dated profile storage and backup compatibility", () => {
     destination.raw.close();
   });
   function downgradeTo13() {
-    source.raw.exec(
-      "DROP TABLE tariff_annual_claims; DROP TABLE actual_annual_payments; DROP TABLE shift_training_details; DROP TABLE training_profiles; DROP TABLE paid_absences; DROP TABLE overtime_allocations; DROP TABLE scoped_allowance_decisions; DROP TABLE remuneration_profiles; DELETE FROM schema_migrations WHERE version>=14",
-    );
+    rewindRemunerationMigrations(source.raw, 14);
   }
   it("keeps an unknown historical beginning null during the frozen legacy migration", async () => {
     const before = await loadProfile(source.db);

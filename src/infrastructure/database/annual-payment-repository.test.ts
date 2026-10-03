@@ -1,3 +1,4 @@
+import { rewindRemunerationMigrations } from "./remuneration-migration-test-fixture";
 import { randomUUID, createHash } from "node:crypto";
 import { unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -267,9 +268,7 @@ describe("actual annual payment persistence", () => {
     expect(await db.getAllAsync("SELECT * FROM user_profile")).toEqual(before);
   });
   it("rolls back a failed additive migration, preserving a large existing shift history", async () => {
-    adapter.database.exec(
-      "DROP TABLE IF EXISTS tariff_annual_claims; DROP TABLE actual_annual_payments; DELETE FROM schema_migrations WHERE version>=20;",
-    );
+    rewindRemunerationMigrations(adapter.database, 20);
     const insert = adapter.database
       .prepare(`INSERT INTO shift_entries(id,date,title,type,start_time,end_time,break_minutes,color,symbol,revision,created_at,updated_at)
       VALUES(?,'2026-09-20','Dienst','EARLY','06:00','14:00',30,'#EA5B55','N',1,'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z')`);

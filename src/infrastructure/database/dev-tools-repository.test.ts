@@ -1,3 +1,4 @@
+import { DEV_BACKUP_VERSION } from "./dev-backup-payload";
 import { shift as shiftFixture } from "@/engine/remuneration-test-fixtures";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
 import {
@@ -384,7 +385,7 @@ describe("test lab repository", () => {
       .prepare("SELECT payload FROM dev_test_backups WHERE month='2026-08'")
       .get() as { payload: string };
     expect(JSON.parse(firstBackup.payload)).toMatchObject({
-      version: 6,
+      version: DEV_BACKUP_VERSION,
       month: "2026-08",
       counts: { appointments: 1, decisions: 0 },
     });
