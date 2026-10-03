@@ -43,7 +43,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 14;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 14;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -65,7 +65,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 14;
+  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 14;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -139,7 +139,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 14;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 14;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -175,6 +175,10 @@ export interface RuleRounding {
 }
 export interface RuleTariffRules {
   selection?: RuleTariffSelection;
+  tvlCareAllowancePolicy?: RuleTvlCareAllowancePolicy;
+  tvlShiftAllowancePolicy?: RuleTvlShiftAllowancePolicy;
+  tvlOvertimePolicy?: RuleTvlOvertimePolicy;
+  tvlTimePremiumPolicy?: RuleTvlTimePremiumPolicy;
   trainingPay?: RuleTrainingPay;
   /**
    * @minItems 1
@@ -301,6 +305,121 @@ export interface RuleTariffSelection {
     overtime: RuleCapabilityStatus;
     annualPayment: RuleCapabilityStatus;
   };
+}
+export interface RuleTvlCareAllowancePolicy {
+  eligibilityRule: "TVL_PART_IV_V1";
+  nursingMonthlyCents: number;
+  instructorMonthlyCents: number;
+  functionMonthlyCents?: number;
+  clinicalLowerMonthlyCents: number;
+  clinicalHigherMonthlyCents: number;
+  burnCareFullHourCents: number;
+  /**
+   * @minItems 6
+   * @maxItems 6
+   */
+  leadershipTiers: [
+    {
+      minimumNursingStaff: number;
+      monthlyCents: number;
+      annexFNumber: number;
+    },
+    {
+      minimumNursingStaff: number;
+      monthlyCents: number;
+      annexFNumber: number;
+    },
+    {
+      minimumNursingStaff: number;
+      monthlyCents: number;
+      annexFNumber: number;
+    },
+    {
+      minimumNursingStaff: number;
+      monthlyCents: number;
+      annexFNumber: number;
+    },
+    {
+      minimumNursingStaff: number;
+      monthlyCents: number;
+      annexFNumber: number;
+    },
+    {
+      minimumNursingStaff: number;
+      monthlyCents: number;
+      annexFNumber: number;
+    },
+  ];
+  sourceIds: RuleSourceIds;
+}
+export interface RuleTvlShiftAllowancePolicy {
+  sourceIds: RuleSourceIds;
+  /**
+   * @minItems 1
+   * @maxItems 100
+   */
+  periods: [
+    {
+      validFrom: string;
+      validTo: string | null;
+      shiftMonthlyCents: number;
+      shiftHourlyCents: number;
+      alternatingMonthlyCents: number;
+      alternatingHourlyCents: number;
+    },
+    ...{
+      validFrom: string;
+      validTo: string | null;
+      shiftMonthlyCents: number;
+      shiftHourlyCents: number;
+      alternatingMonthlyCents: number;
+      alternatingHourlyCents: number;
+    }[],
+  ];
+}
+export interface RuleTvlOvertimePolicy {
+  monthlyFactorThousandths: number;
+  maximumBaseStepId: RuleIdentifier;
+  premiumReferenceStepId: RuleIdentifier;
+  rounding: "HOURLY_THEN_TOTAL";
+  /**
+   * @minItems 1
+   * @maxItems 100
+   */
+  groupRates: [
+    {
+      groupId: RuleIdentifier;
+      percentageBasisPoints: number;
+    },
+    ...{
+      groupId: RuleIdentifier;
+      percentageBasisPoints: number;
+    }[],
+  ];
+  sourceIds: RuleSourceIds;
+}
+export interface RuleTvlTimePremiumPolicy {
+  monthlyFactorThousandths: number;
+  referenceStepId: RuleIdentifier;
+  nightBasisPoints: number;
+  nightWindow: RuleTimeWindow;
+  sundayBasisPoints: number;
+  holidayWithTimeOffBasisPoints: number;
+  holidayWithoutTimeOffBasisPoints: number;
+  preHolidayBasisPoints: number;
+  preHolidayWindow: RuleTimeWindow;
+  /**
+   * @minItems 1
+   */
+  preHolidayMonthDays: [string, ...string[]];
+  saturdayBasisPoints: number;
+  saturdaySalariedShiftHourlyCents: number;
+  saturdayWindow: RuleTimeWindow;
+  sourceIds: RuleSourceIds;
+}
+export interface RuleTimeWindow {
+  startMinute: number;
+  endMinute: number;
 }
 export interface RuleTrainingPay {
   /**
@@ -2520,10 +2639,6 @@ export interface RulePremiumRule {
   timeWindow: null | RuleTimeWindow;
   conditions: RuleConditions;
   sourceIds: RuleSourceIds;
-}
-export interface RuleTimeWindow {
-  startMinute: number;
-  endMinute: number;
 }
 export interface RuleConditions {
   requiresShiftTypes: RuleIdentifier[];

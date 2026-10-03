@@ -151,7 +151,7 @@ describe("Caritas section 6 time-premium rate contract", () => {
   it("keeps the premium field inside Caritas contract 14", () => {
     const pkg = withRates();
     Reflect.set(pkg, "engineContractVersion", 12);
-    expect(codes(pkg)).toContain("SCHEMA_ENUM");
+    expect(codes(pkg)).toContain("TVL_KR_IDENTITY");
     expect(caritasTableIssues(pkg).map((issue) => issue.code)).toContain(
       "CARITAS_PREMIUM_CONTRACT",
     );
