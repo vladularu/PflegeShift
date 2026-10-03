@@ -380,6 +380,8 @@ export interface MonthlyComplianceResult {
 }
 
 export interface PremiumLine {
+  /** Present on the dated calculation path for exact rule provenance. */
+  readonly ruleId?: string;
   readonly key: string;
   readonly label: string;
   readonly minutes: number;

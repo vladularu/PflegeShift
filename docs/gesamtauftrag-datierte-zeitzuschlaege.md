@@ -24,3 +24,7 @@ Die originalen TVöD-P-Tests schützen die Ganzdienst-Ergebnisse, Paket- und Pro
 Der Gesamtcheckout bleibt erhalten. Die Nutzerfreigabe umfasst die abgegrenzte Git-Lieferung. Fachliche Endfreigabe und Geräteabnahme sind getrennte tatsächliche Nachweise.
 
 Expo-Dokumentation: https://docs.expo.dev/versions/v57.0.0/
+
+## Gepruefter Lieferstand
+
+Integration auf master c553516: 54 gezielte Tests und verify:fast (2255 Unit-/Integrationstests, 472 Komponententests) erfolgreich.
