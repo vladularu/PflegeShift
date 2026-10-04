@@ -23,7 +23,13 @@ import {
   type RawShiftRow,
 } from "@/infrastructure/database/dev-backup-payload";
 import { withImmediateTransaction } from "@/infrastructure/database/transaction";
+import { snapshotDevTraining, restoreDevTraining } from "./dev-training-backup";
 import { assertDevToolsAvailable, isDevToolsBuild } from "@/infrastructure/dev-tools-policy";
+import {
+  snapshotDevRemuneration,
+  clearDevRemuneration,
+  restoreDevRemuneration,
+} from "./dev-remuneration-backup";
 interface BackupRow {
   month: string;
   payload: string;
@@ -288,7 +294,9 @@ export async function restoreTestBackup(
   assertDevToolsAvailable();
   await transaction(db, async (tx) => {
     await assertDeveloperModeEnabled(tx);
-    for (const month of months) {
+    // Later months can contain work facts for a night shift that began in the
+    // preceding month. Restore their shift parents before those dependents.
+    for (const month of [...months].sort()) {
       assertMonth(month);
       const backup = await tx.getFirstAsync<BackupRow>(
         "SELECT month,payload,run_id,created_at FROM dev_test_backups WHERE month=?",
