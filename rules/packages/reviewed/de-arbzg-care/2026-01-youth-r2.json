@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 10,
+  "packageId": "de-arbzg-care",
+  "versionId": "2026-01-youth-r2",
+  "kind": "LEGAL",
+  "label": "Arbeitszeitregeln Gesundheit und Jugendarbeitsschutz",
+  "status": "DRAFT",
+  "validFrom": "2026-01-01",
+  "validTo": null,
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "arbzg-2024",
+      "title": "Arbeitszeitgesetz (ArbZG)",
+      "url": "https://www.gesetze-im-internet.de/arbzg/ArbZG.pdf",
+      "documentDate": "2024-10-23",
+      "section": "§§ 2 bis 6 und 9 bis 12; Stand der letzten Änderung durch Art. 52 G vom 23.10.2024",
+      "sha256": "4f02827be6307ad728f4aeb318aff28751422b251973d3350b93e9ec11554e84"
+    },
+    {
+      "id": "pflegeshift-planning-policy-v1",
+      "title": "PflegeShift Legacy-Planungswarnungen",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/compliance.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative ArbZG-Quelle",
+      "sha256": "d848a5077731c7a1dddd9ddc07ed6d1df68b8579f68a03c95a84bf5ed2e3c272"
+    },
+    {
+      "id": "eu-2003-88",
+      "title": "Richtlinie 2003/88/EG über bestimmte Aspekte der Arbeitszeitgestaltung",
+      "url": "https://eur-lex.europa.eu/legal-content/DE/TXT/PDF/?uri=CELEX:32003L0088",
+      "documentDate": "2003-11-04",
+      "section": "Art. 6 und 16; ABl. L 299 vom 18.11.2003, S. 9–19",
+      "sha256": "13ff399696ddd77d9e3e430026056041c1bf29a77b112fcbf3bb359edd67f1f7"
+    },
+    {
+      "id": "bbig-2025",
+      "title": "Berufsbildungsgesetz, konsolidierte Fassung",
+      "url": "https://www.gesetze-im-internet.de/bbig_2005/BBiG.pdf",
+      "documentDate": "2025-10-28",
+      "section": "§ 15; Freistellung und Anrechnung bei volljähriger Ausbildung",
+      "sha256": "9b4e76df83bfe21feb2049c6fbca111e0430ed7a3e730fe3682f0a80f8098848"
+    },
+    {
+      "id": "pflbg-2025",
+      "title": "Pflegeberufegesetz, konsolidierte Fassung",
+      "url": "https://www.gesetze-im-internet.de/pflbg/PflBG.pdf",
+      "documentDate": "2025-12-22",
+      "section": "§§ 18, 25 und 63; berufliche Ausbildung, Freistellung und Abgrenzung BBiG",
+      "sha256": "09ddce9db838f580845ba077ca5b69509b08e9a1e91fbcd2ff3e231a558be754"
+    },
+    {
+      "id": "jarbschg-2024",
+      "title": "Jugendarbeitsschutzgesetz, konsolidierte Fassung",
+      "url": "https://www.gesetze-im-internet.de/jarbschg/JArbSchG.pdf",
+      "documentDate": "2024-10-23",
+      "section": "§§ 1, 2, 4, 8–18, 21–21b; Arbeitszeit und Freizeit",
+      "sha256": "f3bc2712f40f764f1860486a1dd759b1fd804eb8e205c02f0023d3f36161d0b1"
+    }
+  ],
+  "review": {
+    "status": "DRAFT",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "gitCommit": null
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "AFTER_SUM"
+  },
+  "rules": {
+    "adultTraining": {
+      "minimumAge": 18,
+      "bbig": {
+        "school": {
+          "earlyStartMinute": 540,
+          "protectedDayLessonCount": 6,
+          "minimumLessonMinutes": 45,
+          "blockLessonCount": 25,
+          "blockDays": 5,
+          "additionalTrainingMinutes": 120
+        },
+        "exam": {
+          "releaseRequiredOutsideParticipation": true,
+          "releasePrecedingWrittenFinalWorkday": true,
+          "creditParticipationBreaksNecessaryTravel": true,
+          "creditPrecedingAverageDay": true,
+          "sourceIds": ["bbig-2025"]
+        },
+        "sourceIds": ["bbig-2025"]
+      },
+      "pflbg": {
+        "schoolRelease": true,
+        "examRelease": true,
+        "preparationTimeRequired": true,
+        "sourceIds": ["pflbg-2025"]
+      }
+    },
+    "workingTime": {
+      "standardDailyMinutes": 480,
+      "maxDailyMinutes": 600,
+      "nightAverageMinutes": 480,
+      "workWeekLastDay": 6,
+      "absenceWorkdaysPerWeek": 5,
+      "standardAverage": {
+        "calendarMonths": 6,
+        "weeks": 24,
+        "assessmentMode": "FORWARD_FROM_EXTENDED_WORKDAY",
+        "neutralAbsenceTypes": ["VACATION", "SICK"]
+      },
+      "grossPlanningWarningMinutes": 960,
+      "sourceIds": ["arbzg-2024", "eu-2003-88", "pflegeshift-planning-policy-v1"]
+    },
+    "breaks": {
+      "minimumSegmentMinutes": 15,
+      "tiers": [
+        {
+          "overMinutes": 360,
+          "requiredMinutes": 30
+        },
+        {
+          "overMinutes": 540,
+          "requiredMinutes": 45
+        }
+      ],
+      "sourceIds": ["arbzg-2024"]
+    },
+    "nightWork": {
+      "startMinute": 1380,
+      "endMinute": 360,
+      "qualification": {
+        "comparator": "GT",
+        "thresholdMinutes": 120
+      },
+      "workerQualification": {
+        "regularRotatingNightWorkRequiresConfirmation": true,
+        "annualNightWorkDaysThreshold": 48
+      },
+      "averageWindowDays": 28,
+      "sourceIds": ["arbzg-2024"]
+    },
+    "restPeriod": {
+      "defaultMinutes": 660,
+      "deviations": [
+        {
+          "id": "care-rest-deviation",
+          "sectorIds": ["hospital", "care"],
+          "minimumMinutes": 600,
+          "compensationMinutes": 720,
+          "compensationWithinDays": 28,
+          "sourceIds": ["arbzg-2024"],
+          "compensationWithinCalendarMonths": 1
+        }
+      ],
+      "sourceIds": ["arbzg-2024"]
+    },
+    "sundayHolidayRest": {
+      "eligibleSectorIds": ["hospital", "care"],
+      "minimumFreeSundaysPerCalendarYear": 15,
+      "sundayCompensationPeriodDays": 14,
+      "weekdayHolidayCompensationPeriodDays": 56,
+      "replacementDayMinutes": 1440,
+      "connectedRestMinutes": 660,
+      "connectionExceptionMode": "TECHNICAL_OR_OPERATIONAL_REVIEW",
+      "evidenceShiftType": "FREE",
+      "matchingMode": "ONE_TO_ONE_EARLIEST_DEADLINE",
+      "sourceIds": ["arbzg-2024"]
+    },
+    "planning": {
+      "consecutiveWorkDaysWarning": 7,
+      "consecutiveNightShiftsWarning": 5,
+      "consecutiveWeekendGapDays": 7,
+      "lateEarlyDayGap": 1,
+      "sourceIds": ["pflegeshift-planning-policy-v1"]
+    },
+    "youthProtection": {
+      "minimumAge": 15,
+      "adultAge": 18,
+      "workingTime": {
+        "dailyMinutes": 480,
+        "reducedWeekDailyMinutes": 510,
+        "weeklyMinutes": 2400,
+        "shiftSpanMinutes": 600,
+        "maxDaysPerWeek": 5
+      },
+      "breaks": {
+        "minimumSegmentMinutes": 15,
+        "afterStartMinutes": 60,
+        "beforeEndMinutes": 60,
+        "maxContinuousMinutes": 270,
+        "tiers": [
+          {
+            "overMinutes": 270,
+            "requiredMinutes": 30
+          },
+          {
+            "overMinutes": 360,
+            "requiredMinutes": 60
+          }
+        ]
+      },
+      "restMinutes": 720,
+      "employmentWindow": {
+        "startMinute": 360,
+        "endMinute": 1200,
+        "multiShiftMinimumAge": 16,
+        "multiShiftEndMinute": 1380
+      },
+      "school": {
+        "earlyStartMinute": 540,
+        "protectedDayLessonCount": 6,
+        "minimumLessonMinutes": 45,
+        "blockLessonCount": 25,
+        "blockDays": 5,
+        "additionalTrainingMinutes": 120
+      },
+      "exam": {
+        "releaseRequiredOutsideParticipation": true,
+        "releasePrecedingWrittenFinalWorkday": true,
+        "creditParticipationBreaksNecessaryTravel": true,
+        "creditPrecedingAverageDay": true,
+        "sourceIds": ["jarbschg-2024"]
+      },
+      "daysOff": {
+        "minimumFreeSundays": 2,
+        "recommendedFreeSaturdays": 2,
+        "holidayReplacementFollowingWeeks": 1,
+        "absoluteFixedHolidays": ["01-01", "05-01", "12-25"],
+        "easterSundayProhibited": true,
+        "shortEveDays": ["12-24", "12-31"],
+        "shortEveEndMinute": 840
+      },
+      "sourceIds": ["jarbschg-2024"]
+    }
+  }
+}
