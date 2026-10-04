@@ -12,6 +12,7 @@ import { LEGACY_RULE_PACKAGE_IDS } from "@/rules/bundled-rules";
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
 import { resolveTariffSelection } from "@/rules/tariff-selection";
 import { annualPaymentRuleIssues } from "@/rules/annual-payment-rule-validation";
+import { validateRulePackage } from "@/rules/validation";
 import type { OwnRemunerationConfiguration } from "@/domain/own-remuneration";
 
 import { resolveTvlKrPay, type TvlKrPayContext } from "./remuneration-tvl-context";
@@ -28,6 +29,15 @@ export type RemunerationContext = ContextBase &
     | TrainingPayContext
     | TvlKrPayContext
     | TvalTrainingPayContext
+    | {
+        readonly kind: "tvoed-annex-a-draft";
+        readonly rulePackage: RuleTariffPackage;
+        readonly weeklyMinutes: number;
+        readonly fullTimeWeeklyMinutes: number;
+        readonly variant: "BT_K" | "BT_B";
+        readonly groupId: string;
+        readonly stepId: string;
+      }
     | { readonly kind: "unavailable"; readonly issue: RemunerationIssue }
     | {
         readonly kind: "own-configured";
@@ -161,6 +171,42 @@ export function resolveRemunerationContext(
       "Das Tarifregelwerk passt nicht zur Auswahl oder zum Zeitraum.",
       rulePackage,
     );
+  if (rulePackage.engineContractVersion === 16) {
+    const declared = resolveTariffSelection(rulePackage, selection.variant, selection.region);
+    if (
+      selection.packageId !== "tvoed-vka-anlage-a" ||
+      rulePackage.status !== "DRAFT" ||
+      !validateRulePackage(rulePackage).ok ||
+      declared?.familyId !== "tvoed-vka-annex-a" ||
+      declared.engineId !== "tvoed-annex-a-v1" ||
+      !["BT_K", "BT_B"].includes(selection.variant) ||
+      selection.region !== "VKA" ||
+      !/^EG(?:[1-9]|1[0-5])(?:[ABC])?$/u.test(selection.group) ||
+      !/^[1-6]$/u.test(selection.level) ||
+      !declared.groups.some(
+        (group) =>
+          group.id === selection.group.toLowerCase() &&
+          group.levels.includes(`s${selection.level}`),
+      )
+    )
+      return unavailable(
+        profile,
+        "TARIFF_UNSUPPORTED",
+        "Die TVöD-Anlage-A-Auswahl ist nicht als sicherer Tabellenentwurf verfügbar.",
+        rulePackage,
+      );
+    return {
+      kind: "tvoed-annex-a-draft",
+      profile,
+      source: sourceFor(profile, rulePackage),
+      rulePackage,
+      weeklyMinutes: data.weeklyMinutes,
+      fullTimeWeeklyMinutes: selection.fullTimeWeeklyMinutes,
+      variant: selection.variant as "BT_K" | "BT_B",
+      groupId: selection.group.toLowerCase(),
+      stepId: `s${selection.level}`,
+    };
+  }
   if (rulePackage.engineContractVersion === 13) {
     const tval = resolveTvalTrainingPay(date, rulePackage, selection, data.weeklyMinutes);
     return tval.ok
@@ -326,6 +372,8 @@ function sameContext(left: RemunerationContext, right: RemunerationContext): boo
       left.source.versionId === right.source.versionId
     );
   if (left.kind === "tariff" && right.kind === "tariff")
+    return left.rulePackage === right.rulePackage;
+  if (left.kind === "tvoed-annex-a-draft" && right.kind === "tvoed-annex-a-draft")
     return left.rulePackage === right.rulePackage;
   if (left.kind === "training-tariff" && right.kind === "training-tariff")
     return left.rulePackage === right.rulePackage;

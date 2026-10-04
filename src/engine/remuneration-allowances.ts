@@ -174,6 +174,11 @@ export function calculateMonthlyDatedAllowances(
       let issue: SupplementPosition["issue"] = null;
       const shiftAllowance = type === "shift" || type === "alternating-shift";
       if (context.kind === "unavailable") issue = context.issue;
+      else if (context.kind === "tvoed-annex-a-draft")
+        issue = {
+          code: "TARIFF_UNSUPPORTED",
+          message: "Die weiteren TVöD-Anlage-A-Bestandteile sind noch nicht fachlich freigegeben.",
+        };
       else if (context.kind === "tvl-kr")
         issue = {
           code: "TARIFF_UNSUPPORTED",
@@ -246,11 +251,13 @@ export function calculateMonthlyDatedAllowances(
         id: `allowance:${type ?? "unknown"}:${date}`,
         kind: "allowance",
         label:
-          context.kind === "training-tariff" && type === "care"
-            ? "Tätigkeitsabhängige Ausbildungszulage"
-            : type
-              ? LABELS[type]
-              : "Zulagen",
+          context.kind === "tvoed-annex-a-draft"
+            ? "Weitere TVöD-Bestandteile"
+            : context.kind === "training-tariff" && type === "care"
+              ? "Tätigkeitsabhängige Ausbildungszulage"
+              : type
+                ? LABELS[type]
+                : "Zulagen",
         from: date,
         through: date,
         amountCents: issue ? null : 0,
