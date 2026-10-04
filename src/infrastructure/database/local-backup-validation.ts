@@ -1,4 +1,8 @@
 import {
+  mapTvoedAnnexAPremiumFactsRow,
+  requireTvoedAnnexAPremiumFactsParent,
+} from "./tvoed-annex-a-premium-facts-repository";
+import {
   mapTvoedSueAllowanceConfirmationRow,
   requireTvoedSueAllowanceConfirmationParent,
 } from "./tvoed-sue-allowance-confirmation-repository";
@@ -820,6 +824,7 @@ export async function validateLocalBackup(
       root.version !== 13 &&
       root.version !== 14 &&
       root.version !== 15 &&
+      root.version !== 16 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -852,6 +857,7 @@ export async function validateLocalBackup(
       ...(root.version >= 14 ? ["tvoedAnnexAMonthConfirmations"] : []),
       ...(root.version >= 15 ? ["tvoedSueMonthConfirmations"] : []),
       ...(root.version >= 16 ? ["tvoedSueAllowanceConfirmations"] : []),
+      ...(root.version >= 17 ? ["tvoedAnnexAPremiumFacts"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -1220,6 +1226,42 @@ export async function validateLocalBackup(
         );
     }
 
+    const tvoedAnnexAPremiumFacts =
+      root.version >= 17
+        ? Object.freeze(
+            asArray(data.tvoedAnnexAPremiumFacts).map((value) => {
+              mapTvoedAnnexAPremiumFactsRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 17) {
+      if (
+        (databaseSchemaVersion as number) < 29 ||
+        (profile === null && tvoedAnnexAPremiumFacts.length > 0)
+      )
+        return invalid();
+      uniqueValues(tvoedAnnexAPremiumFacts, "month");
+      const profiles = (remunerationProfiles ?? []).map((row) =>
+        mapRemunerationProfileRow(
+          row as unknown as Parameters<typeof mapRemunerationProfileRow>[0],
+        ),
+      );
+      const shiftsById = new Map(
+        shifts.map((row) => [row.id, mapShift(row as unknown as Parameters<typeof mapShift>[0])]),
+      );
+      for (const row of tvoedAnnexAPremiumFacts) {
+        const parsed = mapTvoedAnnexAPremiumFactsRow(row);
+        requireTvoedAnnexAPremiumFactsParent(parsed, profiles);
+        for (const decision of parsed.dayDecisions) {
+          const shift = shiftsById.get(decision.shiftId);
+          const binding = JSON.parse(decision.shiftBinding) as readonly unknown[];
+          if (!shift || (binding[1] as number) > shift.revision)
+            return invalid("Ungültige Dienstreferenz in TVöD-Zuschlagsdaten.");
+        }
+      }
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -1265,6 +1307,7 @@ export async function validateLocalBackup(
         tvoedAnnexAMonthConfirmations,
         tvoedSueMonthConfirmations,
         tvoedSueAllowanceConfirmations,
+        tvoedAnnexAPremiumFacts,
         templates,
         shifts,
         appointments,
@@ -1303,7 +1346,8 @@ export async function validateLocalBackup(
             !(document.version < 13 && key === "caritasOvertime") &&
             !(document.version < 14 && key === "tvoedAnnexAMonthConfirmations") &&
             !(document.version < 15 && key === "tvoedSueMonthConfirmations") &&
-            !(document.version < 16 && key === "tvoedSueAllowanceConfirmations"),
+            !(document.version < 16 && key === "tvoedSueAllowanceConfirmations") &&
+            !(document.version < 17 && key === "tvoedAnnexAPremiumFacts"),
         ),
       ),
     });

@@ -1,4 +1,10 @@
 import {
+  TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS,
+  mapTvoedAnnexAPremiumFactsRow,
+  requireTvoedAnnexAPremiumFactsParent,
+  type TvoedAnnexAPremiumFactsRow,
+} from "./tvoed-annex-a-premium-facts-repository";
+import {
   TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS,
   mapTvoedSueAllowanceConfirmationRow,
   requireTvoedSueAllowanceConfirmationParent,
@@ -73,6 +79,7 @@ export interface DevRemunerationBackup {
   readonly tvoedAnnexAMonthConfirmations: readonly TvoedAnnexAMonthConfirmationRow[];
   readonly tvoedSueMonthConfirmations: readonly TvoedSueMonthConfirmationRow[];
   readonly tvoedSueAllowanceConfirmations: readonly TvoedSueAllowanceConfirmationRow[];
+  readonly tvoedAnnexAPremiumFacts: readonly TvoedAnnexAPremiumFactsRow[];
 }
 
 function exact(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -96,6 +103,7 @@ export function validateDevRemunerationBackup(
   includesTvoedAnnexAMonthConfirmations = false,
   includesTvoedSueMonthConfirmations = false,
   includesTvoedSueAllowanceConfirmations = false,
+  includesTvoedAnnexAPremiumFacts = false,
 ): DevRemunerationBackup {
   const data = exact(value, [
     "allowanceDecision",
@@ -108,6 +116,7 @@ export function validateDevRemunerationBackup(
     ...(includesTvoedAnnexAMonthConfirmations ? ["tvoedAnnexAMonthConfirmations"] : []),
     ...(includesTvoedSueMonthConfirmations ? ["tvoedSueMonthConfirmations"] : []),
     ...(includesTvoedSueAllowanceConfirmations ? ["tvoedSueAllowanceConfirmations"] : []),
+    ...(includesTvoedAnnexAPremiumFacts ? ["tvoedAnnexAPremiumFacts"] : []),
   ]);
   let allowanceDecision: AllowanceDecisionRow | null = null;
   if (data.allowanceDecision !== null) {
@@ -261,6 +270,32 @@ export function validateDevRemunerationBackup(
       throw new Error("Falscher SuE-Zulagenmonat im Testlabor-Backup.");
     return Object.freeze({ ...row });
   });
+  const rawAnnexAPremium = includesTvoedAnnexAPremiumFacts ? data.tvoedAnnexAPremiumFacts : [];
+  if (!Array.isArray(rawAnnexAPremium))
+    throw new Error("TVöD-Zuschlagsdaten fehlen im Testlabor-Backup.");
+  if (rawAnnexAPremium.length > 1)
+    throw new Error("Doppelte TVöD-Zuschlagsdaten im Testlabor-Backup.");
+  const tvoedAnnexAPremiumFacts = rawAnnexAPremium.map((value) => {
+    const row = exact(
+      value,
+      TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS,
+    ) as unknown as TvoedAnnexAPremiumFactsRow;
+    const parsed = mapTvoedAnnexAPremiumFactsRow(row);
+    if (parsed.month !== month)
+      throw new Error("Falscher TVöD-Zuschlagsmonat im Testlabor-Backup.");
+    for (const decision of parsed.dayDecisions) {
+      const shift = byId.get(decision.shiftId);
+      const binding = JSON.parse(decision.shiftBinding) as readonly unknown[];
+      // A month-opening work slice may belong to a shift that started the day before.
+      // That parent is outside the test-month snapshot and is checked during restore.
+      if (
+        (binding[3] as string).startsWith(`${month}-`) &&
+        (!shift || (binding[1] as number) > shift.revision)
+      )
+        throw new Error("Ungültige TVöD-Dienstzuordnung im Testlabor-Backup.");
+    }
+    return Object.freeze({ ...row });
+  });
   return Object.freeze({
     allowanceDecision,
     overtimeAllocations: Object.freeze(overtimeAllocations),
@@ -272,6 +307,7 @@ export function validateDevRemunerationBackup(
     tvoedAnnexAMonthConfirmations: Object.freeze(tvoedAnnexAMonthConfirmations),
     tvoedSueMonthConfirmations: Object.freeze(tvoedSueMonthConfirmations),
     tvoedSueAllowanceConfirmations: Object.freeze(tvoedSueAllowanceConfirmations),
+    tvoedAnnexAPremiumFacts: Object.freeze(tvoedAnnexAPremiumFacts),
   });
 }
 export async function snapshotDevRemuneration(
@@ -326,6 +362,10 @@ export async function snapshotDevRemuneration(
     `SELECT ${TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS.join(",")} FROM tvoed_sue_allowance_confirmations WHERE month=?`,
     month,
   );
+  const tvoedAnnexAPremiumFacts = await db.getAllAsync<TvoedAnnexAPremiumFactsRow>(
+    `SELECT ${TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS.join(",")} FROM tvoed_annex_a_premium_facts WHERE month=?`,
+    month,
+  );
   return {
     allowanceDecision,
     overtimeAllocations,
@@ -337,9 +377,11 @@ export async function snapshotDevRemuneration(
     tvoedAnnexAMonthConfirmations,
     tvoedSueMonthConfirmations,
     tvoedSueAllowanceConfirmations,
+    tvoedAnnexAPremiumFacts,
   };
 }
 export async function clearDevRemuneration(db: SQLiteDatabase, month: string): Promise<void> {
+  await db.runAsync("DELETE FROM tvoed_annex_a_premium_facts WHERE month=?", month);
   await db.runAsync("DELETE FROM tvoed_sue_allowance_confirmations WHERE month=?", month);
   await db.runAsync("DELETE FROM tvoed_sue_month_confirmations WHERE month=?", month);
   await db.runAsync("DELETE FROM tvoed_annex_a_month_confirmations WHERE month=?", month);
@@ -369,7 +411,8 @@ export async function restoreDevRemuneration(
     data.caritasOvertime.length ||
     data.tvoedAnnexAMonthConfirmations.length ||
     data.tvoedSueMonthConfirmations.length ||
-    data.tvoedSueAllowanceConfirmations.length
+    data.tvoedSueAllowanceConfirmations.length ||
+    data.tvoedAnnexAPremiumFacts.length
       ? await listRemunerationProfiles(db)
       : [];
   const tvlByShift = new Map<string, ReturnType<typeof mapTvlShiftWorkRow>[]>();
@@ -435,6 +478,22 @@ export async function restoreDevRemuneration(
     await db.runAsync(
       "INSERT INTO tvoed_sue_allowance_confirmations(month,confirmation_json) VALUES(?,?)",
       ...TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS.map((key) => row[key]),
+    );
+  }
+  for (const row of data.tvoedAnnexAPremiumFacts) {
+    const parsed = mapTvoedAnnexAPremiumFactsRow(row);
+    requireTvoedAnnexAPremiumFactsParent(parsed, profiles);
+    for (const decision of parsed.dayDecisions) {
+      const parent = await db.getFirstAsync<{ revision: number }>(
+        "SELECT revision FROM shift_entries WHERE id=?",
+        decision.shiftId,
+      );
+      if (!parent || (JSON.parse(decision.shiftBinding)[1] as number) > parent.revision)
+        throw new Error("Ungültige TVöD-Dienstreferenz im Testlabor-Backup.");
+    }
+    await db.runAsync(
+      "INSERT INTO tvoed_annex_a_premium_facts(month,facts_json) VALUES(?,?)",
+      ...TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS.map((key) => row[key]),
     );
   }
   if (data.allowanceDecision !== null)
