@@ -32,6 +32,11 @@ import {
 } from "@/features/analysis/analysis-metrics";
 import type { AnnualMonthReport, AnnualReport } from "@/features/analysis/annual-report";
 import { classifyChecks } from "./check-visibility";
+import {
+  trainingComplianceForState,
+  type TrainingComplianceData,
+  type TrainingComplianceResult,
+} from "./training-compliance";
 import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics";
 import {
   requireResolvedPackage,
@@ -178,6 +183,10 @@ export function annualInputKey(value: unknown): string {
 }
 
 interface AnnualComputationOptions {
+  readonly training?: {
+    readonly data: TrainingComplianceData;
+    readonly shifts: readonly ShiftEntry[];
+  };
   readonly remuneration?: AnnualRemunerationInput;
   readonly cache?: ReturnType<typeof createAnnualAvailableReportCache>;
   readonly onCore?: (report: AnnualReport) => void;
@@ -403,17 +412,29 @@ export function* buildAnnualAvailableReportSteps(
       yield step.value;
     }
 
+    // Keep the cached ArbZG result unmodified. Training profiles and actual pauses
+    // can change independently, including a same-revision backup restoration.
+    const compliance: TrainingComplianceResult | null = options.training
+      ? trainingComplianceForState({
+          month: coreMonth.month,
+          adult: available.compliance,
+          training: options.training.data,
+          shifts: options.training.shifts,
+          profile,
+          ruleResolver,
+        })
+      : available.compliance;
     remunerationMonths.push({ month: coreMonth.month, result: available.remuneration ?? null });
     worktimeCoverageComplete &&= available.summary !== null;
-    complianceCoverageComplete &&= available.compliance !== null;
+    complianceCoverageComplete &&= compliance !== null && compliance.trainingComplete !== false;
     if (available.summary !== null) {
       if (available.shiftTypeAnalysis) shiftAnalyses.push(available.shiftTypeAnalysis);
       targetMinutes += available.summary.targetMinutes;
       summaryActualMinutes += available.summary.actualMinutes;
     }
-    if (available.compliance !== null) {
-      criticalCount += available.compliance.criticalCount;
-      warningCount += available.compliance.warningCount;
+    if (compliance !== null) {
+      criticalCount += compliance.criticalCount;
+      warningCount += compliance.warningCount;
     }
     const payAvailable =
       available.pay?.available === true && available.pay.estimatedGrossAmount !== null;
@@ -430,6 +451,8 @@ export function* buildAnnualAvailableReportSteps(
     months.push(
       Object.freeze({
         ...coreMonth,
+        complianceComplete: compliance !== null && compliance.trainingComplete !== false,
+        trainingTimeDays: compliance?.trainingTimeDays ?? [],
         timePremiumAmount:
           payAvailable && profile.tariff !== null ? available.pay!.timePremiumAmount : null,
         targetMinutes: available.summary?.targetMinutes ?? null,
@@ -443,10 +466,10 @@ export function* buildAnnualAvailableReportSteps(
             (available.pay?.tvoedAllowanceAmount ?? 0) +
             (available.pay?.careAllowanceAmount ?? 0)
           : 0,
-        criticalCount: available.compliance?.criticalCount ?? 0,
-        warningCount: available.compliance?.warningCount ?? 0,
-        infoCount: available.compliance?.infoCount ?? 0,
-        checkCounts: classifyChecks(available.compliance?.issues ?? []),
+        criticalCount: compliance?.criticalCount ?? 0,
+        warningCount: compliance?.warningCount ?? 0,
+        infoCount: compliance?.infoCount ?? 0,
+        checkCounts: classifyChecks(compliance?.issues ?? []),
       }),
     );
     yield 4;
