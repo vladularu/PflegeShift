@@ -23,13 +23,7 @@ import {
   type RawShiftRow,
 } from "@/infrastructure/database/dev-backup-payload";
 import { withImmediateTransaction } from "@/infrastructure/database/transaction";
-import { snapshotDevTraining, restoreDevTraining } from "./dev-training-backup";
 import { assertDevToolsAvailable, isDevToolsBuild } from "@/infrastructure/dev-tools-policy";
-import {
-  snapshotDevRemuneration,
-  clearDevRemuneration,
-  restoreDevRemuneration,
-} from "./dev-remuneration-backup";
 interface BackupRow {
   month: string;
   payload: string;
