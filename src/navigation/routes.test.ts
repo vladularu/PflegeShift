@@ -21,6 +21,7 @@ import {
   tvlShiftWorkRoute,
   sueMonthRoute,
   annexAMonthRoute,
+  caritasMonthFactsRoute,
   paidAbsenceRoute,
   annualPaymentRoute,
   templateEditorRoute,
@@ -146,6 +147,11 @@ describe("navigation contracts", () => {
       params: { month: "2026-09" },
     });
     expect(() => annexAMonthRoute("2026-13")).toThrow();
+    expect(caritasMonthFactsRoute("2026-09")).toEqual({
+      pathname: "/caritas-month-facts",
+      params: { month: "2026-09" },
+    });
+    expect(() => caritasMonthFactsRoute("2026-13")).toThrow();
     expect(annualPaymentRoute("2026-11")).toEqual({
       pathname: "/annual-payment",
       params: { month: "2026-11" },

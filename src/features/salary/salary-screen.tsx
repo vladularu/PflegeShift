@@ -15,6 +15,7 @@ import {
   tvlShiftWorkRoute,
   sueMonthRoute,
   annexAMonthRoute,
+  caritasMonthFactsRoute,
   annexAPremiumFactsRoute,
   paidAbsenceRoute,
   annualPaymentRoute,
@@ -166,6 +167,14 @@ export function SalaryScreen() {
               onPress={() => router.push(premiumDetailsRoute(month))}
             />
             <RemunerationComponentCard title="Zulagen" component={calculation.value.allowances} />
+            {calculation.value.base.positions.length === 1 &&
+            calculation.value.base.positions[0].source.requestedPackageId?.startsWith(
+              "avr-caritas-p-",
+            ) ? (
+              <SecondaryButton onPress={() => router.push(caritasMonthFactsRoute(month))}>
+                Caritas-Monatsangaben (Entwurf) bestätigen
+              </SecondaryButton>
+            ) : null}
             {calculation.value.base.positions.length === 1 &&
             calculation.value.base.positions[0].source.packageId === "tvoed-vka-sue-bt-b" ? (
               <SecondaryButton onPress={() => router.push(sueMonthRoute(month))}>

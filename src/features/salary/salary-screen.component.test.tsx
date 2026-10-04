@@ -148,6 +148,40 @@ beforeEach(() => {
   };
 });
 describe("dated salary detail integration", () => {
+  it("opens Caritas month facts for the displayed dated selection without claiming gross", async () => {
+    const selected: DatedRemunerationProfile = {
+      ...history(),
+      data: {
+        version: 1,
+        weeklyMinutes: 2340,
+        selection: {
+          kind: "tariff",
+          packageId: "avr-caritas-p-bw",
+          variant: "ANLAGE_31",
+          region: "BW",
+          group: "p6",
+          level: "1",
+          fullTimeWeeklyMinutes: 2340,
+        },
+      },
+    };
+    mockHistory = { ...mockHistory, profiles: [selected] };
+    const view = await render(<SalaryScreen />);
+    expect(view.queryByText("BRUTTO-SCHÄTZUNG")).toBeNull();
+    await fireEvent.press(
+      view.getByRole("button", { name: "Caritas-Monatsangaben (Entwurf) bestätigen" }),
+    );
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/caritas-month-facts",
+      params: { month: "2026-09" },
+    });
+    mockHistory = { ...mockHistory, profiles: [history()] };
+    await view.rerender(<SalaryScreen />);
+    expect(
+      view.queryByRole("button", { name: "Caritas-Monatsangaben (Entwurf) bestätigen" }),
+    ).toBeNull();
+  });
+
   it.each([LIGHT_PALETTE, DARK_PALETTE])(
     "explains missing personal annual inputs without an invented revision or zero payment",
     async (palette) => {

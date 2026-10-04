@@ -130,6 +130,13 @@ export function sueMonthRoute(month: string) {
   });
 }
 
+export function caritasMonthFactsRoute(month: string) {
+  return Object.freeze({
+    pathname: "/caritas-month-facts" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
 export function annexAMonthRoute(month: string) {
   return Object.freeze({
     pathname: "/annex-a-month" as const,

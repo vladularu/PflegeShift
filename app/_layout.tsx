@@ -236,6 +236,14 @@ function ThemedApp() {
                           }}
                         />
                         <Stack.Screen
+                          name="caritas-month-facts"
+                          options={{
+                            title: "Caritas-Monatsangaben",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
                           name="annex-a-month"
                           options={{
                             title: "TVöD-Monatsangaben",
