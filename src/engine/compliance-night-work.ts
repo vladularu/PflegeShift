@@ -347,7 +347,13 @@ function legacyNightAverageIssue(
       `Der eingetragene Durchschnitt beträgt ${durationLabel(averageMinutes)} je Werktag bei ${workdayCount} Werktagen. Für Nachtarbeit sind innerhalb ${averageWindow} durchschnittlich höchstens ${durationLabel(rules.workingTime.nightAverageMinutes)} zulässig.`,
       related,
     ),
-  ];
+  ].map((finding) => ({
+    ...finding,
+    assessmentRanges: [
+      { from: monthStart.toString(), through: monthEnd.add({ days: 1 }).toString() },
+      { from: `${monthStart.year}-01-01`, through: `${monthStart.year + 1}-01-01` },
+    ],
+  }));
 }
 
 export function checkNightWorkingTimeAverage(
@@ -455,5 +461,13 @@ export function checkNightWorkingTimeAverage(
       candidate.related,
       candidate.date,
     ),
-  ];
+  ].map((finding) => ({
+    ...finding,
+    assessmentRanges: [
+      { from: monthStart.toString(), through: candidate.deadline.add({ days: 1 }).toString() },
+      ...(options.regularRotatingNightWork === true
+        ? []
+        : [{ from: `${monthStart.year}-01-01`, through: `${monthStart.year + 1}-01-01` }]),
+    ],
+  }));
 }
