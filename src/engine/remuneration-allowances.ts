@@ -15,21 +15,24 @@ import { remunerationMonthShifts, remunerationShiftDays } from "./remuneration-s
 import { summarizeSupplements } from "./remuneration-supplement-result";
 import { remunerationTariffProfile } from "./remuneration-tariff-adapter";
 import { calculateOwnMonthlyAllowances } from "./remuneration-own-allowances";
+import { trainingAllowanceRules } from "./remuneration-training-allowances";
 import { calculateTvlShiftAllowances, type TvlAllowanceDay } from "./remuneration-tvl-allowances";
 import {
   calculateTvalShiftAllowances,
   type TvalAllowanceDay,
 } from "./remuneration-tval-allowances";
 import { calculateTvlCareAllowances } from "./remuneration-tvl-care";
-import { calculateTvalCareAllowances } from "./remuneration-tval-care";
 import { calculateTvlBurnCare, calculateTvalBurnCare } from "./remuneration-tvl-burn";
+import { calculateTvalCareAllowances } from "./remuneration-tval-care";
 import type { SavedTvlShiftWork } from "@/domain/saved-tvl-shift-work";
+
 type AllowanceRule = RuleTariffPackage["rules"]["allowanceRules"][number];
 interface Bucket {
   readonly position: SupplementPosition;
   readonly rule: AllowanceRule | null;
   readonly profile: UserProfile;
   readonly fullTimeWeeklyMinutes: number;
+  readonly training: boolean;
 }
 const LABELS = {
   care: "Pflegezulage",
@@ -57,13 +60,28 @@ function validateEntitlements(entitlements: readonly DatedAllowanceEntitlement[]
 function finishBucket(bucket: Bucket): SupplementPosition {
   const { position, rule, profile, fullTimeWeeklyMinutes } = bucket;
   if (!rule || position.amountCents === null) return position;
-  const cents = Math.round(
-    configuredAllowanceAmount(rule, position.basis.minutes, profile, fullTimeWeeklyMinutes) * 100,
-  );
+  const cents = bucket.training
+    ? roundRemunerationCents(
+        rule.amountCents *
+          (rule.amountKind === "FIXED_HOURLY" ? position.basis.minutes : 1) *
+          (rule.prorateByPartTime ? profile.weeklyMinutes : 1),
+        (rule.amountKind === "FIXED_HOURLY" ? 60 : 1) *
+          (rule.prorateByPartTime ? fullTimeWeeklyMinutes : 1),
+      )
+    : Math.round(
+        configuredAllowanceAmount(rule, position.basis.minutes, profile, fullTimeWeeklyMinutes) *
+          100,
+      );
   const monthly = rule.amountKind === "FIXED_MONTHLY";
   return {
     ...position,
-    status: position.status,
+    status:
+      bucket.training &&
+      monthly &&
+      (profile.weeklyMinutes < fullTimeWeeklyMinutes ||
+        position.basis.calendarDays < position.basis.monthDays)
+        ? "estimated"
+        : position.status,
     amountCents: monthly
       ? roundRemunerationCents(cents * position.basis.calendarDays, position.basis.monthDays)
       : cents,
@@ -139,25 +157,50 @@ export function calculateMonthlyDatedAllowances(
             "tvoed",
             entitlement?.status.startsWith("ALTERNATING") ? "alternating-shift" : "shift",
           ] as const)
-        : [null];
+        : context.kind === "training-tariff"
+          ? ([
+              "care",
+              entitlement?.status.startsWith("ALTERNATING") ? "alternating-shift" : "shift",
+            ] as const)
+          : [null];
     for (const type of types) {
       let rule: AllowanceRule | null = null;
       const profile =
-        context.kind === "tariff" ? remunerationTariffProfile(workProfile, context) : workProfile;
+        context.kind === "tariff"
+          ? remunerationTariffProfile(workProfile, context)
+          : context.kind === "training-tariff"
+            ? { ...workProfile, weeklyMinutes: context.weeklyMinutes, tariff: null }
+            : workProfile;
       let issue: SupplementPosition["issue"] = null;
       const shiftAllowance = type === "shift" || type === "alternating-shift";
       if (context.kind === "unavailable") issue = context.issue;
+      else if (context.kind === "tvl-kr")
+        issue = {
+          code: "TARIFF_UNSUPPORTED",
+          message:
+            "Weitere TV-L/KR-Pflege- und Tätigkeitszulagen sind noch nicht vollständig angebunden; bestätigte Schichtzulagen werden separat ausgewiesen.",
+        };
       else if (context.kind === "tval-training")
         issue = {
           code: "TARIFF_UNSUPPORTED",
           message:
             "Weitere TVA-L-Zulagen, insbesondere BAT-Gefahrenzulagen, sind noch nicht vollständig geprüft; bestätigte Schicht- und Tätigkeitszulagen werden separat ausgewiesen.",
         };
-      else if (context.kind === "tvl-kr")
+      else if (
+        context.kind === "training-tariff" &&
+        type === "care" &&
+        (context.specialDutyAllowance === null ||
+          context.specialDutyAllowance === "OTHER_OR_MULTIPLE")
+      )
         issue = {
-          code: "TARIFF_UNSUPPORTED",
+          code:
+            context.specialDutyAllowance === null
+              ? "ALLOWANCE_DECISION_MISSING"
+              : "TARIFF_UNSUPPORTED",
           message:
-            "Weitere TV-L/KR-Pflege- und Tätigkeitszulagen sind noch nicht vollständig angebunden; bestätigte Schichtzulagen werden separat ausgewiesen.",
+            context.specialDutyAllowance === null
+              ? "Bitte die tätigkeitsabhängigen Zulagen im datierten Vergütungsprofil ausdrücklich bestätigen."
+              : "Weitere oder kombinierte tätigkeitsabhängige Ausbildungszulagen sind noch nicht vollständig abgebildet.",
         };
       else if (context.kind === "own-monthly")
         issue = {
@@ -169,15 +212,26 @@ export function calculateMonthlyDatedAllowances(
           code: "ALLOWANCE_DECISION_MISSING",
           message: "Die Schichtzulagenentscheidung fehlt für diesen Zeitraum.",
         };
-      else if (type && !(shiftAllowance && entitlement?.status === "NONE")) {
-        const candidates = applicableAllowanceRules(type, {
-          date,
-          profile,
-          rulePackage: context.rulePackage,
-          status: entitlement?.status ?? null,
-          workMinutes: work.minutes,
-          fullTimeWeeklyMinutes: context.fullTimeWeeklyMinutes,
-        });
+      else if (
+        type &&
+        !(shiftAllowance && entitlement?.status === "NONE") &&
+        !(
+          context.kind === "training-tariff" &&
+          type === "care" &&
+          context.specialDutyAllowance === "NONE"
+        )
+      ) {
+        const candidates =
+          context.kind === "training-tariff" && (shiftAllowance || type === "care")
+            ? trainingAllowanceRules(type, date, entitlement?.status ?? null, context, profile)
+            : applicableAllowanceRules(type, {
+                date,
+                profile,
+                rulePackage: context.rulePackage,
+                status: entitlement?.status ?? null,
+                workMinutes: work.minutes,
+                fullTimeWeeklyMinutes: context.fullTimeWeeklyMinutes,
+              });
         if (candidates.length !== 1)
           issue = {
             code: candidates.length === 0 ? "ALLOWANCE_RULE_MISSING" : "ALLOWANCE_RULE_AMBIGUOUS",
@@ -191,7 +245,12 @@ export function calculateMonthlyDatedAllowances(
       const position: SupplementPosition = {
         id: `allowance:${type ?? "unknown"}:${date}`,
         kind: "allowance",
-        label: type ? LABELS[type] : "Zulagen",
+        label:
+          context.kind === "training-tariff" && type === "care"
+            ? "Tätigkeitsabhängige Ausbildungszulage"
+            : type
+              ? LABELS[type]
+              : "Zulagen",
         from: date,
         through: date,
         amountCents: issue ? null : 0,
@@ -256,7 +315,11 @@ export function calculateMonthlyDatedAllowances(
           position,
           rule,
           profile,
-          fullTimeWeeklyMinutes: context.kind === "tariff" ? context.fullTimeWeeklyMinutes : 1,
+          fullTimeWeeklyMinutes:
+            context.kind === "tariff" || context.kind === "training-tariff"
+              ? context.fullTimeWeeklyMinutes
+              : 1,
+          training: context.kind === "training-tariff",
         });
       }
     }

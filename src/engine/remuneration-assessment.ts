@@ -28,6 +28,10 @@ import { bindRemunerationTariffResolver } from "./remuneration-tariff-adapter";
 import { assessTvoedKCalendarMonth } from "./tvoed-k-calendar-assessment";
 import { assessTvoedPattern, isPayWorkShift } from "./tvoed-pattern";
 
+import { hasTrainingShiftAllowances } from "./remuneration-training-allowances";
+import { hasTvlShiftAllowances } from "./remuneration-tvl-allowances";
+import { hasTvalShiftAllowances } from "./remuneration-tval-allowances";
+
 export interface DatedAllowanceAssessmentInput {
   readonly month: string;
   /** Include the requested tariff's lookback; do not prefilter to the current month. */
@@ -72,7 +76,8 @@ function validateDecisions(
 function observationWindow(period: RemunerationPeriod, input: DatedAllowanceAssessmentInput) {
   const first = remunerationMonthStart(input.month);
   const context = period.context;
-  if (context.kind !== "tariff") throw new Error("Tarifkontext fehlt.");
+  if (context.kind !== "tariff" && context.kind !== "training-tariff")
+    throw new Error("Tarifkontext fehlt.");
   const wanted = identityAt(input.history, period.from);
   const minimum = first
     .subtract({ months: context.rulePackage.rules.workPatternPolicy.assessmentLookbackMonths })
@@ -161,6 +166,15 @@ function assessPeriod(
         message: "Für TV-L/KR ist noch keine vollständige Schichtzulagenprüfung verfügbar.",
       },
     };
+  if (context.kind === "training-tariff" && !hasTrainingShiftAllowances(context, from))
+    return {
+      ...base,
+      issue: {
+        code: "TARIFF_UNSUPPORTED",
+        message:
+          "Für diesen historischen Zeitraum fehlen noch geprüfte Ausbildungs-Schichtzulagenregeln.",
+      },
+    };
   if (context.kind === "own-monthly" || context.kind === "own-configured")
     return {
       ...base,
@@ -237,7 +251,16 @@ export function deriveDatedAllowanceAssessments(input: DatedAllowanceAssessmentI
             through,
             entitlement: automatic.entitlement ? { ...automatic.entitlement, from, through } : null,
           };
-          if (period.context.kind !== "tariff") return result;
+          if (
+            period.context.kind !== "tariff" &&
+            period.context.kind !== "training-tariff" &&
+            !(period.context.kind === "tvl-kr" && hasTvlShiftAllowances(period.context, from)) &&
+            !(
+              period.context.kind === "tval-training" &&
+              hasTvalShiftAllowances(period.context, from)
+            )
+          )
+            return result;
           if (decision) {
             if (identityKey(decision.tariff) !== identityAt(input.history, from))
               return {

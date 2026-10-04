@@ -31,6 +31,7 @@ import {
 import { summarizeSupplements } from "./remuneration-supplement-result";
 import { isPayWorkShift } from "./tvoed-pattern";
 import { calculateOwnOvertime } from "./remuneration-own-overtime";
+import { calculateTrainingOvertime } from "./remuneration-training-overtime";
 import { calculateTvlOvertime } from "./remuneration-tvl-overtime";
 import { calculateTvalOvertime } from "./remuneration-tval-overtime";
 
@@ -129,6 +130,7 @@ function calculateAllocatedOvertime(
 ): readonly SupplementPosition[] {
   if (context.kind === "unavailable")
     return [{ ...position, amountCents: null, status: "unavailable", issue: context.issue }];
+  if (context.kind === "training-tariff") return calculateTrainingOvertime(position, context);
   if (context.kind === "tval-training") return calculateTvalOvertime(position, context);
   if (context.kind === "tvl-kr") return calculateTvlOvertime(position, context);
   if (context.kind === "own-configured")
