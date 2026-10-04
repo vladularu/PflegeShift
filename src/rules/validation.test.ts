@@ -348,3 +348,28 @@ describe("manifest v2 tariff selection", () => {
     expect(validateManifest(unsupported).ok).toBe(false);
   });
 });
+
+describe("original signed catalog acceptance", () => {
+  it("requires a versioned explicit legacy tariff selection", () => {
+    const v2 = {
+      ...clone(manifestFixture),
+      schemaVersion: 2,
+      legacyTariffPackageId: tariffPackageFixture.packageId,
+    };
+    expect(validateManifest(v2).ok).toBe(true);
+    expect(validateManifest({ ...v2, schemaVersion: 1 }).ok).toBe(false);
+    const { legacyTariffPackageId: _, ...missing } = v2;
+    expect(validateManifest(missing).ok).toBe(false);
+    for (const legacyTariffPackageId of [
+      "unknown-tariff",
+      legalPackageFixture.packageId,
+      holidayPackageFixture.packageId,
+    ]) {
+      expect(issueCodes(validateManifest({ ...v2, legacyTariffPackageId }))).toContain(
+        "INVALID_LEGACY_TARIFF",
+      );
+    }
+    expect(validateManifest({ ...v2, legacyTariffPackageId: null }).ok).toBe(false);
+    expect(validateManifest({ ...v2, schemaVersion: 3 }).ok).toBe(false);
+  });
+});

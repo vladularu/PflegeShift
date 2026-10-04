@@ -1,3 +1,7 @@
+import trainingPackageFixture from "../../rules/packages/reviewed/tvaoed-pflege-vka/2026-05.json";
+import { annualPaymentCandidate } from "./annual-payment-test-fixtures";
+import { selectionCandidate } from "./tariff-selection-test-fixtures";
+import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "./rule-catalog-engine-support";
 import { createHash } from "node:crypto";
 
 import * as ed25519 from "@noble/ed25519";
@@ -285,5 +289,151 @@ describe("rule catalog verification", () => {
     const { artifacts } = buildArtifacts();
 
     expect(isVerifiedRuleCatalogArtifacts(artifacts)).toBe(false);
+  });
+});
+
+describe("original signed catalog acceptance", () => {
+  describe("signed tariff selection metadata", () => {
+    it.each([false, true])(
+      "accepts signed annual terms only on contract-11-capable runtimes, training=%s",
+      async (training) => {
+        const { artifacts, manifest, policy } = buildArtifacts();
+        // Synthetic content and test key only; no real package is approved or published.
+        const annual = annualPaymentCandidate(training);
+        annual.status = "PUBLISHED";
+        annual.review = {
+          ...structuredClone(tariffPackageFixture.review),
+          status: "PUBLISHED",
+        } as typeof annual.review;
+        const raw = JSON.stringify(annual);
+        const descriptor = manifest.packages.find((item) => item.kind === "TARIFF")!;
+        Object.assign(descriptor, {
+          packageId: annual.packageId,
+          versionId: annual.versionId,
+          engineContractVersion: 11,
+          validFrom: annual.validFrom,
+          validTo: annual.validTo,
+          path: `packages/${annual.packageId}/${annual.versionId}.json`,
+          sha256: sha256Hex(raw),
+          sizeBytes: encoder.encode(raw).byteLength,
+        });
+        manifest.tracks.find((item) => item.kind === "TARIFF")!.packageId = annual.packageId;
+        signManifest(manifest);
+        const incoming = {
+          manifestJson: JSON.stringify(manifest),
+          packageJson: artifacts.packageJson.map((item) =>
+            JSON.parse(item).kind === "TARIFF" ? raw : item,
+          ),
+        };
+        await expectVerificationError(
+          verifyRuleCatalogArtifacts(incoming, {
+            ...policy,
+            supportedEngineContractVersions: new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+          }),
+          "UNSUPPORTED_ENGINE_CONTRACT",
+        );
+        const accepted = await verifyRuleCatalogArtifacts(incoming, {
+          ...policy,
+          supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
+        });
+        expect(isVerifiedRuleCatalogArtifacts(accepted)).toBe(true);
+      },
+    );
+    it("rejects signed training packages on old engines and accepts only an explicitly capable app", async () => {
+      const { artifacts, manifest, policy } = buildArtifacts();
+      // Synthetic review/signature only, never persisted to the real candidate.
+      const training = {
+        ...structuredClone(trainingPackageFixture),
+        status: "PUBLISHED",
+        review: { ...structuredClone(tariffPackageFixture.review), status: "PUBLISHED" },
+      };
+      const raw = JSON.stringify(training);
+      const descriptor = manifest.packages.find((item) => item.kind === "TARIFF")!;
+      Object.assign(descriptor, {
+        packageId: training.packageId,
+        versionId: training.versionId,
+        engineContractVersion: 10,
+        validFrom: training.validFrom,
+        validTo: training.validTo,
+        path: `packages/${training.packageId}/${training.versionId}.json`,
+        sha256: sha256Hex(raw),
+        sizeBytes: encoder.encode(raw).byteLength,
+      });
+      manifest.tracks.find((item) => item.kind === "TARIFF")!.packageId = training.packageId;
+      signManifest(manifest);
+      const incoming = {
+        manifestJson: JSON.stringify(manifest),
+        packageJson: artifacts.packageJson.map((item) =>
+          JSON.parse(item).kind === "TARIFF" ? raw : item,
+        ),
+      };
+      await expectVerificationError(
+        verifyRuleCatalogArtifacts(incoming, {
+          ...policy,
+          supportedEngineContractVersions: new Set([1, 8, 9]),
+        }),
+        "UNSUPPORTED_ENGINE_CONTRACT",
+      );
+      const accepted = await verifyRuleCatalogArtifacts(incoming, {
+        ...policy,
+        supportedEngineContractVersions: new Set([1, 10]),
+      });
+      expect(isVerifiedRuleCatalogArtifacts(accepted)).toBe(true);
+    });
+    function selectionArtifacts(invalidSource = false) {
+      const { artifacts, manifest, policy } = buildArtifacts();
+      const candidate = selectionCandidate();
+      // Synthetic published fixture. No real review or signing material is used.
+      candidate.versionId = tariffPackageFixture.versionId;
+      candidate.status = "PUBLISHED";
+      candidate.review = structuredClone(tariffPackageFixture.review) as typeof candidate.review;
+      candidate.review.status = "PUBLISHED";
+      if (invalidSource) candidate.rules.selection!.variants[0].sourceIds = ["missing"];
+      const raw = JSON.stringify(candidate);
+      const packageJson = artifacts.packageJson.map((item) =>
+        JSON.parse(item).kind === "TARIFF" ? raw : item,
+      );
+      const descriptor = manifest.packages.find((item) => item.kind === "TARIFF")!;
+      descriptor.engineContractVersion = 11;
+      descriptor.sha256 = sha256Hex(raw);
+      descriptor.sizeBytes = encoder.encode(raw).byteLength;
+      signManifest(manifest);
+      return { artifacts: { packageJson, manifestJson: JSON.stringify(manifest) }, policy };
+    }
+    it("requires an explicitly capable app before accepting the new signed contract", async () => {
+      const { artifacts, policy } = selectionArtifacts();
+      await expectVerificationError(
+        verifyRuleCatalogArtifacts(artifacts, policy),
+        "UNSUPPORTED_ENGINE_CONTRACT",
+      );
+      const accepted = await verifyRuleCatalogArtifacts(artifacts, {
+        ...policy,
+        supportedEngineContractVersions: new Set([1, 11]),
+      });
+      expect(isVerifiedRuleCatalogArtifacts(accepted)).toBe(true);
+    });
+    it("hash-protects the selection data just like tariff amounts", async () => {
+      const { artifacts, policy } = selectionArtifacts();
+      const packageJson = artifacts.packageJson.map((raw) =>
+        raw.replace('"engineId":"tvoed-p-v3"', '"engineId":"tvoed-p-v4"'),
+      );
+      await expectVerificationError(
+        verifyRuleCatalogArtifacts(
+          { ...artifacts, packageJson },
+          { ...policy, supportedEngineContractVersions: new Set([1, 11]) },
+        ),
+        "PACKAGE_HASH_MISMATCH",
+      );
+    });
+    it("rejects correctly signed but semantically invalid metadata", async () => {
+      const { artifacts, policy } = selectionArtifacts(true);
+      await expectVerificationError(
+        verifyRuleCatalogArtifacts(artifacts, {
+          ...policy,
+          supportedEngineContractVersions: new Set([1, 11]),
+        }),
+        "INVALID_CATALOG",
+      );
+    });
   });
 });
