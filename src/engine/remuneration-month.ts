@@ -91,6 +91,7 @@ export function calculateDatedMonthlyRemuneration(input: DatedMonthlyRemuneratio
     history,
     allowanceEntitlements,
     resolver,
+    input.tvlShiftWork ?? [],
   );
   const overtime = calculateMonthlyDatedOvertime(
     month,
