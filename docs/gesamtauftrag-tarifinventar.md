@@ -16,4 +16,4 @@ Fünf ursprüngliche Node-Testfälle, Bericht beider Formate mit festem Datum un
 
 ## Ergebnis
 
-Fünf Originaltests unverändert grün. Bericht mit festem Datum in Markdown und JSON: 48 Tarifpakete, alle sechs Caritas-RK, 13 DRK-Pakete, zwei REVIEWED- und 44 DRAFT-Pakete sowie zwei Legacy-Pakete. verify:fast auf master mit PR #251 vollständig grün: 5.568 Unit-, 542 Komponententests, neue fünf Inventarfälle und alle übrigen Skriptprüfungen. Der gemeinsame Stand mit dem inzwischen gemergten Vertrags-PR #252 wird zusätzlich vollständig geprüft.
+Fünf Originaltests unverändert grün. Bericht mit festem Datum in Markdown und JSON: 48 Tarifpakete, alle sechs Caritas-RK, 13 DRK-Pakete, zwei REVIEWED- und 44 DRAFT-Pakete sowie zwei Legacy-Pakete. verify:fast auf master mit PR #251 vollständig grün: 5.568 Unit-, 542 Komponententests, neue fünf Inventarfälle und alle übrigen Skriptprüfungen. Der gemeinsame Stand mit gemergtem Vertrags-PR #252 ist vollständig geprüft: verify:fast grün mit 5.693 Unit-, 542 Komponententests, fünf Inventarfällen und sämtlichen weiteren Skriptprüfungen.
