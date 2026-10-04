@@ -17,6 +17,12 @@ import {
   shiftSelectionRoute,
   shiftAnalysisRoute,
   tariffAssessmentRoute,
+  overtimeAllocationRoute,
+  tvlShiftWorkRoute,
+  sueMonthRoute,
+  annexAMonthRoute,
+  paidAbsenceRoute,
+  annualPaymentRoute,
   templateEditorRoute,
 } from "@/navigation/routes";
 import {
@@ -125,6 +131,36 @@ describe("navigation contracts", () => {
   });
 
   it("builds validated month destinations without typed-route casts", () => {
+    expect(tvlShiftWorkRoute("2026-09")).toEqual({
+      pathname: "/tvl-shift-work",
+      params: { month: "2026-09" },
+    });
+    expect(() => tvlShiftWorkRoute("2026-13")).toThrow();
+    expect(sueMonthRoute("2026-09")).toEqual({
+      pathname: "/sue-month",
+      params: { month: "2026-09" },
+    });
+    expect(() => sueMonthRoute("2026-13")).toThrow();
+    expect(annexAMonthRoute("2026-09")).toEqual({
+      pathname: "/annex-a-month",
+      params: { month: "2026-09" },
+    });
+    expect(() => annexAMonthRoute("2026-13")).toThrow();
+    expect(annualPaymentRoute("2026-11")).toEqual({
+      pathname: "/annual-payment",
+      params: { month: "2026-11" },
+    });
+    expect(() => annualPaymentRoute("2026-13")).toThrow();
+    expect(paidAbsenceRoute("2026-09")).toEqual({
+      pathname: "/paid-absence",
+      params: { month: "2026-09" },
+    });
+    expect(() => paidAbsenceRoute("2026-13")).toThrow();
+    expect(overtimeAllocationRoute("2026-09")).toEqual({
+      pathname: "/overtime-allocation",
+      params: { month: "2026-09" },
+    });
+    expect(() => overtimeAllocationRoute("2026-13")).toThrow();
     expect(calendarRoute("2026-08")).toEqual({
       pathname: "/",
       params: { month: "2026-08" },

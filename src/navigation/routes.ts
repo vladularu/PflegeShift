@@ -109,6 +109,55 @@ export function tariffAssessmentRoute(month: string) {
   });
 }
 
+export function overtimeAllocationRoute(month: string) {
+  return Object.freeze({
+    pathname: "/overtime-allocation" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function tvlShiftWorkRoute(month: string) {
+  return Object.freeze({
+    pathname: "/tvl-shift-work" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function sueMonthRoute(month: string) {
+  return Object.freeze({
+    pathname: "/sue-month" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function annexAMonthRoute(month: string) {
+  return Object.freeze({
+    pathname: "/annex-a-month" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function annexAPremiumFactsRoute(month: string) {
+  return Object.freeze({
+    pathname: "/annex-a-premium-facts" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function paidAbsenceRoute(month: string) {
+  return Object.freeze({
+    pathname: "/paid-absence" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
+export function annualPaymentRoute(month: string) {
+  return Object.freeze({
+    pathname: "/annual-payment" as const,
+    params: Object.freeze({ month: requireMonth(month) }),
+  });
+}
+
 export function settingsInfoRoute(section: SettingsInfoSection) {
   return Object.freeze({
     pathname: "/info-details" as const,
