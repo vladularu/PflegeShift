@@ -1,3 +1,4 @@
+import { TVOED_ANNEX_A_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-annex-a-month-confirmation-repository";
 import { CARITAS_OVERTIME_COLUMNS } from "./caritas-overtime-repository";
 import { CARITAS_MONTH_FACTS_COLUMNS } from "./caritas-month-facts-repository";
 import { CARITAS_WORK_DAY_COLUMNS } from "./caritas-work-day-repository";
@@ -72,6 +73,7 @@ export async function restoreLocalBackup(
     await transaction.runAsync("DELETE FROM caritas_work_days");
     await transaction.runAsync("DELETE FROM caritas_month_facts");
     await transaction.runAsync("DELETE FROM caritas_overtime");
+    await transaction.runAsync("DELETE FROM tvoed_annex_a_month_confirmations");
     await transaction.runAsync("DELETE FROM tariff_annual_claims");
     await transaction.runAsync("DELETE FROM actual_annual_payments");
     await transaction.runAsync("DELETE FROM shift_training_details");
@@ -169,6 +171,12 @@ export async function restoreLocalBackup(
       "caritas_overtime",
       CARITAS_OVERTIME_COLUMNS,
       document.data.caritasOvertime,
+    );
+    await insertRows(
+      transaction,
+      "tvoed_annex_a_month_confirmations",
+      TVOED_ANNEX_A_MONTH_CONFIRMATION_COLUMNS,
+      document.data.tvoedAnnexAMonthConfirmations,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(

@@ -1,3 +1,4 @@
+import { TVOED_ANNEX_A_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-annex-a-month-confirmation-repository";
 import { CARITAS_OVERTIME_COLUMNS } from "./caritas-overtime-repository";
 import { CARITAS_MONTH_FACTS_COLUMNS } from "./caritas-month-facts-repository";
 import { CARITAS_WORK_DAY_COLUMNS } from "./caritas-work-day-repository";
@@ -21,7 +22,7 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 import { REMUNERATION_PROFILE_COLUMNS } from "./remuneration-profile-repository";
 
 export const LOCAL_BACKUP_FORMAT = "lunashift-local-backup";
-export const LOCAL_BACKUP_VERSION = 13;
+export const LOCAL_BACKUP_VERSION = 14;
 
 type BackupScalar = string | number | null;
 type BackupRow = Readonly<Record<string, BackupScalar>>;
@@ -41,6 +42,7 @@ export interface LocalBackupSnapshot {
   readonly caritasWorkDays: readonly BackupRow[];
   readonly caritasMonthFacts: readonly BackupRow[];
   readonly caritasOvertime: readonly BackupRow[];
+  readonly tvoedAnnexAMonthConfirmations: readonly BackupRow[];
   readonly templates: readonly BackupRow[];
   readonly shifts: readonly BackupRow[];
   readonly appointments: readonly BackupRow[];
@@ -50,7 +52,8 @@ export interface LocalBackupSnapshot {
 
 interface UnsignedLocalBackupDocument {
   readonly format: typeof LOCAL_BACKUP_FORMAT;
-  readonly version: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | typeof LOCAL_BACKUP_VERSION;
+  readonly version:
+    1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | typeof LOCAL_BACKUP_VERSION;
   readonly createdAt: string;
   readonly appVersion: string | null;
   readonly databaseSchemaVersion: number;
@@ -68,6 +71,7 @@ interface UnsignedLocalBackupDocument {
     readonly caritasWorkDays: readonly BackupRow[];
     readonly caritasMonthFacts: readonly BackupRow[];
     readonly caritasOvertime: readonly BackupRow[];
+    readonly tvoedAnnexAMonthConfirmations: readonly BackupRow[];
     readonly templates: readonly BackupRow[];
     readonly shifts: readonly BackupRow[];
     readonly appointments: readonly BackupRow[];
@@ -176,6 +180,9 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
     const caritasOvertime = await transaction.getAllAsync<BackupRow>(
       `SELECT ${CARITAS_OVERTIME_COLUMNS.join(",")} FROM caritas_overtime ORDER BY shift_id`,
     );
+    const tvoedAnnexAMonthConfirmations = await transaction.getAllAsync<BackupRow>(
+      `SELECT ${TVOED_ANNEX_A_MONTH_CONFIRMATION_COLUMNS.join(",")} FROM tvoed_annex_a_month_confirmations ORDER BY month`,
+    );
     const templates = await transaction.getAllAsync<BackupRow>(
       `SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
               all_day,notification_json,location_json,revision,created_at,updated_at,deleted_at
@@ -226,6 +233,9 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
       caritasWorkDays: Object.freeze(caritasWorkDays.map(Object.freeze)),
       caritasMonthFacts: Object.freeze(caritasMonthFacts.map(Object.freeze)),
       caritasOvertime: Object.freeze(caritasOvertime.map(Object.freeze)),
+      tvoedAnnexAMonthConfirmations: Object.freeze(
+        tvoedAnnexAMonthConfirmations.map(Object.freeze),
+      ),
       templates: Object.freeze(templates.map(Object.freeze)),
       shifts: Object.freeze(shifts.map(Object.freeze)),
       appointments: Object.freeze(appointments.map(Object.freeze)),
@@ -264,6 +274,7 @@ export async function createLocalBackupDocument(
       caritasWorkDays: snapshot.caritasWorkDays,
       caritasMonthFacts: snapshot.caritasMonthFacts,
       caritasOvertime: snapshot.caritasOvertime,
+      tvoedAnnexAMonthConfirmations: snapshot.tvoedAnnexAMonthConfirmations,
       templates: snapshot.templates,
       shifts: snapshot.shifts,
       appointments: snapshot.appointments,
