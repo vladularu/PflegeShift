@@ -1531,6 +1531,15 @@
         },
         "tvalCareAllowancePolicy": {
           "$ref": "#/$defs/tvalCareAllowancePolicy"
+        },
+        "caritasTimePremiumPolicy": {
+          "$ref": "#/$defs/caritasTimePremiumPolicy"
+        },
+        "caritasOvertimePolicy": {
+          "$ref": "#/$defs/caritasOvertimePolicy"
+        },
+        "caritasAnnualPaymentPolicy": {
+          "$ref": "#/$defs/caritasAnnualPaymentPolicy"
         }
       }
     },
@@ -2677,6 +2686,271 @@
         },
         "rounding": {
           "const": "RATE_SHARE_THEN_PERSONAL_THEN_TOTAL"
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "caritasTimePremiumPolicy": {
+      "description": "Contract 14: published federal baseline for Anlage 31/32 § 4(5), § 6(1). Local increases, individual eligibility, time-off choice and cash payment are not inferred by this record.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validFrom",
+        "validTo",
+        "referenceStepId",
+        "monthlyFactorThousandths",
+        "nightWindow",
+        "nightBasisPoints",
+        "sundayBasisPoints",
+        "holidayWithTimeOffBasisPoints",
+        "holidayWithoutTimeOffBasisPoints",
+        "preHolidayWindow",
+        "preHolidayMonthDays",
+        "preHolidayBasisPoints",
+        "saturdayWindow",
+        "saturdayBasisPoints",
+        "saturdayOnlyOutsideShiftWork",
+        "competition",
+        "nightStacks",
+        "holidayWithoutTimeOffMaximumTotalBasisPoints",
+        "localAgreementMayIncrease",
+        "sourceIds"
+      ],
+      "properties": {
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "referenceStepId": {
+          "const": "3"
+        },
+        "monthlyFactorThousandths": {
+          "const": 4348
+        },
+        "nightWindow": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "nightBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "sundayBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "holidayWithTimeOffBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "holidayWithoutTimeOffBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "preHolidayWindow": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "preHolidayMonthDays": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["12-24", "12-31"]
+          }
+        },
+        "preHolidayBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "saturdayWindow": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "saturdayBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "saturdayOnlyOutsideShiftWork": {
+          "const": true
+        },
+        "competition": {
+          "const": "HIGHEST_SUNDAY_HOLIDAY_PREHOLIDAY_SATURDAY"
+        },
+        "nightStacks": {
+          "const": true
+        },
+        "holidayWithoutTimeOffMaximumTotalBasisPoints": {
+          "const": 23500
+        },
+        "localAgreementMayIncrease": {
+          "const": true
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "caritasOvertimePolicy": {
+      "description": "Draft-only Anlage 31/32 overtime pay facts. Classification and cash-versus-time settlement require separately confirmed personal facts; this policy never infers payable overtime from a time balance.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validFrom",
+        "validTo",
+        "premiumReferenceStepId",
+        "workPayMaximumStepId",
+        "monthlyFactorThousandths",
+        "rateBands",
+        "requiresConfirmedClassification",
+        "requiresSettlementChoice",
+        "timeConversionAllowed",
+        "sourceIds"
+      ],
+      "properties": {
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "premiumReferenceStepId": {
+          "const": "3"
+        },
+        "workPayMaximumStepId": {
+          "const": "4"
+        },
+        "monthlyFactorThousandths": {
+          "const": 4348
+        },
+        "rateBands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["groupIds", "premiumBasisPoints"],
+            "properties": {
+              "groupIds": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 12,
+                "uniqueItems": true,
+                "items": {
+                  "$ref": "#/$defs/identifier"
+                }
+              },
+              "premiumBasisPoints": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              }
+            }
+          }
+        },
+        "requiresConfirmedClassification": {
+          "const": true
+        },
+        "requiresSettlementChoice": {
+          "const": true
+        },
+        "timeConversionAllowed": {
+          "const": true
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "caritasAnnualPaymentPolicy": {
+      "description": "Draft-only AVR Caritas Anlage 31/32 section 16 facts for 2025/2026. This metadata does not assert executable or complete annual-payment support.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validFrom",
+        "validTo",
+        "referenceMonths",
+        "rateDateMonthDay",
+        "claimDateMonthDay",
+        "payoutMonth",
+        "rateBands",
+        "basisPolicy",
+        "lateEntryBasis",
+        "reductionPolicy",
+        "earlyExitVariantId",
+        "earlyExitBasis",
+        "eastTariff2025UsesWestTable",
+        "sourceIds"
+      ],
+      "properties": {
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "referenceMonths": {
+          "const": [7, 8, 9]
+        },
+        "rateDateMonthDay": {
+          "const": "09-01"
+        },
+        "claimDateMonthDay": {
+          "const": "12-01"
+        },
+        "payoutMonth": {
+          "const": 11
+        },
+        "rateBands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["groupIds", "rateBasisPoints"],
+            "properties": {
+              "groupIds": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 12,
+                "uniqueItems": true,
+                "items": {
+                  "$ref": "#/$defs/identifier"
+                }
+              },
+              "rateBasisPoints": {
+                "enum": [7600, 8600]
+              }
+            }
+          }
+        },
+        "basisPolicy": {
+          "const": "PAID_JULY_SEPTEMBER_WITH_EXCLUSIONS"
+        },
+        "lateEntryBasis": {
+          "const": "FIRST_FULL_MONTH_AFTER_SEPTEMBER"
+        },
+        "reductionPolicy": {
+          "const": "ONE_TWELFTH_WITH_STATUTORY_EXCEPTIONS"
+        },
+        "earlyExitVariantId": {
+          "const": "ANLAGE_31"
+        },
+        "earlyExitBasis": {
+          "const": "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES"
+        },
+        "eastTariff2025UsesWestTable": {
+          "type": "boolean"
         },
         "sourceIds": {
           "$ref": "#/$defs/sourceIds"

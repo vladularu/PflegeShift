@@ -11,6 +11,7 @@ import { tvalTrainingIssues } from "./tval-training-validation";
 import { drkTableIssues } from "./drk-table-validation";
 import { drkTrainingTableIssues } from "./drk-training-table-validation";
 import { caritasAnnualPaymentIssues } from "./caritas-annual-payment-validation";
+import { caritasCareIssues } from "./caritas-care-validation";
 import { caritasTableIssues } from "./caritas-table-validation";
 import { tariffSelectionIssues } from "./tariff-selection";
 import { trainingPayIssues } from "./training-pay-validation";
@@ -150,6 +151,7 @@ function validateTariffPackage(
   issues.push(...tvlKrIssues(rulePackage));
   issues.push(...tvalTrainingIssues(rulePackage));
   issues.push(...caritasTableIssues(rulePackage));
+  issues.push(...caritasCareIssues(rulePackage));
   issues.push(...caritasAnnualPaymentIssues(rulePackage));
   issues.push(...drkTableIssues(rulePackage));
   issues.push(...drkTrainingTableIssues(rulePackage));
