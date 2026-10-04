@@ -169,7 +169,7 @@
       ],
       "properties": {
         "schemaVersion": { "const": 1 },
-        "engineContractVersion": { "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 14] },
+        "engineContractVersion": { "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 14, 17] },
         "packageId": { "$ref": "#/$defs/identifier" },
         "versionId": { "$ref": "#/$defs/versionIdentifier" },
         "kind": { "enum": ["TARIFF", "LEGAL", "HOLIDAY"] },
@@ -1067,7 +1067,7 @@
           "type": "object",
           "required": ["kind", "rules"],
           "properties": {
-            "engineContractVersion": { "enum": [1, 2, 3, 10, 11, 12, 14] },
+            "engineContractVersion": { "enum": [1, 2, 3, 10, 11, 12, 14, 17] },
             "kind": { "const": "TARIFF" },
             "rules": { "$ref": "#/$defs/tariffRules" }
           }
