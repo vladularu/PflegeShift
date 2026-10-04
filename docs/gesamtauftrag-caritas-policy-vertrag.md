@@ -1,6 +1,6 @@
 # Caritas: ergänzender Policy-Vertrag
 
-Stand: 2026-10-04. Zehn-Dateien-Teilpaket des erhaltenen Gesamtauftrags.
+Stand: 2026-10-04. Elf-Dateien-Teilpaket des erhaltenen Gesamtauftrags.
 
 ## Ziel und Dateiscope
 
@@ -27,3 +27,7 @@ Die Policies sind optional und werden hier ausschließlich in einer Testfixture 
 ## Kompatibilität der historischen Vertragsfixture
 
 Die ursprünglichen 39 Vertragsfälle bleiben vollständig erhalten. Die synthetische Ost-Fixture verwendet nun den bereits verbindlichen regionalen Periodenbeginn 01.01.2026; westliche Fixtures bleiben auf 01.02.2026. Diese einzelne Fixture-Datumsanpassung ändert keine tatsächlichen Tabellen oder Wochenzeiten.
+
+## CI-Laufzeit der Jahresreferenzen
+
+Der bestehende Jahresreferenztest prüft weiterhin alle 384 Kombinationen aus Jahr, Anlage, Gebiet und P-Gruppe mit unveränderten 86/76-Prozent-Sollwerten. Die Prüfung ist in sechs regionale Testfaelle geteilt (fünfmal 48, Ost 144). Der Coverage-Lauf der CI überschritt zuvor für einen einzelnen Sammelfall 5 Sekunden; globale Timeouts, Abdeckungsschwellen und Fachprüfungen bleiben unverändert.
