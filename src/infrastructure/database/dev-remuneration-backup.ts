@@ -1,4 +1,10 @@
 import {
+  CARITAS_OVERTIME_COLUMNS,
+  mapCaritasOvertimeRow,
+  requireCaritasOvertimeParents,
+  type CaritasOvertimeRow,
+} from "./caritas-overtime-repository";
+import {
   CARITAS_MONTH_FACTS_COLUMNS,
   mapCaritasMonthFactsRow,
   requireCaritasMonthFactsParent,
@@ -45,6 +51,7 @@ export interface DevRemunerationBackup {
   readonly tvlShiftWork: readonly TvlShiftWorkRow[];
   readonly caritasWorkDays: readonly CaritasWorkDayRow[];
   readonly caritasMonthFacts: readonly CaritasMonthFactsRow[];
+  readonly caritasOvertime: readonly CaritasOvertimeRow[];
 }
 
 function exact(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -64,6 +71,7 @@ export function validateDevRemunerationBackup(
   includesTvlShiftWork = false,
   includesCaritasWorkDays = false,
   includesCaritasMonthFacts = false,
+  includesCaritasOvertime = false,
 ): DevRemunerationBackup {
   const data = exact(value, [
     "allowanceDecision",
@@ -72,6 +80,7 @@ export function validateDevRemunerationBackup(
     ...(includesTvlShiftWork ? ["tvlShiftWork"] : []),
     ...(includesCaritasWorkDays ? ["caritasWorkDays"] : []),
     ...(includesCaritasMonthFacts ? ["caritasMonthFacts"] : []),
+    ...(includesCaritasOvertime ? ["caritasOvertime"] : []),
   ]);
   let allowanceDecision: AllowanceDecisionRow | null = null;
   if (data.allowanceDecision !== null) {
@@ -157,6 +166,32 @@ export function validateDevRemunerationBackup(
       throw new Error("Falscher Caritas-Monat im Testlabor-Backup.");
     return Object.freeze({ ...row });
   });
+  const rawOvertime = includesCaritasOvertime ? data.caritasOvertime : [];
+  if (!Array.isArray(rawOvertime))
+    throw new Error("Caritas-Überstundenbestätigungen fehlen im Testlabor-Backup.");
+  const caritasOvertimeIds = new Set<string>();
+  const allocationById = new Map(
+    overtimeAllocations.map((row) => {
+      const parsed = mapOvertimeAllocationRow(row);
+      return [parsed.shiftId, parsed] as const;
+    }),
+  );
+  const caritasOvertime = rawOvertime.map((value) => {
+    const row = exact(value, CARITAS_OVERTIME_COLUMNS) as unknown as CaritasOvertimeRow;
+    const parsed = mapCaritasOvertimeRow(row);
+    const shift = byId.get(parsed.shiftId);
+    const allocation = allocationById.get(parsed.shiftId);
+    if (
+      !shift ||
+      !allocation ||
+      parsed.shiftRevision > shift.revision ||
+      parsed.allocationRevision > allocation.revision ||
+      caritasOvertimeIds.has(parsed.shiftId)
+    )
+      throw new Error("Ungültige Caritas-Überstundenreferenz im Testlabor-Backup.");
+    caritasOvertimeIds.add(parsed.shiftId);
+    return Object.freeze({ ...row });
+  });
   return Object.freeze({
     allowanceDecision,
     overtimeAllocations: Object.freeze(overtimeAllocations),
@@ -164,6 +199,7 @@ export function validateDevRemunerationBackup(
     tvlShiftWork: Object.freeze(tvlShiftWork),
     caritasWorkDays: Object.freeze(caritasWorkDays),
     caritasMonthFacts: Object.freeze(caritasMonthFacts),
+    caritasOvertime: Object.freeze(caritasOvertime),
   });
 }
 export async function snapshotDevRemuneration(
@@ -200,6 +236,12 @@ export async function snapshotDevRemuneration(
     `SELECT ${CARITAS_MONTH_FACTS_COLUMNS.join(",")} FROM caritas_month_facts WHERE month=?`,
     month,
   );
+  const caritasOvertime = await db.getAllAsync<CaritasOvertimeRow>(
+    `SELECT ${CARITAS_OVERTIME_COLUMNS.map((key) => "c." + key).join(",")}
+      FROM caritas_overtime c JOIN shift_entries s ON s.id=c.shift_id
+      WHERE substr(s.date,1,7)=? ORDER BY c.shift_id`,
+    month,
+  );
   return {
     allowanceDecision,
     overtimeAllocations,
@@ -207,12 +249,14 @@ export async function snapshotDevRemuneration(
     tvlShiftWork,
     caritasWorkDays,
     caritasMonthFacts,
+    caritasOvertime,
   };
 }
 export async function clearDevRemuneration(db: SQLiteDatabase, month: string): Promise<void> {
   await db.runAsync("DELETE FROM caritas_month_facts WHERE month=?", month);
   for (const table of [
     "caritas_work_days",
+    "caritas_overtime",
     "tvl_shift_work",
     "paid_absences",
     "overtime_allocations",
@@ -230,7 +274,7 @@ export async function restoreDevRemuneration(
   data: DevRemunerationBackup,
 ): Promise<void> {
   const profiles =
-    data.tvlShiftWork.length || data.caritasMonthFacts.length
+    data.tvlShiftWork.length || data.caritasMonthFacts.length || data.caritasOvertime.length
       ? await listRemunerationProfiles(db)
       : [];
   const tvlByShift = new Map<string, ReturnType<typeof mapTvlShiftWorkRow>[]>();
@@ -291,6 +335,27 @@ export async function restoreDevRemuneration(
         ") VALUES(?,?,?,?,?,?,?)",
       ...OVERTIME_ALLOCATION_COLUMNS.map((k) => row[k]),
     );
+  for (const row of data.caritasOvertime) {
+    const saved = mapCaritasOvertimeRow(row);
+    const shiftRow = await db.getFirstAsync<Parameters<typeof mapShift>[0]>(
+      "SELECT * FROM shift_entries WHERE id=?",
+      saved.shiftId,
+    );
+    const allocationRow = await db.getFirstAsync<OvertimeAllocationRow>(
+      `SELECT ${OVERTIME_ALLOCATION_COLUMNS.join(",")} FROM overtime_allocations WHERE shift_id=?`,
+      saved.shiftId,
+    );
+    requireCaritasOvertimeParents(
+      saved,
+      shiftRow ? mapShift(shiftRow) : undefined,
+      allocationRow ? mapOvertimeAllocationRow(allocationRow) : undefined,
+      profiles,
+    );
+    await db.runAsync(
+      "INSERT INTO caritas_overtime(shift_id,confirmation_json) VALUES(?,?)",
+      ...CARITAS_OVERTIME_COLUMNS.map((key) => row[key]),
+    );
+  }
   for (const row of data.paidAbsences)
     await db.runAsync(
       "INSERT INTO paid_absences(" + PAID_ABSENCE_COLUMNS.join(",") + ") VALUES(?,?,?,?,?,?,?,?,?)",

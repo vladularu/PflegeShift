@@ -317,6 +317,7 @@ describe("local backup restore", () => {
         tvlShiftWork?: unknown;
         caritasWorkDays?: unknown;
         caritasMonthFacts?: unknown;
+        caritasOvertime?: unknown;
       };
       delete data.remunerationProfiles;
       delete data.allowanceDecisions;
@@ -329,6 +330,7 @@ describe("local backup restore", () => {
       delete data.tvlShiftWork;
       delete data.caritasWorkDays;
       delete data.caritasMonthFacts;
+      delete data.caritasOvertime;
       delete data.profile.display_name;
       delete data.profile.employer_name;
     });

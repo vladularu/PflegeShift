@@ -3,7 +3,7 @@ import type { SaveCaritasOvertimeInput } from "@/domain/saved-caritas-overtime";
 import { work } from "@/engine/remuneration-test-fixtures";
 import { saveShift } from "./calendar-entry-repository";
 import { listCaritasOvertime, saveCaritasOvertime } from "./caritas-overtime-repository";
-import { parseDevBackupPayload } from "./dev-backup-payload";
+import { DEV_BACKUP_VERSION, parseDevBackupPayload } from "./dev-backup-payload";
 import { generateTestRun, restoreTestBackup, setDeveloperMode } from "./dev-tools-repository";
 import { saveOvertimeAllocation } from "./overtime-allocation-repository";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
@@ -83,7 +83,7 @@ describe("Caritas overtime confirmation in test-laboratory backup v10", () => {
     const saved = await saveCaritasOvertime(f.db, input);
     await generate();
     const payload = parseDevBackupPayload(await stored(), "2026-09");
-    expect(payload.version).toBe(16);
+    expect(payload.version).toBe(DEV_BACKUP_VERSION);
     expect(payload.remuneration.caritasOvertime).toHaveLength(1);
     expect(await listCaritasOvertime(f.db)).toEqual([]);
     await generate();

@@ -1,8 +1,9 @@
+import { LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { SaveCaritasOvertimeInput } from "@/domain/saved-caritas-overtime";
 import { saveShift } from "./calendar-entry-repository";
 import { listCaritasOvertime, saveCaritasOvertime } from "./caritas-overtime-repository";
-import { loadLocalBackupSnapshot } from "./local-backup";
+import { LOCAL_BACKUP_VERSION, loadLocalBackupSnapshot } from "./local-backup";
 import { restoreLocalBackup } from "./local-backup-restore";
 import { saveOvertimeAllocation } from "./overtime-allocation-repository";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
@@ -81,7 +82,10 @@ describe("Caritas overtime confirmation in local backup v13", () => {
     const saved = await saveCaritasOvertime(f.db, input);
     const before = await loadLocalBackupSnapshot(f.db);
     const exported = await exportTvlBackup(f);
-    expect(exported.document).toMatchObject({ version: 19, databaseSchemaVersion: 31 });
+    expect(exported.document).toMatchObject({
+      version: LOCAL_BACKUP_VERSION,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    });
     expect(exported.document.data.caritasOvertime).toHaveLength(1);
     await f.db.runAsync("DELETE FROM caritas_overtime");
     await restoreLocalBackup(f.db, await validateTvlBackup(exported.serialized));
@@ -101,7 +105,7 @@ describe("Caritas overtime confirmation in local backup v13", () => {
       delete root.data.tvoedSueAllowanceConfirmations;
     });
     const checked = await validateTvlBackup(legacy);
-    expect(checked.document.data.caritasOvertime).toBeUndefined();
+    expect(checked.document.data.caritasOvertime).toEqual([]);
     await restoreLocalBackup(f.db, checked);
     expect(await listCaritasOvertime(f.db)).toEqual([]);
   });
