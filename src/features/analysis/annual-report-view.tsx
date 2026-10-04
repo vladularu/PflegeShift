@@ -23,6 +23,7 @@ import { ShiftAnalysisDetails } from "./shift-analysis-details";
 import { AnalysisListCard, AnalysisValueRow } from "./analysis-list-card";
 import { AnnualPremiumReport } from "./annual-premium-report";
 import { AnnualOverview } from "./annual-overview";
+import { AnnualRemunerationDetails } from "./annual-remuneration-view";
 import { AnalysisDetailSummaryCard } from "./analysis-detail-layout";
 import { CheckExplanation, CheckPeriod } from "./check-summary-card";
 import type { AnnualDetailSection } from "@/navigation/routes";
@@ -375,6 +376,14 @@ function AnnualSalaryDetails({
 }) {
   const palette = usePalette();
   const available = report.availablePayMonthCount > 0;
+  if (report.remuneration)
+    return (
+      <AnnualRemunerationDetails
+        pay={report.remuneration}
+        year={report.year}
+        onSelectMonth={onSelectMonth}
+      />
+    );
   const rows = [
     {
       label: "Berücksichtigte Monate",

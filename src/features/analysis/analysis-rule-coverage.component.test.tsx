@@ -12,6 +12,7 @@ import futureHolidayPackageValue from "../../../rules/packages/reviewed/de-holid
 import legalPackageValue from "../../../rules/packages/reviewed/de-arbzg-care/2026-01.json";
 import tariffPackageValue from "../../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json";
 import type { MonthlyComplianceResult, ShiftEntry, UserProfile } from "@/domain/types";
+import type { MonthlyAllowanceDecisions } from "@/domain/allowance-decisions";
 import { AnalysisScreen } from "@/features/analysis/analysis-screen";
 import { buildAnnualCoreReport } from "@/features/analysis/annual-core-report";
 import type { AnnualReport } from "@/features/analysis/annual-report";
@@ -90,6 +91,8 @@ const MOCK_TARIFF_PROFILE: UserProfile = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 let mockProfile: UserProfile = MOCK_TARIFF_PROFILE;
+let mockAllowanceDecisions: readonly MonthlyAllowanceDecisions[] = [];
+let mockRemunerationStatus: "ready" | "loading" | "error" = "ready";
 
 const mockCompliance: MonthlyComplianceResult = {
   month: "2027-01",
@@ -194,6 +197,47 @@ jest.mock("@/application/rule-catalog-runtime-provider", () => ({
   useRuleCatalogRuntime: () => ({ resolver: mockRuleResolver }),
 }));
 
+jest.mock("@/application/training-provider", () => ({
+  useTrainingData: () => ({ status: "ready", shifts: [] }),
+}));
+
+// Explicit dated fixtures for the new detail consumers; production never infers this date.
+jest.mock("@/application/remuneration-provider", () => {
+  const read = () => ({
+    status: mockRemunerationStatus,
+    error: mockRemunerationStatus === "error" ? "Vergütungsdaten nicht geladen" : null,
+    allowanceDecisions: mockAllowanceDecisions,
+    overtimeAllocations: [],
+    reload: jest.fn(),
+    actualAnnualPayments: [],
+    paidAbsences: [],
+    profiles: [
+      {
+        effectiveFrom: "2026-01-01",
+        revision: 1,
+        createdAt: mockProfile.createdAt,
+        updatedAt: mockProfile.updatedAt,
+        data: {
+          version: 1,
+          weeklyMinutes: mockProfile.weeklyMinutes,
+          selection: mockProfile.tariff
+            ? {
+                kind: "tariff",
+                packageId: "tvoed-vka-bt-k",
+                variant: mockProfile.tariff.sector,
+                region: mockProfile.tariff.tariffRegion,
+                group: mockProfile.tariff.payGroup,
+                level: String(mockProfile.tariff.payLevel),
+                fullTimeWeeklyMinutes: mockProfile.tariff.fullTimeWeeklyMinutes,
+              }
+            : { kind: "own-monthly", monthlyGrossCents: mockProfile.manualMonthlyGrossCents },
+        },
+      },
+    ],
+  });
+  return { useRemunerationData: read, useRemunerationHistory: read };
+});
+
 jest.mock("@/features/analysis/use-monthly-compliance", () => ({
   useDeferredMonthlyCompliance: () => ({
     error: mockCheckError,
@@ -254,6 +298,28 @@ function januaryShift(): ShiftEntry {
   };
 }
 
+// Explicit fixture confirmation isolates rule coverage from unknown workplace assumptions.
+function confirmJanuaryAllowanceNone() {
+  mockAllowanceDecisions = [
+    {
+      month: "2027-01",
+      revision: 1,
+      updatedAt: MOCK_TARIFF_PROFILE.updatedAt,
+      decisions: [
+        {
+          from: "2027-01-01",
+          through: "2027-01-31",
+          allowanceStatus: "NONE",
+          tariff: { packageId: "tvoed-vka-bt-k", variant: "BT_K", region: "OTHER" },
+          revision: 1,
+          confirmedAt: MOCK_TARIFF_PROFILE.updatedAt,
+          updatedAt: MOCK_TARIFF_PROFILE.updatedAt,
+        },
+      ],
+    },
+  ];
+}
+
 function expectPartialAnalysisShell(
   screen: Awaited<ReturnType<typeof render>>,
   salaryUnavailable = true,
@@ -295,6 +361,8 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     mockAnnualCoreValue = null;
     mockAnnualRuleFailure = null;
     mockProfile = MOCK_TARIFF_PROFILE;
+    mockAllowanceDecisions = [];
+    mockRemunerationStatus = "ready";
     mockActiveMonthCoordinator.setMonth.mockClear();
   });
 
@@ -351,6 +419,7 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
   });
 
   it("keeps January 2027 navigable and shows independent zero values without shifts", async () => {
+    confirmJanuaryAllowanceNone();
     const screen = await render(<AnalysisScreen />);
 
     expectPartialAnalysisShell(screen, false);
@@ -390,7 +459,10 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     mockEntries = [{ ...januaryShift(), id: "april-shift", date: "2027-04-04" }];
 
     const analysis = await render(<AnalysisScreen />);
-    expect(analysis.getByRole("button", { name: /^Gehalt, 3\.450,50/ })).toBeTruthy();
+    expect(analysis.getByRole("button", { name: "Gehalt, Nicht verfügbar" })).toBeTruthy();
+    expect(analysis.getByText("Bekannter Teilbetrag")).toBeTruthy();
+    expect(analysis.getAllByText(/3.450,50/).length).toBeGreaterThan(0);
+    expect(analysis.queryByText("Brutto gesamt")).toBeNull();
 
     const salary = await render(<SalaryScreen />);
     expect(salary.queryByText("Diagnosecode: RULE_PACKAGE_NOT_FOUND")).toBeNull();
@@ -494,6 +566,7 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
   });
 
   it("keeps core, salary and holiday worktime independent from missing legal rules", async () => {
+    confirmJanuaryAllowanceNone();
     mockRuleResolver = FUTURE_HOLIDAY_MISSING_LEGAL_RESOLVER;
     mockEntries = [januaryShift()];
 
@@ -507,6 +580,24 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(salary.queryByText("Diagnosecode: RULE_PACKAGE_NOT_FOUND")).toBeNull();
     expect(salary.getByText("Grundentgelt")).toBeTruthy();
   });
+
+  it.each(["loading", "error"] as const)(
+    "keeps work time and checks independent of remuneration %s",
+    async (status) => {
+      mockRouteMonth = "2026-09";
+      mockRemunerationStatus = status;
+      mockEntries = [{ ...januaryShift(), date: "2026-09-06" }];
+      const screen = await render(<AnalysisScreen />);
+      expect(screen.getByLabelText("Ist: 7:30 h")).toBeTruthy();
+      expect(screen.getByRole("button", { name: /^Prüfung,/ })).toBeTruthy();
+      expect(
+        screen.getByRole("button", {
+          name: `Gehalt, ${status === "loading" ? "Wird berechnet …" : "Nicht verfügbar"}`,
+        }),
+      ).toBeTruthy();
+      expect(screen.queryByText("Grundgehalt")).toBeNull();
+    },
+  );
 
   it("shows expired tariff detail paths as unavailable without zero pseudo-results", async () => {
     mockRouteMonth = "2027-04";

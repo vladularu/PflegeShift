@@ -1,28 +1,27 @@
 import { router } from "expo-router";
-import type { MonthlyComplianceResult, UserProfile } from "@/domain/types";
+import type { MonthlyComplianceResult } from "@/domain/types";
 import { formatMinutes, formatSignedMinutes } from "@/engine/working-time";
 import { classifyChecks, selectVisibleCompliance } from "./check-visibility";
 import type { MonthlyAnalysisCalculation } from "./monthly-analysis";
-import { complianceDetailsRoute, salaryRoute } from "@/navigation/routes";
-import { AnalysisDashboard, CheckListCard, PayListCard, WorkListCard } from "./dashboard-cards";
+import { complianceDetailsRoute } from "@/navigation/routes";
+import { AnalysisDashboard, CheckListCard, WorkListCard } from "./dashboard-cards";
 import { ShiftAnalysisCard } from "./shift-analysis-card";
+import { MonthlyRemunerationCard } from "./monthly-remuneration-card";
 
 export function MonthOverview({
   month,
   data,
-  profile,
   compliance,
   checkError,
   showPlanning,
 }: {
   readonly month: string;
   readonly data: MonthlyAnalysisCalculation;
-  readonly profile: UserProfile;
   readonly compliance: MonthlyComplianceResult | null;
   readonly checkError: string | null;
   readonly showPlanning: boolean;
 }) {
-  const { summary, pay, shiftTypeAnalysis } = data;
+  const { summary, shiftTypeAnalysis } = data;
   const visible = compliance === null ? null : selectVisibleCompliance(compliance, showPlanning);
   const status =
     !data.complianceShifts.ok || checkError
@@ -30,8 +29,6 @@ export function MonthOverview({
       : !visible
         ? "Wird geprüft …"
         : undefined;
-  const salaryReady = profile.tariff !== null || profile.manualMonthlyGrossCents != null;
-  const estimate = pay.ok && pay.value.available ? pay.value : null;
   return (
     <AnalysisDashboard
       cards={{
@@ -71,31 +68,7 @@ export function MonthOverview({
             }
           />
         ),
-        PAY: (
-          <PayListCard
-            onPress={() => router.push(salaryRoute(month))}
-            status={!salaryReady ? "Gehalt einrichten" : !estimate ? "Nicht verfügbar" : undefined}
-            base={estimate?.personalBaseAmount}
-            premiums={estimate?.timePremiumAmount}
-            overtime={estimate?.overtimeAmount}
-            allowances={
-              estimate
-                ? estimate.allowanceAmount +
-                  estimate.tvoedAllowanceAmount +
-                  estimate.careAllowanceAmount
-                : undefined
-            }
-            gross={estimate?.estimatedGrossAmount}
-            manual={profile.tariff === null}
-            caption={
-              !salaryReady
-                ? "Tarif oder Monatsbrutto hinterlegen"
-                : profile.tariff === null
-                  ? "Manuell hinterlegtes Monatsbrutto"
-                  : "Unverbindliche Brutto-Schätzung"
-            }
-          />
-        ),
+        PAY: <MonthlyRemunerationCard month={month} />,
         SHIFTS: (
           <ShiftAnalysisCard
             analysis={shiftTypeAnalysis}

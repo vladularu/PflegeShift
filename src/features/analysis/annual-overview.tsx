@@ -7,6 +7,7 @@ import { addCheckCounts, type CheckCounts } from "./check-visibility";
 import { AnalysisDashboard, CheckListCard, PayListCard, WorkListCard } from "./dashboard-cards";
 import { ShiftAnalysisCard } from "./shift-analysis-card";
 import { AnalysisListCard, AnalysisValueRow } from "./analysis-list-card";
+import { AnnualRemunerationCard } from "./annual-remuneration-view";
 
 export function AnnualOverview({
   report,
@@ -88,7 +89,9 @@ export function AnnualOverview({
             }
           />
         ),
-        PAY: (
+        PAY: report.remuneration ? (
+          <AnnualRemunerationCard pay={report.remuneration} year={report.year} pending={pending} />
+        ) : (
           <PayListCard
             onPress={() => router.push(annualDetailsRoute(report.year, "PAY"))}
             status={pending ? "Wird berechnet …" : !payReady ? "Nicht verfügbar" : undefined}
