@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { work } from "@/engine/remuneration-test-fixtures";
 import { listCaritasMonthFacts, saveCaritasMonthFacts } from "./caritas-month-facts-repository";
-import { parseDevBackupPayload } from "./dev-backup-payload";
+import { DEV_BACKUP_VERSION, parseDevBackupPayload } from "./dev-backup-payload";
 import {
   acceptTestRun,
   generateTestRun,
@@ -65,7 +65,7 @@ describe("Caritas month facts in test-laboratory backups", () => {
     });
     await generate();
     const payload = parseDevBackupPayload(await stored(), "2026-09");
-    expect(payload.version).toBe(16);
+    expect(payload.version).toBe(DEV_BACKUP_VERSION);
     expect(payload.remuneration.caritasMonthFacts).toHaveLength(1);
     expect(await listCaritasMonthFacts(f.db)).toEqual([]);
     await generate();

@@ -1,3 +1,4 @@
+import { CARITAS_MONTH_FACTS_COLUMNS } from "./caritas-month-facts-repository";
 import { CARITAS_WORK_DAY_COLUMNS } from "./caritas-work-day-repository";
 import { TVL_SHIFT_WORK_COLUMNS } from "./tvl-shift-work-repository";
 import { TARIFF_ANNUAL_CLAIM_COLUMNS } from "./tariff-annual-claim-repository";
@@ -68,6 +69,7 @@ export async function restoreLocalBackup(
     await transaction.runAsync("DELETE FROM scheduled_entry_notifications");
     await transaction.runAsync("DELETE FROM tvl_shift_work");
     await transaction.runAsync("DELETE FROM caritas_work_days");
+    await transaction.runAsync("DELETE FROM caritas_month_facts");
     await transaction.runAsync("DELETE FROM tariff_annual_claims");
     await transaction.runAsync("DELETE FROM actual_annual_payments");
     await transaction.runAsync("DELETE FROM shift_training_details");
@@ -153,6 +155,12 @@ export async function restoreLocalBackup(
       "caritas_work_days",
       CARITAS_WORK_DAY_COLUMNS,
       document.data.caritasWorkDays,
+    );
+    await insertRows(
+      transaction,
+      "caritas_month_facts",
+      CARITAS_MONTH_FACTS_COLUMNS,
+      document.data.caritasMonthFacts,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(

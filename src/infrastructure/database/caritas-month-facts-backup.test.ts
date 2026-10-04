@@ -1,6 +1,7 @@
+import { LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { listCaritasMonthFacts, saveCaritasMonthFacts } from "./caritas-month-facts-repository";
-import { loadLocalBackupSnapshot } from "./local-backup";
+import { LOCAL_BACKUP_VERSION, loadLocalBackupSnapshot } from "./local-backup";
 import { restoreLocalBackup } from "./local-backup-restore";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
 import {
@@ -53,7 +54,10 @@ describe("Caritas monthly facts in local backup v11", () => {
     const saved = await saveCaritasMonthFacts(f.db, facts());
     const before = await loadLocalBackupSnapshot(f.db);
     const exported = await exportTvlBackup(f);
-    expect(exported.document).toMatchObject({ version: 19, databaseSchemaVersion: 31 });
+    expect(exported.document).toMatchObject({
+      version: LOCAL_BACKUP_VERSION,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    });
     expect(exported.document.data.caritasMonthFacts).toHaveLength(1);
     await f.db.runAsync("DELETE FROM caritas_month_facts");
     await restoreLocalBackup(f.db, await validateTvlBackup(exported.serialized));
@@ -74,7 +78,7 @@ describe("Caritas monthly facts in local backup v11", () => {
       delete root.data.tvoedSueAllowanceConfirmations;
     });
     const checked = await validateTvlBackup(legacy);
-    expect(checked.document.data.caritasMonthFacts).toBeUndefined();
+    expect(checked.document.data.caritasMonthFacts).toEqual([]);
     await restoreLocalBackup(f.db, checked);
     expect(await listCaritasMonthFacts(f.db)).toEqual([]);
   });
