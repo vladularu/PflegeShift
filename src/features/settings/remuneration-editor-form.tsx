@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { formatMonthTitle } from "@/engine/calendar";
 import { useEffect, useRef, useState } from "react";
 import { TextInput } from "react-native";
 import { useRemunerationHistory } from "@/application/remuneration-provider";
@@ -24,14 +25,17 @@ export interface RemunerationEditorSession {
   readonly data: RemunerationProfileData;
   readonly effectiveFrom: string | null;
   readonly revision: number;
+  readonly simple?: boolean;
 }
 
 export function RemunerationEditorForm({
   session,
   onClose,
+  onHistory,
 }: {
   readonly session: RemunerationEditorSession;
   readonly onClose: () => void;
+  readonly onHistory?: () => void;
 }) {
   const history = useRemunerationHistory();
   const palette = usePalette();
@@ -45,6 +49,7 @@ export function RemunerationEditorForm({
     session.effectiveFrom === null ? "" : formatRemunerationDate(session.effectiveFrom),
   );
   const [revision, setRevision] = useState(session.revision);
+  const [showDate, setShowDate] = useState(!session.simple);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +69,16 @@ export function RemunerationEditorForm({
     options = remunerationTariffOptions(parseRemunerationDateInput(effectiveDate), catalogResolver);
   } catch {
     /* Date validation is shown on submit. */
+  }
+
+  let startLabel = "";
+  try {
+    const date = parseRemunerationDateInput(effectiveDate);
+    startLabel = date.endsWith("-01")
+      ? formatMonthTitle(date.slice(0, 7))
+      : formatRemunerationDate(date);
+  } catch {
+    /* The date field explains an incomplete or invalid input. */
   }
 
   async function submit() {
@@ -116,6 +131,7 @@ export function RemunerationEditorForm({
       setRevision(saved.revision);
       setEffectiveDate(formatRemunerationDate(date));
       setMessage(`Vergütungsstand ab ${formatRemunerationDate(date)} gespeichert.`);
+      if (session.simple) onClose();
     } catch (saveError) {
       if (active.current)
         setError(
@@ -142,7 +158,7 @@ export function RemunerationEditorForm({
           headerRight: () => (
             <HeaderSaveAction
               busy={saving || history.status !== "ready"}
-              closes={false}
+              closes={session.simple ?? false}
               label="Speichern"
               onPress={() => void submit()}
             />
@@ -150,28 +166,45 @@ export function RemunerationEditorForm({
         }}
       />
       <FormSection
-        title={revision === 0 ? "Neuer Vergütungsstand" : "Vergütungsstand korrigieren"}
+        title={
+          session.simple
+            ? undefined
+            : revision === 0
+              ? "Neuer Vergütungsstand"
+              : "Vergütungsstand korrigieren"
+        }
         caption={
-          revision === 0
-            ? "Ab diesem Datum gelten die neuen Angaben. Frühere Stände bleiben erhalten."
-            : "Eine Korrektur ändert diesen bestehenden Stand und kann frühere Auswertungen verändern. Für einen Wechsel lege einen neuen Stand an."
+          session.simple
+            ? startLabel
+              ? `Gilt ab ${startLabel}. Mit Speichern bestätigst du diese Angaben.`
+              : "Bitte den Beginn prüfen."
+            : revision === 0
+              ? "Ab diesem Datum gelten die neuen Angaben. Frühere Stände bleiben erhalten."
+              : "Eine Korrektur ändert diesen bestehenden Stand und kann frühere Auswertungen verändern. Für einen Wechsel lege einen neuen Stand an."
         }
       >
-        <Field
-          label="Gültig ab"
-          value={effectiveDate}
-          inputRef={dateRef}
-          onChangeText={setEffectiveDate}
-          placeholder="TT.MM.JJJJ"
-          accessibilityHint="Datum mit Tag, Monat und Jahr, zum Beispiel 01.10.2026"
-          keyboardType="numbers-and-punctuation"
-          returnKeyType="done"
-          maxLength={10}
-          editable={!saving && revision === 0}
-        />
+        {showDate ? (
+          <Field
+            label="Gültig ab"
+            value={effectiveDate}
+            inputRef={dateRef}
+            onChangeText={setEffectiveDate}
+            placeholder="TT.MM.JJJJ"
+            accessibilityHint="Datum mit Tag, Monat und Jahr, zum Beispiel 01.10.2026"
+            keyboardType="numbers-and-punctuation"
+            returnKeyType="done"
+            maxLength={10}
+            editable={!saving && revision === 0}
+          />
+        ) : revision === 0 ? (
+          <SecondaryButton disabled={saving} onPress={() => setShowDate(true)}>
+            Beginn ändern
+          </SecondaryButton>
+        ) : null}
       </FormSection>
       <RemunerationFields
         catalog={options}
+        compact={session.simple}
         values={values}
         onChange={(change) => {
           setValues((current) => ({ ...current, ...change }));
@@ -204,6 +237,11 @@ export function RemunerationEditorForm({
             Historie erneut laden
           </SecondaryButton>
         </>
+      ) : null}
+      {onHistory ? (
+        <SecondaryButton disabled={saving} onPress={onHistory}>
+          Frühere Angaben
+        </SecondaryButton>
       ) : null}
       <SecondaryButton disabled={saving} onPress={onClose}>
         {message ? "Zur Übersicht" : "Abbrechen"}

@@ -118,7 +118,7 @@ describe("settings pay group selection", () => {
   it.each(["P5", "P6"])("loads and saves %s stage 1", async (payGroup) => {
     mockPayGroup = payGroup;
     const screen = await render(editor());
-    await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Beginn ändern" }));
     await fireEvent.changeText(screen.getByLabelText("Gültig ab"), "01.10.2026");
     expect(screen.getByRole("button", { name: "Stufe: Stufe 1" })).toBeTruthy();
     const options = await select(screen, "Stufe", "Stufe 1");
@@ -146,7 +146,7 @@ describe("settings pay group selection", () => {
 
   it("clears incompatible stage 1 and blocks saving until the user chooses a valid stage", async () => {
     const screen = await render(editor());
-    await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Beginn ändern" }));
     await fireEvent.changeText(screen.getByLabelText("Gültig ab"), "01.10.2026");
     await select(screen, "Entgeltgruppe", "P7");
     expect(screen.getByRole("button", { name: "Stufe: Bitte auswählen" })).toBeTruthy();
@@ -174,7 +174,7 @@ describe("settings pay group selection", () => {
     mockPayGroup = "P8";
     mockPayLevel = 4;
     const screen = await render(editor());
-    await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Beginn ändern" }));
     await fireEvent.changeText(screen.getByLabelText("Gültig ab"), "01.10.2026");
     await select(screen, "Entgeltgruppe", "P6");
     expect(screen.getByRole("button", { name: "Stufe: Stufe 4" })).toBeTruthy();

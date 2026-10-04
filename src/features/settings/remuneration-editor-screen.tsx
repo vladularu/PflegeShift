@@ -1,5 +1,5 @@
 import { router, Stack } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import { useRemunerationHistory } from "@/application/remuneration-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
@@ -24,8 +24,33 @@ export function RemunerationEditorScreen({ profile }: { readonly profile: UserPr
   const [selected, setSelected] = useState("NEW");
   const [session, setSession] = useState<RemunerationEditorSession | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const opened = useRef(false);
+  useEffect(() => {
+    if (opened.current || history.status !== "ready") return;
+    opened.current = true;
+    const today = Temporal.Now.plainDateISO(profile.timeZone);
+    const monthStart = today.with({ day: 1 }).toString();
+    const current = resolveRemunerationProfile(history.profiles, today.toString()).profile;
+    const from =
+      current?.effectiveFrom && current.effectiveFrom > monthStart
+        ? current.effectiveFrom
+        : monthStart;
+    const existing = history.profiles.find((item) => item.effectiveFrom === from);
+    setSession({
+      data: current?.data ?? remunerationDataFromLegacy(profile),
+      effectiveFrom: from,
+      revision: existing?.revision ?? 0,
+      simple: true,
+    });
+  }, [history.status, history.profiles, profile]);
   if (session !== null)
-    return <RemunerationEditorForm session={session} onClose={() => setSession(null)} />;
+    return (
+      <RemunerationEditorForm
+        session={session}
+        onClose={() => (session.simple ? router.back() : setSession(null))}
+        onHistory={session.simple ? () => setSession(null) : undefined}
+      />
+    );
 
   function open() {
     setError(null);
