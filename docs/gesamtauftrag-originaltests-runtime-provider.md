@@ -12,4 +12,4 @@ Die Katalog-Snapshots verwenden ausschließlich synthetische Testreviews. Kein B
 
 ## Prüfung
 
-Ausstehend: gezielte und vollständige Prüfungen sowie PR-CI.
+37 gezielte Unit-Fälle und fünf unveränderte TV-L-Providerfälle grün. Typecheck und verify:fast nach Integration des gemergten Signatur-PR #254 bestanden: 5.716 Unit- und 547 Komponententests sowie sämtliche Skriptgates ohne Fehler. Sieben PR-CI-Prüfungen sind vor Merge separat abzugleichen.
