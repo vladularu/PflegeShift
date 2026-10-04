@@ -244,6 +244,9 @@ export interface RuleTariffRules {
   tvalTimePremiumPolicy?: RuleTvalTimePremiumPolicy;
   tvalOvertimePolicy?: RuleTvalOvertimePolicy;
   tvalCareAllowancePolicy?: RuleTvalCareAllowancePolicy;
+  caritasTimePremiumPolicy?: RuleCaritasTimePremiumPolicy;
+  caritasOvertimePolicy?: RuleCaritasOvertimePolicy;
+  caritasAnnualPaymentPolicy?: RuleCaritasAnnualPaymentPolicy;
 }
 export interface RuleTariffSelection {
   familyId: RuleIdentifier;
@@ -25287,6 +25290,439 @@ export interface RuleTvalCareAllowancePolicy {
   burnUnit: "FULL_WORKED_HOURS";
   competition: "HIGHEST_CLINICAL_LESS_MONTH_BURN";
   rounding: "RATE_SHARE_THEN_PERSONAL_THEN_TOTAL";
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 14: published federal baseline for Anlage 31/32 § 4(5), § 6(1). Local increases, individual eligibility, time-off choice and cash payment are not inferred by this record.
+ */
+export interface RuleCaritasTimePremiumPolicy {
+  validFrom: RuleIsoDate;
+  validTo: RuleIsoDate;
+  referenceStepId: "3";
+  monthlyFactorThousandths: 4348;
+  nightWindow: RuleTimeWindow;
+  nightBasisPoints: number;
+  sundayBasisPoints: number;
+  holidayWithTimeOffBasisPoints: number;
+  holidayWithoutTimeOffBasisPoints: number;
+  preHolidayWindow: RuleTimeWindow;
+  /**
+   * @minItems 2
+   * @maxItems 2
+   */
+  preHolidayMonthDays: ["12-24" | "12-31", "12-24" | "12-31"];
+  preHolidayBasisPoints: number;
+  saturdayWindow: RuleTimeWindow;
+  saturdayBasisPoints: number;
+  saturdayOnlyOutsideShiftWork: true;
+  competition: "HIGHEST_SUNDAY_HOLIDAY_PREHOLIDAY_SATURDAY";
+  nightStacks: true;
+  holidayWithoutTimeOffMaximumTotalBasisPoints: 23500;
+  localAgreementMayIncrease: true;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Draft-only Anlage 31/32 overtime pay facts. Classification and cash-versus-time settlement require separately confirmed personal facts; this policy never infers payable overtime from a time balance.
+ */
+export interface RuleCaritasOvertimePolicy {
+  validFrom: RuleIsoDate;
+  validTo: RuleIsoDate;
+  premiumReferenceStepId: "3";
+  workPayMaximumStepId: "4";
+  monthlyFactorThousandths: 4348;
+  /**
+   * @minItems 2
+   * @maxItems 2
+   */
+  rateBands: [
+    {
+      /**
+       * @minItems 1
+       * @maxItems 12
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      premiumBasisPoints: number;
+    },
+    {
+      /**
+       * @minItems 1
+       * @maxItems 12
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      premiumBasisPoints: number;
+    },
+  ];
+  requiresConfirmedClassification: true;
+  requiresSettlementChoice: true;
+  timeConversionAllowed: true;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Draft-only AVR Caritas Anlage 31/32 section 16 facts for 2025/2026. This metadata does not assert executable or complete annual-payment support.
+ */
+export interface RuleCaritasAnnualPaymentPolicy {
+  validFrom: RuleIsoDate;
+  validTo: RuleIsoDate;
+  referenceMonths: [7, 8, 9];
+  rateDateMonthDay: "09-01";
+  claimDateMonthDay: "12-01";
+  payoutMonth: 11;
+  /**
+   * @minItems 2
+   * @maxItems 2
+   */
+  rateBands: [
+    {
+      /**
+       * @minItems 1
+       * @maxItems 12
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      rateBasisPoints: 7600 | 8600;
+    },
+    {
+      /**
+       * @minItems 1
+       * @maxItems 12
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      rateBasisPoints: 7600 | 8600;
+    },
+  ];
+  basisPolicy: "PAID_JULY_SEPTEMBER_WITH_EXCLUSIONS";
+  lateEntryBasis: "FIRST_FULL_MONTH_AFTER_SEPTEMBER";
+  reductionPolicy: "ONE_TWELFTH_WITH_STATUTORY_EXCEPTIONS";
+  earlyExitVariantId: "ANLAGE_31";
+  earlyExitBasis: "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES";
+  eastTariff2025UsesWestTable: boolean;
   sourceIds: RuleSourceIds;
 }
 export interface RuleLegalRules {

@@ -272,9 +272,10 @@ describe("Caritas regular annual component", () => {
     expect(JSON.stringify(value)).toBe(before);
   });
 
-  it("checks all 384 year/annex/territory/P-group combinations against fixed 86/76 percent references", () => {
-    let combinations = 0;
-    for (const region of ["bw", "bayern", "mitte", "nrw", "nord", "ost"]) {
+  it.each(["bw", "bayern", "mitte", "nrw", "nord", "ost"])(
+    "checks every year/annex/territory/P-group combination in %s against fixed 86/76 percent references",
+    (region) => {
+      let combinations = 0;
       for (const year of [2025, 2026] as const) {
         for (const annex of ["ANLAGE_31", "ANLAGE_32"]) {
           const territories = input(region, year, annex).pkg.rules.selection!.variants.find(
@@ -317,9 +318,9 @@ describe("Caritas regular annual component", () => {
           }
         }
       }
-    }
-    expect(combinations).toBe(384);
-  });
+      expect(combinations).toBe(region === "ost" ? 144 : 48);
+    },
+  );
 
   it("preserves the exceptional 2025 RK-Ost West basis and switches to its own basis in 2026", () => {
     for (const year of [2025, 2026] as const) {
