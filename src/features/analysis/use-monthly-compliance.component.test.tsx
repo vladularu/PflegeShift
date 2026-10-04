@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, afterEach, describe, expect, it, jest } from "@jest/globals";
 
 import type { ShiftEntry, UserProfile } from "@/domain/types";
 import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-compliance";
@@ -8,6 +8,20 @@ import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 jest.mock("@/features/analysis/use-local-reference-date", () => ({
   useLocalReferenceDate: () => "2026-08-04",
 }));
+
+let mockYouth: boolean | null = false;
+const mockRetryPreferences = jest.fn();
+jest.mock("@/features/settings/check-preferences", () => ({
+  useCheckPreferences: () => ({
+    youthEnabled: mockYouth,
+    error: mockYouth === null ? "Prüfungseinstellungen konnten nicht geladen werden." : null,
+    retry: mockRetryPreferences,
+  }),
+}));
+beforeEach(() => {
+  mockYouth = false;
+  mockRetryPreferences.mockClear();
+});
 
 const PROFILE: UserProfile = {
   federalState: "NW",
@@ -143,4 +157,37 @@ describe("useDeferredMonthlyCompliance", () => {
       screen.result.current.result?.issues.some((issue) => issue.rule === "ARBZG_3_MAX_10H"),
     ).toBe(false);
   });
+});
+
+it("recalculates on youth activation and never shows stale adult results during preference loading", async () => {
+  jest.useFakeTimers();
+  const shifts = [shift("normal", "15:00")];
+  const screen = await renderHook(() =>
+    useDeferredMonthlyCompliance({ enabled: true, month: "2026-08", profile: PROFILE, shifts }),
+  );
+  await act(async () => {
+    jest.runAllTimers();
+  });
+  const adult = screen.result.current.result;
+  mockYouth = true;
+  await screen.rerender({});
+  expect(screen.result.current.result).toBeNull();
+  await act(async () => {
+    jest.runAllTimers();
+  });
+  expect(
+    screen.result.current.result?.issues.some((finding) => finding.rule.startsWith("JARBSCHG")),
+  ).toBe(true);
+  mockYouth = false;
+  await screen.rerender({});
+  await act(async () => {
+    jest.runAllTimers();
+  });
+  expect(screen.result.current.result).toEqual(adult);
+  mockYouth = null;
+  await screen.rerender({});
+  expect(screen.result.current.result).toBeNull();
+  expect(screen.result.current.error).toContain("nicht geladen");
+  await act(async () => screen.result.current.retry());
+  expect(mockRetryPreferences).toHaveBeenCalled();
 });

@@ -183,6 +183,7 @@ export function annualInputKey(value: unknown): string {
 }
 
 interface AnnualComputationOptions {
+  readonly youthProtection?: boolean;
   readonly training?: {
     readonly data: TrainingComplianceData;
     readonly shifts: readonly ShiftEntry[];
@@ -202,6 +203,7 @@ function* calculateAvailableMonth(
   ruleResolver: RuleResolver,
   cached: AvailableMonthCache,
   remuneration?: AnnualRemunerationInput,
+  youthProtection = false,
 ): Generator<number, AvailableMonthCalculation, void> {
   const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
   const summaryKey = annualInputKey([monthlyEntries.monthShifts, profile]);
@@ -227,7 +229,7 @@ function* calculateAvailableMonth(
     return selectComplianceShifts(entries, month, ruleResolver);
   });
   // Use the engine's complete legal window, not merely the edited month.
-  const complianceKey = annualInputKey([complianceShifts, profile, referenceDate]);
+  const complianceKey = annualInputKey([complianceShifts, profile, referenceDate, youthProtection]);
   if (cached.compliance?.key === complianceKey) {
     compliance = cached.compliance.value;
   } else if (complianceShifts !== null) {
@@ -241,6 +243,7 @@ function* calculateAvailableMonth(
         regularRotatingNightWork: profile.regularRotatingNightWork,
         sundayHolidayWorkEligible: profile.sundayHolidayWorkEligible,
         allEmploymentWorkRecorded: profile.allEmploymentWorkRecorded,
+        youthProtection,
       });
       while (true) {
         const step = steps.next();
@@ -401,6 +404,7 @@ export function* buildAnnualAvailableReportSteps(
       ruleResolver,
       cached,
       options.remuneration,
+      options.youthProtection,
     );
     let available: AvailableMonthCalculation;
     while (true) {
