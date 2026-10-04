@@ -24,6 +24,8 @@ import { buildShiftTypeDistribution } from "@/features/calendar/calendar-metrics
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { classifyChecks, type ClassifiedCheckCounts } from "./check-visibility";
 
+import type { AnnualRemuneration } from "./annual-remuneration";
+
 export interface AnnualMonthReport {
   readonly timePremiumAmount?: number | null;
   readonly checkCounts?: ClassifiedCheckCounts;
@@ -40,6 +42,8 @@ export interface AnnualMonthReport {
 }
 
 export interface AnnualReport {
+  /** Present only when the caller supplies a dated snapshot; legacy numbers are not a fallback. */
+  readonly remuneration?: AnnualRemuneration;
   readonly shiftTypeAnalysis?: MonthlyShiftTypeAnalysis;
   readonly salarySource?: "MANUAL" | "TARIFF" | "UNSET";
   readonly infoCount?: number;
