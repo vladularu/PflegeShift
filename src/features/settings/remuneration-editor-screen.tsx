@@ -1,6 +1,7 @@
-import { router, Stack } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
+import { usePflegeShiftProfile } from "@/application/pflegeshift-provider";
 import { useRemunerationHistory } from "@/application/remuneration-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import {
@@ -17,8 +18,17 @@ import { formatRemunerationDate } from "./remuneration-editor-values";
 import { remunerationTariffOptions } from "./remuneration-tariff-options";
 import { RemunerationEditorForm, type RemunerationEditorSession } from "./remuneration-editor-form";
 
-export function RemunerationEditorScreen({ profile }: { readonly profile: UserProfile }) {
+export function RemunerationEditorScreen({
+  profile,
+  historyMode = false,
+}: {
+  readonly profile: UserProfile;
+  readonly historyMode?: boolean;
+}) {
+  const params = useLocalSearchParams<{ history?: string }>();
+  const historical = historyMode || params.history === "1";
   const history = useRemunerationHistory();
+  const { updateProfile } = usePflegeShiftProfile();
   const { resolver } = useRuleCatalogRuntime();
   const palette = usePalette();
   const [selected, setSelected] = useState("NEW");
@@ -26,7 +36,7 @@ export function RemunerationEditorScreen({ profile }: { readonly profile: UserPr
   const [error, setError] = useState<string | null>(null);
   const opened = useRef(false);
   useEffect(() => {
-    if (opened.current || history.status !== "ready") return;
+    if (historical || opened.current || history.status !== "ready") return;
     opened.current = true;
     const today = Temporal.Now.plainDateISO(profile.timeZone);
     const monthStart = today.with({ day: 1 }).toString();
@@ -43,13 +53,29 @@ export function RemunerationEditorScreen({ profile }: { readonly profile: UserPr
       simple: true,
       industry: profile.industry ?? undefined,
     });
-  }, [history.status, history.profiles, profile]);
+  }, [history.status, history.profiles, profile, historical]);
+  useEffect(() => {
+    if (historical) setSession(null);
+  }, [historical]);
   if (session !== null)
     return (
       <RemunerationEditorForm
         session={session}
+        saveIndustry={async (industry) => {
+          await updateProfile({
+            federalState: profile.federalState,
+            holidayRegion: profile.holidayRegion,
+            weeklyMinutes: profile.weeklyMinutes,
+            timeZone: profile.timeZone,
+            industry,
+            tariff: profile.tariff,
+            manualMonthlyGrossCents: profile.manualMonthlyGrossCents ?? null,
+            regularRotatingNightWork: profile.regularRotatingNightWork,
+            sundayHolidayWorkEligible: profile.sundayHolidayWorkEligible,
+            allEmploymentWorkRecorded: profile.allEmploymentWorkRecorded,
+          });
+        }}
         onClose={() => (session.simple ? router.back() : setSession(null))}
-        onHistory={session.simple ? () => setSession(null) : undefined}
       />
     );
 

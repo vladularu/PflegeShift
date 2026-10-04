@@ -16,6 +16,8 @@ import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 import { PremiumDetailsScreen } from "@/features/analysis/premium-details-screen";
 import { remunerationEuro } from "./remuneration-presentation";
 import { SalaryScreen } from "./salary-screen";
+import { RemunerationComposition } from "./remuneration-composition";
+import { formatDateTitle } from "@/engine/calendar";
 import { ownRemunerationFixture } from "@/domain/own-remuneration-test-fixtures";
 import { tariffAnnualFixture } from "@/engine/tariff-annual-test-fixtures";
 import { tvlProfile, tvlRules } from "@/engine/tvl-shift-work-test-fixtures";
@@ -148,10 +150,64 @@ beforeEach(() => {
   };
 });
 describe("dated salary detail integration", () => {
+  it("retains the exact dated allowance source separately from its original info action", async () => {
+    const screen = await render(<SalaryScreen />);
+    const row = screen.getByRole("button", { name: "Pflegezulage TVöD-P, Details öffnen" });
+    expect(screen.queryByText("Berechnungsgrundlage & Quellen")).toBeNull();
+    await fireEvent(row, "longPress");
+    expect(router.push).not.toHaveBeenCalled();
+    await fireEvent.press(
+      screen.getByRole("button", { name: /^Berechnungsgrundlage: Pflegezulage,/ }),
+    );
+    expect(screen.getByText("Vergütungsprofil ab 2026-01-01 · Revision 1")).toBeTruthy();
+    expect(screen.getByText(/Regelpaket: tvoed-vka-bt-k/)).toBeTruthy();
+    await fireEvent.press(screen.getByRole("button", { name: "Details schließen" }));
+    expect(screen.queryByText(/Regelpaket:/)).toBeNull();
+  });
+  it("keeps another tariff's shift allowance on its own details instead of the TVöD assessment", async () => {
+    const calculated = result();
+    const position = calculated.allowances.positions[0];
+    const onShiftAllowance = jest.fn();
+    const screen = await render(
+      <RemunerationComposition
+        result={{
+          ...calculated,
+          allowances: {
+            ...calculated.allowances,
+            positions: [
+              {
+                ...position,
+                label: "Schichtzulage",
+                source: { ...position.source, packageId: "tvl-kr-tdl" },
+              },
+            ],
+          },
+        }}
+        profiles={mockHistory.profiles}
+        onPremiums={jest.fn()}
+        onShiftAllowance={onShiftAllowance}
+        onAnnualPayment={jest.fn()}
+        onOvertime={jest.fn()}
+      />,
+    );
+    await fireEvent.press(screen.getByRole("button", { name: "Schichtzulage, Details öffnen" }));
+    expect(onShiftAllowance).not.toHaveBeenCalled();
+    expect(router.push).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Details schließen" })).toBeTruthy();
+    expect(screen.getByText("Berechnungsgrundlage & Quellen")).toBeTruthy();
+  });
   it("keeps the reference composition together and additional inputs out of the main view", async () => {
     const screen = await render(<SalaryScreen />);
     expect(screen.getByTestId("salary-composition")).toBeTruthy();
-    expect(screen.getByText("Zusammensetzung")).toBeTruthy();
+    expect(screen.getByRole("header", { name: "Zusammensetzung" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Zusatzangaben" })).toBeNull();
+    await fireEvent.press(
+      screen.getByRole("button", { name: "Pflegezulage TVöD-P, Details öffnen" }),
+    );
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: "/info-details",
+      params: { section: "CARE_ALLOWANCE" },
+    });
     expect(screen.getByRole("button", { name: "Zeitzuschläge, Details öffnen" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Gehaltsangaben" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Jahressonderzahlungen bearbeiten" })).toBeNull();
@@ -291,7 +347,7 @@ describe("dated salary detail integration", () => {
       };
       const screen = await render(<SalaryScreen />);
       const card = screen.getByRole("button", { name: "Jahressonderzahlung, Details öffnen" });
-      await fireEvent.press(screen.getByRole("button", { name: "Zusatzangaben" }));
+      await fireEvent.press(card);
       await fireEvent.press(
         screen.getByRole("button", { name: "Jahressonderzahlungen bearbeiten" }),
       );
@@ -352,9 +408,10 @@ describe("dated salary detail integration", () => {
       params: { month: "2026-09" },
     });
   });
-  it("opens the allocation editor for the displayed month", async () => {
+  it("opens the allocation editor from the overtime row for the displayed month", async () => {
+    mockEntries = [shift({ overtimeMinutes: 60, tariffOvertimeConfirmed: true })];
     const screen = await render(<SalaryScreen />);
-    await fireEvent.press(screen.getByRole("button", { name: "Zusatzangaben" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Überstunden, Details öffnen" }));
     await fireEvent.press(screen.getByRole("button", { name: "Überstunden den Tagen zuordnen" }));
     expect(router.push).toHaveBeenCalledWith({
       pathname: "/overtime-allocation",
@@ -509,18 +566,18 @@ describe("dated salary detail integration", () => {
     expect(screen.getByText("Zusammensetzung")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Angaben bestätigen" })).toBeNull();
   });
-  it("keeps special inputs collapsed and opens them for the displayed month", async () => {
+  it("uses the original shift allowance info action without an additional input menu", async () => {
+    mockHistory = { ...mockHistory, profiles: [history()] };
     const screen = await render(<SalaryScreen />);
+    expect(screen.queryByRole("button", { name: "Zusatzangaben" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Jahressonderzahlungen bearbeiten" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Überstunden den Tagen zuordnen" })).toBeNull();
-    await fireEvent.press(screen.getByRole("button", { name: "Zusatzangaben" }));
-    await fireEvent.press(screen.getByRole("button", { name: "Jahressonderzahlungen bearbeiten" }));
+    expect(screen.queryByText("Berechnungsgrundlage & Quellen")).toBeNull();
+    await fireEvent.press(screen.getByRole("button", { name: /^Schichtzulage.*Details öffnen$/ }));
     expect(router.push).toHaveBeenLastCalledWith({
-      pathname: "/annual-payment",
+      pathname: "/tariff-assessment",
       params: { month: "2026-09" },
     });
-    await fireEvent.press(screen.getByRole("button", { name: "Zusatzangaben schließen" }));
-    expect(screen.queryByRole("button", { name: "Jahressonderzahlungen bearbeiten" })).toBeNull();
   });
 
   it("shows a known subtotal instead of gross while workplace assumptions are incomplete", async () => {
@@ -610,8 +667,8 @@ describe("dated salary detail integration", () => {
     expect(premiums.totalCents).toBeGreaterThan(0);
     expect(screen.getAllByText(remunerationEuro(premiums.totalCents)).length).toBeGreaterThan(0);
     await fireEvent.press(screen.getByRole("button", { name: /September 2026, Nacht, 3,84/ }));
-    expect(screen.getAllByText("01.09.2026").length).toBeGreaterThan(0);
-    expect(screen.queryByText("31.08.2026")).toBeNull();
+    expect(screen.getAllByText(formatDateTitle("2026-09-01")).length).toBeGreaterThan(0);
+    expect(screen.queryByText(formatDateTitle("2026-08-31"))).toBeNull();
   });
   it("does not calculate own-pay premiums from an implicit TVöD formula", async () => {
     mockEntries = [shift()];

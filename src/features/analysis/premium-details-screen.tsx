@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { formatMonthTitle } from "@/engine/calendar";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
-import { ReportFootnote, ReportScrollView } from "@/ui/report-layout";
+import { ReportScrollView } from "@/ui/report-layout";
 import { AnalysisDetailSummaryCard } from "./analysis-detail-layout";
 import { RuleComputationNotice } from "./rule-computation";
 import { useMonthlyRemuneration } from "./use-monthly-remuneration";
@@ -60,11 +60,6 @@ export function PremiumDetailsScreen() {
           )}
         />
       )}
-      <ReportFootnote>
-        Die Grundlage kann je Dienst und Zeitraum wechseln. Fehlende oder geschätzte Pausenlagen
-        werden in der jeweiligen Berechnungsgrundlage erklärt. Grundentgelt, Zulagen und Überstunden
-        sind hier nicht enthalten.
-      </ReportFootnote>
     </ReportScrollView>
   );
 }

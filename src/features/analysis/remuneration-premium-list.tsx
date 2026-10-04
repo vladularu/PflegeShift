@@ -7,7 +7,8 @@ import type {
 } from "@/domain/remuneration-result";
 import type { ShiftEntry } from "@/domain/types";
 import { formatDateTitle, formatMonthTitle } from "@/engine/calendar";
-import { RemunerationPositions, RemunerationText } from "@/features/salary/remuneration-positions";
+import { RemunerationText } from "@/features/salary/remuneration-positions";
+import { RemunerationPremiumLine } from "./remuneration-premium-line";
 import { remunerationEuro, REMUNERATION_STATUS } from "@/features/salary/remuneration-presentation";
 import { usePalette } from "@/theme/palette";
 import { MINIMUM_TOUCH_TARGET, RADII, SPACING } from "@/theme/tokens";
@@ -62,6 +63,11 @@ export function RemunerationPremiumList({
           : shifts.find((s) => s.id === positions[0].shiftId),
     }))
     .sort((a, b) => a.date.localeCompare(b.date) || a.key.localeCompare(b.key));
+  const countLabel = rows.some((row) => row.key.startsWith("day:"))
+    ? "Einträge"
+    : rows.length === 1
+      ? "Dienst"
+      : "Dienste";
   const issues = [...new Set(result.positions.flatMap((p) => (p.issue ? [p.issue.message] : [])))];
   return (
     <View style={{ gap: SPACING.lg }}>
@@ -70,11 +76,12 @@ export function RemunerationPremiumList({
         period={formatMonthTitle(month)}
         title={remunerationEuro(result.totalCents)}
         caption={
-          "Zeitzuschläge im gesamten Monat · " +
-          REMUNERATION_STATUS[result.status] +
-          (!result.complete
-            ? " · bekannter Teilbetrag: " + remunerationEuro(result.knownSubtotalCents)
-            : "")
+          result.complete
+            ? "Zeitzuschläge im gesamten Monat"
+            : "Zeitzuschläge im gesamten Monat · " +
+              REMUNERATION_STATUS[result.status] +
+              " · bekannter Teilbetrag: " +
+              remunerationEuro(result.knownSubtotalCents)
         }
       />
       <SectionHeader
@@ -131,14 +138,15 @@ export function RemunerationPremiumList({
         title="Dienste"
         caption={
           activeFilter === null
-            ? rows.length + " Einträge · chronologisch"
+            ? rows.length + " " + countLabel + " · chronologisch"
             : "Gefiltert: " +
               activeFilter +
               " · " +
               amount(selected) +
               " · " +
               rows.length +
-              " Einträge"
+              " " +
+              countLabel
         }
       />
       {rows.map((row) => {
@@ -195,7 +203,9 @@ export function RemunerationPremiumList({
             {isExpanded ? (
               <View style={{ padding: SPACING.lg, paddingTop: 0, gap: SPACING.md }}>
                 <CardSeparator inset={0} />
-                <RemunerationPositions positions={row.positions} />
+                {row.positions.map((position) => (
+                  <RemunerationPremiumLine key={position.id} position={position} />
+                ))}
               </View>
             ) : null}
           </SurfaceCard>

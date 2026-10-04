@@ -27,6 +27,10 @@ import krValue from "../../../rules/packages/reviewed/tvl-kr-tdl/2026-04.json";
 import tvalValue from "../../../rules/packages/reviewed/tval-pflege-tdl/2027-01.json";
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
 
+const mockUpdateWorkProfile = jest.fn<() => Promise<void>>();
+jest.mock("@/application/pflegeshift-provider", () => ({
+  usePflegeShiftProfile: () => ({ updateProfile: mockUpdateWorkProfile }),
+}));
 const base: UserProfile = {
   federalState: "NW",
   holidayRegion: "NONE",
@@ -69,6 +73,7 @@ jest.mock("@/application/remuneration-provider", () => ({
 jest.mock("@/theme/palette", () => ({ usePalette: () => mockPalette }));
 jest.mock("expo-router", () => ({
   router: { back: () => mockClose() },
+  useLocalSearchParams: () => ({}),
   Stack: {
     Screen: ({ options }: { options: { headerRight?: () => React.ReactNode } }) => {
       mockOptions = options;
@@ -161,8 +166,7 @@ jest.mock("@/ui/form-controls", () => {
 });
 
 async function start() {
-  const screen = await render(<RemunerationEditorScreen profile={base} />);
-  await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+  const screen = await render(<RemunerationEditorScreen profile={base} historyMode />);
   await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
   return screen;
 }
@@ -178,8 +182,43 @@ async function selectTariff(screen: Awaited<ReturnType<typeof start>>, label = c
 }
 
 describe("dated remuneration editor", () => {
+  it("restores the original Berufsbereich picker and only saves a changed industry with the salary", async () => {
+    const clock = jest
+      .spyOn(Temporal.Now, "plainDateISO")
+      .mockReturnValue(Temporal.PlainDate.from("2026-10-04"));
+    try {
+      const profile = { ...base, industry: "HEALTHCARE" as const };
+      const screen = await render(<RemunerationEditorScreen profile={profile} />);
+      const unchanged = screen.getByRole("button", {
+        name: "Berufsbereich: Pflege & Gesundheitswesen",
+      });
+      expect(unchanged.props.accessibilityState.selected).toBe(true);
+      await fireEvent.press(screen.getByRole("button", { name: "Berufsbereich: Rettungsdienst" }));
+      expect(mockUpdateWorkProfile).not.toHaveBeenCalled();
+      await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+      expect(mockSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          effectiveFrom: "2026-10-01",
+          data: expect.objectContaining({ weeklyMinutes: 2310 }),
+        }),
+      );
+      expect(mockUpdateWorkProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          industry: "EMERGENCY_SERVICES",
+          weeklyMinutes: 2310,
+          tariff: null,
+          manualMonthlyGrossCents: 350000,
+          timeZone: "Europe/Berlin",
+        }),
+      );
+      expect(mockClose).toHaveBeenCalled();
+    } finally {
+      clock.mockRestore();
+    }
+  });
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUpdateWorkProfile.mockResolvedValue(undefined);
     mockPalette = LIGHT_PALETTE;
     mockResolver = bundledRuleResolver;
     mockHistory = {
@@ -239,6 +278,15 @@ describe("dated remuneration editor", () => {
         expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("38,5");
         expect(screen.queryByRole("button", { name: "Berechnung: Tarif" })).toBeNull();
         expect(screen.queryByLabelText("Wochenstunden")).toBeNull();
+        for (const name of [
+          "Wochenstunden ändern",
+          "Frühere Angaben",
+          "Abbrechen",
+          "Beginn ändern",
+        ]) {
+          expect(screen.queryByRole("button", { name })).toBeNull();
+        }
+        expect(screen.getByRole("button", { name: "Zurück" })).toBeTruthy();
         expect(mockSave).not.toHaveBeenCalled();
         await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
         expect(mockSave).toHaveBeenCalledWith({
@@ -263,7 +311,7 @@ describe("dated remuneration editor", () => {
     expect(screen.queryByLabelText("Gültig ab")).toBeNull();
     expect(mockSave).not.toHaveBeenCalled();
   });
-  it("explains an incomplete optional start date without invalidating the stored tariff", async () => {
+  it("explains an incomplete explicitly edited historical date without invalidating the stored tariff", async () => {
     const clock = jest
       .spyOn(Temporal.Now, "plainDateISO")
       .mockReturnValue(Temporal.PlainDate.from("2026-10-04"));
@@ -280,8 +328,8 @@ describe("dated remuneration editor", () => {
           tariffRegion: "OTHER",
         },
       };
-      const screen = await render(<RemunerationEditorScreen profile={profile} />);
-      await fireEvent.press(screen.getByRole("button", { name: "Beginn ändern" }));
+      const screen = await render(<RemunerationEditorScreen profile={profile} historyMode />);
+      await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
       await fireEvent.changeText(screen.getByLabelText("Gültig ab"), "01.05.");
       expect(
         screen.getByText("Bitte ein vollständiges Datum im Format TT.MM.JJJJ eingeben."),
@@ -359,8 +407,7 @@ describe("dated remuneration editor", () => {
       };
       await screen.unmount();
       const reopened = await render(<RemunerationEditorScreen profile={base} />);
-      if (reopened.queryByRole("button", { name: "Frühere Angaben" }))
-        await fireEvent.press(reopened.getByRole("button", { name: "Frühere Angaben" }));
+      await reopened.rerender(<RemunerationEditorScreen profile={base} historyMode />);
       await fireEvent.press(
         reopened.getByRole("button", { name: "Vergütungsstand: Ab 01.01.2027" }),
       );
@@ -404,8 +451,7 @@ describe("dated remuneration editor", () => {
       };
       mockHistory = { ...mockHistory, profiles: [stored] };
       const screen = await render(<RemunerationEditorScreen profile={base} />);
-      if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-        await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+      await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
       await fireEvent.press(screen.getByRole("button", { name: "Vergütungsstand: Ab 01.01.2027" }));
       await fireEvent.press(screen.getByRole("button", { name: "Stand korrigieren" }));
       expect(
@@ -440,8 +486,7 @@ describe("dated remuneration editor", () => {
       mockHistory = { ...mockHistory, profiles: [{ ...stored, data: input.data }] };
       await screen.unmount();
       const reopened = await render(<RemunerationEditorScreen profile={base} />);
-      if (reopened.queryByRole("button", { name: "Frühere Angaben" }))
-        await fireEvent.press(reopened.getByRole("button", { name: "Frühere Angaben" }));
+      await reopened.rerender(<RemunerationEditorScreen profile={base} historyMode />);
       await fireEvent.press(
         reopened.getByRole("button", { name: "Vergütungsstand: Ab 01.01.2027" }),
       );
@@ -619,8 +664,7 @@ describe("dated remuneration editor", () => {
       };
       mockHistory = { ...mockHistory, profiles: [stored] };
       const screen = await render(<RemunerationEditorScreen profile={base} />);
-      if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-        await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+      await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
       await fireEvent.press(screen.getByRole("button", { name: "Vergütungsstand: Ab 01.10.2026" }));
       await fireEvent.press(screen.getByRole("button", { name: "Stand korrigieren" }));
       expect(
@@ -883,8 +927,7 @@ describe("dated remuneration editor", () => {
   it("edits an explicit existing revision without allowing a date change", async () => {
     mockHistory = { ...mockHistory, profiles: [existing] };
     const screen = await render(<RemunerationEditorScreen profile={base} />);
-    if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-      await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+    await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
     await fireEvent.press(screen.getByRole("button", { name: "Vergütungsstand: Ab 01.01.2026" }));
     await fireEvent.press(screen.getByRole("button", { name: "Stand korrigieren" }));
     expect(screen.getByLabelText("Gültig ab").props.editable).toBe(false);
@@ -907,8 +950,7 @@ describe("dated remuneration editor", () => {
   it("copies an undated legacy profile only into a new explicitly dated draft", async () => {
     mockHistory = { ...mockHistory, profiles: [{ ...existing, effectiveFrom: null }] };
     const screen = await render(<RemunerationEditorScreen profile={base} />);
-    if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-      await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+    await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
     await fireEvent.press(
       screen.getByRole("button", {
         name: "Vergütungsstand: Übernommener Stand · Beginn unbekannt",
@@ -943,8 +985,7 @@ describe("dated remuneration editor", () => {
       ],
     };
     const screen = await render(<RemunerationEditorScreen profile={base} />);
-    if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-      await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+    await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
     await fireEvent.press(screen.getByRole("button", { name: "Vergütungsstand: Ab 01.01.2026" }));
     await fireEvent.press(screen.getByRole("button", { name: "Stand korrigieren" }));
     expect(screen.getByText(/Dieser Tarifstand kann/)).toBeTruthy();
@@ -1014,8 +1055,7 @@ describe("dated remuneration editor", () => {
       profiles: [existing],
     };
     const screen = await render(<RemunerationEditorScreen profile={base} />);
-    if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-      await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+    await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
     expect(screen.queryByText("Neuen Stand anlegen")).toBeNull();
     await fireEvent.press(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(mockReload).toHaveBeenCalledTimes(1);
@@ -1080,8 +1120,7 @@ describe("dated remuneration editor", () => {
         ],
       };
       const screen = await render(<RemunerationEditorScreen profile={base} />);
-      if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-        await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+      await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
       if (mode === "new") {
         await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
       } else if (mode === "correction") {
@@ -1174,8 +1213,7 @@ describe("dated remuneration editor", () => {
         profiles: [{ ...existing, effectiveFrom: "2026-10-01", data: trainingData }],
       };
       const screen = await render(<RemunerationEditorScreen profile={base} />);
-      if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-        await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+      await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
       await fireEvent.press(screen.getByRole("button", { name: "Vergütungsstand: Ab 01.10.2026" }));
       await fireEvent.press(screen.getByRole("button", { name: "Stand korrigieren" }));
       await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
@@ -1356,8 +1394,7 @@ describe("dated remuneration editor", () => {
       ],
     };
     const screen = await render(<RemunerationEditorScreen profile={base} />);
-    if (screen.queryByRole("button", { name: "Frühere Angaben" }))
-      await fireEvent.press(screen.getByRole("button", { name: "Frühere Angaben" }));
+    await screen.rerender(<RemunerationEditorScreen profile={base} historyMode />);
     await fireEvent.press(screen.getByRole("button", { name: "Vergütungsstand: Ab 01.10.2026" }));
     await fireEvent.press(screen.getByRole("button", { name: "Stand korrigieren" }));
     expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("40");

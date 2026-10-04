@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Temporal } from "@js-temporal/polyfill";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useRemunerationData } from "@/application/remuneration-provider";
 import { usePflegeShiftTestData } from "@/application/pflegeshift-provider";
 import { formatMonthTitle } from "@/engine/calendar";
@@ -48,7 +48,6 @@ export function SalaryScreen() {
   const { testMonths } = usePflegeShiftTestData();
   const { profiles } = useRemunerationData();
   const [month, setMonth] = useState(() => coordinator.getMonth());
-  const [additionalMonth, setAdditionalMonth] = useState<string | null>(null);
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
   useEffect(() => {
@@ -180,6 +179,9 @@ export function SalaryScreen() {
               result={calculation.value}
               profiles={profiles}
               onPremiums={() => router.push(premiumDetailsRoute(month))}
+              onShiftAllowance={() => router.push(tariffAssessmentRoute(month))}
+              onAnnualPayment={() => router.push(annualPaymentRoute(month))}
+              onOvertime={() => router.push(overtimeAllocationRoute(month))}
             />
             {calculation.value.base.positions.some(
               (position) => position.basis.hourly !== undefined,
@@ -225,42 +227,12 @@ export function SalaryScreen() {
                   : "TV-L-Dienstangaben bestätigen"}
               </SecondaryButton>
             ) : null}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                additionalMonth === month ? "Zusatzangaben schließen" : "Zusatzangaben"
-              }
-              accessibilityState={{ expanded: additionalMonth === month }}
-              onPress={() => setAdditionalMonth((current) => (current === month ? null : month))}
-              style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-end" }}
-            >
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-              >
-                {additionalMonth === month ? "Zusatzangaben schließen" : "Zusatzangaben"}
-              </Text>
-            </Pressable>
-            {additionalMonth === month ? (
-              <View style={{ gap: SPACING.md }}>
-                <SecondaryButton onPress={() => router.push(settingsEditorRoute("TARIFF"))}>
-                  Gehaltsangaben
-                </SecondaryButton>
-                <SecondaryButton onPress={() => router.push(overtimeAllocationRoute(month))}>
-                  Überstunden den Tagen zuordnen
-                </SecondaryButton>
-                <SecondaryButton onPress={() => router.push(annualPaymentRoute(month))}>
-                  Jahressonderzahlungen bearbeiten
-                </SecondaryButton>
-                <SecondaryButton onPress={() => router.push(tariffAssessmentRoute(month))}>
-                  Schichtzulage prüfen & bestätigen
-                </SecondaryButton>
-              </View>
+            {!calculation.value.complete ? (
+              <ReportFootnote>
+                Unverbindliche Brutto-Schätzung aus den für den Zeitraum gespeicherten Angaben.
+                Fehlende Bestandteile sind nicht mit null Euro angesetzt. Keine Lohnabrechnung.
+              </ReportFootnote>
             ) : null}
-            <ReportFootnote>
-              Unverbindliche Brutto-Schätzung aus den für den Zeitraum gespeicherten Angaben.
-              Fehlende Bestandteile sind nicht mit null Euro angesetzt. Keine Lohnabrechnung.
-            </ReportFootnote>
           </View>
         )}
       </ReportPeriodContent>

@@ -1,7 +1,7 @@
 import { View, type TextInput } from "react-native";
-import { INDUSTRY_LABELS, type Industry } from "@/domain/types";
-import { useState, type Ref } from "react";
-import { DropdownField, Field, SecondaryButton } from "@/ui/form-controls";
+import { INDUSTRIES, INDUSTRY_LABELS, type Industry } from "@/domain/types";
+import { type Ref } from "react";
+import { DropdownField, Field } from "@/ui/form-controls";
 import { FormSection, FormStatus } from "@/ui/form-layout";
 import type { RemunerationFormValues } from "./remuneration-editor-values";
 import type { remunerationTariffOptions } from "./remuneration-tariff-options";
@@ -18,6 +18,7 @@ export function RemunerationFields({
   catalog,
   compact = false,
   industry,
+  onIndustryChange,
 }: {
   readonly values: RemunerationFormValues;
   readonly onChange: (change: Partial<RemunerationFormValues>) => void;
@@ -27,13 +28,13 @@ export function RemunerationFields({
   readonly catalog: ReturnType<typeof remunerationTariffOptions> | null;
   readonly compact?: boolean;
   readonly industry?: Industry;
+  readonly onIndustryChange?: (industry: Industry | null) => void;
 }) {
   const tariff = catalog?.available.find((item) => item.id === values.packageId);
   const training = tariff?.employmentKind === "APPRENTICE";
   const variant = tariff?.variants.find((item) => item.id === values.sector);
   const region = variant?.regions.find((item) => item.id === values.tariffRegion);
   const group = tariff?.groups.find((item) => item.id === values.payGroup);
-  const [expanded, setExpanded] = useState(false);
   const shortNames: Readonly<Record<string, string>> = {
     "tvoed-vka-bt-k": "TVöD-P",
     "tvl-kr-tdl": "TV-L · Pflege",
@@ -64,10 +65,18 @@ export function RemunerationFields({
               : "Wochenstunden gelten für diesen Vergütungsstand. Ein eigenes Monatsbrutto ist dein persönlicher Betrag und wird nicht nochmals wegen Teilzeit gekürzt."
         }
       >
-        {compact && industry ? (
-          <Field label="Berufsbereich" value={INDUSTRY_LABELS[industry]} editable={false} />
+        {compact ? (
+          <DropdownField
+            label="Berufsbereich"
+            value={industry ?? "UNKNOWN"}
+            onChange={(value) => onIndustryChange?.(value === "UNKNOWN" ? null : value)}
+            options={[
+              { value: "UNKNOWN" as const, label: "Nicht angegeben" },
+              ...INDUSTRIES.map((value) => ({ value, label: INDUSTRY_LABELS[value] })),
+            ]}
+          />
         ) : null}
-        {!compact || expanded ? (
+        {!compact ? (
           <Field
             label={compact ? "Wochenstunden" : "Wochenstunden für diese Vergütung"}
             value={values.weeklyHours}
@@ -345,11 +354,6 @@ export function RemunerationFields({
               </>
             ) : null}
           </>
-        ) : null}
-        {compact ? (
-          <SecondaryButton disabled={busy} onPress={() => setExpanded((value) => !value)}>
-            {expanded ? "Wochenstunden schließen" : "Wochenstunden ändern"}
-          </SecondaryButton>
         ) : null}
       </FormSection>
       {values.salaryMode === "TARIFF" && values.packageId === "tvl-kr-tdl" ? (

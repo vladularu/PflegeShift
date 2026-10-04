@@ -1,12 +1,16 @@
-import { Fragment } from "react";
-import { Text, View } from "react-native";
+import { Fragment, useState } from "react";
+import { View } from "react-native";
+import { router } from "expo-router";
+import { settingsInfoRoute } from "@/navigation/routes";
 import type { DatedRemunerationProfile } from "@/domain/remuneration-profile";
 import { summarizeSupplements } from "@/engine/remuneration-supplement-result";
-import { usePalette } from "@/theme/palette";
+
 import { SPACING } from "@/theme/tokens";
-import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CardSeparator, SurfaceCard } from "@/ui/design-system";
-import { RemunerationComponentCard } from "./remuneration-positions";
+
+import { CardFooterLine, CardHeader, CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { SalaryValueRow } from "./salary-value-row";
+import { RemunerationDetailSheet } from "./remuneration-detail-sheet";
+import { remunerationEuro, REMUNERATION_STATUS } from "./remuneration-presentation";
 import type { MonthlyRemuneration } from "./remuneration-presentation";
 
 function compositionLabel(
@@ -46,67 +50,123 @@ export function RemunerationComposition({
   result,
   profiles,
   onPremiums,
+  onShiftAllowance,
+  onAnnualPayment,
+  onOvertime,
 }: {
   readonly result: MonthlyRemuneration;
   readonly profiles: readonly DatedRemunerationProfile[];
   readonly onPremiums: () => void;
+  readonly onShiftAllowance: () => void;
+  readonly onAnnualPayment: () => void;
+  readonly onOvertime: () => void;
 }) {
-  const palette = usePalette();
+  const [detail, setDetail] = useState<string | null>(null);
   const allowances = new Map<string, (typeof result.allowances.positions)[number][]>();
   for (const position of result.allowances.positions) {
+    const tvoed = position.source.packageId === "tvoed-vka-bt-k";
     const label =
-      position.label === "Pflegezulage" && position.source.packageId === "tvoed-vka-bt-k"
+      tvoed && position.label === "Pflegezulage"
         ? "Pflegezulage TVöD-P"
-        : position.label;
+        : tvoed && position.label === "Tarifliche Zulage"
+          ? "TVöD-Zulage"
+          : tvoed && /schichtzulage/i.test(position.label)
+            ? position.status === "estimated"
+              ? "Schichtzulage · Muster & Angaben"
+              : "Schichtzulage"
+            : position.label;
     allowances.set(label, [...(allowances.get(label) ?? []), position]);
   }
+  const rank = (title: string) =>
+    /Schichtzulage/.test(title)
+      ? 0
+      : title === "TVöD-Zulage"
+        ? 1
+        : title === "Pflegezulage TVöD-P"
+          ? 2
+          : 3;
   const rows = [
     { title: "Grundentgelt", component: result.base },
     { title: "Zeitzuschläge", component: result.timePremiums, onPress: onPremiums },
-    ...(!result.allowances.complete && allowances.size === 0
-      ? [{ title: "Zulagen", component: result.allowances }]
-      : []),
-    ...[...allowances].map(([title, positions]) => ({
-      title,
-      component: summarizeSupplements(positions),
-    })),
     ...(!result.overtime.complete || result.overtime.totalCents !== 0
       ? [{ title: "Überstunden", component: result.overtime }]
       : []),
+    ...(!result.allowances.complete && allowances.size === 0
+      ? [{ title: "Zulagen", component: result.allowances }]
+      : []),
+    ...[...allowances]
+      .sort(([a], [b]) => rank(a) - rank(b))
+      .map(([title, positions]) => ({
+        title,
+        component: summarizeSupplements(positions),
+      })),
     ...(result.annualPayments.positions.length
       ? [{ title: "Jahressonderzahlung", component: result.annualPayments }]
       : []),
   ];
+  const selected = rows.find((row) => row.title === detail);
+  const actions: Record<string, () => void> = {
+    "TVöD-Zulage": () => router.push(settingsInfoRoute("TVOED_ALLOWANCE")),
+    "Pflegezulage TVöD-P": () => router.push(settingsInfoRoute("CARE_ALLOWANCE")),
+  };
+  function openDetails(row: (typeof rows)[number]) {
+    if ("onPress" in row && row.onPress) {
+      row.onPress();
+      return;
+    }
+    const tvoed =
+      row.component.positions.length > 0 &&
+      row.component.positions.every((p) => p.source.packageId === "tvoed-vka-bt-k");
+    if (tvoed && actions[row.title]) {
+      actions[row.title]();
+      return;
+    }
+    if (tvoed && /^Schichtzulage/.test(row.title)) {
+      onShiftAllowance();
+      return;
+    }
+    setDetail(row.title);
+  }
   return (
-    <SurfaceCard testID="salary-composition">
-      <View style={{ padding: SPACING.lg, gap: SPACING.xxs }}>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
-        >
-          Zusammensetzung
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-        >
-          {compositionLabel(result, profiles)}
-        </Text>
-      </View>
-      <CardSeparator />
-      <View style={{ paddingHorizontal: SPACING.lg }}>
-        {rows.map((row, index) => (
-          <Fragment key={row.title}>
-            {index > 0 ? <CardSeparator inset={0} /> : null}
-            <RemunerationComponentCard
-              compact
-              title={row.title}
-              component={row.component}
-              onPress={"onPress" in row ? row.onPress : undefined}
-            />
-          </Fragment>
-        ))}
-      </View>
-    </SurfaceCard>
+    <>
+      <SurfaceCard testID="salary-composition">
+        <CardHeader title="Zusammensetzung" caption={compositionLabel(result, profiles)} />
+        <View style={{ paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm }}>
+          {rows.map((row, index) => (
+            <Fragment key={row.title}>
+              {index > 0 ? <CardSeparator inset={0} /> : null}
+              <SalaryValueRow
+                label={row.title}
+                value={remunerationEuro(row.component.totalCents)}
+                accessibilityLabel={row.title + ", Details öffnen"}
+                valueDescription={
+                  row.component.totalCents === null
+                    ? REMUNERATION_STATUS[row.component.status]
+                    : remunerationEuro(row.component.totalCents) +
+                      " · " +
+                      REMUNERATION_STATUS[row.component.status]
+                }
+                infoVisible={row.title !== "Grundentgelt"}
+                onPress={() => openDetails(row)}
+                onLongPress={() => setDetail(row.title)}
+              />
+            </Fragment>
+          ))}
+        </View>
+        <CardFooterLine />
+      </SurfaceCard>
+      <RemunerationDetailSheet
+        title={selected?.title ?? "Gehalt"}
+        positions={selected?.component.positions ?? null}
+        onClose={() => setDetail(null)}
+        action={
+          selected?.title === "Jahressonderzahlung"
+            ? { label: "Jahressonderzahlungen bearbeiten", onPress: onAnnualPayment }
+            : selected?.title === "Überstunden"
+              ? { label: "Überstunden den Tagen zuordnen", onPress: onOvertime }
+              : undefined
+        }
+      />
+    </>
   );
 }
