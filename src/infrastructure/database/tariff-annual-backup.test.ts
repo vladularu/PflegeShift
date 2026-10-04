@@ -123,6 +123,13 @@ describe("tariff annual claim backup v8", () => {
     const initial = await save("old-format");
     const malformed = await resign((await backup()).serialized, (root) => {
       root.version = 8;
+      delete root.data.caritasOvertime;
+      delete root.data.tvoedAnnexAMonthConfirmations;
+      delete root.data.tvoedSueMonthConfirmations;
+      delete root.data.tvoedSueAllowanceConfirmations;
+      delete root.data.tvoedAnnexAPremiumFacts;
+      delete root.data.drkEmployeeMonthConfirmations;
+      delete root.data.drkTrainingMonthConfirmations;
       delete root.data.tvlShiftWork;
       delete root.data.caritasWorkDays;
       delete root.data.caritasMonthFacts;
@@ -148,6 +155,13 @@ describe("tariff annual claim backup v8", () => {
     const legacy = await resign((await backup()).serialized, (root) => {
       root.version = 11;
       root.databaseSchemaVersion = 24;
+      delete root.data.caritasOvertime;
+      delete root.data.tvoedAnnexAMonthConfirmations;
+      delete root.data.tvoedSueMonthConfirmations;
+      delete root.data.tvoedSueAllowanceConfirmations;
+      delete root.data.tvoedAnnexAPremiumFacts;
+      delete root.data.drkEmployeeMonthConfirmations;
+      delete root.data.drkTrainingMonthConfirmations;
     });
     await revokeTariffAnnualClaim(adapter.db, initial);
     await restoreLocalBackup(adapter.db, await validate(legacy));

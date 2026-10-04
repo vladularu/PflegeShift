@@ -74,6 +74,14 @@ describe("Caritas annual confirmation backup v12", () => {
       });
       const root = JSON.parse((await backup()).serialized);
       root.version = version;
+      root.databaseSchemaVersion = 24;
+      delete root.data.caritasOvertime;
+      delete root.data.tvoedAnnexAMonthConfirmations;
+      delete root.data.tvoedSueMonthConfirmations;
+      delete root.data.tvoedSueAllowanceConfirmations;
+      delete root.data.tvoedAnnexAPremiumFacts;
+      delete root.data.drkEmployeeMonthConfirmations;
+      delete root.data.drkTrainingMonthConfirmations;
       if (version < 9) delete root.data.tvlShiftWork;
       if (version < 10) delete root.data.caritasWorkDays;
       if (version < 11) delete root.data.caritasMonthFacts;
