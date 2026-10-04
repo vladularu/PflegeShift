@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { tvoedAnnexAShiftBinding } from "@/domain/saved-tvoed-annex-a-premium-facts";
 import { work } from "@/engine/remuneration-test-fixtures";
-import { parseDevBackupPayload } from "./dev-backup-payload";
+import { DEV_BACKUP_VERSION, parseDevBackupPayload } from "./dev-backup-payload";
 import { generateTestRun, restoreTestBackup, setDeveloperMode } from "./dev-tools-repository";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
 import { saveShift } from "./calendar-entry-repository";
@@ -71,7 +71,7 @@ describe("TVöD Anlage A premium facts in test laboratory backup v14", () => {
     const original = await saveTvoedAnnexAPremiumFacts(f.db, answer());
     await generate();
     const backup = parseDevBackupPayload(await stored(), "2026-09");
-    expect(backup.version).toBe(16);
+    expect(backup.version).toBe(DEV_BACKUP_VERSION);
     expect(backup.remuneration.tvoedAnnexAPremiumFacts).toHaveLength(1);
     expect(await listTvoedAnnexAPremiumFacts(f.db)).toEqual([]);
     await generate();

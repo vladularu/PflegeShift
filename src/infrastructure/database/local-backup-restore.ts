@@ -1,3 +1,4 @@
+import { TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS } from "./tvoed-annex-a-premium-facts-repository";
 import { TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS } from "./tvoed-sue-allowance-confirmation-repository";
 import { TVOED_SUE_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-sue-month-confirmation-repository";
 import { TVOED_ANNEX_A_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-annex-a-month-confirmation-repository";
@@ -78,6 +79,7 @@ export async function restoreLocalBackup(
     await transaction.runAsync("DELETE FROM tvoed_annex_a_month_confirmations");
     await transaction.runAsync("DELETE FROM tvoed_sue_month_confirmations");
     await transaction.runAsync("DELETE FROM tvoed_sue_allowance_confirmations");
+    await transaction.runAsync("DELETE FROM tvoed_annex_a_premium_facts");
     await transaction.runAsync("DELETE FROM tariff_annual_claims");
     await transaction.runAsync("DELETE FROM actual_annual_payments");
     await transaction.runAsync("DELETE FROM shift_training_details");
@@ -193,6 +195,12 @@ export async function restoreLocalBackup(
       "tvoed_sue_allowance_confirmations",
       TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS,
       document.data.tvoedSueAllowanceConfirmations,
+    );
+    await insertRows(
+      transaction,
+      "tvoed_annex_a_premium_facts",
+      TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS,
+      document.data.tvoedAnnexAPremiumFacts,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(
