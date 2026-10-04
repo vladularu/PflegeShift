@@ -20,7 +20,7 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 import { REMUNERATION_PROFILE_COLUMNS } from "./remuneration-profile-repository";
 
 export const LOCAL_BACKUP_FORMAT = "lunashift-local-backup";
-export const LOCAL_BACKUP_VERSION = 11;
+export const LOCAL_BACKUP_VERSION = 12;
 
 type BackupScalar = string | number | null;
 type BackupRow = Readonly<Record<string, BackupScalar>>;
@@ -48,7 +48,7 @@ export interface LocalBackupSnapshot {
 
 interface UnsignedLocalBackupDocument {
   readonly format: typeof LOCAL_BACKUP_FORMAT;
-  readonly version: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | typeof LOCAL_BACKUP_VERSION;
+  readonly version: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | typeof LOCAL_BACKUP_VERSION;
   readonly createdAt: string;
   readonly appVersion: string | null;
   readonly databaseSchemaVersion: number;
