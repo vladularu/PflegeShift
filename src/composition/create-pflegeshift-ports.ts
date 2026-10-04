@@ -1,4 +1,4 @@
-import { createProfilePorts } from "./create-profile-ports";
+import { createSimpleProfilePorts } from "./create-simple-profile-ports";
 import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { PflegeShiftPorts } from "@/application/pflegeshift-ports";
@@ -27,7 +27,7 @@ import {
 } from "@/infrastructure/notifications/entry-notifications";
 
 export function createPflegeShiftPorts(db: SQLiteDatabase): PflegeShiftPorts {
-  const profilePorts = createProfilePorts(db);
+  const profilePorts = createSimpleProfilePorts(db);
   return {
     ...profilePorts,
     repository: {
