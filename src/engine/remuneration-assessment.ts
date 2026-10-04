@@ -149,6 +149,14 @@ function assessPeriod(
     issue: null,
   };
   if (context.kind === "unavailable") return { ...base, issue: context.issue };
+  if (context.kind === "tvoed-annex-a-draft")
+    return {
+      ...base,
+      issue: {
+        code: "TARIFF_UNSUPPORTED",
+        message: "Für TVöD-Anlage A ist noch keine vollständige Schichtzulagenprüfung verfügbar.",
+      },
+    };
   if (context.kind === "tval-training")
     return {
       ...base,

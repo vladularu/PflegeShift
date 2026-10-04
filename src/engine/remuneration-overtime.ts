@@ -130,6 +130,14 @@ function calculateAllocatedOvertime(
 ): readonly SupplementPosition[] {
   if (context.kind === "unavailable")
     return [{ ...position, amountCents: null, status: "unavailable", issue: context.issue }];
+  if (context.kind === "tvoed-annex-a-draft")
+    return [
+      unavailable(
+        position,
+        "TARIFF_UNSUPPORTED",
+        "Die TVöD-Anlage-A-Überstundenregeln sind noch nicht fachlich freigegeben.",
+      ),
+    ];
   if (context.kind === "training-tariff") return calculateTrainingOvertime(position, context);
   if (context.kind === "tval-training") return calculateTvalOvertime(position, context);
   if (context.kind === "tvl-kr") return calculateTvlOvertime(position, context);

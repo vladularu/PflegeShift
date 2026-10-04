@@ -128,6 +128,16 @@ export function calculateDatedShiftTimePremiums(
       };
       if (context.kind === "unavailable")
         positions.push({ ...base, status: "unavailable", amountCents: null, issue: context.issue });
+      else if (context.kind === "tvoed-annex-a-draft")
+        positions.push({
+          ...base,
+          status: "unavailable",
+          amountCents: null,
+          issue: {
+            code: "TARIFF_UNSUPPORTED",
+            message: "Die TVöD-Anlage-A-Zeitzuschläge sind noch nicht fachlich freigegeben.",
+          },
+        });
       else if (context.kind === "own-configured")
         positions.push(
           ...calculateOwnShiftDayPremiums(
