@@ -434,7 +434,10 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(salary.queryByText("Diagnosecode: RULE_PACKAGE_NOT_FOUND")).toBeNull();
     expect(salary.getByText("BERECHNUNG UNVOLLSTÄNDIG")).toBeTruthy();
     expect(salary.getByText(/Bekannter Teilbetrag: 3\.450,50/)).toBeTruthy();
-    expect(salary.getByText("3.450,50 € · Berechnet")).toBeTruthy();
+    expect(
+      salary.getByRole("button", { name: "Grundentgelt, Details öffnen" }).props.accessibilityValue
+        .text,
+    ).toBe("3.450,50 € · Berechnet");
     expect(
       salary.getByText("Für die eigene Vergütung sind noch keine Zuschlagsparameter bestätigt."),
     ).toBeTruthy();

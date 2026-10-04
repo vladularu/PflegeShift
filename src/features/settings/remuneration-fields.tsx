@@ -1,4 +1,5 @@
 import { View, type TextInput } from "react-native";
+import { INDUSTRY_LABELS, type Industry } from "@/domain/types";
 import { useState, type Ref } from "react";
 import { DropdownField, Field, SecondaryButton } from "@/ui/form-controls";
 import { FormSection, FormStatus } from "@/ui/form-layout";
@@ -16,6 +17,7 @@ export function RemunerationFields({
   amountRef,
   catalog,
   compact = false,
+  industry,
 }: {
   readonly values: RemunerationFormValues;
   readonly onChange: (change: Partial<RemunerationFormValues>) => void;
@@ -24,6 +26,7 @@ export function RemunerationFields({
   readonly amountRef: Ref<TextInput>;
   readonly catalog: ReturnType<typeof remunerationTariffOptions> | null;
   readonly compact?: boolean;
+  readonly industry?: Industry;
 }) {
   const tariff = catalog?.available.find((item) => item.id === values.packageId);
   const training = tariff?.employmentKind === "APPRENTICE";
@@ -31,9 +34,8 @@ export function RemunerationFields({
   const region = variant?.regions.find((item) => item.id === values.tariffRegion);
   const group = tariff?.groups.find((item) => item.id === values.payGroup);
   const [expanded, setExpanded] = useState(false);
-  const details = !compact || expanded || !variant || !region;
   const shortNames: Readonly<Record<string, string>> = {
-    "tvoed-vka-bt-k": "TVöD · Pflege",
+    "tvoed-vka-bt-k": "TVöD-P",
     "tvl-kr-tdl": "TV-L · Pflege",
     "tvaoed-pflege-vka": "TVAöD · Pflege",
     "tval-pflege-tdl": "TVA-L · Pflege",
@@ -42,6 +44,10 @@ export function RemunerationFields({
     items.some((item) => item.value === value)
       ? items
       : [{ value, label: value ? `${value} · nicht verfügbar` : "Bitte auswählen" }, ...items];
+  const packageChoices = (catalog?.available ?? []).map((item) => ({
+    value: item.id,
+    label: shortNames[item.id] ?? item.label,
+  }));
   return (
     <View
       pointerEvents={busy ? "none" : "auto"}
@@ -49,33 +55,79 @@ export function RemunerationFields({
       importantForAccessibility={busy ? "no-hide-descendants" : "auto"}
     >
       <FormSection
-        title={compact ? undefined : "Vergütung"}
+        title={compact ? "Gehaltsgrundlage" : "Vergütung"}
         caption={
           compact
-            ? undefined
+            ? "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
             : training
               ? "Kategorie und vergüteten Ausbildungszeitraum laut Vertrag bestätigen. Anrechenbare Verkürzungen berücksichtigen; Änderungen mit ihrem Gültigkeitsdatum als neuen Vergütungsstand speichern. Kein automatischer Ausbildungsjahrwechsel. Zuschläge und Zulagen sind noch nicht vollständig berechenbar."
               : "Wochenstunden gelten für diesen Vergütungsstand. Ein eigenes Monatsbrutto ist dein persönlicher Betrag und wird nicht nochmals wegen Teilzeit gekürzt."
         }
       >
-        <Field
-          label={compact ? "Wochenstunden" : "Wochenstunden für diese Vergütung"}
-          value={values.weeklyHours}
-          inputRef={weeklyRef}
-          keyboardType="decimal-pad"
-          returnKeyType="done"
-          editable={!busy}
-          onChangeText={(weeklyHours) => onChange({ weeklyHours })}
-        />
+        {compact && industry ? (
+          <Field label="Berufsbereich" value={INDUSTRY_LABELS[industry]} editable={false} />
+        ) : null}
+        {!compact || expanded ? (
+          <Field
+            label={compact ? "Wochenstunden" : "Wochenstunden für diese Vergütung"}
+            value={values.weeklyHours}
+            inputRef={weeklyRef}
+            keyboardType="decimal-pad"
+            returnKeyType="done"
+            editable={!busy}
+            onChangeText={(weeklyHours) => onChange({ weeklyHours })}
+          />
+        ) : null}
         <DropdownField
           label="Berechnung"
-          value={values.salaryMode}
-          onChange={(salaryMode) => onChange({ salaryMode })}
-          options={[
-            { value: "UNSET", label: "Bitte wählen" },
-            { value: "TARIFF", label: "Tarif" },
-            { value: "MANUAL", label: "Eigene Vergütung" },
-          ]}
+          value={compact && values.salaryMode === "TARIFF" ? values.packageId : values.salaryMode}
+          onChange={(value) => {
+            if (value === "UNSET" || value === "MANUAL" || (!compact && value === "TARIFF")) {
+              onChange({ salaryMode: value });
+              return;
+            }
+            onChange({
+              salaryMode: "TARIFF",
+              ...(value !== values.packageId
+                ? {
+                    packageId: value,
+                    sector: "",
+                    tariffRegion: "",
+                    payGroup: "",
+                    payLevel: "",
+                    specialDutyAllowance: null,
+                    tvlEmploymentCategory: null,
+                    tvlCareAllowances: null,
+                    tvalEmployerScope: null,
+                    tvalCareAllowances: null,
+                  }
+                : {}),
+            });
+          }}
+          options={
+            compact
+              ? [
+                  { value: "UNSET", label: "Bitte wählen" },
+                  ...(catalog === null
+                    ? values.packageId
+                      ? [
+                          {
+                            value: values.packageId,
+                            label: shortNames[values.packageId] ?? "Gespeicherter Tarif",
+                          },
+                        ]
+                      : []
+                    : values.packageId
+                      ? choices(packageChoices, values.packageId)
+                      : packageChoices),
+                  { value: "MANUAL", label: "Eigener Monatswert" },
+                ]
+              : [
+                  { value: "UNSET", label: "Bitte wählen" },
+                  { value: "TARIFF", label: "Tarif" },
+                  { value: "MANUAL", label: "Eigene Vergütung" },
+                ]
+          }
         />
         {values.salaryMode === "TARIFF" ? (
           <>
@@ -89,86 +141,81 @@ export function RemunerationFields({
             />
             {catalog !== null ? (
               <>
-                <DropdownField
-                  label="Tarif"
-                  value={values.packageId}
-                  onChange={(packageId) =>
-                    packageId !== values.packageId &&
-                    onChange({
-                      packageId,
-                      tvalEmployerScope: null,
-                      tvalCareAllowances: null,
-                      sector: "",
-                      tariffRegion: "",
-                      payGroup: "",
-                      payLevel: "",
-                      specialDutyAllowance: null,
-                      tvlEmploymentCategory: null,
-                      tvlCareAllowances: null,
-                    })
-                  }
-                  options={choices(
-                    (catalog?.available ?? []).map((item) => ({
-                      value: item.id,
-                      label: compact ? (shortNames[item.id] ?? item.label) : item.label,
-                    })),
-                    values.packageId,
-                  )}
-                />
-                {compact && variant && region ? (
-                  <SecondaryButton disabled={busy} onPress={() => setExpanded((value) => !value)}>
-                    {expanded ? "Tarifdetails schließen" : "Tarifbereich & Vollzeit"}
-                  </SecondaryButton>
+                {!compact ? (
+                  <DropdownField
+                    label="Tarif"
+                    value={values.packageId}
+                    onChange={(packageId) =>
+                      packageId !== values.packageId &&
+                      onChange({
+                        packageId,
+                        tvalEmployerScope: null,
+                        tvalCareAllowances: null,
+                        sector: "",
+                        tariffRegion: "",
+                        payGroup: "",
+                        payLevel: "",
+                        specialDutyAllowance: null,
+                        tvlEmploymentCategory: null,
+                        tvlCareAllowances: null,
+                      })
+                    }
+                    options={choices(
+                      (catalog?.available ?? []).map((item) => ({
+                        value: item.id,
+                        label: compact ? (shortNames[item.id] ?? item.label) : item.label,
+                      })),
+                      values.packageId,
+                    )}
+                  />
                 ) : null}
-                {details ? (
-                  <>
-                    <DropdownField
-                      label="Tarifbereich"
-                      value={values.sector}
-                      onChange={(sector) =>
-                        sector !== values.sector &&
-                        onChange({
-                          sector,
-                          tvalEmployerScope: null,
-                          tvalCareAllowances: null,
-                          tariffRegion: "",
-                          specialDutyAllowance: null,
-                          tvlEmploymentCategory: null,
-                          tvlCareAllowances: null,
-                        })
-                      }
-                      options={choices(
-                        (tariff?.variants ?? []).map((item) => ({
-                          value: item.id,
-                          label: item.label,
-                        })),
-                        values.sector,
-                      )}
-                    />
-                    <DropdownField
-                      label="Tarifgebiet"
-                      value={values.tariffRegion}
-                      onChange={(tariffRegion) =>
-                        tariffRegion !== values.tariffRegion &&
-                        onChange({
-                          tariffRegion,
-                          tvalEmployerScope: null,
-                          tvalCareAllowances: null,
-                          specialDutyAllowance: null,
-                          tvlEmploymentCategory: null,
-                          tvlCareAllowances: null,
-                        })
-                      }
-                      options={choices(
-                        (variant?.regions ?? []).map((item) => ({
-                          value: item.id,
-                          label: item.label,
-                        })),
-                        values.tariffRegion,
-                      )}
-                    />
-                  </>
-                ) : null}
+                <>
+                  <DropdownField
+                    label="Tarifbereich"
+                    value={values.sector}
+                    onChange={(sector) =>
+                      sector !== values.sector &&
+                      onChange({
+                        sector,
+                        tvalEmployerScope: null,
+                        tvalCareAllowances: null,
+                        tariffRegion: "",
+                        specialDutyAllowance: null,
+                        tvlEmploymentCategory: null,
+                        tvlCareAllowances: null,
+                      })
+                    }
+                    options={choices(
+                      (tariff?.variants ?? []).map((item) => ({
+                        value: item.id,
+                        label: item.label,
+                      })),
+                      values.sector,
+                    )}
+                  />
+                  <DropdownField
+                    label="Tarifgebiet"
+                    value={values.tariffRegion}
+                    onChange={(tariffRegion) =>
+                      tariffRegion !== values.tariffRegion &&
+                      onChange({
+                        tariffRegion,
+                        tvalEmployerScope: null,
+                        tvalCareAllowances: null,
+                        specialDutyAllowance: null,
+                        tvlEmploymentCategory: null,
+                        tvlCareAllowances: null,
+                      })
+                    }
+                    options={choices(
+                      (variant?.regions ?? []).map((item) => ({
+                        value: item.id,
+                        label: item.label,
+                      })),
+                      values.tariffRegion,
+                    )}
+                  />
+                </>
                 <DropdownField
                   label={training ? "Ausbildungskategorie laut Tarifvertrag" : "Entgeltgruppe"}
                   value={values.payGroup}
@@ -281,17 +328,15 @@ export function RemunerationFields({
                     <FormStatus message="Gemeint sind tätigkeitsabhängige Zulagen nach § 8b Abs. 2 TVAöD-Pflege, nicht Schichtzulagen. Nr. 1 setzt zeitlich überwiegende Grund- und Behandlungspflege in den genannten Fällen voraus, etwa Geriatrie, bestimmte psychiatrische Bereiche, Infektionsstationen oder onkologische Behandlungen. Bitte anhand deiner Anspruchsgrundlage bestätigen. Weitere BAT-Zulagen oder Kombinationen sind noch nicht vollständig berechenbar." />
                   </>
                 ) : null}
-                {details ? (
-                  <Field
-                    editable={false}
-                    label="Tarifliche Vollzeit pro Woche"
-                    value={
-                      region
-                        ? String(region.fullTimeWeeklyMinutes / 60).replace(".", ",")
-                        : "Nicht verfügbar"
-                    }
-                  />
-                ) : null}
+                <Field
+                  editable={false}
+                  label="Tarifliche Vollzeit pro Woche"
+                  value={
+                    region
+                      ? String(region.fullTimeWeeklyMinutes / 60).replace(".", ",")
+                      : "Nicht verfügbar"
+                  }
+                />
                 {catalog?.unavailable
                   .filter((item) => catalog.available.length === 0 || item.id === values.packageId)
                   .map((item) => (
@@ -300,6 +345,11 @@ export function RemunerationFields({
               </>
             ) : null}
           </>
+        ) : null}
+        {compact ? (
+          <SecondaryButton disabled={busy} onPress={() => setExpanded((value) => !value)}>
+            {expanded ? "Wochenstunden schließen" : "Wochenstunden ändern"}
+          </SecondaryButton>
         ) : null}
       </FormSection>
       {values.salaryMode === "TARIFF" && values.packageId === "tvl-kr-tdl" ? (

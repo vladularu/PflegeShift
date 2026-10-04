@@ -6,11 +6,13 @@ import { ReportFootnote, ReportScrollView } from "@/ui/report-layout";
 import { AnalysisDetailSummaryCard } from "./analysis-detail-layout";
 import { RuleComputationNotice } from "./rule-computation";
 import { useMonthlyRemuneration } from "./use-monthly-remuneration";
-import { RemunerationPositions } from "@/features/salary/remuneration-positions";
-import { remunerationEuro, REMUNERATION_STATUS } from "@/features/salary/remuneration-presentation";
+import { usePflegeShiftEntries } from "@/application/pflegeshift-provider";
+import type { ShiftEntry } from "@/domain/types";
+import { RemunerationPremiumList } from "./remuneration-premium-list";
 
 export function PremiumDetailsScreen() {
   const params = useLocalSearchParams<{ month?: RouteParam }>();
+  const { entries } = usePflegeShiftEntries();
   const parsed = parseMonthRouteParam(params.month);
   // Disabled sentinel cannot be evaluated and is never shown.
   const month = parsed.status === "valid" ? parsed.value : "2000-01";
@@ -42,16 +44,22 @@ export function PremiumDetailsScreen() {
     calculation.value.base.positions.every((position) => position.source.kind === "profile");
   return (
     <ReportScrollView>
-      <AnalysisDetailSummaryCard
-        title={noOwnPositions ? "Keine Zuschlagspositionen" : remunerationEuro(premiums.totalCents)}
-        period={formatMonthTitle(month)}
-        caption={
-          noOwnPositions
-            ? "Für diesen Zeitraum sind keine Zeitzuschläge erfasst."
-            : `Zeitzuschläge · ${REMUNERATION_STATUS[premiums.status]}${!premiums.complete ? ` · bekannter Teilbetrag: ${remunerationEuro(premiums.knownSubtotalCents)}` : ""}`
-        }
-      />
-      <RemunerationPositions key={month} positions={premiums.positions} />
+      {noOwnPositions ? (
+        <AnalysisDetailSummaryCard
+          title="Keine Zuschlagspositionen"
+          period={formatMonthTitle(month)}
+          caption="Für diesen Zeitraum sind keine Zeitzuschläge erfasst."
+        />
+      ) : (
+        <RemunerationPremiumList
+          key={month}
+          month={month}
+          result={premiums}
+          shifts={entries.filter(
+            (entry): entry is ShiftEntry => entry.kind === "SHIFT" && entry.deletedAt === null,
+          )}
+        />
+      )}
       <ReportFootnote>
         Die Grundlage kann je Dienst und Zeitraum wechseln. Fehlende oder geschätzte Pausenlagen
         werden in der jeweiligen Berechnungsgrundlage erklärt. Grundentgelt, Zulagen und Überstunden

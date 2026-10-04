@@ -148,6 +148,26 @@ beforeEach(() => {
   };
 });
 describe("dated salary detail integration", () => {
+  it("keeps the reference composition together and additional inputs out of the main view", async () => {
+    const screen = await render(<SalaryScreen />);
+    expect(screen.getByTestId("salary-composition")).toBeTruthy();
+    expect(screen.getByText("Zusammensetzung")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zeitzuschläge, Details öffnen" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Gehaltsangaben" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Jahressonderzahlungen bearbeiten" })).toBeNull();
+  });
+  it("restores premium types and chronological service cards", async () => {
+    mockEntries = [
+      shift({ id: "saturday", date: "2026-09-05" }),
+      shift({ id: "sunday", date: "2026-09-06" }),
+    ];
+    const screen = await render(<PremiumDetailsScreen />);
+    expect(screen.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(screen.getByText("Dienste")).toBeTruthy();
+    expect(screen.queryByText("Berechnungsgrundlage & Quellen")).toBeNull();
+    await fireEvent.press(screen.getByRole("button", { name: /^Nacht,/ }));
+    expect(screen.getByText(/Gefiltert: Nacht/)).toBeTruthy();
+  });
   it("opens Caritas month facts for the displayed dated selection without claiming gross", async () => {
     const selected: DatedRemunerationProfile = {
       ...history(),
@@ -588,7 +608,8 @@ describe("dated salary detail integration", () => {
     const screen = await render(<PremiumDetailsScreen />);
     const premiums = result().timePremiums;
     expect(premiums.totalCents).toBeGreaterThan(0);
-    expect(screen.getByText(remunerationEuro(premiums.totalCents))).toBeTruthy();
+    expect(screen.getAllByText(remunerationEuro(premiums.totalCents)).length).toBeGreaterThan(0);
+    await fireEvent.press(screen.getByRole("button", { name: /September 2026, Nacht, 3,84/ }));
     expect(screen.getAllByText("01.09.2026").length).toBeGreaterThan(0);
     expect(screen.queryByText("31.08.2026")).toBeNull();
   });

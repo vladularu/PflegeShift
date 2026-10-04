@@ -5,6 +5,7 @@ import { TextInput } from "react-native";
 import { useRemunerationHistory } from "@/application/remuneration-provider";
 import { userFacingErrorMessage } from "@/domain/errors";
 import type { RemunerationProfileData } from "@/domain/remuneration-profile";
+import type { Industry } from "@/domain/types";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { usePalette } from "@/theme/palette";
 import { Field, SecondaryButton } from "@/ui/form-controls";
@@ -26,6 +27,7 @@ export interface RemunerationEditorSession {
   readonly effectiveFrom: string | null;
   readonly revision: number;
   readonly simple?: boolean;
+  readonly industry?: Industry;
 }
 
 export function RemunerationEditorForm({
@@ -165,6 +167,19 @@ export function RemunerationEditorForm({
           ),
         }}
       />
+      <RemunerationFields
+        catalog={options}
+        compact={session.simple}
+        industry={session.industry}
+        values={values}
+        onChange={(change) => {
+          setValues((current) => ({ ...current, ...change }));
+          setMessage(null);
+        }}
+        busy={saving}
+        weeklyRef={weeklyRef}
+        amountRef={amountRef}
+      />
       <FormSection
         title={
           session.simple
@@ -202,18 +217,6 @@ export function RemunerationEditorForm({
           </SecondaryButton>
         ) : null}
       </FormSection>
-      <RemunerationFields
-        catalog={options}
-        compact={session.simple}
-        values={values}
-        onChange={(change) => {
-          setValues((current) => ({ ...current, ...change }));
-          setMessage(null);
-        }}
-        busy={saving}
-        weeklyRef={weeklyRef}
-        amountRef={amountRef}
-      />
       {catalogChanged && values.salaryMode === "TARIFF" ? (
         <>
           <FormStatus error="Der Tarifkatalog hat sich geändert. Deine Auswahl bleibt erhalten; bitte aktuellen Stand übernehmen und prüfen." />

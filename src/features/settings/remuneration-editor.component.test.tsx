@@ -232,7 +232,13 @@ describe("dated remuneration editor", () => {
         expect(screen.queryByTestId("Vergütungsstand")).toBeNull();
         expect(screen.getByRole("button", { name: "Entgeltgruppe: P8" })).toBeTruthy();
         expect(screen.getByRole("button", { name: "Stufe: Stufe 4" })).toBeTruthy();
-        expect(screen.getByRole("button", { name: "Tarif: TVöD · Pflege" })).toBeTruthy();
+        expect(screen.getByRole("button", { name: "Berechnung: TVöD-P" })).toBeTruthy();
+        expect(
+          screen.getByRole("button", { name: "Tarifbereich: Krankenhaus · BT-K" }),
+        ).toBeTruthy();
+        expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("38,5");
+        expect(screen.queryByRole("button", { name: "Berechnung: Tarif" })).toBeNull();
+        expect(screen.queryByLabelText("Wochenstunden")).toBeNull();
         expect(mockSave).not.toHaveBeenCalled();
         await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
         expect(mockSave).toHaveBeenCalledWith({

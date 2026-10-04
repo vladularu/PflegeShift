@@ -41,6 +41,7 @@ export function RemunerationEditorScreen({ profile }: { readonly profile: UserPr
       effectiveFrom: from,
       revision: existing?.revision ?? 0,
       simple: true,
+      industry: profile.industry ?? undefined,
     });
   }, [history.status, history.profiles, profile]);
   if (session !== null)
@@ -87,6 +88,7 @@ export function RemunerationEditorScreen({ profile }: { readonly profile: UserPr
       data,
       effectiveFrom: correcting ? entry.effectiveFrom : null,
       revision: correcting ? entry.revision : 0,
+      industry: profile.industry ?? undefined,
     });
   }
 

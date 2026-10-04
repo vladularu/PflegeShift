@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import type { RemunerationPosition, RemunerationStatus } from "@/domain/remuneration-result";
 import { usePalette } from "@/theme/palette";
 import { SPACING, CONTROL_HEIGHT } from "@/theme/tokens";
@@ -122,6 +122,7 @@ export function RemunerationComponentCard({
   title,
   component,
   onPress,
+  compact = false,
 }: {
   readonly title: string;
   readonly component: {
@@ -131,15 +132,24 @@ export function RemunerationComponentCard({
     readonly positions: readonly RemunerationPosition[];
   };
   readonly onPress?: () => void;
+  readonly compact?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const palette = usePalette();
+  const stacked = useWindowDimensions().fontScale >= 1.6;
+  const Wrapper = compact ? View : SurfaceCard;
   const value =
     component.totalCents === null
       ? REMUNERATION_STATUS[component.status]
       : `${remunerationEuro(component.totalCents)} · ${REMUNERATION_STATUS[component.status]}`;
   return (
-    <SurfaceCard style={{ padding: SPACING.lg, gap: SPACING.sm }}>
+    <Wrapper
+      style={{
+        paddingVertical: compact ? SPACING.sm : SPACING.lg,
+        paddingHorizontal: compact ? 0 : SPACING.lg,
+        gap: SPACING.sm,
+      }}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${title}, Details öffnen`}
@@ -148,18 +158,45 @@ export function RemunerationComponentCard({
         onPress={onPress ?? (() => setExpanded(!expanded))}
         style={{ minHeight: CONTROL_HEIGHT.regular, gap: SPACING.xs }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
-          <View style={{ flex: 1 }}>
-            <RemunerationText>{title}</RemunerationText>
+        <View
+          style={{
+            flexDirection: compact && stacked ? "column" : "row",
+            alignItems: compact && stacked ? "flex-start" : "center",
+            gap: SPACING.sm,
+          }}
+        >
+          <View style={{ flex: compact && stacked ? undefined : 1 }}>
+            <RemunerationText muted={compact}>{title}</RemunerationText>
           </View>
+          {compact ? (
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_SCALE}
+              style={{
+                color: palette.text,
+                ...TYPOGRAPHY.bodyStrong,
+                flexShrink: 1,
+                fontVariant: ["tabular-nums"],
+              }}
+            >
+              {remunerationEuro(component.totalCents)}
+            </Text>
+          ) : null}
           <Ionicons
             accessibilityElementsHidden
             color={palette.textMuted}
             size={20}
-            name={onPress ? "chevron-forward" : expanded ? "chevron-up" : "chevron-down"}
+            name={
+              compact
+                ? "ellipsis-horizontal-circle"
+                : onPress
+                  ? "chevron-forward"
+                  : expanded
+                    ? "chevron-up"
+                    : "chevron-down"
+            }
           />
         </View>
-        <RemunerationText>{value}</RemunerationText>
+        {!compact ? <RemunerationText>{value}</RemunerationText> : null}
         {component.totalCents === null ? (
           <RemunerationText muted>
             Bekannter Teilbetrag: {remunerationEuro(component.knownSubtotalCents)}
@@ -172,6 +209,6 @@ export function RemunerationComponentCard({
           <RemunerationPositions positions={component.positions} />
         </>
       ) : null}
-    </SurfaceCard>
+    </Wrapper>
   );
 }
