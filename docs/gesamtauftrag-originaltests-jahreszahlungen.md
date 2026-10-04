@@ -15,3 +15,9 @@ Die bereits geprüften Primärquellen und bestehenden Originalbelege zu VG-04/VG
 ## Pflichtcheck
 
 Sieben ursprüngliche Testdateien gezielt; verify:fast auf aktuellem master-Elternstand. Genaue sieben PR-CI-Prüfungen vor Merge.
+
+## Ergebnis und Fixture-Abgleich
+
+Alle 134 ursprünglichen Fälle bestehen. Fünf Testdateien sind bytegleich mit dem Original; zwei erhalten ausdrücklich aktuelle und historische Pakete: Der TVöD-Referenztest nutzt die freigegebene r3 statt der überholten r2. Die Prüfung eines Katalogs ohne Jahreszahlung verwendet weiter ein explizites älteres Paket. Die Ausbildungsfixture behält reale Monatsbeträge und beide Ausbildungsgruppen, ergänzt ausschließlich testweise Jahresregeln mit passenden Quellen und vollständiger Gruppendeckung. Sie bleibt DRAFT und ist im gebündelten Katalog nicht auswählbar. Kein Originalfall entfällt.
+
+Auf dem mit PR #249 abgeglichenen master: verify:fast vollständig grün mit 5.479 Unit- und 542 Komponententests, alle weiteren Skriptprüfungen ohne Fehler. Die Originaldateien bleiben unverändert separat versioniert.
