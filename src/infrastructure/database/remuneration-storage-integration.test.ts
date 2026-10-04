@@ -253,6 +253,7 @@ describe("dated profile storage and backup compatibility", () => {
       delete (root.data as Record<string, unknown>).tvlShiftWork;
       delete (root.data as Record<string, unknown>).caritasWorkDays;
       delete (root.data as Record<string, unknown>).caritasMonthFacts;
+      delete (root.data as Record<string, unknown>).caritasOvertime;
     });
     await saveProfile(destination.db, { ...legacy, manualMonthlyGrossCents: 999000 });
     await saveDatedRemunerationProfile(destination.db, input());

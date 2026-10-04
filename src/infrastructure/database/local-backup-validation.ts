@@ -1,4 +1,8 @@
 import {
+  mapCaritasOvertimeRow,
+  requireCaritasOvertimeParents,
+} from "./caritas-overtime-repository";
+import {
   mapCaritasMonthFactsRow,
   requireCaritasMonthFactsParent,
 } from "./caritas-month-facts-repository";
@@ -800,6 +804,7 @@ export async function validateLocalBackup(
       root.version !== 9 &&
       root.version !== 10 &&
       root.version !== 11 &&
+      root.version !== 12 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -828,6 +833,7 @@ export async function validateLocalBackup(
       ...(root.version >= 9 ? ["tvlShiftWork"] : []),
       ...(root.version >= 10 ? ["caritasWorkDays"] : []),
       ...(root.version >= 11 ? ["caritasMonthFacts"] : []),
+      ...(root.version >= 13 ? ["caritasOvertime"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -1072,6 +1078,49 @@ export async function validateLocalBackup(
         requireCaritasMonthFactsParent(mapCaritasMonthFactsRow(row), profiles);
     }
 
+    const caritasOvertime =
+      root.version >= 13
+        ? Object.freeze(
+            asArray(data.caritasOvertime).map((value) => {
+              mapCaritasOvertimeRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 13) {
+      if (
+        (databaseSchemaVersion as number) < 25 ||
+        (profile === null && caritasOvertime.length > 0)
+      )
+        return invalid();
+      uniqueValues(caritasOvertime, "shift_id");
+      const shiftById = new Map(
+        shifts.map((row) => [row.id, mapShift(row as unknown as Parameters<typeof mapShift>[0])]),
+      );
+      const allocationById = new Map(
+        (overtimeAllocations ?? []).map((row) => {
+          const parsed = mapOvertimeAllocationRow(
+            row as unknown as Parameters<typeof mapOvertimeAllocationRow>[0],
+          );
+          return [parsed.shiftId, parsed] as const;
+        }),
+      );
+      const profiles = (remunerationProfiles ?? []).map((row) =>
+        mapRemunerationProfileRow(
+          row as unknown as Parameters<typeof mapRemunerationProfileRow>[0],
+        ),
+      );
+      for (const row of caritasOvertime) {
+        const parsed = mapCaritasOvertimeRow(row);
+        requireCaritasOvertimeParents(
+          parsed,
+          shiftById.get(parsed.shiftId),
+          allocationById.get(parsed.shiftId),
+          profiles,
+        );
+      }
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -1113,6 +1162,7 @@ export async function validateLocalBackup(
         tvlShiftWork,
         caritasWorkDays,
         caritasMonthFacts,
+        caritasOvertime,
         templates,
         shifts,
         appointments,
@@ -1147,7 +1197,8 @@ export async function validateLocalBackup(
             !(document.version < 8 && key === "tariffAnnualClaims") &&
             !(document.version < 9 && key === "tvlShiftWork") &&
             !(document.version < 10 && key === "caritasWorkDays") &&
-            !(document.version < 11 && key === "caritasMonthFacts"),
+            !(document.version < 11 && key === "caritasMonthFacts") &&
+            !(document.version < 13 && key === "caritasOvertime"),
         ),
       ),
     });
