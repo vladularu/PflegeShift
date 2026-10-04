@@ -11,6 +11,7 @@ import { roundRemunerationCents } from "./remuneration-base";
 import { remunerationMonthStart, resolveRemunerationContext } from "./remuneration-context";
 import { calculateOwnShiftDayPremiums } from "./remuneration-own-premiums";
 import { isCurrentTvlShiftWork, type SavedTvlShiftWork } from "@/domain/saved-tvl-shift-work";
+import { calculateTrainingShiftDayPremiums } from "./remuneration-training-premiums";
 import { calculateTvlShiftDayPremiums } from "./remuneration-tvl-premiums";
 import { calculateTvalShiftDayPremiums } from "./remuneration-tval-premiums";
 import {
@@ -174,6 +175,19 @@ export function calculateDatedShiftTimePremiums(
               ...calculateTvlShiftDayPremiums(base, day, shift, workProfile, context, resolver, {
                 shiftWork: current.length === 1 ? current[0].shiftWork : null,
               }),
+            );
+            continue;
+          }
+          if (context.kind === "training-tariff") {
+            positions.push(
+              ...calculateTrainingShiftDayPremiums(
+                base,
+                day,
+                shift,
+                workProfile,
+                context,
+                resolver,
+              ),
             );
             continue;
           }

@@ -17,12 +17,15 @@ import type { OwnRemunerationConfiguration } from "@/domain/own-remuneration";
 import { resolveTvlKrPay, type TvlKrPayContext } from "./remuneration-tvl-context";
 import { resolveTvalTrainingPay, type TvalTrainingPayContext } from "./remuneration-tval-context";
 
+import { resolveTrainingPay, type TrainingPayContext } from "./remuneration-training-context";
+
 interface ContextBase {
   readonly profile: DatedRemunerationProfile | null;
   readonly source: RemunerationSource;
 }
 export type RemunerationContext = ContextBase &
   (
+    | TrainingPayContext
     | TvlKrPayContext
     | TvalTrainingPayContext
     | { readonly kind: "unavailable"; readonly issue: RemunerationIssue }
@@ -170,6 +173,16 @@ export function resolveRemunerationContext(
       ? { ...tvl.context, profile, source: sourceFor(profile, rulePackage) }
       : unavailable(profile, tvl.issue.code, tvl.issue.message, rulePackage);
   }
+  if (
+    rulePackage.engineContractVersion === 10 ||
+    (rulePackage.engineContractVersion === 11 &&
+      rulePackage.rules.selection?.employmentKind === "APPRENTICE")
+  ) {
+    const training = resolveTrainingPay(rulePackage, selection, data.weeklyMinutes);
+    return training.ok
+      ? { ...training.context, profile, source: sourceFor(profile, rulePackage) }
+      : unavailable(profile, training.issue.code, training.issue.message, rulePackage);
+  }
   // Additional tariff families receive their own adapter; matching table shapes do not establish support.
   if (!["tvoed-vka-bt-k", LEGACY_RULE_PACKAGE_IDS.tariff].includes(selection.packageId))
     return unavailable(
@@ -313,6 +326,8 @@ function sameContext(left: RemunerationContext, right: RemunerationContext): boo
       left.source.versionId === right.source.versionId
     );
   if (left.kind === "tariff" && right.kind === "tariff")
+    return left.rulePackage === right.rulePackage;
+  if (left.kind === "training-tariff" && right.kind === "training-tariff")
     return left.rulePackage === right.rulePackage;
   if (left.kind === "tval-training" && right.kind === "tval-training")
     return (
