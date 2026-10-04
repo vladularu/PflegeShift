@@ -7,6 +7,7 @@ import type {
 } from "./contracts.generated";
 import { annualPaymentRuleIssues } from "./annual-payment-rule-validation";
 import { tvlKrIssues } from "./tvl-kr-validation";
+import { tvalTrainingIssues } from "./tval-training-validation";
 import { drkTableIssues } from "./drk-table-validation";
 import { drkTrainingTableIssues } from "./drk-training-table-validation";
 import { caritasAnnualPaymentIssues } from "./caritas-annual-payment-validation";
@@ -147,6 +148,7 @@ function validateTariffPackage(
   issues.push(...trainingPayIssues(rulePackage));
   issues.push(...annualPaymentRuleIssues(rulePackage));
   issues.push(...tvlKrIssues(rulePackage));
+  issues.push(...tvalTrainingIssues(rulePackage));
   issues.push(...caritasTableIssues(rulePackage));
   issues.push(...caritasAnnualPaymentIssues(rulePackage));
   issues.push(...drkTableIssues(rulePackage));
@@ -211,6 +213,7 @@ function validateTariffPackage(
     rulePackage.engineContractVersion >= 2 &&
     rulePackage.engineContractVersion !== 14 &&
     rulePackage.engineContractVersion !== 12 &&
+    rulePackage.engineContractVersion !== 13 &&
     rulePackage.engineContractVersion !== 10 &&
     rulePackage.engineContractVersion !== 17 &&
     !(
@@ -270,6 +273,7 @@ function validateTariffPackage(
     rulePackage.engineContractVersion >= 3 &&
     rulePackage.engineContractVersion !== 14 &&
     rulePackage.engineContractVersion !== 12 &&
+    rulePackage.engineContractVersion !== 13 &&
     rulePackage.engineContractVersion !== 17
   ) {
     if (weeklyWorkingTimeRules === undefined) {

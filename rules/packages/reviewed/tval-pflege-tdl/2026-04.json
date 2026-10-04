@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 13,
+  "packageId": "tval-pflege-tdl",
+  "versionId": "2026-04",
+  "kind": "TARIFF",
+  "label": "TVA-L Pflege · Ausbildung der Länder",
+  "status": "DRAFT",
+  "validFrom": "2026-04-01",
+  "validTo": "2026-12-31",
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "tdl-tvl-annex-a-care",
+      "title": "TdL Entgeltordnung Anlage A, ÄTV 13; Abrufstand 22.09.2026",
+      "url": "https://www.tdl-online.de/fileadmin/user_upload/Anlage_A_i.d.F._des_%C3%84TV_Nr._13_Homepage.pdf",
+      "documentDate": "2026-09-22",
+      "section": "Teil IV Abschnitt 1 Vorbemerkungen 9–11 (S. 324–325), via TVA-L Pflege § 8 Abs. 5 a; Datum = Abrufstand",
+      "sha256": "e33de71f9abb6c1762a1288a0f742da5e2fc2d860282660c1dfe14b4f3e25bcf"
+    },
+    {
+      "id": "tdl-tvl-annex-f-care",
+      "title": "TdL Anlage F, Schwerbrandpflege 2025–2028; Abrufstand 22.09.2026",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/TV-L_Anlagen/TV-L_Anlage_F_neu.pdf",
+      "documentDate": "2026-09-22",
+      "section": "Abschnitt IV Nr. 1, S. 4; Beschäftigtenbetrag vor Ausbildungsanteil; Datum = Abrufstand",
+      "sha256": "800f80cbd4adfbd255a154df891b3049da3c8d2100b5855f8e2875115a019495"
+    },
+    {
+      "id": "tdl-tval-pflege-2026",
+      "title": "TdL TVA-L Pflege, Änderungstarifvertrag 13 vom 14.02.2026",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-Ausbildung/TVA-L-Pflege/260804_TVA-L_Pflege_i.d.F._des_%C3%84TV_Nr._13.pdf",
+      "documentDate": "2026-02-14",
+      "section": "§§ 1, 7, 8 und 16; Kategorieerweiterung ab 01.01.2027; vollständige Zulagen-/Jahresanbindung noch offen",
+      "sha256": "0d6e0db4974150534f96cc5745a93330c8b4f6524629753cb09607e4e80eb1c4"
+    },
+    {
+      "id": "tdl-tv-l-2026",
+      "title": "TdL TV-L, Fassung des Änderungstarifvertrags Nr. 14 vom 14.02.2026",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/260812_TV-L__i.d.F._des_%C3%84TV_Nr._14_VT.pdf",
+      "documentDate": "2026-02-14",
+      "section": "§ 6 Abs. 1 b/c; § 7 Abs. 5, 7–8; § 8 Abs. 2; § 24 Abs. 2–4; § 38 Abs. 5; § 43 Nr. 1, Nr. 5, Nr. 5a, Nr. 8 und Nr. 9",
+      "sha256": "05de64ee356df189690875a491e5d52d8ac8171328b43f7fd401d8b0c04f94f9"
+    },
+    {
+      "id": "pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    }
+  ],
+  "review": {
+    "status": "DRAFT",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "gitCommit": null
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "PER_LINE"
+  },
+  "rules": {
+    "selection": {
+      "familyId": "tval-pflege",
+      "engineId": "tval-pflege-v1",
+      "employmentKind": "APPRENTICE",
+      "variants": [
+        {
+          "id": "CARE",
+          "label": "TVA-L Pflege · bestätigter Geltungsbereich",
+          "specialPartId": "pflege",
+          "sourceIds": ["tdl-tval-pflege-2026"],
+          "regions": [
+            {
+              "id": "WEST_38_5",
+              "label": "West · 38,5 Std. nach § 6 Abs. 1 b (Voraussetzung bestätigt)",
+              "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+            },
+            {
+              "id": "EAST",
+              "label": "Tarifgebiet Ost · außerhalb Universitätskliniken",
+              "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+            },
+            {
+              "id": "EAST_UNIVERSITY_HOSPITAL",
+              "label": "Tarifgebiet Ost · Universitätskliniken",
+              "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+            }
+          ]
+        }
+      ],
+      "capabilities": {
+        "basePay": "SUPPORTED",
+        "timePremiums": "SUPPORTED",
+        "allowances": "UNSUPPORTED",
+        "overtime": "SUPPORTED",
+        "annualPayment": "SUPPORTED"
+      }
+    },
+    "selector": {
+      "agreementId": "tva-l-pflege",
+      "specialPartId": "pflege",
+      "payTableId": "tdl-training-2026-04"
+    },
+    "tvalShiftAllowancePolicy": {
+      "shareBasisPoints": 7500,
+      "rounding": "RATE_THEN_TOTAL",
+      "scopes": [
+        {
+          "id": "GENERAL",
+          "rates": {
+            "periods": [
+              {
+                "validFrom": "2026-04-01",
+                "validTo": "2026-06-30",
+                "shiftMonthlyCents": 4000,
+                "shiftHourlyCents": 24,
+                "alternatingMonthlyCents": 10500,
+                "alternatingHourlyCents": 63
+              },
+              {
+                "validFrom": "2026-07-01",
+                "validTo": "2026-12-31",
+                "shiftMonthlyCents": 10000,
+                "shiftHourlyCents": 60,
+                "alternatingMonthlyCents": 20000,
+                "alternatingHourlyCents": 119
+              }
+            ],
+            "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+          }
+        },
+        {
+          "id": "SECTION_43",
+          "rates": {
+            "periods": [
+              {
+                "validFrom": "2026-04-01",
+                "validTo": "2026-06-30",
+                "shiftMonthlyCents": 6000,
+                "shiftHourlyCents": 24,
+                "alternatingMonthlyCents": 15000,
+                "alternatingHourlyCents": 63
+              },
+              {
+                "validFrom": "2026-07-01",
+                "validTo": "2026-12-31",
+                "shiftMonthlyCents": 10000,
+                "shiftHourlyCents": 60,
+                "alternatingMonthlyCents": 25000,
+                "alternatingHourlyCents": 149
+              }
+            ],
+            "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+          }
+        }
+      ]
+    },
+    "tvalCareAllowancePolicy": {
+      "eligibilityRule": "TVAL_PART_IV_NOTES_9_TO_11",
+      "shareBasisPoints": 5000,
+      "clinicalLowerMonthlyCents": 9000,
+      "clinicalHigherMonthlyCents": 15000,
+      "burnCareFullHourCents": 186,
+      "burnUnit": "FULL_WORKED_HOURS",
+      "competition": "HIGHEST_CLINICAL_LESS_MONTH_BURN",
+      "rounding": "RATE_SHARE_THEN_PERSONAL_THEN_TOTAL",
+      "sourceIds": [
+        "tdl-tval-pflege-2026",
+        "tdl-tvl-annex-a-care",
+        "tdl-tvl-annex-f-care",
+        "tdl-tv-l-2026"
+      ]
+    },
+    "tvalOvertimePolicy": {
+      "hourlyBasis": "TRAINING_TABLE_FULL_TIME",
+      "monthlyFactorThousandths": 4348,
+      "rounding": "HOURLY_THEN_PREMIUM_THEN_TOTAL",
+      "percentageBasisPoints": 3000,
+      "paymentScope": "CONFIRMED_CASH_PAYABLE_BASE_AND_PREMIUM",
+      "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+    },
+    "tvalTimePremiumPolicy": {
+      "hourlyBasis": "TRAINING_TABLE_FULL_TIME",
+      "monthlyFactorThousandths": 4348,
+      "rounding": "HOURLY_THEN_PREMIUM_THEN_TOTAL",
+      "competition": "HIGHEST_DAY_PREMIUM_PLUS_NIGHT",
+      "nightBasisPoints": 2000,
+      "nightWindow": {
+        "startMinute": 1260,
+        "endMinute": 360
+      },
+      "sundayBasisPoints": 2500,
+      "holidayWithTimeOffBasisPoints": 3500,
+      "holidayWithoutTimeOffBasisPoints": 13500,
+      "preHolidayBasisPoints": 3500,
+      "preHolidayWindow": {
+        "startMinute": 360,
+        "endMinute": 0
+      },
+      "preHolidayMonthDays": ["12-24", "12-31"],
+      "saturdayBasisPoints": 2000,
+      "saturdayWindow": {
+        "startMinute": 780,
+        "endMinute": 1260
+      },
+      "hospitalSalariedShiftHourlyCents": 64,
+      "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+    },
+    "tvalTrainingPay": {
+      "categories": [
+        {
+          "groupId": "regular",
+          "label": "Pflege / Notfallsanität / ATA-OTA · Geltung nach § 1 bestätigt",
+          "periodKind": "TRAINING_YEAR",
+          "levels": [
+            {
+              "id": "1",
+              "label": "1. vergütetes Ausbildungsjahr"
+            },
+            {
+              "id": "2",
+              "label": "2. vergütetes Ausbildungsjahr"
+            },
+            {
+              "id": "3",
+              "label": "3. vergütetes Ausbildungsjahr"
+            }
+          ],
+          "sourceIds": ["tdl-tval-pflege-2026"]
+        }
+      ],
+      "sourceIds": ["tdl-tval-pflege-2026"]
+    },
+    "payTables": [
+      {
+        "id": "tdl-training-2026-04",
+        "entries": [
+          {
+            "groupId": "regular",
+            "stepId": "1",
+            "monthlyCents": 144070
+          },
+          {
+            "groupId": "regular",
+            "stepId": "2",
+            "monthlyCents": 150670
+          },
+          {
+            "groupId": "regular",
+            "stepId": "3",
+            "monthlyCents": 161300
+          }
+        ],
+        "sourceIds": ["tdl-tval-pflege-2026"]
+      }
+    ],
+    "employmentWorkingTimeRules": [
+      {
+        "id": "west-2026-04",
+        "variantId": "CARE",
+        "regionId": "WEST_38_5",
+        "validFrom": "2026-04-01",
+        "validTo": "2026-12-31",
+        "fullTimeWeeklyMinutes": 2310,
+        "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+      },
+      {
+        "id": "east-2026-04",
+        "variantId": "CARE",
+        "regionId": "EAST",
+        "validFrom": "2026-04-01",
+        "validTo": "2026-12-31",
+        "fullTimeWeeklyMinutes": 2400,
+        "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+      },
+      {
+        "id": "east-university-2026-04",
+        "variantId": "CARE",
+        "regionId": "EAST_UNIVERSITY_HOSPITAL",
+        "validFrom": "2026-04-01",
+        "validTo": "2026-12-31",
+        "fullTimeWeeklyMinutes": 2400,
+        "sourceIds": ["tdl-tval-pflege-2026", "tdl-tv-l-2026"]
+      }
+    ],
+    "premiumRules": [],
+    "allowanceRules": [],
+    "combinationRules": [],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": {
+        "startMinute": 1260,
+        "endMinute": 360
+      },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
+    },
+    "annualPaymentRules": [
+      {
+        "id": "tval-pflege-annual",
+        "variantId": "CARE",
+        "regionIds": ["WEST_38_5", "EAST", "EAST_UNIVERSITY_HOSPITAL"],
+        "payGroups": ["regular"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 9500,
+        "referenceMonths": [11],
+        "lateEntryAfterMonth": 11,
+        "basisPolicy": "TVAL_PFLEGE_16",
+        "eligibilityPolicy": "TVAL_TRAINING_OR_DIRECT_TAKEOVER_DECEMBER_1",
+        "reductionPolicy": "TVAL_PFLEGE_16",
+        "earlyExitBasis": "NONE",
+        "payoutMonth": 11,
+        "sourceIds": ["tdl-tval-pflege-2026"]
+      }
+    ]
+  }
+}
