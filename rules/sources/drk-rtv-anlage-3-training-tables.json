@@ -1,0 +1,62 @@
+{
+  "kind": "SOURCE_TABLE_ONLY",
+  "agreementId": "drk-rtv",
+  "source": {
+    "title": "BTG DRK-Reformtarifvertrag, Fassung 52. Änderungstarifvertrag und 14. TVÜ-Änderungstarifvertrag",
+    "url": "https://btg.drk.de/fileadmin/user_upload/Bundestarifgemeinschaft/05_grundlagen_news/DRK-RTV_idF_52.AETV_14.AETV-TVUE_durchgeschriebene_Fassung.pdf",
+    "documentDate": "2025-07-10",
+    "sha256": "97c25f8030b40897c10d828a92382655847212d5f924ce0132073034a13b19d8",
+    "pdfPages": [102, 104, 109, 110],
+    "section": "Anlage 3 § 1 und § 8 Absatz 1; Anlage 3a § 1 und § 3 Absatz 1 Buchstaben a und b"
+  },
+  "columns": ["categoryId", "year1", "year2", "year3", "year4"],
+  "categories": [
+    {
+      "id": "anlage-3-general",
+      "annexId": "anlage-3",
+      "years": [1, 2, 3, 4],
+      "scope": "Staatlich anerkannter Ausbildungsberuf nach Anlage 3 § 1 Absatz 1, sofern kein Ausschluss nach Absatz 2 vorliegt"
+    },
+    {
+      "id": "anlage-3a-a",
+      "annexId": "anlage-3a",
+      "years": [1, 2, 3],
+      "scope": "Ausdrücklich in Anlage 3 § 1 Absatz 2 Buchstabe a und Anlage 3a § 1 erfasste Ausbildung, einschließlich Pflege und Notfallsanitäter; nicht automatisch aus Berufsbezeichnung ableiten"
+    },
+    {
+      "id": "anlage-3a-b",
+      "annexId": "anlage-3a",
+      "years": [1],
+      "scope": "Einjährige Kranken- oder Altenpflegehilfe nach Anlage 3a § 3 Absatz 1 Buchstabe b"
+    }
+  ],
+  "tables": [
+    {
+      "validFrom": "2024-06-01",
+      "validTo": "2025-08-31",
+      "rows": [
+        ["anlage-3-general", 123074, 128727, 133913, 141108],
+        ["anlage-3a-a", 136006, 142839, 153955, null],
+        ["anlage-3a-b", 128246, null, null, null]
+      ]
+    },
+    {
+      "validFrom": "2025-09-01",
+      "validTo": "2026-09-30",
+      "rows": [
+        ["anlage-3-general", 132074, 137727, 142913, 150108],
+        ["anlage-3a-a", 145006, 151839, 162955, null],
+        ["anlage-3a-b", 137246, null, null, null]
+      ]
+    },
+    {
+      "validFrom": "2026-10-01",
+      "validTo": null,
+      "rows": [
+        ["anlage-3-general", 141074, 146727, 151913, 159108],
+        ["anlage-3a-a", 154006, 160839, 171955, null],
+        ["anlage-3a-b", 146246, null, null, null]
+      ]
+    }
+  ]
+}
