@@ -24,6 +24,10 @@ const repositoryMocks = vi.hoisted(() => ({
   saveTvoedWorkPatternSettings: vi.fn(),
   swapTemplateSortOrder: vi.fn(),
 }));
+vi.mock("@/infrastructure/database/simple-app-profile", () => ({
+  projectStoredSimpleProfile: async (_db: SQLiteDatabase, profile: unknown) => profile,
+}));
+
 const notificationMocks = vi.hoisted(() => ({
   cancelEntry: vi.fn(),
   syncEntry: vi.fn(),
