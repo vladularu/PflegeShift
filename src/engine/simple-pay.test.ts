@@ -1,0 +1,589 @@
+import { describe, expect, it } from "vitest";
+
+import generation5TariffValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05-r3.json";
+import tariffCandidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json";
+import type { ShiftEntry, UserProfile } from "@/domain/types";
+import {
+  assessTvoedPattern,
+  calculateMonthlyPayEstimate,
+  calculateShiftPremiumBreakdown,
+} from "@/engine/simple-pay";
+import {
+  BUNDLED_HOLIDAY_RULES,
+  BUNDLED_LEGAL_RULES,
+  BUNDLED_TARIFF_RULES,
+  LEGACY_RULE_PACKAGE_IDS,
+} from "@/rules/bundled-rules";
+import type { RuleTariffPackage } from "@/rules/contracts.generated";
+import { createRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
+
+const profile: UserProfile = {
+  federalState: "NW",
+  holidayRegion: "NONE",
+  weeklyMinutes: 1_155,
+  timeZone: "Europe/Berlin",
+  regularRotatingNightWork: false,
+  sundayHolidayWorkEligible: true,
+  allEmploymentWorkRecorded: true,
+  tariff: {
+    payGroup: "P8",
+    payLevel: 4,
+    sector: "BT_K",
+    tariffRegion: "OTHER",
+    fullTimeWeeklyMinutes: 2_310,
+  },
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+};
+
+const permanentRoundTheClock = {
+  workplaceCoverage: "AROUND_THE_CLOCK" as const,
+  assignment: "PERMANENT" as const,
+  updatedAt: "2026-01-01T00:00:00.000Z",
+};
+
+const candidateResolver = createRuleResolver(
+  {
+    tariff: [tariffCandidateValue as RuleTariffPackage],
+    legal: BUNDLED_LEGAL_RULES,
+    holiday: BUNDLED_HOLIDAY_RULES,
+  },
+  {
+    tariff: "tvoed-vka-bt-k",
+    legal: LEGACY_RULE_PACKAGE_IDS.legal,
+    holiday: LEGACY_RULE_PACKAGE_IDS.holiday,
+  },
+);
+
+function shift(overrides: Partial<ShiftEntry> = {}): ShiftEntry {
+  return {
+    kind: "SHIFT",
+    id: "shift-1",
+    date: "2026-07-05",
+    templateId: null,
+    title: "Nacht",
+    type: "NIGHT",
+    startTime: "21:00",
+    endTime: "07:00",
+    breakMinutes: 60,
+    color: "#EA5B55",
+    symbol: "N",
+    note: null,
+    overtimeMinutes: 60,
+    tariffOvertimeConfirmed: true,
+    holidayPremiumMode: "WITH_TIME_OFF",
+    revision: 1,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    deletedAt: null,
+    ...overrides,
+  };
+}
+
+describe("TVöD-P pay engine", () => {
+  it("uses a manual monthly gross without resolving or inventing TVöD additions", () => {
+    const unreachableRuleResolver = new Proxy({} as RuleResolver, {
+      get() {
+        throw new Error("Manual gross must not resolve TVöD rule packages.");
+      },
+    });
+    const result = calculateMonthlyPayEstimate(
+      "2026-07",
+      [shift()],
+      {
+        ...profile,
+        tariff: null,
+        manualMonthlyGrossCents: 345_050,
+      },
+      {
+        month: "2026-07",
+        allowanceStatus: "ALTERNATING_MONTHLY",
+        revision: 1,
+        confirmedAt: "2026-07-01T00:00:00.000Z",
+        updatedAt: "2026-07-01T00:00:00.000Z",
+      },
+      undefined,
+      undefined,
+      unreachableRuleResolver,
+    );
+
+    expect(result).toEqual({
+      month: "2026-07",
+      tariffLabel: "Manuell hinterlegt",
+      available: true,
+      fullTimeTableAmount: null,
+      personalBaseAmount: 3450.5,
+      shiftBreakdowns: [],
+      timePremiumAmount: 0,
+      overtimeAmount: 0,
+      allowanceAmount: 0,
+      tvoedAllowanceAmount: 0,
+      careAllowanceAmount: 0,
+      estimatedGrossAmount: 3450.5,
+      assessment: {
+        shiftWork: "NOT_DETECTED",
+        alternatingShiftWork: "NOT_DETECTED",
+        suggestedAllowance: "NONE",
+        evidence: [],
+        criteria: [],
+        requiresConfirmation: false,
+      },
+      confirmedAllowance: null,
+    });
+  });
+
+  it("keeps pay unavailable without a tariff or manual monthly gross", () => {
+    const result = calculateMonthlyPayEstimate(
+      "2026-07",
+      [shift()],
+      {
+        ...profile,
+        tariff: null,
+        manualMonthlyGrossCents: null,
+      },
+      null,
+    );
+
+    expect(result.available).toBe(false);
+    expect(result.personalBaseAmount).toBeNull();
+    expect(result.estimatedGrossAmount).toBeNull();
+  });
+
+  it("reuses premium calculations while the shift and profile stay unchanged", () => {
+    const input = shift();
+    const first = calculateShiftPremiumBreakdown(input, profile);
+
+    expect(calculateShiftPremiumBreakdown(input, profile)).toBe(first);
+    expect(calculateShiftPremiumBreakdown({ ...input, revision: 2 }, profile)).not.toBe(first);
+  });
+
+  it("keeps night additive to Sunday and calculates overtime separately", () => {
+    const result = calculateShiftPremiumBreakdown(shift(), profile);
+    expect(result.premiumLines.map((line) => line.key)).toEqual(["night", "sunday"]);
+    expect(result.overtimeBaseAmount).toBe(24.03);
+    expect(result.overtimePremiumAmount).toBe(6.83);
+  });
+
+  it("uses the corrected divisor when the reviewed tariff candidate is resolved", () => {
+    const result = calculateShiftPremiumBreakdown(shift(), profile, candidateResolver);
+    expect(result.overtimeBaseAmount).toBe(24.35);
+    expect(result.overtimePremiumAmount).toBe(6.92);
+  });
+
+  it("does not classify entered extra minutes as tariff overtime without confirmation", () => {
+    const result = calculateShiftPremiumBreakdown(
+      shift({ tariffOvertimeConfirmed: false }),
+      profile,
+    );
+    expect(result.overtimeBaseAmount).toBe(0);
+    expect(result.overtimePremiumAmount).toBe(0);
+  });
+
+  it("uses 30 percent through P11 and 15 percent from P12 for overtime", () => {
+    const overtimeShift = shift({
+      date: "2026-07-06",
+      type: "DAY",
+      startTime: "08:00",
+      endTime: "16:00",
+      breakMinutes: 0,
+    });
+    const overtimeFor = (payGroup: "P11" | "P12") =>
+      calculateShiftPremiumBreakdown(overtimeShift, {
+        ...profile,
+        tariff: { ...profile.tariff!, payGroup, payLevel: 4 },
+      });
+
+    expect(overtimeFor("P11")).toMatchObject({
+      overtimeBaseAmount: 28.9,
+      overtimePremiumAmount: 8.06,
+    });
+    expect(overtimeFor("P12")).toMatchObject({
+      overtimeBaseAmount: 30.47,
+      overtimePremiumAmount: 4.25,
+    });
+  });
+
+  it("caps actual overtime work at the configured step-four hourly rate", () => {
+    const result = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-07-06",
+        type: "DAY",
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 0,
+      }),
+      {
+        ...profile,
+        tariff: { ...profile.tariff!, payGroup: "P16", payLevel: 6 },
+      },
+    );
+
+    expect(result.overtimeBaseAmount).toBe(35.29);
+    expect(result.overtimePremiumAmount).toBe(4.79);
+  });
+
+  it("reads the overtime base cap from the resolved tariff package", () => {
+    const tariffPackages = BUNDLED_TARIFF_RULES.map((rulePackage) => structuredClone(rulePackage));
+    tariffPackages[1].rules.overtimeBaseRule!.maximumStepId = "s3";
+    const resolver = createRuleResolver({
+      tariff: tariffPackages,
+      legal: BUNDLED_LEGAL_RULES,
+      holiday: BUNDLED_HOLIDAY_RULES,
+    });
+    const result = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-07-06",
+        type: "DAY",
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 0,
+      }),
+      {
+        ...profile,
+        tariff: { ...profile.tariff!, payGroup: "P16", payLevel: 6 },
+      },
+      resolver,
+    );
+
+    expect(result.overtimeBaseAmount).toBe(31.94);
+  });
+
+  it("uses the selected holiday compensation percentage", () => {
+    const withTimeOff = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-12-25",
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      }),
+      profile,
+    );
+    const withoutTimeOff = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-12-25",
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+        holidayPremiumMode: "WITHOUT_TIME_OFF",
+      }),
+      profile,
+    );
+    expect(withTimeOff.premiumLines.find((line) => line.key === "holiday")?.percentage).toBe(35);
+    expect(withoutTimeOff.premiumLines.find((line) => line.key === "holiday")?.percentage).toBe(
+      135,
+    );
+  });
+
+  it("applies calendar-day package conditions after an overnight boundary", () => {
+    const result = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-12-23",
+        startTime: "23:00",
+        endTime: "07:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      }),
+      profile,
+    );
+
+    expect(result.premiumLines.find((line) => line.key === "preholiday")?.minutes).toBe(60);
+  });
+
+  it("keeps actual premium minutes across daylight-saving transitions", () => {
+    const spring = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-03-29",
+        startTime: "00:00",
+        endTime: "06:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      }),
+      profile,
+    );
+    const autumn = calculateShiftPremiumBreakdown(
+      shift({
+        date: "2026-10-25",
+        startTime: "00:00",
+        endTime: "06:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      }),
+      profile,
+    );
+
+    expect(spring.premiumLines.find((line) => line.key === "night")?.minutes).toBe(300);
+    expect(autumn.premiumLines.find((line) => line.key === "night")?.minutes).toBe(420);
+  });
+
+  it("prorates salary and applies detected or manually confirmed allowances", () => {
+    const withoutDecision = calculateMonthlyPayEstimate("2026-07", [shift()], profile, null);
+    const withDecision = calculateMonthlyPayEstimate("2026-07", [shift()], profile, {
+      month: "2026-07",
+      allowanceStatus: "ALTERNATING_MONTHLY",
+      revision: 1,
+      confirmedAt: "2026-07-01T00:00:00.000Z",
+      updatedAt: "2026-07-01T00:00:00.000Z",
+    });
+    expect(withoutDecision.personalBaseAmount).toBe(2037.79);
+    expect(withoutDecision.allowanceAmount).toBe(0);
+    expect(withoutDecision.tvoedAllowanceAmount).toBe(12.5);
+    expect(withoutDecision.careAllowanceAmount).toBe(70.91);
+    expect(withDecision.allowanceAmount).toBe(125);
+    expect(withDecision.estimatedGrossAmount).toBe(
+      Math.round(
+        (withDecision.personalBaseAmount! +
+          withDecision.timePremiumAmount +
+          withDecision.overtimeAmount +
+          withDecision.allowanceAmount +
+          withDecision.tvoedAllowanceAmount +
+          withDecision.careAllowanceAmount) *
+          100,
+      ) / 100,
+    );
+  });
+
+  it("uses the pre-July-2025 shift allowance amounts for historical months", () => {
+    const mayShift = shift({
+      date: "2025-05-05",
+      type: "DAY",
+      startTime: "08:00",
+      endTime: "16:00",
+      breakMinutes: 0,
+      overtimeMinutes: 0,
+    });
+    const allowanceFor = (
+      allowanceStatus:
+        "SHIFT_MONTHLY" | "SHIFT_HOURLY" | "ALTERNATING_MONTHLY" | "ALTERNATING_HOURLY",
+    ) =>
+      calculateMonthlyPayEstimate("2025-05", [mayShift], profile, {
+        month: "2025-05",
+        allowanceStatus,
+        revision: 1,
+        confirmedAt: "2025-05-01T00:00:00.000Z",
+        updatedAt: "2025-05-01T00:00:00.000Z",
+      }).allowanceAmount;
+
+    expect(allowanceFor("SHIFT_MONTHLY")).toBe(20);
+    expect(allowanceFor("ALTERNATING_MONTHLY")).toBe(77.5);
+    expect(allowanceFor("SHIFT_HOURLY")).toBe(1.92);
+    expect(allowanceFor("ALTERNATING_HOURLY")).toBe(7.44);
+  });
+
+  it("uses the Baden-Württemberg TVöD-P allowance", () => {
+    const result = calculateMonthlyPayEstimate(
+      "2026-07",
+      [shift()],
+      { ...profile, federalState: "BW" },
+      null,
+    );
+
+    expect(result.tvoedAllowanceAmount).toBe(17.5);
+  });
+
+  it("detects shift and alternating-shift patterns", () => {
+    const result = assessTvoedPattern(
+      [
+        shift({ id: "1", date: "2026-07-01", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+        shift({ id: "2", date: "2026-07-02", type: "LATE", startTime: "13:18", endTime: "21:30" }),
+        shift({ id: "3", date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+        shift({ id: "4", date: "2026-07-04", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+        shift({ id: "5", date: "2026-07-05", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+        shift({ id: "6", date: "2026-07-06", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      ],
+      permanentRoundTheClock,
+    );
+    expect(result.shiftWork).toBe("DETECTED");
+    expect(result.alternatingShiftWork).toBe("DETECTED");
+    expect(result.suggestedAllowance).toBe("ALTERNATING_MONTHLY");
+  });
+
+  it("recognizes tariff night work even when the shift starts before 21:00", () => {
+    const result = assessTvoedPattern(
+      [
+        shift({
+          id: "1",
+          date: "2026-07-01",
+          type: "LATE",
+          startTime: "19:00",
+          endTime: "23:00",
+          breakMinutes: 0,
+        }),
+        shift({ id: "2", date: "2026-07-02", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+        shift({ id: "3", date: "2026-07-03", type: "DAY", startTime: "12:00", endTime: "20:00" }),
+        shift({
+          id: "4",
+          date: "2026-07-04",
+          type: "LATE",
+          startTime: "19:00",
+          endTime: "23:00",
+          breakMinutes: 0,
+        }),
+        shift({ id: "5", date: "2026-07-05", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+        shift({
+          id: "6",
+          date: "2026-07-06",
+          type: "LATE",
+          startTime: "19:00",
+          endTime: "23:00",
+          breakMinutes: 0,
+        }),
+      ],
+      permanentRoundTheClock,
+    );
+    expect(result.alternatingShiftWork).toBe("DETECTED");
+  });
+
+  it("does not classify one isolated night shift as constant alternating-shift work", () => {
+    const result = assessTvoedPattern([
+      shift({ id: "1", date: "2026-07-01", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+      shift({ id: "2", date: "2026-07-02", type: "LATE", startTime: "13:18", endTime: "21:30" }),
+      shift({ id: "3", date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      shift({ id: "4", date: "2026-07-04", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+    ]);
+
+    expect(result.alternatingShiftWork).toBe("REVIEW");
+    expect(result.suggestedAllowance).toBe("NONE");
+    expect(result.requiresConfirmation).toBe(true);
+  });
+
+  it("uses the previous month to recognize a rotation across a month boundary", () => {
+    const currentShifts = [
+      shift({
+        id: "current-1",
+        date: "2026-07-01",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+      }),
+      shift({
+        id: "current-2",
+        date: "2026-07-03",
+        type: "EARLY",
+        startTime: "06:00",
+        endTime: "14:00",
+      }),
+    ];
+    const assessmentShifts = [
+      shift({
+        id: "previous-1",
+        date: "2026-06-27",
+        type: "EARLY",
+        startTime: "06:00",
+        endTime: "14:00",
+      }),
+      shift({
+        id: "previous-2",
+        date: "2026-06-29",
+        type: "LATE",
+        startTime: "13:18",
+        endTime: "21:30",
+      }),
+      ...currentShifts,
+      shift({
+        id: "current-3",
+        date: "2026-07-08",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+      }),
+      shift({
+        id: "current-4",
+        date: "2026-07-12",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+      }),
+    ];
+
+    const result = calculateMonthlyPayEstimate(
+      "2026-07",
+      currentShifts,
+      profile,
+      null,
+      assessmentShifts,
+      permanentRoundTheClock,
+    );
+
+    expect(result.assessment.alternatingShiftWork).toBe("DETECTED");
+    expect(result.assessment.suggestedAllowance).toBe("ALTERNATING_MONTHLY");
+  });
+
+  it("does not infer 24/7 coverage or permanent assignment from calendar data", () => {
+    const result = assessTvoedPattern([
+      shift({ id: "1", date: "2026-07-01", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+      shift({ id: "2", date: "2026-07-02", type: "LATE", startTime: "13:18", endTime: "21:30" }),
+      shift({ id: "3", date: "2026-07-03", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      shift({ id: "4", date: "2026-07-08", type: "EARLY", startTime: "06:00", endTime: "14:00" }),
+      shift({ id: "5", date: "2026-07-10", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+      shift({ id: "6", date: "2026-07-17", type: "NIGHT", startTime: "21:00", endTime: "07:00" }),
+    ]);
+
+    expect(result.alternatingShiftWork).toBe("REVIEW");
+    expect(result.suggestedAllowance).toBe("NONE");
+    expect(result.requiresConfirmation).toBe(true);
+    expect(result.criteria.find((item) => item.key === "AROUND_THE_CLOCK")?.state).toBe("OPEN");
+  });
+});
+
+describe("existing Preview P5/P6 support survives the return", () => {
+  const resolver = createRuleResolver(
+    {
+      tariff: [generation5TariffValue as RuleTariffPackage],
+      legal: BUNDLED_LEGAL_RULES,
+      holiday: BUNDLED_HOLIDAY_RULES,
+    },
+    {
+      tariff: "tvoed-vka-bt-k",
+      legal: LEGACY_RULE_PACKAGE_IDS.legal,
+      holiday: LEGACY_RULE_PACKAGE_IDS.holiday,
+    },
+  );
+  it.each([
+    ["P5", 2907.18, "BT_K", 2310],
+    ["P6", 3012.49, "BT_K", 2310],
+    ["P5", 2907.18, "BT_B", 2340],
+    ["P6", 3012.49, "BT_B", 2340],
+  ] as const)("keeps %s step 1 available in %s", (group, amount, sector, weeklyMinutes) => {
+    const current: UserProfile = {
+      ...profile,
+      weeklyMinutes,
+      tariff: {
+        payGroup: group,
+        payLevel: 1,
+        sector,
+        tariffRegion: "OTHER",
+        fullTimeWeeklyMinutes: weeklyMinutes,
+      },
+    };
+    const result = calculateMonthlyPayEstimate(
+      "2026-10",
+      [],
+      current,
+      null,
+      undefined,
+      undefined,
+      resolver,
+    );
+    expect(result.available).toBe(true);
+    expect(result.personalBaseAmount).toBe(amount);
+  });
+  it("does not turn a missing older P5 cell into a zero salary", () => {
+    const current: UserProfile = {
+      ...profile,
+      tariff: { ...profile.tariff!, payGroup: "P5", payLevel: 1 },
+    };
+    const result = calculateMonthlyPayEstimate(
+      "2026-10",
+      [],
+      current,
+      null,
+      undefined,
+      undefined,
+      candidateResolver,
+    );
+    expect(result.available).toBe(false);
+    expect(result.estimatedGrossAmount).toBeNull();
+  });
+});

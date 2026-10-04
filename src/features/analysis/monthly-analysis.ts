@@ -7,7 +7,7 @@ import type {
   TvoedWorkPatternSettings,
   UserProfile,
 } from "@/domain/types";
-import { calculateMonthlyPayEstimate } from "@/engine/pay";
+import { calculateMonthlyPayEstimate } from "@/engine/simple-pay";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import {
   selectAllowanceShifts,

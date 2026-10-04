@@ -19,7 +19,7 @@ import {
 } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
-import { calculateMonthlyTvoedAssessment } from "@/engine/pay";
+import { calculateMonthlyTvoedAssessment } from "@/engine/simple-pay";
 import {
   selectAllowanceShifts,
   selectMonthlyAnalysisEntries,
