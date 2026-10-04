@@ -1,3 +1,4 @@
+import { createProfilePorts } from "./create-profile-ports";
 import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { PflegeShiftPorts } from "@/application/pflegeshift-ports";
@@ -7,13 +8,11 @@ import {
   listCalendarEntries,
   listMonthlyTariffDecisions,
   listTemplates,
-  loadProfile,
   loadTvoedWorkPatternSettings,
   restoreCalendarEntry,
   restoreTemplate,
   saveAppointment,
   saveMonthlyTariffDecision,
-  saveProfile,
   saveShift,
   saveTemplate,
   saveTvoedWorkPatternSettings,
@@ -28,10 +27,11 @@ import {
 } from "@/infrastructure/notifications/entry-notifications";
 
 export function createPflegeShiftPorts(db: SQLiteDatabase): PflegeShiftPorts {
+  const profilePorts = createProfilePorts(db);
   return {
+    ...profilePorts,
     repository: {
-      loadProfile: () => loadProfile(db),
-      saveProfile: (input) => saveProfile(db, input),
+      ...profilePorts.repository,
       listTemplates: () => listTemplates(db),
       saveTemplate: (input) => saveTemplate(db, input),
       deleteTemplate: (id, expectedRevision) => deleteTemplate(db, id, expectedRevision),

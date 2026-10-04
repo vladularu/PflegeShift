@@ -93,7 +93,82 @@ const diagnostics: PflegeShiftDiagnosticsPort = {
   record: jest.fn(),
 };
 const ports: PflegeShiftPorts = {
+  training: {
+    loadSnapshot: jest.fn(async () => ({ profiles: [], shifts: [] })),
+    saveProfile: jest.fn(async () => {
+      throw new Error("Unexpected training save");
+    }),
+    saveShift: jest.fn(async () => {
+      throw new Error("Unexpected training shift save");
+    }),
+  },
   repository,
+  remuneration: {
+    saveDrkEmployeeMonthConfirmation: jest.fn(async () => {
+      throw new Error("Unexpected DRK month confirmation save");
+    }),
+    saveDrkTrainingMonthConfirmation: jest.fn(async () => {
+      throw new Error("Unexpected DRK training month confirmation save");
+    }),
+    saveCaritasMonthFacts: jest.fn(async () => {
+      throw new Error("Unexpected Caritas month facts save");
+    }),
+    saveTvoedAnnexAMonthConfirmation: jest.fn(async () => {
+      throw new Error("Unexpected TVöD month confirmation save");
+    }),
+    saveTvoedAnnexAPremiumFacts: jest.fn(async () => {
+      throw new Error("Unexpected TVöD premium facts save");
+    }),
+    saveTvoedSueMonthConfirmation: jest.fn(async () => {
+      throw new Error("Unexpected SuE month confirmation save");
+    }),
+    saveTvoedSueAllowanceConfirmation: jest.fn(async () => {
+      throw new Error("Unexpected SuE allowance confirmation save");
+    }),
+    saveTvlShiftWork: jest.fn(async () => {
+      throw new Error("Unexpected TV-L save");
+    }),
+    saveTariffAnnualClaim: jest.fn(async () => {
+      throw new Error("Unexpected tariff annual claim save");
+    }),
+    revokeTariffAnnualClaim: jest.fn(async () => {
+      throw new Error("Unexpected tariff annual claim revoke");
+    }),
+    saveActualAnnualPayment: jest.fn(async () => {
+      throw new Error("Unexpected annual payment save");
+    }),
+    revokeActualAnnualPayment: jest.fn(async () => {
+      throw new Error("Unexpected annual payment revoke");
+    }),
+    savePaidAbsence: jest.fn(async () => {
+      throw new Error("Unexpected paid absence save");
+    }),
+    loadSnapshot: jest.fn(async () => ({
+      drkEmployeeMonthConfirmations: [],
+      drkTrainingMonthConfirmations: [],
+      caritasMonthFacts: [],
+      tvoedAnnexAMonthConfirmations: [],
+      tvoedAnnexAPremiumFacts: [],
+      tvoedSueMonthConfirmations: [],
+      tvoedSueAllowanceConfirmations: [],
+      tvlShiftWork: [],
+      profiles: [],
+      allowanceDecisions: [],
+      overtimeAllocations: [],
+      paidAbsences: [],
+      actualAnnualPayments: [],
+      tariffAnnualClaims: [],
+    })),
+    saveOvertimeAllocation: jest.fn(async () => {
+      throw new Error("Unexpected overtime save");
+    }),
+    saveProfile: jest.fn(async () => {
+      throw new Error("Unexpected remuneration save");
+    }),
+    saveAllowanceDecisions: jest.fn(async () => {
+      throw new Error("Unexpected allowance save");
+    }),
+  },
   notifications,
   diagnostics,
   devTools: {
