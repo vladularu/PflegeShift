@@ -1,0 +1,3592 @@
+{
+  "schemaVersion": 1,
+  "originMaster": "2c2462b6bc7039316decc1d7c14615cccc1e4c1e",
+  "purpose": "Preserve existing source metadata, stable identifiers and independently delivered rate and annual structures; no pay tables.",
+  "tracks": {
+    "avr-caritas-p-bayern/2025-07-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-bayern-2025",
+          "title": "Caritas Regionalkommission Bayern, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Bayern/2025-06-26_RKBayern_Beschluss_allgemeineTarifrunde_Teil1_gez.pdf",
+          "documentDate": "2025-06-26",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "23c50f087481a0d97ca59a4758100c4eefef6a24d94a9412c360917fc219cf17"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-factsheets-2025",
+          "title": "Caritas-Dienstgeber, Faktenblätter Vergütung Regionen West 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "Stand Juli 2025: P7-KH (Anlage 31) und P6-AH (Anlage 32)",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        },
+        {
+          "id": "caritas-dcv-premiums-2025",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2025",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+          "documentDate": "2025-09-03",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2025",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2025, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-facts-2025",
+          "title": "Caritas-Dienstgeber: westliche Jahreszahlung, Faktenblätter Juli 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "P4/P6/P7/P8 86 Prozent; P9/P10/P11/P12 76 Prozent; abweichende P11-KH-Beschriftung siehe Quellenbeleg",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-bayern-31-2025-07-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "BAYERN",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        },
+        {
+          "id": "caritas-bayern-32-2025-07-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "BAYERN",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|BAYERN|2025-07-01|2026-01-31": "caritas-bayern-care-3-31-2025-07-01",
+        "SECTION_12_4|ANLAGE_31|BAYERN|2025-07-01|2026-01-31": "caritas-bayern-care-4-31-2025-07-01",
+        "SECTION_12_3|ANLAGE_32|BAYERN|2025-07-01|2026-01-31": "caritas-bayern-care-3-32-2025-07-01",
+        "SECTION_12_4|ANLAGE_32|BAYERN|2025-07-01|2026-01-31": "caritas-bayern-care-4-32-2025-07-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-bayern-premium-31-2025-07-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "BAYERN",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-bayern-premium-31-2026-01-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "BAYERN",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-bayern-premium-32-2025-07-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "BAYERN",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-bayern-premium-32-2026-01-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "BAYERN",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-bayern-2025-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "BAYERN",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BAYERN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bayern-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-bayern-2025-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "BAYERN",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BAYERN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bayern-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-bayern-2025-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "BAYERN",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BAYERN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bayern-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-bayern-2025-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "BAYERN",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BAYERN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bayern-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-bayern/2026-02-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-bayern-2025",
+          "title": "Caritas Regionalkommission Bayern, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Bayern/2025-06-26_RKBayern_Beschluss_allgemeineTarifrunde_Teil1_gez.pdf",
+          "documentDate": "2025-06-26",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "23c50f087481a0d97ca59a4758100c4eefef6a24d94a9412c360917fc219cf17"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-hospital-time-2026",
+          "title": "Caritas-Dienstgeber, P7 Krankenhaus Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P7-KH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 31, 38,5 h bzw. 39 h in RK BW und RK Mitte",
+          "sha256": "6ed4d632987966d783dd4f9128bd24ca9fd911f7c084545fe748fdc1da020f49"
+        },
+        {
+          "id": "caritas-dgs-west-care-time-2026",
+          "title": "Caritas-Dienstgeber, P6 Altenhilfe Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 32, 39 h",
+          "sha256": "76f9728de35bd5b50ac68ee34866c13f13f97d2337438b2b48858ca35b65ebfd"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2026",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2026, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p6-2026",
+          "title": "Caritas-Dienstgeber: P6 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 86 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "1d5d55787e2a94af24b48371d744669411407395b5ebafa89782b58dbbe0b1ca"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p12-2026",
+          "title": "Caritas-Dienstgeber: P12 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P12-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 76 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "936b9abdbed1d15c645dde2934eaf3b75bbbcf67eaadec8508f0aa13255c6428"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-bayern-31-2026-02-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "BAYERN",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-dgs-west-hospital-time-2026"]
+        },
+        {
+          "id": "caritas-bayern-32-2026-02-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "BAYERN",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-care-time-2026"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|BAYERN|2026-02-01|2026-12-31": "caritas-bayern-care-3-31-2026-02-01",
+        "SECTION_12_4|ANLAGE_31|BAYERN|2026-02-01|2026-12-31": "caritas-bayern-care-4-31-2026-02-01",
+        "SECTION_12_3|ANLAGE_32|BAYERN|2026-02-01|2026-12-31": "caritas-bayern-care-3-32-2026-02-01",
+        "SECTION_12_4|ANLAGE_32|BAYERN|2026-02-01|2026-12-31": "caritas-bayern-care-4-32-2026-02-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-bayern-premium-31-2026-02-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "BAYERN",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-bayern-premium-32-2026-02-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "BAYERN",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-bayern-2026-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "BAYERN",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BAYERN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bayern-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-bayern-2026-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "BAYERN",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BAYERN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bayern-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-bayern-2026-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "BAYERN",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BAYERN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bayern-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-bayern-2026-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "BAYERN",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BAYERN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bayern-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-bw/2025-07-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-bw-2025",
+          "title": "Caritas Regionalkommission Baden-Württemberg, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_BW/2025-06-24_Beschluss_RKBW_Tarifrunde_2025_Teil1.pdf",
+          "documentDate": "2025-06-24",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "c39245927fbc96e7c602851b652f2ab2305543058a2bff9ac29a094bf203a18b"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-factsheets-2025",
+          "title": "Caritas-Dienstgeber, Faktenblätter Vergütung Regionen West 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "Stand Juli 2025: P7-KH (Anlage 31) und P6-AH (Anlage 32)",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        },
+        {
+          "id": "caritas-dcv-premiums-2025",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2025",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+          "documentDate": "2025-09-03",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2025",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2025, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-facts-2025",
+          "title": "Caritas-Dienstgeber: westliche Jahreszahlung, Faktenblätter Juli 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "P4/P6/P7/P8 86 Prozent; P9/P10/P11/P12 76 Prozent; abweichende P11-KH-Beschriftung siehe Quellenbeleg",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-bw-31-2025-07-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "BW",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        },
+        {
+          "id": "caritas-bw-32-2025-07-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "BW",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|BW|2025-07-01|2026-01-31": "caritas-bw-care-3-31-2025-07-01",
+        "SECTION_12_4|ANLAGE_31|BW|2025-07-01|2026-01-31": "caritas-bw-care-4-31-2025-07-01",
+        "SECTION_12_3|ANLAGE_32|BW|2025-07-01|2026-01-31": "caritas-bw-care-3-32-2025-07-01",
+        "SECTION_12_4|ANLAGE_32|BW|2025-07-01|2026-01-31": "caritas-bw-care-4-32-2025-07-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-bw-premium-31-2025-07-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "BW",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-bw-premium-31-2026-01-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "BW",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-bw-premium-32-2025-07-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "BW",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-bw-premium-32-2026-01-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "BW",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-bw-2025-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "BW",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bw-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-bw-2025-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "BW",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bw-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-bw-2025-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "BW",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bw-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-bw-2025-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "BW",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bw-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-bw/2026-02-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-bw-2025",
+          "title": "Caritas Regionalkommission Baden-Württemberg, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_BW/2025-06-24_Beschluss_RKBW_Tarifrunde_2025_Teil1.pdf",
+          "documentDate": "2025-06-24",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "c39245927fbc96e7c602851b652f2ab2305543058a2bff9ac29a094bf203a18b"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-hospital-time-2026",
+          "title": "Caritas-Dienstgeber, P7 Krankenhaus Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P7-KH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 31, 38,5 h bzw. 39 h in RK BW und RK Mitte",
+          "sha256": "6ed4d632987966d783dd4f9128bd24ca9fd911f7c084545fe748fdc1da020f49"
+        },
+        {
+          "id": "caritas-dgs-west-care-time-2026",
+          "title": "Caritas-Dienstgeber, P6 Altenhilfe Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 32, 39 h",
+          "sha256": "76f9728de35bd5b50ac68ee34866c13f13f97d2337438b2b48858ca35b65ebfd"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2026",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2026, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p6-2026",
+          "title": "Caritas-Dienstgeber: P6 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 86 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "1d5d55787e2a94af24b48371d744669411407395b5ebafa89782b58dbbe0b1ca"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p12-2026",
+          "title": "Caritas-Dienstgeber: P12 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P12-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 76 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "936b9abdbed1d15c645dde2934eaf3b75bbbcf67eaadec8508f0aa13255c6428"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-bw-31-2026-02-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "BW",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-hospital-time-2026"]
+        },
+        {
+          "id": "caritas-bw-32-2026-02-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "BW",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-care-time-2026"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|BW|2026-02-01|2026-12-31": "caritas-bw-care-3-31-2026-02-01",
+        "SECTION_12_4|ANLAGE_31|BW|2026-02-01|2026-12-31": "caritas-bw-care-4-31-2026-02-01",
+        "SECTION_12_3|ANLAGE_32|BW|2026-02-01|2026-12-31": "caritas-bw-care-3-32-2026-02-01",
+        "SECTION_12_4|ANLAGE_32|BW|2026-02-01|2026-12-31": "caritas-bw-care-4-32-2026-02-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-bw-premium-31-2026-02-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "BW",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-bw-premium-32-2026-02-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "BW",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-bw-2026-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "BW",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bw-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-bw-2026-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "BW",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bw-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-bw-2026-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "BW",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bw-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-bw-2026-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "BW",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "BW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-bw-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-mitte/2025-07-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-mitte-2025",
+          "title": "Caritas Regionalkommission Mitte, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Mitte/2025-06-26_Beschluss_RKMitte_Tarifrunde_2025gez.pdf",
+          "documentDate": "2025-06-26",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "98757c00930c91ac2d22a99169f094d014a4b7be903f84605469a0c311a81e42"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-factsheets-2025",
+          "title": "Caritas-Dienstgeber, Faktenblätter Vergütung Regionen West 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "Stand Juli 2025: P7-KH (Anlage 31) und P6-AH (Anlage 32)",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        },
+        {
+          "id": "caritas-dcv-premiums-2025",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2025",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+          "documentDate": "2025-09-03",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2025",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2025, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-facts-2025",
+          "title": "Caritas-Dienstgeber: westliche Jahreszahlung, Faktenblätter Juli 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "P4/P6/P7/P8 86 Prozent; P9/P10/P11/P12 76 Prozent; abweichende P11-KH-Beschriftung siehe Quellenbeleg",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-mitte-31-2025-07-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "MITTE",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        },
+        {
+          "id": "caritas-mitte-32-2025-07-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "MITTE",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|MITTE|2025-07-01|2026-01-31": "caritas-mitte-care-3-31-2025-07-01",
+        "SECTION_12_4|ANLAGE_31|MITTE|2025-07-01|2026-01-31": "caritas-mitte-care-4-31-2025-07-01",
+        "SECTION_12_3|ANLAGE_32|MITTE|2025-07-01|2026-01-31": "caritas-mitte-care-3-32-2025-07-01",
+        "SECTION_12_4|ANLAGE_32|MITTE|2025-07-01|2026-01-31": "caritas-mitte-care-4-32-2025-07-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-mitte-premium-31-2025-07-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "MITTE",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-mitte-premium-31-2026-01-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "MITTE",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-mitte-premium-32-2025-07-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "MITTE",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-mitte-premium-32-2026-01-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "MITTE",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-mitte-2025-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "MITTE",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "MITTE",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-mitte-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-mitte-2025-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "MITTE",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "MITTE",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-mitte-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-mitte-2025-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "MITTE",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "MITTE",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-mitte-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-mitte-2025-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "MITTE",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "MITTE",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-mitte-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-mitte/2026-02-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-mitte-2025",
+          "title": "Caritas Regionalkommission Mitte, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Mitte/2025-06-26_Beschluss_RKMitte_Tarifrunde_2025gez.pdf",
+          "documentDate": "2025-06-26",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "98757c00930c91ac2d22a99169f094d014a4b7be903f84605469a0c311a81e42"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-hospital-time-2026",
+          "title": "Caritas-Dienstgeber, P7 Krankenhaus Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P7-KH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 31, 38,5 h bzw. 39 h in RK BW und RK Mitte",
+          "sha256": "6ed4d632987966d783dd4f9128bd24ca9fd911f7c084545fe748fdc1da020f49"
+        },
+        {
+          "id": "caritas-dgs-west-care-time-2026",
+          "title": "Caritas-Dienstgeber, P6 Altenhilfe Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 32, 39 h",
+          "sha256": "76f9728de35bd5b50ac68ee34866c13f13f97d2337438b2b48858ca35b65ebfd"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2026",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2026, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p6-2026",
+          "title": "Caritas-Dienstgeber: P6 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 86 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "1d5d55787e2a94af24b48371d744669411407395b5ebafa89782b58dbbe0b1ca"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p12-2026",
+          "title": "Caritas-Dienstgeber: P12 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P12-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 76 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "936b9abdbed1d15c645dde2934eaf3b75bbbcf67eaadec8508f0aa13255c6428"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-mitte-31-2026-02-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "MITTE",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-hospital-time-2026"]
+        },
+        {
+          "id": "caritas-mitte-32-2026-02-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "MITTE",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-care-time-2026"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|MITTE|2026-02-01|2026-12-31": "caritas-mitte-care-3-31-2026-02-01",
+        "SECTION_12_4|ANLAGE_31|MITTE|2026-02-01|2026-12-31": "caritas-mitte-care-4-31-2026-02-01",
+        "SECTION_12_3|ANLAGE_32|MITTE|2026-02-01|2026-12-31": "caritas-mitte-care-3-32-2026-02-01",
+        "SECTION_12_4|ANLAGE_32|MITTE|2026-02-01|2026-12-31": "caritas-mitte-care-4-32-2026-02-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-mitte-premium-31-2026-02-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "MITTE",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-mitte-premium-32-2026-02-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "MITTE",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-mitte-2026-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "MITTE",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "MITTE",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-mitte-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-mitte-2026-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "MITTE",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "MITTE",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-mitte-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-mitte-2026-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "MITTE",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "MITTE",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-mitte-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-mitte-2026-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "MITTE",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "MITTE",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-mitte-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-nord/2025-07-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-nord-2025",
+          "title": "Caritas Regionalkommission Nord, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Nord/2025-06-18-beschluss-tarifrunde_2025-teil1-rk-nord.pdf",
+          "documentDate": "2025-06-18",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "db5311d7638a6db584b06d4e039231c9fe7b945d86328a9bdf40f4fdd56cbbbc"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-factsheets-2025",
+          "title": "Caritas-Dienstgeber, Faktenblätter Vergütung Regionen West 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "Stand Juli 2025: P7-KH (Anlage 31) und P6-AH (Anlage 32)",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        },
+        {
+          "id": "caritas-dcv-premiums-2025",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2025",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+          "documentDate": "2025-09-03",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2025",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2025, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-facts-2025",
+          "title": "Caritas-Dienstgeber: westliche Jahreszahlung, Faktenblätter Juli 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "P4/P6/P7/P8 86 Prozent; P9/P10/P11/P12 76 Prozent; abweichende P11-KH-Beschriftung siehe Quellenbeleg",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-nord-31-2025-07-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "NORD",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        },
+        {
+          "id": "caritas-nord-32-2025-07-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "NORD",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|NORD|2025-07-01|2026-01-31": "caritas-nord-care-3-31-2025-07-01",
+        "SECTION_12_4|ANLAGE_31|NORD|2025-07-01|2026-01-31": "caritas-nord-care-4-31-2025-07-01",
+        "SECTION_12_3|ANLAGE_32|NORD|2025-07-01|2026-01-31": "caritas-nord-care-3-32-2025-07-01",
+        "SECTION_12_4|ANLAGE_32|NORD|2025-07-01|2026-01-31": "caritas-nord-care-4-32-2025-07-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-nord-premium-31-2025-07-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "NORD",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-nord-premium-31-2026-01-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "NORD",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-nord-premium-32-2025-07-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "NORD",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-nord-premium-32-2026-01-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "NORD",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-nord-2025-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "NORD",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NORD",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nord-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-nord-2025-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "NORD",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NORD",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nord-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-nord-2025-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "NORD",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NORD",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nord-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-nord-2025-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "NORD",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NORD",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nord-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-nord/2026-02-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-nord-2025",
+          "title": "Caritas Regionalkommission Nord, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Nord/2025-06-18-beschluss-tarifrunde_2025-teil1-rk-nord.pdf",
+          "documentDate": "2025-06-18",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "db5311d7638a6db584b06d4e039231c9fe7b945d86328a9bdf40f4fdd56cbbbc"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-hospital-time-2026",
+          "title": "Caritas-Dienstgeber, P7 Krankenhaus Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P7-KH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 31, 38,5 h bzw. 39 h in RK BW und RK Mitte",
+          "sha256": "6ed4d632987966d783dd4f9128bd24ca9fd911f7c084545fe748fdc1da020f49"
+        },
+        {
+          "id": "caritas-dgs-west-care-time-2026",
+          "title": "Caritas-Dienstgeber, P6 Altenhilfe Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 32, 39 h",
+          "sha256": "76f9728de35bd5b50ac68ee34866c13f13f97d2337438b2b48858ca35b65ebfd"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2026",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2026, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p6-2026",
+          "title": "Caritas-Dienstgeber: P6 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 86 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "1d5d55787e2a94af24b48371d744669411407395b5ebafa89782b58dbbe0b1ca"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p12-2026",
+          "title": "Caritas-Dienstgeber: P12 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P12-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 76 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "936b9abdbed1d15c645dde2934eaf3b75bbbcf67eaadec8508f0aa13255c6428"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-nord-31-2026-02-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "NORD",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-dgs-west-hospital-time-2026"]
+        },
+        {
+          "id": "caritas-nord-32-2026-02-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "NORD",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-care-time-2026"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|NORD|2026-02-01|2026-12-31": "caritas-nord-care-3-31-2026-02-01",
+        "SECTION_12_4|ANLAGE_31|NORD|2026-02-01|2026-12-31": "caritas-nord-care-4-31-2026-02-01",
+        "SECTION_12_3|ANLAGE_32|NORD|2026-02-01|2026-12-31": "caritas-nord-care-3-32-2026-02-01",
+        "SECTION_12_4|ANLAGE_32|NORD|2026-02-01|2026-12-31": "caritas-nord-care-4-32-2026-02-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-nord-premium-31-2026-02-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "NORD",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-nord-premium-32-2026-02-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "NORD",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-nord-2026-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "NORD",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NORD",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nord-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-nord-2026-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "NORD",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NORD",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nord-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-nord-2026-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "NORD",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NORD",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nord-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-nord-2026-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "NORD",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NORD",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nord-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-nrw/2025-07-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-nrw-2025",
+          "title": "Caritas Regionalkommission Nordrhein-Westfalen, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_NRW/2025-06-27-beschluss-tarifrunde_2025-rk-nrw.pdf",
+          "documentDate": "2025-06-27",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "14af8cb08fd8e9b4605925bfe0e16983c9476a00829b5f1d8101d227f2ad913c"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-factsheets-2025",
+          "title": "Caritas-Dienstgeber, Faktenblätter Vergütung Regionen West 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "Stand Juli 2025: P7-KH (Anlage 31) und P6-AH (Anlage 32)",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        },
+        {
+          "id": "caritas-dcv-premiums-2025",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2025",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+          "documentDate": "2025-09-03",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2025",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2025, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-facts-2025",
+          "title": "Caritas-Dienstgeber: westliche Jahreszahlung, Faktenblätter Juli 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Regionen_West.zip",
+          "documentDate": "2025-07-01",
+          "section": "P4/P6/P7/P8 86 Prozent; P9/P10/P11/P12 76 Prozent; abweichende P11-KH-Beschriftung siehe Quellenbeleg",
+          "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-nrw-31-2025-07-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "NRW",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        },
+        {
+          "id": "caritas-nrw-32-2025-07-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "NRW",
+          "validFrom": "2025-07-01",
+          "validTo": "2026-01-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-factsheets-2025"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|NRW|2025-07-01|2026-01-31": "caritas-nrw-care-3-31-2025-07-01",
+        "SECTION_12_4|ANLAGE_31|NRW|2025-07-01|2026-01-31": "caritas-nrw-care-4-31-2025-07-01",
+        "SECTION_12_3|ANLAGE_32|NRW|2025-07-01|2026-01-31": "caritas-nrw-care-3-32-2025-07-01",
+        "SECTION_12_4|ANLAGE_32|NRW|2025-07-01|2026-01-31": "caritas-nrw-care-4-32-2025-07-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-nrw-premium-31-2025-07-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "NRW",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-nrw-premium-31-2026-01-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "NRW",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-nrw-premium-32-2025-07-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "NRW",
+            "validFrom": "2025-07-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-nrw-premium-32-2026-01-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "NRW",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-01-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-nrw-2025-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "NRW",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NRW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nrw-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-nrw-2025-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "NRW",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NRW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nrw-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-nrw-2025-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "NRW",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NRW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nrw-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-nrw-2025-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "NRW",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NRW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nrw-2025",
+              "caritas-dgs-west-annual-facts-2025"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-nrw/2026-02-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-nrw-2025",
+          "title": "Caritas Regionalkommission Nordrhein-Westfalen, Tarifrunde 2025 Teil 1",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_NRW/2025-06-27-beschluss-tarifrunde_2025-rk-nrw.pdf",
+          "documentDate": "2025-06-27",
+          "section": "Übernahme der Bundesmittelwerte in gleicher Höhe und zu denselben Zeitpunkten ab 01.07.2025",
+          "sha256": "14af8cb08fd8e9b4605925bfe0e16983c9476a00829b5f1d8101d227f2ad913c"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-dgs-west-hospital-time-2026",
+          "title": "Caritas-Dienstgeber, P7 Krankenhaus Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P7-KH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 31, 38,5 h bzw. 39 h in RK BW und RK Mitte",
+          "sha256": "6ed4d632987966d783dd4f9128bd24ca9fd911f7c084545fe748fdc1da020f49"
+        },
+        {
+          "id": "caritas-dgs-west-care-time-2026",
+          "title": "Caritas-Dienstgeber, P6 Altenhilfe Regionen West 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Stand Februar 2026: Anlage 32, 39 h",
+          "sha256": "76f9728de35bd5b50ac68ee34866c13f13f97d2337438b2b48858ca35b65ebfd"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2026",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung Anspruchsjahr 2026, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Druckseiten 250/286 §12 Absatz 1 und 255-256/291-292 §16; Anmerkung zu Absatz 2: Bemessungssätze gelten seit 2020",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p6-2026",
+          "title": "Caritas-Dienstgeber: P6 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P6-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 86 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "1d5d55787e2a94af24b48371d744669411407395b5ebafa89782b58dbbe0b1ca"
+        },
+        {
+          "id": "caritas-dgs-west-annual-p12-2026",
+          "title": "Caritas-Dienstgeber: P12 Altenhilfe West, Jahreszahlung Februar 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Regionen_West/P12-AH-Faktenblatt_Verguetung_West_2026.pdf",
+          "documentDate": "2026-02-01",
+          "section": "Jahressonderzahlung 76 Prozent; Ausgabe für alle fünf westlichen Regionalkommissionen",
+          "sha256": "936b9abdbed1d15c645dde2934eaf3b75bbbcf67eaadec8508f0aa13255c6428"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-nrw-31-2026-02-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "NRW",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-dgs-west-hospital-time-2026"]
+        },
+        {
+          "id": "caritas-nrw-32-2026-02-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "NRW",
+          "validFrom": "2026-02-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-dgs-west-care-time-2026"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|NRW|2026-02-01|2026-12-31": "caritas-nrw-care-3-31-2026-02-01",
+        "SECTION_12_4|ANLAGE_31|NRW|2026-02-01|2026-12-31": "caritas-nrw-care-4-31-2026-02-01",
+        "SECTION_12_3|ANLAGE_32|NRW|2026-02-01|2026-12-31": "caritas-nrw-care-3-32-2026-02-01",
+        "SECTION_12_4|ANLAGE_32|NRW|2026-02-01|2026-12-31": "caritas-nrw-care-4-32-2026-02-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-nrw-premium-31-2026-02-01",
+            "variantId": "ANLAGE_31",
+            "regionId": "NRW",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-nrw-premium-32-2026-02-01",
+            "variantId": "ANLAGE_32",
+            "regionId": "NRW",
+            "validFrom": "2026-02-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-nrw-2026-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "NRW",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NRW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nrw-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-nrw-2026-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "NRW",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NRW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nrw-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-nrw-2026-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "NRW",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NRW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nrw-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-nrw-2026-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "NRW",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "NRW",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-bk-2025-02-corrected",
+              "caritas-rk-nrw-2025",
+              "caritas-dgs-west-annual-p6-2026",
+              "caritas-dgs-west-annual-p12-2026"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-ost/2025-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-rk-ost-2025-p",
+          "title": "Caritas RK Ost, Entgeltwerte 2025, Anlagen 31 und 32",
+          "url": "https://www.caritas.de/cms/contents/caritas.de/medien/dokumente/arbeitsrechtliche-ko/beschluesse/beschluesse-regional/2023-07-05-langfassu1/2023-07-05_langfassungeckpunktebeschlussrkostbeschlussdez.2019_werte_2025_gez.pdf?d=a&f=pdf",
+          "documentDate": "2023-07-05",
+          "section": "Anlage 31 Anhang B S. 8-9; Anlage 32 Anhang B S. 16-17; Tarifgebiet Ost und West",
+          "sha256": "ce4b2bf09fa75714c99484d45bada2eb77db2c06d3932e642677fc6c12bbaa01"
+        },
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-ost-2025-allowances",
+          "title": "Caritas Regionalkommission Ost, weitere Verguetungsbestandteile 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Ost/2025-06-26_Beschluss_Erhoehung_Werte_weitere_Verguetungsbestandteile_gez.pdf",
+          "documentDate": "2025-06-26",
+          "section": "I: Anlagen 31/32 Paragraph 6 Absaetze 5 und 6 sowie Paragraph 12 Absatz 4, Bundesmittelwerte in gleicher Hoehe zu gleichen Zeitpunkten",
+          "sha256": "6bfe23a0a45a5ee269ddd452a96ec213a07ca111dd7fc2f6b05a817db8a74993"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-rk-ost-time-2022",
+          "title": "Caritas RK Ost, Arbeitszeitregelung für Anlagen 31 und 32",
+          "url": "https://www.caritas.de/cms/contents/caritas.de/medien/dokumente/arbeitsrechtliche-ko/beschluesse/beschluesse-regional/2022-01-25-beschluss/2022_01_25_beschluss_rkost_nderung_der_anlagen_5_31bis33_redaktionell_bearbeitet_gez.pdf?d=a&f=pdf",
+          "documentDate": "2022-01-25",
+          "section": "Nr. 2 und 3: Anlage 31 ab Januar bzw. Juli 2025; Anlage 32 ab Juli 2023",
+          "sha256": "b8b3eff8f6c35445db0fc3e766bf1791b60989331d65ac4c7c37a01aefea0fcb"
+        },
+        {
+          "id": "caritas-dcv-premiums-2025",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2025",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+          "documentDate": "2025-09-03",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+        },
+        {
+          "id": "caritas-avr-jsz-2025",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung RK Ost 2025, Textstand 01.07.2025",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR-PDF_Version_2025.pdf",
+          "documentDate": "2025-07-01",
+          "section": "Anlagen 31/32 § 12 Abs. 1 und § 16; Druckseiten 264-265/301-302, § 16 Abs. 3: seit 2022 volle Sätze auf Basis der RK-Ost-West-Tabelle",
+          "sha256": "a4f8dea02fb84ba4f203a753bd362d82dec8ad8953f3befed99ac65e65ec2637"
+        },
+        {
+          "id": "caritas-dgs-ost-east-annual-facts-2025",
+          "title": "Caritas-Dienstgeber: Jahreszahlung Tarifgebiet Ost, Faktenblätter Juli 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Faktenblaetter_2025_-_Region_Ost_-_TG-Ost.zip",
+          "documentDate": "2025-07-01",
+          "section": "P6-AH und P12-AH, Seite 2: Jahressonderzahlung 86 bzw. 76 Prozent; Beispiele mit West-Jahresbasis",
+          "sha256": "33c753ebb59d25ca27d5f835792b3befbedb47d3e561fdbb8b7297e1e5e0e845"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-ost-31-ost-tarif-ost-2025-01-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "OST_TARIF_OST",
+          "validFrom": "2025-01-01",
+          "validTo": "2025-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-31-ost-tarif-west-berlin-2025-01-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "OST_TARIF_WEST_BERLIN",
+          "validFrom": "2025-01-01",
+          "validTo": "2025-06-30",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-31-ost-tarif-west-berlin-2025-07-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "OST_TARIF_WEST_BERLIN",
+          "validFrom": "2025-07-01",
+          "validTo": "2025-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-31-ost-tarif-west-hamburg-2025-01-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "OST_TARIF_WEST_HAMBURG",
+          "validFrom": "2025-01-01",
+          "validTo": "2025-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-32-ost-tarif-ost-2025-01-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "OST_TARIF_OST",
+          "validFrom": "2025-01-01",
+          "validTo": "2025-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-32-ost-tarif-west-berlin-2025-01-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "OST_TARIF_WEST_BERLIN",
+          "validFrom": "2025-01-01",
+          "validTo": "2025-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-32-ost-tarif-west-hamburg-2025-01-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "OST_TARIF_WEST_HAMBURG",
+          "validFrom": "2025-01-01",
+          "validTo": "2025-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|OST_TARIF_OST|2025-01-01|2025-12-31": "caritas-ost-ost-tarif-ost-31-care-3-2025",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_OST|2025-07-01|2025-12-31": "caritas-ost-ost-tarif-ost-31-care-4-2025-07-01",
+        "SECTION_12_3|ANLAGE_31|OST_TARIF_WEST_BERLIN|2025-01-01|2025-12-31": "caritas-ost-ost-tarif-west-berlin-31-care-3-2025",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_WEST_BERLIN|2025-07-01|2025-12-31": "caritas-ost-ost-tarif-west-berlin-31-care-4-2025-07-01",
+        "SECTION_12_3|ANLAGE_31|OST_TARIF_WEST_HAMBURG|2025-01-01|2025-12-31": "caritas-ost-ost-tarif-west-hamburg-31-care-3-2025",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_WEST_HAMBURG|2025-07-01|2025-12-31": "caritas-ost-ost-tarif-west-hamburg-31-care-4-2025-07-01",
+        "SECTION_12_3|ANLAGE_32|OST_TARIF_OST|2025-01-01|2025-12-31": "caritas-ost-ost-tarif-ost-32-care-3-2025",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_OST|2025-07-01|2025-12-31": "caritas-ost-ost-tarif-ost-32-care-4-2025-07-01",
+        "SECTION_12_3|ANLAGE_32|OST_TARIF_WEST_BERLIN|2025-01-01|2025-12-31": "caritas-ost-ost-tarif-west-berlin-32-care-3-2025",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_WEST_BERLIN|2025-07-01|2025-12-31": "caritas-ost-ost-tarif-west-berlin-32-care-4-2025-07-01",
+        "SECTION_12_3|ANLAGE_32|OST_TARIF_WEST_HAMBURG|2025-01-01|2025-12-31": "caritas-ost-ost-tarif-west-hamburg-32-care-3-2025",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_WEST_HAMBURG|2025-07-01|2025-12-31": "caritas-ost-ost-tarif-west-hamburg-32-care-4-2025-07-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-ost-premium-anlage-31-ost-tarif-ost-2025",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_OST",
+            "validFrom": "2025-01-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-31-ost-tarif-west-berlin-2025",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "validFrom": "2025-01-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-31-ost-tarif-west-hamburg-2025",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "validFrom": "2025-01-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-32-ost-tarif-ost-2025",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_OST",
+            "validFrom": "2025-01-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-32-ost-tarif-west-berlin-2025",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "validFrom": "2025-01-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-32-ost-tarif-west-hamburg-2025",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "validFrom": "2025-01-01",
+            "validTo": "2025-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2025"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-ost-tarif-ost-2025-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_OST",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "RK_OST_WEST_TABLE_2025",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-ost-2025-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_OST",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "RK_OST_WEST_TABLE_2025",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-west-berlin-2025-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_BERLIN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-west-berlin-2025-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_BERLIN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-west-hamburg-2025-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-west-hamburg-2025-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-ost-2025-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_OST",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "RK_OST_WEST_TABLE_2025",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-ost-2025-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_OST",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "RK_OST_WEST_TABLE_2025",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-west-berlin-2025-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_BERLIN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-west-berlin-2025-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_BERLIN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-west-hamburg-2025-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "entitlementYear": 2025,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-west-hamburg-2025-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "entitlementYear": 2025,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2025",
+              "caritas-rk-ost-2025-p",
+              "caritas-dgs-ost-east-annual-facts-2025"
+            ]
+          }
+        ]
+      }
+    },
+    "avr-caritas-p-ost/2026-01-draft1": {
+      "sources": [
+        {
+          "id": "caritas-rk-ost-2026-p",
+          "title": "Caritas RK Ost, Entgeltwerte 2026, Anlagen 31 und 32",
+          "url": "https://www.caritas.de/cms/contents/caritas.de/medien/dokumente/arbeitsrechtliche-ko/beschluesse/beschluesse-regional/2025-06-26-langfassu/2025-06-26_langfassungeckpunktebeschlussrkostbeschlussdez.2019_werte_2026_gez.pdf?d=a&f=pdf",
+          "documentDate": "2025-06-26",
+          "section": "Anlage 31 Anhang B S. 5; Anlage 32 Anhang B S. 9; 01.01.-31.12.2026",
+          "sha256": "2b64d9893f09df91e4daae412ec315795135c3f482e837642983ff4fb0b1a733"
+        },
+        {
+          "id": "caritas-bk-2025-02-corrected",
+          "title": "Caritas Bundeskommission, Tarifrunde 2025 Teil 1, korrigierte Fassung",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/02_BK_2025-02_Beschluss_Allgemeine_Tarifrunde_Caritas_2025_Teil_1_gezeichnet_korrigiert.pdf",
+          "documentDate": "2025-07-30",
+          "section": "A.I–IV und Tabellenanhang; P-Tabellen sowie Pflegezulage in Anlagen 31/32 ab Juli 2025 und Februar 2026",
+          "sha256": "18084ff2b4858c95bd801ffcf0c29cffb33711be710513e964850cecfe463874"
+        },
+        {
+          "id": "caritas-rk-ost-2025-allowances",
+          "title": "Caritas Regionalkommission Ost, weitere Verguetungsbestandteile 2025",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/RK_Ost/2025-06-26_Beschluss_Erhoehung_Werte_weitere_Verguetungsbestandteile_gez.pdf",
+          "documentDate": "2025-06-26",
+          "section": "I: Anlagen 31/32 Paragraph 6 Absaetze 5 und 6 sowie Paragraph 12 Absatz 4, Bundesmittelwerte in gleicher Hoehe zu gleichen Zeitpunkten",
+          "sha256": "6bfe23a0a45a5ee269ddd452a96ec213a07ca111dd7fc2f6b05a817db8a74993"
+        },
+        {
+          "id": "caritas-dg-2024-care-allowances",
+          "title": "Caritas-Dienstgeber, AVR erklärt: Zulagen als Bestandteile der Entlohnung",
+          "url": "https://caritas-dienstgeber.de/detail-news/avr-erklaert-teil-5-zulagen-als-bestandteile-der-entlohnung/",
+          "documentDate": "2024-12-17",
+          "section": "III und V: § 12 Abs. 3 Anlagen 31/32; 25 Euro in den Regionen außer Baden-Württemberg, dort 35 Euro",
+          "sha256": "6740550d20915b03c4eef4f26730dd9ec6a1ad9372f40e5abbc17527455030f4"
+        },
+        {
+          "id": "pflegeshift-tariff-assessment-v1",
+          "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+          "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+          "documentDate": "2026-08-28",
+          "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+          "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+        },
+        {
+          "id": "caritas-rk-ost-time-2022",
+          "title": "Caritas RK Ost, Arbeitszeitregelung für Anlagen 31 und 32",
+          "url": "https://www.caritas.de/cms/contents/caritas.de/medien/dokumente/arbeitsrechtliche-ko/beschluesse/beschluesse-regional/2022-01-25-beschluss/2022_01_25_beschluss_rkost_nderung_der_anlagen_5_31bis33_redaktionell_bearbeitet_gez.pdf?d=a&f=pdf",
+          "documentDate": "2022-01-25",
+          "section": "Nr. 2 und 3: Anlage 31 ab Januar bzw. Juli 2025; Anlage 32 ab Juli 2023",
+          "sha256": "b8b3eff8f6c35445db0fc3e766bf1791b60989331d65ac4c7c37a01aefea0fcb"
+        },
+        {
+          "id": "caritas-dgs-ost-hospital-time-2026",
+          "title": "Caritas-Dienstgeber, P11 Krankenhaus Region Ost 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Region_Ost/P11-KH-Faktenblatt_Verguetung_Ost_2026.pdf",
+          "documentDate": "2026-01-01",
+          "section": "Stand Januar 2026: Anlage 31 im Tarifgebiet Ost, 38,5 h",
+          "sha256": "a5616c3563657de77c4dad24c8f14861ad70a3537a5c5194d773848e8ba22c9b"
+        },
+        {
+          "id": "caritas-dcv-premiums-2026",
+          "title": "DCV Arbeits- und Tarifrecht, AVR-Zeitzuschlagstabellen 2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+          "documentDate": "2025-10-31",
+          "section": "Seiten 8-10, Anlagen 31 und 32, § 6 Abs. 1",
+          "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
+        },
+        {
+          "id": "caritas-avr-jsz-2026",
+          "title": "AVR-Anlagen 31/32: Jahreszahlung RK Ost 2026, Textstand 19.03.2026",
+          "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR_Online-PDF_2026_final.pdf",
+          "documentDate": "2026-03-19",
+          "section": "Anlagen 31/32 § 12 Abs. 1 und § 16; Druckseiten 255-256/291-292, Absatz 3 weggefallen",
+          "sha256": "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7"
+        },
+        {
+          "id": "caritas-bk-2025-03-jsz-ost",
+          "title": "Bundeskommission 09.10.2025: Wegfall der RK-Ost-Sonderregel für die Jahreszahlung ab 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Beschluesse/BK/BK_2025-03_Beschluss_Berechnung_JSZ_und_Weihnachtsgeld_fuer_die_RK_Ost_gez.pdf",
+          "documentDate": "2025-10-09",
+          "section": "A.II und A.IV, Seite 1: § 16 Abs. 3 Anlagen 31/32 entfällt zum 01.01.2026; B, Seite 2: Vergütungsangleichung",
+          "sha256": "cb16c87710b42662d49e59666cee82c74d406f2da7569b6cfc7b9b9937c596c3"
+        },
+        {
+          "id": "caritas-dgs-ost-annual-p6-2026",
+          "title": "Caritas-Dienstgeber: P6 Altenhilfe Ost, Jahreszahlung 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Region_Ost/P6-AH-Faktenblatt_Verguetung_Ost_2026.pdf",
+          "documentDate": "2026-01-01",
+          "section": "Jahressonderzahlung 86 Prozent; Ausgabe Region Ost, Stand Januar 2026",
+          "sha256": "b1fab89be20d3c0d6109b3447bab8bb9be9b4f47f14314e288803143caf90da5"
+        },
+        {
+          "id": "caritas-dgs-ost-annual-p12-2026",
+          "title": "Caritas-Dienstgeber: P12 Altenhilfe Ost, Jahreszahlung 2026",
+          "url": "https://caritas-dienstgeber.de/fileadmin/Faktenblaetter/Region_Ost/P12-AH-Faktenblatt_Verguetung_Ost_2026.pdf",
+          "documentDate": "2026-01-01",
+          "section": "Jahressonderzahlung 76 Prozent; Ausgabe Region Ost, Stand Januar 2026",
+          "sha256": "35c49650f31b590bbf1fec1c5505c589c3c7aa05f8ae120b0c77c3443824f849"
+        }
+      ],
+      "employmentWorkingTimeRules": [
+        {
+          "id": "caritas-ost-31-ost-tarif-ost-2026-01-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "OST_TARIF_OST",
+          "validFrom": "2026-01-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-rk-ost-time-2022", "caritas-dgs-ost-hospital-time-2026"]
+        },
+        {
+          "id": "caritas-ost-31-ost-tarif-west-berlin-2026-01-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "OST_TARIF_WEST_BERLIN",
+          "validFrom": "2026-01-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-31-ost-tarif-west-hamburg-2026-01-01",
+          "variantId": "ANLAGE_31",
+          "regionId": "OST_TARIF_WEST_HAMBURG",
+          "validFrom": "2026-01-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2310,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-32-ost-tarif-ost-2026-01-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "OST_TARIF_OST",
+          "validFrom": "2026-01-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-32-ost-tarif-west-berlin-2026-01-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "OST_TARIF_WEST_BERLIN",
+          "validFrom": "2026-01-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        },
+        {
+          "id": "caritas-ost-32-ost-tarif-west-hamburg-2026-01-01",
+          "variantId": "ANLAGE_32",
+          "regionId": "OST_TARIF_WEST_HAMBURG",
+          "validFrom": "2026-01-01",
+          "validTo": "2026-12-31",
+          "fullTimeWeeklyMinutes": 2340,
+          "sourceIds": ["caritas-rk-ost-time-2022"]
+        }
+      ],
+      "careRateIds": {
+        "SECTION_12_3|ANLAGE_31|OST_TARIF_OST|2026-01-01|2026-12-31": "caritas-ost-ost-tarif-ost-31-care-3-2026",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_OST|2026-01-01|2026-01-31": "caritas-ost-ost-tarif-ost-31-care-4-2026-01-01",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_OST|2026-02-01|2026-12-31": "caritas-ost-ost-tarif-ost-31-care-4-2026-02-01",
+        "SECTION_12_3|ANLAGE_31|OST_TARIF_WEST_BERLIN|2026-01-01|2026-12-31": "caritas-ost-ost-tarif-west-berlin-31-care-3-2026",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_WEST_BERLIN|2026-01-01|2026-01-31": "caritas-ost-ost-tarif-west-berlin-31-care-4-2026-01-01",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_WEST_BERLIN|2026-02-01|2026-12-31": "caritas-ost-ost-tarif-west-berlin-31-care-4-2026-02-01",
+        "SECTION_12_3|ANLAGE_31|OST_TARIF_WEST_HAMBURG|2026-01-01|2026-12-31": "caritas-ost-ost-tarif-west-hamburg-31-care-3-2026",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_WEST_HAMBURG|2026-01-01|2026-01-31": "caritas-ost-ost-tarif-west-hamburg-31-care-4-2026-01-01",
+        "SECTION_12_4|ANLAGE_31|OST_TARIF_WEST_HAMBURG|2026-02-01|2026-12-31": "caritas-ost-ost-tarif-west-hamburg-31-care-4-2026-02-01",
+        "SECTION_12_3|ANLAGE_32|OST_TARIF_OST|2026-01-01|2026-12-31": "caritas-ost-ost-tarif-ost-32-care-3-2026",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_OST|2026-01-01|2026-01-31": "caritas-ost-ost-tarif-ost-32-care-4-2026-01-01",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_OST|2026-02-01|2026-12-31": "caritas-ost-ost-tarif-ost-32-care-4-2026-02-01",
+        "SECTION_12_3|ANLAGE_32|OST_TARIF_WEST_BERLIN|2026-01-01|2026-12-31": "caritas-ost-ost-tarif-west-berlin-32-care-3-2026",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_WEST_BERLIN|2026-01-01|2026-01-31": "caritas-ost-ost-tarif-west-berlin-32-care-4-2026-01-01",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_WEST_BERLIN|2026-02-01|2026-12-31": "caritas-ost-ost-tarif-west-berlin-32-care-4-2026-02-01",
+        "SECTION_12_3|ANLAGE_32|OST_TARIF_WEST_HAMBURG|2026-01-01|2026-12-31": "caritas-ost-ost-tarif-west-hamburg-32-care-3-2026",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_WEST_HAMBURG|2026-01-01|2026-01-31": "caritas-ost-ost-tarif-west-hamburg-32-care-4-2026-01-01",
+        "SECTION_12_4|ANLAGE_32|OST_TARIF_WEST_HAMBURG|2026-02-01|2026-12-31": "caritas-ost-ost-tarif-west-hamburg-32-care-4-2026-02-01"
+      },
+      "additionalRules": {
+        "caritasTimePremiumRates": [
+          {
+            "id": "caritas-ost-premium-anlage-31-ost-tarif-ost-2026",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_OST",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-31-ost-tarif-west-berlin-2026",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-31-ost-tarif-west-hamburg-2026",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-32-ost-tarif-ost-2026",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_OST",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-32-ost-tarif-west-berlin-2026",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          },
+          {
+            "id": "caritas-ost-premium-anlage-32-ost-tarif-west-hamburg-2026",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "validFrom": "2026-01-01",
+            "validTo": "2026-12-31",
+            "referenceStepId": "3",
+            "nightBasisPoints": 2000,
+            "sundayBasisPoints": 2500,
+            "holidayWithTimeOffBasisPoints": 3500,
+            "holidayWithoutTimeOffBasisPoints": 13500,
+            "preHolidayBasisPoints": 3500,
+            "saturdayBasisPoints": 2000,
+            "sourceIds": ["caritas-dcv-premiums-2026"]
+          }
+        ],
+        "caritasAnnualPaymentRules": [
+          {
+            "id": "jsz-anlage-31-ost-tarif-ost-2026-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_OST",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_OST",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-ost-2026-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_OST",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_OST",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-west-berlin-2026-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_BERLIN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-west-berlin-2026-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_BERLIN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-west-hamburg-2026-0",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-31-ost-tarif-west-hamburg-2026-1",
+            "variantId": "ANLAGE_31",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_31_SECTION_16_1_AND_6",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-ost-2026-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_OST",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_OST",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-ost-2026-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_OST",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_OST",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-west-berlin-2026-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_BERLIN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-west-berlin-2026-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_BERLIN",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_BERLIN",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-west-hamburg-2026-0",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "entitlementYear": 2026,
+            "payGroups": ["p4", "p6", "p7", "p8"],
+            "rateBasisPoints": 8600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          },
+          {
+            "id": "jsz-anlage-32-ost-tarif-west-hamburg-2026-1",
+            "variantId": "ANLAGE_32",
+            "regionId": "OST_TARIF_WEST_HAMBURG",
+            "entitlementYear": 2026,
+            "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+            "rateBasisPoints": 7600,
+            "referenceMonths": [7, 8, 9],
+            "groupReferenceMonth": 9,
+            "groupReferenceDay": 1,
+            "payoutMonth": 11,
+            "basisPolicy": "ANLAGE_31_32_SECTION_16_2_WITH_EXCEPTIONS",
+            "eligibilityPolicy": "ANLAGE_32_SECTION_16_1",
+            "reductionPolicy": "ANLAGE_31_32_SECTION_16_4_WITH_EXCEPTIONS",
+            "basisRegionId": "OST_TARIF_WEST_HAMBURG",
+            "basisTablePolicy": "SELECTED_TERRITORY",
+            "sourceIds": [
+              "caritas-avr-jsz-2026",
+              "caritas-rk-ost-2026-p",
+              "caritas-bk-2025-03-jsz-ost",
+              "caritas-dgs-ost-annual-p6-2026",
+              "caritas-dgs-ost-annual-p12-2026"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
