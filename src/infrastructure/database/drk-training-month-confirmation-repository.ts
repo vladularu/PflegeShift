@@ -115,8 +115,10 @@ export async function saveDrkTrainingMonthConfirmation(
       training.revision !== input.expectedTrainingProfileRevision ||
       resolveRemunerationProfile(remunerationProfiles, first).profile !== remuneration ||
       resolveRemunerationProfile(remunerationProfiles, last).profile !== remuneration ||
-      trainingProfileForDate(trainingProfiles, first) !== training ||
-      trainingProfileForDate(trainingProfiles, last) !== training
+      trainingProfileForDate(trainingProfiles, first)?.data.effectiveFrom !==
+        training.data.effectiveFrom ||
+      trainingProfileForDate(trainingProfiles, last)?.data.effectiveFrom !==
+        training.data.effectiveFrom
     )
       throw new ConcurrencyError("Der Profilstand wurde geändert. Bitte neu laden.");
     const selection = remuneration.data.selection;

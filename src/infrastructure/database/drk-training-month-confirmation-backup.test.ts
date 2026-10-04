@@ -1,5 +1,6 @@
+import { LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { loadLocalBackupSnapshot } from "./local-backup";
+import { LOCAL_BACKUP_VERSION, loadLocalBackupSnapshot } from "./local-backup";
 import { restoreLocalBackup } from "./local-backup-restore";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
 import { saveTrainingProfile } from "./training-repository";
@@ -77,7 +78,10 @@ describe("DRK training confirmations in local backup v19", () => {
     const saved = await saveDrkTrainingMonthConfirmation(f.db, answer());
     const before = await loadLocalBackupSnapshot(f.db);
     const exported = await exportTvlBackup(f);
-    expect(exported.document).toMatchObject({ version: 19, databaseSchemaVersion: 31 });
+    expect(exported.document).toMatchObject({
+      version: LOCAL_BACKUP_VERSION,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    });
     expect(exported.document.data.drkTrainingMonthConfirmations).toHaveLength(1);
     await f.db.runAsync("DELETE FROM drk_training_month_confirmations");
     await restoreLocalBackup(f.db, await validateTvlBackup(exported.serialized));
@@ -93,7 +97,7 @@ describe("DRK training confirmations in local backup v19", () => {
       root.databaseSchemaVersion = 30;
     });
     const checked = await validateTvlBackup(legacy);
-    expect(checked.document.data.drkTrainingMonthConfirmations).toBeUndefined();
+    expect(checked.document.data.drkTrainingMonthConfirmations).toEqual([]);
     await restoreLocalBackup(f.db, checked);
     expect(await listDrkTrainingMonthConfirmations(f.db)).toEqual([]);
   });

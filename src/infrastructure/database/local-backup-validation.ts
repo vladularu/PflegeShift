@@ -1,4 +1,8 @@
 import {
+  mapDrkTrainingMonthConfirmationRow,
+  requireDrkTrainingMonthConfirmationParents,
+} from "./drk-training-month-confirmation-repository";
+import {
   mapDrkEmployeeMonthConfirmationRow,
   requireDrkEmployeeMonthConfirmationParent,
 } from "./drk-employee-month-confirmation-repository";
@@ -830,6 +834,7 @@ export async function validateLocalBackup(
       root.version !== 15 &&
       root.version !== 16 &&
       root.version !== 17 &&
+      root.version !== 18 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -864,6 +869,7 @@ export async function validateLocalBackup(
       ...(root.version >= 16 ? ["tvoedSueAllowanceConfirmations"] : []),
       ...(root.version >= 17 ? ["tvoedAnnexAPremiumFacts"] : []),
       ...(root.version >= 18 ? ["drkEmployeeMonthConfirmations"] : []),
+      ...(root.version >= 19 ? ["drkTrainingMonthConfirmations"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -1296,6 +1302,36 @@ export async function validateLocalBackup(
         );
     }
 
+    const drkTrainingMonthConfirmations =
+      root.version >= 19
+        ? Object.freeze(
+            asArray(data.drkTrainingMonthConfirmations).map((value) => {
+              mapDrkTrainingMonthConfirmationRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 19) {
+      if (
+        (databaseSchemaVersion as number) < 31 ||
+        (profile === null && drkTrainingMonthConfirmations.length > 0)
+      )
+        return invalid();
+      uniqueValues(drkTrainingMonthConfirmations, "month");
+      const remuneration = (remunerationProfiles ?? []).map((row) =>
+        mapRemunerationProfileRow(
+          row as unknown as Parameters<typeof mapRemunerationProfileRow>[0],
+        ),
+      );
+      const training = (trainingProfiles ?? []).map((row) => mapTrainingProfileRow(row));
+      for (const row of drkTrainingMonthConfirmations)
+        requireDrkTrainingMonthConfirmationParents(
+          mapDrkTrainingMonthConfirmationRow(row),
+          remuneration.filter((item) => item.effectiveFrom !== null),
+          training,
+        );
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -1343,6 +1379,7 @@ export async function validateLocalBackup(
         tvoedSueAllowanceConfirmations,
         tvoedAnnexAPremiumFacts,
         drkEmployeeMonthConfirmations,
+        drkTrainingMonthConfirmations,
         templates,
         shifts,
         appointments,
@@ -1383,7 +1420,8 @@ export async function validateLocalBackup(
             !(document.version < 15 && key === "tvoedSueMonthConfirmations") &&
             !(document.version < 16 && key === "tvoedSueAllowanceConfirmations") &&
             !(document.version < 17 && key === "tvoedAnnexAPremiumFacts") &&
-            !(document.version < 18 && key === "drkEmployeeMonthConfirmations"),
+            !(document.version < 18 && key === "drkEmployeeMonthConfirmations") &&
+            !(document.version < 19 && key === "drkTrainingMonthConfirmations"),
         ),
       ),
     });

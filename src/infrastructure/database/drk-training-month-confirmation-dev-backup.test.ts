@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { work } from "@/engine/remuneration-test-fixtures";
-import { parseDevBackupPayload } from "./dev-backup-payload";
+import { DEV_BACKUP_VERSION, parseDevBackupPayload } from "./dev-backup-payload";
 import { generateTestRun, restoreTestBackup, setDeveloperMode } from "./dev-tools-repository";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
 import { saveTrainingProfile } from "./training-repository";
@@ -81,7 +81,7 @@ describe("DRK training confirmations in test laboratory backup v16", () => {
     const original = await saveDrkTrainingMonthConfirmation(f.db, answer());
     await generate();
     const backup = parseDevBackupPayload(await stored(), "2026-10");
-    expect(backup.version).toBe(16);
+    expect(backup.version).toBe(DEV_BACKUP_VERSION);
     expect(backup.remuneration.drkTrainingMonthConfirmations).toHaveLength(1);
     expect(await listDrkTrainingMonthConfirmations(f.db)).toEqual([]);
     await generate();
