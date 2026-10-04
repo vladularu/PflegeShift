@@ -359,6 +359,12 @@ export interface SaveProfileInput {
 export type ComplianceSeverity = "info" | "warning" | "critical";
 export type ComplianceKind = "LEGAL" | "PLANNING";
 
+/** Inclusive calendar-day bounds of the evidence used by a calculation. */
+export interface ComplianceAssessmentRange {
+  readonly from: string;
+  readonly through: string;
+}
+
 export interface ComplianceIssue {
   readonly id: string;
   readonly severity: ComplianceSeverity;
@@ -368,6 +374,7 @@ export interface ComplianceIssue {
   readonly description: string;
   readonly relatedShiftIds: readonly string[];
   readonly date: string;
+  readonly assessmentRanges?: readonly ComplianceAssessmentRange[];
 }
 
 export interface MonthlyComplianceResult {
@@ -377,6 +384,8 @@ export interface MonthlyComplianceResult {
   readonly warningCount: number;
   readonly infoCount: number;
   readonly affectedDates: readonly string[];
+  /** Includes dependencies of checks that produced no finding. Not a clearance. */
+  readonly assessmentRange?: ComplianceAssessmentRange;
 }
 
 export interface PremiumLine {
