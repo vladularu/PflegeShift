@@ -366,16 +366,19 @@ function freeSundayIssues(
   const permittedWorkedSundays = Math.max(0, sundayCount - minimumFreeSundays);
   return workedSundays.slice(permittedWorkedSundays).map(({ date, related }) => {
     const completed = Temporal.PlainDate.compare(date, referenceDate) <= 0;
-    return issue(
-      completed ? "critical" : "warning",
-      "ARBZG_11_FREE_SUNDAYS",
-      completed
-        ? "Zu wenige beschäftigungsfreie Sonntage"
-        : "Mindestzahl freier Sonntage gefährdet",
-      `Mit diesem Dienst bleiben im Kalenderjahr ${year} weniger als ${minimumFreeSundays} Sonntage beschäftigungsfrei.`,
-      related,
-      date.toString(),
-    );
+    return {
+      ...issue(
+        completed ? "critical" : "warning",
+        "ARBZG_11_FREE_SUNDAYS",
+        completed
+          ? "Zu wenige beschäftigungsfreie Sonntage"
+          : "Mindestzahl freier Sonntage gefährdet",
+        `Mit diesem Dienst bleiben im Kalenderjahr ${year} weniger als ${minimumFreeSundays} Sonntage beschäftigungsfrei.`,
+        related,
+        date.toString(),
+      ),
+      assessmentRanges: [{ from: `${year}-01-01`, through: `${year + 1}-01-01` }],
+    };
   });
 }
 

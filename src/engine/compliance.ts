@@ -703,9 +703,31 @@ export function* calculateMonthlyComplianceSteps(
   }
   yield 7;
   issues.push(...checkPlanningSeries(assessmentIntervals, rules));
-  const monthIssues = issues.filter((item) => item.date.startsWith(`${month}-`));
+  // Include the end day of overnight services. Shared replacement-day assignment,
+  // night-worker qualification and even checks without findings depend on this
+  // entire loaded horizon, not just on each finding's display date.
+  const assessmentRange = {
+    from: start,
+    through: Temporal.PlainDate.from(end).add({ days: 1 }).toString(),
+  };
+  const monthIssues = issues
+    .filter((item) => item.date.startsWith(`${month}-`))
+    .map((finding) =>
+      finding.kind === "LEGAL" &&
+      finding.assessmentRanges === undefined &&
+      [
+        "ARBZG_5_REST_11H",
+        "ARBZG_11_SUNDAY_REST",
+        "ARBZG_11_HOLIDAY_REST",
+        "ARBZG_11_REST_CONNECTION",
+        "HOLIDAY_CATALOG_COVERAGE",
+      ].includes(finding.rule)
+        ? { ...finding, assessmentRanges: [assessmentRange] }
+        : finding,
+    );
   return {
     month,
+    assessmentRange,
     issues: monthIssues,
     criticalCount: monthIssues.filter((item) => item.severity === "critical").length,
     warningCount: monthIssues.filter((item) => item.severity === "warning").length,

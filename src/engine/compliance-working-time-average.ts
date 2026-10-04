@@ -34,6 +34,7 @@ function issue(
   description: string,
   related: readonly ShiftEntry[],
   date: string,
+  through: string,
 ): ComplianceIssue {
   const rule = "ARBZG_3_OVER_8H";
   const relatedShiftIds = related.map((shift) => shift.id);
@@ -46,6 +47,7 @@ function issue(
     description,
     relatedShiftIds,
     date,
+    assessmentRanges: [{ from: date, through }],
   };
 }
 
@@ -262,6 +264,7 @@ export function* checkWorkingTimeAverageIncrementally(
           `Ab ${dateLabel(start)} liegen die erfassten Durchschnitte bei ${durationLabel(calendarAverage.averageMinutes)} in ${averageRules.calendarMonths} Kalendermonaten (${calendarAverage.statutoryWorkdays} Werktage) und ${durationLabel(weekAverage.averageMinutes)} in ${averageRules.weeks} Wochen (${weekAverage.statutoryWorkdays} Werktage). Zulässig sind höchstens ${durationLabel(rules.workingTime.standardDailyMinutes)} je Werktag; eine der beiden Alternativen muss bis ${dateLabel(deadline)} eingehalten sein.${absenceDescription}`,
           candidate.map((item) => item.shift),
           candidate[0]!.shift.date,
+          deadline.add({ days: 1 }).toString(),
         ),
       ];
     }
