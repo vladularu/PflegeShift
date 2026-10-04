@@ -132,73 +132,76 @@ function deepFreeze(value: object) {
 }
 
 describe("Caritas historical replacement annual amount", () => {
-  it.each(["bw", "bayern", "mitte", "nord", "nrw", "ost"])(
-    "matches fixed 2025/2026 annual amounts across annexes, territories and P groups in %s",
-    (region) => {
-      const territories =
-        region === "ost"
+  const annualCases = ["bw", "bayern", "mitte", "nord", "nrw", "ost"].flatMap((region) =>
+    ([2025, 2026] as const).flatMap((year) =>
+      ["ANLAGE_31", "ANLAGE_32"].flatMap((annex) =>
+        (region === "ost"
           ? ["OST_TARIF_OST", "OST_TARIF_WEST_BERLIN", "OST_TARIF_WEST_HAMBURG"]
-          : [region.toUpperCase()];
-      for (const year of [2025, 2026] as const)
-        for (const annex of ["ANLAGE_31", "ANLAGE_32"])
-          for (const territory of territories)
-            for (const group of [
-              "p4",
-              "p6",
-              "p7",
-              "p8",
-              "p9",
-              "p10",
-              "p11",
-              "p12",
-              "p13",
-              "p14",
-              "p15",
-              "p16",
-            ]) {
-              const value = {
-                ...input(region, year, annex, territory),
-                groupIdAtSeptember1: group,
-              };
-              const lowerBand = ["p4", "p6", "p7", "p8"].includes(group);
-              expect(calculate(value)).toMatchObject({
-                kind: "personal-annual-payment-fallback-amount",
-                draft: true,
-                completeGross: false,
-                entitlementYear: year,
-                amountCents: lowerBand ? 215001 : 190001,
-                rateBasisPoints: lowerBand ? 8600 : 7600,
-                exactAmountCents: {
-                  numerator: lowerBand ? "25800086000" : "22800076000",
-                  denominator: "120000",
-                },
-                parentalLeavePartTimeBasis: "NOT_APPLICABLE",
-                basis: {
-                  meanMonthlyBasis: { numeratorCents: 300001, denominator: 1 },
-                  referenceEntgeltCalendarDays: 20,
-                  referencePaidBasisTotalCents: 200000,
-                  replacementMonth: value.replacementMonth,
-                  annualRule: {
-                    basisRegionId: value.replacementMonth.basisRegionId,
-                    basisPayTableId: value.paidMonths[0].basisPayTableId,
-                  },
-                },
-                entitlement: {
-                  retainedMonthCount: 10,
-                  reducedMonthCount: 2,
-                  eligibility: { eligible: true, reason: "EMPLOYED_ON_DECEMBER_1" },
-                },
-                roundingEvidence: {
-                  policy: "AVR_ANLAGE_1_X_E_HALF_UP_FINAL_CENT",
-                  sourceId: `caritas-avr-jsz-${year}`,
-                  sourceSection: "Anlage 1 Abschnitt X Absatz e",
-                  sourceSha256:
-                    year === 2025 && region === "ost"
-                      ? "a4f8dea02fb84ba4f203a753bd362d82dec8ad8953f3befed99ac65e65ec2637"
-                      : "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7",
-                },
-              });
-            }
+          : [region.toUpperCase()]
+        ).map((territory) => ({ region, year, annex, territory })),
+      ),
+    ),
+  );
+  it.each(annualCases)(
+    "matches fixed annual amounts for $region / $year / $annex / $territory across P groups",
+    ({ region, year, annex, territory }) => {
+      for (const group of [
+        "p4",
+        "p6",
+        "p7",
+        "p8",
+        "p9",
+        "p10",
+        "p11",
+        "p12",
+        "p13",
+        "p14",
+        "p15",
+        "p16",
+      ]) {
+        const value = {
+          ...input(region, year, annex, territory),
+          groupIdAtSeptember1: group,
+        };
+        const lowerBand = ["p4", "p6", "p7", "p8"].includes(group);
+        expect(calculate(value)).toMatchObject({
+          kind: "personal-annual-payment-fallback-amount",
+          draft: true,
+          completeGross: false,
+          entitlementYear: year,
+          amountCents: lowerBand ? 215001 : 190001,
+          rateBasisPoints: lowerBand ? 8600 : 7600,
+          exactAmountCents: {
+            numerator: lowerBand ? "25800086000" : "22800076000",
+            denominator: "120000",
+          },
+          parentalLeavePartTimeBasis: "NOT_APPLICABLE",
+          basis: {
+            meanMonthlyBasis: { numeratorCents: 300001, denominator: 1 },
+            referenceEntgeltCalendarDays: 20,
+            referencePaidBasisTotalCents: 200000,
+            replacementMonth: value.replacementMonth,
+            annualRule: {
+              basisRegionId: value.replacementMonth.basisRegionId,
+              basisPayTableId: value.paidMonths[0].basisPayTableId,
+            },
+          },
+          entitlement: {
+            retainedMonthCount: 10,
+            reducedMonthCount: 2,
+            eligibility: { eligible: true, reason: "EMPLOYED_ON_DECEMBER_1" },
+          },
+          roundingEvidence: {
+            policy: "AVR_ANLAGE_1_X_E_HALF_UP_FINAL_CENT",
+            sourceId: `caritas-avr-jsz-${year}`,
+            sourceSection: "Anlage 1 Abschnitt X Absatz e",
+            sourceSha256:
+              year === 2025 && region === "ost"
+                ? "a4f8dea02fb84ba4f203a753bd362d82dec8ad8953f3befed99ac65e65ec2637"
+                : "cb6fc32981eb120d5c05e68d6563725436001409e9bc728bc47d52d08d705aa7",
+          },
+        });
+      }
     },
   );
   it("uses a confirmed prior-year amount without requiring a current historical pay table", () => {
