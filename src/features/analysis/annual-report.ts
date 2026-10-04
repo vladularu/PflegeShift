@@ -4,6 +4,7 @@ import {
   type MonthlyShiftTypeAnalysis,
 } from "./analysis-metrics";
 import { Temporal } from "@js-temporal/polyfill";
+import type { TrainingTimeDay } from "@/engine/youth-types";
 
 import type {
   CalendarEntry,
@@ -27,6 +28,10 @@ import { classifyChecks, type ClassifiedCheckCounts } from "./check-visibility";
 import type { AnnualRemuneration } from "./annual-remuneration";
 
 export interface AnnualMonthReport {
+  /** Missing on legacy reports; use the year coverage as the conservative fallback. */
+  readonly complianceComplete?: boolean;
+  /** Day-level legal training values; never included in actualMinutes or pay. */
+  readonly trainingTimeDays?: readonly TrainingTimeDay[];
   readonly timePremiumAmount?: number | null;
   readonly checkCounts?: ClassifiedCheckCounts;
   readonly infoCount?: number;
