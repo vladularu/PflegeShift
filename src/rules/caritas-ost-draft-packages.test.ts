@@ -55,6 +55,9 @@ describe("RK Ost Caritas P-table DRAFT candidates", () => {
     expect(candidate.sources.map((source) => source.id).sort()).toEqual(
       [
         `caritas-rk-ost-${year}-p`,
+        "caritas-avr-text-2025-1",
+        `caritas-time-premiums-${year}`,
+        ...(year === 2026 ? ["caritas-avr-text-2026-03", "caritas-bk-2025-03-east-annual"] : []),
         `caritas-avr-jsz-${year}`,
         ...(year === 2025
           ? ["caritas-dgs-ost-east-annual-facts-2025"]
