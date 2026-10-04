@@ -17,3 +17,7 @@ Die drei vollständigen ursprünglichen Dateien prüfen Zeitzuschläge, bestäti
 ## Quellen und Grenzen
 
 Die zwölf TVAöD-Tabellenwerte wurden unabhängig aus dem aktuellen offiziellen VKA-PDF centgenau verglichen. Beide ursprünglichen DRAFT-Pakete und unveränderte Norm-/Produktheuristikquellen bleiben erhalten; Details im Quellenbeleg. Vertrag 10 wird technisch akzeptiert, sobald der vollständige Kern geliefert ist. Die Pakete bleiben DRAFT und werden weder in einen veröffentlichten Katalog aufgenommen noch per OTA ausgeliefert. Vollständige Fachfreigabe, sichtbare Eingabemasken, Jahresregelrevisionen und Geräteabnahme stehen weiter aus.
+
+## Ergänzende Monatsreferenz
+
+Die ursprünglichen vollständigen Monatsreferenzen deckten einen fehlenden Periodenvergleich für TVAöD auf. Ein unveränderter Ausbildungskontext wird nun als eine Monatsperiode zusammengefasst; nur tatsächliche Profil- oder Regelwechsel teilen die Periode. Zwei zusätzliche Regressionen sichern die vollen 149.069 Cent und den Wechsel zur Monatsmitte mit 152.139 Cent. Quellenbeträge und Rundungsregel bleiben unverändert.

@@ -7,6 +7,7 @@ import {
   calculateDatedShiftOvertime,
   calculateMonthlyDatedOvertime,
 } from "./remuneration-overtime";
+import { calculateMonthlyBaseRemuneration } from "./remuneration-base";
 import { calculateDatedMonthlyRemuneration } from "./remuneration-month";
 import { history, resolver, shift, work } from "./remuneration-test-fixtures";
 
@@ -49,6 +50,24 @@ const run = (profiles = [training()], record = entry, rules = catalog) =>
   calculateDatedShiftOvertime(record, work, profiles, rules);
 
 describe("explicit TVAöD-Pflege overtime", () => {
+  it("retains one period and the exact source cents for an unchanged training month", () => {
+    const result = calculateMonthlyBaseRemuneration("2026-09", [training()], catalog);
+    expect(result.positions).toHaveLength(1);
+    expect(result.status).toBe("calculated");
+    expect(result.totalCents).toBe(149069);
+    expect(result.positions[0].basis.proration).toBe("none");
+  });
+  it("prorates only at the actual mid-month training-year change", () => {
+    const result = calculateMonthlyBaseRemuneration(
+      "2026-09",
+      [training(), training("2026-09-16", "b", "2")],
+      catalog,
+    );
+    expect(result.positions).toHaveLength(2);
+    expect(result.positions.map((position) => position.amountCents)).toEqual([74535, 77604]);
+    expect(result.totalCents).toBe(152139);
+    expect(result.status).toBe("estimated");
+  });
   // Independent reference: listed monthly cents / (38.5 * 4.348), rounded to cents.
   // These are draft reference calculations, not evidence of legal approval.
   it.each([

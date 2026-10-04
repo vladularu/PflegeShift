@@ -327,6 +327,8 @@ function sameContext(left: RemunerationContext, right: RemunerationContext): boo
     );
   if (left.kind === "tariff" && right.kind === "tariff")
     return left.rulePackage === right.rulePackage;
+  if (left.kind === "training-tariff" && right.kind === "training-tariff")
+    return left.rulePackage === right.rulePackage;
   if (left.kind === "tval-training" && right.kind === "tval-training")
     return (
       left.rulePackage === right.rulePackage &&
