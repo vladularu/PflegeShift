@@ -1,4 +1,10 @@
 import {
+  CARITAS_MONTH_FACTS_COLUMNS,
+  mapCaritasMonthFactsRow,
+  requireCaritasMonthFactsParent,
+  type CaritasMonthFactsRow,
+} from "./caritas-month-facts-repository";
+import {
   CARITAS_WORK_DAY_COLUMNS,
   mapCaritasWorkDayRow,
   requireCaritasWorkDayParent,
@@ -38,6 +44,7 @@ export interface DevRemunerationBackup {
   readonly paidAbsences: readonly PaidAbsenceRow[];
   readonly tvlShiftWork: readonly TvlShiftWorkRow[];
   readonly caritasWorkDays: readonly CaritasWorkDayRow[];
+  readonly caritasMonthFacts: readonly CaritasMonthFactsRow[];
 }
 
 function exact(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -56,6 +63,7 @@ export function validateDevRemunerationBackup(
   includesPaidAbsences = true,
   includesTvlShiftWork = false,
   includesCaritasWorkDays = false,
+  includesCaritasMonthFacts = false,
 ): DevRemunerationBackup {
   const data = exact(value, [
     "allowanceDecision",
@@ -63,6 +71,7 @@ export function validateDevRemunerationBackup(
     ...(includesPaidAbsences ? ["paidAbsences"] : []),
     ...(includesTvlShiftWork ? ["tvlShiftWork"] : []),
     ...(includesCaritasWorkDays ? ["caritasWorkDays"] : []),
+    ...(includesCaritasMonthFacts ? ["caritasMonthFacts"] : []),
   ]);
   let allowanceDecision: AllowanceDecisionRow | null = null;
   if (data.allowanceDecision !== null) {
@@ -137,12 +146,24 @@ export function validateDevRemunerationBackup(
     caritasIds.add(key);
     return Object.freeze({ ...row });
   });
+  const rawMonthFacts = includesCaritasMonthFacts ? data.caritasMonthFacts : [];
+  if (!Array.isArray(rawMonthFacts))
+    throw new Error("Caritas-Monatsbestätigungen fehlen im Testlabor-Backup.");
+  if (rawMonthFacts.length > 1)
+    throw new Error("Doppelte Caritas-Monatsbestätigung im Testlabor-Backup.");
+  const caritasMonthFacts = rawMonthFacts.map((value) => {
+    const row = exact(value, CARITAS_MONTH_FACTS_COLUMNS) as unknown as CaritasMonthFactsRow;
+    if (mapCaritasMonthFactsRow(row).month !== month)
+      throw new Error("Falscher Caritas-Monat im Testlabor-Backup.");
+    return Object.freeze({ ...row });
+  });
   return Object.freeze({
     allowanceDecision,
     overtimeAllocations: Object.freeze(overtimeAllocations),
     paidAbsences: Object.freeze(paidAbsences),
     tvlShiftWork: Object.freeze(tvlShiftWork),
     caritasWorkDays: Object.freeze(caritasWorkDays),
+    caritasMonthFacts: Object.freeze(caritasMonthFacts),
   });
 }
 export async function snapshotDevRemuneration(
@@ -175,9 +196,21 @@ export async function snapshotDevRemuneration(
       WHERE substr(s.date,1,7)=? ORDER BY c.shift_id,c.date`,
     month,
   );
-  return { allowanceDecision, overtimeAllocations, paidAbsences, tvlShiftWork, caritasWorkDays };
+  const caritasMonthFacts = await db.getAllAsync<CaritasMonthFactsRow>(
+    `SELECT ${CARITAS_MONTH_FACTS_COLUMNS.join(",")} FROM caritas_month_facts WHERE month=?`,
+    month,
+  );
+  return {
+    allowanceDecision,
+    overtimeAllocations,
+    paidAbsences,
+    tvlShiftWork,
+    caritasWorkDays,
+    caritasMonthFacts,
+  };
 }
 export async function clearDevRemuneration(db: SQLiteDatabase, month: string): Promise<void> {
+  await db.runAsync("DELETE FROM caritas_month_facts WHERE month=?", month);
   for (const table of [
     "caritas_work_days",
     "tvl_shift_work",
@@ -196,7 +229,10 @@ export async function restoreDevRemuneration(
   db: SQLiteDatabase,
   data: DevRemunerationBackup,
 ): Promise<void> {
-  const profiles = data.tvlShiftWork.length ? await listRemunerationProfiles(db) : [];
+  const profiles =
+    data.tvlShiftWork.length || data.caritasMonthFacts.length
+      ? await listRemunerationProfiles(db)
+      : [];
   const tvlByShift = new Map<string, ReturnType<typeof mapTvlShiftWorkRow>[]>();
   for (const row of data.tvlShiftWork) {
     const parsed = mapTvlShiftWorkRow(row);
@@ -232,6 +268,13 @@ export async function restoreDevRemuneration(
     await db.runAsync(
       "INSERT INTO caritas_work_days(shift_id,date,confirmation_json) VALUES(?,?,?)",
       ...CARITAS_WORK_DAY_COLUMNS.map((key) => row[key]),
+    );
+  }
+  for (const row of data.caritasMonthFacts) {
+    requireCaritasMonthFactsParent(mapCaritasMonthFactsRow(row), profiles);
+    await db.runAsync(
+      "INSERT INTO caritas_month_facts(month,facts_json) VALUES(?,?)",
+      ...CARITAS_MONTH_FACTS_COLUMNS.map((key) => row[key]),
     );
   }
   if (data.allowanceDecision !== null)

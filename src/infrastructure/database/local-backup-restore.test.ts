@@ -316,6 +316,7 @@ describe("local backup restore", () => {
         tariffAnnualClaims?: unknown;
         tvlShiftWork?: unknown;
         caritasWorkDays?: unknown;
+        caritasMonthFacts?: unknown;
       };
       delete data.remunerationProfiles;
       delete data.allowanceDecisions;
@@ -327,6 +328,7 @@ describe("local backup restore", () => {
       delete data.tariffAnnualClaims;
       delete data.tvlShiftWork;
       delete data.caritasWorkDays;
+      delete data.caritasMonthFacts;
       delete data.profile.display_name;
       delete data.profile.employer_name;
     });
