@@ -3,6 +3,7 @@ import type { AnnualReport } from "./annual-report";
 import { AnalysisListCard, AnalysisValueRow } from "./analysis-list-card";
 import { formatEuro } from "./salary-summary-card";
 import { ReportPeriodContent, ReportScrollView } from "@/ui/report-layout";
+import { AnnualRemunerationPremiums } from "./annual-remuneration-view";
 
 export function AnnualPremiumReport({
   report,
@@ -13,6 +14,19 @@ export function AnnualPremiumReport({
   readonly pending: boolean;
   readonly onSelectMonth: (month: string) => void;
 }) {
+  if (report.remuneration)
+    return (
+      <ReportScrollView>
+        <ReportPeriodContent>
+          <AnnualRemunerationPremiums
+            pay={report.remuneration}
+            year={report.year}
+            pending={pending}
+            onSelectMonth={onSelectMonth}
+          />
+        </ReportPeriodContent>
+      </ReportScrollView>
+    );
   const available =
     !pending && report.salarySource === "TARIFF" && report.availablePayMonthCount > 0;
   const months = report.months.filter((month) => month.timePremiumAmount != null);

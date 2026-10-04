@@ -97,25 +97,8 @@ export function AnalysisScreen({
 
   const monthlyCalculation = useMemo(() => {
     if (period !== "MONTH" || !ready || error !== null || profile === null) return null;
-    return calculateMonthlyAnalysis(
-      month,
-      entries,
-      profile,
-      tariffDecisions,
-      workPatternSettings,
-      ruleResolver,
-    );
-  }, [
-    entries,
-    error,
-    month,
-    period,
-    profile,
-    ready,
-    ruleResolver,
-    tariffDecisions,
-    workPatternSettings,
-  ]);
+    return calculateMonthlyAnalysis(month, entries, profile, ruleResolver);
+  }, [entries, error, month, period, profile, ready, ruleResolver]);
   const monthlyData = monthlyCalculation;
   const monthlyCompliance = useDeferredMonthlyCompliance({
     enabled:
@@ -251,7 +234,6 @@ export function AnalysisScreen({
             <MonthOverview
               month={month}
               data={monthlyData}
-              profile={profile}
               compliance={compliance}
               checkError={monthlyCompliance.error}
               showPlanning={checkPreferences.enabled !== false}

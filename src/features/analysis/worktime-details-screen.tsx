@@ -5,7 +5,6 @@ import {
   usePflegeShiftEntries,
   usePflegeShiftProfile,
   usePflegeShiftStatus,
-  usePflegeShiftTariff,
 } from "@/application/pflegeshift-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
@@ -33,32 +32,14 @@ export function WorktimeDetailsScreen() {
   const { profile } = usePflegeShiftProfile();
   const { entries } = usePflegeShiftEntries();
   const { ready, error, reload } = usePflegeShiftStatus();
-  const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
   const { resolver } = useRuleCatalogRuntime();
   const month = parsed.status === "valid" ? parsed.value : currentMonth(profile?.timeZone);
   const data = useMemo(
     () =>
       parsed.status === "valid" && ready && !error && profile
-        ? calculateMonthlyAnalysis(
-            month,
-            entries,
-            profile,
-            tariffDecisions,
-            workPatternSettings,
-            resolver,
-          )
+        ? calculateMonthlyAnalysis(month, entries, profile, resolver)
         : null,
-    [
-      parsed.status,
-      ready,
-      error,
-      month,
-      entries,
-      profile,
-      tariffDecisions,
-      workPatternSettings,
-      resolver,
-    ],
+    [parsed.status, ready, error, month, entries, profile, resolver],
   );
   if (parsed.status !== "valid" || parsedSection.status === "invalid")
     return (
