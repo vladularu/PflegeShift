@@ -6,9 +6,11 @@ import { usePalette } from "@/theme/palette";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
 import { selectionFeedback } from "@/ui/haptics";
-import { profileSalaryLabel, profileWorkLabel } from "./work-profile-summary";
+import { profileWorkLabel } from "./work-profile-summary";
+import { useCurrentRemunerationSummary } from "./use-current-remuneration-summary";
 export function WorkProfileCard({ profile }: { readonly profile: UserProfile }) {
   const palette = usePalette();
+  const remunerationSummary = useCurrentRemunerationSummary(profile);
   return (
     <Pressable
       accessibilityRole="button"
@@ -57,7 +59,7 @@ export function WorkProfileCard({ profile }: { readonly profile: UserProfile }) 
           {profileWorkLabel(profile)}
         </Text>
         <Text style={{ ...TYPOGRAPHY.caption, color: palette.textMuted }}>
-          {profileSalaryLabel(profile)}
+          {remunerationSummary.label}
         </Text>
       </View>
     </Pressable>

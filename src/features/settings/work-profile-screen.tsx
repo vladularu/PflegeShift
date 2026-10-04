@@ -18,7 +18,8 @@ import { Field } from "@/ui/form-controls";
 import { FormScreen, FormSection, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { successFeedback } from "@/ui/haptics";
-import { profileSalaryLabel, profileWorkLabel } from "./work-profile-summary";
+import { profileWorkLabel } from "./work-profile-summary";
+import { useCurrentRemunerationSummary } from "./use-current-remuneration-summary";
 
 export function WorkProfileScreen() {
   const { ready, error, reload } = usePflegeShiftStatus();
@@ -29,6 +30,7 @@ export function WorkProfileScreen() {
 }
 function WorkProfileForm({ profile }: { readonly profile: UserProfile }) {
   const palette = usePalette();
+  const remunerationSummary = useCurrentRemunerationSummary(profile);
   const { updateProfile } = usePflegeShiftProfile();
   const { workPatternSettings } = usePflegeShiftTariff();
   const [displayName, setDisplayName] = useState(profile.displayName ?? "");
@@ -115,11 +117,11 @@ function WorkProfileForm({ profile }: { readonly profile: UserProfile }) {
           <CardSeparator />
           <RowButton
             title="Tarif & Gehalt"
-            subtitle={profileSalaryLabel(profile)}
+            subtitle={remunerationSummary.label}
             subtitleBelow
             onPress={() => router.push(settingsEditorRoute("TARIFF"))}
           />
-          {profile.tariff ? (
+          {remunerationSummary.tariff ? (
             <>
               <CardSeparator />
               <RowButton

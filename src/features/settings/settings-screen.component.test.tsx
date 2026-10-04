@@ -1,3 +1,4 @@
+import type { DatedRemunerationProfile } from "@/domain/remuneration-profile";
 import { fireEvent, render, within } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { router } from "expo-router";
@@ -22,6 +23,35 @@ const mockBaseProfile = {
 let mockProfile = { ...mockBaseProfile };
 let mockDevToolsAvailable = false;
 let mockFontScale = 1;
+let mockRemunerationStatus: "ready" | "loading" | "error" = "ready";
+let mockCurrentProfiles: readonly DatedRemunerationProfile[] | null = null;
+jest.mock("@/application/remuneration-provider", () => ({
+  useRemunerationHistory: () => ({
+    status: mockRemunerationStatus,
+    profiles: mockCurrentProfiles ?? [
+      {
+        effectiveFrom: "2026-01-01",
+        revision: 1,
+        data: {
+          version: 1,
+          weeklyMinutes: mockProfile.weeklyMinutes,
+          selection:
+            mockProfile.manualMonthlyGrossCents === null
+              ? { kind: "unconfigured" }
+              : { kind: "own-monthly", monthlyGrossCents: mockProfile.manualMonthlyGrossCents },
+        },
+      },
+    ],
+    error: null,
+  }),
+}));
+jest.mock("@/application/rule-catalog-runtime-provider", () => ({
+  useRuleCatalogRuntime: () => ({
+    resolver:
+      jest.requireActual<typeof import("@/rules/rule-resolver")>("@/rules/rule-resolver")
+        .bundledRuleResolver,
+  }),
+}));
 
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   __esModule: true,
@@ -89,6 +119,8 @@ describe("SettingsScreen production gates", () => {
     mockProfile = { ...mockBaseProfile };
     mockDevToolsAvailable = false;
     mockFontScale = 1;
+    mockCurrentProfiles = null;
+    mockRemunerationStatus = "ready";
   });
 
   it.each([1, 1.29, 1.3, 2, 3.1])("adapts all More rows at font scale %s", async (fontScale) => {
@@ -147,7 +179,7 @@ describe("SettingsScreen production gates", () => {
 
     const screen = await render(<SettingsScreen />);
 
-    expect(screen.getByText(/Manuell.*3\.450,50/)).toBeTruthy();
+    expect(screen.getByText(/Eigenes Monatsentgelt.*3\.450,50/)).toBeTruthy();
     expect(screen.queryByText("Schichtmodell")).toBeNull();
   });
 
@@ -165,4 +197,66 @@ describe("SettingsScreen production gates", () => {
     expect(router.push).toHaveBeenLastCalledWith("/training");
     expect(screen.queryByText("Testlabor")).toBeNull();
   });
+  it("shows dated P5 content and then changed P6 content at the same revision", async () => {
+    mockProfile = { ...mockBaseProfile, manualMonthlyGrossCents: 345050 };
+    const entry: DatedRemunerationProfile = {
+      effectiveFrom: "2026-01-01",
+      revision: 1,
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-01-01T00:00:00Z",
+      data: {
+        version: 1,
+        weeklyMinutes: 2310,
+        selection: {
+          kind: "tariff",
+          packageId: "tvoed-vka-bt-k",
+          variant: "BT_K",
+          region: "OTHER",
+          group: "P5",
+          level: "1",
+          fullTimeWeeklyMinutes: 2310,
+        },
+      },
+    };
+    mockCurrentProfiles = [entry];
+    const screen = await render(<SettingsScreen />);
+    expect(screen.getByText(/P5.*Stufe 1/)).toBeTruthy();
+    expect(screen.queryByText(/3\.450,50/)).toBeNull();
+    mockCurrentProfiles = [
+      {
+        ...entry,
+        data: {
+          ...entry.data,
+          selection: {
+            ...entry.data.selection,
+            kind: "tariff",
+            packageId: "tvoed-vka-bt-k",
+            variant: "BT_K",
+            region: "OTHER",
+            group: "P6",
+            level: "1",
+            fullTimeWeeklyMinutes: 2310,
+          },
+        },
+      },
+    ];
+    await screen.rerender(<SettingsScreen />);
+    expect(screen.getByText(/P6.*Stufe 1/)).toBeTruthy();
+    expect(screen.queryByText(/P5.*Stufe 1/)).toBeNull();
+  });
+  it.each(["loading", "error"] as const)(
+    "hides stored money when remuneration is %s",
+    async (status) => {
+      mockProfile = { ...mockBaseProfile, manualMonthlyGrossCents: 345050 };
+      const screen = await render(<SettingsScreen />);
+      mockRemunerationStatus = status;
+      await screen.rerender(<SettingsScreen />);
+      expect(screen.queryByText(/3\.450,50/)).toBeNull();
+      expect(
+        screen.getByText(
+          status === "loading" ? "Vergütung wird geladen …" : "Vergütungsstand nicht verfügbar",
+        ),
+      ).toBeTruthy();
+    },
+  );
 });
