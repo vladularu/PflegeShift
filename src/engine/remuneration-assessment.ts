@@ -144,6 +144,14 @@ function assessPeriod(
     issue: null,
   };
   if (context.kind === "unavailable") return { ...base, issue: context.issue };
+  if (context.kind === "tvl-kr")
+    return {
+      ...base,
+      issue: {
+        code: "TARIFF_UNSUPPORTED",
+        message: "Für TV-L/KR ist noch keine vollständige Schichtzulagenprüfung verfügbar.",
+      },
+    };
   if (context.kind === "own-monthly" || context.kind === "own-configured")
     return {
       ...base,

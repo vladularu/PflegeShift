@@ -118,6 +118,12 @@ export function calculateMonthlyDatedAllowances(
       let issue: SupplementPosition["issue"] = null;
       const shiftAllowance = type === "shift" || type === "alternating-shift";
       if (context.kind === "unavailable") issue = context.issue;
+      else if (context.kind === "tvl-kr")
+        issue = {
+          code: "TARIFF_UNSUPPORTED",
+          message:
+            "Die TV-L-Zulagen sind noch nicht vollständig an die Monatsberechnung angebunden.",
+        };
       else if (context.kind === "own-monthly")
         issue = {
           code: "OWN_ALLOWANCES_UNCONFIGURED",

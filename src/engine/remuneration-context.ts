@@ -14,12 +14,15 @@ import { resolveTariffSelection } from "@/rules/tariff-selection";
 import { annualPaymentRuleIssues } from "@/rules/annual-payment-rule-validation";
 import type { OwnRemunerationConfiguration } from "@/domain/own-remuneration";
 
+import { resolveTvlKrPay, type TvlKrPayContext } from "./remuneration-tvl-context";
+
 interface ContextBase {
   readonly profile: DatedRemunerationProfile | null;
   readonly source: RemunerationSource;
 }
 export type RemunerationContext = ContextBase &
   (
+    | TvlKrPayContext
     | { readonly kind: "unavailable"; readonly issue: RemunerationIssue }
     | {
         readonly kind: "own-configured";
@@ -153,6 +156,12 @@ export function resolveRemunerationContext(
       "Das Tarifregelwerk passt nicht zur Auswahl oder zum Zeitraum.",
       rulePackage,
     );
+  if (rulePackage.engineContractVersion === 12) {
+    const tvl = resolveTvlKrPay(date, rulePackage, selection, data.weeklyMinutes);
+    return tvl.ok
+      ? { ...tvl.context, profile, source: sourceFor(profile, rulePackage) }
+      : unavailable(profile, tvl.issue.code, tvl.issue.message, rulePackage);
+  }
   // Additional tariff families receive their own adapter; matching table shapes do not establish support.
   if (!["tvoed-vka-bt-k", LEGACY_RULE_PACKAGE_IDS.tariff].includes(selection.packageId))
     return unavailable(
@@ -297,6 +306,12 @@ function sameContext(left: RemunerationContext, right: RemunerationContext): boo
     );
   if (left.kind === "tariff" && right.kind === "tariff")
     return left.rulePackage === right.rulePackage;
+  if (left.kind === "tvl-kr" && right.kind === "tvl-kr")
+    return (
+      left.rulePackage === right.rulePackage &&
+      left.monthlyCents === right.monthlyCents &&
+      left.fullTimeWeeklyMinutes === right.fullTimeWeeklyMinutes
+    );
   return (
     (left.kind === "own-monthly" && right.kind === "own-monthly") ||
     (left.kind === "own-configured" && right.kind === "own-configured")

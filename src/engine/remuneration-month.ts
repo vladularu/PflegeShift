@@ -3,6 +3,7 @@ import type { SavedOvertimeAllocation } from "@/domain/overtime-allocation";
 import type { SavedPaidAbsence } from "@/domain/paid-absence";
 import type { ActualOwnAnnualPayment } from "@/domain/annual-payment";
 import type { SavedTariffAnnualClaim } from "@/domain/saved-tariff-annual-claim";
+import type { SavedTvlShiftWork } from "@/domain/saved-tvl-shift-work";
 import { calculateOwnAnnualPayments } from "./remuneration-annual-payment";
 import { calculateTariffAnnualPayments, combineAnnualPayments } from "./remuneration-tariff-annual";
 import { missingTariffAnnualClaims } from "./remuneration-annual-coverage";
@@ -33,6 +34,7 @@ export interface DatedMonthlyRemunerationInput {
   readonly paidAbsences?: readonly SavedPaidAbsence[];
   readonly actualAnnualPayments?: readonly ActualOwnAnnualPayment[];
   readonly tariffAnnualClaims?: readonly SavedTariffAnnualClaim[];
+  readonly tvlShiftWork?: readonly SavedTvlShiftWork[];
   readonly resolver?: RuleResolver;
 }
 
@@ -46,6 +48,7 @@ export function calculateAssessedMonthlyRemuneration(
       | "paidAbsences"
       | "actualAnnualPayments"
       | "tariffAnnualClaims"
+      | "tvlShiftWork"
     >,
 ) {
   const allowanceAssessment = deriveDatedAllowanceAssessments(input);
@@ -79,6 +82,7 @@ export function calculateDatedMonthlyRemuneration(input: DatedMonthlyRemuneratio
     workProfile,
     history,
     resolver,
+    input.tvlShiftWork ?? [],
   );
   const allowances = calculateMonthlyDatedAllowances(
     month,
