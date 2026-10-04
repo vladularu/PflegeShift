@@ -12,6 +12,13 @@ import type {
 import { calculateMonthlyComplianceSteps } from "@/engine/compliance";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
 import { calculateMonthlyPayEstimate } from "@/engine/pay";
+import { calculateAssessedMonthlyRemuneration } from "@/engine/remuneration-month";
+import {
+  summarizeAnnualRemuneration,
+  type AnnualRemunerationInput,
+  type AnnualMonthlyRemuneration,
+  type AnnualRemunerationMonth,
+} from "./annual-remuneration";
 import {
   selectAllowanceShifts,
   selectComplianceShifts,
@@ -134,6 +141,7 @@ export function buildAnnualCoreReport(
 }
 
 interface AvailableMonthCalculation {
+  readonly remuneration?: AnnualMonthlyRemuneration | null;
   readonly shiftTypeAnalysis: MonthlyShiftTypeAnalysis | null;
   readonly compliance: MonthlyComplianceResult | null;
   readonly pay: MonthlyPayEstimate | null;
@@ -146,6 +154,7 @@ interface CachedPart<T> {
 }
 
 interface AvailableMonthCache {
+  remuneration?: CachedPart<AnnualMonthlyRemuneration | null>;
   shiftTypeAnalysis?: CachedPart<MonthlyShiftTypeAnalysis | null>;
   summary?: CachedPart<MonthlySummary | null>;
   compliance?: CachedPart<MonthlyComplianceResult | null>;
@@ -169,6 +178,7 @@ export function annualInputKey(value: unknown): string {
 }
 
 interface AnnualComputationOptions {
+  readonly remuneration?: AnnualRemunerationInput;
   readonly cache?: ReturnType<typeof createAnnualAvailableReportCache>;
   readonly onCore?: (report: AnnualReport) => void;
 }
@@ -182,6 +192,7 @@ function* calculateAvailableMonth(
   referenceDate: string,
   ruleResolver: RuleResolver,
   cached: AvailableMonthCache,
+  remuneration?: AnnualRemunerationInput,
 ): Generator<number, AvailableMonthCalculation, void> {
   const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
   const summaryKey = annualInputKey([monthlyEntries.monthShifts, profile]);
@@ -237,6 +248,66 @@ function* calculateAvailableMonth(
   cached.compliance = { key: complianceKey, value: compliance };
   yield 2;
 
+  if (remuneration !== undefined) {
+    const decisions = remuneration.allowanceDecisions.find(
+      (item) => item.month === month,
+    )?.decisions;
+    const key = annualInputKey([
+      remuneration.status,
+      remuneration.profiles,
+      remuneration.shifts,
+      remuneration.overtimeAllocations,
+      remuneration.paidAbsences,
+      remuneration.actualAnnualPayments,
+      remuneration.tariffAnnualClaims,
+      remuneration.tvlShiftWork,
+      remuneration.savedAnnexAConfirmations,
+      remuneration.savedAnnexAPremiumFacts,
+      remuneration.annexAPauseDetails,
+      remuneration.annexAPauseDetailsComplete,
+      remuneration.savedSueConfirmations,
+      remuneration.savedSueAllowanceConfirmations,
+      decisions,
+      profile,
+      decision,
+      workPatternSettings,
+    ]);
+    const result =
+      cached.remuneration?.key === key
+        ? cached.remuneration.value
+        : remuneration.status !== "ready"
+          ? null
+          : captureRuleValue(() => {
+              const monthlyInput = {
+                month,
+                shifts: remuneration.shifts,
+                history: remuneration.profiles,
+                savedOvertimeAllocations: remuneration.overtimeAllocations,
+                paidAbsences: remuneration.paidAbsences,
+                actualAnnualPayments: remuneration.actualAnnualPayments,
+                tariffAnnualClaims: remuneration.tariffAnnualClaims,
+                tvlShiftWork: remuneration.tvlShiftWork,
+                savedAnnexAConfirmations: remuneration.savedAnnexAConfirmations,
+                savedAnnexAPremiumFacts: remuneration.savedAnnexAPremiumFacts,
+                annexAPauseDetails: remuneration.annexAPauseDetails,
+                annexAEntriesComplete: true,
+                annexAPauseDetailsComplete: remuneration.annexAPauseDetailsComplete,
+                savedSueConfirmations: remuneration.savedSueConfirmations,
+                savedSueAllowanceConfirmations: remuneration.savedSueAllowanceConfirmations,
+                workProfile: profile,
+                settings: workPatternSettings,
+                resolver: ruleResolver,
+                decisions,
+                legacyDecision: decision,
+              };
+              return calculateAssessedMonthlyRemuneration(monthlyInput);
+            });
+    cached.remuneration = { key, value: result };
+    yield 3;
+    return { compliance, pay: null, summary, shiftTypeAnalysis, remuneration: result };
+  }
+
+  // Legacy callers remain supported until their UI hooks supply the dated snapshot.
   const allowanceShifts = captureRuleValue(() =>
     profile.tariff === null
       ? monthlyEntries.monthShifts
@@ -290,6 +361,7 @@ export function* buildAnnualAvailableReportSteps(
   const monthsCache = options.cache?.get(ruleResolver) ?? new Map<string, AvailableMonthCache>();
   options.cache?.set(ruleResolver, monthsCache);
   const decisions = new Map(tariffDecisions.map((item) => [item.month, item]));
+  const remunerationMonths: AnnualRemunerationMonth[] = [];
   const shiftAnalyses: MonthlyShiftTypeAnalysis[] = [];
   const months: AnnualMonthReport[] = [];
   let targetMinutes = 0;
@@ -319,6 +391,7 @@ export function* buildAnnualAvailableReportSteps(
       referenceDate,
       ruleResolver,
       cached,
+      options.remuneration,
     );
     let available: AvailableMonthCalculation;
     while (true) {
@@ -330,6 +403,7 @@ export function* buildAnnualAvailableReportSteps(
       yield step.value;
     }
 
+    remunerationMonths.push({ month: coreMonth.month, result: available.remuneration ?? null });
     worktimeCoverageComplete &&= available.summary !== null;
     complianceCoverageComplete &&= available.compliance !== null;
     if (available.summary !== null) {
@@ -379,8 +453,13 @@ export function* buildAnnualAvailableReportSteps(
   }
 
   const actualMinutes = worktimeCoverageComplete ? summaryActualMinutes : core.actualMinutes;
+  const remuneration =
+    options.remuneration === undefined
+      ? undefined
+      : summarizeAnnualRemuneration(year, options.remuneration.status, remunerationMonths);
   return Object.freeze({
     ...core,
+    ...(remuneration === undefined ? {} : { remuneration }),
     shiftTypeAnalysis: worktimeCoverageComplete
       ? combineShiftTypeAnalyses(shiftAnalyses)
       : core.shiftTypeAnalysis,
