@@ -6,6 +6,7 @@ import type {
   Track,
 } from "./contracts.generated";
 import { annualPaymentRuleIssues } from "./annual-payment-rule-validation";
+import { youthRuleIssues } from "./youth-rule-validation";
 import { tvlKrIssues } from "./tvl-kr-validation";
 import { tvalTrainingIssues } from "./tval-training-validation";
 import { drkTableIssues } from "./drk-table-validation";
@@ -526,6 +527,7 @@ function validateLegalPackage(
   issues: ValidationIssue[],
 ): void {
   const { rules } = rulePackage;
+  issues.push(...youthRuleIssues(rulePackage));
   const workerQualification = rules.nightWork.workerQualification;
   if (rulePackage.engineContractVersion >= 3 && workerQualification === undefined) {
     issues.push(
@@ -599,6 +601,28 @@ function validateLegalPackage(
       ? []
       : ([["/rules/sundayHolidayRest/sourceIds", sundayHolidayRest.sourceIds]] as const)),
     ["/rules/planning/sourceIds", rules.planning.sourceIds],
+    ...(rules.youthProtection === undefined
+      ? []
+      : ([["/rules/youthProtection/sourceIds", rules.youthProtection.sourceIds]] as const)),
+    ...(rules.youthProtection?.exam === undefined
+      ? []
+      : ([
+          ["/rules/youthProtection/exam/sourceIds", rules.youthProtection.exam.sourceIds],
+        ] as const)),
+    ...(rules.adultTraining === undefined
+      ? []
+      : ([
+          ["/rules/adultTraining/bbig/sourceIds", rules.adultTraining.bbig.sourceIds],
+          ...(rules.adultTraining.bbig.exam === undefined
+            ? []
+            : ([
+                [
+                  "/rules/adultTraining/bbig/exam/sourceIds",
+                  rules.adultTraining.bbig.exam.sourceIds,
+                ],
+              ] as const)),
+          ["/rules/adultTraining/pflbg/sourceIds", rules.adultTraining.pflbg.sourceIds],
+        ] as const)),
   ] as const;
   for (const [path, references] of sourceBearingRules) {
     validateSourceReferences(references, sourceIds, path, issues);

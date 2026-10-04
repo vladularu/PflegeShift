@@ -43,7 +43,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -127,7 +127,7 @@ export type RuleSourceIds = [RuleIdentifier, ...RuleIdentifier[]];
 export type RuleCapabilityStatus = "SUPPORTED" | "UNSUPPORTED" | "NOT_APPLICABLE";
 export type RuleNullableIdentifier = null | RuleIdentifier;
 export type RuleLegalPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 3 | 4 | 5 | 6;
+  engineContractVersion?: 1 | 3 | 4 | 5 | 6 | 9 | 10;
   kind: "LEGAL";
   rules: RuleLegalRules;
 };
@@ -139,7 +139,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -27688,6 +27688,8 @@ export interface RuleLegalRules {
     lateEarlyDayGap: number;
     sourceIds: RuleSourceIds;
   };
+  youthProtection?: RuleYouthProtection;
+  adultTraining?: RuleAdultTraining;
 }
 export interface RuleBreakTier {
   overMinutes: number;
@@ -27719,6 +27721,478 @@ export interface RuleSundayHolidayRest {
   evidenceShiftType: "FREE";
   matchingMode: "ONE_TO_ONE_EARLIEST_DEADLINE";
   sourceIds: RuleSourceIds;
+}
+export interface RuleYouthProtection {
+  minimumAge: number;
+  adultAge: number;
+  workingTime: {
+    dailyMinutes: number;
+    reducedWeekDailyMinutes: number;
+    weeklyMinutes: number;
+    shiftSpanMinutes: number;
+    maxDaysPerWeek: number;
+  };
+  breaks: {
+    minimumSegmentMinutes: number;
+    afterStartMinutes: number;
+    beforeEndMinutes: number;
+    maxContinuousMinutes: number;
+    /**
+     * @minItems 1
+     * @maxItems 10
+     */
+    tiers:
+      | [RuleBreakTier]
+      | [RuleBreakTier, RuleBreakTier]
+      | [RuleBreakTier, RuleBreakTier, RuleBreakTier]
+      | [RuleBreakTier, RuleBreakTier, RuleBreakTier, RuleBreakTier]
+      | [RuleBreakTier, RuleBreakTier, RuleBreakTier, RuleBreakTier, RuleBreakTier]
+      | [RuleBreakTier, RuleBreakTier, RuleBreakTier, RuleBreakTier, RuleBreakTier, RuleBreakTier]
+      | [
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+        ]
+      | [
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+        ]
+      | [
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+        ]
+      | [
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+          RuleBreakTier,
+        ];
+  };
+  restMinutes: number;
+  employmentWindow: {
+    startMinute: number;
+    endMinute: number;
+    multiShiftMinimumAge: number;
+    multiShiftEndMinute: number;
+  };
+  school: School;
+  exam?: Exam;
+  daysOff: {
+    minimumFreeSundays: number;
+    recommendedFreeSaturdays: number;
+    holidayReplacementFollowingWeeks: number;
+    /**
+     * @minItems 1
+     * @maxItems 20
+     */
+    absoluteFixedHolidays:
+      | [string]
+      | [string, string]
+      | [string, string, string]
+      | [string, string, string, string]
+      | [string, string, string, string, string]
+      | [string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string, string, string, string, string]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ];
+    easterSundayProhibited: boolean;
+    /**
+     * @minItems 1
+     * @maxItems 20
+     */
+    shortEveDays:
+      | [string]
+      | [string, string]
+      | [string, string, string]
+      | [string, string, string, string]
+      | [string, string, string, string, string]
+      | [string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string, string, string, string]
+      | [string, string, string, string, string, string, string, string, string, string, string]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ]
+      | [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+        ];
+    shortEveEndMinute: number;
+  };
+  sourceIds: RuleSourceIds;
+}
+export interface School {
+  earlyStartMinute: number;
+  protectedDayLessonCount: number;
+  minimumLessonMinutes: number;
+  blockLessonCount: number;
+  blockDays: number;
+  additionalTrainingMinutes: number;
+}
+export interface Exam {
+  releaseRequiredOutsideParticipation: boolean;
+  releasePrecedingWrittenFinalWorkday: boolean;
+  creditParticipationBreaksNecessaryTravel: boolean;
+  creditPrecedingAverageDay: boolean;
+  sourceIds: RuleSourceIds;
+}
+export interface RuleAdultTraining {
+  minimumAge: number;
+  bbig: {
+    school: School;
+    exam?: Exam;
+    sourceIds: RuleSourceIds;
+  };
+  pflbg: {
+    schoolRelease: boolean;
+    examRelease?: boolean;
+    preparationTimeRequired: boolean;
+    sourceIds: RuleSourceIds;
+  };
 }
 export interface RuleHolidayRules {
   /**
