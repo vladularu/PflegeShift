@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRemunerationData } from "@/application/remuneration-provider";
+import { activeActualOwnAnnualPayments } from "@/domain/saved-annual-payment";
+import { useTrainingData } from "@/application/training-provider";
+import { usePflegeShiftEntries } from "@/application/pflegeshift-provider";
+import type { AnnualRemunerationInput } from "./annual-remuneration";
 
 import type {
   CalendarEntry,
+  ShiftEntry,
   MonthlyTariffDecision,
   TvoedWorkPatternSettings,
   UserProfile,
@@ -53,6 +59,47 @@ export function useDeferredAnnualReport({
   readonly workPatternSettings: TvoedWorkPatternSettings;
   readonly year: number;
 }): DeferredAnnualReportResult {
+  const history = useRemunerationData();
+  const trainingData = useTrainingData();
+  const { entries: loadedEntries } = usePflegeShiftEntries();
+  const remuneration = useMemo<AnnualRemunerationInput>(
+    () => ({
+      status: history.status,
+      profiles: history.profiles,
+      allowanceDecisions: history.allowanceDecisions,
+      overtimeAllocations: history.overtimeAllocations,
+      paidAbsences: history.paidAbsences,
+      actualAnnualPayments: activeActualOwnAnnualPayments(history.actualAnnualPayments),
+      tariffAnnualClaims: history.tariffAnnualClaims,
+      tvlShiftWork: history.tvlShiftWork,
+      savedAnnexAConfirmations: history.tvoedAnnexAMonthConfirmations,
+      savedAnnexAPremiumFacts: history.tvoedAnnexAPremiumFacts,
+      annexAPauseDetails: trainingData.shifts,
+      annexAPauseDetailsComplete: trainingData.status === "ready",
+      savedSueConfirmations: history.tvoedSueMonthConfirmations,
+      savedSueAllowanceConfirmations: history.tvoedSueAllowanceConfirmations,
+      shifts: loadedEntries.filter(
+        (entry): entry is ShiftEntry => entry.kind === "SHIFT" && entry.deletedAt === null,
+      ),
+    }),
+    [
+      history.status,
+      history.profiles,
+      history.allowanceDecisions,
+      history.overtimeAllocations,
+      history.paidAbsences,
+      history.actualAnnualPayments,
+      history.tariffAnnualClaims,
+      history.tvlShiftWork,
+      history.tvoedAnnexAMonthConfirmations,
+      history.tvoedAnnexAPremiumFacts,
+      trainingData.shifts,
+      trainingData.status,
+      history.tvoedSueMonthConfirmations,
+      history.tvoedSueAllowanceConfirmations,
+      loadedEntries,
+    ],
+  );
   const [retryRevision, setRetryRevision] = useState(0);
   const [states, setStates] = useState<readonly AnnualReportState[]>([]);
   const [coreState, setCoreState] = useState<AnnualReportState | null>(null);
@@ -73,9 +120,19 @@ export function useDeferredAnnualReport({
             workPatternSettings,
             year,
             referenceDate,
+            remuneration,
           })
         : null,
-    [enabled, entries, profile, tariffDecisions, workPatternSettings, year, referenceDate],
+    [
+      enabled,
+      entries,
+      profile,
+      tariffDecisions,
+      workPatternSettings,
+      year,
+      referenceDate,
+      remuneration,
+    ],
   );
 
   const state = states.find(
@@ -103,6 +160,7 @@ export function useDeferredAnnualReport({
       ruleResolver,
       {
         cache: computationCache,
+        remuneration,
         onCore: (report) => {
           if (!active || requestRevision.current !== currentRequest) return;
           setCoreState({
@@ -181,6 +239,7 @@ export function useDeferredAnnualReport({
     profile,
     referenceDate,
     retryRevision,
+    remuneration,
     ruleResolver,
     tariffDecisions,
     workPatternSettings,

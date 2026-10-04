@@ -24,6 +24,25 @@ import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 import { selectAnnualCheckDisplay } from "./check-visibility";
 
 let mockReferenceDate = "2026-08-04";
+const mockHistory = {
+  status: "ready",
+  profiles: [],
+  allowanceDecisions: [],
+  overtimeAllocations: [],
+  paidAbsences: [],
+  actualAnnualPayments: [],
+};
+const mockLoadedEntries: readonly CalendarEntry[] = [];
+const mockTraining = { status: "ready", error: null, profiles: [], shifts: [] };
+jest.mock("@/application/training-provider", () => ({
+  useTrainingData: () => mockTraining,
+}));
+jest.mock("@/application/remuneration-provider", () => ({
+  useRemunerationData: () => mockHistory,
+}));
+jest.mock("@/application/pflegeshift-provider", () => ({
+  usePflegeShiftEntries: () => ({ entries: mockLoadedEntries }),
+}));
 
 jest.mock("@/features/analysis/use-local-reference-date", () => ({
   useLocalReferenceDate: () => mockReferenceDate,
