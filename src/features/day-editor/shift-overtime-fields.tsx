@@ -19,7 +19,7 @@ export function ShiftOvertimeFields({
   readonly overtimeMinutes: string;
 }) {
   const palette = usePalette();
-  const status = confirmed ? "Als Überstunden bestätigt" : "Nicht bestätigt";
+  const status = confirmed ? "Zur Auszahlung bestätigt" : "Nicht bestätigt";
   return (
     <>
       <View style={[styles.row, { borderBottomColor: palette.separator }]}>
@@ -31,7 +31,7 @@ export function ShiftOvertimeFields({
         </Text>
         <TextInput
           ref={inputRef}
-          accessibilityLabel="Tariflich bestätigte Überstunden in Minuten"
+          accessibilityLabel="Auszahlbare Mehr- und Überstunden in Minuten"
           keyboardType="number-pad"
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           onChangeText={onMinutesChange}
@@ -42,7 +42,7 @@ export function ShiftOvertimeFields({
       </View>
       {Number(overtimeMinutes) > 0 ? (
         <Pressable
-          accessibilityLabel={`Tarifstatus: ${status}`}
+          accessibilityLabel={`Auszahlung: ${status}`}
           accessibilityRole="button"
           onPress={() => onConfirmedChange(!confirmed)}
           style={({ pressed }) => [
@@ -57,7 +57,7 @@ export function ShiftOvertimeFields({
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
             style={[styles.label, { color: palette.text }]}
           >
-            Tarifstatus
+            Auszahlung
           </Text>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_SCALE}

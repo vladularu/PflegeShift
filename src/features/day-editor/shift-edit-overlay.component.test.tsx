@@ -65,6 +65,18 @@ async function renderOverlay(
 }
 
 describe("ShiftEditOverlay", () => {
+  it("allows explicit payable overtime independently of a tariff selection", async () => {
+    const { screen, props } = await renderOverlay({
+      overtimeMinutes: "60",
+      tariffOvertimeConfirmed: false,
+    });
+    const field = screen.getByLabelText("Auszahlbare Mehr- und Überstunden in Minuten");
+    await fireEvent.changeText(field, "90");
+    expect(props.onOvertimeMinutesChange).toHaveBeenCalledWith("90");
+    await fireEvent.press(screen.getByRole("button", { name: "Auszahlung: Nicht bestätigt" }));
+    expect(props.onTariffOvertimeConfirmedChange).toHaveBeenCalledWith(true);
+    expect(screen.queryByText("Tarifstatus")).toBeNull();
+  });
   it("shows the saved location map without changing the location action", async () => {
     const { screen, props } = await renderOverlay({
       location: { name: "Heppenheim", latitude: 49.64, longitude: 8.64 },
