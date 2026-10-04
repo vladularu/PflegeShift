@@ -138,6 +138,16 @@ export function calculateDatedShiftTimePremiums(
             message: "Die TVöD-Anlage-A-Zeitzuschläge sind noch nicht fachlich freigegeben.",
           },
         });
+      else if (context.kind === "tvoed-sue-draft")
+        positions.push({
+          ...base,
+          status: "unavailable",
+          amountCents: null,
+          issue: {
+            code: "TARIFF_UNSUPPORTED",
+            message: "SuE-Zeitzuschläge sind für diesen Tabellenentwurf noch nicht berechenbar.",
+          },
+        });
       else if (context.kind === "own-configured")
         positions.push(
           ...calculateOwnShiftDayPremiums(

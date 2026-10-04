@@ -8,6 +8,8 @@ import type { SavedTvoedAnnexAMonthConfirmation } from "@/domain/saved-tvoed-ann
 import type { SavedTvoedAnnexAPremiumFacts } from "@/domain/saved-tvoed-annex-a-premium-facts";
 import type { SavedShiftTraining } from "@/domain/training-data";
 
+import type { SavedTvoedSueMonthConfirmation } from "@/domain/saved-tvoed-sue-month-confirmation";
+import type { SavedTvoedSueAllowanceConfirmation } from "@/domain/saved-tvoed-sue-allowance-confirmation";
 import { calculateOwnAnnualPayments } from "./remuneration-annual-payment";
 import { calculateTariffAnnualPayments, combineAnnualPayments } from "./remuneration-tariff-annual";
 import { missingTariffAnnualClaims } from "./remuneration-annual-coverage";
@@ -21,6 +23,7 @@ import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import {
   calculateMonthlyBaseRemuneration,
   type TvoedAnnexAMonthConfirmation,
+  type TvoedSueMonthConfirmation,
 } from "./remuneration-base";
 import { calculateMonthlyTimeRemuneration } from "./remuneration-premiums";
 import { calculateMonthlyDatedAllowances } from "./remuneration-allowances";
@@ -32,6 +35,10 @@ import {
 
 import { resolveSavedTvoedAnnexAMonthConfirmation } from "./tvoed-annex-a-saved-confirmation";
 import { calculateSavedTvoedAnnexADraftTimePremiums } from "./tvoed-annex-a-saved-premiums";
+
+import { resolveSavedTvoedSueMonthConfirmation } from "./tvoed-sue-saved-confirmation";
+import { calculateSavedTvoedSueAllowancePosition } from "./tvoed-sue-saved-allowance";
+import { summarizeSupplements } from "./remuneration-supplement-result";
 
 export interface DatedMonthlyRemunerationInput {
   readonly month: string;
@@ -46,11 +53,14 @@ export interface DatedMonthlyRemunerationInput {
   readonly tariffAnnualClaims?: readonly SavedTariffAnnualClaim[];
   readonly tvlShiftWork?: readonly SavedTvlShiftWork[];
   readonly annexAConfirmation?: TvoedAnnexAMonthConfirmation;
+  readonly sueConfirmation?: TvoedSueMonthConfirmation;
   readonly savedAnnexAConfirmations?: readonly SavedTvoedAnnexAMonthConfirmation[];
   readonly savedAnnexAPremiumFacts?: readonly SavedTvoedAnnexAPremiumFacts[];
   readonly annexAPauseDetails?: readonly SavedShiftTraining[];
   readonly annexAEntriesComplete?: boolean;
   readonly annexAPauseDetailsComplete?: boolean;
+  readonly savedSueConfirmations?: readonly SavedTvoedSueMonthConfirmation[];
+  readonly savedSueAllowanceConfirmations?: readonly SavedTvoedSueAllowanceConfirmation[];
   readonly resolver?: RuleResolver;
 }
 
@@ -66,11 +76,14 @@ export function calculateAssessedMonthlyRemuneration(
       | "tariffAnnualClaims"
       | "tvlShiftWork"
       | "annexAConfirmation"
+      | "sueConfirmation"
       | "savedAnnexAConfirmations"
       | "savedAnnexAPremiumFacts"
       | "annexAPauseDetails"
       | "annexAEntriesComplete"
       | "annexAPauseDetailsComplete"
+      | "savedSueConfirmations"
+      | "savedSueAllowanceConfirmations"
     >,
 ) {
   const allowanceAssessment = deriveDatedAllowanceAssessments(input);
@@ -93,6 +106,14 @@ export function calculateDatedMonthlyRemuneration(input: DatedMonthlyRemuneratio
     savedOvertimeAllocations,
     resolver = bundledRuleResolver,
   } = input;
+  const sueConfirmation =
+    input.sueConfirmation ??
+    resolveSavedTvoedSueMonthConfirmation(
+      month,
+      history,
+      input.savedSueConfirmations ?? [],
+      resolver,
+    );
   const base = calculateMonthlyBaseRemuneration(
     month,
     history,
@@ -109,6 +130,7 @@ export function calculateDatedMonthlyRemuneration(input: DatedMonthlyRemuneratio
         input.savedAnnexAConfirmations ?? [],
         resolver,
       ),
+    sueConfirmation,
   );
   const timePremiums =
     calculateSavedTvoedAnnexADraftTimePremiums({
@@ -131,7 +153,7 @@ export function calculateDatedMonthlyRemuneration(input: DatedMonthlyRemuneratio
       resolver,
       input.tvlShiftWork ?? [],
     );
-  const allowances = calculateMonthlyDatedAllowances(
+  const datedAllowances = calculateMonthlyDatedAllowances(
     month,
     shifts,
     workProfile,
@@ -140,6 +162,16 @@ export function calculateDatedMonthlyRemuneration(input: DatedMonthlyRemuneratio
     resolver,
     input.tvlShiftWork ?? [],
   );
+  const sueAllowance = calculateSavedTvoedSueAllowancePosition(
+    month,
+    history,
+    input.savedSueAllowanceConfirmations ?? [],
+    sueConfirmation,
+    resolver,
+  );
+  const allowances = sueAllowance
+    ? summarizeSupplements([...datedAllowances.positions, sueAllowance])
+    : datedAllowances;
   const overtime = calculateMonthlyDatedOvertime(
     month,
     shifts,

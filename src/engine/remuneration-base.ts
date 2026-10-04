@@ -7,6 +7,7 @@ import type {
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { calculateOwnHourlyPeriod, type OwnHourlyInput } from "./remuneration-own-hourly";
 import { roundRemunerationCents } from "./remuneration-money";
+import { calculateTvoedSueDraftBase, type TvoedSueDraftBaseInput } from "./tvoed-sue-draft-base";
 import {
   calculateTvoedAnnexADraftBase,
   type TvoedAnnexADraftBaseInput,
@@ -29,10 +30,20 @@ export type TvoedAnnexAMonthConfirmation = Pick<
   | "fullMonthSameContractConfirmed"
 > & { readonly month: string };
 
+export type TvoedSueMonthConfirmation = Pick<
+  TvoedSueDraftBaseInput,
+  | "tariffApplicabilityConfirmed"
+  | "sueClassificationConfirmed"
+  | "standardFullTimeConfirmed"
+  | "fullMonthBaseEntitlementConfirmed"
+  | "fullMonthSameContractConfirmed"
+> & { readonly month: string };
+
 function basePosition(
   period: RemunerationPeriod,
   monthDays: number,
   annexAConfirmation?: TvoedAnnexAMonthConfirmation,
+  sueConfirmation?: TvoedSueMonthConfirmation,
 ): RemunerationPosition {
   const { from, through, context } = period;
   const calendarDays = Temporal.PlainDate.from(from).until(through).days + 1;
@@ -93,6 +104,54 @@ function basePosition(
     return {
       ...base,
       label: "Tabellenentgelt (Entwurf)",
+      status: "estimated",
+      amountCents: result.personalTableBaseCents,
+      basis: {
+        ...base.basis,
+        fullTimeMonthlyCents: result.fullTimeTableCents,
+        personalMonthlyCents: result.personalTableBaseCents,
+        weeklyMinutes: context.weeklyMinutes,
+        fullTimeWeeklyMinutes: context.fullTimeWeeklyMinutes,
+        proration: "none",
+      },
+      issue: null,
+    };
+  }
+  if (context.kind === "tvoed-sue-draft") {
+    const entireMonth = calendarDays === monthDays && from.endsWith("-01");
+    if (!entireMonth || sueConfirmation?.month !== from.slice(0, 7))
+      return {
+        ...base,
+        label: "SuE-Tabellenentgelt (Entwurf)",
+        status: "unavailable",
+        amountCents: null,
+        issue: {
+          code: "TARIFF_UNSUPPORTED",
+          message:
+            "Für das SuE-Tabellenentgelt fehlen ein vollständiger Monat oder bestätigte Angaben.",
+        },
+      };
+    const result = calculateTvoedSueDraftBase({
+      pkg: context.rulePackage,
+      groupId: context.groupId,
+      stepId: context.stepId,
+      contractedWeeklyMinutes: context.weeklyMinutes,
+      ...sueConfirmation,
+    });
+    if (result.kind === "unavailable")
+      return {
+        ...base,
+        label: "SuE-Tabellenentgelt (Entwurf)",
+        status: "unavailable",
+        amountCents: null,
+        issue: {
+          code: "TARIFF_UNSUPPORTED",
+          message: `Das SuE-Tabellenentgelt kann noch nicht bestimmt werden: ${result.reason}.`,
+        },
+      };
+    return {
+      ...base,
+      label: "SuE-Tabellenentgelt (Entwurf)",
       status: "estimated",
       amountCents: result.personalTableBaseCents,
       basis: {
@@ -192,12 +251,13 @@ export function calculateMonthlyBaseRemuneration(
   resolver: RuleResolver = bundledRuleResolver,
   hourlyInput?: OwnHourlyInput,
   annexAConfirmation?: TvoedAnnexAMonthConfirmation,
+  sueConfirmation?: TvoedSueMonthConfirmation,
 ): MonthlyBaseRemuneration {
   const monthDays = remunerationMonthStart(month).daysInMonth;
   const positions = resolveRemunerationMonth(month, history, resolver).flatMap((period) =>
     period.context.kind === "own-configured" && period.context.configuration.base.kind === "hourly"
       ? calculateOwnHourlyPeriod(period, monthDays, hourlyInput)
-      : [basePosition(period, monthDays, annexAConfirmation)],
+      : [basePosition(period, monthDays, annexAConfirmation, sueConfirmation)],
   );
   const complete = positions.every((position) => position.status !== "unavailable");
   const knownSubtotalCents = positions.reduce(

@@ -138,6 +138,14 @@ function calculateAllocatedOvertime(
         "Die TVöD-Anlage-A-Überstundenregeln sind noch nicht fachlich freigegeben.",
       ),
     ];
+  if (context.kind === "tvoed-sue-draft")
+    return [
+      unavailable(
+        position,
+        "TARIFF_UNSUPPORTED",
+        "SuE-Überstunden sind für diesen Tabellenentwurf noch nicht berechenbar.",
+      ),
+    ];
   if (context.kind === "training-tariff") return calculateTrainingOvertime(position, context);
   if (context.kind === "tval-training") return calculateTvalOvertime(position, context);
   if (context.kind === "tvl-kr") return calculateTvlOvertime(position, context);
