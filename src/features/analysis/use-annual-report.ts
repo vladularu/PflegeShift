@@ -100,6 +100,24 @@ export function useDeferredAnnualReport({
       loadedEntries,
     ],
   );
+  const training = useMemo(
+    () => ({
+      data: {
+        status: trainingData.status,
+        error: trainingData.error,
+        profiles: trainingData.profiles,
+        shifts: trainingData.shifts,
+      },
+      shifts: remuneration.shifts,
+    }),
+    [
+      trainingData.status,
+      trainingData.error,
+      trainingData.profiles,
+      trainingData.shifts,
+      remuneration.shifts,
+    ],
+  );
   const [retryRevision, setRetryRevision] = useState(0);
   const [states, setStates] = useState<readonly AnnualReportState[]>([]);
   const [coreState, setCoreState] = useState<AnnualReportState | null>(null);
@@ -121,6 +139,7 @@ export function useDeferredAnnualReport({
             year,
             referenceDate,
             remuneration,
+            training,
           })
         : null,
     [
@@ -132,6 +151,7 @@ export function useDeferredAnnualReport({
       year,
       referenceDate,
       remuneration,
+      training,
     ],
   );
 
@@ -161,6 +181,7 @@ export function useDeferredAnnualReport({
       {
         cache: computationCache,
         remuneration,
+        training,
         onCore: (report) => {
           if (!active || requestRevision.current !== currentRequest) return;
           setCoreState({
@@ -240,6 +261,7 @@ export function useDeferredAnnualReport({
     referenceDate,
     retryRevision,
     remuneration,
+    training,
     ruleResolver,
     tariffDecisions,
     workPatternSettings,
