@@ -3,7 +3,7 @@
 ## Task-Vertrag
 
 Ziel: Den erhaltenen Anlage-A-Vertrag 16, beide datierten Originalpakete und vollständige Referenzen reproduzierbar liefern.
-Dateiscope: Paket-/Manifest-Schema, zwei generierte Artefakte, Validierungsanschluss, vollständiger Validator und Originaltest, Generator, zwei CSV-Dateien, zwei JSON-Pakete und dieser Beleg (13 Dateien).
+Dateiscope: Paket-/Manifest-Schema, zwei generierte Artefakte, Validierungsanschluss, vollständiger Validator und Originaltest, Generator, zwei CSV-Dateien, zwei JSON-Pakete dieser Beleg und die unverändert vollständige Caritas-Testmatrix (14 Dateien).
 Plattform: Plattformunabhängige Vertrags-/Tarifvorbereitung für den späteren iPhone-Fluss.
 Abnahme: Frischer Primärquellenabgleich, vollständige Originalreferenzen, Erzeugung plus unverändernder --check, rules:generate, verify:fast und sieben grüne PR-CI-Prüfungen.
 Nicht-Ziele: Persönliche Berechnung, App-Anbindung, native Änderung, Remote-Aktivierung oder Veröffentlichung.
@@ -26,3 +26,7 @@ Vollständiger Originalvalidator, alle Originalreferenzassertionen und unveränd
 Nur die beiden Anlage-A-Richtlinien und Vertrag 16 werden in das aktuelle Schema aufgenommen. Allgemeine TVöD-Pflichtfelder werden für diesen eigenständigen DRAFT-Vertrag durch seinen eigenen Validator geprüft.
 BT-K und BT-B behalten ihre getrennten Quellenzuordnungen, Zeiträume und Sonderregelverweise. Zuschlags-/Überstundenrichtlinien sind datiert und geprüft, begründen hier noch keine Berechnung.
 Alle Fähigkeiten bleiben UNSUPPORTED, Vertrag 16 bleibt außerhalb des ausführbaren Remote-Katalogs. Unabhängige Fachprüfung, persönliche Integration und Geräteabnahme bleiben separate offene Gates.
+
+## Konkrete CI-Korrektur
+
+Der erste Coverage-Lauf von PR #221 überschritt im bestehenden Ost-Jahresreferenztest das Zeitlimit von fünf Sekunden. Die bisherigen sechs regionalen Testfälle werden nach Region, Jahr, Anlage und Gebiet in 32 kleinere Testfälle aufgeteilt. Sämtliche 384 Berechnungen und ursprünglichen Erwartungen bleiben identisch; Zeitlimits, Coverage-Schwellen und Produktionscode werden nicht geändert.
