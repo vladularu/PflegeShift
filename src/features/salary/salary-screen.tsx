@@ -26,7 +26,7 @@ import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SPACING } from "@/theme/tokens";
 import { SurfaceCard } from "@/ui/design-system";
-import { SecondaryButton } from "@/ui/form-controls";
+import { PrimaryButton, SecondaryButton } from "@/ui/form-controls";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
 import { selectionFeedback } from "@/ui/haptics";
@@ -45,6 +45,7 @@ export function SalaryScreen() {
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { testMonths } = usePflegeShiftTestData();
   const [month, setMonth] = useState(() => coordinator.getMonth());
+  const [additionalMonth, setAdditionalMonth] = useState<string | null>(null);
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
   useEffect(() => {
@@ -82,6 +83,14 @@ export function SalaryScreen() {
     );
   if (error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
   if (calculation === null) return <LoadingView />;
+  const needsSetup =
+    calculation.ok &&
+    calculation.value.base.positions.length > 0 &&
+    calculation.value.base.positions.every((position) =>
+      ["PROFILE_MISSING", "REMUNERATION_UNCONFIGURED", "EFFECTIVE_DATE_UNKNOWN"].includes(
+        position.issue?.code ?? "",
+      ),
+    );
   return (
     <ReportScrollView>
       <MonthNavigator
@@ -97,6 +106,16 @@ export function SalaryScreen() {
             onRetry={() => void reload()}
             title="Gehalt nicht verfügbar"
           />
+        ) : needsSetup ? (
+          <SurfaceCard style={{ padding: SPACING.xl, gap: SPACING.md }}>
+            <RemunerationText>Dein Gehalt</RemunerationText>
+            <RemunerationText muted>
+              Prüfe und bestätige deine Gehaltsangaben einmal. Ein anderer Beginn ist optional.
+            </RemunerationText>
+            <PrimaryButton onPress={() => router.push(settingsEditorRoute("TARIFF"))}>
+              Angaben bestätigen
+            </PrimaryButton>
+          </SurfaceCard>
         ) : (
           <View key={month} style={{ gap: SPACING.lg }}>
             <SurfaceCard
@@ -132,7 +151,9 @@ export function SalaryScreen() {
                 >
                   {calculation.value.complete
                     ? remunerationEuro(calculation.value.estimatedGrossCents)
-                    : "Nicht berechenbar"}
+                    : calculation.value.knownSubtotalCents > 0
+                      ? remunerationEuro(calculation.value.knownSubtotalCents)
+                      : "Angaben fehlen"}
                 </Text>
               </View>
               {!calculation.value.complete ? (
@@ -210,18 +231,27 @@ export function SalaryScreen() {
                 component={calculation.value.annualPayments}
               />
             ) : null}
-            <SecondaryButton onPress={() => router.push(overtimeAllocationRoute(month))}>
-              Überstunden den Tagen zuordnen
-            </SecondaryButton>
-            <SecondaryButton onPress={() => router.push(annualPaymentRoute(month))}>
-              Jahressonderzahlungen bearbeiten
-            </SecondaryButton>
             <SecondaryButton onPress={() => router.push(settingsEditorRoute("TARIFF"))}>
-              Vergütungsprofil prüfen
+              Gehaltsangaben
             </SecondaryButton>
-            <SecondaryButton onPress={() => router.push(tariffAssessmentRoute(month))}>
-              Schichtzulage prüfen & bestätigen
+            <SecondaryButton
+              onPress={() => setAdditionalMonth((current) => (current === month ? null : month))}
+            >
+              {additionalMonth === month ? "Zusatzangaben schließen" : "Zusatzangaben"}
             </SecondaryButton>
+            {additionalMonth === month ? (
+              <View style={{ gap: SPACING.md }}>
+                <SecondaryButton onPress={() => router.push(overtimeAllocationRoute(month))}>
+                  Überstunden den Tagen zuordnen
+                </SecondaryButton>
+                <SecondaryButton onPress={() => router.push(annualPaymentRoute(month))}>
+                  Jahressonderzahlungen bearbeiten
+                </SecondaryButton>
+                <SecondaryButton onPress={() => router.push(tariffAssessmentRoute(month))}>
+                  Schichtzulage prüfen & bestätigen
+                </SecondaryButton>
+              </View>
+            ) : null}
             <ReportFootnote>
               Unverbindliche Brutto-Schätzung aus den für den Zeitraum gespeicherten Angaben.
               Fehlende Bestandteile sind nicht mit null Euro angesetzt. Keine Lohnabrechnung.

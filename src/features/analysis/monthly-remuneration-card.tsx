@@ -13,27 +13,37 @@ export function MonthlyRemunerationCard({ month }: { readonly month: string }) {
     pay.base.positions.every(
       (position) =>
         position.issue?.code === "PROFILE_MISSING" ||
-        position.issue?.code === "REMUNERATION_UNCONFIGURED",
+        position.issue?.code === "REMUNERATION_UNCONFIGURED" ||
+        position.issue?.code === "EFFECTIVE_DATE_UNKNOWN",
     );
+  const imported =
+    pay !== null &&
+    pay.base.positions.every((position) => position.issue?.code === "EFFECTIVE_DATE_UNKNOWN");
   const status =
     error || (calculation !== null && !calculation.ok)
       ? "Nicht verfügbar"
       : calculation === null
         ? "Wird berechnet …"
         : unconfigured
-          ? "Gehalt einrichten"
+          ? imported
+            ? "Angaben bestätigen"
+            : "Gehalt einrichten"
           : !pay?.complete
-            ? "Nicht verfügbar"
+            ? pay && pay.knownSubtotalCents > 0
+              ? "Teilweise berechnet"
+              : "Nicht verfügbar"
             : null;
   const caption = error
     ? "Vergütungsdaten konnten nicht geladen werden. Details zum erneuten Laden öffnen."
     : calculation === null
       ? "Vergütungsdaten werden geladen."
       : unconfigured
-        ? "Tarif oder eigene Vergütung mit Gültigkeitsdatum hinterlegen."
+        ? imported
+          ? "Bestätige deine übernommenen Gehaltsangaben für den aktuellen Monat."
+          : "Tarif oder eigene Vergütung hinterlegen."
         : !pay?.complete
           ? "Berechnung unvollständig · Teilbeträge sind kein Gesamtbrutto."
-          : "Unverbindliche Brutto-Schätzung · datierte Vergütungsgrundlage";
+          : "Unverbindliche Brutto-Schätzung · aus deinen gespeicherten Angaben";
   const value = status ?? remunerationEuro(pay?.estimatedGrossCents ?? null);
   return (
     <AnalysisListCard
@@ -43,7 +53,7 @@ export function MonthlyRemunerationCard({ month }: { readonly month: string }) {
       onPress={() => router.push(unconfigured ? settingsEditorRoute("TARIFF") : salaryRoute(month))}
     >
       {status ? <AnalysisValueRow first reserveDisclosure label="Status" value={status} /> : null}
-      {pay ? (
+      {pay && !unconfigured ? (
         <>
           <AnalysisValueRow
             first={!status}

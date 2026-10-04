@@ -271,6 +271,7 @@ describe("dated salary detail integration", () => {
       };
       const screen = await render(<SalaryScreen />);
       const card = screen.getByRole("button", { name: "Jahressonderzahlung, Details öffnen" });
+      await fireEvent.press(screen.getByRole("button", { name: "Zusatzangaben" }));
       await fireEvent.press(
         screen.getByRole("button", { name: "Jahressonderzahlungen bearbeiten" }),
       );
@@ -333,6 +334,7 @@ describe("dated salary detail integration", () => {
   });
   it("opens the allocation editor for the displayed month", async () => {
     const screen = await render(<SalaryScreen />);
+    await fireEvent.press(screen.getByRole("button", { name: "Zusatzangaben" }));
     await fireEvent.press(screen.getByRole("button", { name: "Überstunden den Tagen zuordnen" }));
     expect(router.push).toHaveBeenCalledWith({
       pathname: "/overtime-allocation",
@@ -471,6 +473,36 @@ describe("dated salary detail integration", () => {
     expect(mockHistory.saveProfile).not.toHaveBeenCalled();
     expect(mockHistory.saveAllowanceDecisions).not.toHaveBeenCalled();
   });
+  it("offers one clear confirmation action for imported pay and keeps all writes in the editor", async () => {
+    mockHistory = { ...mockHistory, profiles: [{ ...history(), effectiveFrom: null }] };
+    const screen = await render(<SalaryScreen />);
+    expect(screen.queryByText(/Bekannter Teilbetrag/)).toBeNull();
+    expect(screen.queryByText("Zusammensetzung")).toBeNull();
+    await fireEvent.press(screen.getByRole("button", { name: "Angaben bestätigen" }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/settings-editor",
+      params: { section: "TARIFF" },
+    });
+    expect(mockHistory.saveProfile).not.toHaveBeenCalled();
+    mockHistory = { ...mockHistory, profiles: [history()] };
+    await screen.rerender(<SalaryScreen />);
+    expect(screen.getByText("Zusammensetzung")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Angaben bestätigen" })).toBeNull();
+  });
+  it("keeps special inputs collapsed and opens them for the displayed month", async () => {
+    const screen = await render(<SalaryScreen />);
+    expect(screen.queryByRole("button", { name: "Jahressonderzahlungen bearbeiten" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Überstunden den Tagen zuordnen" })).toBeNull();
+    await fireEvent.press(screen.getByRole("button", { name: "Zusatzangaben" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Jahressonderzahlungen bearbeiten" }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/annual-payment",
+      params: { month: "2026-09" },
+    });
+    await fireEvent.press(screen.getByRole("button", { name: "Zusatzangaben schließen" }));
+    expect(screen.queryByRole("button", { name: "Jahressonderzahlungen bearbeiten" })).toBeNull();
+  });
+
   it("shows a known subtotal instead of gross while workplace assumptions are incomplete", async () => {
     const screen = await render(<SalaryScreen />);
     expect(screen.getByText("BERECHNUNG UNVOLLSTÄNDIG")).toBeTruthy();
@@ -508,7 +540,7 @@ describe("dated salary detail integration", () => {
   it("never borrows the old profile for undated or missing historical data", async () => {
     mockHistory = { ...mockHistory, profiles: [{ ...history(), effectiveFrom: null }] };
     const screen = await render(<SalaryScreen />);
-    expect(screen.getByText(/Gültigkeitsbeginn.*noch nicht bestätigt/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Angaben bestätigen" })).toBeTruthy();
     expect(screen.queryByText("BRUTTO-SCHÄTZUNG")).toBeNull();
     expect(screen.queryByText(/2.907,18/)).toBeNull();
     mockHistory = { ...mockHistory, profiles: [] };

@@ -285,9 +285,13 @@ function confirmJanuaryAllowanceNone() {
 function expectPartialAnalysisShell(
   screen: Awaited<ReturnType<typeof render>>,
   salaryUnavailable = true,
+  salaryPartial = false,
 ) {
   expect(screen.getByTestId("analysis-month-toolbar")).toBeTruthy();
-  if (salaryUnavailable) {
+  if (salaryPartial) {
+    expect(screen.getByRole("button", { name: "Gehalt, Teilweise berechnet" })).toBeTruthy();
+    expect(screen.queryByText("Brutto gesamt")).toBeNull();
+  } else if (salaryUnavailable) {
     expect(screen.getByRole("button", { name: /Gehalt, Nicht verfügbar/ })).toBeTruthy();
   } else {
     expect(screen.queryByRole("button", { name: /Gehalt, Nicht verfügbar/ })).toBeNull();
@@ -402,7 +406,7 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
 
     const screen = await render(<AnalysisScreen />);
 
-    expectPartialAnalysisShell(screen);
+    expectPartialAnalysisShell(screen, true, true);
     expect(screen.getByLabelText("Ist: 7:30 h")).toBeTruthy();
     await expectShiftCount(1);
     expect(
@@ -421,7 +425,7 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     mockEntries = [{ ...januaryShift(), id: "april-shift", date: "2027-04-04" }];
 
     const analysis = await render(<AnalysisScreen />);
-    expect(analysis.getByRole("button", { name: "Gehalt, Nicht verfügbar" })).toBeTruthy();
+    expect(analysis.getByRole("button", { name: "Gehalt, Teilweise berechnet" })).toBeTruthy();
     expect(analysis.getByText("Bekannter Teilbetrag")).toBeTruthy();
     expect(analysis.getAllByText(/3.450,50/).length).toBeGreaterThan(0);
     expect(analysis.queryByText("Brutto gesamt")).toBeNull();

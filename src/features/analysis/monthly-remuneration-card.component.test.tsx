@@ -393,7 +393,7 @@ describe("monthly dated remuneration card", () => {
     mockEntries = [{ ...service, revision: 2 }];
     await screen.rerender(<MonthlyRemunerationCard month="2026-09" />);
     expect(screen.queryByText("Brutto gesamt")).toBeNull();
-    expect(screen.getByRole("button", { name: "Gehalt, Nicht verfügbar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Gehalt, Teilweise berechnet" })).toBeTruthy();
     mockHistory = {
       ...mockHistory,
       overtimeAllocations: [{ ...record, shiftRevision: 2, revision: 2 }],
@@ -415,7 +415,7 @@ describe("monthly dated remuneration card", () => {
     expect(screen.getByLabelText("Grundgehalt: 2.907,18 €")).toBeTruthy();
     expect(screen.getByText("Bekannter Teilbetrag")).toBeTruthy();
     expect(screen.queryByText("Brutto gesamt")).toBeNull();
-    expect(screen.getByRole("button", { name: "Gehalt, Nicht verfügbar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Gehalt, Teilweise berechnet" })).toBeTruthy();
     expect(mockHistory.saveProfile).not.toHaveBeenCalled();
     expect(mockHistory.saveAllowanceDecisions).not.toHaveBeenCalled();
   });
@@ -488,6 +488,16 @@ describe("monthly dated remuneration card", () => {
     expect(screen.queryByText("Brutto gesamt")).toBeNull();
     expect(screen.queryByText(/2.907,18/)).toBeNull();
   });
+  it("routes an undated imported stand to confirmation without presenting zero salary", async () => {
+    mockHistory = { ...mockHistory, profiles: [{ ...history(), effectiveFrom: null }] };
+    const screen = await render(<MonthlyRemunerationCard month="2026-09" />);
+    expect(screen.queryByText("Bekannter Teilbetrag")).toBeNull();
+    expect(screen.queryByText("Grundgehalt")).toBeNull();
+    await fireEvent.press(screen.getByRole("button", { name: "Gehalt, Angaben bestätigen" }));
+    expect(router.push).toHaveBeenLastCalledWith(settingsEditorRoute("TARIFF"));
+    expect(mockHistory.saveProfile).not.toHaveBeenCalled();
+  });
+
   it("does not resolve an undated legacy snapshot to a full gross amount", async () => {
     mockHistory = { ...mockHistory, profiles: [{ ...history(), effectiveFrom: null }] };
     const screen = await render(<MonthlyRemunerationCard month="2026-09" />);
