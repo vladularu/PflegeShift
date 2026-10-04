@@ -10,6 +10,8 @@ import { remunerationMonthShifts, remunerationShiftDays } from "./remuneration-s
 import { roundRemunerationCents } from "./remuneration-base";
 import { remunerationMonthStart, resolveRemunerationContext } from "./remuneration-context";
 import { calculateOwnShiftDayPremiums } from "./remuneration-own-premiums";
+import { isCurrentTvlShiftWork, type SavedTvlShiftWork } from "@/domain/saved-tvl-shift-work";
+import { calculateTvlShiftDayPremiums } from "./remuneration-tvl-premiums";
 import {
   bindRemunerationTariffResolver,
   remunerationTariffProfile,
@@ -85,6 +87,7 @@ export function calculateDatedShiftTimePremiums(
   history: readonly DatedRemunerationProfile[],
   resolver: RuleResolver = bundledRuleResolver,
   includedMonth?: string,
+  tvlShiftWork: readonly SavedTvlShiftWork[] = [],
 ): TimeRemunerationResult {
   if (includedMonth !== undefined) remunerationMonthStart(includedMonth);
   const positions: TimeRemunerationPosition[] = [];
@@ -146,6 +149,19 @@ export function calculateDatedShiftTimePremiums(
         });
       else {
         try {
+          if (context.kind === "tvl-kr") {
+            const current = tvlShiftWork.filter(
+              (value) =>
+                context.profile !== null &&
+                isCurrentTvlShiftWork(value, shift, workProfile.timeZone, context.profile),
+            );
+            positions.push(
+              ...calculateTvlShiftDayPremiums(base, day, shift, workProfile, context, resolver, {
+                shiftWork: current.length === 1 ? current[0].shiftWork : null,
+              }),
+            );
+            continue;
+          }
           if (
             !context.rulePackage.rules.premiumRules.some((rule) => rule.premiumType !== "OVERTIME")
           )
@@ -208,9 +224,10 @@ export function calculateMonthlyTimeRemuneration(
   workProfile: UserProfile,
   history: readonly DatedRemunerationProfile[],
   resolver: RuleResolver = bundledRuleResolver,
+  tvlShiftWork: readonly SavedTvlShiftWork[] = [],
 ): TimeRemunerationResult {
   const results = remunerationMonthShifts(month, shifts).map((shift) =>
-    calculateDatedShiftTimePremiums(shift, workProfile, history, resolver, month),
+    calculateDatedShiftTimePremiums(shift, workProfile, history, resolver, month, tvlShiftWork),
   );
   return summarize(
     results.flatMap((result) => result.positions),
