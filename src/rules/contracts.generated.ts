@@ -43,7 +43,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 17;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 17;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -65,7 +65,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 17;
+  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 17;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -139,7 +139,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 17;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 17;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -247,6 +247,245 @@ export interface RuleTariffRules {
   caritasTimePremiumPolicy?: RuleCaritasTimePremiumPolicy;
   caritasOvertimePolicy?: RuleCaritasOvertimePolicy;
   caritasAnnualPaymentPolicy?: RuleCaritasAnnualPaymentPolicy;
+  avrddStagePolicy?: RuleAvrddStagePolicy;
+  /**
+   * @minItems 13
+   * @maxItems 13
+   */
+  avrddHourlyRates?: [
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+    RuleAvrddHourlyRate,
+  ];
+  avrddTimePremiumPolicy?: RuleAvrddTimePremiumPolicy;
+  avrddOvertimePolicy?: RuleAvrddOvertimePolicy;
+  /**
+   * @minItems 1
+   * @maxItems 10
+   */
+  avrddShiftAllowanceRates?:
+    | [RuleAvrddShiftAllowanceRate]
+    | [RuleAvrddShiftAllowanceRate, RuleAvrddShiftAllowanceRate]
+    | [RuleAvrddShiftAllowanceRate, RuleAvrddShiftAllowanceRate, RuleAvrddShiftAllowanceRate]
+    | [
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+      ]
+    | [
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+      ]
+    | [
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+      ]
+    | [
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+      ]
+    | [
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+      ]
+    | [
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+      ]
+    | [
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+        RuleAvrddShiftAllowanceRate,
+      ];
+  /**
+   * @minItems 1
+   * @maxItems 10
+   */
+  avrddCareAllowanceRates?:
+    | [RuleAvrddCareAllowanceRate]
+    | [RuleAvrddCareAllowanceRate, RuleAvrddCareAllowanceRate]
+    | [RuleAvrddCareAllowanceRate, RuleAvrddCareAllowanceRate, RuleAvrddCareAllowanceRate]
+    | [
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+      ]
+    | [
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+      ]
+    | [
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+      ]
+    | [
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+      ]
+    | [
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+      ]
+    | [
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+      ]
+    | [
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+        RuleAvrddCareAllowanceRate,
+      ];
+  /**
+   * @minItems 1
+   * @maxItems 10
+   */
+  avrddAdvancedAllowancePolicies?:
+    | [RuleAvrddAdvancedAllowancePolicy]
+    | [RuleAvrddAdvancedAllowancePolicy, RuleAvrddAdvancedAllowancePolicy]
+    | [
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+      ]
+    | [
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+      ]
+    | [
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+      ]
+    | [
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+      ]
+    | [
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+      ]
+    | [
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+      ]
+    | [
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+      ]
+    | [
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+        RuleAvrddAdvancedAllowancePolicy,
+      ];
 }
 export interface RuleTariffSelection {
   familyId: RuleIdentifier;
@@ -25723,6 +25962,1015 @@ export interface RuleCaritasAnnualPaymentPolicy {
   earlyExitVariantId: "ANLAGE_31";
   earlyExitBasis: "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES";
   eastTariff2025UsesWestTable: boolean;
+  sourceIds: RuleSourceIds;
+}
+export interface RuleAvrddStagePolicy {
+  standardFullTimeWeeklyMinutes: 2340;
+  individualFullTimeMaxWeeklyMinutes: 2520;
+  /**
+   * @minItems 13
+   * @maxItems 13
+   */
+  groups: [
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+    {
+      groupId: RuleIdentifier;
+      /**
+       * @minItems 2
+       * @maxItems 5
+       */
+      stages:
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ]
+        | [
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+            {
+              stepId: "entry" | "base" | "exp1" | "exp2" | "exp3";
+              monthsToNext: number | null;
+            },
+          ];
+    },
+  ];
+  sourceIds: RuleSourceIds;
+}
+export interface RuleAvrddHourlyRate {
+  groupId: RuleIdentifier;
+  hourlyCents: number;
+  overtimeSupplementCents: number;
+  anlage8OvertimeTotalCents: number;
+  sundayOrHolidayCents: number;
+  holidayOnSundayCents: number;
+  nightCents: number;
+  saturdayCents: number;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 15 DRAFT: AVR.DD § 20a regular active-work time windows and premium competition. Printed Anlage 9 cents remain independent per group.
+ */
+export interface RuleAvrddTimePremiumPolicy {
+  nightWindow: RuleTimeWindow;
+  saturdayWindow: RuleTimeWindow;
+  competition: "HIGHEST_SUNDAY_HOLIDAY_SATURDAY";
+  nightStacks: true;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 15 DRAFT: AVR.DD § 9b(8), § 9c(4), § 20a(1)(a),(3). Monthly account classification and the personal hourly basis must be independently confirmed.
+ */
+export interface RuleAvrddOvertimePolicy {
+  fullTimePlusThresholdMinutes: 1800;
+  monthlyFactorThousandths: 4348;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 15 DRAFT: AVR.DD § 20 monthly employee rates. Qualification is never inferred from shifts alone.
+ */
+export interface RuleAvrddShiftAllowanceRate {
+  validFrom: RuleIsoDate;
+  validTo: RuleNullableDate;
+  alternatingMonthlyCents: number;
+  shiftMonthlyCents: number;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 15 DRAFT: AVR.DD § 14(2)(c), EG 3/4 care and support only; personal eligibility is independently confirmed.
+ */
+export interface RuleAvrddCareAllowanceRate {
+  validFrom: RuleIsoDate;
+  validTo: RuleNullableDate;
+  monthlyCents: number;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 15 DRAFT: AVR.DD § 14(2) practice instruction, palliative/wound, intensive care and specialist monthly allowance rules; personal eligibility and offsets remain external facts.
+ */
+export interface RuleAvrddAdvancedAllowancePolicy {
+  validFrom: RuleIsoDate;
+  validTo: RuleNullableDate;
+  phase: "LEGACY_EFG" | "POST_2026_07_EFGH";
+  practiceMode: "HALF_EG8_DIFFERENCE" | "FIXED_MONTHLY";
+  practiceMonthlyCents: number | null;
+  eg8DifferenceBasisPoints: 5000;
+  intensiveMonthlyCents: number;
+  specialistMonthlyCents: number;
   sourceIds: RuleSourceIds;
 }
 export interface RuleLegalRules {
