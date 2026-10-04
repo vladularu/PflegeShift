@@ -266,7 +266,7 @@
           "const": 1
         },
         "engineContractVersion": {
-          "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 17]
+          "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 17]
         },
         "packageId": {
           "$ref": "#/$defs/identifier"
@@ -1540,6 +1540,47 @@
         },
         "caritasAnnualPaymentPolicy": {
           "$ref": "#/$defs/caritasAnnualPaymentPolicy"
+        },
+        "avrddStagePolicy": {
+          "$ref": "#/$defs/avrddStagePolicy"
+        },
+        "avrddHourlyRates": {
+          "type": "array",
+          "minItems": 13,
+          "maxItems": 13,
+          "items": {
+            "$ref": "#/$defs/avrddHourlyRate"
+          }
+        },
+        "avrddTimePremiumPolicy": {
+          "$ref": "#/$defs/avrddTimePremiumPolicy"
+        },
+        "avrddOvertimePolicy": {
+          "$ref": "#/$defs/avrddOvertimePolicy"
+        },
+        "avrddShiftAllowanceRates": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/avrddShiftAllowanceRate"
+          }
+        },
+        "avrddCareAllowanceRates": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/avrddCareAllowanceRate"
+          }
+        },
+        "avrddAdvancedAllowancePolicies": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/avrddAdvancedAllowancePolicy"
+          }
         }
       }
     },
@@ -1553,7 +1594,7 @@
           "required": ["kind", "rules"],
           "properties": {
             "engineContractVersion": {
-              "enum": [1, 2, 3, 10, 11, 12, 13, 14, 17]
+              "enum": [1, 2, 3, 10, 11, 12, 13, 14, 15, 17]
             },
             "kind": {
               "const": "TARIFF"
@@ -2951,6 +2992,267 @@
         },
         "eastTariff2025UsesWestTable": {
           "type": "boolean"
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "avrddStagePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standardFullTimeWeeklyMinutes",
+        "individualFullTimeMaxWeeklyMinutes",
+        "groups",
+        "sourceIds"
+      ],
+      "properties": {
+        "standardFullTimeWeeklyMinutes": {
+          "const": 2340
+        },
+        "individualFullTimeMaxWeeklyMinutes": {
+          "const": 2520
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 13,
+          "maxItems": 13,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["groupId", "stages"],
+            "properties": {
+              "groupId": {
+                "$ref": "#/$defs/identifier"
+              },
+              "stages": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 5,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["stepId", "monthsToNext"],
+                  "properties": {
+                    "stepId": {
+                      "enum": ["entry", "base", "exp1", "exp2", "exp3"]
+                    },
+                    "monthsToNext": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 120
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "avrddHourlyRate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "groupId",
+        "hourlyCents",
+        "overtimeSupplementCents",
+        "anlage8OvertimeTotalCents",
+        "sundayOrHolidayCents",
+        "holidayOnSundayCents",
+        "nightCents",
+        "saturdayCents",
+        "sourceIds"
+      ],
+      "properties": {
+        "groupId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "hourlyCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "overtimeSupplementCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "anlage8OvertimeTotalCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sundayOrHolidayCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "holidayOnSundayCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "nightCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "saturdayCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "avrddTimePremiumPolicy": {
+      "description": "Contract 15 DRAFT: AVR.DD § 20a regular active-work time windows and premium competition. Printed Anlage 9 cents remain independent per group.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nightWindow", "saturdayWindow", "competition", "nightStacks", "sourceIds"],
+      "properties": {
+        "nightWindow": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "saturdayWindow": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "competition": {
+          "const": "HIGHEST_SUNDAY_HOLIDAY_SATURDAY"
+        },
+        "nightStacks": {
+          "const": true
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "avrddOvertimePolicy": {
+      "description": "Contract 15 DRAFT: AVR.DD § 9b(8), § 9c(4), § 20a(1)(a),(3). Monthly account classification and the personal hourly basis must be independently confirmed.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fullTimePlusThresholdMinutes", "monthlyFactorThousandths", "sourceIds"],
+      "properties": {
+        "fullTimePlusThresholdMinutes": {
+          "const": 1800
+        },
+        "monthlyFactorThousandths": {
+          "const": 4348
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "avrddShiftAllowanceRate": {
+      "description": "Contract 15 DRAFT: AVR.DD § 20 monthly employee rates. Qualification is never inferred from shifts alone.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validFrom",
+        "validTo",
+        "alternatingMonthlyCents",
+        "shiftMonthlyCents",
+        "sourceIds"
+      ],
+      "properties": {
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/nullableDate"
+        },
+        "alternatingMonthlyCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "shiftMonthlyCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "avrddCareAllowanceRate": {
+      "description": "Contract 15 DRAFT: AVR.DD § 14(2)(c), EG 3/4 care and support only; personal eligibility is independently confirmed.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validFrom", "validTo", "monthlyCents", "sourceIds"],
+      "properties": {
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/nullableDate"
+        },
+        "monthlyCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "avrddAdvancedAllowancePolicy": {
+      "description": "Contract 15 DRAFT: AVR.DD § 14(2) practice instruction, palliative/wound, intensive care and specialist monthly allowance rules; personal eligibility and offsets remain external facts.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validFrom",
+        "validTo",
+        "phase",
+        "practiceMode",
+        "practiceMonthlyCents",
+        "eg8DifferenceBasisPoints",
+        "intensiveMonthlyCents",
+        "specialistMonthlyCents",
+        "sourceIds"
+      ],
+      "properties": {
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/nullableDate"
+        },
+        "phase": {
+          "enum": ["LEGACY_EFG", "POST_2026_07_EFGH"]
+        },
+        "practiceMode": {
+          "enum": ["HALF_EG8_DIFFERENCE", "FIXED_MONTHLY"]
+        },
+        "practiceMonthlyCents": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eg8DifferenceBasisPoints": {
+          "const": 5000
+        },
+        "intensiveMonthlyCents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "specialistMonthlyCents": {
+          "type": "integer",
+          "minimum": 1
         },
         "sourceIds": {
           "$ref": "#/$defs/sourceIds"
