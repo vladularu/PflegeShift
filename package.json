@@ -16,7 +16,7 @@
     "test:watch": "vitest",
     "test:rules": "vitest run src/rules/validation.test.ts",
     "test:components": "jest --runInBand",
-    "test:all": "npm run test && npm run test:components && npm run test:rules-publisher && npm run test:rules-delivery && npm run test:rules-production-preflight && npm run test:rules-production-provisioning && npm run test:rules-production-trust && npm run test:rules-operator && npm run test:audit-policy && npm run test:runtime-policy && npm run test:build-dependencies",
+    "test:all": "npm run test && npm run test:components && npm run test:rules-publisher && npm run test:rules-delivery && npm run test:rules-production-preflight && npm run test:rules-production-provisioning && npm run test:rules-production-trust && npm run test:rules-operator && npm run test:tariff-inventory && npm run test:audit-policy && npm run test:runtime-policy && npm run test:build-dependencies",
     "test:rules-publisher": "node --import tsx --test scripts/publish-rule-catalog.test.mjs",
     "test:rules-delivery": "node --import tsx --test scripts/deliver-rule-catalog.test.mjs",
     "test:rules-production-preflight": "node --import tsx --test scripts/production-rule-catalog-preflight.test.mjs",
@@ -51,7 +51,9 @@
     "export:web": "expo export --platform web --output-dir dist/web",
     "export:ios": "expo export --platform ios --output-dir dist/ios",
     "export:android": "expo export --platform android --output-dir dist/android",
-    "postinstall": "node scripts/node-forge-hardening.mjs apply && node scripts/braces-hardening.mjs apply"
+    "postinstall": "node scripts/node-forge-hardening.mjs apply && node scripts/braces-hardening.mjs apply",
+    "test:tariff-inventory": "node --import tsx --test scripts/report-tariff-inventory.test.mjs",
+    "rules:inventory": "node --import tsx scripts/report-tariff-inventory.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
