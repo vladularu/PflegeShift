@@ -1,3 +1,4 @@
+import { TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS } from "./tvoed-sue-allowance-confirmation-repository";
 import { TVOED_SUE_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-sue-month-confirmation-repository";
 import { TVOED_ANNEX_A_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-annex-a-month-confirmation-repository";
 import { CARITAS_OVERTIME_COLUMNS } from "./caritas-overtime-repository";
@@ -76,6 +77,7 @@ export async function restoreLocalBackup(
     await transaction.runAsync("DELETE FROM caritas_overtime");
     await transaction.runAsync("DELETE FROM tvoed_annex_a_month_confirmations");
     await transaction.runAsync("DELETE FROM tvoed_sue_month_confirmations");
+    await transaction.runAsync("DELETE FROM tvoed_sue_allowance_confirmations");
     await transaction.runAsync("DELETE FROM tariff_annual_claims");
     await transaction.runAsync("DELETE FROM actual_annual_payments");
     await transaction.runAsync("DELETE FROM shift_training_details");
@@ -185,6 +187,12 @@ export async function restoreLocalBackup(
       "tvoed_sue_month_confirmations",
       TVOED_SUE_MONTH_CONFIRMATION_COLUMNS,
       document.data.tvoedSueMonthConfirmations,
+    );
+    await insertRows(
+      transaction,
+      "tvoed_sue_allowance_confirmations",
+      TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS,
+      document.data.tvoedSueAllowanceConfirmations,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(
