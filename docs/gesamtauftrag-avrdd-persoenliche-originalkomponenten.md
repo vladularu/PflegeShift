@@ -3,9 +3,9 @@
 ## Task-Vertrag
 
 Ziel: Die sechs vollständig erhaltenen AVR.DD-DRAFT-Bausteine mit allen Originaltests auf aktuellem master liefern.
-Dateiscope: Sechs Engine-Module, sechs vollständige Originaltestdateien und dieser Beleg (13 Dateien).
+Dateiscope: Sechs Engine-Module, sechs vollständige Originaltestdateien, der vollständige Original-CSV-Erfassungstest und dieser Beleg (14 Dateien).
 Plattform: Plattformunabhängige fachliche Vorbereitung; Zielgerät für die spätere Oberfläche ist iPhone Preview.
-Abnahme: Originalassertionen unverändert, gezielte sechs Testsuiten, verify:fast und sieben erfolgreiche PR-CI-Prüfungen.
+Abnahme: Originalassertionen unverändert, sechs Komponenten-Testsuiten und der ursprüngliche Quellenerfassungstest, verify:fast und sieben erfolgreiche PR-CI-Prüfungen.
 Nicht-Ziele: App-Anbindung, Remote-Aktivierung, native Änderungen oder Veröffentlichung.
 
 ## Enthaltene Komponenten
@@ -20,7 +20,7 @@ Nicht-Ziele: App-Anbindung, Remote-Aktivierung, native Änderungen oder Veröffe
 ## Quellen- und Liefergrenzen
 
 Die zuvor geprüften Originalpakete binden jede Tabellenzelle und jede Richtlinie an ihre Primärquelle. Neu geladene PDFs, alle Geld- und Laufzeitzellen sowie die konsolidierte September-Fassung wurden separat unabhängig abgeglichen.
-Alle zwölf Originaldateien werden unverändert übernommen. Es gibt keine gekürzten Referenzlisten oder neu erfundenen Positivfixtures.
+Alle dreizehn Originaldateien werden unverändert übernommen. Es gibt keine gekürzten Referenzlisten oder neu erfundenen Positivfixtures.
 Jedes Ergebnis bleibt completeGross=false. Unbekannte Voraussetzungen, individuelle Vollzeitkorridore, örtliche Sondervereinbarungen und nicht bestätigte Abrechnung werden ausdrücklich abgelehnt.
 Die erweiterten Zulagen liefern bewusst einzelne Positionen ohne pauschale Gesamtsumme. Die Einzelergebnisse begründen weder einen vollständigen Monatsbruttobetrag noch eine Jahresauszahlung.
 Unabhängige Fachprüfung, App-Integration und Geräteabnahme bleiben separate nachfolgende Gates.
