@@ -38,6 +38,14 @@ export type RemunerationContext = ContextBase &
         readonly groupId: string;
         readonly stepId: string;
       }
+    | {
+        readonly kind: "tvoed-sue-draft";
+        readonly rulePackage: RuleTariffPackage;
+        readonly weeklyMinutes: number;
+        readonly fullTimeWeeklyMinutes: 2340;
+        readonly groupId: string;
+        readonly stepId: string;
+      }
     | { readonly kind: "unavailable"; readonly issue: RemunerationIssue }
     | {
         readonly kind: "own-configured";
@@ -203,6 +211,42 @@ export function resolveRemunerationContext(
       weeklyMinutes: data.weeklyMinutes,
       fullTimeWeeklyMinutes: selection.fullTimeWeeklyMinutes,
       variant: selection.variant as "BT_K" | "BT_B",
+      groupId: selection.group.toLowerCase(),
+      stepId: `s${selection.level}`,
+    };
+  }
+  if (rulePackage.engineContractVersion === 18) {
+    const declared = resolveTariffSelection(rulePackage, selection.variant, selection.region);
+    if (
+      selection.packageId !== "tvoed-vka-sue-bt-b" ||
+      rulePackage.status !== "DRAFT" ||
+      !validateRulePackage(rulePackage).ok ||
+      declared?.familyId !== "tvoed-vka-sue" ||
+      declared.engineId !== "tvoed-sue-bt-b-table-draft-v1" ||
+      selection.variant !== "BT_B" ||
+      selection.region !== "VKA" ||
+      selection.fullTimeWeeklyMinutes !== 2340 ||
+      data.weeklyMinutes > 2340 ||
+      !/^[1-6]$/u.test(selection.level) ||
+      !declared.groups.some(
+        (group) =>
+          group.id === selection.group.toLowerCase() &&
+          group.levels.includes(`s${selection.level}`),
+      )
+    )
+      return unavailable(
+        profile,
+        "TARIFF_UNSUPPORTED",
+        "Die SuE-Auswahl ist nicht als sicherer BT-B-Tabellenentwurf verfügbar.",
+        rulePackage,
+      );
+    return {
+      kind: "tvoed-sue-draft",
+      profile,
+      source: sourceFor(profile, rulePackage),
+      rulePackage,
+      weeklyMinutes: data.weeklyMinutes,
+      fullTimeWeeklyMinutes: 2340,
       groupId: selection.group.toLowerCase(),
       stepId: `s${selection.level}`,
     };
@@ -374,6 +418,8 @@ function sameContext(left: RemunerationContext, right: RemunerationContext): boo
   if (left.kind === "tariff" && right.kind === "tariff")
     return left.rulePackage === right.rulePackage;
   if (left.kind === "tvoed-annex-a-draft" && right.kind === "tvoed-annex-a-draft")
+    return left.rulePackage === right.rulePackage;
+  if (left.kind === "tvoed-sue-draft" && right.kind === "tvoed-sue-draft")
     return left.rulePackage === right.rulePackage;
   if (left.kind === "training-tariff" && right.kind === "training-tariff")
     return left.rulePackage === right.rulePackage;

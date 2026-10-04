@@ -179,6 +179,11 @@ export function calculateMonthlyDatedAllowances(
           code: "TARIFF_UNSUPPORTED",
           message: "Die weiteren TVöD-Anlage-A-Bestandteile sind noch nicht fachlich freigegeben.",
         };
+      else if (context.kind === "tvoed-sue-draft")
+        issue = {
+          code: "TARIFF_UNSUPPORTED",
+          message: "SuE-Zulagen sind für diesen Tabellenentwurf noch nicht berechenbar.",
+        };
       else if (context.kind === "tvl-kr")
         issue = {
           code: "TARIFF_UNSUPPORTED",
@@ -251,7 +256,7 @@ export function calculateMonthlyDatedAllowances(
         id: `allowance:${type ?? "unknown"}:${date}`,
         kind: "allowance",
         label:
-          context.kind === "tvoed-annex-a-draft"
+          context.kind === "tvoed-annex-a-draft" || context.kind === "tvoed-sue-draft"
             ? "Weitere TVöD-Bestandteile"
             : context.kind === "training-tariff" && type === "care"
               ? "Tätigkeitsabhängige Ausbildungszulage"

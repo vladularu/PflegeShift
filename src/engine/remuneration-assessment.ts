@@ -157,6 +157,14 @@ function assessPeriod(
         message: "Für TVöD-Anlage A ist noch keine vollständige Schichtzulagenprüfung verfügbar.",
       },
     };
+  if (context.kind === "tvoed-sue-draft")
+    return {
+      ...base,
+      issue: {
+        code: "TARIFF_UNSUPPORTED",
+        message: "Für SuE ist noch keine vollständige Schichtzulagenprüfung verfügbar.",
+      },
+    };
   if (context.kind === "tval-training")
     return {
       ...base,
