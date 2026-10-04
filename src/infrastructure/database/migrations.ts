@@ -1,9 +1,10 @@
+import { migrateCaritasWorkDay } from "./migration-23-caritas-work-day";
 import { migrateTvlShiftWork } from "./migration-22-tvl-shift-work";
 import { migrateTariffAnnualClaims } from "./migration-21-tariff-annual-claims";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { withImmediateTransaction } from "./transaction";
 
-export const LATEST_DATABASE_SCHEMA_VERSION = 22;
+export const LATEST_DATABASE_SCHEMA_VERSION = 23;
 
 const MIGRATION_1 = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -691,4 +692,5 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
   });
   await migrateTariffAnnualClaims(db, now);
   await migrateTvlShiftWork(db, now);
+  await migrateCaritasWorkDay(db, now);
 }
