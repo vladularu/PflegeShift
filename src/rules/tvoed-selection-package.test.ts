@@ -14,8 +14,6 @@ import {
 import legacyValue from "./__fixtures__/original-tvoed-selection-r2.json";
 import type { RuleTariffPackage } from "./contracts.generated";
 import currentValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05-r3.json";
-const candidate = currentValue as RuleTariffPackage;
-const resolver = (packages = [candidate]) => createResolver(packages);
 import {
   remunerationDataFromForm,
   remunerationFormValues,
@@ -23,6 +21,8 @@ import {
 import { remunerationTariffOptions } from "@/features/settings/remuneration-tariff-options";
 import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "./rule-catalog-engine-support";
 import { validateRulePackage } from "./validation";
+const candidate = currentValue as RuleTariffPackage;
+const resolver = (packages = [candidate]) => createResolver(packages);
 
 describe("TVöD-P selection candidate", () => {
   it("uses the current reviewed contract with explicit annual-payment support", () => {
