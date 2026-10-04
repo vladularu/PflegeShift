@@ -90,8 +90,15 @@ function basePosition(period: RemunerationPeriod, monthDays: number): Remunerati
   );
   return {
     ...base,
-    label: base.label,
-    status: "calculated",
+    label:
+      context.kind === "tval-training"
+        ? "Ausbildungsentgelt · " + context.periodLabel + " · " + context.categoryLabel
+        : base.label,
+    status:
+      context.kind === "tval-training" &&
+      (context.weeklyMinutes !== context.fullTimeWeeklyMinutes || calendarDays !== monthDays)
+        ? "estimated"
+        : "calculated",
     amountCents: roundRemunerationCents(personalMonthlyCents * calendarDays, monthDays),
     basis: {
       ...base.basis,

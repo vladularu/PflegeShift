@@ -32,6 +32,7 @@ import { summarizeSupplements } from "./remuneration-supplement-result";
 import { isPayWorkShift } from "./tvoed-pattern";
 import { calculateOwnOvertime } from "./remuneration-own-overtime";
 import { calculateTvlOvertime } from "./remuneration-tvl-overtime";
+import { calculateTvalOvertime } from "./remuneration-tval-overtime";
 
 function overtimeContextKey(
   context: RemunerationContext,
@@ -59,6 +60,13 @@ function overtimeContextKey(
     context.source,
     context.kind === "unavailable" ? context.issue : null,
     applicable,
+    context.kind === "tval-training"
+      ? [
+          context.monthlyCents,
+          context.fullTimeWeeklyMinutes,
+          context.rulePackage.rules.tvalOvertimePolicy,
+        ]
+      : null,
     context.kind === "tvl-kr"
       ? [
           context.groupId,
@@ -121,6 +129,7 @@ function calculateAllocatedOvertime(
 ): readonly SupplementPosition[] {
   if (context.kind === "unavailable")
     return [{ ...position, amountCents: null, status: "unavailable", issue: context.issue }];
+  if (context.kind === "tval-training") return calculateTvalOvertime(position, context);
   if (context.kind === "tvl-kr") return calculateTvlOvertime(position, context);
   if (context.kind === "own-configured")
     return calculateOwnOvertime(position, context.configuration);

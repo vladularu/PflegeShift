@@ -15,6 +15,7 @@ import { annualPaymentRuleIssues } from "@/rules/annual-payment-rule-validation"
 import type { OwnRemunerationConfiguration } from "@/domain/own-remuneration";
 
 import { resolveTvlKrPay, type TvlKrPayContext } from "./remuneration-tvl-context";
+import { resolveTvalTrainingPay, type TvalTrainingPayContext } from "./remuneration-tval-context";
 
 interface ContextBase {
   readonly profile: DatedRemunerationProfile | null;
@@ -23,6 +24,7 @@ interface ContextBase {
 export type RemunerationContext = ContextBase &
   (
     | TvlKrPayContext
+    | TvalTrainingPayContext
     | { readonly kind: "unavailable"; readonly issue: RemunerationIssue }
     | {
         readonly kind: "own-configured";
@@ -156,6 +158,12 @@ export function resolveRemunerationContext(
       "Das Tarifregelwerk passt nicht zur Auswahl oder zum Zeitraum.",
       rulePackage,
     );
+  if (rulePackage.engineContractVersion === 13) {
+    const tval = resolveTvalTrainingPay(date, rulePackage, selection, data.weeklyMinutes);
+    return tval.ok
+      ? { ...tval.context, profile, source: sourceFor(profile, rulePackage) }
+      : unavailable(profile, tval.issue.code, tval.issue.message, rulePackage);
+  }
   if (rulePackage.engineContractVersion === 12) {
     const tvl = resolveTvlKrPay(date, rulePackage, selection, data.weeklyMinutes);
     return tvl.ok
@@ -306,6 +314,12 @@ function sameContext(left: RemunerationContext, right: RemunerationContext): boo
     );
   if (left.kind === "tariff" && right.kind === "tariff")
     return left.rulePackage === right.rulePackage;
+  if (left.kind === "tval-training" && right.kind === "tval-training")
+    return (
+      left.rulePackage === right.rulePackage &&
+      left.monthlyCents === right.monthlyCents &&
+      left.fullTimeWeeklyMinutes === right.fullTimeWeeklyMinutes
+    );
   if (left.kind === "tvl-kr" && right.kind === "tvl-kr")
     return (
       left.rulePackage === right.rulePackage &&

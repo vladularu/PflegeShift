@@ -12,6 +12,7 @@ import { remunerationMonthStart, resolveRemunerationContext } from "./remunerati
 import { calculateOwnShiftDayPremiums } from "./remuneration-own-premiums";
 import { isCurrentTvlShiftWork, type SavedTvlShiftWork } from "@/domain/saved-tvl-shift-work";
 import { calculateTvlShiftDayPremiums } from "./remuneration-tvl-premiums";
+import { calculateTvalShiftDayPremiums } from "./remuneration-tval-premiums";
 import {
   bindRemunerationTariffResolver,
   remunerationTariffProfile,
@@ -149,6 +150,20 @@ export function calculateDatedShiftTimePremiums(
         });
       else {
         try {
+          if (context.kind === "tval-training") {
+            const current = tvlShiftWork.filter(
+              (value) =>
+                context.profile !== null &&
+                isCurrentTvlShiftWork(value, shift, workProfile.timeZone, context.profile),
+            );
+            positions.push(
+              ...calculateTvalShiftDayPremiums(base, day, shift, workProfile, context, resolver, {
+                shiftWork: current.length === 1 ? current[0].shiftWork : null,
+                employmentCategory: context.employmentCategory,
+              }),
+            );
+            continue;
+          }
           if (context.kind === "tvl-kr") {
             const current = tvlShiftWork.filter(
               (value) =>
