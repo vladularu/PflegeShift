@@ -11,7 +11,7 @@ import type {
 } from "@/domain/types";
 import { calculateMonthlyComplianceSteps } from "@/engine/compliance";
 import { calculateMonthlySummary } from "@/engine/monthly-summary";
-import { calculateMonthlyPayEstimate } from "@/engine/pay";
+import { calculateMonthlyPayEstimate } from "@/engine/simple-pay";
 import { calculateAssessedMonthlyRemuneration } from "@/engine/remuneration-month";
 import {
   summarizeAnnualRemuneration,

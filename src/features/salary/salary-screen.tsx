@@ -13,7 +13,7 @@ import {
 } from "@/application/pflegeshift-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
 import { formatMonthTitle } from "@/engine/calendar";
-import { calculateMonthlyPayEstimate } from "@/engine/pay";
+import { calculateMonthlyPayEstimate } from "@/engine/simple-pay";
 import {
   selectAllowanceShifts,
   selectMonthlyAnalysisEntries,

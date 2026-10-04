@@ -178,8 +178,8 @@ jest.mock("@/features/analysis/use-annual-report-inputs", () => ({
     },
 }));
 
-jest.mock("@/features/analysis/use-annual-report", () => ({
-  useDeferredAnnualReport: () => ({
+jest.mock("@/features/analysis/use-simple-annual-report", () => ({
+  useSimpleAnnualReport: () => ({
     error: null,
     fatalError: mockAnnualFatalError,
     report: mockAnnualReportValue,

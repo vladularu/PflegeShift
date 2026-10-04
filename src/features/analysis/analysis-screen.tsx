@@ -26,7 +26,7 @@ import {
 } from "@/features/analysis/analysis-overview-cards";
 import { AnnualReportScreen, type AnalysisPeriod } from "@/features/analysis/annual-report-view";
 import { useAnnualReportInputs } from "@/features/analysis/use-annual-report-inputs";
-import { useDeferredAnnualReport } from "@/features/analysis/use-annual-report";
+import { useSimpleAnnualReport as useDeferredAnnualReport } from "@/features/analysis/use-simple-annual-report";
 import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-compliance";
 import { useCheckPreferences } from "@/features/settings/check-preferences";
 import { PLANNING_HIDDEN_NOTICE, selectVisibleCompliance } from "./check-visibility";

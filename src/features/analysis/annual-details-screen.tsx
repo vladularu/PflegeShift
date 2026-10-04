@@ -22,7 +22,7 @@ import {
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { AnnualReportDetails } from "./annual-report-view";
 import { useAnnualReportInputs } from "./use-annual-report-inputs";
-import { useDeferredAnnualReport } from "./use-annual-report";
+import { useSimpleAnnualReport as useDeferredAnnualReport } from "./use-simple-annual-report";
 
 export function AnnualDetailsScreen() {
   const params = useLocalSearchParams<{ month?: RouteParam; section?: RouteParam }>();
