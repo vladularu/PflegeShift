@@ -43,7 +43,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 14 | 17;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 17;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -65,7 +65,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 14 | 17;
+  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 17;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -139,7 +139,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 14 | 17;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 17;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -239,6 +239,11 @@ export interface RuleTariffRules {
   combinationRules: RuleCombinationRule[];
   workPatternRules: RuleWorkPatternRule[];
   workPatternPolicy: RuleWorkPatternPolicy;
+  tvalTrainingPay?: RuleTvalTrainingPay;
+  tvalShiftAllowancePolicy?: RuleTvalShiftAllowancePolicy;
+  tvalTimePremiumPolicy?: RuleTvalTimePremiumPolicy;
+  tvalOvertimePolicy?: RuleTvalOvertimePolicy;
+  tvalCareAllowancePolicy?: RuleTvalCareAllowancePolicy;
 }
 export interface RuleTariffSelection {
   familyId: RuleIdentifier;
@@ -2703,6 +2708,22585 @@ export interface RuleWorkPatternPolicy {
     dayEndMinute: number;
     nightStartMinute: number;
   };
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 13: explicit TVA-L Pflege categories and labelled pay periods, not VKA employee steps or an automatic training-year progression.
+ */
+export interface RuleTvalTrainingPay {
+  /**
+   * @minItems 1
+   * @maxItems 20
+   */
+  categories:
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ]
+    | [
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+        {
+          groupId: RuleIdentifier;
+          label: string;
+          periodKind: "TRAINING_YEAR" | "TRAINING_MONTH_BRACKET";
+          /**
+           * @minItems 1
+           * @maxItems 6
+           */
+          levels:
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ]
+            | [
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+                {
+                  id: string;
+                  label: string;
+                },
+              ];
+          sourceIds: RuleSourceIds;
+        },
+      ];
+  sourceIds: RuleSourceIds;
+}
+export interface RuleTvalShiftAllowancePolicy {
+  shareBasisPoints: 7500;
+  rounding: "RATE_THEN_TOTAL";
+  /**
+   * @minItems 2
+   * @maxItems 2
+   */
+  scopes: [
+    {
+      id: "GENERAL" | "SECTION_43";
+      rates: RuleTvlShiftAllowancePolicy;
+    },
+    {
+      id: "GENERAL" | "SECTION_43";
+      rates: RuleTvlShiftAllowancePolicy;
+    },
+  ];
+}
+export interface RuleTvalTimePremiumPolicy {
+  hourlyBasis: "TRAINING_TABLE_FULL_TIME";
+  monthlyFactorThousandths: number;
+  rounding: "HOURLY_THEN_PREMIUM_THEN_TOTAL";
+  competition: "HIGHEST_DAY_PREMIUM_PLUS_NIGHT";
+  nightBasisPoints: number;
+  nightWindow: RuleTimeWindow;
+  sundayBasisPoints: number;
+  holidayWithTimeOffBasisPoints: number;
+  holidayWithoutTimeOffBasisPoints: number;
+  preHolidayBasisPoints: number;
+  preHolidayWindow: RuleTimeWindow;
+  /**
+   * @minItems 1
+   */
+  preHolidayMonthDays: [string, ...string[]];
+  saturdayBasisPoints: number;
+  saturdayWindow: RuleTimeWindow;
+  hospitalSalariedShiftHourlyCents: number;
+  sourceIds: RuleSourceIds;
+}
+export interface RuleTvalOvertimePolicy {
+  hourlyBasis: "TRAINING_TABLE_FULL_TIME";
+  monthlyFactorThousandths: number;
+  rounding: "HOURLY_THEN_PREMIUM_THEN_TOTAL";
+  percentageBasisPoints: number;
+  paymentScope: "CONFIRMED_CASH_PAYABLE_BASE_AND_PREMIUM";
+  sourceIds: RuleSourceIds;
+}
+export interface RuleTvalCareAllowancePolicy {
+  eligibilityRule: "TVAL_PART_IV_NOTES_9_TO_11";
+  shareBasisPoints: number;
+  clinicalLowerMonthlyCents: number;
+  clinicalHigherMonthlyCents: number;
+  burnCareFullHourCents: number;
+  burnUnit: "FULL_WORKED_HOURS";
+  competition: "HIGHEST_CLINICAL_LESS_MONTH_BURN";
+  rounding: "RATE_SHARE_THEN_PERSONAL_THEN_TOTAL";
   sourceIds: RuleSourceIds;
 }
 export interface RuleLegalRules {

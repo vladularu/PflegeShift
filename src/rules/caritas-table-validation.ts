@@ -50,11 +50,15 @@ export function caritasTableIssues(pkg: RuleTariffPackage): ValidationIssue[] {
     if (claimsCaritas) {
       add("CARITAS_CONTRACT", "/engineContractVersion", "Caritas P tables require contract 14.");
     }
-    if (rules.employmentWorkingTimeRules !== undefined && pkg.engineContractVersion !== 12) {
+    if (
+      rules.employmentWorkingTimeRules !== undefined &&
+      pkg.engineContractVersion !== 12 &&
+      pkg.engineContractVersion !== 13
+    ) {
       add(
         "CARITAS_WORKING_TIME_CONTRACT",
         "/rules/employmentWorkingTimeRules",
-        "Dated employment working time requires contract 14.",
+        "Dated employment working time requires contract 12, 13 or 14.",
       );
     }
     if (rules.caritasCareAllowanceRates !== undefined) {
