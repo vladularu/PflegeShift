@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 17,
+  "packageId": "drk-rtv-p",
+  "versionId": "2025-09-01-draft1",
+  "kind": "TARIFF",
+  "label": "DRK-RTV · Anlage A2 · P-Gruppen (nicht aktiviert)",
+  "status": "DRAFT",
+  "validFrom": "2025-09-01",
+  "validTo": "2026-09-30",
+  "jurisdiction": { "country": "DE", "federalStates": null },
+  "sources": [
+    {
+      "id": "drk-btg-rtv-52",
+      "title": "BTG DRK-Reformtarifvertrag, Fassung 52. Änderungstarifvertrag und 14. TVÜ-Änderungstarifvertrag",
+      "url": "https://btg.drk.de/fileadmin/user_upload/Bundestarifgemeinschaft/05_grundlagen_news/DRK-RTV_idF_52.AETV_14.AETV-TVUE_durchgeschriebene_Fassung.pdf",
+      "documentDate": "2025-07-10",
+      "section": "Anlage A2 zu § 19, P-Gruppen; PDF-Seiten 44, 45",
+      "sha256": "97c25f8030b40897c10d828a92382655847212d5f924ce0132073034a13b19d8"
+    },
+    {
+      "id": "pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    }
+  ],
+  "review": { "status": "DRAFT", "reviewedBy": null, "reviewedAt": null, "gitCommit": null },
+  "rounding": { "moneyScale": 2, "mode": "HALF_UP", "stage": "PER_LINE" },
+  "rules": {
+    "selection": {
+      "familyId": "drk-rtv",
+      "engineId": "drk-rtv-p-v1",
+      "employmentKind": "EMPLOYEE",
+      "variants": [
+        {
+          "id": "ANLAGE_A2",
+          "label": "Anlage A2 · P-Gruppen",
+          "specialPartId": "anlage-a2",
+          "sourceIds": ["drk-btg-rtv-52"],
+          "regions": [
+            {
+              "id": "BTG",
+              "label": "DRK-Bundestarifgemeinschaft",
+              "payTableId": "anlage-a2-p",
+              "sourceIds": ["drk-btg-rtv-52"]
+            }
+          ]
+        }
+      ],
+      "capabilities": {
+        "basePay": "UNSUPPORTED",
+        "timePremiums": "UNSUPPORTED",
+        "allowances": "UNSUPPORTED",
+        "overtime": "UNSUPPORTED",
+        "annualPayment": "UNSUPPORTED"
+      }
+    },
+    "selector": {
+      "agreementId": "drk-rtv",
+      "specialPartId": "anlage-a2",
+      "payTableId": "anlage-a2-p"
+    },
+    "payTables": [
+      {
+        "id": "anlage-a2-p",
+        "entries": [
+          { "groupId": "p16", "stepId": "s2", "monthlyCents": 512179 },
+          { "groupId": "p16", "stepId": "s3", "monthlyCents": 529371 },
+          { "groupId": "p16", "stepId": "s4", "monthlyCents": 584874 },
+          { "groupId": "p16", "stepId": "s5", "monthlyCents": 649575 },
+          { "groupId": "p16", "stepId": "s6", "monthlyCents": 678154 },
+          { "groupId": "p15", "stepId": "s2", "monthlyCents": 501648 },
+          { "groupId": "p15", "stepId": "s3", "monthlyCents": 517378 },
+          { "groupId": "p15", "stepId": "s4", "monthlyCents": 556708 },
+          { "groupId": "p15", "stepId": "s5", "monthlyCents": 603776 },
+          { "groupId": "p15", "stepId": "s6", "monthlyCents": 621751 },
+          { "groupId": "p14", "stepId": "s2", "monthlyCents": 490039 },
+          { "groupId": "p14", "stepId": "s3", "monthlyCents": 505391 },
+          { "groupId": "p14", "stepId": "s4", "monthlyCents": 543769 },
+          { "groupId": "p14", "stepId": "s5", "monthlyCents": 595910 },
+          { "groupId": "p14", "stepId": "s6", "monthlyCents": 605425 },
+          { "groupId": "p13", "stepId": "s2", "monthlyCents": 478432 },
+          { "groupId": "p13", "stepId": "s3", "monthlyCents": 493402 },
+          { "groupId": "p13", "stepId": "s4", "monthlyCents": 530828 },
+          { "groupId": "p13", "stepId": "s5", "monthlyCents": 557851 },
+          { "groupId": "p13", "stepId": "s6", "monthlyCents": 564827 },
+          { "groupId": "p12", "stepId": "s2", "monthlyCents": 455214 },
+          { "groupId": "p12", "stepId": "s3", "monthlyCents": 469423 },
+          { "groupId": "p12", "stepId": "s4", "monthlyCents": 504947 },
+          { "groupId": "p12", "stepId": "s5", "monthlyCents": 526768 },
+          { "groupId": "p12", "stepId": "s6", "monthlyCents": 536917 },
+          { "groupId": "p11", "stepId": "s2", "monthlyCents": 431996 },
+          { "groupId": "p11", "stepId": "s3", "monthlyCents": 445446 },
+          { "groupId": "p11", "stepId": "s4", "monthlyCents": 479067 },
+          { "groupId": "p11", "stepId": "s5", "monthlyCents": 501393 },
+          { "groupId": "p11", "stepId": "s6", "monthlyCents": 511544 },
+          { "groupId": "p10", "stepId": "s2", "monthlyCents": 408454 },
+          { "groupId": "p10", "stepId": "s3", "monthlyCents": 421127 },
+          { "groupId": "p10", "stepId": "s4", "monthlyCents": 456990 },
+          { "groupId": "p10", "stepId": "s5", "monthlyCents": 474118 },
+          { "groupId": "p10", "stepId": "s6", "monthlyCents": 484900 },
+          { "groupId": "p9", "stepId": "s2", "monthlyCents": 389568 },
+          { "groupId": "p9", "stepId": "s3", "monthlyCents": 408454 },
+          { "groupId": "p9", "stepId": "s4", "monthlyCents": 421347 },
+          { "groupId": "p9", "stepId": "s5", "monthlyCents": 445574 },
+          { "groupId": "p9", "stepId": "s6", "monthlyCents": 455721 },
+          { "groupId": "p8", "stepId": "s2", "monthlyCents": 360622 },
+          { "groupId": "p8", "stepId": "s3", "monthlyCents": 376506 },
+          { "groupId": "p8", "stepId": "s4", "monthlyCents": 397501 },
+          { "groupId": "p8", "stepId": "s5", "monthlyCents": 414954 },
+          { "groupId": "p8", "stepId": "s6", "monthlyCents": 438766 },
+          { "groupId": "p7", "stepId": "s2", "monthlyCents": 347623 },
+          { "groupId": "p7", "stepId": "s3", "monthlyCents": 360622 },
+          { "groupId": "p7", "stepId": "s4", "monthlyCents": 389967 },
+          { "groupId": "p7", "stepId": "s5", "monthlyCents": 405061 },
+          { "groupId": "p7", "stepId": "s6", "monthlyCents": 420736 },
+          { "groupId": "p6", "stepId": "s1", "monthlyCents": 294207 },
+          { "groupId": "p6", "stepId": "s2", "monthlyCents": 310578 },
+          { "groupId": "p6", "stepId": "s3", "monthlyCents": 327725 },
+          { "groupId": "p6", "stepId": "s4", "monthlyCents": 364200 },
+          { "groupId": "p6", "stepId": "s5", "monthlyCents": 373593 },
+          { "groupId": "p6", "stepId": "s6", "monthlyCents": 391463 },
+          { "groupId": "p5", "stepId": "s1", "monthlyCents": 283284 },
+          { "groupId": "p5", "stepId": "s2", "monthlyCents": 306578 },
+          { "groupId": "p5", "stepId": "s3", "monthlyCents": 313423 },
+          { "groupId": "p5", "stepId": "s4", "monthlyCents": 324865 },
+          { "groupId": "p5", "stepId": "s5", "monthlyCents": 333448 },
+          { "groupId": "p5", "stepId": "s6", "monthlyCents": 353614 }
+        ],
+        "sourceIds": ["drk-btg-rtv-52"]
+      }
+    ],
+    "premiumRules": [],
+    "allowanceRules": [],
+    "combinationRules": [],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
+    }
+  }
+}

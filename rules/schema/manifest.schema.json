@@ -140,7 +140,7 @@
           "$ref": "#/$defs/kind"
         },
         "engineContractVersion": {
-          "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 14]
+          "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 14, 17]
         },
         "validFrom": {
           "$ref": "#/$defs/isoDate"
