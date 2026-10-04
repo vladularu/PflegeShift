@@ -144,6 +144,15 @@ function assessPeriod(
     issue: null,
   };
   if (context.kind === "unavailable") return { ...base, issue: context.issue };
+  if (context.kind === "tval-training")
+    return {
+      ...base,
+      issue: {
+        code: "TARIFF_UNSUPPORTED",
+        message:
+          "TVA-L-Pflege-Schichtzulagen werden nicht aus TVöD-Arbeitsmustern abgeleitet. Bitte den Anspruch für den Zeitraum ausdrücklich bestätigen.",
+      },
+    };
   if (context.kind === "tvl-kr")
     return {
       ...base,
