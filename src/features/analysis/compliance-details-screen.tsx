@@ -22,6 +22,8 @@ import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { ScreenScrollView } from "@/ui/screen-layout";
 import { ReportScrollView } from "@/ui/report-layout";
+import { useTrainingCompliance } from "./use-training-compliance";
+import { TrainingTimeCard } from "./training-time-card";
 
 const EMPTY_SHIFTS: readonly ShiftEntry[] = Object.freeze([]);
 
@@ -51,7 +53,7 @@ export function ComplianceDetailsScreen() {
     ruleResolver,
     shifts: window?.ok ? window.value : EMPTY_SHIFTS,
   });
-  const sourceCompliance = monthlyCompliance.result;
+  const sourceCompliance = useTrainingCompliance(month, monthlyCompliance.result);
   const compliance =
     sourceCompliance === null
       ? null
@@ -103,6 +105,7 @@ export function ComplianceDetailsScreen() {
         <AnalysisCoverageNote message="Prüfungseinstellungen werden geladen … Hinweise sind vorläufig vollständig sichtbar." />
       ) : null}
       <CheckPeriod period={formatMonthTitle(month)} />
+      <TrainingTimeCard days={sourceCompliance?.trainingTimeDays ?? []} />
       <ComplianceDayList
         compliance={sourceCompliance!}
         showPlanning={preferences.enabled !== false}

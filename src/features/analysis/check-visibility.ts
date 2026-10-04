@@ -68,4 +68,4 @@ export function selectAnnualCheckDisplay(
 }
 
 export const PLANNING_HIDDEN_NOTICE =
-  "Planungshinweise ausgeblendet · gesetzliche Hinweise bleiben sichtbar.";
+  "Dienstplan-Empfehlungen ausgeblendet · gesetzliche Hinweise bleiben sichtbar.";

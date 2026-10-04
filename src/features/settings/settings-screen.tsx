@@ -121,7 +121,7 @@ export function SettingsScreen() {
               subtitleBelow={subtitleBelow}
               leading={<SettingsIcon name="shield-checkmark-outline" />}
               title="Prüfung"
-              subtitle="Freiwillige Planungshinweise anzeigen"
+              subtitle="Optionale Dienstplan-Empfehlungen anzeigen"
               onPress={() => router.push("/check-settings")}
             />
           </SurfaceCard>

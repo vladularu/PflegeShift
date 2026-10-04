@@ -33,7 +33,7 @@ export function CheckSettingsScreen() {
           Gehaltsberechnung werden hier nicht verändert.
         </Text>
       </SurfaceCard>
-      <SectionHeader title="Freiwillige Planung" />
+      <SectionHeader title="Dienstplan-Empfehlungen" />
       <SurfaceCard>
         <View
           style={{
@@ -47,10 +47,10 @@ export function CheckSettingsScreen() {
             maxFontSizeMultiplier={TEXT_MAX_SCALE}
             style={{ ...TYPOGRAPHY.body, color: palette.text, flex: 1 }}
           >
-            Planungshinweise
+            Empfehlungen anzeigen
           </Text>
           <LabeledSwitch
-            label="Planungshinweise"
+            label="Dienstplan-Empfehlungen"
             value={enabled}
             disabled={saving}
             onValueChange={(value) => void save(value)}
@@ -65,8 +65,8 @@ export function CheckSettingsScreen() {
             paddingTop: 0,
           }}
         >
-          Zum Beispiel Hinweise zu Dienstfolgen, Nachtserien und aufeinanderfolgenden Wochenenden.
-          Dies sind keine eigenständigen gesetzlichen Verstöße.
+          Optionale Hinweise zu Dienstfolgen, Nachtserien und aufeinanderfolgenden Wochenenden.
+          Dienstplan-Empfehlungen sind keine eigenständigen gesetzlichen Verstöße.
         </Text>
       </SurfaceCard>
       <Text

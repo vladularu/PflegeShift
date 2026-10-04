@@ -149,7 +149,7 @@ export function AnnualReportDetails({
                 message={
                   pending
                     ? "Die Jahresprüfung wird berechnet …"
-                    : "Die Jahresprüfung benötigt vollständige Regelstände."
+                    : "Die Jahresprüfung benötigt vollständige Regelstände und Prüfungsangaben. Vorhandene Meldungen bleiben sichtbar."
                 }
               />
             ) : null}
@@ -173,8 +173,9 @@ export function AnnualReportDetails({
             {preferences.enabled === null && !preferences.error ? (
               <AnalysisCoverageNote message="Prüfungseinstellungen werden geladen … Hinweise sind vorläufig vollständig sichtbar." />
             ) : null}
-            {!pending && report.complianceCoverageComplete ? (
-              <AnnualCheckDetails report={report} onSelectMonth={onSelectMonth} />
+            {!pending ? <AnnualCheckDetails report={report} onSelectMonth={onSelectMonth} /> : null}
+            {!pending ? (
+              <AnnualTrainingTimeDetails report={report} onSelectMonth={onSelectMonth} />
             ) : null}
           </>
         ) : section === "PAY" ? (
@@ -270,11 +271,19 @@ function AnnualCheckDetails({
 }) {
   const palette = usePalette();
   const issueMonths = report.months.filter(
-    (item) => item.criticalCount + item.warningCount + (item.infoCount ?? 0) > 0,
+    (item) =>
+      item.criticalCount + item.warningCount + (item.infoCount ?? 0) > 0 ||
+      !(item.complianceComplete ?? report.complianceCoverageComplete),
   );
   if (issueMonths.length === 0)
     return (
-      <AnalysisCoverageNote message="Keine Auffälligkeiten in den eingeblendeten Prüfungen." />
+      <AnalysisCoverageNote
+        message={
+          report.complianceCoverageComplete
+            ? "Keine Auffälligkeiten in den eingeblendeten Prüfungen."
+            : "Die Jahresprüfung ist unvollständig."
+        }
+      />
     );
   return (
     <View style={{ gap: SPACING.md }}>
@@ -283,19 +292,27 @@ function AnnualCheckDetails({
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
         style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
       >
-        Monate mit Meldungen
+        {report.complianceCoverageComplete
+          ? "Monate mit Meldungen"
+          : "Meldungen und offene Prüfungen"}
       </Text>
       <SurfaceCard style={{ paddingHorizontal: SPACING.lg }}>
         {issueMonths.map((item, index) => {
           const count = item.criticalCount + item.warningCount + (item.infoCount ?? 0);
-          const countLabel = `${count} ${count === 1 ? "Meldung" : "Meldungen"}`;
+          const complete = item.complianceComplete ?? report.complianceCoverageComplete;
+          const countLabel =
+            count === 0 && !complete
+              ? "Prüfung unvollständig"
+              : `${count} ${count === 1 ? "Meldung" : "Meldungen"}${complete ? "" : " · unvollständig"}`;
           const monthLabel = formatMonthTitle(item.month);
           const severity =
             item.criticalCount > 0
               ? "Kritische Meldung enthalten"
               : item.warningCount > 0
                 ? "Warnung enthalten"
-                : "Hinweis enthalten";
+                : count > 0
+                  ? "Hinweis enthalten"
+                  : "Angaben oder Regeln fehlen";
           return (
             <View key={item.month}>
               {index > 0 ? <CardSeparator inset={0} /> : null}
@@ -364,6 +381,37 @@ function AnnualCheckDetails({
         </View>
       </SurfaceCard>
     </View>
+  );
+}
+
+function AnnualTrainingTimeDetails({
+  report,
+  onSelectMonth,
+}: {
+  readonly report: AnnualReport;
+  readonly onSelectMonth: (month: string) => void;
+}) {
+  const months = report.months.filter((item) => item.trainingTimeDays?.length);
+  if (!months.length) return null;
+  return (
+    <AnalysisListCard
+      title="Ausbildungszeit"
+      caption="Schul- und Prüfungstage getrennt von Ist-Zeit, Zeitsaldo und Gehalt. Tageswerte im jeweiligen Monat."
+    >
+      {months.map((item, index) => {
+        const days = item.trainingTimeDays ?? [];
+        const unknown = days.filter((day) => day.minutes === null).length;
+        return (
+          <AnalysisValueRow
+            key={item.month}
+            first={index === 0}
+            label={formatMonthTitle(item.month)}
+            value={`${days.length} ${days.length === 1 ? "Tag" : "Tage"}${unknown ? ` · ${unknown} offen` : ""}`}
+            onPress={() => onSelectMonth(item.month)}
+          />
+        );
+      })}
+    </AnalysisListCard>
   );
 }
 

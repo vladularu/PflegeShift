@@ -108,7 +108,7 @@ describe("daily compliance list", () => {
       <ComplianceDayList compliance={compliance} shifts={[]} showPlanning={false} />,
     );
     expect(screen.queryByTestId("check-details-Planungshinweis")).toBeNull();
-    expect(screen.getByText(/Planungshinweise ausgeblendet/)).toBeTruthy();
+    expect(screen.getByText(/Dienstplan-Empfehlungen ausgeblendet/)).toBeTruthy();
     expect(screen.getByText("Keine Auffälligkeiten")).toBeTruthy();
     await screen.rerender(<ComplianceDayList compliance={compliance} shifts={[]} showPlanning />);
     expect(screen.queryByTestId("check-details-Planungshinweis")).toBeNull();

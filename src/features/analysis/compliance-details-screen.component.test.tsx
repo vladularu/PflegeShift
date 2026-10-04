@@ -2,6 +2,7 @@ import { fireEvent, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import type { MonthlyComplianceResult } from "@/domain/types";
+import type { TrainingComplianceResult } from "@/features/analysis/training-compliance";
 import { ComplianceDetailsScreen } from "@/features/analysis/compliance-details-screen";
 
 const mockCompliance: MonthlyComplianceResult = {
@@ -22,7 +23,7 @@ const mockCompliance: MonthlyComplianceResult = {
   })),
 };
 let mockPlanning = true;
-let mockResult: MonthlyComplianceResult | null = mockCompliance;
+let mockResult: TrainingComplianceResult | null = mockCompliance;
 jest.mock("@/features/settings/check-preferences", () => ({
   useCheckPreferences: () => ({ enabled: mockPlanning, error: null }),
 }));
@@ -70,8 +71,8 @@ describe("ComplianceDetailsScreen", () => {
     mockPlanning = false;
     const screen = await render(<ComplianceDetailsScreen />);
     expect(screen.queryByRole("header", { name: /Meldungen/ })).toBeNull();
-    expect(screen.queryByText("Freiwillige Planung")).toBeNull();
-    expect(screen.getByText(/Planungshinweise ausgeblendet/)).toBeVisible();
+    expect(screen.queryByText("Dienstplan-Empfehlungen")).toBeNull();
+    expect(screen.getByText(/Dienstplan-Empfehlungen ausgeblendet/)).toBeVisible();
   });
   it("shows one neutral total and reserves color for its severity", async () => {
     const screen = await render(<ComplianceDetailsScreen />);
@@ -117,4 +118,22 @@ describe("ComplianceDetailsScreen", () => {
     await screen.rerender(<ComplianceDetailsScreen />);
     expect(screen.getByText("Keine Auffälligkeiten")).toBeVisible();
   });
+  it("shows training credits separately from normal actual time and marks unknown values", async () => {
+    mockResult = {
+      ...mockCompliance,
+      trainingTimeDays: [
+        { date: "2026-08-03", basis: "BBIG", minutes: 480 },
+        { date: "2026-08-04", basis: "PFLBG", minutes: null },
+      ],
+    };
+    const screen = await render(<ComplianceDetailsScreen />);
+    expect(screen.getByRole("header", { name: "Ausbildungszeit" })).toBeVisible();
+    expect(screen.getByText(/8:00 h/)).toBeVisible();
+    expect(screen.getByText(/Nicht berechenbar/)).toBeVisible();
+    expect(screen.getByText(/nicht zusätzlich zu Ist-Zeit/)).toBeVisible();
+    expect(screen.getByText(/keine BBiG-Pauschale/)).toBeVisible();
+  });
 });
+jest.mock("./use-training-compliance", () => ({
+  useTrainingCompliance: (_month: string, result: unknown) => result,
+}));

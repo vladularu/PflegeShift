@@ -160,7 +160,7 @@ jest.mock("@/application/rule-catalog-runtime-provider", () => ({
 }));
 
 jest.mock("@/application/training-provider", () => ({
-  useTrainingData: () => ({ status: "ready", shifts: [] }),
+  useTrainingData: () => ({ status: "ready", error: null, profiles: [], shifts: [] }),
 }));
 
 // Explicit dated fixtures for the new detail consumers; production never infers this date.

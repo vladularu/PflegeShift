@@ -127,6 +127,37 @@ describe("annual report view", () => {
     expect(onSelectMonth).toHaveBeenCalledWith("2026-08");
   });
 
+  it("links separate training-time days to the month without a misleading year total", async () => {
+    const onSelectMonth = jest.fn();
+    const withTraining: AnnualReport = {
+      ...report,
+      months: report.months.map((month) =>
+        month.month === "2026-08"
+          ? {
+              ...month,
+              trainingTimeDays: [
+                { date: "2026-08-03", basis: "BBIG", minutes: 480 },
+                { date: "2026-08-04", basis: "PFLBG", minutes: null },
+              ],
+            }
+          : month,
+      ),
+    };
+    const screen = await render(
+      <AnnualReportDetails
+        report={withTraining}
+        testMonths={[]}
+        section="CHECK"
+        onSelectMonth={onSelectMonth}
+      />,
+    );
+    expect(screen.getByRole("header", { name: "Ausbildungszeit" })).toBeVisible();
+    expect(screen.getByText(/getrennt von Ist-Zeit, Zeitsaldo und Gehalt/)).toBeVisible();
+    await fireEvent.press(screen.getByRole("button", { name: "August 2026: 2 Tage · 1 offen" }));
+    expect(onSelectMonth).toHaveBeenCalledWith("2026-08");
+    expect(screen.queryByText(/Ausbildungszeit gesamt/)).toBeNull();
+  });
+
   it("keeps legal and optional planning counts consistent in the compact summary", async () => {
     const classified: AnnualReport = {
       ...report,
@@ -158,7 +189,7 @@ describe("annual report view", () => {
       />,
     );
     expect(screen.queryByRole("header", { name: "1 Meldung" })).toBeNull();
-    expect(screen.queryByText("Freiwillige Planung: 2")).toBeNull();
+    expect(screen.queryByText("Dienstplan-Empfehlungen: 2")).toBeNull();
     expect(screen.queryByText("2 Warnungen")).toBeNull();
     expect(screen.getByRole("button", { name: /^August 2026, 1 Meldung/ })).toBeVisible();
   });
@@ -214,7 +245,7 @@ describe("annual report view", () => {
     const screen = await render(<AnnualReportScreen {...props} report={partial} />);
     expect(screen.getByLabelText("Soll: Nicht verfügbar")).toBeTruthy();
     expect(screen.getByLabelText("Stundensaldo: Nicht verfügbar")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Prüfung, Nicht verfügbar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Prüfung, Unvollständig" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Gehalt, Nicht verfügbar" })).toBeTruthy();
     expect(screen.queryByText("Keine sichtbaren Auffälligkeiten")).toBeNull();
     await screen.rerender(
@@ -237,6 +268,41 @@ describe("annual report view", () => {
     );
     expect(screen.getByText(/benötigt vollständige Regelstände/)).toBeTruthy();
     expect(screen.queryByText(/keine Auffälligkeiten erkannt/)).toBeNull();
+    expect(screen.queryByText(/Keine Auffälligkeiten/)).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /^August 2026, 3 Meldungen · unvollständig/ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /^September 2026, Prüfung unvollständig/ }),
+    ).toBeTruthy();
+  });
+  it("keeps known findings and opens a specifically incomplete month without claiming zero findings", async () => {
+    const onSelectMonth = jest.fn();
+    const screen = await render(
+      <AnnualReportDetails
+        report={{
+          ...report,
+          complianceCoverageComplete: false,
+          months: report.months.map((month, index) => ({
+            ...month,
+            complianceComplete: index !== 8,
+          })),
+        }}
+        section="CHECK"
+        testMonths={[]}
+        onSelectMonth={onSelectMonth}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "August 2026, 3 Meldungen, Kritische Meldung enthalten" }),
+    ).toBeTruthy();
+    const incomplete = screen.getByRole("button", {
+      name: "September 2026, Prüfung unvollständig, Angaben oder Regeln fehlen",
+    });
+    await fireEvent.press(incomplete);
+    expect(onSelectMonth).toHaveBeenCalledWith("2026-09");
+    expect(screen.queryByText(/Keine Auffälligkeiten/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Januar 2026,/ })).toBeNull();
   });
 });
 

@@ -31,7 +31,7 @@ export function AnnualOverview({
   const checkStatus = pending
     ? "Wird geprüft …"
     : !report.complianceCoverageComplete
-      ? "Nicht verfügbar"
+      ? "Unvollständig"
       : undefined;
   const payReady = !pending && report.availablePayMonthCount > 0;
   const tariff = report.salarySource === "TARIFF";
@@ -84,7 +84,7 @@ export function AnnualOverview({
             onPress={() => router.push(annualDetailsRoute(report.year, "CHECK"))}
             caption={
               !pending && !report.complianceCoverageComplete
-                ? "Die Jahresprüfung benötigt vollständige Regelstände."
+                ? "Die Jahresprüfung benötigt vollständige Regelstände und Prüfungsangaben."
                 : undefined
             }
           />

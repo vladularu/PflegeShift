@@ -143,7 +143,7 @@ export function CheckListCard({
         <>
           <CheckRow first label="Gesetzliche Prüfung" counts={categories.legal} />
           {showPlanning ? (
-            <CheckRow label="Freiwillige Planung" counts={categories.planning} />
+            <CheckRow label="Dienstplan-Empfehlungen" counts={categories.planning} />
           ) : null}
         </>
       ) : (

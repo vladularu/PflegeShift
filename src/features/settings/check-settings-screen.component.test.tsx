@@ -28,8 +28,15 @@ beforeEach(() => {
 it("loads the saved choice and explains the shared display setting", async () => {
   mockLoad.mockResolvedValue(false);
   const screen = await render(<CheckSettingsScreen />);
-  await waitFor(() => expect(screen.getByLabelText("Planungshinweise").props.value).toBe(false));
+  await waitFor(() =>
+    expect(screen.getByLabelText("Dienstplan-Empfehlungen").props.value).toBe(false),
+  );
   expect(screen.getByText(/Deine Auswahl gilt für Monats- und Jahresauswertung/)).toBeTruthy();
+  expect(screen.getByText("Dienstplan-Empfehlungen")).toBeTruthy();
+  expect(
+    screen.getByText(/Dienstplan-Empfehlungen sind keine eigenständigen gesetzlichen Verstöße/),
+  ).toBeTruthy();
+  expect(screen.queryByText("Freiwillige Planung")).toBeNull();
   expect(mockSave).not.toHaveBeenCalled();
 });
 
@@ -111,15 +118,15 @@ it("updates already mounted month and year cards from the same saved selection",
     expect(screen.getAllByRole("button", { name: "Prüfung, 3 Meldungen" })).toHaveLength(2),
   );
   expect(screen.getByText("Freiwilliger Testhinweis")).toBeTruthy();
-  await fireEvent(screen.getByLabelText("Planungshinweise"), "valueChange", false);
+  await fireEvent(screen.getByLabelText("Dienstplan-Empfehlungen"), "valueChange", false);
   await waitFor(() =>
     expect(screen.getAllByRole("button", { name: "Prüfung, 2 Meldungen" })).toHaveLength(2),
   );
   expect(screen.queryByText("Freiwilliger Testhinweis")).toBeNull();
   expect(screen.getByText("Gesetzlicher Testhinweis")).toBeTruthy();
   expect(screen.getByText("Fehlende Angaben")).toBeTruthy();
-  expect(screen.getAllByText(/Planungshinweise ausgeblendet/).length).toBeGreaterThan(0);
-  await fireEvent(screen.getByLabelText("Planungshinweise"), "valueChange", true);
+  expect(screen.getAllByText(/Dienstplan-Empfehlungen ausgeblendet/).length).toBeGreaterThan(0);
+  await fireEvent(screen.getByLabelText("Dienstplan-Empfehlungen"), "valueChange", true);
   await waitFor(() =>
     expect(screen.getAllByRole("button", { name: "Prüfung, 3 Meldungen" })).toHaveLength(2),
   );
@@ -135,23 +142,27 @@ it("saves the choice and prevents overlapping writes", async () => {
       }),
   );
   const screen = await render(<CheckSettingsScreen />);
-  await waitFor(() => expect(screen.getByLabelText("Planungshinweise")).toBeTruthy());
-  await fireEvent(screen.getByLabelText("Planungshinweise"), "valueChange", false);
-  expect(screen.getByLabelText("Planungshinweise").props.disabled).toBe(true);
+  await waitFor(() => expect(screen.getByLabelText("Dienstplan-Empfehlungen")).toBeTruthy());
+  await fireEvent(screen.getByLabelText("Dienstplan-Empfehlungen"), "valueChange", false);
+  expect(screen.getByLabelText("Dienstplan-Empfehlungen").props.disabled).toBe(true);
   expect(mockSave).toHaveBeenCalledWith(mockDb, false);
   await act(async () => resolve());
-  await waitFor(() => expect(screen.getByLabelText("Planungshinweise").props.value).toBe(false));
+  await waitFor(() =>
+    expect(screen.getByLabelText("Dienstplan-Empfehlungen").props.value).toBe(false),
+  );
 });
 
 it("keeps the previous choice on write failure and permits retry", async () => {
   mockSave.mockRejectedValueOnce(new Error("write failed"));
   const screen = await render(<CheckSettingsScreen />);
-  await waitFor(() => expect(screen.getByLabelText("Planungshinweise")).toBeTruthy());
-  await fireEvent(screen.getByLabelText("Planungshinweise"), "valueChange", false);
+  await waitFor(() => expect(screen.getByLabelText("Dienstplan-Empfehlungen")).toBeTruthy());
+  await fireEvent(screen.getByLabelText("Dienstplan-Empfehlungen"), "valueChange", false);
   await waitFor(() => expect(screen.getByText(/Nicht gespeichert/)).toBeTruthy());
-  expect(screen.getByLabelText("Planungshinweise").props.value).toBe(true);
-  await fireEvent(screen.getByLabelText("Planungshinweise"), "valueChange", false);
-  await waitFor(() => expect(screen.getByLabelText("Planungshinweise").props.value).toBe(false));
+  expect(screen.getByLabelText("Dienstplan-Empfehlungen").props.value).toBe(true);
+  await fireEvent(screen.getByLabelText("Dienstplan-Empfehlungen"), "valueChange", false);
+  await waitFor(() =>
+    expect(screen.getByLabelText("Dienstplan-Empfehlungen").props.value).toBe(false),
+  );
 });
 
 it("shows a load error without writing defaults and can reload", async () => {
@@ -162,5 +173,5 @@ it("shows a load error without writing defaults and can reload", async () => {
   );
   expect(mockSave).not.toHaveBeenCalled();
   await fireEvent.press(screen.getByText("Erneut versuchen"));
-  await waitFor(() => expect(screen.getByLabelText("Planungshinweise")).toBeTruthy());
+  await waitFor(() => expect(screen.getByLabelText("Dienstplan-Empfehlungen")).toBeTruthy());
 });
