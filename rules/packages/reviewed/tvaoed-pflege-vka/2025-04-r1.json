@@ -1,0 +1,718 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 11,
+  "packageId": "tvaoed-pflege-vka",
+  "versionId": "2025-04-r1",
+  "kind": "TARIFF",
+  "label": "TVAöD-Pflege · VKA · Jahresregeln 2025/2026",
+  "status": "DRAFT",
+  "validFrom": "2025-04-01",
+  "validTo": "2026-04-30",
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "dbb-tariff-round-2025-10",
+      "title": "dbb Rundschreiben Nr. 10/2025: Redaktionsverhandlungen abgeschlossen",
+      "url": "https://www.vbb.dbb.de/fileadmin/user_upload/www_vbb-bund_de/images/2025/Einkommensrunde_2025_mit_Bund_und_Kommunen_-_Redaktionsverhandlungen_abgeschlossen.pdf",
+      "documentDate": "2025-07-15",
+      "section": "Seite 3: Schicht- und Wechselschichtzulagen, alte Beträge bis 30.06.2025 und Erhöhung ab 01.07.2025",
+      "sha256": "50cfdbd51983f5a18099d98d77c6c727e8e3f3b52d1fc3ff893794f87b512426"
+    },
+    {
+      "id": "vka-tvaoed-pflege-2025",
+      "title": "VKA TVAöD-Pflege, Stand 01.07.2025",
+      "url": "https://vka.de/wp-content/uploads/2026/04/TVAOED_BT-Pflege_AETV_18_Lesefassung_Stand_01_07_2025.pdf",
+      "documentDate": "2025-07-01",
+      "section": "§§ 7, 8, 8b, 14 und 20a",
+      "sha256": "477a4a2127a848de4d973b45fb893520a113e170d054440d4fcee5555146a48b"
+    },
+    {
+      "id": "vka-tvaoed-at-2025",
+      "title": "VKA TVAöD Allgemeiner Teil, Stand 01.08.2025",
+      "url": "https://vka.de/wp-content/uploads/2026/04/TVAOED_AT_AETV_14_Lesefassung_Stand_01_08_2025.pdf",
+      "documentDate": "2025-08-01",
+      "section": "§ 1 Abs. 1 Buchst. b und c; § 8a",
+      "sha256": "352a1bf20827ad32ceacb3efdaf49712fb7bb4728a6e5a3de3bb105ff1a73f9c"
+    },
+    {
+      "id": "vka-tvoed-hospitals-2026",
+      "title": "VKA Lesefassung TVöD Krankenhäuser einschließlich BT-K",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7, 8, 24; BT-K §§ 44, 48, 50, 52; Anlage E; Entgeltordnung Teil B XI.1 Protokollerklärung 1",
+      "sha256": "00e831fefffb833b689c1355c58e87cf25bdd6c585ab4693f41a187604b0ef6e"
+    },
+    {
+      "id": "vka-tvoed-care-2026",
+      "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7, 8, 24; BT-B §§ 6, 49a, 51a; Anlage E; Entgeltordnung Teil B XI.1 Protokollerklärung 1",
+      "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
+    },
+    {
+      "id": "pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "vka-tvaoed-annual-2025",
+      "title": "VKA TVAöD-Pflege, Stand 01.07.2025",
+      "url": "https://vka.de/wp-content/uploads/2026/04/TVAOED_BT-Pflege_AETV_18_Lesefassung_Stand_01_07_2025.pdf",
+      "documentDate": "2025-07-01",
+      "section": "§ 14 Abs. 1–4, Niederschriftserklärung zu § 14 Abs. 2; § 20a Abs. 3 b",
+      "sha256": "477a4a2127a848de4d973b45fb893520a113e170d054440d4fcee5555146a48b"
+    }
+  ],
+  "review": {
+    "status": "DRAFT",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "gitCommit": null
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "PER_LINE"
+  },
+  "rules": {
+    "selection": {
+      "familyId": "tvaoed-pflege",
+      "engineId": "tvaoed-pflege-v1",
+      "employmentKind": "APPRENTICE",
+      "variants": [
+        {
+          "id": "BT_K",
+          "label": "Krankenhaus · BT-K",
+          "specialPartId": "bt-k",
+          "sourceIds": ["vka-tvoed-hospitals-2026"],
+          "regions": [
+            {
+              "id": "OTHER",
+              "label": "Übrige VKA-Tarifgebiete",
+              "sourceIds": ["vka-tvoed-hospitals-2026"]
+            },
+            {
+              "id": "KAV_BW",
+              "label": "KAV Baden-Württemberg",
+              "sourceIds": ["vka-tvoed-hospitals-2026"]
+            }
+          ]
+        },
+        {
+          "id": "BT_B",
+          "label": "Pflege und Betreuung · BT-B",
+          "specialPartId": "bt-b",
+          "sourceIds": ["vka-tvoed-care-2026"],
+          "regions": [
+            {
+              "id": "OTHER",
+              "label": "Übrige VKA-Tarifgebiete",
+              "sourceIds": ["vka-tvoed-care-2026"]
+            },
+            {
+              "id": "KAV_BW",
+              "label": "KAV Baden-Württemberg",
+              "sourceIds": ["vka-tvoed-care-2026"]
+            }
+          ]
+        }
+      ],
+      "capabilities": {
+        "basePay": "SUPPORTED",
+        "timePremiums": "SUPPORTED",
+        "allowances": "UNSUPPORTED",
+        "overtime": "SUPPORTED",
+        "annualPayment": "SUPPORTED"
+      }
+    },
+    "selector": {
+      "agreementId": "tvaoed-vka",
+      "specialPartIds": ["bt-k", "bt-b"],
+      "payTableId": "training"
+    },
+    "payTables": [
+      {
+        "id": "training",
+        "sourceIds": ["vka-tvaoed-pflege-2025"],
+        "entries": [
+          {
+            "groupId": "b",
+            "stepId": "s1",
+            "monthlyCents": 141569
+          },
+          {
+            "groupId": "b",
+            "stepId": "s2",
+            "monthlyCents": 147707
+          },
+          {
+            "groupId": "b",
+            "stepId": "s3",
+            "monthlyCents": 157838
+          },
+          {
+            "groupId": "c",
+            "stepId": "s1",
+            "monthlyCents": 129024
+          },
+          {
+            "groupId": "c",
+            "stepId": "s2",
+            "monthlyCents": 135030
+          },
+          {
+            "groupId": "c",
+            "stepId": "s3",
+            "monthlyCents": 144703
+          }
+        ]
+      }
+    ],
+    "premiumRules": [
+      {
+        "id": "night",
+        "label": "Nacht",
+        "premiumType": "NIGHT",
+        "percentageBasisPoints": 2000,
+        "rateBasis": "INDIVIDUAL_HOURLY",
+        "referenceStepId": null,
+        "timeWindow": {
+          "startMinute": 1260,
+          "endMinute": 360
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": [
+          "vka-tvoed-hospitals-2026",
+          "vka-tvoed-care-2026",
+          "vka-tvaoed-at-2025",
+          "vka-tvaoed-pflege-2025"
+        ]
+      },
+      {
+        "id": "sunday",
+        "label": "Sonntag",
+        "premiumType": "SUNDAY",
+        "percentageBasisPoints": 2500,
+        "rateBasis": "INDIVIDUAL_HOURLY",
+        "referenceStepId": null,
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026", "vka-tvaoed-at-2025"]
+      },
+      {
+        "id": "holiday-with-time-off",
+        "label": "Feiertag mit Freizeitausgleich",
+        "premiumType": "HOLIDAY_WITH_TIME_OFF",
+        "percentageBasisPoints": 3500,
+        "rateBasis": "INDIVIDUAL_HOURLY",
+        "referenceStepId": null,
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": ["WITH_TIME_OFF"],
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026", "vka-tvaoed-at-2025"]
+      },
+      {
+        "id": "holiday-without-time-off",
+        "label": "Feiertag ohne Freizeitausgleich",
+        "premiumType": "HOLIDAY_WITHOUT_TIME_OFF",
+        "percentageBasisPoints": 13500,
+        "rateBasis": "INDIVIDUAL_HOURLY",
+        "referenceStepId": null,
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": ["WITHOUT_TIME_OFF"],
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026", "vka-tvaoed-at-2025"]
+      },
+      {
+        "id": "saturday",
+        "label": "Samstag 13–21 Uhr",
+        "premiumType": "SATURDAY",
+        "percentageBasisPoints": 2000,
+        "rateBasis": "INDIVIDUAL_HOURLY",
+        "referenceStepId": null,
+        "timeWindow": {
+          "startMinute": 780,
+          "endMinute": 1260
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026", "vka-tvaoed-at-2025"]
+      },
+      {
+        "id": "pre-holiday",
+        "label": "24./31. Dezember",
+        "premiumType": "PRE_HOLIDAY",
+        "percentageBasisPoints": 3500,
+        "rateBasis": "INDIVIDUAL_HOURLY",
+        "referenceStepId": null,
+        "timeWindow": {
+          "startMinute": 360,
+          "endMinute": 0
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": ["12-24", "12-31"]
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026", "vka-tvaoed-at-2025"]
+      },
+      {
+        "id": "training-overtime",
+        "label": "Ausbildungsüberstunden · Zuschlag",
+        "premiumType": "OVERTIME",
+        "percentageBasisPoints": 3000,
+        "rateBasis": "INDIVIDUAL_HOURLY",
+        "referenceStepId": null,
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvaoed-at-2025", "vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      }
+    ],
+    "allowanceRules": [
+      {
+        "id": "training-special-duty-pe1",
+        "allowanceType": "care",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 2301,
+        "prorateByPartTime": true,
+        "validFrom": "2025-04-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K", "BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvaoed-pflege-2025", "vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "training-shift-monthly-2025-before-july",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 3000,
+        "prorateByPartTime": true,
+        "validFrom": "2025-04-01",
+        "validTo": "2025-06-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K", "BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["dbb-tariff-round-2025-10", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-alternating-monthly-2025-before-july",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 11625,
+        "prorateByPartTime": true,
+        "validFrom": "2025-04-01",
+        "validTo": "2025-06-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K", "BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["dbb-tariff-round-2025-10", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-shift-hourly-2025-before-july",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 18,
+        "prorateByPartTime": false,
+        "validFrom": "2025-04-01",
+        "validTo": "2025-06-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K", "BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["dbb-tariff-round-2025-10", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-alternating-hourly-2025-before-july",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 70,
+        "prorateByPartTime": false,
+        "validFrom": "2025-04-01",
+        "validTo": "2025-06-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K", "BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["dbb-tariff-round-2025-10", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-shift-monthly-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 7500,
+        "prorateByPartTime": true,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-alternating-monthly-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 18750,
+        "prorateByPartTime": true,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-shift-hourly-bt-k-non-bw-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 45,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": null,
+          "tariffRegions": ["OTHER"],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-shift-hourly-other-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 44,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": null,
+          "tariffRegions": ["KAV_BW"],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-shift-hourly-bt-b-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 44,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-care-2026", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-alternating-hourly-bt-k-non-bw-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 112,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null,
+          "tariffRegions": ["OTHER"]
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-alternating-hourly-other-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 110,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null,
+          "tariffRegions": ["KAV_BW"]
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvaoed-pflege-2025"]
+      },
+      {
+        "id": "training-alternating-hourly-bt-b-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 110,
+        "prorateByPartTime": false,
+        "validFrom": "2025-07-01",
+        "validTo": "2026-04-30",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-care-2026", "vka-tvaoed-pflege-2025"]
+      }
+    ],
+    "combinationRules": [
+      {
+        "id": "calendar-day-priority",
+        "memberRuleIds": [
+          "holiday-without-time-off",
+          "holiday-with-time-off",
+          "pre-holiday",
+          "sunday",
+          "saturday"
+        ],
+        "mode": "EXCLUSIVE_HIGHEST",
+        "priorityRuleIds": [],
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026", "vka-tvaoed-at-2025"]
+      }
+    ],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": {
+        "startMinute": 1260,
+        "endMinute": 360
+      },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": [
+        "vka-tvoed-hospitals-2026",
+        "vka-tvoed-care-2026",
+        "pflegeshift-tariff-assessment-v1"
+      ]
+    },
+    "weeklyWorkingTimeRules": [
+      {
+        "id": "training-bt-k",
+        "sectors": ["BT_K"],
+        "tariffRegions": ["OTHER", "KAV_BW"],
+        "fullTimeWeeklyMinutes": 2310,
+        "sourceIds": ["vka-tvaoed-pflege-2025", "vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "training-bt-b",
+        "sectors": ["BT_B"],
+        "tariffRegions": ["OTHER", "KAV_BW"],
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["vka-tvaoed-pflege-2025", "vka-tvoed-care-2026"]
+      }
+    ],
+    "hourlyCalculation": {
+      "monthlyFactorThousandths": 4348,
+      "rounding": "HALF_UP",
+      "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+    },
+    "trainingPay": {
+      "categories": [
+        {
+          "groupId": "b",
+          "label": "Kategorie b · Pflege und zugehörige Ausbildungen",
+          "years": [1, 2, 3],
+          "sourceIds": ["vka-tvaoed-pflege-2025", "vka-tvaoed-at-2025"]
+        },
+        {
+          "groupId": "c",
+          "label": "Kategorie c · Betrieblich-schulische Gesundheitsberufe",
+          "years": [1, 2, 3],
+          "sourceIds": ["vka-tvaoed-pflege-2025", "vka-tvaoed-at-2025"]
+        }
+      ],
+      "minimumNightHourlyCents": 128,
+      "sourceIds": ["vka-tvaoed-pflege-2025"]
+    },
+    "annualPaymentRules": [
+      {
+        "id": "bt-k-annual-0",
+        "variantId": "BT_K",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["b", "c"],
+        "firstEntitlementYear": 2025,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 9000,
+        "referenceMonths": [8, 9, 10],
+        "lateEntryAfterMonth": 10,
+        "basisPolicy": "TVAOED_PFLEGE_14",
+        "eligibilityPolicy": "TRAINING_OR_DIRECT_TAKEOVER_DECEMBER_1",
+        "reductionPolicy": "TVAOED_PFLEGE_14",
+        "earlyExitBasis": "NONE",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvaoed-annual-2025"]
+      },
+      {
+        "id": "bt-b-annual-0",
+        "variantId": "BT_B",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["b", "c"],
+        "firstEntitlementYear": 2025,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 9000,
+        "referenceMonths": [8, 9, 10],
+        "lateEntryAfterMonth": 10,
+        "basisPolicy": "TVAOED_PFLEGE_14",
+        "eligibilityPolicy": "TRAINING_OR_DIRECT_TAKEOVER_DECEMBER_1",
+        "reductionPolicy": "TVAOED_PFLEGE_14",
+        "earlyExitBasis": "NONE",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvaoed-annual-2025"]
+      }
+    ]
+  }
+}
