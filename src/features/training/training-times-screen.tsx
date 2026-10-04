@@ -15,7 +15,7 @@ import { useActiveMonth, useActiveMonthCoordinator } from "@/navigation/active-m
 import { formatRemunerationDate } from "@/features/settings/remuneration-editor-values";
 import { usePalette } from "@/theme/palette";
 import { SPACING } from "@/theme/tokens";
-import { SecondaryButton } from "@/ui/form-controls";
+import { RowButton, SurfaceCard } from "@/ui/design-system";
 import { FormSection, FormStatus } from "@/ui/form-layout";
 import { LoadingView, LoadFailureView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
@@ -78,8 +78,8 @@ export function TrainingTimesScreen() {
       }}
       ListHeaderComponent={
         <FormSection
-          title="Schulzeiten & Pausen"
-          caption="Wähle einen Eintrag mit Uhrzeiten. Berufsschule zunächst als Fortbildungseintrag im Kalender anlegen und hier ausdrücklich zuordnen."
+          title="Einträge"
+          caption="Hier kannst du bei Bedarf Schulzeiten und tatsächliche Pausen ergänzen. Berufsschule im Kalender als Fortbildung anlegen und hier zuordnen."
         >
           <MonthNavigator
             label={formatMonthTitle(month)}
@@ -95,7 +95,7 @@ export function TrainingTimesScreen() {
         const saved = history.shifts.find((item) => item.shiftId === shift.id) ?? null;
         const status =
           saved === null
-            ? "Noch nicht erfasst"
+            ? "Optional ergänzen"
             : !isCurrentShiftTraining(saved, shift, profile.timeZone)
               ? "Erneut erfassen"
               : saved.data.exam
@@ -106,10 +106,13 @@ export function TrainingTimesScreen() {
                     ? "Pausenlage offen"
                     : "Pausen erfasst";
         return (
-          <SecondaryButton onPress={() => setSession({ shift, saved, timeZone: profile.timeZone })}>
-            {formatRemunerationDate(shift.date)} · {shift.title} · {shift.startTime}–{shift.endTime}{" "}
-            · {status}
-          </SecondaryButton>
+          <SurfaceCard>
+            <RowButton
+              title={formatRemunerationDate(shift.date) + " · " + shift.title}
+              subtitle={shift.startTime + "–" + shift.endTime + " · " + status}
+              onPress={() => setSession({ shift, saved, timeZone: profile.timeZone })}
+            />
+          </SurfaceCard>
         );
       }}
     />

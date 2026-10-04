@@ -43,6 +43,7 @@ export function SettingsScreen() {
     appearance?.mode === "light" ? "Hell" : appearance?.mode === "dark" ? "Dunkel" : "System";
   const calendarPreferences = useCalendarPreferences();
   const [developerMode, setDeveloperModeState] = useState(false);
+  const [showAdditional, setShowAdditional] = useState(false);
 
   useEffect(() => {
     if (!DEV_TOOLS_AVAILABLE) return;
@@ -89,15 +90,6 @@ export function SettingsScreen() {
       <TabRootHeader surface="groupedBackground" title="Mehr" />
       <ScreenScrollView surface="groupedBackground">
         <WorkProfileCard profile={profile} />
-        <SurfaceCard>
-          <RowButton
-            subtitleBelow={subtitleBelow}
-            leading={<SettingsIcon name="school-outline" />}
-            title="Ausbildung & Alter"
-            subtitle="Ausbildungsdaten und Schulpflicht"
-            onPress={() => router.push("/training")}
-          />
-        </SurfaceCard>
         <View style={{ gap: SPACING.sm }}>
           <SectionHeader title="Deine App" />
           <SurfaceCard>
@@ -127,6 +119,34 @@ export function SettingsScreen() {
           </SurfaceCard>
         </View>
 
+        <SurfaceCard>
+          <RowButton
+            subtitleBelow={subtitleBelow}
+            title="Zusätzliche Angaben"
+            subtitle="Ausbildung, Alter und Schulzeiten"
+            trailing={
+              <Ionicons
+                accessibilityElementsHidden
+                color={palette.textMuted}
+                name={showAdditional ? "chevron-up" : "chevron-down"}
+                size={18}
+              />
+            }
+            onPress={() => setShowAdditional((value) => !value)}
+          />
+          {showAdditional ? (
+            <>
+              <CardSeparator />
+              <RowButton
+                subtitleBelow={subtitleBelow}
+                leading={<SettingsIcon name="school-outline" />}
+                title="Ausbildung & Alter"
+                subtitle="Bei Bedarf für Ausbildung und Arbeitszeitprüfung"
+                onPress={() => router.push("/training")}
+              />
+            </>
+          ) : null}
+        </SurfaceCard>
         <CalendarPerformanceControls subtitleBelow={subtitleBelow} />
         {DEV_TOOLS_AVAILABLE ? (
           <View style={{ gap: SPACING.sm }}>

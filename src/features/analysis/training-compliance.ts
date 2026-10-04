@@ -51,7 +51,7 @@ export function trainingComplianceForState(
           title: "Arbeitszeitprüfung unvollständig",
           description:
             input.training.error ??
-            "Ausbildungsdaten konnten nicht geladen werden. Bitte unter Mehr → Ausbildung & Alter erneut laden.",
+            "Ausbildungsdaten konnten nicht geladen werden. Bitte unter Mehr → Zusätzliche Angaben → Ausbildung & Alter erneut laden.",
           relatedShiftIds: [],
         },
       ],

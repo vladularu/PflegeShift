@@ -116,7 +116,9 @@ beforeEach(() => {
 describe("school and pause input", () => {
   it("opens timed entries without inferring facts from their title", async () => {
     const ui = await render(<TrainingTimesScreen />, { wrapper: Wrapper });
-    await fireEvent.press(ui.getByRole("button", { name: /15.09.2026 · Schule · 08:00–15:00/ }));
+    expect(ui.getByText("08:00–15:00 · Optional ergänzen")).toBeTruthy();
+    expect(mockHistory.saveShift).not.toHaveBeenCalled();
+    await fireEvent.press(ui.getByRole("button", { name: /15.09.2026 · Schule/ }));
     expect(ui.getByRole("button", { name: "Schulzuordnung: Keine Schulzuordnung" })).toBeTruthy();
     expect(ui.getByRole("button", { name: "Pausenlage: Noch nicht erfasst" })).toBeTruthy();
     expect(ui.queryByLabelText("Unterrichtseinheit 1 Beginn")).toBeNull();
