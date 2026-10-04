@@ -266,7 +266,7 @@
           "const": 1
         },
         "engineContractVersion": {
-          "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17]
+          "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18]
         },
         "packageId": {
           "$ref": "#/$defs/identifier"
@@ -1587,6 +1587,9 @@
         },
         "tvoedAnnexATimePremiumPolicy": {
           "$ref": "#/$defs/tvoedAnnexATimePremiumPolicy"
+        },
+        "tvoedSueAllowancePolicy": {
+          "$ref": "#/$defs/tvoedSueAllowancePolicy"
         }
       }
     },
@@ -1600,7 +1603,7 @@
           "required": ["kind", "rules"],
           "properties": {
             "engineContractVersion": {
-              "enum": [1, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17]
+              "enum": [1, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18]
             },
             "kind": {
               "const": "TARIFF"
@@ -3441,6 +3444,64 @@
           "const": 23500
         },
         "localAgreementMayIncrease": {
+          "const": true
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "tvoedSueAllowancePolicy": {
+      "description": "Draft-only BT-B section 52(6) monthly SuE allowance; conversion-day deductions remain outside this calculator.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bands",
+        "partTimeProRata",
+        "conversionDaysRequireSeparateCalculation",
+        "sourceIds"
+      ],
+      "properties": {
+        "bands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["groupIds", "monthlyCents", "caseGroup"],
+            "properties": {
+              "groupIds": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 16,
+                "uniqueItems": true,
+                "items": {
+                  "$ref": "#/$defs/identifier"
+                }
+              },
+              "monthlyCents": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100000
+              },
+              "caseGroup": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "const": "6"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "partTimeProRata": {
+          "const": true
+        },
+        "conversionDaysRequireSeparateCalculation": {
           "const": true
         },
         "sourceIds": {

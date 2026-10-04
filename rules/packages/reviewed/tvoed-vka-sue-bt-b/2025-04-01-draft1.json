@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 18,
+  "packageId": "tvoed-vka-sue-bt-b",
+  "versionId": "2025-04-01-draft1",
+  "kind": "TARIFF",
+  "label": "TVöD-VKA Sozial- und Erziehungsdienst · BT-B · Anlage C (nicht aktiviert)",
+  "status": "DRAFT",
+  "validFrom": "2025-04-01",
+  "validTo": "2026-04-30",
+  "jurisdiction": { "country": "DE", "federalStates": null },
+  "sources": [
+    {
+      "id": "vka-tvoed-sue-bt-b-2025-2026",
+      "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
+      "documentDate": "2025-04-06",
+      "section": "BT-B Anlage C, Tabellen S 2–S 18, Druckseiten 94–95 (2025/26 und ab 01.05.2026)",
+      "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
+    },
+    {
+      "id": "pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    }
+  ],
+  "review": { "status": "DRAFT", "reviewedBy": null, "reviewedAt": null, "gitCommit": null },
+  "rounding": { "moneyScale": 2, "mode": "HALF_UP", "stage": "PER_LINE" },
+  "rules": {
+    "selection": {
+      "familyId": "tvoed-vka-sue",
+      "engineId": "tvoed-sue-bt-b-table-draft-v1",
+      "employmentKind": "EMPLOYEE",
+      "variants": [
+        {
+          "id": "BT_B",
+          "label": "Pflege- und Betreuungseinrichtung (BT-B)",
+          "specialPartId": "bt-b",
+          "sourceIds": ["vka-tvoed-sue-bt-b-2025-2026"],
+          "regions": [
+            {
+              "id": "VKA",
+              "label": "VKA · Anlage C",
+              "payTableId": "anlage-c",
+              "sourceIds": ["vka-tvoed-sue-bt-b-2025-2026"]
+            }
+          ]
+        }
+      ],
+      "capabilities": {
+        "basePay": "UNSUPPORTED",
+        "timePremiums": "UNSUPPORTED",
+        "allowances": "UNSUPPORTED",
+        "overtime": "UNSUPPORTED",
+        "annualPayment": "UNSUPPORTED"
+      }
+    },
+    "selector": { "agreementId": "tvoed-vka", "specialPartId": "bt-b", "payTableId": "anlage-c" },
+    "payTables": [
+      {
+        "id": "anlage-c",
+        "entries": [
+          { "groupId": "s18", "stepId": "s1", "monthlyCents": 459195 },
+          { "groupId": "s18", "stepId": "s2", "monthlyCents": 470894 },
+          { "groupId": "s18", "stepId": "s3", "monthlyCents": 528855 },
+          { "groupId": "s18", "stepId": "s4", "monthlyCents": 572321 },
+          { "groupId": "s18", "stepId": "s5", "monthlyCents": 637522 },
+          { "groupId": "s18", "stepId": "s6", "monthlyCents": 677365 },
+          { "groupId": "s17", "stepId": "s1", "monthlyCents": 423384 },
+          { "groupId": "s17", "stepId": "s2", "monthlyCents": 452784 },
+          { "groupId": "s17", "stepId": "s3", "monthlyCents": 499873 },
+          { "groupId": "s17", "stepId": "s4", "monthlyCents": 528855 },
+          { "groupId": "s17", "stepId": "s5", "monthlyCents": 586809 },
+          { "groupId": "s17", "stepId": "s6", "monthlyCents": 620858 },
+          { "groupId": "s16", "stepId": "s1", "monthlyCents": 414717 },
+          { "groupId": "s16", "stepId": "s2", "monthlyCents": 443368 },
+          { "groupId": "s16", "stepId": "s3", "monthlyCents": 475242 },
+          { "groupId": "s16", "stepId": "s4", "monthlyCents": 514362 },
+          { "groupId": "s16", "stepId": "s5", "monthlyCents": 557829 },
+          { "groupId": "s16", "stepId": "s6", "monthlyCents": 583911 },
+          { "groupId": "s15", "stepId": "s1", "monthlyCents": 400066 },
+          { "groupId": "s15", "stepId": "s2", "monthlyCents": 427425 },
+          { "groupId": "s15", "stepId": "s3", "monthlyCents": 456408 },
+          { "groupId": "s15", "stepId": "s4", "monthlyCents": 489732 },
+          { "groupId": "s15", "stepId": "s5", "monthlyCents": 543343 },
+          { "groupId": "s15", "stepId": "s6", "monthlyCents": 566523 },
+          { "groupId": "s14", "stepId": "s1", "monthlyCents": 396244 },
+          { "groupId": "s14", "stepId": "s2", "monthlyCents": 423266 },
+          { "groupId": "s14", "stepId": "s3", "monthlyCents": 455471 },
+          { "groupId": "s14", "stepId": "s4", "monthlyCents": 488230 },
+          { "groupId": "s14", "stepId": "s5", "monthlyCents": 524456 },
+          { "groupId": "s14", "stepId": "s6", "monthlyCents": 549811 },
+          { "groupId": "s13", "stepId": "s1", "monthlyCents": 386968 },
+          { "groupId": "s13", "stepId": "s2", "monthlyCents": 413298 },
+          { "groupId": "s13", "stepId": "s3", "monthlyCents": 449162 },
+          { "groupId": "s13", "stepId": "s4", "monthlyCents": 478138 },
+          { "groupId": "s13", "stepId": "s5", "monthlyCents": 514362 },
+          { "groupId": "s13", "stepId": "s6", "monthlyCents": 532474 },
+          { "groupId": "s12", "stepId": "s1", "monthlyCents": 385950 },
+          { "groupId": "s12", "stepId": "s2", "monthlyCents": 412207 },
+          { "groupId": "s12", "stepId": "s3", "monthlyCents": 446571 },
+          { "groupId": "s12", "stepId": "s4", "monthlyCents": 476997 },
+          { "groupId": "s12", "stepId": "s5", "monthlyCents": 514670 },
+          { "groupId": "s12", "stepId": "s6", "monthlyCents": 530608 },
+          { "groupId": "s11b", "stepId": "s1", "monthlyCents": 380848 },
+          { "groupId": "s11b", "stepId": "s2", "monthlyCents": 406731 },
+          { "groupId": "s11b", "stepId": "s3", "monthlyCents": 424915 },
+          { "groupId": "s11b", "stepId": "s4", "monthlyCents": 471282 },
+          { "groupId": "s11b", "stepId": "s5", "monthlyCents": 507504 },
+          { "groupId": "s11b", "stepId": "s6", "monthlyCents": 529238 },
+          { "groupId": "s11a", "stepId": "s1", "monthlyCents": 374149 },
+          { "groupId": "s11a", "stepId": "s2", "monthlyCents": 399428 },
+          { "groupId": "s11a", "stepId": "s3", "monthlyCents": 417459 },
+          { "groupId": "s11a", "stepId": "s4", "monthlyCents": 463651 },
+          { "groupId": "s11a", "stepId": "s5", "monthlyCents": 499873 },
+          { "groupId": "s11a", "stepId": "s6", "monthlyCents": 521607 },
+          { "groupId": "s9", "stepId": "s1", "monthlyCents": 354930 },
+          { "groupId": "s9", "stepId": "s2", "monthlyCents": 378154 },
+          { "groupId": "s9", "stepId": "s3", "monthlyCents": 405320 },
+          { "groupId": "s9", "stepId": "s4", "monthlyCents": 445527 },
+          { "groupId": "s9", "stepId": "s5", "monthlyCents": 483559 },
+          { "groupId": "s9", "stepId": "s6", "monthlyCents": 512899 },
+          { "groupId": "s8b", "stepId": "s1", "monthlyCents": 348139 },
+          { "groupId": "s8b", "stepId": "s2", "monthlyCents": 370879 },
+          { "groupId": "s8b", "stepId": "s3", "monthlyCents": 398049 },
+          { "groupId": "s8b", "stepId": "s4", "monthlyCents": 438082 },
+          { "groupId": "s8b", "stepId": "s5", "monthlyCents": 475933 },
+          { "groupId": "s8b", "stepId": "s6", "monthlyCents": 504951 },
+          { "groupId": "s8a", "stepId": "s1", "monthlyCents": 341385 },
+          { "groupId": "s8a", "stepId": "s2", "monthlyCents": 363631 },
+          { "groupId": "s8a", "stepId": "s3", "monthlyCents": 386850 },
+          { "groupId": "s8a", "stepId": "s4", "monthlyCents": 409249 },
+          { "groupId": "s8a", "stepId": "s5", "monthlyCents": 431144 },
+          { "groupId": "s8a", "stepId": "s6", "monthlyCents": 454167 },
+          { "groupId": "s7", "stepId": "s1", "monthlyCents": 333359 },
+          { "groupId": "s7", "stepId": "s2", "monthlyCents": 355019 },
+          { "groupId": "s7", "stepId": "s3", "monthlyCents": 376570 },
+          { "groupId": "s7", "stepId": "s4", "monthlyCents": 398731 },
+          { "groupId": "s7", "stepId": "s5", "monthlyCents": 415380 },
+          { "groupId": "s7", "stepId": "s6", "monthlyCents": 440469 },
+          { "groupId": "s4", "stepId": "s1", "monthlyCents": 320181 },
+          { "groupId": "s4", "stepId": "s2", "monthlyCents": 340876 },
+          { "groupId": "s4", "stepId": "s3", "monthlyCents": 359733 },
+          { "groupId": "s4", "stepId": "s4", "monthlyCents": 372530 },
+          { "groupId": "s4", "stepId": "s5", "monthlyCents": 384861 },
+          { "groupId": "s4", "stepId": "s6", "monthlyCents": 404312 },
+          { "groupId": "s3", "stepId": "s1", "monthlyCents": 303489 },
+          { "groupId": "s3", "stepId": "s2", "monthlyCents": 322962 },
+          { "groupId": "s3", "stepId": "s3", "monthlyCents": 341078 },
+          { "groupId": "s3", "stepId": "s4", "monthlyCents": 357712 },
+          { "groupId": "s3", "stepId": "s5", "monthlyCents": 365323 },
+          { "groupId": "s3", "stepId": "s6", "monthlyCents": 374414 },
+          { "groupId": "s2", "stepId": "s1", "monthlyCents": 282914 },
+          { "groupId": "s2", "stepId": "s2", "monthlyCents": 294841 },
+          { "groupId": "s2", "stepId": "s3", "monthlyCents": 303664 },
+          { "groupId": "s2", "stepId": "s4", "monthlyCents": 313245 },
+          { "groupId": "s2", "stepId": "s5", "monthlyCents": 324019 },
+          { "groupId": "s2", "stepId": "s6", "monthlyCents": 334795 }
+        ],
+        "sourceIds": ["vka-tvoed-sue-bt-b-2025-2026"]
+      }
+    ],
+    "premiumRules": [],
+    "allowanceRules": [],
+    "tvoedSueAllowancePolicy": {
+      "bands": [
+        {
+          "groupIds": ["s2", "s3", "s4", "s7", "s8a", "s8b", "s9", "s11a"],
+          "monthlyCents": 13000,
+          "caseGroup": null
+        },
+        {
+          "groupIds": ["s11b", "s12", "s14"],
+          "monthlyCents": 18000,
+          "caseGroup": null
+        },
+        {
+          "groupIds": ["s15"],
+          "monthlyCents": 18000,
+          "caseGroup": "6"
+        }
+      ],
+      "partTimeProRata": true,
+      "conversionDaysRequireSeparateCalculation": true,
+      "sourceIds": ["vka-tvoed-sue-bt-b-2025-2026"]
+    },
+    "combinationRules": [],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
+    }
+  }
+}

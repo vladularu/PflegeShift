@@ -43,7 +43,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -65,7 +65,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
+  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -139,7 +139,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -488,6 +488,7 @@ export interface RuleTariffRules {
       ];
   tvoedAnnexAOvertimePolicy?: RuleTvoedAnnexAOvertimePolicy;
   tvoedAnnexATimePremiumPolicy?: RuleTvoedAnnexATimePremiumPolicy;
+  tvoedSueAllowancePolicy?: RuleTvoedSueAllowancePolicy;
 }
 export interface RuleTariffSelection {
   familyId: RuleIdentifier;
@@ -27149,6 +27150,491 @@ export interface RuleTvoedAnnexATimePremiumPolicy {
   nightStacks: true;
   holidayWithoutTimeOffMaximumTotalBasisPoints: 23500;
   localAgreementMayIncrease: true;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Draft-only BT-B section 52(6) monthly SuE allowance; conversion-day deductions remain outside this calculator.
+ */
+export interface RuleTvoedSueAllowancePolicy {
+  /**
+   * @minItems 3
+   * @maxItems 3
+   */
+  bands: [
+    {
+      /**
+       * @minItems 1
+       * @maxItems 16
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      monthlyCents: number;
+      caseGroup: null | "6";
+    },
+    {
+      /**
+       * @minItems 1
+       * @maxItems 16
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      monthlyCents: number;
+      caseGroup: null | "6";
+    },
+    {
+      /**
+       * @minItems 1
+       * @maxItems 16
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      monthlyCents: number;
+      caseGroup: null | "6";
+    },
+  ];
+  partTimeProRata: true;
+  conversionDaysRequireSeparateCalculation: true;
   sourceIds: RuleSourceIds;
 }
 export interface RuleLegalRules {
