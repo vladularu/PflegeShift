@@ -9,6 +9,8 @@ import React, {
 } from "react";
 
 import type { PflegeShiftPorts } from "@/application/pflegeshift-ports";
+import { RemunerationProvider } from "@/application/remuneration-provider";
+import { TrainingProvider } from "./training-provider";
 import { usePflegeShiftLoading } from "@/application/use-pflegeshift-loading";
 import {
   EMPTY_WORK_PATTERN_SETTINGS,
@@ -136,6 +138,7 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
   const [workPatternSettings, setWorkPatternSettings] = useState(EMPTY_WORK_PATTERN_SETTINGS);
   const [testMonths, setTestMonths] = useState<readonly string[]>([]);
   const [testDataLoadRevision, setTestDataLoadRevision] = useState(0);
+  const [remunerationReloadRevision, setRemunerationReloadRevision] = useState(0);
   const [notificationWarning, setNotificationWarning] = useState<NotificationWarning | null>(null);
   const notificationWarningSequence = useRef(0);
 
@@ -154,6 +157,7 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
     setTariffDecisions(snapshot.tariffDecisions);
     setWorkPatternSettings(snapshot.workPatternSettings);
     setTestDataLoadRevision((current) => current + 1);
+    setRemunerationReloadRevision((current) => current + 1);
   }, []);
   const {
     ready: statusReady,
@@ -192,6 +196,7 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
     async (input: SaveProfileInput) => {
       const saved = await repository.saveProfile(input);
       setProfile(saved);
+      setRemunerationReloadRevision((current) => current + 1);
       return saved;
     },
     [repository],
@@ -389,7 +394,19 @@ export function PflegeShiftProvider({ activeMonth, children, ports }: PflegeShif
           <PflegeShiftEntriesContext value={entriesValue}>
             <PflegeShiftTariffContext value={tariffValue}>
               <PflegeShiftTestDataContext value={testDataValue}>
-                {children}
+                <RemunerationProvider
+                  repository={ports.remuneration}
+                  diagnostics={diagnostics}
+                  reloadRevision={remunerationReloadRevision}
+                >
+                  <TrainingProvider
+                    repository={ports.training}
+                    diagnostics={diagnostics}
+                    reloadRevision={remunerationReloadRevision}
+                  >
+                    {children}
+                  </TrainingProvider>
+                </RemunerationProvider>
               </PflegeShiftTestDataContext>
             </PflegeShiftTariffContext>
           </PflegeShiftEntriesContext>
