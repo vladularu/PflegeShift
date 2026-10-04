@@ -1,0 +1,484 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 15,
+  "packageId": "avr-dd-anlage-1",
+  "versionId": "2025-03-01-draft1",
+  "kind": "TARIFF",
+  "label": "AVR.DD · Anlage 1/2 · Entgelttabelle (nicht aktiviert)",
+  "status": "DRAFT",
+  "validFrom": "2025-03-01",
+  "validTo": "2026-08-31",
+  "jurisdiction": { "country": "DE", "federalStates": null },
+  "sources": [
+    {
+      "id": "arkdd-avrdd-2026-01",
+      "title": "Arbeitsrechtliche Kommission Diakonie Deutschland, AVR.DD Stand 01.01.2026",
+      "url": "https://www.arkdd.de/avr/avrdd_20260101.pdf",
+      "documentDate": "2026-01-01",
+      "section": "§§ 9, 14, 15, 20, 21, Anlage 2 (S. 129) und Anlage 9 (S. 172); Tabellen ab 01.03.2025",
+      "sha256": "6dbe45ec4234ea189da4635521ea2265d359c35666aec0ef2858a499f0561ad7"
+    },
+    {
+      "id": "arkdd-rundschreiben-2025-07",
+      "title": "Arbeitsrechtliche Kommission Diakonie Deutschland, Rundschreiben 11.07.2025",
+      "url": "https://www.arkdd.de/rs/rs_20250711.pdf",
+      "documentDate": "2025-07-11",
+      "section": "§ 14 Abs. 2 Buchst. c ab 01.07.2026; § 20 ab 01.09.2026/01.07.2027; Tabellen ab 01.09.2026",
+      "sha256": "9518d677c23229ee33301b44124e394f159382deebf4667ca88e6f1a32f1304c"
+    },
+    {
+      "id": "pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    }
+  ],
+  "review": { "status": "DRAFT", "reviewedBy": null, "reviewedAt": null, "gitCommit": null },
+  "rounding": { "moneyScale": 2, "mode": "HALF_UP", "stage": "PER_LINE" },
+  "rules": {
+    "selection": {
+      "familyId": "avr-dd",
+      "engineId": "avr-dd-v1",
+      "employmentKind": "EMPLOYEE",
+      "variants": [
+        {
+          "id": "ANLAGE_1",
+          "label": "Anlage 1",
+          "specialPartId": "anlage-1",
+          "sourceIds": ["arkdd-avrdd-2026-01"],
+          "regions": [
+            {
+              "id": "AVR_DD",
+              "label": "AVR.DD",
+              "payTableId": "anlage-2",
+              "sourceIds": ["arkdd-avrdd-2026-01"]
+            }
+          ]
+        }
+      ],
+      "capabilities": {
+        "basePay": "UNSUPPORTED",
+        "timePremiums": "UNSUPPORTED",
+        "allowances": "UNSUPPORTED",
+        "overtime": "UNSUPPORTED",
+        "annualPayment": "UNSUPPORTED"
+      }
+    },
+    "selector": { "agreementId": "avr-dd", "specialPartId": "anlage-1", "payTableId": "anlage-2" },
+    "payTables": [
+      {
+        "id": "anlage-2",
+        "entries": [
+          { "groupId": "eg1", "stepId": "base", "monthlyCents": 237405 },
+          { "groupId": "eg1", "stepId": "exp1", "monthlyCents": 247343 },
+          { "groupId": "eg2", "stepId": "base", "monthlyCents": 266623 },
+          { "groupId": "eg2", "stepId": "exp1", "monthlyCents": 278027 },
+          { "groupId": "eg3", "stepId": "entry", "monthlyCents": 282521 },
+          { "groupId": "eg3", "stepId": "base", "monthlyCents": 295633 },
+          { "groupId": "eg3", "stepId": "exp1", "monthlyCents": 308744 },
+          { "groupId": "eg4", "stepId": "entry", "monthlyCents": 301672 },
+          { "groupId": "eg4", "stepId": "base", "monthlyCents": 315791 },
+          { "groupId": "eg4", "stepId": "exp1", "monthlyCents": 329909 },
+          { "groupId": "eg5", "stepId": "entry", "monthlyCents": 325722 },
+          { "groupId": "eg5", "stepId": "base", "monthlyCents": 341106 },
+          { "groupId": "eg5", "stepId": "exp1", "monthlyCents": 356492 },
+          { "groupId": "eg5", "stepId": "exp2", "monthlyCents": 371876 },
+          { "groupId": "eg6", "stepId": "entry", "monthlyCents": 336950 },
+          { "groupId": "eg6", "stepId": "base", "monthlyCents": 352926 },
+          { "groupId": "eg6", "stepId": "exp1", "monthlyCents": 368902 },
+          { "groupId": "eg6", "stepId": "exp2", "monthlyCents": 384879 },
+          { "groupId": "eg7", "stepId": "entry", "monthlyCents": 376131 },
+          { "groupId": "eg7", "stepId": "base", "monthlyCents": 394127 },
+          { "groupId": "eg7", "stepId": "exp1", "monthlyCents": 412712 },
+          { "groupId": "eg7", "stepId": "exp2", "monthlyCents": 431698 },
+          { "groupId": "eg7", "stepId": "exp3", "monthlyCents": 441336 },
+          { "groupId": "eg8", "stepId": "entry", "monthlyCents": 411887 },
+          { "groupId": "eg8", "stepId": "base", "monthlyCents": 432788 },
+          { "groupId": "eg8", "stepId": "exp1", "monthlyCents": 454004 },
+          { "groupId": "eg8", "stepId": "exp2", "monthlyCents": 475218 },
+          { "groupId": "eg8", "stepId": "exp3", "monthlyCents": 485825 },
+          { "groupId": "eg9", "stepId": "entry", "monthlyCents": 449747 },
+          { "groupId": "eg9", "stepId": "base", "monthlyCents": 472929 },
+          { "groupId": "eg9", "stepId": "exp1", "monthlyCents": 496112 },
+          { "groupId": "eg9", "stepId": "exp2", "monthlyCents": 519294 },
+          { "groupId": "eg9", "stepId": "exp3", "monthlyCents": 530886 },
+          { "groupId": "eg10", "stepId": "entry", "monthlyCents": 511179 },
+          { "groupId": "eg10", "stepId": "base", "monthlyCents": 537528 },
+          { "groupId": "eg10", "stepId": "exp1", "monthlyCents": 563878 },
+          { "groupId": "eg10", "stepId": "exp2", "monthlyCents": 590227 },
+          { "groupId": "eg10", "stepId": "exp3", "monthlyCents": 603402 },
+          { "groupId": "eg11", "stepId": "entry", "monthlyCents": 580469 },
+          { "groupId": "eg11", "stepId": "base", "monthlyCents": 610390 },
+          { "groupId": "eg11", "stepId": "exp1", "monthlyCents": 640309 },
+          { "groupId": "eg11", "stepId": "exp2", "monthlyCents": 670231 },
+          { "groupId": "eg11", "stepId": "exp3", "monthlyCents": 685192 },
+          { "groupId": "eg12", "stepId": "entry", "monthlyCents": 611584 },
+          { "groupId": "eg12", "stepId": "base", "monthlyCents": 643109 },
+          { "groupId": "eg12", "stepId": "exp1", "monthlyCents": 674635 },
+          { "groupId": "eg12", "stepId": "exp2", "monthlyCents": 706160 },
+          { "groupId": "eg12", "stepId": "exp3", "monthlyCents": 721922 },
+          { "groupId": "eg13", "stepId": "entry", "monthlyCents": 691143 },
+          { "groupId": "eg13", "stepId": "base", "monthlyCents": 726769 },
+          { "groupId": "eg13", "stepId": "exp1", "monthlyCents": 762394 },
+          { "groupId": "eg13", "stepId": "exp2", "monthlyCents": 798019 },
+          { "groupId": "eg13", "stepId": "exp3", "monthlyCents": 815834 }
+        ],
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      }
+    ],
+    "avrddStagePolicy": {
+      "standardFullTimeWeeklyMinutes": 2340,
+      "individualFullTimeMaxWeeklyMinutes": 2520,
+      "groups": [
+        {
+          "groupId": "eg1",
+          "stages": [
+            { "stepId": "base", "monthsToNext": 24 },
+            { "stepId": "exp1", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg2",
+          "stages": [
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg3",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 6 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg4",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 12 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg5",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg6",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg7",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": 48 },
+            { "stepId": "exp3", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg8",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": 48 },
+            { "stepId": "exp3", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg9",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": 48 },
+            { "stepId": "exp3", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg10",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": 48 },
+            { "stepId": "exp3", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg11",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": 48 },
+            { "stepId": "exp3", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg12",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": 48 },
+            { "stepId": "exp3", "monthsToNext": null }
+          ]
+        },
+        {
+          "groupId": "eg13",
+          "stages": [
+            { "stepId": "entry", "monthsToNext": 24 },
+            { "stepId": "base", "monthsToNext": 48 },
+            { "stepId": "exp1", "monthsToNext": 48 },
+            { "stepId": "exp2", "monthsToNext": 48 },
+            { "stepId": "exp3", "monthsToNext": null }
+          ]
+        }
+      ],
+      "sourceIds": ["arkdd-avrdd-2026-01"]
+    },
+    "avrddHourlyRates": [
+      {
+        "groupId": "eg1",
+        "hourlyCents": 1456,
+        "overtimeSupplementCents": 437,
+        "anlage8OvertimeTotalCents": 1893,
+        "sundayOrHolidayCents": 510,
+        "holidayOnSundayCents": 728,
+        "nightCents": 364,
+        "saturdayCents": 218,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg2",
+        "hourlyCents": 1635,
+        "overtimeSupplementCents": 491,
+        "anlage8OvertimeTotalCents": 2126,
+        "sundayOrHolidayCents": 572,
+        "holidayOnSundayCents": 818,
+        "nightCents": 409,
+        "saturdayCents": 245,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg3",
+        "hourlyCents": 1813,
+        "overtimeSupplementCents": 544,
+        "anlage8OvertimeTotalCents": 2357,
+        "sundayOrHolidayCents": 635,
+        "holidayOnSundayCents": 907,
+        "nightCents": 453,
+        "saturdayCents": 272,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg4",
+        "hourlyCents": 1937,
+        "overtimeSupplementCents": 484,
+        "anlage8OvertimeTotalCents": 2421,
+        "sundayOrHolidayCents": 678,
+        "holidayOnSundayCents": 968,
+        "nightCents": 484,
+        "saturdayCents": 291,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg5",
+        "hourlyCents": 2092,
+        "overtimeSupplementCents": 523,
+        "anlage8OvertimeTotalCents": 2615,
+        "sundayOrHolidayCents": 732,
+        "holidayOnSundayCents": 1046,
+        "nightCents": 523,
+        "saturdayCents": 314,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg6",
+        "hourlyCents": 2165,
+        "overtimeSupplementCents": 541,
+        "anlage8OvertimeTotalCents": 2706,
+        "sundayOrHolidayCents": 758,
+        "holidayOnSundayCents": 1082,
+        "nightCents": 541,
+        "saturdayCents": 325,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg7",
+        "hourlyCents": 2417,
+        "overtimeSupplementCents": 604,
+        "anlage8OvertimeTotalCents": 3022,
+        "sundayOrHolidayCents": 846,
+        "holidayOnSundayCents": 1209,
+        "nightCents": 604,
+        "saturdayCents": 363,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg8",
+        "hourlyCents": 2654,
+        "overtimeSupplementCents": 531,
+        "anlage8OvertimeTotalCents": 3185,
+        "sundayOrHolidayCents": 929,
+        "holidayOnSundayCents": 1327,
+        "nightCents": 664,
+        "saturdayCents": 398,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg9",
+        "hourlyCents": 2901,
+        "overtimeSupplementCents": 435,
+        "anlage8OvertimeTotalCents": 3336,
+        "sundayOrHolidayCents": 1015,
+        "holidayOnSundayCents": 1450,
+        "nightCents": 725,
+        "saturdayCents": 435,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg10",
+        "hourlyCents": 3297,
+        "overtimeSupplementCents": 495,
+        "anlage8OvertimeTotalCents": 3791,
+        "sundayOrHolidayCents": 1154,
+        "holidayOnSundayCents": 1648,
+        "nightCents": 824,
+        "saturdayCents": 495,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg11",
+        "hourlyCents": 3744,
+        "overtimeSupplementCents": 562,
+        "anlage8OvertimeTotalCents": 4305,
+        "sundayOrHolidayCents": 1310,
+        "holidayOnSundayCents": 1872,
+        "nightCents": 936,
+        "saturdayCents": 562,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg12",
+        "hourlyCents": 3944,
+        "overtimeSupplementCents": 592,
+        "anlage8OvertimeTotalCents": 4536,
+        "sundayOrHolidayCents": 1380,
+        "holidayOnSundayCents": 1972,
+        "nightCents": 986,
+        "saturdayCents": 592,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "groupId": "eg13",
+        "hourlyCents": 4457,
+        "overtimeSupplementCents": 669,
+        "anlage8OvertimeTotalCents": 5126,
+        "sundayOrHolidayCents": 1560,
+        "holidayOnSundayCents": 2229,
+        "nightCents": 1114,
+        "saturdayCents": 669,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      }
+    ],
+    "avrddTimePremiumPolicy": {
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "saturdayWindow": { "startMinute": 780, "endMinute": 1260 },
+      "competition": "HIGHEST_SUNDAY_HOLIDAY_SATURDAY",
+      "nightStacks": true,
+      "sourceIds": ["arkdd-avrdd-2026-01"]
+    },
+    "avrddOvertimePolicy": {
+      "fullTimePlusThresholdMinutes": 1800,
+      "monthlyFactorThousandths": 4348,
+      "sourceIds": ["arkdd-avrdd-2026-01"]
+    },
+    "avrddShiftAllowanceRates": [
+      {
+        "validFrom": "2025-03-01",
+        "validTo": "2026-08-31",
+        "alternatingMonthlyCents": 15000,
+        "shiftMonthlyCents": 6000,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      }
+    ],
+    "avrddCareAllowanceRates": [
+      {
+        "validFrom": "2025-03-01",
+        "validTo": "2026-06-30",
+        "monthlyCents": 8000,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "validFrom": "2026-07-01",
+        "validTo": "2026-08-31",
+        "monthlyCents": 10000,
+        "sourceIds": ["arkdd-avrdd-2026-01", "arkdd-rundschreiben-2025-07"]
+      }
+    ],
+    "avrddAdvancedAllowancePolicies": [
+      {
+        "validFrom": "2025-03-01",
+        "validTo": "2026-06-30",
+        "phase": "LEGACY_EFG",
+        "practiceMode": "HALF_EG8_DIFFERENCE",
+        "practiceMonthlyCents": null,
+        "eg8DifferenceBasisPoints": 5000,
+        "intensiveMonthlyCents": 15000,
+        "specialistMonthlyCents": 10000,
+        "sourceIds": ["arkdd-avrdd-2026-01"]
+      },
+      {
+        "validFrom": "2026-07-01",
+        "validTo": "2026-08-31",
+        "phase": "POST_2026_07_EFGH",
+        "practiceMode": "FIXED_MONTHLY",
+        "practiceMonthlyCents": 20000,
+        "eg8DifferenceBasisPoints": 5000,
+        "intensiveMonthlyCents": 15000,
+        "specialistMonthlyCents": 10000,
+        "sourceIds": ["arkdd-avrdd-2026-01", "arkdd-rundschreiben-2025-07"]
+      }
+    ],
+    "premiumRules": [],
+    "allowanceRules": [],
+    "combinationRules": [],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
+    }
+  }
+}
