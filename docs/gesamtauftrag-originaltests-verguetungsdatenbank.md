@@ -20,4 +20,4 @@ Fünf gezielte Originaltests, gesamte Datenbanktests und verify:fast; anschließ
 
 ## Ergebnis
 
-Alle fünf Originaldateien bytegleich: 89 gezielte Fälle grün. Die gesamte Datenbanksuite besteht mit 772 Tests. verify:fast auf master mit PR #249 vollständig grün: 5.434 Unit-, 542 Komponententests und alle Skriptprüfungen. Nach Einbeziehung des inzwischen gemergten Jahreszahlungspakets wird der gemeinsame Stand erneut vollständig geprüft.
+Alle fünf Originaldateien bytegleich: 89 gezielte Fälle grün. Die gesamte Datenbanksuite besteht mit 772 Tests. verify:fast auf master mit PR #249 vollständig grün: 5.434 Unit-, 542 Komponententests und alle Skriptprüfungen. Nach Einbeziehung des gemergten Jahreszahlungspakets PR #250: gemeinsamer verify:fast vollständig grün mit 5.568 Unit-, 542 Komponententests und allen Skriptprüfungen.
