@@ -1,4 +1,8 @@
 import {
+  mapTvoedSueAllowanceConfirmationRow,
+  requireTvoedSueAllowanceConfirmationParent,
+} from "./tvoed-sue-allowance-confirmation-repository";
+import {
   mapTvoedSueMonthConfirmationRow,
   requireTvoedSueMonthConfirmationParent,
 } from "./tvoed-sue-month-confirmation-repository";
@@ -815,6 +819,7 @@ export async function validateLocalBackup(
       root.version !== 12 &&
       root.version !== 13 &&
       root.version !== 14 &&
+      root.version !== 15 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -846,6 +851,7 @@ export async function validateLocalBackup(
       ...(root.version >= 13 ? ["caritasOvertime"] : []),
       ...(root.version >= 14 ? ["tvoedAnnexAMonthConfirmations"] : []),
       ...(root.version >= 15 ? ["tvoedSueMonthConfirmations"] : []),
+      ...(root.version >= 16 ? ["tvoedSueAllowanceConfirmations"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -1186,6 +1192,34 @@ export async function validateLocalBackup(
         requireTvoedSueMonthConfirmationParent(mapTvoedSueMonthConfirmationRow(row), profiles);
     }
 
+    const tvoedSueAllowanceConfirmations =
+      root.version >= 16
+        ? Object.freeze(
+            asArray(data.tvoedSueAllowanceConfirmations).map((value) => {
+              mapTvoedSueAllowanceConfirmationRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 16) {
+      if (
+        (databaseSchemaVersion as number) < 28 ||
+        (profile === null && tvoedSueAllowanceConfirmations.length > 0)
+      )
+        return invalid();
+      uniqueValues(tvoedSueAllowanceConfirmations, "month");
+      const profiles = (remunerationProfiles ?? []).map((row) =>
+        mapRemunerationProfileRow(
+          row as unknown as Parameters<typeof mapRemunerationProfileRow>[0],
+        ),
+      );
+      for (const row of tvoedSueAllowanceConfirmations)
+        requireTvoedSueAllowanceConfirmationParent(
+          mapTvoedSueAllowanceConfirmationRow(row),
+          profiles,
+        );
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -1230,6 +1264,7 @@ export async function validateLocalBackup(
         caritasOvertime,
         tvoedAnnexAMonthConfirmations,
         tvoedSueMonthConfirmations,
+        tvoedSueAllowanceConfirmations,
         templates,
         shifts,
         appointments,
@@ -1267,7 +1302,8 @@ export async function validateLocalBackup(
             !(document.version < 11 && key === "caritasMonthFacts") &&
             !(document.version < 13 && key === "caritasOvertime") &&
             !(document.version < 14 && key === "tvoedAnnexAMonthConfirmations") &&
-            !(document.version < 15 && key === "tvoedSueMonthConfirmations"),
+            !(document.version < 15 && key === "tvoedSueMonthConfirmations") &&
+            !(document.version < 16 && key === "tvoedSueAllowanceConfirmations"),
         ),
       ),
     });

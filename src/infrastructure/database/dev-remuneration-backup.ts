@@ -1,4 +1,10 @@
 import {
+  TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS,
+  mapTvoedSueAllowanceConfirmationRow,
+  requireTvoedSueAllowanceConfirmationParent,
+  type TvoedSueAllowanceConfirmationRow,
+} from "./tvoed-sue-allowance-confirmation-repository";
+import {
   TVOED_SUE_MONTH_CONFIRMATION_COLUMNS,
   mapTvoedSueMonthConfirmationRow,
   requireTvoedSueMonthConfirmationParent,
@@ -66,6 +72,7 @@ export interface DevRemunerationBackup {
   readonly caritasOvertime: readonly CaritasOvertimeRow[];
   readonly tvoedAnnexAMonthConfirmations: readonly TvoedAnnexAMonthConfirmationRow[];
   readonly tvoedSueMonthConfirmations: readonly TvoedSueMonthConfirmationRow[];
+  readonly tvoedSueAllowanceConfirmations: readonly TvoedSueAllowanceConfirmationRow[];
 }
 
 function exact(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -88,6 +95,7 @@ export function validateDevRemunerationBackup(
   includesCaritasOvertime = false,
   includesTvoedAnnexAMonthConfirmations = false,
   includesTvoedSueMonthConfirmations = false,
+  includesTvoedSueAllowanceConfirmations = false,
 ): DevRemunerationBackup {
   const data = exact(value, [
     "allowanceDecision",
@@ -99,6 +107,7 @@ export function validateDevRemunerationBackup(
     ...(includesCaritasOvertime ? ["caritasOvertime"] : []),
     ...(includesTvoedAnnexAMonthConfirmations ? ["tvoedAnnexAMonthConfirmations"] : []),
     ...(includesTvoedSueMonthConfirmations ? ["tvoedSueMonthConfirmations"] : []),
+    ...(includesTvoedSueAllowanceConfirmations ? ["tvoedSueAllowanceConfirmations"] : []),
   ]);
   let allowanceDecision: AllowanceDecisionRow | null = null;
   if (data.allowanceDecision !== null) {
@@ -236,6 +245,22 @@ export function validateDevRemunerationBackup(
       throw new Error("Falscher SuE-Monat im Testlabor-Backup.");
     return Object.freeze({ ...row });
   });
+  const rawSueAllowance = includesTvoedSueAllowanceConfirmations
+    ? data.tvoedSueAllowanceConfirmations
+    : [];
+  if (!Array.isArray(rawSueAllowance))
+    throw new Error("SuE-Zulagenbestätigungen fehlen im Testlabor-Backup.");
+  if (rawSueAllowance.length > 1)
+    throw new Error("Doppelte SuE-Zulagenbestätigung im Testlabor-Backup.");
+  const tvoedSueAllowanceConfirmations = rawSueAllowance.map((value) => {
+    const row = exact(
+      value,
+      TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS,
+    ) as unknown as TvoedSueAllowanceConfirmationRow;
+    if (mapTvoedSueAllowanceConfirmationRow(row).month !== month)
+      throw new Error("Falscher SuE-Zulagenmonat im Testlabor-Backup.");
+    return Object.freeze({ ...row });
+  });
   return Object.freeze({
     allowanceDecision,
     overtimeAllocations: Object.freeze(overtimeAllocations),
@@ -246,6 +271,7 @@ export function validateDevRemunerationBackup(
     caritasOvertime: Object.freeze(caritasOvertime),
     tvoedAnnexAMonthConfirmations: Object.freeze(tvoedAnnexAMonthConfirmations),
     tvoedSueMonthConfirmations: Object.freeze(tvoedSueMonthConfirmations),
+    tvoedSueAllowanceConfirmations: Object.freeze(tvoedSueAllowanceConfirmations),
   });
 }
 export async function snapshotDevRemuneration(
@@ -296,6 +322,10 @@ export async function snapshotDevRemuneration(
     `SELECT ${TVOED_SUE_MONTH_CONFIRMATION_COLUMNS.join(",")} FROM tvoed_sue_month_confirmations WHERE month=?`,
     month,
   );
+  const tvoedSueAllowanceConfirmations = await db.getAllAsync<TvoedSueAllowanceConfirmationRow>(
+    `SELECT ${TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS.join(",")} FROM tvoed_sue_allowance_confirmations WHERE month=?`,
+    month,
+  );
   return {
     allowanceDecision,
     overtimeAllocations,
@@ -306,9 +336,11 @@ export async function snapshotDevRemuneration(
     caritasOvertime,
     tvoedAnnexAMonthConfirmations,
     tvoedSueMonthConfirmations,
+    tvoedSueAllowanceConfirmations,
   };
 }
 export async function clearDevRemuneration(db: SQLiteDatabase, month: string): Promise<void> {
+  await db.runAsync("DELETE FROM tvoed_sue_allowance_confirmations WHERE month=?", month);
   await db.runAsync("DELETE FROM tvoed_sue_month_confirmations WHERE month=?", month);
   await db.runAsync("DELETE FROM tvoed_annex_a_month_confirmations WHERE month=?", month);
   await db.runAsync("DELETE FROM caritas_month_facts WHERE month=?", month);
@@ -336,7 +368,8 @@ export async function restoreDevRemuneration(
     data.caritasMonthFacts.length ||
     data.caritasOvertime.length ||
     data.tvoedAnnexAMonthConfirmations.length ||
-    data.tvoedSueMonthConfirmations.length
+    data.tvoedSueMonthConfirmations.length ||
+    data.tvoedSueAllowanceConfirmations.length
       ? await listRemunerationProfiles(db)
       : [];
   const tvlByShift = new Map<string, ReturnType<typeof mapTvlShiftWorkRow>[]>();
@@ -395,6 +428,13 @@ export async function restoreDevRemuneration(
     await db.runAsync(
       "INSERT INTO tvoed_sue_month_confirmations(month,confirmation_json) VALUES(?,?)",
       ...TVOED_SUE_MONTH_CONFIRMATION_COLUMNS.map((key) => row[key]),
+    );
+  }
+  for (const row of data.tvoedSueAllowanceConfirmations) {
+    requireTvoedSueAllowanceConfirmationParent(mapTvoedSueAllowanceConfirmationRow(row), profiles);
+    await db.runAsync(
+      "INSERT INTO tvoed_sue_allowance_confirmations(month,confirmation_json) VALUES(?,?)",
+      ...TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS.map((key) => row[key]),
     );
   }
   if (data.allowanceDecision !== null)

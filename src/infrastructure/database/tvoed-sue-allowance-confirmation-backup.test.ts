@@ -1,5 +1,6 @@
+import { LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { loadLocalBackupSnapshot } from "./local-backup";
+import { LOCAL_BACKUP_VERSION, loadLocalBackupSnapshot } from "./local-backup";
 import { restoreLocalBackup } from "./local-backup-restore";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
 import {
@@ -56,7 +57,10 @@ describe("TVöD SuE allowance confirmations in local backup v16", () => {
     const saved = await saveTvoedSueAllowanceConfirmation(f.db, answer());
     const before = await loadLocalBackupSnapshot(f.db);
     const exported = await exportTvlBackup(f);
-    expect(exported.document).toMatchObject({ version: 19, databaseSchemaVersion: 31 });
+    expect(exported.document).toMatchObject({
+      version: LOCAL_BACKUP_VERSION,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    });
     expect(exported.document.data.tvoedSueAllowanceConfirmations).toHaveLength(1);
     await f.db.runAsync("DELETE FROM tvoed_sue_allowance_confirmations");
     await restoreLocalBackup(f.db, await validateTvlBackup(exported.serialized));
@@ -72,7 +76,7 @@ describe("TVöD SuE allowance confirmations in local backup v16", () => {
       delete root.data.tvoedSueAllowanceConfirmations;
     });
     const checked = await validateTvlBackup(legacy);
-    expect(checked.document.data.tvoedSueAllowanceConfirmations).toBeUndefined();
+    expect(checked.document.data.tvoedSueAllowanceConfirmations).toEqual([]);
     await restoreLocalBackup(f.db, checked);
     expect(await listTvoedSueAllowanceConfirmations(f.db)).toEqual([]);
   });

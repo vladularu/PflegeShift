@@ -1,3 +1,4 @@
+import { TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS } from "./tvoed-sue-allowance-confirmation-repository";
 import { TVOED_SUE_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-sue-month-confirmation-repository";
 import { TVOED_ANNEX_A_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-annex-a-month-confirmation-repository";
 import { CARITAS_OVERTIME_COLUMNS } from "./caritas-overtime-repository";
@@ -23,7 +24,7 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 import { REMUNERATION_PROFILE_COLUMNS } from "./remuneration-profile-repository";
 
 export const LOCAL_BACKUP_FORMAT = "lunashift-local-backup";
-export const LOCAL_BACKUP_VERSION = 15;
+export const LOCAL_BACKUP_VERSION = 16;
 
 type BackupScalar = string | number | null;
 type BackupRow = Readonly<Record<string, BackupScalar>>;
@@ -45,6 +46,7 @@ export interface LocalBackupSnapshot {
   readonly caritasOvertime: readonly BackupRow[];
   readonly tvoedAnnexAMonthConfirmations: readonly BackupRow[];
   readonly tvoedSueMonthConfirmations: readonly BackupRow[];
+  readonly tvoedSueAllowanceConfirmations: readonly BackupRow[];
   readonly templates: readonly BackupRow[];
   readonly shifts: readonly BackupRow[];
   readonly appointments: readonly BackupRow[];
@@ -55,7 +57,7 @@ export interface LocalBackupSnapshot {
 interface UnsignedLocalBackupDocument {
   readonly format: typeof LOCAL_BACKUP_FORMAT;
   readonly version:
-    1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | typeof LOCAL_BACKUP_VERSION;
+    1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | typeof LOCAL_BACKUP_VERSION;
   readonly createdAt: string;
   readonly appVersion: string | null;
   readonly databaseSchemaVersion: number;
@@ -75,6 +77,7 @@ interface UnsignedLocalBackupDocument {
     readonly caritasOvertime: readonly BackupRow[];
     readonly tvoedAnnexAMonthConfirmations: readonly BackupRow[];
     readonly tvoedSueMonthConfirmations: readonly BackupRow[];
+    readonly tvoedSueAllowanceConfirmations: readonly BackupRow[];
     readonly templates: readonly BackupRow[];
     readonly shifts: readonly BackupRow[];
     readonly appointments: readonly BackupRow[];
@@ -189,6 +192,9 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
     const tvoedSueMonthConfirmations = await transaction.getAllAsync<BackupRow>(
       `SELECT ${TVOED_SUE_MONTH_CONFIRMATION_COLUMNS.join(",")} FROM tvoed_sue_month_confirmations ORDER BY month`,
     );
+    const tvoedSueAllowanceConfirmations = await transaction.getAllAsync<BackupRow>(
+      `SELECT ${TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS.join(",")} FROM tvoed_sue_allowance_confirmations ORDER BY month`,
+    );
     const templates = await transaction.getAllAsync<BackupRow>(
       `SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
               all_day,notification_json,location_json,revision,created_at,updated_at,deleted_at
@@ -243,6 +249,9 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
         tvoedAnnexAMonthConfirmations.map(Object.freeze),
       ),
       tvoedSueMonthConfirmations: Object.freeze(tvoedSueMonthConfirmations.map(Object.freeze)),
+      tvoedSueAllowanceConfirmations: Object.freeze(
+        tvoedSueAllowanceConfirmations.map(Object.freeze),
+      ),
       templates: Object.freeze(templates.map(Object.freeze)),
       shifts: Object.freeze(shifts.map(Object.freeze)),
       appointments: Object.freeze(appointments.map(Object.freeze)),
@@ -283,6 +292,7 @@ export async function createLocalBackupDocument(
       caritasOvertime: snapshot.caritasOvertime,
       tvoedAnnexAMonthConfirmations: snapshot.tvoedAnnexAMonthConfirmations,
       tvoedSueMonthConfirmations: snapshot.tvoedSueMonthConfirmations,
+      tvoedSueAllowanceConfirmations: snapshot.tvoedSueAllowanceConfirmations,
       templates: snapshot.templates,
       shifts: snapshot.shifts,
       appointments: snapshot.appointments,

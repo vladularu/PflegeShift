@@ -320,6 +320,7 @@ describe("local backup restore", () => {
         caritasOvertime?: unknown;
         tvoedAnnexAMonthConfirmations?: unknown;
         tvoedSueMonthConfirmations?: unknown;
+        tvoedSueAllowanceConfirmations?: unknown;
       };
       delete data.remunerationProfiles;
       delete data.allowanceDecisions;
@@ -335,6 +336,7 @@ describe("local backup restore", () => {
       delete data.caritasOvertime;
       delete data.tvoedAnnexAMonthConfirmations;
       delete data.tvoedSueMonthConfirmations;
+      delete data.tvoedSueAllowanceConfirmations;
       delete data.profile.display_name;
       delete data.profile.employer_name;
     });
