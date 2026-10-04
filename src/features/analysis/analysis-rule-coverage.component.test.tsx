@@ -372,7 +372,7 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
   it("explains a direct premium link for manual salary without inventing zeros", async () => {
     mockProfile = { ...MOCK_TARIFF_PROFILE, tariff: null, manualMonthlyGrossCents: 320000 };
     const screen = await render(<PremiumDetailsScreen />);
-    expect(screen.getByText("Keine tarifliche Berechnung")).toBeTruthy();
+    expect(screen.getByText("Keine Zuschlagspositionen")).toBeTruthy();
     expect(screen.queryByText("0,00 €")).toBeNull();
   });
 
@@ -428,10 +428,13 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
 
     const salary = await render(<SalaryScreen />);
     expect(salary.queryByText("Diagnosecode: RULE_PACKAGE_NOT_FOUND")).toBeNull();
-    expect(salary.getByText("MONATSBRUTTO")).toBeTruthy();
-    expect(salary.getByText("Monatsbrutto")).toBeTruthy();
-    expect(salary.getByText("Manuell hinterlegt")).toBeTruthy();
-    expect(salary.queryByText("Zeitzuschläge")).toBeNull();
+    expect(salary.getByText("BERECHNUNG UNVOLLSTÄNDIG")).toBeTruthy();
+    expect(salary.getByText(/Bekannter Teilbetrag: 3\.450,50/)).toBeTruthy();
+    expect(salary.getByText("3.450,50 € · Berechnet")).toBeTruthy();
+    expect(
+      salary.getByText("Für die eigene Vergütung sind noch keine Zuschlagsparameter bestätigt."),
+    ).toBeTruthy();
+    expect(salary.queryByText("BRUTTO-SCHÄTZUNG")).toBeNull();
   });
 
   it("does not present missing absence credits as exact zero hours", async () => {
@@ -481,11 +484,25 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
   });
 
   it("keeps missing rule coverage local in SalaryScreen", async () => {
-    await expectRuleCoverageDiagnostic(<SalaryScreen />);
+    mockEntries = [januaryShift()];
+    const screen = await render(<SalaryScreen />);
+    expect(
+      screen.getAllByText("Die Feiertagsregeln sind für diesen Abschnitt nicht verfügbar.").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Nicht berechenbar").length).toBeGreaterThan(0);
+    expect(screen.queryByText("0,00 €")).toBeNull();
+    expect(screen.queryByText("LUNA Shift konnte nicht angezeigt werden")).toBeNull();
   });
 
   it("keeps missing rule coverage local in PremiumDetailsScreen", async () => {
-    await expectRuleCoverageDiagnostic(<PremiumDetailsScreen />);
+    mockEntries = [januaryShift()];
+    const screen = await render(<PremiumDetailsScreen />);
+    expect(
+      screen.getAllByText("Die Feiertagsregeln sind für diesen Abschnitt nicht verfügbar.").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Nicht berechenbar").length).toBeGreaterThan(0);
+    expect(screen.queryByText("0,00 €")).toBeNull();
+    expect(screen.queryByText("LUNA Shift konnte nicht angezeigt werden")).toBeNull();
   });
 
   it("keeps tariff assessment independent from missing holiday rules", async () => {
@@ -568,7 +585,9 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
 
     const premiums = await render(<PremiumDetailsScreen />);
     expect(
-      premiums.getByText("Für diesen Zeitraum liegt kein geprüfter Tarifstand vor."),
+      premiums.getByText(
+        "Das ausgewählte Tarifregelwerk ist für diesen Zeitraum nicht eindeutig verfügbar.",
+      ),
     ).toBeTruthy();
     expect(premiums.queryByText("0,00 €")).toBeNull();
 

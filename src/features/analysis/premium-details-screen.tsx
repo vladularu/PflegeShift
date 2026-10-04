@@ -1,134 +1,62 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
-
-import {
-  usePflegeShiftEntries,
-  usePflegeShiftProfile,
-  usePflegeShiftStatus,
-  usePflegeShiftTariff,
-} from "@/application/pflegeshift-provider";
-import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
-import { currentMonth, formatMonthTitle } from "@/engine/calendar";
-import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import { PremiumBreakdownList } from "./premium-breakdown-list";
-import {
-  selectAllowanceShifts,
-  selectMonthlyAnalysisEntries,
-} from "@/features/analysis/analysis-data";
-import { AnalysisCoverageNote } from "@/features/analysis/analysis-coverage-note";
-import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-layout";
-import {
-  captureRuleComputation,
-  RuleComputationNotice,
-} from "@/features/analysis/rule-computation";
+import { formatMonthTitle } from "@/engine/calendar";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
-import { ReportScrollView } from "@/ui/report-layout";
+import { ReportFootnote, ReportScrollView } from "@/ui/report-layout";
+import { AnalysisDetailSummaryCard } from "./analysis-detail-layout";
+import { RuleComputationNotice } from "./rule-computation";
+import { useMonthlyRemuneration } from "./use-monthly-remuneration";
+import { RemunerationPositions } from "@/features/salary/remuneration-positions";
+import { remunerationEuro, REMUNERATION_STATUS } from "@/features/salary/remuneration-presentation";
 
 export function PremiumDetailsScreen() {
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { error, ready, reload } = usePflegeShiftStatus();
-  const { profile } = usePflegeShiftProfile();
-  const { entries } = usePflegeShiftEntries();
-  const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
-  const { resolver: ruleResolver } = useRuleCatalogRuntime();
-  const [ruleRetryRevision, setRuleRetryRevision] = useState(0);
-  const parsedMonth = parseMonthRouteParam(params.month);
-  const month =
-    parsedMonth.status === "valid" ? parsedMonth.value : currentMonth(profile?.timeZone);
-  const calculation = useMemo(() => {
-    void ruleRetryRevision;
-    if (parsedMonth.status !== "valid" || !ready || error || profile === null) return null;
-    return captureRuleComputation(() => {
-      const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts =
-        profile.tariff === null
-          ? monthlyEntries.monthShifts
-          : selectAllowanceShifts(entries, month, ruleResolver);
-      const decision = tariffDecisions.find((item) => item.month === month) ?? null;
-      return {
-        monthShifts: monthlyEntries.monthShifts,
-        pay: calculateMonthlyPayEstimate(
-          month,
-          monthlyEntries.monthShifts,
-          profile,
-          decision,
-          allowanceShifts,
-          workPatternSettings,
-          ruleResolver,
-        ),
-      };
-    });
-  }, [
-    entries,
-    error,
-    month,
-    parsedMonth.status,
-    profile,
-    ready,
-    ruleResolver,
-    ruleRetryRevision,
-    tariffDecisions,
-    workPatternSettings,
-  ]);
-
-  if (parsedMonth.status !== "valid") {
+  const parsed = parseMonthRouteParam(params.month);
+  // Disabled sentinel cannot be evaluated and is never shown.
+  const month = parsed.status === "valid" ? parsed.value : "2000-01";
+  const { calculation, error, reload } = useMonthlyRemuneration(month, parsed.status === "valid");
+  if (parsed.status !== "valid")
     return (
       <LoadFailureView
         actionLabel="Schließen"
+        title="Zuschlagsdetails können nicht geöffnet werden"
         message="Der Link zu den Zuschlagsdetails enthält keinen gültigen Monat."
         onRetry={() => router.back()}
-        title="Zuschlagsdetails können nicht geöffnet werden"
       />
     );
-  }
-  if (ready && error) {
-    return <LoadFailureView message={error} onRetry={() => void reload()} />;
-  }
-  if (calculation !== null && !calculation.ok) {
+  if (error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
+  if (calculation === null) return <LoadingView />;
+  if (!calculation.ok)
     return (
       <ReportScrollView>
-        <AnalysisDetailSummaryCard
-          caption="Die übrige Auswertung bleibt verfügbar."
-          period={formatMonthTitle(month)}
-          title="Nicht verfügbar"
-        />
         <RuleComputationNotice
           failure={calculation}
-          onRetry={() => setRuleRetryRevision((value) => value + 1)}
+          onRetry={() => void reload()}
           title="Zuschlagsdetails nicht verfügbar"
         />
       </ReportScrollView>
     );
-  }
-  if (!ready || profile === null || calculation === null) return <LoadingView />;
-
-  const { monthShifts, pay } = calculation.value;
-  if (profile.tariff === null)
-    return (
-      <ReportScrollView>
-        <AnalysisDetailSummaryCard
-          title="Keine tarifliche Berechnung"
-          period={formatMonthTitle(month)}
-          caption="Für manuell hinterlegtes Gehalt werden keine Zeitzuschläge berechnet."
-        />
-      </ReportScrollView>
-    );
-  if (!pay.available) {
-    return (
-      <ReportScrollView>
-        <AnalysisDetailSummaryCard
-          caption="Für diesen Zeitraum liegt kein geprüfter Tarifstand vor."
-          period={formatMonthTitle(month)}
-          title="Nicht verfügbar"
-        />
-        <AnalysisCoverageNote message="Zuschlagsdetails werden erst mit einem gültigen Tarifstand angezeigt." />
-      </ReportScrollView>
-    );
-  }
+  const premiums = calculation.value.timePremiums;
+  const noOwnPositions =
+    premiums.positions.length === 0 &&
+    calculation.value.base.positions.every((position) => position.source.kind === "profile");
   return (
     <ReportScrollView>
-      <PremiumBreakdownList key={month} pay={pay} shifts={monthShifts} />
+      <AnalysisDetailSummaryCard
+        title={noOwnPositions ? "Keine Zuschlagspositionen" : remunerationEuro(premiums.totalCents)}
+        period={formatMonthTitle(month)}
+        caption={
+          noOwnPositions
+            ? "Für diesen Zeitraum sind keine Zeitzuschläge erfasst."
+            : `Zeitzuschläge · ${REMUNERATION_STATUS[premiums.status]}${!premiums.complete ? ` · bekannter Teilbetrag: ${remunerationEuro(premiums.knownSubtotalCents)}` : ""}`
+        }
+      />
+      <RemunerationPositions key={month} positions={premiums.positions} />
+      <ReportFootnote>
+        Die Grundlage kann je Dienst und Zeitraum wechseln. Fehlende oder geschätzte Pausenlagen
+        werden in der jeweiligen Berechnungsgrundlage erklärt. Grundentgelt, Zulagen und Überstunden
+        sind hier nicht enthalten.
+      </ReportFootnote>
     </ReportScrollView>
   );
 }

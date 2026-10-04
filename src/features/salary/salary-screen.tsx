@@ -1,202 +1,86 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { Ionicons } from "@expo/vector-icons";
 import { Temporal } from "@js-temporal/polyfill";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, Text, View, useWindowDimensions } from "react-native";
-
-import {
-  usePflegeShiftEntries,
-  usePflegeShiftProfile,
-  usePflegeShiftStatus,
-  usePflegeShiftTariff,
-  usePflegeShiftTestData,
-} from "@/application/pflegeshift-provider";
-import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
+import { useCallback, useEffect, useState } from "react";
+import { Text, View } from "react-native";
+import { usePflegeShiftTestData } from "@/application/pflegeshift-provider";
 import { formatMonthTitle } from "@/engine/calendar";
-import { calculateMonthlyPayEstimate } from "@/engine/pay";
-import {
-  selectAllowanceShifts,
-  selectMonthlyAnalysisEntries,
-} from "@/features/analysis/analysis-data";
-import {
-  captureRuleComputation,
-  RuleComputationNotice,
-} from "@/features/analysis/rule-computation";
+import { useMonthlyRemuneration } from "@/features/analysis/use-monthly-remuneration";
+import { RuleComputationNotice } from "@/features/analysis/rule-computation";
 import {
   premiumDetailsRoute,
   settingsEditorRoute,
-  settingsInfoRoute,
   tariffAssessmentRoute,
+  overtimeAllocationRoute,
+  tvlShiftWorkRoute,
+  sueMonthRoute,
+  annexAMonthRoute,
+  annexAPremiumFactsRoute,
+  paidAbsenceRoute,
+  annualPaymentRoute,
 } from "@/navigation/routes";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { useActiveMonthCoordinator } from "@/navigation/active-month";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import { CardFooterLine, CardHeader, CardSeparator, SurfaceCard } from "@/ui/design-system";
+import { SPACING } from "@/theme/tokens";
+import { SurfaceCard } from "@/ui/design-system";
+import { SecondaryButton } from "@/ui/form-controls";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { MonthNavigator } from "@/ui/month-navigator";
 import { selectionFeedback } from "@/ui/haptics";
-import { ReportPeriodContent, ReportScrollView, ReportTestBadge } from "@/ui/report-layout";
-
-function euro(value: number | null): string {
-  if (value === null) return "–";
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value);
-}
+import {
+  ReportFootnote,
+  ReportPeriodContent,
+  ReportScrollView,
+  ReportTestBadge,
+} from "@/ui/report-layout";
+import { RemunerationComponentCard, RemunerationText } from "./remuneration-positions";
+import { remunerationEuro, remunerationIssues } from "./remuneration-presentation";
 
 export function SalaryScreen() {
   const palette = usePalette();
-  const activeMonthCoordinator = useActiveMonthCoordinator();
+  const coordinator = useActiveMonthCoordinator();
   const params = useLocalSearchParams<{ month?: RouteParam }>();
-  const { error, ready, reload } = usePflegeShiftStatus();
-  const { profile } = usePflegeShiftProfile();
-  const { entries } = usePflegeShiftEntries();
-  const { tariffDecisions, workPatternSettings } = usePflegeShiftTariff();
   const { testMonths } = usePflegeShiftTestData();
-  const { resolver: ruleResolver } = useRuleCatalogRuntime();
-  const [month, setMonth] = useState(() => activeMonthCoordinator.getMonth());
-  const [ruleRetryRevision, setRuleRetryRevision] = useState(0);
+  const [month, setMonth] = useState(() => coordinator.getMonth());
   const parsedMonth = parseMonthRouteParam(params.month);
   const routeMonth = parsedMonth.status === "valid" ? parsedMonth.value : null;
-
   useEffect(() => {
     if (routeMonth !== null) {
-      activeMonthCoordinator.setMonth(routeMonth);
+      coordinator.setMonth(routeMonth);
       setMonth(routeMonth);
     }
-  }, [activeMonthCoordinator, routeMonth]);
-
+  }, [coordinator, routeMonth]);
   useFocusEffect(
     useCallback(() => {
-      const activeMonth = activeMonthCoordinator.getMonth();
-      setMonth((current) => (current === activeMonth ? current : activeMonth));
-    }, [activeMonthCoordinator]),
+      setMonth(coordinator.getMonth());
+    }, [coordinator]),
   );
-
-  const calculation = useMemo(() => {
-    void ruleRetryRevision;
-    if (!ready || error !== null || profile === null) return null;
-    return captureRuleComputation(() => {
-      const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts =
-        profile.tariff === null
-          ? monthlyEntries.monthShifts
-          : selectAllowanceShifts(entries, month, ruleResolver);
-      const decision = tariffDecisions.find((item) => item.month === month) ?? null;
-      return {
-        monthShifts: monthlyEntries.monthShifts,
-        pay: calculateMonthlyPayEstimate(
-          month,
-          monthlyEntries.monthShifts,
-          profile,
-          decision,
-          allowanceShifts,
-          workPatternSettings,
-          ruleResolver,
-        ),
-      };
-    });
-  }, [
-    entries,
-    error,
+  const { calculation, error, reload } = useMonthlyRemuneration(
     month,
-    profile,
-    ready,
-    ruleResolver,
-    ruleRetryRevision,
-    tariffDecisions,
-    workPatternSettings,
-  ]);
-
-  if (ready && error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
-  if (calculation !== null && !calculation.ok) {
-    return (
-      <ReportScrollView>
-        <MonthNavigator
-          label={formatMonthTitle(month)}
-          onNext={() => moveMonth(1)}
-          onPrevious={() => moveMonth(-1)}
-        />
-        <ReportPeriodContent>
-          <RuleComputationNotice
-            failure={calculation}
-            onRetry={() => setRuleRetryRevision((value) => value + 1)}
-            title="Gehalt nicht verfügbar"
-          />
-        </ReportPeriodContent>
-      </ReportScrollView>
-    );
-  }
-  if (!ready || profile === null || calculation === null) return <LoadingView />;
-  const { monthShifts, pay } = calculation.value;
-  const manualSalary = profile.tariff === null && profile.manualMonthlyGrossCents != null;
-  const salaryReady = profile.tariff !== null || manualSalary;
-
+    parsedMonth.status !== "invalid",
+  );
   function moveMonth(delta: number) {
-    const nextMonth = Temporal.PlainDate.from(`${month}-01`)
+    const next = Temporal.PlainDate.from(`${month}-01`)
       .add({ months: delta })
       .toString()
       .slice(0, 7);
-    activeMonthCoordinator.setMonth(nextMonth);
-    setMonth(nextMonth);
+    coordinator.setMonth(next);
+    setMonth(next);
     selectionFeedback();
   }
-
-  const salaryProfileLabel = manualSalary
-    ? "Manuell hinterlegt"
-    : profile.tariff
-      ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
-      : null;
-  const compositionRows = manualSalary
-    ? [{ key: "base", label: "Monatsbrutto", value: euro(pay.personalBaseAmount) }]
-    : [
-        { key: "base", label: "Grundentgelt", value: euro(pay.personalBaseAmount) },
-        {
-          key: "premium",
-          label: "Zeitzuschläge",
-          value: euro(pay.timePremiumAmount),
-          onPress: () => router.push(premiumDetailsRoute(pay.month)),
-        },
-        ...(pay.overtimeAmount > 0
-          ? [{ key: "overtime", label: "Überstunden", value: euro(pay.overtimeAmount) }]
-          : []),
-        ...(pay.allowanceAmount > 0
-          ? [
-              {
-                key: "shift-allowance",
-                label: pay.confirmedAllowance
-                  ? "Schichtzulage"
-                  : "Schichtzulage · Muster & Angaben",
-                value: euro(pay.allowanceAmount),
-                onPress: () => router.push(tariffAssessmentRoute(month)),
-              },
-            ]
-          : []),
-        ...(pay.tvoedAllowanceAmount > 0
-          ? [
-              {
-                key: "tvoed",
-                label: "TVöD-Zulage",
-                value: euro(pay.tvoedAllowanceAmount),
-                onPress: () => router.push(settingsInfoRoute("TVOED_ALLOWANCE")),
-              },
-            ]
-          : []),
-        ...(pay.careAllowanceAmount > 0
-          ? [
-              {
-                key: "care",
-                label: "Pflegezulage TVöD-P",
-                value: euro(pay.careAllowanceAmount),
-                onPress: () => router.push(settingsInfoRoute("CARE_ALLOWANCE")),
-              },
-            ]
-          : []),
-      ];
-
+  if (parsedMonth.status === "invalid")
+    return (
+      <LoadFailureView
+        title="Gehalt kann nicht geöffnet werden"
+        message="Der Link zur Gehaltsauswertung enthält keinen gültigen Monat."
+        actionLabel="Schließen"
+        onRetry={() => router.back()}
+      />
+    );
+  if (error) return <LoadFailureView message={error} onRetry={() => void reload()} />;
+  if (calculation === null) return <LoadingView />;
   return (
     <ReportScrollView>
       <MonthNavigator
@@ -206,47 +90,14 @@ export function SalaryScreen() {
       />
       <ReportPeriodContent>
         {testMonths.includes(month) ? <ReportTestBadge /> : null}
-
-        {!salaryReady ? (
-          <SetupCard />
-        ) : !pay.available ? (
-          <SurfaceCard style={{ gap: SPACING.xs, padding: SPACING.lg }}>
-            <Text
-              maxFontSizeMultiplier={TEXT_MAX_SCALE}
-              selectable
-              style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
-            >
-              Für diesen Monat nicht verfügbar
-            </Text>
-            <Text
-              maxFontSizeMultiplier={TEXT_MAX_SCALE}
-              selectable
-              style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
-            >
-              Für den gewählten Zeitraum liegt kein unterstützter Tarifstand vor.
-            </Text>
-          </SurfaceCard>
+        {!calculation.ok ? (
+          <RuleComputationNotice
+            failure={calculation}
+            onRetry={() => void reload()}
+            title="Gehalt nicht verfügbar"
+          />
         ) : (
-          <>
-            {!manualSalary && monthShifts.length === 0 ? (
-              <SurfaceCard style={{ gap: SPACING.xxs, padding: SPACING.md }}>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
-                >
-                  Noch keine Dienste in diesem Monat
-                </Text>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-                >
-                  Grundentgelt und feste Zulagen sind bereits enthalten. Variable Zeitzuschläge
-                  erscheinen nach dem ersten Dienst.
-                </Text>
-              </SurfaceCard>
-            ) : null}
+          <View key={month} style={{ gap: SPACING.lg }}>
             <SurfaceCard
               style={{
                 gap: SPACING.md,
@@ -266,7 +117,7 @@ export function SalaryScreen() {
                     selectable
                     style={{ color: palette.textMuted, ...TYPOGRAPHY.overline }}
                   >
-                    {manualSalary ? "MONATSBRUTTO" : "BRUTTO-SCHÄTZUNG"}
+                    {calculation.value.complete ? "BRUTTO-SCHÄTZUNG" : "BERECHNUNG UNVOLLSTÄNDIG"}
                   </Text>
                 </View>
                 <Text
@@ -278,148 +129,97 @@ export function SalaryScreen() {
                     fontVariant: ["tabular-nums"],
                   }}
                 >
-                  {euro(pay.estimatedGrossAmount)}
+                  {calculation.value.complete
+                    ? remunerationEuro(calculation.value.estimatedGrossCents)
+                    : "Nicht berechenbar"}
                 </Text>
               </View>
+              {!calculation.value.complete ? (
+                <RemunerationText>
+                  Bekannter Teilbetrag: {remunerationEuro(calculation.value.knownSubtotalCents)} ·
+                  kein Gesamtbrutto
+                </RemunerationText>
+              ) : null}
             </SurfaceCard>
-
-            <SurfaceCard>
-              <CardHeader title="Zusammensetzung" caption={salaryProfileLabel ?? undefined} />
-              <View style={{ paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm }}>
-                {compositionRows.map((row, index) => (
-                  <View key={row.key}>
-                    {index > 0 ? <CardSeparator inset={0} /> : null}
-                    <ValueRow label={row.label} onPress={row.onPress} value={row.value} />
-                  </View>
+            {remunerationIssues(calculation.value).length > 0 ? (
+              <SurfaceCard style={{ padding: SPACING.lg, gap: SPACING.sm }}>
+                <RemunerationText>Offene Angaben & Regeln</RemunerationText>
+                {remunerationIssues(calculation.value).map((issue) => (
+                  <RemunerationText key={issue} muted>
+                    {issue}
+                  </RemunerationText>
                 ))}
-              </View>
-              <CardFooterLine />
-            </SurfaceCard>
-          </>
+              </SurfaceCard>
+            ) : null}
+            <RemunerationText>Zusammensetzung</RemunerationText>
+            <RemunerationComponentCard title="Grundentgelt" component={calculation.value.base} />
+            {calculation.value.base.positions.some(
+              (position) => position.basis.hourly !== undefined,
+            ) ? (
+              <SecondaryButton onPress={() => router.push(paidAbsenceRoute(month))}>
+                Bezahlte Abwesenheitsstunden bestätigen
+              </SecondaryButton>
+            ) : null}
+            <RemunerationComponentCard
+              title="Zeitzuschläge"
+              component={calculation.value.timePremiums}
+              onPress={() => router.push(premiumDetailsRoute(month))}
+            />
+            <RemunerationComponentCard title="Zulagen" component={calculation.value.allowances} />
+            {calculation.value.base.positions.length === 1 &&
+            calculation.value.base.positions[0].source.packageId === "tvoed-vka-sue-bt-b" ? (
+              <SecondaryButton onPress={() => router.push(sueMonthRoute(month))}>
+                SuE-Monatsangaben (Entwurf) bestätigen
+              </SecondaryButton>
+            ) : null}
+            {calculation.value.base.positions.length === 1 &&
+            calculation.value.base.positions[0].source.packageId === "tvoed-vka-anlage-a" ? (
+              <>
+                <SecondaryButton onPress={() => router.push(annexAMonthRoute(month))}>
+                  TVöD-Anlage-A-Monatsangaben (Entwurf) bestätigen
+                </SecondaryButton>
+                <SecondaryButton onPress={() => router.push(annexAPremiumFactsRoute(month))}>
+                  TVöD-Anlage-A-Zuschlagsangaben (Entwurf) bestätigen
+                </SecondaryButton>
+              </>
+            ) : null}
+            {calculation.value.base.positions.some((p) =>
+              ["tvl-kr-tdl", "tval-pflege-tdl"].includes(p.source.requestedPackageId ?? ""),
+            ) ? (
+              <SecondaryButton onPress={() => router.push(tvlShiftWorkRoute(month))}>
+                {calculation.value.base.positions.some(
+                  (p) => p.source.requestedPackageId === "tval-pflege-tdl",
+                )
+                  ? "TVA-L-Dienstangaben bestätigen"
+                  : "TV-L-Dienstangaben bestätigen"}
+              </SecondaryButton>
+            ) : null}
+            <RemunerationComponentCard title="Überstunden" component={calculation.value.overtime} />
+            {calculation.value.annualPayments.positions.length > 0 ? (
+              <RemunerationComponentCard
+                title="Jahressonderzahlung"
+                component={calculation.value.annualPayments}
+              />
+            ) : null}
+            <SecondaryButton onPress={() => router.push(overtimeAllocationRoute(month))}>
+              Überstunden den Tagen zuordnen
+            </SecondaryButton>
+            <SecondaryButton onPress={() => router.push(annualPaymentRoute(month))}>
+              Jahressonderzahlungen bearbeiten
+            </SecondaryButton>
+            <SecondaryButton onPress={() => router.push(settingsEditorRoute("TARIFF"))}>
+              Vergütungsprofil prüfen
+            </SecondaryButton>
+            <SecondaryButton onPress={() => router.push(tariffAssessmentRoute(month))}>
+              Schichtzulage prüfen & bestätigen
+            </SecondaryButton>
+            <ReportFootnote>
+              Unverbindliche Brutto-Schätzung aus den für den Zeitraum gespeicherten Angaben.
+              Fehlende Bestandteile sind nicht mit null Euro angesetzt. Keine Lohnabrechnung.
+            </ReportFootnote>
+          </View>
         )}
       </ReportPeriodContent>
     </ReportScrollView>
-  );
-}
-
-function SetupCard() {
-  const palette = usePalette();
-  return (
-    <SurfaceCard style={{ gap: SPACING.md, padding: SPACING.lg }}>
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        selectable
-        style={{ color: palette.text, ...TYPOGRAPHY.screenTitle }}
-      >
-        Gehalt aktivieren
-      </Text>
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        selectable
-        style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}
-      >
-        Wähle TVöD-P oder hinterlege dein Monatsbrutto.
-      </Text>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push(settingsEditorRoute("TARIFF"))}
-        style={({ pressed }) => ({
-          minHeight: CONTROL_HEIGHT.regular,
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: RADII.control,
-          borderCurve: "continuous",
-          backgroundColor: palette.accent,
-          opacity: pressed ? 0.75 : 1,
-        })}
-      >
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ color: palette.onAccent, ...TYPOGRAPHY.button }}
-        >
-          Gehalt einrichten
-        </Text>
-      </Pressable>
-    </SurfaceCard>
-  );
-}
-
-function ValueRow({
-  label,
-  value,
-  onPress,
-}: {
-  readonly label: string;
-  readonly value: string;
-  readonly onPress?: () => void;
-}) {
-  const palette = usePalette();
-  const { fontScale } = useWindowDimensions();
-  const stacked = fontScale >= 1.6;
-  const content = (
-    <>
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        selectable
-        style={{ color: palette.dark ? palette.text : palette.textMuted, ...TYPOGRAPHY.label }}
-      >
-        {label}
-      </Text>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          selectable
-          style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong, fontVariant: ["tabular-nums"] }}
-        >
-          {value}
-        </Text>
-        {onPress ? (
-          <Ionicons
-            accessibilityElementsHidden
-            color={palette.textMuted}
-            name="ellipsis-horizontal-circle"
-            size={17}
-          />
-        ) : null}
-      </View>
-    </>
-  );
-
-  if (!onPress) {
-    return (
-      <View
-        style={{
-          minHeight: CONTROL_HEIGHT.regular,
-          flexDirection: stacked ? "column" : "row",
-          alignItems: stacked ? "flex-start" : "center",
-          justifyContent: "space-between",
-          gap: SPACING.md,
-          paddingVertical: stacked ? SPACING.sm : 0,
-        }}
-      >
-        {content}
-      </View>
-    );
-  }
-
-  return (
-    <Pressable
-      accessibilityLabel={`${label} ${value}, Erklärung öffnen`}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => ({
-        minHeight: CONTROL_HEIGHT.regular,
-        flexDirection: stacked ? "column" : "row",
-        alignItems: stacked ? "flex-start" : "center",
-        justifyContent: "space-between",
-        gap: SPACING.md,
-        borderRadius: RADII.control,
-        backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-        opacity: pressed ? 0.72 : 1,
-        paddingVertical: stacked ? SPACING.sm : 0,
-      })}
-    >
-      {content}
-    </Pressable>
   );
 }
