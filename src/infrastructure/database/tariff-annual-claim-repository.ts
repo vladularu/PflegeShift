@@ -49,10 +49,6 @@ export function mapTariffAnnualClaimRow(value: unknown): SavedTariffAnnualClaim 
     revision: row.revision,
     updatedAt: row.updated_at,
   });
-  if (saved.claim.version === 3)
-    throw new UserFacingError(
-      "Die Caritas-Jahresbestätigung ist in diesem Speicherformat noch nicht verfügbar.",
-    );
   if (saved.claim.id !== row.claim_id || saved.claim.year !== row.entitlement_year)
     throw new UserFacingError("Die Tarif-Jahreszuordnung ist ungültig.");
   return saved;
@@ -70,10 +66,6 @@ async function writeClaim(
   next: SavedTariffAnnualClaim,
   expected: SavedTariffAnnualClaim | null,
 ): Promise<SavedTariffAnnualClaim> {
-  if (next.claim.version === 3)
-    throw new UserFacingError(
-      "Die Caritas-Jahresbestätigung ist in diesem Speicherformat noch nicht verfügbar.",
-    );
   return withImmediateTransaction(db, async (tx) => {
     if (await tx.getFirstAsync("SELECT month FROM dev_test_backups LIMIT 1"))
       throw new UserFacingError(TARIFF_ANNUAL_CLAIM_TEST_LOCK);

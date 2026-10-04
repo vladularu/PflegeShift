@@ -799,6 +799,7 @@ export async function validateLocalBackup(
       root.version !== 8 &&
       root.version !== 9 &&
       root.version !== 10 &&
+      root.version !== 11 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
