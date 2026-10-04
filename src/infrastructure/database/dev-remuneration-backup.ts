@@ -1,4 +1,10 @@
 import {
+  DRK_EMPLOYEE_MONTH_CONFIRMATION_COLUMNS,
+  mapDrkEmployeeMonthConfirmationRow,
+  requireDrkEmployeeMonthConfirmationParent,
+  type DrkEmployeeMonthConfirmationRow,
+} from "./drk-employee-month-confirmation-repository";
+import {
   TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS,
   mapTvoedAnnexAPremiumFactsRow,
   requireTvoedAnnexAPremiumFactsParent,
@@ -80,6 +86,7 @@ export interface DevRemunerationBackup {
   readonly tvoedSueMonthConfirmations: readonly TvoedSueMonthConfirmationRow[];
   readonly tvoedSueAllowanceConfirmations: readonly TvoedSueAllowanceConfirmationRow[];
   readonly tvoedAnnexAPremiumFacts: readonly TvoedAnnexAPremiumFactsRow[];
+  readonly drkEmployeeMonthConfirmations: readonly DrkEmployeeMonthConfirmationRow[];
 }
 
 function exact(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -104,6 +111,7 @@ export function validateDevRemunerationBackup(
   includesTvoedSueMonthConfirmations = false,
   includesTvoedSueAllowanceConfirmations = false,
   includesTvoedAnnexAPremiumFacts = false,
+  includesDrkEmployeeMonthConfirmations = false,
 ): DevRemunerationBackup {
   const data = exact(value, [
     "allowanceDecision",
@@ -117,6 +125,7 @@ export function validateDevRemunerationBackup(
     ...(includesTvoedSueMonthConfirmations ? ["tvoedSueMonthConfirmations"] : []),
     ...(includesTvoedSueAllowanceConfirmations ? ["tvoedSueAllowanceConfirmations"] : []),
     ...(includesTvoedAnnexAPremiumFacts ? ["tvoedAnnexAPremiumFacts"] : []),
+    ...(includesDrkEmployeeMonthConfirmations ? ["drkEmployeeMonthConfirmations"] : []),
   ]);
   let allowanceDecision: AllowanceDecisionRow | null = null;
   if (data.allowanceDecision !== null) {
@@ -296,6 +305,19 @@ export function validateDevRemunerationBackup(
     }
     return Object.freeze({ ...row });
   });
+  const rawDrk = includesDrkEmployeeMonthConfirmations ? data.drkEmployeeMonthConfirmations : [];
+  if (!Array.isArray(rawDrk))
+    throw new Error("DRK-Monatsbestätigungen fehlen im Testlabor-Backup.");
+  if (rawDrk.length > 1) throw new Error("Doppelte DRK-Monatsbestätigung im Testlabor-Backup.");
+  const drkEmployeeMonthConfirmations = rawDrk.map((value) => {
+    const row = exact(
+      value,
+      DRK_EMPLOYEE_MONTH_CONFIRMATION_COLUMNS,
+    ) as unknown as DrkEmployeeMonthConfirmationRow;
+    if (mapDrkEmployeeMonthConfirmationRow(row).month !== month)
+      throw new Error("Falscher DRK-Monat im Testlabor-Backup.");
+    return Object.freeze({ ...row });
+  });
   return Object.freeze({
     allowanceDecision,
     overtimeAllocations: Object.freeze(overtimeAllocations),
@@ -308,6 +330,7 @@ export function validateDevRemunerationBackup(
     tvoedSueMonthConfirmations: Object.freeze(tvoedSueMonthConfirmations),
     tvoedSueAllowanceConfirmations: Object.freeze(tvoedSueAllowanceConfirmations),
     tvoedAnnexAPremiumFacts: Object.freeze(tvoedAnnexAPremiumFacts),
+    drkEmployeeMonthConfirmations: Object.freeze(drkEmployeeMonthConfirmations),
   });
 }
 export async function snapshotDevRemuneration(
@@ -366,6 +389,10 @@ export async function snapshotDevRemuneration(
     `SELECT ${TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS.join(",")} FROM tvoed_annex_a_premium_facts WHERE month=?`,
     month,
   );
+  const drkEmployeeMonthConfirmations = await db.getAllAsync<DrkEmployeeMonthConfirmationRow>(
+    `SELECT ${DRK_EMPLOYEE_MONTH_CONFIRMATION_COLUMNS.join(",")} FROM drk_employee_month_confirmations WHERE month=?`,
+    month,
+  );
   return {
     allowanceDecision,
     overtimeAllocations,
@@ -378,9 +405,11 @@ export async function snapshotDevRemuneration(
     tvoedSueMonthConfirmations,
     tvoedSueAllowanceConfirmations,
     tvoedAnnexAPremiumFacts,
+    drkEmployeeMonthConfirmations,
   };
 }
 export async function clearDevRemuneration(db: SQLiteDatabase, month: string): Promise<void> {
+  await db.runAsync("DELETE FROM drk_employee_month_confirmations WHERE month=?", month);
   await db.runAsync("DELETE FROM tvoed_annex_a_premium_facts WHERE month=?", month);
   await db.runAsync("DELETE FROM tvoed_sue_allowance_confirmations WHERE month=?", month);
   await db.runAsync("DELETE FROM tvoed_sue_month_confirmations WHERE month=?", month);
@@ -412,7 +441,8 @@ export async function restoreDevRemuneration(
     data.tvoedAnnexAMonthConfirmations.length ||
     data.tvoedSueMonthConfirmations.length ||
     data.tvoedSueAllowanceConfirmations.length ||
-    data.tvoedAnnexAPremiumFacts.length
+    data.tvoedAnnexAPremiumFacts.length ||
+    data.drkEmployeeMonthConfirmations.length
       ? await listRemunerationProfiles(db)
       : [];
   const tvlByShift = new Map<string, ReturnType<typeof mapTvlShiftWorkRow>[]>();
@@ -494,6 +524,13 @@ export async function restoreDevRemuneration(
     await db.runAsync(
       "INSERT INTO tvoed_annex_a_premium_facts(month,facts_json) VALUES(?,?)",
       ...TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS.map((key) => row[key]),
+    );
+  }
+  for (const row of data.drkEmployeeMonthConfirmations) {
+    requireDrkEmployeeMonthConfirmationParent(mapDrkEmployeeMonthConfirmationRow(row), profiles);
+    await db.runAsync(
+      "INSERT INTO drk_employee_month_confirmations(month,confirmation_json) VALUES(?,?)",
+      ...DRK_EMPLOYEE_MONTH_CONFIRMATION_COLUMNS.map((key) => row[key]),
     );
   }
   if (data.allowanceDecision !== null)

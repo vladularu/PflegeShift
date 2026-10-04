@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { work } from "@/engine/remuneration-test-fixtures";
-import { parseDevBackupPayload } from "./dev-backup-payload";
+import { DEV_BACKUP_VERSION, parseDevBackupPayload } from "./dev-backup-payload";
 import { generateTestRun, restoreTestBackup, setDeveloperMode } from "./dev-tools-repository";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
 import {
@@ -9,7 +9,7 @@ import {
 } from "./drk-employee-month-confirmation-repository";
 import { setupTvlShiftWork, type TvlShiftWorkFixture } from "./tvl-shift-work-test-fixtures";
 
-describe("DRK employee confirmations in test laboratory backup v16", () => {
+describe("DRK employee confirmations in test laboratory backup v15", () => {
   let f: TvlShiftWorkFixture;
   let profileRevision: number;
   beforeEach(async () => {
@@ -60,7 +60,7 @@ describe("DRK employee confirmations in test laboratory backup v16", () => {
     const original = await saveDrkEmployeeMonthConfirmation(f.db, answer());
     await generate();
     const backup = parseDevBackupPayload(await stored(), "2026-10");
-    expect(backup.version).toBe(16);
+    expect(backup.version).toBe(DEV_BACKUP_VERSION);
     expect(backup.remuneration.drkEmployeeMonthConfirmations).toHaveLength(1);
     expect(await listDrkEmployeeMonthConfirmations(f.db)).toEqual([]);
     await generate();

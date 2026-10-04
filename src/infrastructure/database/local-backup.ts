@@ -1,3 +1,7 @@
+import {
+  DRK_EMPLOYEE_MONTH_CONFIRMATION_COLUMNS,
+  mapDrkEmployeeMonthConfirmationRow,
+} from "./drk-employee-month-confirmation-repository";
 import { TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS } from "./tvoed-annex-a-premium-facts-repository";
 import { TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS } from "./tvoed-sue-allowance-confirmation-repository";
 import { TVOED_SUE_MONTH_CONFIRMATION_COLUMNS } from "./tvoed-sue-month-confirmation-repository";
@@ -25,7 +29,7 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 import { REMUNERATION_PROFILE_COLUMNS } from "./remuneration-profile-repository";
 
 export const LOCAL_BACKUP_FORMAT = "lunashift-local-backup";
-export const LOCAL_BACKUP_VERSION = 17;
+export const LOCAL_BACKUP_VERSION = 18;
 
 type BackupScalar = string | number | null;
 type BackupRow = Readonly<Record<string, BackupScalar>>;
@@ -49,6 +53,7 @@ export interface LocalBackupSnapshot {
   readonly tvoedSueMonthConfirmations: readonly BackupRow[];
   readonly tvoedSueAllowanceConfirmations: readonly BackupRow[];
   readonly tvoedAnnexAPremiumFacts: readonly BackupRow[];
+  readonly drkEmployeeMonthConfirmations: readonly BackupRow[];
   readonly templates: readonly BackupRow[];
   readonly shifts: readonly BackupRow[];
   readonly appointments: readonly BackupRow[];
@@ -75,6 +80,7 @@ interface UnsignedLocalBackupDocument {
     | 14
     | 15
     | 16
+    | 17
     | typeof LOCAL_BACKUP_VERSION;
   readonly createdAt: string;
   readonly appVersion: string | null;
@@ -97,6 +103,7 @@ interface UnsignedLocalBackupDocument {
     readonly tvoedSueMonthConfirmations: readonly BackupRow[];
     readonly tvoedSueAllowanceConfirmations: readonly BackupRow[];
     readonly tvoedAnnexAPremiumFacts: readonly BackupRow[];
+    readonly drkEmployeeMonthConfirmations: readonly BackupRow[];
     readonly templates: readonly BackupRow[];
     readonly shifts: readonly BackupRow[];
     readonly appointments: readonly BackupRow[];
@@ -217,6 +224,10 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
     const tvoedAnnexAPremiumFacts = await transaction.getAllAsync<BackupRow>(
       `SELECT ${TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS.join(",")} FROM tvoed_annex_a_premium_facts ORDER BY month`,
     );
+    const drkEmployeeMonthConfirmations = await transaction.getAllAsync<BackupRow>(
+      `SELECT ${DRK_EMPLOYEE_MONTH_CONFIRMATION_COLUMNS.join(",")} FROM drk_employee_month_confirmations ORDER BY month`,
+    );
+    drkEmployeeMonthConfirmations.forEach(mapDrkEmployeeMonthConfirmationRow);
     const templates = await transaction.getAllAsync<BackupRow>(
       `SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
               all_day,notification_json,location_json,revision,created_at,updated_at,deleted_at
@@ -275,6 +286,9 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
         tvoedSueAllowanceConfirmations.map(Object.freeze),
       ),
       tvoedAnnexAPremiumFacts: Object.freeze(tvoedAnnexAPremiumFacts.map(Object.freeze)),
+      drkEmployeeMonthConfirmations: Object.freeze(
+        drkEmployeeMonthConfirmations.map(Object.freeze),
+      ),
       templates: Object.freeze(templates.map(Object.freeze)),
       shifts: Object.freeze(shifts.map(Object.freeze)),
       appointments: Object.freeze(appointments.map(Object.freeze)),
@@ -317,6 +331,7 @@ export async function createLocalBackupDocument(
       tvoedSueMonthConfirmations: snapshot.tvoedSueMonthConfirmations,
       tvoedSueAllowanceConfirmations: snapshot.tvoedSueAllowanceConfirmations,
       tvoedAnnexAPremiumFacts: snapshot.tvoedAnnexAPremiumFacts,
+      drkEmployeeMonthConfirmations: snapshot.drkEmployeeMonthConfirmations,
       templates: snapshot.templates,
       shifts: snapshot.shifts,
       appointments: snapshot.appointments,

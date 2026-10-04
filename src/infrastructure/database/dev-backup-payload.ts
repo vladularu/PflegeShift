@@ -4,7 +4,7 @@ import {
   validateDevRemunerationBackup,
   type DevRemunerationBackup,
 } from "./dev-remuneration-backup";
-export const DEV_BACKUP_VERSION = 14;
+export const DEV_BACKUP_VERSION = 15;
 
 export interface RawShiftRow {
   id: string;
@@ -312,6 +312,7 @@ function normalizePayload(value: unknown, expectedMonth: string): BackupPayload 
     hasVersion(12),
     hasVersion(13),
     hasVersion(14),
+    hasVersion(15),
   );
   const training = validateDevTraining(hasVersion(6) ? payload.training : [], shifts);
   return {

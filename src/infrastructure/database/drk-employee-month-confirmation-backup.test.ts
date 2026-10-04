@@ -1,5 +1,6 @@
+import { LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { loadLocalBackupSnapshot } from "./local-backup";
+import { LOCAL_BACKUP_VERSION, loadLocalBackupSnapshot } from "./local-backup";
 import { restoreLocalBackup } from "./local-backup-restore";
 import { saveDatedRemunerationProfile } from "./remuneration-profile-repository";
 import {
@@ -14,7 +15,7 @@ import {
   type TvlShiftWorkFixture,
 } from "./tvl-shift-work-test-fixtures";
 
-describe("DRK employee confirmations in local backup v19", () => {
+describe("DRK employee confirmations in local backup v18", () => {
   let f: TvlShiftWorkFixture;
   let profileRevision: number;
   beforeEach(async () => {
@@ -56,7 +57,10 @@ describe("DRK employee confirmations in local backup v19", () => {
     const saved = await saveDrkEmployeeMonthConfirmation(f.db, answer());
     const before = await loadLocalBackupSnapshot(f.db);
     const exported = await exportTvlBackup(f);
-    expect(exported.document).toMatchObject({ version: 19, databaseSchemaVersion: 31 });
+    expect(exported.document).toMatchObject({
+      version: LOCAL_BACKUP_VERSION,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    });
     expect(exported.document.data.drkEmployeeMonthConfirmations).toHaveLength(1);
     await f.db.runAsync("DELETE FROM drk_employee_month_confirmations");
     await restoreLocalBackup(f.db, await validateTvlBackup(exported.serialized));
@@ -73,7 +77,7 @@ describe("DRK employee confirmations in local backup v19", () => {
       delete root.data.drkEmployeeMonthConfirmations;
     });
     const checked = await validateTvlBackup(legacy);
-    expect(checked.document.data.drkEmployeeMonthConfirmations).toBeUndefined();
+    expect(checked.document.data.drkEmployeeMonthConfirmations).toEqual([]);
     await restoreLocalBackup(f.db, checked);
     expect(await listDrkEmployeeMonthConfirmations(f.db)).toEqual([]);
   });
