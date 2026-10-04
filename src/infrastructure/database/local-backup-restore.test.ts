@@ -323,6 +323,7 @@ describe("local backup restore", () => {
         tvoedSueAllowanceConfirmations?: unknown;
         tvoedAnnexAPremiumFacts?: unknown;
         drkEmployeeMonthConfirmations?: unknown;
+        drkTrainingMonthConfirmations?: unknown;
       };
       delete data.remunerationProfiles;
       delete data.allowanceDecisions;
@@ -341,6 +342,7 @@ describe("local backup restore", () => {
       delete data.tvoedSueAllowanceConfirmations;
       delete data.tvoedAnnexAPremiumFacts;
       delete data.drkEmployeeMonthConfirmations;
+      delete data.drkTrainingMonthConfirmations;
       delete data.profile.display_name;
       delete data.profile.employer_name;
     });

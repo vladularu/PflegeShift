@@ -1,3 +1,4 @@
+import { migrateDrkTrainingMonthConfirmations } from "./migration-31-drk-training-month-confirmations";
 import { migrateDrkEmployeeMonthConfirmations } from "./migration-30-drk-employee-month-confirmations";
 import { migrateTvoedAnnexAPremiumFacts } from "./migration-29-tvoed-annex-a-premium-facts";
 import { migrateTvoedSueAllowanceConfirmations } from "./migration-28-tvoed-sue-allowance-confirmations";
@@ -11,7 +12,7 @@ import { migrateTariffAnnualClaims } from "./migration-21-tariff-annual-claims";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { withImmediateTransaction } from "./transaction";
 
-export const LATEST_DATABASE_SCHEMA_VERSION = 30;
+export const LATEST_DATABASE_SCHEMA_VERSION = 31;
 
 const MIGRATION_1 = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -707,4 +708,5 @@ export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
   await migrateTvoedSueAllowanceConfirmations(db, now);
   await migrateTvoedAnnexAPremiumFacts(db, now);
   await migrateDrkEmployeeMonthConfirmations(db, now);
+  await migrateDrkTrainingMonthConfirmations(db, now);
 }

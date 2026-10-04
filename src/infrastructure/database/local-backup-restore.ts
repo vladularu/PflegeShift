@@ -1,3 +1,4 @@
+import { DRK_TRAINING_MONTH_CONFIRMATION_COLUMNS } from "./drk-training-month-confirmation-repository";
 import { DRK_EMPLOYEE_MONTH_CONFIRMATION_COLUMNS } from "./drk-employee-month-confirmation-repository";
 import { TVOED_ANNEX_A_PREMIUM_FACTS_COLUMNS } from "./tvoed-annex-a-premium-facts-repository";
 import { TVOED_SUE_ALLOWANCE_CONFIRMATION_COLUMNS } from "./tvoed-sue-allowance-confirmation-repository";
@@ -82,6 +83,7 @@ export async function restoreLocalBackup(
     await transaction.runAsync("DELETE FROM tvoed_sue_allowance_confirmations");
     await transaction.runAsync("DELETE FROM tvoed_annex_a_premium_facts");
     await transaction.runAsync("DELETE FROM drk_employee_month_confirmations");
+    await transaction.runAsync("DELETE FROM drk_training_month_confirmations");
     await transaction.runAsync("DELETE FROM tariff_annual_claims");
     await transaction.runAsync("DELETE FROM actual_annual_payments");
     await transaction.runAsync("DELETE FROM shift_training_details");
@@ -209,6 +211,12 @@ export async function restoreLocalBackup(
       "drk_employee_month_confirmations",
       DRK_EMPLOYEE_MONTH_CONFIRMATION_COLUMNS,
       document.data.drkEmployeeMonthConfirmations,
+    );
+    await insertRows(
+      transaction,
+      "drk_training_month_confirmations",
+      DRK_TRAINING_MONTH_CONFIRMATION_COLUMNS,
+      document.data.drkTrainingMonthConfirmations,
     );
     await insertRows(transaction, "appointments", APPOINTMENT_COLUMNS, document.data.appointments);
     await insertRows(
