@@ -375,3 +375,64 @@ describe("explicit tariff resolution", () => {
     }
   });
 });
+
+describe("original signed catalog acceptance", () => {
+  it("selects multiple tariff tracks explicitly without falling back for an unknown tariff", () => {
+    const second = { ...structuredClone(tariffPackageFixture), packageId: "test-other-tariff" };
+    const tariffTrack = manifestFixture.tracks.find((track) => track.kind === "TARIFF")!;
+    const tariffDescriptor = manifestFixture.packages.find((entry) => entry.kind === "TARIFF")!;
+    const manifest = {
+      ...structuredClone(manifestFixture),
+      schemaVersion: 2,
+      legacyTariffPackageId: tariffPackageFixture.packageId,
+      tracks: [...manifestFixture.tracks, { ...tariffTrack, packageId: second.packageId }],
+      packages: [
+        ...manifestFixture.packages,
+        {
+          ...tariffDescriptor,
+          packageId: second.packageId,
+          path: `packages/${second.packageId}/${second.versionId}.json`,
+        },
+      ],
+    };
+    const validation = validateRuleCatalog(manifest, [
+      tariffPackageFixture,
+      second,
+      legalPackageFixture,
+      holidayPackageFixture,
+    ]);
+    if (!validation.ok) throw new Error(JSON.stringify(validation.issues));
+    expect(isRuleCatalogRuntimeCompatible(validation.value)).toBe(true);
+    const resolver = createRuleResolverFromCatalog(validation.value);
+    expect(requireResolvedPackage(resolver.resolveTariff("2026-05-01")).packageId).toBe(
+      tariffPackageFixture.packageId,
+    );
+    expect(
+      requireResolvedPackage(resolver.resolveTariff("2026-05-01", second.packageId)).packageId,
+    ).toBe(second.packageId);
+    for (const packageId of ["unknown", "", legalPackageFixture.packageId]) {
+      expect(resolver.resolveTariff("2026-05-01", packageId)).toMatchObject({
+        ok: false,
+        error: { code: "RULE_PACKAGE_NOT_FOUND", packageId },
+      });
+    }
+    expect(resolver.resolveTariff("2026-04-30", second.packageId)).toMatchObject({
+      ok: false,
+      error: { code: "RULE_PACKAGE_NOT_FOUND" },
+    });
+    expect(resolver.resolveTariff("2026-02-31", second.packageId)).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_EFFECTIVE_DATE" },
+    });
+    const { legacyTariffPackageId: _, ...oldShape } = manifest;
+    const oldResult = validateRuleCatalog({ ...oldShape, schemaVersion: 1 }, [
+      tariffPackageFixture,
+      second,
+      legalPackageFixture,
+      holidayPackageFixture,
+    ]);
+    expect(oldResult.ok).toBe(false);
+    if (!oldResult.ok)
+      expect(oldResult.issues.map((issue) => issue.code)).toContain("MULTI_TARIFF_REQUIRES_V2");
+  });
+});

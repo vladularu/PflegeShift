@@ -520,7 +520,7 @@ export async function createRuleCatalogPublication(
   if (!isRuleCatalogRuntimeCompatible(catalogValidation.value)) {
     throw new RuleCatalogPublicationError(
       "RUNTIME_INCOMPATIBLE",
-      "Engine contract v1 requires exactly one tariff, legal, and holiday track.",
+      "The catalog requires an unambiguous legacy tariff selection and exactly one legal and holiday track.",
     );
   }
 

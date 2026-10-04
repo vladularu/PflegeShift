@@ -1,3 +1,13 @@
+import { annualPaymentCandidate } from "./annual-payment-test-fixtures";
+import { selectionCandidate } from "./tariff-selection-test-fixtures";
+import { RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS } from "./rule-catalog-engine-support";
+import { resolveTariffSelection } from "./tariff-selection";
+import {
+  createRuleResolverFromCatalog,
+  isRuleCatalogRuntimeCompatible,
+  requireResolvedPackage,
+} from "./rule-resolver";
+import { validateRuleCatalog } from "./validation";
 import { createHash } from "node:crypto";
 
 import * as ed25519 from "@noble/ed25519";
@@ -658,6 +668,165 @@ describe("signed catalog v2 selection", () => {
         verifiedRollbackManifest: legacy.manifest,
       }),
       "ROLLBACK_TARGET_MISMATCH",
+    );
+  });
+});
+
+describe("original signed catalog acceptance", () => {
+  it.each([
+    ["synthetic selection", selectionCandidate()],
+    ["TVöD-P draft selection", annualPaymentCandidate()],
+  ] as const)(
+    "publishes %s through the existing immutable signed pipeline",
+    async (_label, fixture) => {
+      // Test-only review and signing: the real on-disk draft stays unreviewed.
+      const candidate = clone(fixture);
+      candidate.review = clone(tariffPackageFixture.review) as typeof candidate.review;
+      const packageSources = [reviewedSource(candidate), ...sources().slice(1)];
+      const publication = await createRuleCatalogPublication({
+        request: request(packageSources),
+        sources: packageSources,
+        signer: testSigner,
+      });
+      const verified = await verifyRuleCatalogArtifacts(
+        { manifestJson: publication.manifestJson, packageJson: publication.packageJson },
+        {
+          expectedChannel: "PREVIEW",
+          supportedEngineContractVersions: new Set(RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS),
+          trustedPublicKeys: new Map([["preview-test-2026", publicKey]]),
+          acceptsCatalog: isRuleCatalogRuntimeCompatible,
+        },
+        testCryptography,
+      );
+      expect(isVerifiedRuleCatalogArtifacts(verified)).toBe(true);
+      const validation = validateRuleCatalog(
+        publication.manifest,
+        publication.packageJson.map((raw) => JSON.parse(raw)),
+      );
+      if (!validation.ok) throw new Error(JSON.stringify(validation.issues));
+      const rule = requireResolvedPackage(
+        createRuleResolverFromCatalog(validation.value).resolveTariff(
+          "2026-09-01",
+          candidate.packageId,
+        ),
+      );
+      expect(resolveTariffSelection(rule, "BT_K", "OTHER")).toMatchObject({
+        engineId: "tvoed-p-v3",
+        capabilities: { annualPayment: "SUPPORTED" },
+      });
+      expect(rule.rules.selection).toEqual(candidate.rules.selection);
+      expect(rule.status).toBe("PUBLISHED");
+    },
+  );
+
+  it("publishes, verifies and resolves schema v2 tariff selection through the same signed contract", async () => {
+    const otherTariff = { ...clone(tariffPackageFixture), packageId: "test-other-tariff" };
+    const packageSources = [...sources(), reviewedSource(otherTariff)];
+    const publicationRequest = request(packageSources, {
+      schemaVersion: 2,
+      legacyTariffPackageId: tariffPackageFixture.packageId,
+    });
+    const publication = await createRuleCatalogPublication({
+      request: publicationRequest,
+      sources: packageSources,
+      signer: testSigner,
+    });
+    const policy = {
+      expectedChannel: "PREVIEW" as const,
+      supportedEngineContractVersions: new Set([1]),
+      trustedPublicKeys: new Map([["preview-test-2026", publicKey]]),
+      acceptsCatalog: isRuleCatalogRuntimeCompatible,
+    };
+    const verified = await verifyRuleCatalogArtifacts(
+      { manifestJson: publication.manifestJson, packageJson: publication.packageJson },
+      policy,
+      testCryptography,
+    );
+    expect(isVerifiedRuleCatalogArtifacts(verified)).toBe(true);
+    const validation = validateRuleCatalog(
+      JSON.parse(publication.manifestJson),
+      publication.packageJson.map((json) => JSON.parse(json)),
+    );
+    if (!validation.ok) throw new Error(JSON.stringify(validation.issues));
+    const resolver = createRuleResolverFromCatalog(validation.value);
+    expect(requireResolvedPackage(resolver.resolveTariff("2026-06-01")).packageId).toBe(
+      tariffPackageFixture.packageId,
+    );
+    expect(
+      requireResolvedPackage(resolver.resolveTariff("2026-06-01", otherTariff.packageId)).packageId,
+    ).toBe(otherTariff.packageId);
+    const tampered = { ...publication.manifest, legacyTariffPackageId: otherTariff.packageId };
+    await expect(
+      verifyRuleCatalogArtifacts(
+        { manifestJson: JSON.stringify(tampered), packageJson: publication.packageJson },
+        policy,
+        testCryptography,
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_SIGNATURE" });
+
+    const second = await createRuleCatalogPublication({
+      request: { ...publicationRequest, generation: 2, publishedAt: "2026-08-28T13:00:00Z" },
+      sources: packageSources,
+      signer: testSigner,
+      verifiedPreviousManifest: publication.manifest,
+    });
+    await expectPublicationError(
+      createRuleCatalogPublication({
+        request: {
+          ...publicationRequest,
+          generation: 3,
+          publishedAt: "2026-08-28T14:00:00Z",
+          rollbackOfGeneration: 1,
+          legacyTariffPackageId: otherTariff.packageId,
+        },
+        sources: packageSources,
+        signer: testSigner,
+        verifiedPreviousManifest: second.manifest,
+        verifiedRollbackManifest: publication.manifest,
+      }),
+      "ROLLBACK_TARGET_MISMATCH",
+    );
+  });
+
+  it("upgrades a v1 catalog without changing existing profiles and rejects a new legacy mapping", async () => {
+    const oldSources = sources();
+    const first = await createRuleCatalogPublication({
+      request: request(oldSources),
+      sources: oldSources,
+      signer: testSigner,
+    });
+    const other = { ...clone(tariffPackageFixture), packageId: "test-other-tariff" };
+    const packageSources = [...oldSources, reviewedSource(other)];
+    const nextRequest = request(packageSources, {
+      schemaVersion: 2,
+      generation: 2,
+      publishedAt: "2026-08-28T13:00:00Z",
+      legacyTariffPackageId: tariffPackageFixture.packageId,
+    });
+    const next = await createRuleCatalogPublication({
+      request: nextRequest,
+      sources: packageSources,
+      signer: testSigner,
+      verifiedPreviousManifest: first.manifest,
+    });
+    expect(next.manifest.schemaVersion).toBe(2);
+    expect(next.manifest.legacyTariffPackageId).toBe(tariffPackageFixture.packageId);
+    await expectPublicationError(
+      createRuleCatalogPublication({
+        request: { ...nextRequest, legacyTariffPackageId: other.packageId },
+        sources: packageSources,
+        signer: testSigner,
+        verifiedPreviousManifest: first.manifest,
+      }),
+      "LEGACY_TARIFF_REASSIGNMENT",
+    );
+    await expectPublicationError(
+      createRuleCatalogPublication({
+        request: request(packageSources),
+        sources: packageSources,
+        signer: testSigner,
+      }),
+      "INVALID_CATALOG",
     );
   });
 });
