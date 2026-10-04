@@ -7,12 +7,16 @@ import type {
   PflegeShiftNotificationPort,
   PflegeShiftPorts,
   PflegeShiftRepositoryPort,
+  RemunerationSnapshot,
 } from "@/application/pflegeshift-ports";
 import {
   PflegeShiftProvider,
   usePflegeShiftEntries,
+  usePflegeShiftProfile,
   usePflegeShiftStatus,
 } from "@/application/pflegeshift-provider";
+import { useRemunerationData } from "@/application/remuneration-provider";
+import type { DatedRemunerationProfile } from "@/domain/remuneration-profile";
 import { calendarRangeCoversMonth } from "@/application/calendar-entry-loading";
 import type { CalendarEntry, ShiftEntry, TvoedWorkPatternSettings } from "@/domain/types";
 
@@ -230,7 +234,238 @@ function RangeHarness({ month }: { month: string }) {
   );
 }
 
+function RemunerationIntegrationHarness() {
+  const history = useRemunerationData();
+  const { reload } = usePflegeShiftStatus();
+  const { updateProfile } = usePflegeShiftProfile();
+  return (
+    <>
+      <Text testID="history-status">{history.status}</Text>
+      <Text testID="history-count">{history.profiles.length}</Text>
+      <Text testID="allowance-count">{history.allowanceDecisions.length}</Text>
+      <Text testID="overtime-count">{history.overtimeAllocations.length}</Text>
+      <Pressable
+        onPress={() =>
+          void history.saveOvertimeAllocation({
+            shiftId: "shift-1",
+            expectedShiftRevision: 1,
+            expectedRevision: 0,
+            timeZone: "Europe/Berlin",
+            allocations: null,
+          })
+        }
+      >
+        <Text>Überstunden speichern</Text>
+      </Pressable>
+      <Pressable
+        onPress={() =>
+          void history.saveAllowanceDecisions({
+            month: "2026-09",
+            expectedRevision: 0,
+            decisions: [],
+          })
+        }
+      >
+        <Text>Zulagen speichern</Text>
+      </Pressable>
+      <Pressable onPress={() => void reload()}>
+        <Text>Vollständig laden</Text>
+      </Pressable>
+      <Pressable
+        onPress={() =>
+          void updateProfile({ federalState: "NW", weeklyMinutes: 2310, timeZone: "Europe/Berlin" })
+        }
+      >
+        <Text>Arbeitsprofil speichern</Text>
+      </Pressable>
+      <Pressable
+        onPress={() =>
+          void history.saveProfile({
+            effectiveFrom: "2026-10-01",
+            expectedRevision: 0,
+            data: {
+              version: 1,
+              weeklyMinutes: 2310,
+              selection: { kind: "own-monthly", monthlyGrossCents: 300000 },
+            },
+          })
+        }
+      >
+        <Text>Vergütung speichern</Text>
+      </Pressable>
+    </>
+  );
+}
+
 describe("PflegeShiftProvider notification feedback", () => {
+  it("reloads history after full restore/profile reloads but remuneration writes do not reschedule reminders", async () => {
+    const dated: DatedRemunerationProfile = {
+      effectiveFrom: "2026-10-01",
+      revision: 1,
+      createdAt: "2026-09-21T00:00:00Z",
+      updatedAt: "2026-09-21T00:00:00Z",
+      data: {
+        version: 1,
+        weeklyMinutes: 2310,
+        selection: { kind: "own-monthly", monthlyGrossCents: 300000 },
+      },
+    };
+    const savedProfile = {
+      federalState: "NW" as const,
+      holidayRegion: "NONE" as const,
+      weeklyMinutes: 2310,
+      timeZone: "Europe/Berlin",
+      tariff: null,
+      regularRotatingNightWork: null,
+      sundayHolidayWorkEligible: null,
+      allEmploymentWorkRecorded: null,
+      createdAt: dated.createdAt,
+      updatedAt: dated.updatedAt,
+    };
+    const localPorts: PflegeShiftPorts = {
+      ...ports,
+      repository: {
+        ...repository,
+        loadProfile: jest.fn(async () => savedProfile),
+        saveProfile: jest.fn(async () => savedProfile),
+        listCalendarEntries: jest.fn(async () => [mockSavedShift]),
+      },
+      remuneration: {
+        saveDrkEmployeeMonthConfirmation: ports.remuneration.saveDrkEmployeeMonthConfirmation,
+        saveDrkTrainingMonthConfirmation: ports.remuneration.saveDrkTrainingMonthConfirmation,
+        saveCaritasMonthFacts: ports.remuneration.saveCaritasMonthFacts,
+        saveTvoedAnnexAMonthConfirmation: ports.remuneration.saveTvoedAnnexAMonthConfirmation,
+        saveTvoedAnnexAPremiumFacts: ports.remuneration.saveTvoedAnnexAPremiumFacts,
+        saveTvoedSueMonthConfirmation: ports.remuneration.saveTvoedSueMonthConfirmation,
+        saveTvoedSueAllowanceConfirmation: ports.remuneration.saveTvoedSueAllowanceConfirmation,
+        saveTvlShiftWork: ports.remuneration.saveTvlShiftWork,
+        saveTariffAnnualClaim: ports.remuneration.saveTariffAnnualClaim,
+        revokeTariffAnnualClaim: ports.remuneration.revokeTariffAnnualClaim,
+        saveActualAnnualPayment: ports.remuneration.saveActualAnnualPayment,
+        revokeActualAnnualPayment: ports.remuneration.revokeActualAnnualPayment,
+        savePaidAbsence: ports.remuneration.savePaidAbsence,
+        loadSnapshot: jest.fn(async (): Promise<RemunerationSnapshot> => ({
+          drkEmployeeMonthConfirmations: [],
+          drkTrainingMonthConfirmations: [],
+          caritasMonthFacts: [],
+          tvoedAnnexAMonthConfirmations: [],
+          tvoedAnnexAPremiumFacts: [],
+          tvoedSueMonthConfirmations: [],
+          tvoedSueAllowanceConfirmations: [],
+          tvlShiftWork: [],
+          profiles: [],
+          allowanceDecisions: [],
+          overtimeAllocations: [],
+          paidAbsences: [],
+          actualAnnualPayments: [],
+          tariffAnnualClaims: [],
+        })),
+        saveProfile: jest.fn(async () => dated),
+        saveOvertimeAllocation: jest.fn(async () => ({
+          shiftId: "shift-1",
+          shiftRevision: 1,
+          timeZone: "Europe/Berlin",
+          allocations: null,
+          revision: 1,
+          confirmedAt: dated.updatedAt,
+          updatedAt: dated.updatedAt,
+        })),
+        saveAllowanceDecisions: jest.fn(async () => ({
+          month: "2026-09",
+          revision: 1,
+          updatedAt: dated.updatedAt,
+          decisions: [],
+        })),
+      },
+      notifications: {
+        syncEntry: jest.fn(async () => undefined),
+        cancelEntry: jest.fn(async () => undefined),
+      },
+    };
+    const view = await render(
+      <PflegeShiftProvider activeMonth="2026-09" ports={localPorts}>
+        <RemunerationIntegrationHarness />
+      </PflegeShiftProvider>,
+    );
+    await waitFor(() => expect(view.getByTestId("history-status").props.children).toBe("ready"));
+    const initialReads = jest.mocked(localPorts.remuneration.loadSnapshot).mock.calls.length;
+    jest.mocked(localPorts.remuneration.loadSnapshot).mockResolvedValue({
+      drkEmployeeMonthConfirmations: [],
+      drkTrainingMonthConfirmations: [],
+      caritasMonthFacts: [],
+      tvoedAnnexAMonthConfirmations: [],
+      tvoedAnnexAPremiumFacts: [],
+      tvoedSueMonthConfirmations: [],
+      tvoedSueAllowanceConfirmations: [],
+      tvlShiftWork: [],
+      actualAnnualPayments: [],
+      tariffAnnualClaims: [],
+      paidAbsences: [],
+      profiles: [dated],
+      overtimeAllocations: [
+        {
+          shiftId: "shift-1",
+          shiftRevision: 1,
+          revision: 1,
+          timeZone: "Europe/Berlin",
+          allocations: null,
+          confirmedAt: dated.updatedAt,
+          updatedAt: dated.updatedAt,
+        },
+      ],
+      allowanceDecisions: [
+        { month: "2026-09", revision: 1, updatedAt: dated.updatedAt, decisions: [] },
+      ],
+    });
+    await fireEvent.press(view.getByText("Vollständig laden"));
+    await waitFor(() => expect(view.getByTestId("history-count").props.children).toBe(1));
+    expect(view.getByTestId("allowance-count").props.children).toBe(1);
+    expect(view.getByTestId("overtime-count").props.children).toBe(1);
+    expect(jest.mocked(localPorts.remuneration.loadSnapshot).mock.calls.length).toBeGreaterThan(
+      initialReads,
+    );
+    const beforeProfile = jest.mocked(localPorts.remuneration.loadSnapshot).mock.calls.length;
+    await fireEvent.press(view.getByText("Arbeitsprofil speichern"));
+    await waitFor(() =>
+      expect(jest.mocked(localPorts.remuneration.loadSnapshot).mock.calls.length).toBeGreaterThan(
+        beforeProfile,
+      ),
+    );
+    const notificationCalls = jest.mocked(localPorts.notifications.syncEntry).mock.calls.length;
+    const profileCalls = jest.mocked(localPorts.repository.saveProfile).mock.calls.length;
+    await fireEvent.press(view.getByText("Vergütung speichern"));
+    await waitFor(() => expect(localPorts.remuneration.saveProfile).toHaveBeenCalledTimes(1));
+    expect(localPorts.repository.saveProfile).toHaveBeenCalledTimes(profileCalls);
+    expect(localPorts.notifications.syncEntry).toHaveBeenCalledTimes(notificationCalls);
+    const entryReads = jest.mocked(localPorts.repository.listCalendarEntries).mock.calls.length;
+    const cancelCalls = jest.mocked(localPorts.notifications.cancelEntry).mock.calls.length;
+    await fireEvent.press(view.getByText("Zulagen speichern"));
+    await waitFor(() =>
+      expect(localPorts.remuneration.saveAllowanceDecisions).toHaveBeenCalledTimes(1),
+    );
+    await waitFor(() => expect(view.getByTestId("history-status").props.children).toBe("ready"));
+    expect(localPorts.repository.listCalendarEntries).toHaveBeenCalledTimes(entryReads);
+    expect(localPorts.repository.saveProfile).toHaveBeenCalledTimes(profileCalls);
+    expect(localPorts.notifications.syncEntry).toHaveBeenCalledTimes(notificationCalls);
+    expect(localPorts.notifications.cancelEntry).toHaveBeenCalledTimes(cancelCalls);
+    const beforeOvertime = jest.mocked(localPorts.remuneration.loadSnapshot).mock.calls.length;
+    await fireEvent.press(view.getByText("Überstunden speichern"));
+    await waitFor(() => expect(view.getByTestId("history-status").props.children).toBe("ready"));
+    expect(localPorts.remuneration.saveOvertimeAllocation).toHaveBeenCalledWith({
+      shiftId: "shift-1",
+      expectedShiftRevision: 1,
+      expectedRevision: 0,
+      timeZone: "Europe/Berlin",
+      allocations: null,
+    });
+    expect(jest.mocked(localPorts.remuneration.loadSnapshot).mock.calls.length).toBe(
+      beforeOvertime + 1,
+    );
+    expect(localPorts.repository.listCalendarEntries).toHaveBeenCalledTimes(entryReads);
+    expect(localPorts.repository.saveProfile).toHaveBeenCalledTimes(profileCalls);
+    expect(localPorts.notifications.syncEntry).toHaveBeenCalledTimes(notificationCalls);
+    expect(localPorts.notifications.cancelEntry).toHaveBeenCalledTimes(cancelCalls);
+  });
   it.each([false, true])(
     "preserves a newly inserted service (then deleted = %s) across a pending range query",
     async (remove) => {
