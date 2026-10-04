@@ -152,6 +152,44 @@ jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftTestData: () => ({ testMonths: [] }),
 }));
 
+jest.mock("@/application/remuneration-provider", () => {
+  const fixtures = jest.requireActual<typeof import("@/engine/remuneration-test-fixtures")>(
+    "@/engine/remuneration-test-fixtures",
+  );
+  return {
+    useRemunerationHistory: () => {
+      const original = fixtures.history();
+      const tariff = mockProfile.tariff;
+      return {
+        status: "ready",
+        error: null,
+        profiles: tariff
+          ? [
+              {
+                ...original,
+                data: {
+                  ...original.data,
+                  weeklyMinutes: mockProfile.weeklyMinutes,
+                  selection: {
+                    kind: "tariff",
+                    packageId: "tvoed-vka-bt-k",
+                    variant: tariff.sector,
+                    region: tariff.tariffRegion,
+                    group: tariff.payGroup,
+                    level: String(tariff.payLevel),
+                    fullTimeWeeklyMinutes: tariff.fullTimeWeeklyMinutes,
+                  },
+                },
+              },
+            ]
+          : [],
+        allowanceDecisions: [],
+        reload: jest.fn(),
+      };
+    },
+  };
+});
+
 jest.mock("@/application/rule-catalog-runtime-provider", () => ({
   useRuleCatalogRuntime: () => ({ resolver: mockRuleResolver }),
 }));

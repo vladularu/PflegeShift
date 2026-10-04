@@ -18,6 +18,7 @@ function dateLabel(date: string) {
 }
 
 interface ExplanationProps {
+  readonly accessibilityLabel?: string;
   readonly entries: readonly CalendarEntry[];
   readonly month: string;
   readonly timeZone: string;
@@ -84,7 +85,7 @@ export function NightSequenceExplanationCard(props: ExplanationProps) {
     <SurfaceCard>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Einschätzung erklären"
+        accessibilityLabel={props.accessibilityLabel ?? "Einschätzung erklären"}
         accessibilityState={{ expanded }}
         onPress={() => setExpanded((value) => !value)}
         style={({ pressed }) => ({

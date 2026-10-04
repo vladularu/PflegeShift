@@ -37,3 +37,21 @@ export function ReportTestBadge() {
 export function ReportPeriodContent({ children }: PropsWithChildren) {
   return <View style={{ gap: REPORT_CARD_GAP }}>{children}</View>;
 }
+
+export function ReportFootnote({ children }: PropsWithChildren) {
+  const palette = usePalette();
+  return (
+    <Text
+      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+      selectable
+      style={{
+        color: palette.textMuted,
+        paddingHorizontal: SPACING.xs,
+        textAlign: "center",
+        ...TYPOGRAPHY.footnote,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}

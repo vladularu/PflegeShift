@@ -1,59 +1,37 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
-
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   usePflegeShiftEntries,
   usePflegeShiftProfile,
   usePflegeShiftStatus,
   usePflegeShiftTariff,
 } from "@/application/pflegeshift-provider";
+import { useRemunerationHistory } from "@/application/remuneration-provider";
 import { useRuleCatalogRuntime } from "@/application/rule-catalog-runtime-provider";
-import {
-  ALLOWANCE_STATUSES,
-  type AllowanceStatus,
-  type TvoedAssignment,
-  type TvoedWorkPatternSettings,
-  type TvoedWorkplaceCoverage,
+import type {
+  ShiftEntry,
+  TvoedAssignment,
+  TvoedWorkPatternSettings,
+  TvoedWorkplaceCoverage,
 } from "@/domain/types";
 import { userFacingErrorMessage } from "@/domain/errors";
 import { currentMonth, formatMonthTitle } from "@/engine/calendar";
-import { calculateMonthlyTvoedAssessment } from "@/engine/pay";
-import {
-  selectAllowanceShifts,
-  selectMonthlyAnalysisEntries,
-} from "@/features/analysis/analysis-data";
-import { AnalysisCoverageNote } from "@/features/analysis/analysis-coverage-note";
-import { AnalysisDetailSummaryCard } from "@/features/analysis/analysis-detail-layout";
-import {
-  captureRuleComputation,
-  RuleComputationNotice,
-} from "@/features/analysis/rule-computation";
-import { TariffQuestion } from "@/features/analysis/tariff-question";
-import { NightSequenceExplanationCard } from "@/features/analysis/night-sequence-explanation-card";
+import { deriveDatedAllowanceAssessments } from "@/engine/remuneration-assessment";
+import { AnalysisCoverageNote } from "./analysis-coverage-note";
+import { AnalysisDetailSummaryCard } from "./analysis-detail-layout";
+import { captureRuleComputation, RuleComputationNotice } from "./rule-computation";
+import { DatedAllowanceCard, datedAllowanceTitle } from "./dated-allowance-card";
+import { TariffQuestion } from "./tariff-question";
 import { resolveEditorSession } from "@/features/editor-session";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
-import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { RADII, SPACING } from "@/theme/tokens";
-import { CardSeparator, SurfaceCard } from "@/ui/design-system";
 import { FormStatus } from "@/ui/form-layout";
-import { PrimaryButton } from "@/ui/form-controls";
+import { PrimaryButton, SecondaryButton } from "@/ui/form-controls";
+import { AllowanceConfirmationScreen } from "./allowance-confirmation-screen";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { successFeedback } from "@/ui/haptics";
-import { ReportScrollView } from "@/ui/report-layout";
+import { ReportFootnote, ReportScrollView } from "@/ui/report-layout";
 import { SheetBackFooter } from "@/ui/sheet-back-footer";
-
-const ALLOWANCE_LABELS: Readonly<Record<AllowanceStatus, string>> = {
-  NONE: "Keine Zulage",
-  SHIFT_MONTHLY: "Ständige Schichtarbeit",
-  SHIFT_HOURLY: "Nichtständige Schichtarbeit",
-  ALTERNATING_MONTHLY: "Ständige Wechselschicht",
-  ALTERNATING_HOURLY: "Nichtständige Wechselschicht",
-};
-
-const CRITERION_ICON_SIZE = 28;
 
 export function TariffAssessmentScreen() {
   const palette = usePalette();
@@ -74,6 +52,7 @@ export function TariffAssessmentScreen() {
 }
 
 function TariffAssessmentContent() {
+  const [confirmationMonth, setConfirmationMonth] = useState<string | null>(null);
   const params = useLocalSearchParams<{ month?: RouteParam }>();
   const { error, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
@@ -96,352 +75,216 @@ function TariffAssessmentContent() {
   }
   const session = resolveEditorSession(ready && profile !== null, month, () => workPatternSettings);
   if (session === null || profile === null) return <LoadingView />;
+  if (confirmationMonth === month)
+    return (
+      <AllowanceConfirmationScreen
+        key={month}
+        month={month}
+        onClose={() => setConfirmationMonth(null)}
+      />
+    );
   return (
-    <TariffAssessmentForm key={session.key} initialSettings={session.initialValue} month={month} />
+    <TariffAssessmentForm
+      key={session.key}
+      initialSettings={session.initialValue}
+      month={month}
+      onConfirmRange={() => setConfirmationMonth(month)}
+    />
   );
 }
 
 function TariffAssessmentForm({
   initialSettings,
   month,
+  onConfirmRange,
 }: {
   readonly initialSettings: TvoedWorkPatternSettings;
   readonly month: string;
+  readonly onConfirmRange: () => void;
 }) {
-  const palette = usePalette();
-  const { resolver: ruleResolver } = useRuleCatalogRuntime();
+  const { resolver } = useRuleCatalogRuntime();
   const { entries } = usePflegeShiftEntries();
   const { profile } = usePflegeShiftProfile();
-  const { tariffDecisions, workPatternSettings, updateWorkPatternSettings, upsertTariffDecision } =
+  const history = useRemunerationHistory();
+  const { tariffDecisions, workPatternSettings, updateWorkPatternSettings } =
     usePflegeShiftTariff();
   const [coverage, setCoverage] = useState<TvoedWorkplaceCoverage>(
     initialSettings.workplaceCoverage,
   );
   const [assignment, setAssignment] = useState<TvoedAssignment>(initialSettings.assignment);
-  const [showOverride, setShowOverride] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ruleRetryRevision, setRuleRetryRevision] = useState(0);
-
-  const decision = tariffDecisions.find((item) => item.month === month) ?? null;
+  const busy = useRef(false);
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  const draft =
+    coverage !== workPatternSettings.workplaceCoverage ||
+    assignment !== workPatternSettings.assignment;
   const calculation = useMemo(() => {
     void ruleRetryRevision;
-    return captureRuleComputation(() => {
-      const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts = selectAllowanceShifts(entries, month, ruleResolver);
-      return calculateMonthlyTvoedAssessment(
+    if (profile === null || history.status !== "ready") return null;
+    return captureRuleComputation(() =>
+      deriveDatedAllowanceAssessments({
         month,
-        monthlyEntries.monthShifts,
-        allowanceShifts,
-        { workplaceCoverage: coverage, assignment, updatedAt: workPatternSettings.updatedAt },
-        ruleResolver,
-        profile ?? undefined,
-      );
-    });
+        workProfile: profile,
+        shifts: entries.filter(
+          (entry): entry is ShiftEntry => entry.kind === "SHIFT" && entry.deletedAt === null,
+        ),
+        history: history.profiles,
+        resolver,
+        settings: {
+          workplaceCoverage: coverage,
+          assignment,
+          updatedAt: draft ? null : workPatternSettings.updatedAt,
+        },
+        decisions: history.allowanceDecisions.find((item) => item.month === month)?.decisions,
+        legacyDecision: tariffDecisions.find((item) => item.month === month) ?? null,
+      }),
+    );
   }, [
-    assignment,
-    coverage,
+    profile,
+    history.status,
+    history.profiles,
+    history.allowanceDecisions,
     entries,
     month,
-    profile,
-    ruleResolver,
-    ruleRetryRevision,
+    resolver,
+    coverage,
+    assignment,
+    draft,
     workPatternSettings.updatedAt,
+    tariffDecisions,
+    ruleRetryRevision,
   ]);
 
-  if (!calculation.ok) {
+  async function saveSettings() {
+    if (busy.current) return;
+    busy.current = true;
+    setSaving(true);
+    setError(null);
+    try {
+      await updateWorkPatternSettings({ workplaceCoverage: coverage, assignment });
+      if (active.current) {
+        successFeedback();
+        router.back();
+      }
+    } catch (saveError) {
+      if (active.current)
+        setError(userFacingErrorMessage(saveError, "Angaben konnten nicht gespeichert werden."));
+    } finally {
+      busy.current = false;
+      if (active.current) setSaving(false);
+    }
+  }
+  if (history.status === "error")
+    return (
+      <LoadFailureView
+        title="Zulagenerklärung nicht verfügbar"
+        message={history.error ?? "Vergütungsdaten konnten nicht geladen werden."}
+        onRetry={() => void history.reload().catch(() => undefined)}
+      />
+    );
+  if (calculation === null || profile === null)
+    return <LoadingView label="Vergütungsdaten werden geladen …" />;
+  if (!calculation.ok)
     return (
       <ReportScrollView>
-        <AnalysisDetailSummaryCard
-          caption="Deine Angaben bleiben erhalten."
-          period={formatMonthTitle(month)}
-          title="Nicht verfügbar"
-        />
         <RuleComputationNotice
           failure={calculation}
           onRetry={() => setRuleRetryRevision((value) => value + 1)}
           title="Tarifprüfung nicht verfügbar"
         />
+        <SecondaryButton onPress={onConfirmRange}>Zulage zeitbezogen bestätigen</SecondaryButton>
         <SheetBackFooter onPress={() => router.back()} />
       </ReportScrollView>
     );
-  }
-  const assessmentResult = calculation.value;
-  if (!assessmentResult.available || assessmentResult.assessment === null) {
-    return (
-      <ReportScrollView>
-        <AnalysisDetailSummaryCard
-          caption="Deine Angaben bleiben erhalten."
-          period={formatMonthTitle(month)}
-          title="Nicht verfügbar"
-        />
-        <AnalysisCoverageNote message="Die Tarifprüfung ist für diesen Monat ohne gültigen Tarifstand deaktiviert." />
-        <SheetBackFooter onPress={() => router.back()} />
-      </ReportScrollView>
-    );
-  }
-  const assessment = assessmentResult.assessment;
-  const resultTitle = decision
-    ? ALLOWANCE_LABELS[decision.allowanceStatus]
-    : assessment.suggestedAllowance !== "NONE"
-      ? ALLOWANCE_LABELS[assessment.suggestedAllowance]
-      : assessment.requiresConfirmation
-        ? "Bestätigung erforderlich"
-        : assessment.alternatingShiftWork === "REVIEW"
-          ? "Wechselschicht noch nicht eindeutig"
-          : assessment.shiftWork === "DETECTED"
-            ? "Schichtarbeit erkannt"
-            : "Kein eindeutiges Schichtmuster";
-
-  async function saveSettings() {
-    try {
-      setSaving(true);
-      setError(null);
-      await updateWorkPatternSettings({ workplaceCoverage: coverage, assignment });
-      successFeedback();
-      router.back();
-    } catch (saveError) {
-      setError(userFacingErrorMessage(saveError, "Angaben konnten nicht gespeichert werden."));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function confirmOverride(status: AllowanceStatus) {
-    try {
-      setSaving(true);
-      setError(null);
-      await upsertTariffDecision({
-        month,
-        allowanceStatus: status,
-        expectedRevision: decision?.revision,
-      });
-      successFeedback();
-      router.back();
-    } catch (saveError) {
-      setError(userFacingErrorMessage(saveError, "Monatswert konnte nicht gespeichert werden."));
-    } finally {
-      setSaving(false);
-    }
-  }
-
+  const result = calculation.value;
+  const periods = result.periods;
+  const hasAssessment = periods.some((period) => period.assessment !== null);
   return (
     <ReportScrollView>
       <AnalysisDetailSummaryCard
-        caption={
-          decision
-            ? "Deine manuelle Monatsfestlegung bleibt maßgeblich."
-            : (assessment.estimateNote ??
-              "Wir schätzen dein Dienstmuster automatisch ein. Deine Angaben zum Arbeitsplatz bleiben gespeichert.")
-        }
         period={formatMonthTitle(month)}
-        title={resultTitle}
+        title={
+          !hasAssessment
+            ? "Nicht verfügbar"
+            : periods.length === 1
+              ? datedAllowanceTitle(periods[0])
+              : "Mehrere Vergütungszeiträume"
+        }
+        caption={
+          draft
+            ? "Vorschau · ungespeicherte Arbeitsplatzangaben. Das gespeicherte Gehalt bleibt bis zum Speichern unverändert."
+            : "Datierte Vergütungsgrundlage und aktuelle gespeicherte Arbeitsplatzangaben · keine Anspruchsbestätigung."
+        }
       />
-
-      <SurfaceCard>
-        {assessment.criteria.map((criterion, index) => (
-          <View key={criterion.key}>
-            {index > 0 ? (
-              <CardSeparator inset={SPACING.lg + CRITERION_ICON_SIZE + SPACING.md} />
-            ) : null}
-            <View
-              style={{
-                minHeight: 64,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: SPACING.md,
-                paddingHorizontal: SPACING.lg,
-                paddingVertical: SPACING.sm,
-              }}
-            >
-              <View
-                style={{
-                  width: CRITERION_ICON_SIZE,
-                  height: CRITERION_ICON_SIZE,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: RADII.pill,
-                  backgroundColor:
-                    criterion.state === "MET"
-                      ? palette.primarySoft
-                      : criterion.state === "NOT_MET"
-                        ? `${palette.danger}1A`
-                        : palette.surfaceMuted,
-                }}
-              >
-                <Ionicons
-                  accessibilityElementsHidden
-                  color={
-                    criterion.state === "MET"
-                      ? palette.primary
-                      : criterion.state === "NOT_MET"
-                        ? palette.danger
-                        : palette.textMuted
-                  }
-                  name={
-                    criterion.state === "MET"
-                      ? "checkmark"
-                      : criterion.state === "NOT_MET"
-                        ? "remove"
-                        : "help"
-                  }
-                  size={16}
-                />
-              </View>
-              <View style={{ flex: 1, gap: SPACING.xxs }}>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
-                >
-                  {criterion.label}
-                </Text>
-                <Text
-                  maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                  selectable
-                  style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-                >
-                  {criterion.detail}
-                </Text>
-              </View>
-            </View>
-          </View>
-        ))}
-      </SurfaceCard>
-
-      {profile?.tariff?.sector === "BT_K" ? (
-        <NightSequenceExplanationCard
-          key={month}
-          entries={entries}
+      {periods.length > 0 &&
+      periods.every((period) => period.issue?.code === "RULE_PACKAGE_NOT_FOUND") ? (
+        <AnalysisCoverageNote message="Die Tarifprüfung ist für diesen Monat ohne gültigen Tarifstand deaktiviert." />
+      ) : null}
+      {periods.map((period) => (
+        <DatedAllowanceCard
+          key={`${period.from}:${period.through}:${period.source.versionId}`}
+          period={period}
           month={month}
+          entries={entries}
           timeZone={profile.timeZone}
-          explanation={assessmentResult.nightSequence}
-          estimateNote={
-            decision
-              ? "Deine manuelle Monatsfestlegung bleibt maßgeblich."
-              : assessment.estimateNote
-          }
+          multiple={periods.length > 1}
         />
-      ) : null}
-
-      <TariffQuestion
-        title="Wird dein Arbeitsbereich rund um die Uhr betrieben?"
-        caption="Zum Beispiel Station, Intensivbereich oder Notaufnahme mit 24/7-Besetzung."
-        options={[
-          { value: "AROUND_THE_CLOCK", label: "Ja" },
-          { value: "NOT_AROUND_THE_CLOCK", label: "Nein" },
-          { value: "UNKNOWN", label: "Unsicher" },
-        ]}
-        value={coverage}
-        onChange={(value) => setCoverage(value as TvoedWorkplaceCoverage)}
-      />
-
-      <TariffQuestion
-        title="Gehört das Schichtmodell dauerhaft zu deiner Stelle?"
-        caption="Nicht nur einzelne Vertretungen oder gelegentliche Zusatzdienste."
-        options={[
-          { value: "PERMANENT", label: "Dauerhaft" },
-          { value: "TEMPORARY", label: "Gelegentlich" },
-          { value: "UNKNOWN", label: "Unsicher" },
-        ]}
-        value={assignment}
-        onChange={(value) => setAssignment(value as TvoedAssignment)}
-      />
-
-      <FormStatus error={error} />
-
-      <PrimaryButton
-        busy={saving}
-        busyLabel="Angaben werden gespeichert"
-        onPress={() => void saveSettings()}
-      >
-        Angaben speichern
-      </PrimaryButton>
-
-      <Pressable
-        accessibilityLabel="Monatswert manuell festlegen"
-        accessibilityRole="button"
-        accessibilityState={{ expanded: showOverride }}
-        onPress={() => setShowOverride((current) => !current)}
-        style={({ pressed }) => ({
-          minHeight: 56,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: SPACING.md,
-          opacity: pressed ? 0.7 : 1,
-          paddingHorizontal: SPACING.xxs,
-        })}
-      >
-        <View style={{ flex: 1, gap: SPACING.xxs }}>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+      ))}
+      {hasAssessment ? (
+        <>
+          <TariffQuestion
+            title="Wird dein Arbeitsbereich rund um die Uhr betrieben?"
+            caption="Zum Beispiel Station, Intensivbereich oder Notaufnahme mit 24/7-Besetzung."
+            options={[
+              { value: "AROUND_THE_CLOCK", label: "Ja" },
+              { value: "NOT_AROUND_THE_CLOCK", label: "Nein" },
+              { value: "UNKNOWN", label: "Unsicher" },
+            ]}
+            value={coverage}
+            onChange={(value) => {
+              if (!busy.current) setCoverage(value as TvoedWorkplaceCoverage);
+            }}
+          />
+          <TariffQuestion
+            title="Gehört das Schichtmodell dauerhaft zu deiner Stelle?"
+            caption="Nicht nur einzelne Vertretungen oder gelegentliche Zusatzdienste."
+            options={[
+              { value: "PERMANENT", label: "Dauerhaft" },
+              { value: "TEMPORARY", label: "Gelegentlich" },
+              { value: "UNKNOWN", label: "Unsicher" },
+            ]}
+            value={assignment}
+            onChange={(value) => {
+              if (!busy.current) setAssignment(value as TvoedAssignment);
+            }}
+          />
+          {draft ? (
+            <AnalysisCoverageNote message="Die Vorschau verändert keine gespeicherten Zulagenbestätigungen." />
+          ) : null}
+          <FormStatus error={error} />
+          <PrimaryButton
+            busy={saving}
+            busyLabel="Angaben werden gespeichert"
+            onPress={() => void saveSettings()}
           >
-            Monatswert manuell festlegen
-          </Text>
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_SCALE}
-            style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
-          >
-            Nur verwenden, wenn die automatische Einordnung abweicht.
-          </Text>
-        </View>
-        <Ionicons
-          accessibilityElementsHidden
-          color={palette.textMuted}
-          name={showOverride ? "chevron-up" : "chevron-down"}
-          size={20}
-        />
-      </Pressable>
-
-      {showOverride ? (
-        <SurfaceCard>
-          <View accessibilityLabel="Monatswert manuell festlegen" accessibilityRole="radiogroup">
-            {ALLOWANCE_STATUSES.map((status, index) => (
-              <View key={status}>
-                {index > 0 ? <CardSeparator inset={SPACING.lg} /> : null}
-                <Pressable
-                  accessibilityLabel={`Monatswert manuell festlegen: ${ALLOWANCE_LABELS[status]}`}
-                  accessibilityRole="radio"
-                  accessibilityState={{
-                    checked: decision?.allowanceStatus === status,
-                    disabled: saving,
-                  }}
-                  disabled={saving}
-                  onPress={() => void confirmOverride(status)}
-                  style={({ pressed }) => ({
-                    minHeight: 56,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: SPACING.md,
-                    backgroundColor: pressed ? palette.surfaceMuted : "transparent",
-                    paddingHorizontal: SPACING.lg,
-                  })}
-                >
-                  <Text
-                    maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                    style={{ flex: 1, color: palette.text, ...TYPOGRAPHY.bodyStrong }}
-                  >
-                    {ALLOWANCE_LABELS[status]}
-                  </Text>
-                  <Ionicons
-                    accessibilityElementsHidden
-                    color={
-                      decision?.allowanceStatus === status ? palette.primary : palette.textMuted
-                    }
-                    name={
-                      decision?.allowanceStatus === status ? "radio-button-on" : "radio-button-off"
-                    }
-                    size={20}
-                  />
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        </SurfaceCard>
+            Angaben speichern
+          </PrimaryButton>
+        </>
       ) : null}
+      <SecondaryButton disabled={saving} onPress={onConfirmRange}>
+        Zulage zeitbezogen bestätigen
+      </SecondaryButton>
+      <ReportFootnote>
+        Automatische Plausibilitätsprüfung · keine Rechts- oder Lohnberatung
+      </ReportFootnote>
       <SheetBackFooter disabled={saving} onPress={() => router.back()} />
     </ReportScrollView>
   );
