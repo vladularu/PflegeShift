@@ -258,6 +258,7 @@ describe("dated profile storage and backup compatibility", () => {
       delete (root.data as Record<string, unknown>).tvoedSueMonthConfirmations;
       delete (root.data as Record<string, unknown>).tvoedSueAllowanceConfirmations;
       delete (root.data as Record<string, unknown>).tvoedAnnexAPremiumFacts;
+      delete (root.data as Record<string, unknown>).drkEmployeeMonthConfirmations;
     });
     await saveProfile(destination.db, { ...legacy, manualMonthlyGrossCents: 999000 });
     await saveDatedRemunerationProfile(destination.db, input());

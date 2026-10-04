@@ -1,4 +1,8 @@
 import {
+  mapDrkEmployeeMonthConfirmationRow,
+  requireDrkEmployeeMonthConfirmationParent,
+} from "./drk-employee-month-confirmation-repository";
+import {
   mapTvoedAnnexAPremiumFactsRow,
   requireTvoedAnnexAPremiumFactsParent,
 } from "./tvoed-annex-a-premium-facts-repository";
@@ -825,6 +829,7 @@ export async function validateLocalBackup(
       root.version !== 14 &&
       root.version !== 15 &&
       root.version !== 16 &&
+      root.version !== 17 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -858,6 +863,7 @@ export async function validateLocalBackup(
       ...(root.version >= 15 ? ["tvoedSueMonthConfirmations"] : []),
       ...(root.version >= 16 ? ["tvoedSueAllowanceConfirmations"] : []),
       ...(root.version >= 17 ? ["tvoedAnnexAPremiumFacts"] : []),
+      ...(root.version >= 18 ? ["drkEmployeeMonthConfirmations"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -1262,6 +1268,34 @@ export async function validateLocalBackup(
       }
     }
 
+    const drkEmployeeMonthConfirmations =
+      root.version >= 18
+        ? Object.freeze(
+            asArray(data.drkEmployeeMonthConfirmations).map((value) => {
+              mapDrkEmployeeMonthConfirmationRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 18) {
+      if (
+        (databaseSchemaVersion as number) < 30 ||
+        (profile === null && drkEmployeeMonthConfirmations.length > 0)
+      )
+        return invalid();
+      uniqueValues(drkEmployeeMonthConfirmations, "month");
+      const profiles = (remunerationProfiles ?? []).map((row) =>
+        mapRemunerationProfileRow(
+          row as unknown as Parameters<typeof mapRemunerationProfileRow>[0],
+        ),
+      );
+      for (const row of drkEmployeeMonthConfirmations)
+        requireDrkEmployeeMonthConfirmationParent(
+          mapDrkEmployeeMonthConfirmationRow(row),
+          profiles,
+        );
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -1308,6 +1342,7 @@ export async function validateLocalBackup(
         tvoedSueMonthConfirmations,
         tvoedSueAllowanceConfirmations,
         tvoedAnnexAPremiumFacts,
+        drkEmployeeMonthConfirmations,
         templates,
         shifts,
         appointments,
@@ -1347,7 +1382,8 @@ export async function validateLocalBackup(
             !(document.version < 14 && key === "tvoedAnnexAMonthConfirmations") &&
             !(document.version < 15 && key === "tvoedSueMonthConfirmations") &&
             !(document.version < 16 && key === "tvoedSueAllowanceConfirmations") &&
-            !(document.version < 17 && key === "tvoedAnnexAPremiumFacts"),
+            !(document.version < 17 && key === "tvoedAnnexAPremiumFacts") &&
+            !(document.version < 18 && key === "drkEmployeeMonthConfirmations"),
         ),
       ),
     });
