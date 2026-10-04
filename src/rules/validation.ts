@@ -13,6 +13,7 @@ import { drkTrainingTableIssues } from "./drk-training-table-validation";
 import { caritasAnnualPaymentIssues } from "./caritas-annual-payment-validation";
 import { caritasCareIssues } from "./caritas-care-validation";
 import { avrddIssues } from "./avrdd-validation";
+import { tvoedAnnexAIssues } from "./tvoed-annex-a-validation";
 import { caritasTableIssues } from "./caritas-table-validation";
 import { tariffSelectionIssues } from "./tariff-selection";
 import { trainingPayIssues } from "./training-pay-validation";
@@ -154,6 +155,7 @@ function validateTariffPackage(
   issues.push(...caritasTableIssues(rulePackage));
   issues.push(...caritasCareIssues(rulePackage));
   issues.push(...avrddIssues(rulePackage));
+  issues.push(...tvoedAnnexAIssues(rulePackage));
   issues.push(...caritasAnnualPaymentIssues(rulePackage));
   issues.push(...drkTableIssues(rulePackage));
   issues.push(...drkTrainingTableIssues(rulePackage));
@@ -217,6 +219,7 @@ function validateTariffPackage(
     rulePackage.engineContractVersion >= 2 &&
     rulePackage.engineContractVersion !== 14 &&
     rulePackage.engineContractVersion !== 15 &&
+    rulePackage.engineContractVersion !== 16 &&
     rulePackage.engineContractVersion !== 12 &&
     rulePackage.engineContractVersion !== 13 &&
     rulePackage.engineContractVersion !== 10 &&
@@ -278,6 +281,7 @@ function validateTariffPackage(
     rulePackage.engineContractVersion >= 3 &&
     rulePackage.engineContractVersion !== 14 &&
     rulePackage.engineContractVersion !== 15 &&
+    rulePackage.engineContractVersion !== 16 &&
     rulePackage.engineContractVersion !== 12 &&
     rulePackage.engineContractVersion !== 13 &&
     rulePackage.engineContractVersion !== 17

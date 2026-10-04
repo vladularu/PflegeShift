@@ -266,7 +266,7 @@
           "const": 1
         },
         "engineContractVersion": {
-          "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 17]
+          "enum": [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17]
         },
         "packageId": {
           "$ref": "#/$defs/identifier"
@@ -1581,6 +1581,12 @@
           "items": {
             "$ref": "#/$defs/avrddAdvancedAllowancePolicy"
           }
+        },
+        "tvoedAnnexAOvertimePolicy": {
+          "$ref": "#/$defs/tvoedAnnexAOvertimePolicy"
+        },
+        "tvoedAnnexATimePremiumPolicy": {
+          "$ref": "#/$defs/tvoedAnnexATimePremiumPolicy"
         }
       }
     },
@@ -1594,7 +1600,7 @@
           "required": ["kind", "rules"],
           "properties": {
             "engineContractVersion": {
-              "enum": [1, 2, 3, 10, 11, 12, 13, 14, 15, 17]
+              "enum": [1, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17]
             },
             "kind": {
               "const": "TARIFF"
@@ -3253,6 +3259,189 @@
         "specialistMonthlyCents": {
           "type": "integer",
           "minimum": 1
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "tvoedAnnexAOvertimePolicy": {
+      "description": "Contract 16 draft-only TVöD-AT §§ 7(7-8), 8(1)a overtime cash facts for VKA Anlage A. No plus-hour or payout-month inference.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validFrom",
+        "validTo",
+        "premiumReferenceStepId",
+        "workPayMaximumStepId",
+        "monthlyFactorThousandths",
+        "standardFullTimeWeeklyMinutes",
+        "rateBands",
+        "requiresConfirmedClassification",
+        "requiresSeparateSettlement",
+        "sourceIds"
+      ],
+      "properties": {
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "premiumReferenceStepId": {
+          "const": "s3"
+        },
+        "workPayMaximumStepId": {
+          "const": "s4"
+        },
+        "monthlyFactorThousandths": {
+          "const": 4348
+        },
+        "standardFullTimeWeeklyMinutes": {
+          "const": 2340
+        },
+        "rateBands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["groupIds", "premiumBasisPoints"],
+            "properties": {
+              "groupIds": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 10,
+                "uniqueItems": true,
+                "items": {
+                  "$ref": "#/$defs/identifier"
+                }
+              },
+              "premiumBasisPoints": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              }
+            }
+          }
+        },
+        "requiresConfirmedClassification": {
+          "const": true
+        },
+        "requiresSeparateSettlement": {
+          "const": true
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        }
+      }
+    },
+    "tvoedAnnexATimePremiumPolicy": {
+      "description": "Contract 16 draft-only TVöD-AT § 8(1) b-f baseline for VKA Anlage A, with BT-K § 50(1) and BT-B § 49a(1) Saturday exceptions. Overtime, local increases and time-credit arrangements are not inferred.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validFrom",
+        "validTo",
+        "referenceStepId",
+        "monthlyFactorThousandths",
+        "standardFullTimeWeeklyMinutes",
+        "nightWindow",
+        "nightBasisPoints",
+        "sundayBasisPoints",
+        "holidayWithTimeOffBasisPoints",
+        "holidayWithoutTimeOffBasisPoints",
+        "preHolidayWindow",
+        "preHolidayMonthDays",
+        "preHolidayBasisPoints",
+        "saturdayWindow",
+        "saturdayBasisPoints",
+        "saturdayShiftLegacyAngestellteOnly",
+        "competition",
+        "nightStacks",
+        "holidayWithoutTimeOffMaximumTotalBasisPoints",
+        "localAgreementMayIncrease",
+        "sourceIds"
+      ],
+      "properties": {
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "referenceStepId": {
+          "const": "s3"
+        },
+        "monthlyFactorThousandths": {
+          "const": 4348
+        },
+        "standardFullTimeWeeklyMinutes": {
+          "const": 2340
+        },
+        "nightWindow": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "nightBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "sundayBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "holidayWithTimeOffBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "holidayWithoutTimeOffBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "preHolidayWindow": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "preHolidayMonthDays": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["12-24", "12-31"]
+          }
+        },
+        "preHolidayBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "saturdayWindow": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "saturdayBasisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "saturdayShiftLegacyAngestellteOnly": {
+          "const": true
+        },
+        "competition": {
+          "const": "HIGHEST_SUNDAY_HOLIDAY_PREHOLIDAY_SATURDAY"
+        },
+        "nightStacks": {
+          "const": true
+        },
+        "holidayWithoutTimeOffMaximumTotalBasisPoints": {
+          "const": 23500
+        },
+        "localAgreementMayIncrease": {
+          "const": true
         },
         "sourceIds": {
           "$ref": "#/$defs/sourceIds"

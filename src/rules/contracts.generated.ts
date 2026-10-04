@@ -43,7 +43,7 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 17;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -65,7 +65,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 17;
+  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -139,7 +139,7 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 17;
+  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -486,6 +486,8 @@ export interface RuleTariffRules {
         RuleAvrddAdvancedAllowancePolicy,
         RuleAvrddAdvancedAllowancePolicy,
       ];
+  tvoedAnnexAOvertimePolicy?: RuleTvoedAnnexAOvertimePolicy;
+  tvoedAnnexATimePremiumPolicy?: RuleTvoedAnnexATimePremiumPolicy;
 }
 export interface RuleTariffSelection {
   familyId: RuleIdentifier;
@@ -26971,6 +26973,182 @@ export interface RuleAvrddAdvancedAllowancePolicy {
   eg8DifferenceBasisPoints: 5000;
   intensiveMonthlyCents: number;
   specialistMonthlyCents: number;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 16 draft-only TVöD-AT §§ 7(7-8), 8(1)a overtime cash facts for VKA Anlage A. No plus-hour or payout-month inference.
+ */
+export interface RuleTvoedAnnexAOvertimePolicy {
+  validFrom: RuleIsoDate;
+  validTo: RuleIsoDate;
+  premiumReferenceStepId: "s3";
+  workPayMaximumStepId: "s4";
+  monthlyFactorThousandths: 4348;
+  standardFullTimeWeeklyMinutes: 2340;
+  /**
+   * @minItems 2
+   * @maxItems 2
+   */
+  rateBands: [
+    {
+      /**
+       * @minItems 1
+       * @maxItems 10
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      premiumBasisPoints: number;
+    },
+    {
+      /**
+       * @minItems 1
+       * @maxItems 10
+       */
+      groupIds:
+        | [RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier, RuleIdentifier]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ]
+        | [
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+            RuleIdentifier,
+          ];
+      premiumBasisPoints: number;
+    },
+  ];
+  requiresConfirmedClassification: true;
+  requiresSeparateSettlement: true;
+  sourceIds: RuleSourceIds;
+}
+/**
+ * Contract 16 draft-only TVöD-AT § 8(1) b-f baseline for VKA Anlage A, with BT-K § 50(1) and BT-B § 49a(1) Saturday exceptions. Overtime, local increases and time-credit arrangements are not inferred.
+ */
+export interface RuleTvoedAnnexATimePremiumPolicy {
+  validFrom: RuleIsoDate;
+  validTo: RuleIsoDate;
+  referenceStepId: "s3";
+  monthlyFactorThousandths: 4348;
+  standardFullTimeWeeklyMinutes: 2340;
+  nightWindow: RuleTimeWindow;
+  nightBasisPoints: number;
+  sundayBasisPoints: number;
+  holidayWithTimeOffBasisPoints: number;
+  holidayWithoutTimeOffBasisPoints: number;
+  preHolidayWindow: RuleTimeWindow;
+  /**
+   * @minItems 2
+   * @maxItems 2
+   */
+  preHolidayMonthDays: ["12-24" | "12-31", "12-24" | "12-31"];
+  preHolidayBasisPoints: number;
+  saturdayWindow: RuleTimeWindow;
+  saturdayBasisPoints: number;
+  saturdayShiftLegacyAngestellteOnly: true;
+  competition: "HIGHEST_SUNDAY_HOLIDAY_PREHOLIDAY_SATURDAY";
+  nightStacks: true;
+  holidayWithoutTimeOffMaximumTotalBasisPoints: 23500;
+  localAgreementMayIncrease: true;
   sourceIds: RuleSourceIds;
 }
 export interface RuleLegalRules {
