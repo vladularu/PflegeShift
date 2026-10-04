@@ -8,19 +8,35 @@ let mockPalette = LIGHT_PALETTE;
 let mockSection = "WORK";
 let mockOptions: Record<string, unknown> = {};
 const mockUpdateProfile = jest.fn();
+jest.mock("@/application/rule-catalog-runtime-provider", () => ({
+  useRuleCatalogRuntime: () => ({
+    resolver:
+      jest.requireActual<typeof import("@/rules/rule-resolver")>("@/rules/rule-resolver")
+        .bundledRuleResolver,
+  }),
+}));
 
 jest.mock("expo-router", () => ({
   router: { back: jest.fn() },
   useLocalSearchParams: () => ({ section: mockSection }),
   Stack: {
-    Screen: ({ options }: { options: Record<string, unknown> }) => {
+    Screen: ({
+      options,
+    }: {
+      options: Record<string, unknown> & { headerRight?: () => React.ReactNode };
+    }) => {
       mockOptions = options;
-      return null;
+      return options.headerRight?.() ?? null;
     },
   },
 }));
 jest.mock("@/theme/palette", () => ({ usePalette: () => mockPalette }));
-jest.mock("@/features/onboarding/onboarding-screen", () => ({ parseWeeklyHours: jest.fn() }));
+jest.mock("@/application/remuneration-provider", () => ({
+  useRemunerationHistory: () => ({ status: "ready", profiles: [], error: null }),
+}));
+jest.mock("@/features/onboarding/onboarding-screen", () => ({
+  parseWeeklyHours: (value: string) => Math.round(Number(value.replace(",", ".")) * 60),
+}));
 jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftStatus: () => ({ ready: true, error: null }),
   usePflegeShiftProfile: () => ({
@@ -31,21 +47,33 @@ jest.mock("@/application/pflegeshift-provider", () => ({
       weeklyMinutes: 2310,
       timeZone: "Europe/Berlin",
       tariff: null,
+      manualMonthlyGrossCents: 210050,
+      industry: "HEALTHCARE",
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: false,
+      allEmploymentWorkRecorded: null,
       createdAt: "2026-01-01T00:00:00Z",
       updatedAt: "2026-01-01T00:00:00Z",
     },
   }),
 }));
-jest.mock("@/ui/form-layout", () => ({
-  FormScreen: ({ children }: React.PropsWithChildren) => children,
-  FormSection: ({ children }: React.PropsWithChildren) => children,
-  FormStatus: () => null,
-  HeaderSaveAction: () => null,
-}));
+jest.mock("@/ui/form-layout", () => {
+  const { Button } = jest.requireActual<typeof import("react-native")>("react-native");
+  return {
+    FormScreen: ({ children }: React.PropsWithChildren) => children,
+    FormSection: ({ children }: React.PropsWithChildren) => children,
+    FormStatus: () => null,
+    HeaderSaveAction: ({ onPress }: { onPress: () => void }) => (
+      <Button title="Speichern" onPress={onPress} />
+    ),
+  };
+});
 jest.mock("@/ui/form-controls", () => {
   const { TextInput } = jest.requireActual<typeof import("react-native")>("react-native");
   return {
     DropdownField: () => null,
+    PrimaryButton: () => null,
+    SecondaryButton: () => null,
     Field: ({
       label,
       value,
@@ -91,5 +119,23 @@ describe("settings native header theme", () => {
     await screen.rerender(<SettingsEditorScreen />);
     expect(screen.getByDisplayValue("32")).toBeTruthy();
     expect(mockUpdateProfile).not.toHaveBeenCalled();
+  });
+  it("keeps remuneration and evidence unchanged while saving the work profile", async () => {
+    mockSection = "WORK";
+    const screen = await render(<SettingsEditorScreen />);
+    await fireEvent.changeText(screen.getByDisplayValue("38,5"), "32");
+    await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+    expect(mockUpdateProfile).toHaveBeenCalledWith({
+      federalState: "NW",
+      holidayRegion: "NONE",
+      weeklyMinutes: 1920,
+      timeZone: "Europe/Berlin",
+      industry: "HEALTHCARE",
+      tariff: null,
+      manualMonthlyGrossCents: 210050,
+      regularRotatingNightWork: true,
+      sundayHolidayWorkEligible: false,
+      allEmploymentWorkRecorded: null,
+    });
   });
 });

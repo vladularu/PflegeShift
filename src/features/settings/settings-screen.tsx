@@ -89,6 +89,15 @@ export function SettingsScreen() {
       <TabRootHeader surface="groupedBackground" title="Mehr" />
       <ScreenScrollView surface="groupedBackground">
         <WorkProfileCard profile={profile} />
+        <SurfaceCard>
+          <RowButton
+            subtitleBelow={subtitleBelow}
+            leading={<SettingsIcon name="school-outline" />}
+            title="Ausbildung & Alter"
+            subtitle="Ausbildungsdaten und Schulpflicht"
+            onPress={() => router.push("/training")}
+          />
+        </SurfaceCard>
         <View style={{ gap: SPACING.sm }}>
           <SectionHeader title="Deine App" />
           <SurfaceCard>

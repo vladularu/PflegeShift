@@ -5,9 +5,22 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SettingsEditorScreen } from "./settings-editor-screen";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
+import type {
+  SaveDatedRemunerationProfileInput,
+  DatedRemunerationProfile,
+} from "@/domain/remuneration-profile";
 
 const mockUpdateProfile = jest.fn<() => Promise<void>>();
+const mockSaveProfile =
+  jest.fn<(input: SaveDatedRemunerationProfileInput) => Promise<DatedRemunerationProfile>>();
 const mockPalette = LIGHT_PALETTE;
+jest.mock("@/application/rule-catalog-runtime-provider", () => ({
+  useRuleCatalogRuntime: () => ({
+    resolver:
+      jest.requireActual<typeof import("@/rules/rule-resolver")>("@/rules/rule-resolver")
+        .bundledRuleResolver,
+  }),
+}));
 let mockPayGroup = "P5";
 let mockPayLevel = 1;
 
@@ -20,6 +33,14 @@ jest.mock("expo-router", () => ({
   },
 }));
 jest.mock("@/theme/palette", () => ({ usePalette: () => mockPalette }));
+jest.mock("@/application/remuneration-provider", () => ({
+  useRemunerationHistory: () => ({
+    status: "ready",
+    profiles: [],
+    error: null,
+    saveProfile: mockSaveProfile,
+  }),
+}));
 jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftStatus: () => ({ ready: true, error: null }),
   usePflegeShiftProfile: () => ({
@@ -83,6 +104,13 @@ describe("settings pay group selection", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUpdateProfile.mockResolvedValue(undefined);
+    mockSaveProfile.mockImplementation(async (input) => ({
+      effectiveFrom: input.effectiveFrom,
+      data: input.data,
+      revision: input.expectedRevision + 1,
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-01-01T00:00:00Z",
+    }));
     mockPayGroup = "P5";
     mockPayLevel = 1;
   });
@@ -90,6 +118,8 @@ describe("settings pay group selection", () => {
   it.each(["P5", "P6"])("loads and saves %s stage 1", async (payGroup) => {
     mockPayGroup = payGroup;
     const screen = await render(editor());
+    await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
+    await fireEvent.changeText(screen.getByLabelText("Gültig ab"), "01.10.2026");
     expect(screen.getByRole("button", { name: "Stufe: Stufe 1" })).toBeTruthy();
     const options = await select(screen, "Stufe", "Stufe 1");
     expect(options).toEqual([
@@ -102,28 +132,40 @@ describe("settings pay group selection", () => {
       "Abbrechen",
     ]);
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
-    expect(mockUpdateProfile).toHaveBeenCalledWith(
+    expect(mockSaveProfile).toHaveBeenCalledWith(
       expect.objectContaining({
-        tariff: expect.objectContaining({ payGroup, payLevel: 1 }),
+        effectiveFrom: "2026-10-01",
+        expectedRevision: 0,
+        data: expect.objectContaining({
+          selection: expect.objectContaining({ group: payGroup, level: "1" }),
+        }),
       }),
     );
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
   });
 
   it("clears incompatible stage 1 and blocks saving until the user chooses a valid stage", async () => {
     const screen = await render(editor());
+    await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
+    await fireEvent.changeText(screen.getByLabelText("Gültig ab"), "01.10.2026");
     await select(screen, "Entgeltgruppe", "P7");
     expect(screen.getByRole("button", { name: "Stufe: Bitte auswählen" })).toBeTruthy();
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).not.toHaveBeenCalled();
+    expect(mockSaveProfile).not.toHaveBeenCalled();
     expect(
-      screen.getByText("Bitte eine gültige Stufe für die gewählte Gruppe wählen."),
+      screen.getByText(
+        "Bitte einen verfügbaren Tarif mit gültigem Bereich, Tarifgebiet, Gruppe und Stufe wählen.",
+      ),
     ).toBeTruthy();
     const options = await select(screen, "Stufe", "Stufe 2");
     expect(options).not.toContain("Stufe 1");
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
-    expect(mockUpdateProfile).toHaveBeenCalledWith(
+    expect(mockSaveProfile).toHaveBeenCalledWith(
       expect.objectContaining({
-        tariff: expect.objectContaining({ payGroup: "P7", payLevel: 2 }),
+        data: expect.objectContaining({
+          selection: expect.objectContaining({ group: "P7", level: "2" }),
+        }),
       }),
     );
   });
@@ -132,6 +174,8 @@ describe("settings pay group selection", () => {
     mockPayGroup = "P8";
     mockPayLevel = 4;
     const screen = await render(editor());
+    await fireEvent.press(screen.getByRole("button", { name: "Neuen Stand anlegen" }));
+    await fireEvent.changeText(screen.getByLabelText("Gültig ab"), "01.10.2026");
     await select(screen, "Entgeltgruppe", "P6");
     expect(screen.getByRole("button", { name: "Stufe: Stufe 4" })).toBeTruthy();
   });

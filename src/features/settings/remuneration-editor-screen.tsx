@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useState } from "react";
 import { Temporal } from "@js-temporal/polyfill";
 import { useRemunerationHistory } from "@/application/remuneration-provider";
@@ -12,6 +12,7 @@ import { usePalette } from "@/theme/palette";
 import { DropdownField, PrimaryButton } from "@/ui/form-controls";
 import { FormScreen, FormSection, FormStatus } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
+import { SheetBackFooter } from "@/ui/sheet-back-footer";
 import { formatRemunerationDate } from "./remuneration-editor-values";
 import { remunerationTariffOptions } from "./remuneration-tariff-options";
 import { RemunerationEditorForm, type RemunerationEditorSession } from "./remuneration-editor-form";
@@ -113,6 +114,7 @@ export function RemunerationEditorScreen({ profile }: { readonly profile: UserPr
             </PrimaryButton>
           </FormSection>
           <FormStatus error={error} />
+          <SheetBackFooter onPress={() => router.back()} />
         </FormScreen>
       )}
     </>

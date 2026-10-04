@@ -159,4 +159,10 @@ describe("SettingsScreen production gates", () => {
     expect(router.push).toHaveBeenCalledWith({ pathname: "/onboarding", params: { preview: "1" } });
     expect(screen.queryByText("Testlabor")).toBeNull();
   });
+  it("opens the training and age inputs independently of developer mode", async () => {
+    const screen = await render(<SettingsScreen />);
+    await fireEvent.press(screen.getByText("Ausbildung & Alter"));
+    expect(router.push).toHaveBeenLastCalledWith("/training");
+    expect(screen.queryByText("Testlabor")).toBeNull();
+  });
 });
