@@ -8,10 +8,7 @@
   "status": "DRAFT",
   "validFrom": "2025-07-01",
   "validTo": "2026-01-31",
-  "jurisdiction": {
-    "country": "DE",
-    "federalStates": null
-  },
+  "jurisdiction": { "country": "DE", "federalStates": null },
   "sources": [
     {
       "id": "caritas-bk-2025-02-corrected",
@@ -84,19 +81,34 @@
       "documentDate": "2025-07-01",
       "section": "P4/P6/P7/P8 86 Prozent; P9/P10/P11/P12 76 Prozent; abweichende P11-KH-Beschriftung siehe Quellenbeleg",
       "sha256": "01a2a4e6681bb94e6fd85042f012d9582a6805b12ccfd1283a82ce1371a6045a"
+    },
+    {
+      "id": "caritas-avr-text-2025-1",
+      "title": "Deutscher Caritasverband / Lambertus, AVR-Caritas Gesamtausgabe 2025/1",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR-PDF_Version_2025_1.pdf",
+      "documentDate": "2025-09-25",
+      "section": "Anlagen 31/32 § 4 Abs. 5–8, § 6 Abs. 1 und 3, § 12 Abs. 1 und § 16; Anlage 1 Abschnitt X(b)",
+      "sha256": "6b02381f7424744c1c8a5c60c55c65ab8a77c64f22444740e1e7be950117a6fc"
+    },
+    {
+      "id": "caritas-time-premiums-2025",
+      "title": "DCV Arbeits- und Tarifrecht, Zeitzuschlagstabellen 2025",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+      "documentDate": "2025-09-03",
+      "section": "S. 8-10: Anlagen 31/32, Feiertage, Nachtfenster, Stufe 3, Samstag und Kollisionen",
+      "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
+    },
+    {
+      "id": "caritas-time-premiums-2026",
+      "title": "DCV Arbeits- und Tarifrecht, Zeitzuschlagstabellen 2026",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen2026_AVR_und_bundesweite_Feiertage_31.10.2025_.pdf",
+      "documentDate": "2025-10-31",
+      "section": "S. 8-10: Anlagen 31/32, Feiertage, Nachtfenster, Stufe 3, Samstag und Kollisionen",
+      "sha256": "0e0869710b087a72ee3452d2caf9d65e1234f16e50b8d93a6c59989e3e12ade4"
     }
   ],
-  "review": {
-    "status": "DRAFT",
-    "reviewedBy": null,
-    "reviewedAt": null,
-    "gitCommit": null
-  },
-  "rounding": {
-    "moneyScale": 2,
-    "mode": "HALF_UP",
-    "stage": "PER_LINE"
-  },
+  "review": { "status": "DRAFT", "reviewedBy": null, "reviewedAt": null, "gitCommit": null },
+  "rounding": { "moneyScale": 2, "mode": "HALF_UP", "stage": "PER_LINE" },
   "rules": {
     "selection": {
       "familyId": "avr-caritas-p",
@@ -150,316 +162,68 @@
         "id": "caritas-p-2025-07-01",
         "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-bw-2025"],
         "entries": [
-          {
-            "groupId": "p4",
-            "stepId": "1",
-            "monthlyCents": 286114
-          },
-          {
-            "groupId": "p4",
-            "stepId": "2",
-            "monthlyCents": 292132
-          },
-          {
-            "groupId": "p4",
-            "stepId": "3",
-            "monthlyCents": 296594
-          },
-          {
-            "groupId": "p4",
-            "stepId": "4",
-            "monthlyCents": 299961
-          },
-          {
-            "groupId": "p4",
-            "stepId": "5",
-            "monthlyCents": 302701
-          },
-          {
-            "groupId": "p4",
-            "stepId": "6",
-            "monthlyCents": 306810
-          },
-          {
-            "groupId": "p6",
-            "stepId": "1",
-            "monthlyCents": 293044
-          },
-          {
-            "groupId": "p6",
-            "stepId": "2",
-            "monthlyCents": 310059
-          },
-          {
-            "groupId": "p6",
-            "stepId": "3",
-            "monthlyCents": 327186
-          },
-          {
-            "groupId": "p6",
-            "stepId": "4",
-            "monthlyCents": 363614
-          },
-          {
-            "groupId": "p6",
-            "stepId": "5",
-            "monthlyCents": 372900
-          },
-          {
-            "groupId": "p6",
-            "stepId": "6",
-            "monthlyCents": 390410
-          },
-          {
-            "groupId": "p7",
-            "stepId": "2",
-            "monthlyCents": 341469
-          },
-          {
-            "groupId": "p7",
-            "stepId": "3",
-            "monthlyCents": 360040
-          },
-          {
-            "groupId": "p7",
-            "stepId": "4",
-            "monthlyCents": 388943
-          },
-          {
-            "groupId": "p7",
-            "stepId": "5",
-            "monthlyCents": 403657
-          },
-          {
-            "groupId": "p7",
-            "stepId": "6",
-            "monthlyCents": 418813
-          },
-          {
-            "groupId": "p8",
-            "stepId": "2",
-            "monthlyCents": 360040
-          },
-          {
-            "groupId": "p8",
-            "stepId": "3",
-            "monthlyCents": 375759
-          },
-          {
-            "groupId": "p8",
-            "stepId": "4",
-            "monthlyCents": 396457
-          },
-          {
-            "groupId": "p8",
-            "stepId": "5",
-            "monthlyCents": 413222
-          },
-          {
-            "groupId": "p8",
-            "stepId": "6",
-            "monthlyCents": 436671
-          },
-          {
-            "groupId": "p9",
-            "stepId": "2",
-            "monthlyCents": 388365
-          },
-          {
-            "groupId": "p9",
-            "stepId": "3",
-            "monthlyCents": 407043
-          },
-          {
-            "groupId": "p9",
-            "stepId": "4",
-            "monthlyCents": 419492
-          },
-          {
-            "groupId": "p9",
-            "stepId": "5",
-            "monthlyCents": 443443
-          },
-          {
-            "groupId": "p9",
-            "stepId": "6",
-            "monthlyCents": 453543
-          },
-          {
-            "groupId": "p10",
-            "stepId": "2",
-            "monthlyCents": 407043
-          },
-          {
-            "groupId": "p10",
-            "stepId": "3",
-            "monthlyCents": 419492
-          },
-          {
-            "groupId": "p10",
-            "stepId": "4",
-            "monthlyCents": 454807
-          },
-          {
-            "groupId": "p10",
-            "stepId": "5",
-            "monthlyCents": 471851
-          },
-          {
-            "groupId": "p10",
-            "stepId": "6",
-            "monthlyCents": 482584
-          },
-          {
-            "groupId": "p11",
-            "stepId": "2",
-            "monthlyCents": 429933
-          },
-          {
-            "groupId": "p11",
-            "stepId": "3",
-            "monthlyCents": 443317
-          },
-          {
-            "groupId": "p11",
-            "stepId": "4",
-            "monthlyCents": 476777
-          },
-          {
-            "groupId": "p11",
-            "stepId": "5",
-            "monthlyCents": 498997
-          },
-          {
-            "groupId": "p11",
-            "stepId": "6",
-            "monthlyCents": 509099
-          },
-          {
-            "groupId": "p12",
-            "stepId": "2",
-            "monthlyCents": 453037
-          },
-          {
-            "groupId": "p12",
-            "stepId": "3",
-            "monthlyCents": 467180
-          },
-          {
-            "groupId": "p12",
-            "stepId": "4",
-            "monthlyCents": 502533
-          },
-          {
-            "groupId": "p12",
-            "stepId": "5",
-            "monthlyCents": 524250
-          },
-          {
-            "groupId": "p12",
-            "stepId": "6",
-            "monthlyCents": 534351
-          },
-          {
-            "groupId": "p13",
-            "stepId": "2",
-            "monthlyCents": 476146
-          },
-          {
-            "groupId": "p13",
-            "stepId": "3",
-            "monthlyCents": 491045
-          },
-          {
-            "groupId": "p13",
-            "stepId": "4",
-            "monthlyCents": 528290
-          },
-          {
-            "groupId": "p13",
-            "stepId": "5",
-            "monthlyCents": 555183
-          },
-          {
-            "groupId": "p13",
-            "stepId": "6",
-            "monthlyCents": 562128
-          },
-          {
-            "groupId": "p14",
-            "stepId": "2",
-            "monthlyCents": 487697
-          },
-          {
-            "groupId": "p14",
-            "stepId": "3",
-            "monthlyCents": 502976
-          },
-          {
-            "groupId": "p14",
-            "stepId": "4",
-            "monthlyCents": 541169
-          },
-          {
-            "groupId": "p14",
-            "stepId": "5",
-            "monthlyCents": 593062
-          },
-          {
-            "groupId": "p14",
-            "stepId": "6",
-            "monthlyCents": 602531
-          },
-          {
-            "groupId": "p15",
-            "stepId": "2",
-            "monthlyCents": 499250
-          },
-          {
-            "groupId": "p15",
-            "stepId": "3",
-            "monthlyCents": 514906
-          },
-          {
-            "groupId": "p15",
-            "stepId": "4",
-            "monthlyCents": 554047
-          },
-          {
-            "groupId": "p15",
-            "stepId": "5",
-            "monthlyCents": 600891
-          },
-          {
-            "groupId": "p15",
-            "stepId": "6",
-            "monthlyCents": 618780
-          },
-          {
-            "groupId": "p16",
-            "stepId": "2",
-            "monthlyCents": 509732
-          },
-          {
-            "groupId": "p16",
-            "stepId": "3",
-            "monthlyCents": 526839
-          },
-          {
-            "groupId": "p16",
-            "stepId": "4",
-            "monthlyCents": 582078
-          },
-          {
-            "groupId": "p16",
-            "stepId": "5",
-            "monthlyCents": 646470
-          },
-          {
-            "groupId": "p16",
-            "stepId": "6",
-            "monthlyCents": 674874
-          }
+          { "groupId": "p4", "stepId": "1", "monthlyCents": 286114 },
+          { "groupId": "p4", "stepId": "2", "monthlyCents": 292132 },
+          { "groupId": "p4", "stepId": "3", "monthlyCents": 296594 },
+          { "groupId": "p4", "stepId": "4", "monthlyCents": 299961 },
+          { "groupId": "p4", "stepId": "5", "monthlyCents": 302701 },
+          { "groupId": "p4", "stepId": "6", "monthlyCents": 306810 },
+          { "groupId": "p6", "stepId": "1", "monthlyCents": 293044 },
+          { "groupId": "p6", "stepId": "2", "monthlyCents": 310059 },
+          { "groupId": "p6", "stepId": "3", "monthlyCents": 327186 },
+          { "groupId": "p6", "stepId": "4", "monthlyCents": 363614 },
+          { "groupId": "p6", "stepId": "5", "monthlyCents": 372900 },
+          { "groupId": "p6", "stepId": "6", "monthlyCents": 390410 },
+          { "groupId": "p7", "stepId": "2", "monthlyCents": 341469 },
+          { "groupId": "p7", "stepId": "3", "monthlyCents": 360040 },
+          { "groupId": "p7", "stepId": "4", "monthlyCents": 388943 },
+          { "groupId": "p7", "stepId": "5", "monthlyCents": 403657 },
+          { "groupId": "p7", "stepId": "6", "monthlyCents": 418813 },
+          { "groupId": "p8", "stepId": "2", "monthlyCents": 360040 },
+          { "groupId": "p8", "stepId": "3", "monthlyCents": 375759 },
+          { "groupId": "p8", "stepId": "4", "monthlyCents": 396457 },
+          { "groupId": "p8", "stepId": "5", "monthlyCents": 413222 },
+          { "groupId": "p8", "stepId": "6", "monthlyCents": 436671 },
+          { "groupId": "p9", "stepId": "2", "monthlyCents": 388365 },
+          { "groupId": "p9", "stepId": "3", "monthlyCents": 407043 },
+          { "groupId": "p9", "stepId": "4", "monthlyCents": 419492 },
+          { "groupId": "p9", "stepId": "5", "monthlyCents": 443443 },
+          { "groupId": "p9", "stepId": "6", "monthlyCents": 453543 },
+          { "groupId": "p10", "stepId": "2", "monthlyCents": 407043 },
+          { "groupId": "p10", "stepId": "3", "monthlyCents": 419492 },
+          { "groupId": "p10", "stepId": "4", "monthlyCents": 454807 },
+          { "groupId": "p10", "stepId": "5", "monthlyCents": 471851 },
+          { "groupId": "p10", "stepId": "6", "monthlyCents": 482584 },
+          { "groupId": "p11", "stepId": "2", "monthlyCents": 429933 },
+          { "groupId": "p11", "stepId": "3", "monthlyCents": 443317 },
+          { "groupId": "p11", "stepId": "4", "monthlyCents": 476777 },
+          { "groupId": "p11", "stepId": "5", "monthlyCents": 498997 },
+          { "groupId": "p11", "stepId": "6", "monthlyCents": 509099 },
+          { "groupId": "p12", "stepId": "2", "monthlyCents": 453037 },
+          { "groupId": "p12", "stepId": "3", "monthlyCents": 467180 },
+          { "groupId": "p12", "stepId": "4", "monthlyCents": 502533 },
+          { "groupId": "p12", "stepId": "5", "monthlyCents": 524250 },
+          { "groupId": "p12", "stepId": "6", "monthlyCents": 534351 },
+          { "groupId": "p13", "stepId": "2", "monthlyCents": 476146 },
+          { "groupId": "p13", "stepId": "3", "monthlyCents": 491045 },
+          { "groupId": "p13", "stepId": "4", "monthlyCents": 528290 },
+          { "groupId": "p13", "stepId": "5", "monthlyCents": 555183 },
+          { "groupId": "p13", "stepId": "6", "monthlyCents": 562128 },
+          { "groupId": "p14", "stepId": "2", "monthlyCents": 487697 },
+          { "groupId": "p14", "stepId": "3", "monthlyCents": 502976 },
+          { "groupId": "p14", "stepId": "4", "monthlyCents": 541169 },
+          { "groupId": "p14", "stepId": "5", "monthlyCents": 593062 },
+          { "groupId": "p14", "stepId": "6", "monthlyCents": 602531 },
+          { "groupId": "p15", "stepId": "2", "monthlyCents": 499250 },
+          { "groupId": "p15", "stepId": "3", "monthlyCents": 514906 },
+          { "groupId": "p15", "stepId": "4", "monthlyCents": 554047 },
+          { "groupId": "p15", "stepId": "5", "monthlyCents": 600891 },
+          { "groupId": "p15", "stepId": "6", "monthlyCents": 618780 },
+          { "groupId": "p16", "stepId": "2", "monthlyCents": 509732 },
+          { "groupId": "p16", "stepId": "3", "monthlyCents": 526839 },
+          { "groupId": "p16", "stepId": "4", "monthlyCents": 582078 },
+          { "groupId": "p16", "stepId": "5", "monthlyCents": 646470 },
+          { "groupId": "p16", "stepId": "6", "monthlyCents": 674874 }
         ]
       }
     ],
@@ -551,6 +315,92 @@
         "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-bw-2025"]
       }
     ],
+    "caritasTimePremiumPolicy": {
+      "validFrom": "2025-07-01",
+      "validTo": "2026-01-31",
+      "referenceStepId": "3",
+      "monthlyFactorThousandths": 4348,
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "nightBasisPoints": 2000,
+      "sundayBasisPoints": 2500,
+      "holidayWithTimeOffBasisPoints": 3500,
+      "holidayWithoutTimeOffBasisPoints": 13500,
+      "preHolidayWindow": { "startMinute": 360, "endMinute": 0 },
+      "preHolidayMonthDays": ["12-24", "12-31"],
+      "preHolidayBasisPoints": 3500,
+      "saturdayWindow": { "startMinute": 780, "endMinute": 1260 },
+      "saturdayBasisPoints": 2000,
+      "saturdayOnlyOutsideShiftWork": true,
+      "competition": "HIGHEST_SUNDAY_HOLIDAY_PREHOLIDAY_SATURDAY",
+      "nightStacks": true,
+      "holidayWithoutTimeOffMaximumTotalBasisPoints": 23500,
+      "localAgreementMayIncrease": true,
+      "sourceIds": [
+        "caritas-avr-text-2025-1",
+        "caritas-time-premiums-2025",
+        "caritas-time-premiums-2026"
+      ]
+    },
+    "caritasOvertimePolicy": {
+      "validFrom": "2025-07-01",
+      "validTo": "2026-01-31",
+      "premiumReferenceStepId": "3",
+      "workPayMaximumStepId": "4",
+      "monthlyFactorThousandths": 4348,
+      "rateBands": [
+        { "groupIds": ["p4", "p6", "p7", "p8", "p9", "p10", "p11"], "premiumBasisPoints": 3000 },
+        { "groupIds": ["p12", "p13", "p14", "p15", "p16"], "premiumBasisPoints": 1500 }
+      ],
+      "requiresConfirmedClassification": true,
+      "requiresSettlementChoice": true,
+      "timeConversionAllowed": true,
+      "sourceIds": ["caritas-avr-text-2025-1"]
+    },
+    "caritasAnnualPaymentPolicy": {
+      "validFrom": "2025-07-01",
+      "validTo": "2025-12-31",
+      "referenceMonths": [7, 8, 9],
+      "rateDateMonthDay": "09-01",
+      "claimDateMonthDay": "12-01",
+      "payoutMonth": 11,
+      "rateBands": [
+        { "groupIds": ["p4", "p6", "p7", "p8"], "rateBasisPoints": 8600 },
+        {
+          "groupIds": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+          "rateBasisPoints": 7600
+        }
+      ],
+      "basisPolicy": "PAID_JULY_SEPTEMBER_WITH_EXCLUSIONS",
+      "lateEntryBasis": "FIRST_FULL_MONTH_AFTER_SEPTEMBER",
+      "reductionPolicy": "ONE_TWELFTH_WITH_STATUTORY_EXCEPTIONS",
+      "earlyExitVariantId": "ANLAGE_31",
+      "earlyExitBasis": "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES",
+      "eastTariff2025UsesWestTable": false,
+      "sourceIds": ["caritas-avr-text-2025-1"]
+    },
+    "premiumRules": [],
+    "allowanceRules": [],
+    "combinationRules": [],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
+    },
     "caritasTimePremiumRates": [
       {
         "id": "caritas-bw-premium-31-2025-07-01",
@@ -613,32 +463,6 @@
         "sourceIds": ["caritas-dcv-premiums-2026"]
       }
     ],
-    "premiumRules": [],
-    "allowanceRules": [],
-    "combinationRules": [],
-    "workPatternRules": [],
-    "workPatternPolicy": {
-      "nightWindow": {
-        "startMinute": 1260,
-        "endMinute": 360
-      },
-      "nightQualificationMinutes": 120,
-      "recurringNightShiftCount": 3,
-      "recurringWindowMonths": 1,
-      "regularChangeCount": 2,
-      "shiftWorkMinimumShifts": 4,
-      "shiftWorkMinimumWindows": 2,
-      "alternatingMinimumShifts": 5,
-      "alternatingMinimumWindows": 3,
-      "assessmentLookbackMonths": 2,
-      "shiftWindowBoundaries": {
-        "nightEndMinute": 360,
-        "earlyEndMinute": 660,
-        "dayEndMinute": 900,
-        "nightStartMinute": 1200
-      },
-      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
-    },
     "caritasAnnualPaymentRules": [
       {
         "id": "jsz-anlage-31-bw-2025-0",
