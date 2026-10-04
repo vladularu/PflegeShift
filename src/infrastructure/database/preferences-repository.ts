@@ -14,6 +14,35 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 const TVOED_COVERAGE_KEY = "tvoed_workplace_coverage";
 const TVOED_ASSIGNMENT_KEY = "tvoed_assignment";
 export const PLANNING_HINTS_PREFERENCE_KEY = "check_show_planning_hints";
+export const YOUTH_PROTECTION_PREFERENCE_KEY = "check_youth_protection";
+
+export async function loadYouthProtectionPreference(db: SQLiteDatabase): Promise<boolean> {
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM app_preferences WHERE key = ?",
+    YOUTH_PROTECTION_PREFERENCE_KEY,
+  );
+  if (!row) return false;
+  if (row.value !== "true" && row.value !== "false") {
+    throw new Error("Ungültige Jugendlichenprüfungseinstellung.");
+  }
+  return row.value === "true";
+}
+
+export async function saveYouthProtectionPreference(
+  db: SQLiteDatabase,
+  enabled: boolean,
+): Promise<void> {
+  if (typeof enabled !== "boolean") throw new Error("Ungültige Prüfungseinstellung.");
+  await withImmediateTransaction(db, async (transaction) => {
+    await transaction.runAsync(
+      `INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)
+       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
+      YOUTH_PROTECTION_PREFERENCE_KEY,
+      String(enabled),
+      new Date().toISOString(),
+    );
+  });
+}
 
 export async function loadPlanningHintsPreference(db: SQLiteDatabase): Promise<boolean> {
   const row = await db.getFirstAsync<{ value: string }>(
@@ -60,6 +89,7 @@ export const USER_DATA_PREFERENCE_KEYS = Object.freeze([
   ANALYSIS_VIEW_KEY,
   ...Object.values(APPEARANCE_KEYS),
   PLANNING_HINTS_PREFERENCE_KEY,
+  YOUTH_PROTECTION_PREFERENCE_KEY,
   TVOED_COVERAGE_KEY,
   TVOED_ASSIGNMENT_KEY,
   ...Object.values(CALENDAR_PREFERENCE_KEYS),

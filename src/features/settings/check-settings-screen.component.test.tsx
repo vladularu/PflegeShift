@@ -13,15 +13,21 @@ const render = (ui: ReactNode) =>
   renderNative(<CheckPreferencesProvider>{ui}</CheckPreferencesProvider>);
 
 const mockDb = {};
+const mockLoadYouth = jest.fn<() => Promise<boolean>>();
+const mockSaveYouth = jest.fn<(db: unknown, value: boolean) => Promise<void>>();
 const mockLoad = jest.fn<() => Promise<boolean>>();
 const mockSave = jest.fn<(db: unknown, value: boolean) => Promise<void>>();
 jest.mock("expo-sqlite", () => ({ useSQLiteContext: () => mockDb }));
 jest.mock("@/infrastructure/database/preferences-repository", () => ({
   loadPlanningHintsPreference: () => mockLoad(),
+  loadYouthProtectionPreference: () => mockLoadYouth(),
+  saveYouthProtectionPreference: (db: unknown, value: boolean) => mockSaveYouth(db, value),
   savePlanningHintsPreference: (db: unknown, value: boolean) => mockSave(db, value),
 }));
 beforeEach(() => {
   mockLoad.mockReset().mockResolvedValue(true);
+  mockLoadYouth.mockReset().mockResolvedValue(false);
+  mockSaveYouth.mockReset().mockResolvedValue();
   mockSave.mockReset().mockResolvedValue();
 });
 
@@ -163,4 +169,30 @@ it("shows a load error without writing defaults and can reload", async () => {
   expect(mockSave).not.toHaveBeenCalled();
   await fireEvent.press(screen.getByText("Erneut versuchen"));
   await waitFor(() => expect(screen.getByLabelText("Planungshinweise")).toBeTruthy());
+});
+
+it("offers just one additional switch and keeps the previous youth choice after a failed save", async () => {
+  mockSaveYouth.mockRejectedValueOnce(new Error("write failed"));
+  const screen = await render(<CheckSettingsScreen />);
+  await waitFor(() => expect(screen.getByLabelText("Jugendlichenprüfung").props.value).toBe(false));
+  expect(screen.queryAllByRole("textbox")).toHaveLength(0);
+  await fireEvent(screen.getByLabelText("Jugendlichenprüfung"), "valueChange", true);
+  await waitFor(() => expect(screen.getByText(/Nicht gespeichert/)).toBeTruthy());
+  expect(screen.getByLabelText("Jugendlichenprüfung").props.value).toBe(false);
+  await fireEvent(screen.getByLabelText("Jugendlichenprüfung"), "valueChange", true);
+  await waitFor(() => expect(screen.getByLabelText("Jugendlichenprüfung").props.value).toBe(true));
+  expect(mockSaveYouth).toHaveBeenCalledWith(mockDb, true);
+  expect(mockSave).not.toHaveBeenCalled();
+});
+
+it("restores an enabled youth choice on opening and blocks on an unreadable preference", async () => {
+  mockLoadYouth.mockRejectedValueOnce(new Error("read failed")).mockResolvedValue(true);
+  const screen = await render(<CheckSettingsScreen />);
+  await waitFor(() =>
+    expect(screen.getByText("Prüfungseinstellungen konnten nicht geladen werden.")).toBeTruthy(),
+  );
+  expect(screen.queryByLabelText("Jugendlichenprüfung")).toBeNull();
+  await fireEvent.press(screen.getByText("Erneut versuchen"));
+  await waitFor(() => expect(screen.getByLabelText("Jugendlichenprüfung").props.value).toBe(true));
+  expect(mockSaveYouth).not.toHaveBeenCalled();
 });
