@@ -8,10 +8,7 @@
   "status": "DRAFT",
   "validFrom": "2025-01-01",
   "validTo": "2025-12-31",
-  "jurisdiction": {
-    "country": "DE",
-    "federalStates": null
-  },
+  "jurisdiction": { "country": "DE", "federalStates": null },
   "sources": [
     {
       "id": "caritas-rk-ost-2025-p",
@@ -84,19 +81,26 @@
       "documentDate": "2025-07-01",
       "section": "P6-AH und P12-AH, Seite 2: Jahressonderzahlung 86 bzw. 76 Prozent; Beispiele mit West-Jahresbasis",
       "sha256": "33c753ebb59d25ca27d5f835792b3befbedb47d3e561fdbb8b7297e1e5e0e845"
+    },
+    {
+      "id": "caritas-avr-text-2025-1",
+      "title": "Deutscher Caritasverband / Lambertus, AVR-Caritas Gesamtausgabe 2025/1",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/AVR-PDF_Version_2025_1.pdf",
+      "documentDate": "2025-09-25",
+      "section": "Anlagen 31/32 § 4 Abs. 5–8, § 6 Abs. 1 und 3, § 12 Abs. 1 und § 16; Anlage 1 Abschnitt X(b)",
+      "sha256": "6b02381f7424744c1c8a5c60c55c65ab8a77c64f22444740e1e7be950117a6fc"
+    },
+    {
+      "id": "caritas-time-premiums-2025",
+      "title": "DCV Arbeits- und Tarifrecht, Zeitzuschlagstabellen 2025",
+      "url": "https://www.lambertus.de/media/wysiwyg/websites/lam_lambertus/Zeitzuschlagstabellen_2025_AVR.pdf",
+      "documentDate": "2025-09-03",
+      "section": "S. 8-10: Anlagen 31/32, Feiertage, Nachtfenster, Stufe 3, Samstag und Kollisionen",
+      "sha256": "43b73882a5f9e06f7d48fe6034febb38f6a3a9e69c41c6098669646b3950df80"
     }
   ],
-  "review": {
-    "status": "DRAFT",
-    "reviewedBy": null,
-    "reviewedAt": null,
-    "gitCommit": null
-  },
-  "rounding": {
-    "moneyScale": 2,
-    "mode": "HALF_UP",
-    "stage": "PER_LINE"
-  },
+  "review": { "status": "DRAFT", "reviewedBy": null, "reviewedAt": null, "gitCommit": null },
+  "rounding": { "moneyScale": 2, "mode": "HALF_UP", "stage": "PER_LINE" },
   "rules": {
     "selection": {
       "familyId": "avr-caritas-p",
@@ -174,632 +178,136 @@
         "id": "caritas-ost-p-2025-common",
         "sourceIds": ["caritas-rk-ost-2025-p"],
         "entries": [
-          {
-            "groupId": "p4",
-            "stepId": "1",
-            "monthlyCents": 281992
-          },
-          {
-            "groupId": "p4",
-            "stepId": "2",
-            "monthlyCents": 288160
-          },
-          {
-            "groupId": "p4",
-            "stepId": "3",
-            "monthlyCents": 292734
-          },
-          {
-            "groupId": "p4",
-            "stepId": "4",
-            "monthlyCents": 296185
-          },
-          {
-            "groupId": "p4",
-            "stepId": "5",
-            "monthlyCents": 298994
-          },
-          {
-            "groupId": "p4",
-            "stepId": "6",
-            "monthlyCents": 303205
-          },
-          {
-            "groupId": "p6",
-            "stepId": "1",
-            "monthlyCents": 289095
-          },
-          {
-            "groupId": "p6",
-            "stepId": "2",
-            "monthlyCents": 306535
-          },
-          {
-            "groupId": "p6",
-            "stepId": "3",
-            "monthlyCents": 324091
-          },
-          {
-            "groupId": "p6",
-            "stepId": "4",
-            "monthlyCents": 361429
-          },
-          {
-            "groupId": "p6",
-            "stepId": "5",
-            "monthlyCents": 370948
-          },
-          {
-            "groupId": "p6",
-            "stepId": "6",
-            "monthlyCents": 388515
-          },
-          {
-            "groupId": "p7",
-            "stepId": "2",
-            "monthlyCents": 338731
-          },
-          {
-            "groupId": "p7",
-            "stepId": "3",
-            "monthlyCents": 357766
-          },
-          {
-            "groupId": "p7",
-            "stepId": "4",
-            "monthlyCents": 387055
-          },
-          {
-            "groupId": "p7",
-            "stepId": "5",
-            "monthlyCents": 401698
-          },
-          {
-            "groupId": "p7",
-            "stepId": "6",
-            "monthlyCents": 416780
-          },
-          {
-            "groupId": "p8",
-            "stepId": "2",
-            "monthlyCents": 357766
-          },
-          {
-            "groupId": "p8",
-            "stepId": "3",
-            "monthlyCents": 373878
-          },
-          {
-            "groupId": "p8",
-            "stepId": "4",
-            "monthlyCents": 394533
-          },
-          {
-            "groupId": "p8",
-            "stepId": "5",
-            "monthlyCents": 411216
-          },
-          {
-            "groupId": "p8",
-            "stepId": "6",
-            "monthlyCents": 434551
-          },
-          {
-            "groupId": "p9",
-            "stepId": "2",
-            "monthlyCents": 386479
-          },
-          {
-            "groupId": "p9",
-            "stepId": "3",
-            "monthlyCents": 405067
-          },
-          {
-            "groupId": "p9",
-            "stepId": "4",
-            "monthlyCents": 417456
-          },
-          {
-            "groupId": "p9",
-            "stepId": "5",
-            "monthlyCents": 441290
-          },
-          {
-            "groupId": "p9",
-            "stepId": "6",
-            "monthlyCents": 451341
-          },
-          {
-            "groupId": "p10",
-            "stepId": "2",
-            "monthlyCents": 405067
-          },
-          {
-            "groupId": "p10",
-            "stepId": "3",
-            "monthlyCents": 417456
-          },
-          {
-            "groupId": "p10",
-            "stepId": "4",
-            "monthlyCents": 452599
-          },
-          {
-            "groupId": "p10",
-            "stepId": "5",
-            "monthlyCents": 469561
-          },
-          {
-            "groupId": "p10",
-            "stepId": "6",
-            "monthlyCents": 480241
-          },
-          {
-            "groupId": "p11",
-            "stepId": "2",
-            "monthlyCents": 427846
-          },
-          {
-            "groupId": "p11",
-            "stepId": "3",
-            "monthlyCents": 441165
-          },
-          {
-            "groupId": "p11",
-            "stepId": "4",
-            "monthlyCents": 474462
-          },
-          {
-            "groupId": "p11",
-            "stepId": "5",
-            "monthlyCents": 496575
-          },
-          {
-            "groupId": "p11",
-            "stepId": "6",
-            "monthlyCents": 506628
-          },
-          {
-            "groupId": "p12",
-            "stepId": "2",
-            "monthlyCents": 450838
-          },
-          {
-            "groupId": "p12",
-            "stepId": "3",
-            "monthlyCents": 464912
-          },
-          {
-            "groupId": "p12",
-            "stepId": "4",
-            "monthlyCents": 500093
-          },
-          {
-            "groupId": "p12",
-            "stepId": "5",
-            "monthlyCents": 521706
-          },
-          {
-            "groupId": "p12",
-            "stepId": "6",
-            "monthlyCents": 531757
-          },
-          {
-            "groupId": "p13",
-            "stepId": "2",
-            "monthlyCents": 473835
-          },
-          {
-            "groupId": "p13",
-            "stepId": "3",
-            "monthlyCents": 488662
-          },
-          {
-            "groupId": "p13",
-            "stepId": "4",
-            "monthlyCents": 525726
-          },
-          {
-            "groupId": "p13",
-            "stepId": "5",
-            "monthlyCents": 552488
-          },
-          {
-            "groupId": "p13",
-            "stepId": "6",
-            "monthlyCents": 559399
-          },
-          {
-            "groupId": "p14",
-            "stepId": "2",
-            "monthlyCents": 485329
-          },
-          {
-            "groupId": "p14",
-            "stepId": "3",
-            "monthlyCents": 500534
-          },
-          {
-            "groupId": "p14",
-            "stepId": "4",
-            "monthlyCents": 538542
-          },
-          {
-            "groupId": "p14",
-            "stepId": "5",
-            "monthlyCents": 590183
-          },
-          {
-            "groupId": "p14",
-            "stepId": "6",
-            "monthlyCents": 599607
-          },
-          {
-            "groupId": "p15",
-            "stepId": "2",
-            "monthlyCents": 496827
-          },
-          {
-            "groupId": "p15",
-            "stepId": "3",
-            "monthlyCents": 512407
-          },
-          {
-            "groupId": "p15",
-            "stepId": "4",
-            "monthlyCents": 551358
-          },
-          {
-            "groupId": "p15",
-            "stepId": "5",
-            "monthlyCents": 597974
-          },
-          {
-            "groupId": "p15",
-            "stepId": "6",
-            "monthlyCents": 615776
-          },
-          {
-            "groupId": "p16",
-            "stepId": "2",
-            "monthlyCents": 507257
-          },
-          {
-            "groupId": "p16",
-            "stepId": "3",
-            "monthlyCents": 524281
-          },
-          {
-            "groupId": "p16",
-            "stepId": "4",
-            "monthlyCents": 579252
-          },
-          {
-            "groupId": "p16",
-            "stepId": "5",
-            "monthlyCents": 643332
-          },
-          {
-            "groupId": "p16",
-            "stepId": "6",
-            "monthlyCents": 671597
-          }
+          { "groupId": "p4", "stepId": "1", "monthlyCents": 281992 },
+          { "groupId": "p4", "stepId": "2", "monthlyCents": 288160 },
+          { "groupId": "p4", "stepId": "3", "monthlyCents": 292734 },
+          { "groupId": "p4", "stepId": "4", "monthlyCents": 296185 },
+          { "groupId": "p4", "stepId": "5", "monthlyCents": 298994 },
+          { "groupId": "p4", "stepId": "6", "monthlyCents": 303205 },
+          { "groupId": "p6", "stepId": "1", "monthlyCents": 289095 },
+          { "groupId": "p6", "stepId": "2", "monthlyCents": 306535 },
+          { "groupId": "p6", "stepId": "3", "monthlyCents": 324091 },
+          { "groupId": "p6", "stepId": "4", "monthlyCents": 361429 },
+          { "groupId": "p6", "stepId": "5", "monthlyCents": 370948 },
+          { "groupId": "p6", "stepId": "6", "monthlyCents": 388515 },
+          { "groupId": "p7", "stepId": "2", "monthlyCents": 338731 },
+          { "groupId": "p7", "stepId": "3", "monthlyCents": 357766 },
+          { "groupId": "p7", "stepId": "4", "monthlyCents": 387055 },
+          { "groupId": "p7", "stepId": "5", "monthlyCents": 401698 },
+          { "groupId": "p7", "stepId": "6", "monthlyCents": 416780 },
+          { "groupId": "p8", "stepId": "2", "monthlyCents": 357766 },
+          { "groupId": "p8", "stepId": "3", "monthlyCents": 373878 },
+          { "groupId": "p8", "stepId": "4", "monthlyCents": 394533 },
+          { "groupId": "p8", "stepId": "5", "monthlyCents": 411216 },
+          { "groupId": "p8", "stepId": "6", "monthlyCents": 434551 },
+          { "groupId": "p9", "stepId": "2", "monthlyCents": 386479 },
+          { "groupId": "p9", "stepId": "3", "monthlyCents": 405067 },
+          { "groupId": "p9", "stepId": "4", "monthlyCents": 417456 },
+          { "groupId": "p9", "stepId": "5", "monthlyCents": 441290 },
+          { "groupId": "p9", "stepId": "6", "monthlyCents": 451341 },
+          { "groupId": "p10", "stepId": "2", "monthlyCents": 405067 },
+          { "groupId": "p10", "stepId": "3", "monthlyCents": 417456 },
+          { "groupId": "p10", "stepId": "4", "monthlyCents": 452599 },
+          { "groupId": "p10", "stepId": "5", "monthlyCents": 469561 },
+          { "groupId": "p10", "stepId": "6", "monthlyCents": 480241 },
+          { "groupId": "p11", "stepId": "2", "monthlyCents": 427846 },
+          { "groupId": "p11", "stepId": "3", "monthlyCents": 441165 },
+          { "groupId": "p11", "stepId": "4", "monthlyCents": 474462 },
+          { "groupId": "p11", "stepId": "5", "monthlyCents": 496575 },
+          { "groupId": "p11", "stepId": "6", "monthlyCents": 506628 },
+          { "groupId": "p12", "stepId": "2", "monthlyCents": 450838 },
+          { "groupId": "p12", "stepId": "3", "monthlyCents": 464912 },
+          { "groupId": "p12", "stepId": "4", "monthlyCents": 500093 },
+          { "groupId": "p12", "stepId": "5", "monthlyCents": 521706 },
+          { "groupId": "p12", "stepId": "6", "monthlyCents": 531757 },
+          { "groupId": "p13", "stepId": "2", "monthlyCents": 473835 },
+          { "groupId": "p13", "stepId": "3", "monthlyCents": 488662 },
+          { "groupId": "p13", "stepId": "4", "monthlyCents": 525726 },
+          { "groupId": "p13", "stepId": "5", "monthlyCents": 552488 },
+          { "groupId": "p13", "stepId": "6", "monthlyCents": 559399 },
+          { "groupId": "p14", "stepId": "2", "monthlyCents": 485329 },
+          { "groupId": "p14", "stepId": "3", "monthlyCents": 500534 },
+          { "groupId": "p14", "stepId": "4", "monthlyCents": 538542 },
+          { "groupId": "p14", "stepId": "5", "monthlyCents": 590183 },
+          { "groupId": "p14", "stepId": "6", "monthlyCents": 599607 },
+          { "groupId": "p15", "stepId": "2", "monthlyCents": 496827 },
+          { "groupId": "p15", "stepId": "3", "monthlyCents": 512407 },
+          { "groupId": "p15", "stepId": "4", "monthlyCents": 551358 },
+          { "groupId": "p15", "stepId": "5", "monthlyCents": 597974 },
+          { "groupId": "p15", "stepId": "6", "monthlyCents": 615776 },
+          { "groupId": "p16", "stepId": "2", "monthlyCents": 507257 },
+          { "groupId": "p16", "stepId": "3", "monthlyCents": 524281 },
+          { "groupId": "p16", "stepId": "4", "monthlyCents": 579252 },
+          { "groupId": "p16", "stepId": "5", "monthlyCents": 643332 },
+          { "groupId": "p16", "stepId": "6", "monthlyCents": 671597 }
         ]
       },
       {
         "id": "caritas-ost-p-2025-annex32-east",
         "sourceIds": ["caritas-rk-ost-2025-p"],
         "entries": [
-          {
-            "groupId": "p4",
-            "stepId": "1",
-            "monthlyCents": 280616
-          },
-          {
-            "groupId": "p4",
-            "stepId": "2",
-            "monthlyCents": 286755
-          },
-          {
-            "groupId": "p4",
-            "stepId": "3",
-            "monthlyCents": 291306
-          },
-          {
-            "groupId": "p4",
-            "stepId": "4",
-            "monthlyCents": 294740
-          },
-          {
-            "groupId": "p4",
-            "stepId": "5",
-            "monthlyCents": 297535
-          },
-          {
-            "groupId": "p4",
-            "stepId": "6",
-            "monthlyCents": 301726
-          },
-          {
-            "groupId": "p6",
-            "stepId": "1",
-            "monthlyCents": 287685
-          },
-          {
-            "groupId": "p6",
-            "stepId": "2",
-            "monthlyCents": 305040
-          },
-          {
-            "groupId": "p6",
-            "stepId": "3",
-            "monthlyCents": 322510
-          },
-          {
-            "groupId": "p6",
-            "stepId": "4",
-            "monthlyCents": 359666
-          },
-          {
-            "groupId": "p6",
-            "stepId": "5",
-            "monthlyCents": 369138
-          },
-          {
-            "groupId": "p6",
-            "stepId": "6",
-            "monthlyCents": 386620
-          },
-          {
-            "groupId": "p7",
-            "stepId": "2",
-            "monthlyCents": 337078
-          },
-          {
-            "groupId": "p7",
-            "stepId": "3",
-            "monthlyCents": 356021
-          },
-          {
-            "groupId": "p7",
-            "stepId": "4",
-            "monthlyCents": 385167
-          },
-          {
-            "groupId": "p7",
-            "stepId": "5",
-            "monthlyCents": 399738
-          },
-          {
-            "groupId": "p7",
-            "stepId": "6",
-            "monthlyCents": 414747
-          },
-          {
-            "groupId": "p8",
-            "stepId": "2",
-            "monthlyCents": 356021
-          },
-          {
-            "groupId": "p8",
-            "stepId": "3",
-            "monthlyCents": 372054
-          },
-          {
-            "groupId": "p8",
-            "stepId": "4",
-            "monthlyCents": 392608
-          },
-          {
-            "groupId": "p8",
-            "stepId": "5",
-            "monthlyCents": 409210
-          },
-          {
-            "groupId": "p8",
-            "stepId": "6",
-            "monthlyCents": 432431
-          },
-          {
-            "groupId": "p9",
-            "stepId": "2",
-            "monthlyCents": 384594
-          },
-          {
-            "groupId": "p9",
-            "stepId": "3",
-            "monthlyCents": 403091
-          },
-          {
-            "groupId": "p9",
-            "stepId": "4",
-            "monthlyCents": 415419
-          },
-          {
-            "groupId": "p9",
-            "stepId": "5",
-            "monthlyCents": 439138
-          },
-          {
-            "groupId": "p9",
-            "stepId": "6",
-            "monthlyCents": 449140
-          },
-          {
-            "groupId": "p10",
-            "stepId": "2",
-            "monthlyCents": 403091
-          },
-          {
-            "groupId": "p10",
-            "stepId": "3",
-            "monthlyCents": 415419
-          },
-          {
-            "groupId": "p10",
-            "stepId": "4",
-            "monthlyCents": 450391
-          },
-          {
-            "groupId": "p10",
-            "stepId": "5",
-            "monthlyCents": 467270
-          },
-          {
-            "groupId": "p10",
-            "stepId": "6",
-            "monthlyCents": 477899
-          },
-          {
-            "groupId": "p11",
-            "stepId": "2",
-            "monthlyCents": 425759
-          },
-          {
-            "groupId": "p11",
-            "stepId": "3",
-            "monthlyCents": 439013
-          },
-          {
-            "groupId": "p11",
-            "stepId": "4",
-            "monthlyCents": 472148
-          },
-          {
-            "groupId": "p11",
-            "stepId": "5",
-            "monthlyCents": 494152
-          },
-          {
-            "groupId": "p11",
-            "stepId": "6",
-            "monthlyCents": 504156
-          },
-          {
-            "groupId": "p12",
-            "stepId": "2",
-            "monthlyCents": 448639
-          },
-          {
-            "groupId": "p12",
-            "stepId": "3",
-            "monthlyCents": 462644
-          },
-          {
-            "groupId": "p12",
-            "stepId": "4",
-            "monthlyCents": 497654
-          },
-          {
-            "groupId": "p12",
-            "stepId": "5",
-            "monthlyCents": 519161
-          },
-          {
-            "groupId": "p12",
-            "stepId": "6",
-            "monthlyCents": 529163
-          },
-          {
-            "groupId": "p13",
-            "stepId": "2",
-            "monthlyCents": 471524
-          },
-          {
-            "groupId": "p13",
-            "stepId": "3",
-            "monthlyCents": 486278
-          },
-          {
-            "groupId": "p13",
-            "stepId": "4",
-            "monthlyCents": 523161
-          },
-          {
-            "groupId": "p13",
-            "stepId": "5",
-            "monthlyCents": 549793
-          },
-          {
-            "groupId": "p13",
-            "stepId": "6",
-            "monthlyCents": 556670
-          },
-          {
-            "groupId": "p14",
-            "stepId": "2",
-            "monthlyCents": 482962
-          },
-          {
-            "groupId": "p14",
-            "stepId": "3",
-            "monthlyCents": 498093
-          },
-          {
-            "groupId": "p14",
-            "stepId": "4",
-            "monthlyCents": 535915
-          },
-          {
-            "groupId": "p14",
-            "stepId": "5",
-            "monthlyCents": 587304
-          },
-          {
-            "groupId": "p14",
-            "stepId": "6",
-            "monthlyCents": 596682
-          },
-          {
-            "groupId": "p15",
-            "stepId": "2",
-            "monthlyCents": 494403
-          },
-          {
-            "groupId": "p15",
-            "stepId": "3",
-            "monthlyCents": 509907
-          },
-          {
-            "groupId": "p15",
-            "stepId": "4",
-            "monthlyCents": 548668
-          },
-          {
-            "groupId": "p15",
-            "stepId": "5",
-            "monthlyCents": 595057
-          },
-          {
-            "groupId": "p15",
-            "stepId": "6",
-            "monthlyCents": 612772
-          },
-          {
-            "groupId": "p16",
-            "stepId": "2",
-            "monthlyCents": 504783
-          },
-          {
-            "groupId": "p16",
-            "stepId": "3",
-            "monthlyCents": 521724
-          },
-          {
-            "groupId": "p16",
-            "stepId": "4",
-            "monthlyCents": 576426
-          },
-          {
-            "groupId": "p16",
-            "stepId": "5",
-            "monthlyCents": 640194
-          },
-          {
-            "groupId": "p16",
-            "stepId": "6",
-            "monthlyCents": 668321
-          }
+          { "groupId": "p4", "stepId": "1", "monthlyCents": 280616 },
+          { "groupId": "p4", "stepId": "2", "monthlyCents": 286755 },
+          { "groupId": "p4", "stepId": "3", "monthlyCents": 291306 },
+          { "groupId": "p4", "stepId": "4", "monthlyCents": 294740 },
+          { "groupId": "p4", "stepId": "5", "monthlyCents": 297535 },
+          { "groupId": "p4", "stepId": "6", "monthlyCents": 301726 },
+          { "groupId": "p6", "stepId": "1", "monthlyCents": 287685 },
+          { "groupId": "p6", "stepId": "2", "monthlyCents": 305040 },
+          { "groupId": "p6", "stepId": "3", "monthlyCents": 322510 },
+          { "groupId": "p6", "stepId": "4", "monthlyCents": 359666 },
+          { "groupId": "p6", "stepId": "5", "monthlyCents": 369138 },
+          { "groupId": "p6", "stepId": "6", "monthlyCents": 386620 },
+          { "groupId": "p7", "stepId": "2", "monthlyCents": 337078 },
+          { "groupId": "p7", "stepId": "3", "monthlyCents": 356021 },
+          { "groupId": "p7", "stepId": "4", "monthlyCents": 385167 },
+          { "groupId": "p7", "stepId": "5", "monthlyCents": 399738 },
+          { "groupId": "p7", "stepId": "6", "monthlyCents": 414747 },
+          { "groupId": "p8", "stepId": "2", "monthlyCents": 356021 },
+          { "groupId": "p8", "stepId": "3", "monthlyCents": 372054 },
+          { "groupId": "p8", "stepId": "4", "monthlyCents": 392608 },
+          { "groupId": "p8", "stepId": "5", "monthlyCents": 409210 },
+          { "groupId": "p8", "stepId": "6", "monthlyCents": 432431 },
+          { "groupId": "p9", "stepId": "2", "monthlyCents": 384594 },
+          { "groupId": "p9", "stepId": "3", "monthlyCents": 403091 },
+          { "groupId": "p9", "stepId": "4", "monthlyCents": 415419 },
+          { "groupId": "p9", "stepId": "5", "monthlyCents": 439138 },
+          { "groupId": "p9", "stepId": "6", "monthlyCents": 449140 },
+          { "groupId": "p10", "stepId": "2", "monthlyCents": 403091 },
+          { "groupId": "p10", "stepId": "3", "monthlyCents": 415419 },
+          { "groupId": "p10", "stepId": "4", "monthlyCents": 450391 },
+          { "groupId": "p10", "stepId": "5", "monthlyCents": 467270 },
+          { "groupId": "p10", "stepId": "6", "monthlyCents": 477899 },
+          { "groupId": "p11", "stepId": "2", "monthlyCents": 425759 },
+          { "groupId": "p11", "stepId": "3", "monthlyCents": 439013 },
+          { "groupId": "p11", "stepId": "4", "monthlyCents": 472148 },
+          { "groupId": "p11", "stepId": "5", "monthlyCents": 494152 },
+          { "groupId": "p11", "stepId": "6", "monthlyCents": 504156 },
+          { "groupId": "p12", "stepId": "2", "monthlyCents": 448639 },
+          { "groupId": "p12", "stepId": "3", "monthlyCents": 462644 },
+          { "groupId": "p12", "stepId": "4", "monthlyCents": 497654 },
+          { "groupId": "p12", "stepId": "5", "monthlyCents": 519161 },
+          { "groupId": "p12", "stepId": "6", "monthlyCents": 529163 },
+          { "groupId": "p13", "stepId": "2", "monthlyCents": 471524 },
+          { "groupId": "p13", "stepId": "3", "monthlyCents": 486278 },
+          { "groupId": "p13", "stepId": "4", "monthlyCents": 523161 },
+          { "groupId": "p13", "stepId": "5", "monthlyCents": 549793 },
+          { "groupId": "p13", "stepId": "6", "monthlyCents": 556670 },
+          { "groupId": "p14", "stepId": "2", "monthlyCents": 482962 },
+          { "groupId": "p14", "stepId": "3", "monthlyCents": 498093 },
+          { "groupId": "p14", "stepId": "4", "monthlyCents": 535915 },
+          { "groupId": "p14", "stepId": "5", "monthlyCents": 587304 },
+          { "groupId": "p14", "stepId": "6", "monthlyCents": 596682 },
+          { "groupId": "p15", "stepId": "2", "monthlyCents": 494403 },
+          { "groupId": "p15", "stepId": "3", "monthlyCents": 509907 },
+          { "groupId": "p15", "stepId": "4", "monthlyCents": 548668 },
+          { "groupId": "p15", "stepId": "5", "monthlyCents": 595057 },
+          { "groupId": "p15", "stepId": "6", "monthlyCents": 612772 },
+          { "groupId": "p16", "stepId": "2", "monthlyCents": 504783 },
+          { "groupId": "p16", "stepId": "3", "monthlyCents": 521724 },
+          { "groupId": "p16", "stepId": "4", "monthlyCents": 576426 },
+          { "groupId": "p16", "stepId": "5", "monthlyCents": 640194 },
+          { "groupId": "p16", "stepId": "6", "monthlyCents": 668321 }
         ]
       }
     ],
@@ -1064,6 +572,88 @@
         "sourceIds": ["caritas-bk-2025-02-corrected", "caritas-rk-ost-2025-allowances"]
       }
     ],
+    "caritasTimePremiumPolicy": {
+      "validFrom": "2025-01-01",
+      "validTo": "2025-12-31",
+      "referenceStepId": "3",
+      "monthlyFactorThousandths": 4348,
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "nightBasisPoints": 2000,
+      "sundayBasisPoints": 2500,
+      "holidayWithTimeOffBasisPoints": 3500,
+      "holidayWithoutTimeOffBasisPoints": 13500,
+      "preHolidayWindow": { "startMinute": 360, "endMinute": 0 },
+      "preHolidayMonthDays": ["12-24", "12-31"],
+      "preHolidayBasisPoints": 3500,
+      "saturdayWindow": { "startMinute": 780, "endMinute": 1260 },
+      "saturdayBasisPoints": 2000,
+      "saturdayOnlyOutsideShiftWork": true,
+      "competition": "HIGHEST_SUNDAY_HOLIDAY_PREHOLIDAY_SATURDAY",
+      "nightStacks": true,
+      "holidayWithoutTimeOffMaximumTotalBasisPoints": 23500,
+      "localAgreementMayIncrease": true,
+      "sourceIds": ["caritas-avr-text-2025-1", "caritas-time-premiums-2025"]
+    },
+    "caritasOvertimePolicy": {
+      "validFrom": "2025-01-01",
+      "validTo": "2025-12-31",
+      "premiumReferenceStepId": "3",
+      "workPayMaximumStepId": "4",
+      "monthlyFactorThousandths": 4348,
+      "rateBands": [
+        { "groupIds": ["p4", "p6", "p7", "p8", "p9", "p10", "p11"], "premiumBasisPoints": 3000 },
+        { "groupIds": ["p12", "p13", "p14", "p15", "p16"], "premiumBasisPoints": 1500 }
+      ],
+      "requiresConfirmedClassification": true,
+      "requiresSettlementChoice": true,
+      "timeConversionAllowed": true,
+      "sourceIds": ["caritas-avr-text-2025-1"]
+    },
+    "caritasAnnualPaymentPolicy": {
+      "validFrom": "2025-01-01",
+      "validTo": "2025-12-31",
+      "referenceMonths": [7, 8, 9],
+      "rateDateMonthDay": "09-01",
+      "claimDateMonthDay": "12-01",
+      "payoutMonth": 11,
+      "rateBands": [
+        { "groupIds": ["p4", "p6", "p7", "p8"], "rateBasisPoints": 8600 },
+        {
+          "groupIds": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+          "rateBasisPoints": 7600
+        }
+      ],
+      "basisPolicy": "PAID_JULY_SEPTEMBER_WITH_EXCLUSIONS",
+      "lateEntryBasis": "FIRST_FULL_MONTH_AFTER_SEPTEMBER",
+      "reductionPolicy": "ONE_TWELFTH_WITH_STATUTORY_EXCEPTIONS",
+      "earlyExitVariantId": "ANLAGE_31",
+      "earlyExitBasis": "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES",
+      "eastTariff2025UsesWestTable": true,
+      "sourceIds": ["caritas-avr-text-2025-1"]
+    },
+    "premiumRules": [],
+    "allowanceRules": [],
+    "combinationRules": [],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
+    },
     "caritasTimePremiumRates": [
       {
         "id": "caritas-ost-premium-anlage-31-ost-tarif-ost-2025",
@@ -1156,32 +746,6 @@
         "sourceIds": ["caritas-dcv-premiums-2025"]
       }
     ],
-    "premiumRules": [],
-    "allowanceRules": [],
-    "combinationRules": [],
-    "workPatternRules": [],
-    "workPatternPolicy": {
-      "nightWindow": {
-        "startMinute": 1260,
-        "endMinute": 360
-      },
-      "nightQualificationMinutes": 120,
-      "recurringNightShiftCount": 3,
-      "recurringWindowMonths": 1,
-      "regularChangeCount": 2,
-      "shiftWorkMinimumShifts": 4,
-      "shiftWorkMinimumWindows": 2,
-      "alternatingMinimumShifts": 5,
-      "alternatingMinimumWindows": 3,
-      "assessmentLookbackMonths": 2,
-      "shiftWindowBoundaries": {
-        "nightEndMinute": 360,
-        "earlyEndMinute": 660,
-        "dayEndMinute": 900,
-        "nightStartMinute": 1200
-      },
-      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
-    },
     "caritasAnnualPaymentRules": [
       {
         "id": "jsz-anlage-31-ost-tarif-ost-2025-0",
