@@ -101,6 +101,22 @@ function ThemedApp() {
                         />
                         <Stack.Screen name="appearance" options={{ presentation: "card" }} />
                         <Stack.Screen name="work-profile" options={{ presentation: "card" }} />
+                        <Stack.Screen
+                          name="training"
+                          options={{
+                            title: "Ausbildung & Alter",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
+                          name="training-times"
+                          options={{
+                            title: "Schulzeiten & Pausen",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
                         <Stack.Screen name="day-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
                         <Stack.Screen name="shift-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
                         <Stack.Screen
@@ -177,6 +193,62 @@ function ThemedApp() {
                             contentStyle: { backgroundColor: "transparent" },
                             sheetAllowedDetents: [1],
                             sheetGrabberVisible: true,
+                          }}
+                        />
+                        <Stack.Screen
+                          name="paid-absence"
+                          options={{
+                            title: "Bezahlte Abwesenheit",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
+                          name="annual-payment"
+                          options={{
+                            title: "Sonderzahlungen",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
+                          name="overtime-allocation"
+                          options={{
+                            title: "Überstunden",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
+                          name="tvl-shift-work"
+                          options={{
+                            title: "Tarifliche Dienstangaben",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
+                          name="sue-month"
+                          options={{
+                            title: "SuE-Monatsangaben",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
+                          name="annex-a-month"
+                          options={{
+                            title: "TVöD-Monatsangaben",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
+                          }}
+                        />
+                        <Stack.Screen
+                          name="annex-a-premium-facts"
+                          options={{
+                            title: "TVöD-Zuschlagsangaben",
+                            presentation: "card",
+                            contentStyle: { backgroundColor: palette.groupedBackground },
                           }}
                         />
                         <Stack.Screen
