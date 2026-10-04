@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 17,
+  "packageId": "drk-rtv-training",
+  "versionId": "2024-06-01-draft1",
+  "kind": "TARIFF",
+  "label": "DRK-RTV · Anlagen 3/3a · Ausbildungsentgelt (nicht aktiviert)",
+  "status": "DRAFT",
+  "validFrom": "2024-06-01",
+  "validTo": "2025-08-31",
+  "jurisdiction": { "country": "DE", "federalStates": null },
+  "sources": [
+    {
+      "id": "drk-btg-rtv-52",
+      "title": "BTG DRK-Reformtarifvertrag, Fassung 52. Änderungstarifvertrag und 14. TVÜ-Änderungstarifvertrag",
+      "url": "https://btg.drk.de/fileadmin/user_upload/Bundestarifgemeinschaft/05_grundlagen_news/DRK-RTV_idF_52.AETV_14.AETV-TVUE_durchgeschriebene_Fassung.pdf",
+      "documentDate": "2025-07-10",
+      "section": "Anlage 3 § 1 und § 8 Absatz 1; Anlage 3a § 1 und § 3 Absatz 1 Buchstaben a und b; PDF-Seiten 102, 104, 109, 110",
+      "sha256": "97c25f8030b40897c10d828a92382655847212d5f924ce0132073034a13b19d8"
+    },
+    {
+      "id": "pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    }
+  ],
+  "review": { "status": "DRAFT", "reviewedBy": null, "reviewedAt": null, "gitCommit": null },
+  "rounding": { "moneyScale": 2, "mode": "HALF_UP", "stage": "PER_LINE" },
+  "rules": {
+    "selection": {
+      "familyId": "drk-rtv",
+      "engineId": "drk-rtv-training-v1",
+      "employmentKind": "APPRENTICE",
+      "variants": [
+        {
+          "id": "ANLAGE_3",
+          "label": "Allgemeine Ausbildung",
+          "specialPartId": "anlage-3",
+          "sourceIds": ["drk-btg-rtv-52"],
+          "regions": [
+            {
+              "id": "BTG",
+              "label": "DRK-Bundestarifgemeinschaft",
+              "payTableId": "training",
+              "sourceIds": ["drk-btg-rtv-52"]
+            }
+          ]
+        },
+        {
+          "id": "ANLAGE_3A_A",
+          "label": "Anlage 3a · Pflege und weitere genannte Ausbildungen",
+          "specialPartId": "anlage-3a",
+          "sourceIds": ["drk-btg-rtv-52"],
+          "regions": [
+            {
+              "id": "BTG",
+              "label": "DRK-Bundestarifgemeinschaft",
+              "payTableId": "training",
+              "sourceIds": ["drk-btg-rtv-52"]
+            }
+          ]
+        },
+        {
+          "id": "ANLAGE_3A_B",
+          "label": "Anlage 3a · einjährige Pflegehilfe",
+          "specialPartId": "anlage-3a",
+          "sourceIds": ["drk-btg-rtv-52"],
+          "regions": [
+            {
+              "id": "BTG",
+              "label": "DRK-Bundestarifgemeinschaft",
+              "payTableId": "training",
+              "sourceIds": ["drk-btg-rtv-52"]
+            }
+          ]
+        }
+      ],
+      "capabilities": {
+        "basePay": "UNSUPPORTED",
+        "timePremiums": "UNSUPPORTED",
+        "allowances": "UNSUPPORTED",
+        "overtime": "UNSUPPORTED",
+        "annualPayment": "UNSUPPORTED"
+      }
+    },
+    "selector": {
+      "agreementId": "drk-rtv",
+      "specialPartIds": ["anlage-3", "anlage-3a"],
+      "payTableId": "training"
+    },
+    "payTables": [
+      {
+        "id": "training",
+        "entries": [
+          { "groupId": "anlage-3-general", "stepId": "s1", "monthlyCents": 123074 },
+          { "groupId": "anlage-3-general", "stepId": "s2", "monthlyCents": 128727 },
+          { "groupId": "anlage-3-general", "stepId": "s3", "monthlyCents": 133913 },
+          { "groupId": "anlage-3-general", "stepId": "s4", "monthlyCents": 141108 },
+          { "groupId": "anlage-3a-a", "stepId": "s1", "monthlyCents": 136006 },
+          { "groupId": "anlage-3a-a", "stepId": "s2", "monthlyCents": 142839 },
+          { "groupId": "anlage-3a-a", "stepId": "s3", "monthlyCents": 153955 },
+          { "groupId": "anlage-3a-b", "stepId": "s1", "monthlyCents": 128246 }
+        ],
+        "sourceIds": ["drk-btg-rtv-52"]
+      }
+    ],
+    "premiumRules": [],
+    "allowanceRules": [],
+    "combinationRules": [],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": { "startMinute": 1260, "endMinute": 360 },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": ["pflegeshift-tariff-assessment-v1"]
+    }
+  }
+}
