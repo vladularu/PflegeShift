@@ -78,9 +78,9 @@ describe("DRK-RTV P source-only catalog candidates", () => {
       expect(result.issues.map((issue) => issue.code)).toContain("DRK_P_NOT_ACTIVATABLE");
   });
 
-  it("rejects the same DRK identity under an older contract version", () => {
+  it.each([14, 16] as const)("rejects the same DRK identity under older contract %i", (version) => {
     const pkg = structuredClone(currentCandidate) as RuleTariffPackage;
-    pkg.engineContractVersion = 14;
+    pkg.engineContractVersion = version;
     const result = validateRulePackage(pkg);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.issues.map((issue) => issue.code)).toContain("DRK_CONTRACT");
