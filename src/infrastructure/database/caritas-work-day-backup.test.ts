@@ -1,7 +1,8 @@
+import { LATEST_DATABASE_SCHEMA_VERSION } from "./migrations";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { saveShift } from "./calendar-entry-repository";
 import { listCaritasWorkDays, saveCaritasWorkDay } from "./caritas-work-day-repository";
-import { loadLocalBackupSnapshot } from "./local-backup";
+import { LOCAL_BACKUP_VERSION, loadLocalBackupSnapshot } from "./local-backup";
 import { restoreLocalBackup } from "./local-backup-restore";
 import {
   exportTvlBackup,
@@ -33,7 +34,10 @@ describe("Caritas work-day confirmation backup v10", () => {
     await saveShift(f.db, { ...f.shift, expectedRevision: f.shift.revision, endTime: "20:00" });
     const before = await loadLocalBackupSnapshot(f.db);
     const exported = await exportTvlBackup(f);
-    expect(exported.document).toMatchObject({ version: 19, databaseSchemaVersion: 31 });
+    expect(exported.document).toMatchObject({
+      version: LOCAL_BACKUP_VERSION,
+      databaseSchemaVersion: LATEST_DATABASE_SCHEMA_VERSION,
+    });
     expect(exported.document.data.caritasWorkDays).toHaveLength(1);
     await f.db.runAsync("DELETE FROM caritas_work_days");
     await restoreLocalBackup(f.db, await validateTvlBackup(exported.serialized));
@@ -55,7 +59,7 @@ describe("Caritas work-day confirmation backup v10", () => {
       delete root.data.tvoedSueAllowanceConfirmations;
     });
     const checked = await validateTvlBackup(legacy);
-    expect(checked.document.data.caritasWorkDays).toBeUndefined();
+    expect(checked.document.data.caritasWorkDays).toEqual([]);
     await restoreLocalBackup(f.db, checked);
     expect(await listCaritasWorkDays(f.db)).toEqual([]);
   });

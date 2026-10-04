@@ -1,4 +1,10 @@
 import {
+  CARITAS_WORK_DAY_COLUMNS,
+  mapCaritasWorkDayRow,
+  requireCaritasWorkDayParent,
+  type CaritasWorkDayRow,
+} from "./caritas-work-day-repository";
+import {
   TVL_SHIFT_WORK_COLUMNS,
   mapTvlShiftWorkRow,
   requireTvlShiftWorkParents,
@@ -31,6 +37,7 @@ export interface DevRemunerationBackup {
   readonly overtimeAllocations: readonly OvertimeAllocationRow[];
   readonly paidAbsences: readonly PaidAbsenceRow[];
   readonly tvlShiftWork: readonly TvlShiftWorkRow[];
+  readonly caritasWorkDays: readonly CaritasWorkDayRow[];
 }
 
 function exact(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -48,12 +55,14 @@ export function validateDevRemunerationBackup(
   month: string,
   includesPaidAbsences = true,
   includesTvlShiftWork = false,
+  includesCaritasWorkDays = false,
 ): DevRemunerationBackup {
   const data = exact(value, [
     "allowanceDecision",
     "overtimeAllocations",
     ...(includesPaidAbsences ? ["paidAbsences"] : []),
     ...(includesTvlShiftWork ? ["tvlShiftWork"] : []),
+    ...(includesCaritasWorkDays ? ["caritasWorkDays"] : []),
   ]);
   let allowanceDecision: AllowanceDecisionRow | null = null;
   if (data.allowanceDecision !== null) {
@@ -113,11 +122,27 @@ export function validateDevRemunerationBackup(
     tvlIds.add(key);
     return Object.freeze({ ...row });
   });
+  const rawCaritas = includesCaritasWorkDays ? data.caritasWorkDays : [];
+  if (!Array.isArray(rawCaritas))
+    throw new Error("Caritas-Dienstbestätigungen fehlen im Testlabor-Backup.");
+  const caritasIds = new Set<string>();
+  const caritasWorkDays = rawCaritas.map((value) => {
+    const row = exact(value, CARITAS_WORK_DAY_COLUMNS) as unknown as CaritasWorkDayRow;
+    const parsed = mapCaritasWorkDayRow(row);
+    const shift = byId.get(parsed.shiftId);
+    const key = JSON.stringify([parsed.shiftId, parsed.date]);
+    if (!shift || caritasIds.has(key))
+      throw new Error("Ungültige Caritas-Dienstzuordnung im Testlabor-Backup.");
+    requireCaritasWorkDayParent(parsed, mapShift(shift as Parameters<typeof mapShift>[0]));
+    caritasIds.add(key);
+    return Object.freeze({ ...row });
+  });
   return Object.freeze({
     allowanceDecision,
     overtimeAllocations: Object.freeze(overtimeAllocations),
     paidAbsences: Object.freeze(paidAbsences),
     tvlShiftWork: Object.freeze(tvlShiftWork),
+    caritasWorkDays: Object.freeze(caritasWorkDays),
   });
 }
 export async function snapshotDevRemuneration(
@@ -144,10 +169,21 @@ export async function snapshotDevRemuneration(
       WHERE substr(s.date,1,7)=? ORDER BY t.shift_id,t.profile_effective_from`,
     month,
   );
-  return { allowanceDecision, overtimeAllocations, paidAbsences, tvlShiftWork };
+  const caritasWorkDays = await db.getAllAsync<CaritasWorkDayRow>(
+    `SELECT ${CARITAS_WORK_DAY_COLUMNS.map((key) => "c." + key).join(",")}
+      FROM caritas_work_days c JOIN shift_entries s ON s.id=c.shift_id
+      WHERE substr(s.date,1,7)=? ORDER BY c.shift_id,c.date`,
+    month,
+  );
+  return { allowanceDecision, overtimeAllocations, paidAbsences, tvlShiftWork, caritasWorkDays };
 }
 export async function clearDevRemuneration(db: SQLiteDatabase, month: string): Promise<void> {
-  for (const table of ["tvl_shift_work", "paid_absences", "overtime_allocations"])
+  for (const table of [
+    "caritas_work_days",
+    "tvl_shift_work",
+    "paid_absences",
+    "overtime_allocations",
+  ])
     await db.runAsync(
       "DELETE FROM " +
         table +
@@ -185,6 +221,17 @@ export async function restoreDevRemuneration(
     await db.runAsync(
       "INSERT INTO tvl_shift_work(shift_id,profile_effective_from,confirmation_json) VALUES(?,?,?)",
       ...TVL_SHIFT_WORK_COLUMNS.map((key) => row[key]),
+    );
+  }
+  for (const row of data.caritasWorkDays) {
+    const parent = await db.getFirstAsync<Parameters<typeof mapShift>[0]>(
+      "SELECT * FROM shift_entries WHERE id=?",
+      row.shift_id,
+    );
+    requireCaritasWorkDayParent(mapCaritasWorkDayRow(row), parent ? mapShift(parent) : undefined);
+    await db.runAsync(
+      "INSERT INTO caritas_work_days(shift_id,date,confirmation_json) VALUES(?,?,?)",
+      ...CARITAS_WORK_DAY_COLUMNS.map((key) => row[key]),
     );
   }
   if (data.allowanceDecision !== null)

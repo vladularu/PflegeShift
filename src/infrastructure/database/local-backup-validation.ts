@@ -1,3 +1,4 @@
+import { mapCaritasWorkDayRow, requireCaritasWorkDayParent } from "./caritas-work-day-repository";
 import {
   mapTvlShiftWorkRow,
   requireTvlShiftWorkParents,
@@ -792,6 +793,7 @@ export async function validateLocalBackup(
       root.version !== 6 &&
       root.version !== 7 &&
       root.version !== 8 &&
+      root.version !== 9 &&
       root.version !== LOCAL_BACKUP_VERSION
     ) {
       return invalid("Diese Backup-Version wird von LUNA Shift nicht unterstützt.");
@@ -818,6 +820,7 @@ export async function validateLocalBackup(
       ...(root.version >= 7 ? ["actualAnnualPayments"] : []),
       ...(root.version >= 8 ? ["tariffAnnualClaims"] : []),
       ...(root.version >= 9 ? ["tvlShiftWork"] : []),
+      ...(root.version >= 10 ? ["caritasWorkDays"] : []),
     ]);
     const rawProfile = data.profile;
     const profile = rawProfile === null ? null : validateProfileRow(rawProfile);
@@ -1009,6 +1012,34 @@ export async function validateLocalBackup(
         requireTvlBurnCareCollection(values, shiftById.get(id)!, profiles);
     }
 
+    const caritasWorkDays =
+      root.version >= 10
+        ? Object.freeze(
+            asArray(data.caritasWorkDays).map((value) => {
+              mapCaritasWorkDayRow(value);
+              return frozenBackupRow(asRecord(value));
+            }),
+          )
+        : Object.freeze([]);
+    if (root.version >= 10) {
+      if (
+        (databaseSchemaVersion as number) < 23 ||
+        (profile === null && caritasWorkDays.length > 0)
+      )
+        return invalid();
+      const seen = new Set<string>();
+      const shiftById = new Map(
+        shifts.map((row) => [row.id, mapShift(row as unknown as Parameters<typeof mapShift>[0])]),
+      );
+      for (const row of caritasWorkDays) {
+        const parsed = mapCaritasWorkDayRow(row);
+        const key = JSON.stringify([parsed.shiftId, parsed.date]);
+        if (seen.has(key)) return invalid();
+        seen.add(key);
+        requireCaritasWorkDayParent(parsed, shiftById.get(parsed.shiftId));
+      }
+    }
+
     uniqueValues(templates, "id");
     uniqueValues(shifts, "id");
     uniqueValues(appointments, "id");
@@ -1048,6 +1079,7 @@ export async function validateLocalBackup(
         actualAnnualPayments,
         tariffAnnualClaims,
         tvlShiftWork,
+        caritasWorkDays,
         templates,
         shifts,
         appointments,
@@ -1080,7 +1112,8 @@ export async function validateLocalBackup(
             ) &&
             !(document.version < 7 && key === "actualAnnualPayments") &&
             !(document.version < 8 && key === "tariffAnnualClaims") &&
-            !(document.version < 9 && key === "tvlShiftWork"),
+            !(document.version < 9 && key === "tvlShiftWork") &&
+            !(document.version < 10 && key === "caritasWorkDays"),
         ),
       ),
     });

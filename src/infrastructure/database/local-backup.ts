@@ -1,3 +1,4 @@
+import { CARITAS_WORK_DAY_COLUMNS } from "./caritas-work-day-repository";
 import { TVL_SHIFT_WORK_COLUMNS } from "./tvl-shift-work-repository";
 import {
   TARIFF_ANNUAL_CLAIM_COLUMNS,
@@ -18,7 +19,7 @@ import { withImmediateTransaction } from "@/infrastructure/database/transaction"
 import { REMUNERATION_PROFILE_COLUMNS } from "./remuneration-profile-repository";
 
 export const LOCAL_BACKUP_FORMAT = "lunashift-local-backup";
-export const LOCAL_BACKUP_VERSION = 9;
+export const LOCAL_BACKUP_VERSION = 10;
 
 type BackupScalar = string | number | null;
 type BackupRow = Readonly<Record<string, BackupScalar>>;
@@ -35,6 +36,7 @@ export interface LocalBackupSnapshot {
   readonly actualAnnualPayments: readonly BackupRow[];
   readonly tariffAnnualClaims: readonly BackupRow[];
   readonly tvlShiftWork: readonly BackupRow[];
+  readonly caritasWorkDays: readonly BackupRow[];
   readonly templates: readonly BackupRow[];
   readonly shifts: readonly BackupRow[];
   readonly appointments: readonly BackupRow[];
@@ -44,7 +46,7 @@ export interface LocalBackupSnapshot {
 
 interface UnsignedLocalBackupDocument {
   readonly format: typeof LOCAL_BACKUP_FORMAT;
-  readonly version: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | typeof LOCAL_BACKUP_VERSION;
+  readonly version: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | typeof LOCAL_BACKUP_VERSION;
   readonly createdAt: string;
   readonly appVersion: string | null;
   readonly databaseSchemaVersion: number;
@@ -59,6 +61,7 @@ interface UnsignedLocalBackupDocument {
     readonly actualAnnualPayments: readonly BackupRow[];
     readonly tariffAnnualClaims: readonly BackupRow[];
     readonly tvlShiftWork: readonly BackupRow[];
+    readonly caritasWorkDays: readonly BackupRow[];
     readonly templates: readonly BackupRow[];
     readonly shifts: readonly BackupRow[];
     readonly appointments: readonly BackupRow[];
@@ -158,6 +161,9 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
     const tvlShiftWork = await transaction.getAllAsync<BackupRow>(
       `SELECT ${TVL_SHIFT_WORK_COLUMNS.join(",")} FROM tvl_shift_work ORDER BY shift_id,profile_effective_from`,
     );
+    const caritasWorkDays = await transaction.getAllAsync<BackupRow>(
+      `SELECT ${CARITAS_WORK_DAY_COLUMNS.join(",")} FROM caritas_work_days ORDER BY shift_id,date`,
+    );
     const templates = await transaction.getAllAsync<BackupRow>(
       `SELECT id,name,type,start_time,end_time,break_minutes,color,symbol,sort_order,
               all_day,notification_json,location_json,revision,created_at,updated_at,deleted_at
@@ -205,6 +211,7 @@ export async function loadLocalBackupSnapshot(db: SQLiteDatabase): Promise<Local
       actualAnnualPayments: Object.freeze(actualAnnualPayments.map(Object.freeze)),
       tariffAnnualClaims: Object.freeze(tariffAnnualClaims.map(Object.freeze)),
       tvlShiftWork: Object.freeze(tvlShiftWork.map(Object.freeze)),
+      caritasWorkDays: Object.freeze(caritasWorkDays.map(Object.freeze)),
       templates: Object.freeze(templates.map(Object.freeze)),
       shifts: Object.freeze(shifts.map(Object.freeze)),
       appointments: Object.freeze(appointments.map(Object.freeze)),
@@ -240,6 +247,7 @@ export async function createLocalBackupDocument(
       actualAnnualPayments: snapshot.actualAnnualPayments,
       tariffAnnualClaims: snapshot.tariffAnnualClaims,
       tvlShiftWork: snapshot.tvlShiftWork,
+      caritasWorkDays: snapshot.caritasWorkDays,
       templates: snapshot.templates,
       shifts: snapshot.shifts,
       appointments: snapshot.appointments,

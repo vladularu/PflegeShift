@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { work } from "@/engine/remuneration-test-fixtures";
 import { listCaritasWorkDays, saveCaritasWorkDay } from "./caritas-work-day-repository";
-import { parseDevBackupPayload } from "./dev-backup-payload";
+import { DEV_BACKUP_VERSION, parseDevBackupPayload } from "./dev-backup-payload";
 import { generateTestRun, restoreTestBackup, setDeveloperMode } from "./dev-tools-repository";
 import { setupTvlShiftWork, type TvlShiftWorkFixture } from "./tvl-shift-work-test-fixtures";
 
@@ -37,7 +37,7 @@ describe("Caritas confirmations in the test laboratory", () => {
       const original = await saveCaritasWorkDay(f.db, { ...input(f), shiftWork });
       await generate();
       const payload = parseDevBackupPayload(await storedPayload(), "2026-09");
-      expect(payload.version).toBe(16);
+      expect(payload.version).toBe(DEV_BACKUP_VERSION);
       expect(payload.remuneration.caritasWorkDays).toHaveLength(1);
       expect(await listCaritasWorkDays(f.db)).toEqual([]);
       await generate();
