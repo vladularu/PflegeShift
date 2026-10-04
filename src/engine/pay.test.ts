@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import tariffCandidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json";
+import tariffCandidateValue from "../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05-r3.json";
 import type { ShiftEntry, UserProfile } from "@/domain/types";
 import {
   assessTvoedPattern,
