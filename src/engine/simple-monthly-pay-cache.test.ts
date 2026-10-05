@@ -177,6 +177,31 @@ const profiles: readonly [string, UserProfile][] = [
   ["manual", { ...work, manualMonthlyGrossCents: 12345 }],
 ];
 describe("shared pay entry point", () => {
+  it("invalidates training pay when the TVA-L year or region changes", () => {
+    const west: UserProfile = {
+      ...work,
+      tvalPflegeTariff: { trainingYear: 1, universityRegion: "WEST" },
+    };
+    const first = calculateMonthlyPayEstimate("2026-10", [], west, null);
+    const second = calculateMonthlyPayEstimate(
+      "2026-10",
+      [],
+      { ...west, tvalPflegeTariff: { trainingYear: 2, universityRegion: "WEST" } },
+      null,
+    );
+    const east = calculateMonthlyPayEstimate(
+      "2026-10",
+      [],
+      { ...west, tvalPflegeTariff: { trainingYear: 1, universityRegion: "EAST" } },
+      null,
+    );
+    expect(first.personalBaseAmount).toBe(1440.7);
+    expect(second.personalBaseAmount).toBe(1506.7);
+    expect(east.personalBaseAmount).toBe(1386.67);
+    expect(second).not.toBe(first);
+    expect(east).not.toBe(first);
+  });
+
   it.each(profiles.filter(([name]) => ["TV-L", "TV-UK", "TV-H", "TVA-L Pflege"].includes(name)))(
     "reuses the real overview result when opening %s salary details",
     (_name, profile) => {

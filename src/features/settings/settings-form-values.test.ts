@@ -103,3 +103,17 @@ describe("TV-H settings projection", () => {
     expect(values.fullTimeHours).toBe("40");
   });
 });
+
+describe("TVA-L training settings projection", () => {
+  it("restores the training year and explicit East selection", () => {
+    const values = settingsFormValues({
+      ...baseProfile,
+      tvalPflegeTariff: { trainingYear: 3, universityRegion: "EAST" },
+    });
+    expect(values).toMatchObject({
+      salaryMode: "TVAL_PFLEGE",
+      trainingYear: 3,
+      tvlUniversityRegion: "EAST",
+    });
+  });
+});
