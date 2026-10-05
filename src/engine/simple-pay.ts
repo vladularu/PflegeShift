@@ -1,3 +1,8 @@
+import {
+  calculateTvalPflegeAssessment,
+  calculateTvalPflegeProfileMonth,
+  calculateTvalPflegeProfileShift,
+} from "./simple-tval-pflege-profile-pay";
 import { createSimpleMonthlyPayCache } from "./simple-monthly-pay-cache";
 import {
   calculateTvhKrAssessment,
@@ -454,6 +459,8 @@ export function calculateShiftPremiumBreakdown(
   ruleResolver: RuleResolver = bundledRuleResolver,
   tvlSaturdayShiftWork = false,
 ): ShiftPremiumBreakdown {
+  if (profile.tvalPflegeTariff)
+    return calculateTvalPflegeProfileShift(shift, profile, ruleResolver, tvlSaturdayShiftWork);
   if (profile.tvhKrTariff)
     return calculateTvhKrProfileShift(shift, profile, ruleResolver, tvlSaturdayShiftWork);
   if (profile.tvUkNursingTariff)
@@ -516,6 +523,16 @@ function calculateMonthlyPayEstimateUncached(
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyPayEstimate {
+  if (profile.tvalPflegeTariff)
+    return calculateTvalPflegeProfileMonth(
+      month,
+      shifts,
+      profile,
+      decision,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+    );
   if (profile.tvhKrTariff)
     return calculateTvhKrProfileMonth(
       month,
@@ -682,8 +699,16 @@ export function calculateMonthlyTvoedAssessment(
     | "tvlKrTariff"
     | "tvUkNursingTariff"
     | "tvhKrTariff"
+    | "tvalPflegeTariff"
   >,
 ): MonthlyTvoedAssessmentResult {
+  if (profile?.tvalPflegeTariff)
+    return calculateTvalPflegeAssessment(
+      month,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+    );
   if (profile?.tvhKrTariff)
     return calculateTvhKrAssessment(month, assessmentShifts, workPatternSettings, profile.timeZone);
   if (profile?.tvUkNursingTariff) return calculateTvUkNursingAssessment(month, assessmentShifts);

@@ -173,10 +173,11 @@ const profiles: readonly [string, UserProfile][] = [
   ["TV-L", { ...work, tvlKrTariff: { payGroup: "KR8", payLevel: 4, universityRegion: "WEST" } }],
   ["TV-UK", { ...work, tvUkNursingTariff: { payGroup: "PUK8", payLevel: 4 } }],
   ["TV-H", tvh],
+  ["TVA-L Pflege", { ...work, tvalPflegeTariff: { trainingYear: 1, universityRegion: "WEST" } }],
   ["manual", { ...work, manualMonthlyGrossCents: 12345 }],
 ];
 describe("shared pay entry point", () => {
-  it.each(profiles.filter(([name]) => ["TV-L", "TV-UK", "TV-H"].includes(name)))(
+  it.each(profiles.filter(([name]) => ["TV-L", "TV-UK", "TV-H", "TVA-L Pflege"].includes(name)))(
     "reuses the real overview result when opening %s salary details",
     (_name, profile) => {
       const shifts = [

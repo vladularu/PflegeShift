@@ -63,7 +63,7 @@ export function calculateMonthlyAnalysis(
         ? selectTvhKrAssessmentShifts(entries, month)
         : profile.tvUkNursingTariff
           ? selectTvUkAssessmentShifts(entries, month)
-          : profile.tvlKrTariff
+          : profile.tvlKrTariff || profile.tvalPflegeTariff
             ? selectTvlKrAssessmentShifts(entries, month)
             : profile.vkaETariff
               ? selectVkaEAssessmentShifts(entries, month)

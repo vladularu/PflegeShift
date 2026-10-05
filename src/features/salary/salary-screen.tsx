@@ -90,7 +90,7 @@ export function SalaryScreen() {
         ? selectTvhKrAssessmentShifts(entries, month)
         : profile.tvUkNursingTariff
           ? selectTvUkAssessmentShifts(entries, month)
-          : profile.tvlKrTariff
+          : profile.tvlKrTariff || profile.tvalPflegeTariff
             ? selectTvlKrAssessmentShifts(entries, month)
             : profile.vkaETariff
               ? selectVkaEAssessmentShifts(entries, month)
@@ -154,6 +154,7 @@ export function SalaryScreen() {
     profile.tvlKrTariff != null ||
     profile.tvUkNursingTariff != null ||
     profile.tvhKrTariff != null ||
+    profile.tvalPflegeTariff != null ||
     manualSalary;
 
   function moveMonth(delta: number) {
@@ -168,28 +169,33 @@ export function SalaryScreen() {
 
   const salaryProfileLabel = manualSalary
     ? "Manuell hinterlegt"
-    : profile.tvhKrTariff
-      ? `TV-H ${profile.tvhKrTariff.payGroup} · Stufe ${profile.tvhKrTariff.payLevel}`
-      : profile.tvUkNursingTariff
-        ? "TV-UK " +
-          profile.tvUkNursingTariff.payGroup.replace("PUK", "P-UK") +
-          " · Stufe " +
-          profile.tvUkNursingTariff.payLevel
-        : profile.tvlKrTariff
-          ? `TV-L ${profile.tvlKrTariff.payGroup} · Stufe ${profile.tvlKrTariff.payLevel}`
-          : profile.vkaETariff
-            ? `TVöD ${profile.vkaETariff.payGroup} · Stufe ${profile.vkaETariff.payLevel}`
-            : profile.nursingTrainingTariff
-              ? `TVAöD Pflege · ${profile.nursingTrainingTariff.trainingYear}. Ausbildungsjahr`
-              : profile.tariff
-                ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
-                : null;
+    : profile.tvalPflegeTariff
+      ? `TVA-L Pflege · ${profile.tvalPflegeTariff.trainingYear}. Ausbildungsjahr`
+      : profile.tvhKrTariff
+        ? `TV-H ${profile.tvhKrTariff.payGroup} · Stufe ${profile.tvhKrTariff.payLevel}`
+        : profile.tvUkNursingTariff
+          ? "TV-UK " +
+            profile.tvUkNursingTariff.payGroup.replace("PUK", "P-UK") +
+            " · Stufe " +
+            profile.tvUkNursingTariff.payLevel
+          : profile.tvlKrTariff
+            ? `TV-L ${profile.tvlKrTariff.payGroup} · Stufe ${profile.tvlKrTariff.payLevel}`
+            : profile.vkaETariff
+              ? `TVöD ${profile.vkaETariff.payGroup} · Stufe ${profile.vkaETariff.payLevel}`
+              : profile.nursingTrainingTariff
+                ? `TVAöD Pflege · ${profile.nursingTrainingTariff.trainingYear}. Ausbildungsjahr`
+                : profile.tariff
+                  ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
+                  : null;
   const compositionRows = manualSalary
     ? [{ key: "base", label: "Monatsbrutto", value: euro(pay.personalBaseAmount) }]
     : [
         {
           key: "base",
-          label: profile.nursingTrainingTariff ? "Ausbildungsentgelt" : "Grundentgelt",
+          label:
+            profile.nursingTrainingTariff || profile.tvalPflegeTariff
+              ? "Ausbildungsentgelt"
+              : "Grundentgelt",
           value: euro(pay.personalBaseAmount),
         },
         {

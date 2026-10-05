@@ -50,7 +50,7 @@ export function PremiumDetailsScreen() {
         ? selectTvhKrAssessmentShifts(entries, month)
         : profile.tvUkNursingTariff
           ? selectTvUkAssessmentShifts(entries, month)
-          : profile.tvlKrTariff
+          : profile.tvlKrTariff || profile.tvalPflegeTariff
             ? selectTvlKrAssessmentShifts(entries, month)
             : profile.vkaETariff
               ? selectVkaEAssessmentShifts(entries, month)
@@ -124,7 +124,8 @@ export function PremiumDetailsScreen() {
     profile.vkaETariff == null &&
     profile.tvlKrTariff == null &&
     profile.tvUkNursingTariff == null &&
-    profile.tvhKrTariff == null
+    profile.tvhKrTariff == null &&
+    profile.tvalPflegeTariff == null
   )
     return (
       <ReportScrollView>

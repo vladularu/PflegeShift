@@ -36,3 +36,11 @@ Am 05.10.2026: 386 gezielte Tests (60 TVA-L-Fälle und 326 bestehende TV-L-Fäll
 - Arbeitszeitbearbeitung und Neustart erhalten die Auswahl. Backup/Restore nimmt sie auf, aeltere Backups entfernen spaeter gespeicherte TVA-L-Angaben.
 - Keine native Aenderung, neue DB-Migration, Geburtsdatum oder datierte Verguetungshistorie.
 - Gesamte Datenbanksuite: 943 Tests in 77 Dateien gruen, einschliesslich Fehler-Rollback und widerspruechlicher Backups.
+
+## Auswertung
+
+- Einfache Monats- und Jahresauswertung liefern TVA-L als Tarifgehalt, mit Ausbildungsentgelt und gruppierten Zeitzuschlaegen.
+- Zulagenmuster nutzt die TV-L-Definitionen des laufenden Monats; TVA-L-eigene 75-Prozent-Saetze bleiben im Rechenkern.
+- Keine Beschaeftigten-Pflegezulage, TVoeD-Zulage oder TVAOeD-Nacht-Untergrenze.
+- Der gemeinsame Monatscache wird auch beim Wechsel von Auswertung zu Gehalt wiederverwendet.
+- 50 gezielte Adapter-, Jahres-, Muster- und Cachepruefungen gruen; Jahresbasis 2026 im 1. Ausbildungsjahr 17.108,40 Euro.
