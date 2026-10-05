@@ -1,3 +1,8 @@
+import {
+  calculateNursingTrainingMonth,
+  calculateNursingTrainingShift,
+  calculateNursingTrainingAssessment,
+} from "./simple-nursing-training-pay";
 // Restored Build-31 calculator. Dated tariff engines remain separate.
 import { Temporal } from "@js-temporal/polyfill";
 
@@ -427,6 +432,8 @@ export function calculateShiftPremiumBreakdown(
   profile: UserProfile,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): ShiftPremiumBreakdown {
+  if (profile.nursingTrainingTariff)
+    return calculateNursingTrainingShift(shift, profile, ruleResolver);
   const key = premiumCacheKey(shift, profile);
   const cachedByResolver = SHIFT_PREMIUM_CACHE.get(shift);
   const cachedByInput = cachedByResolver?.get(ruleResolver);
@@ -454,6 +461,16 @@ export function calculateMonthlyPayEstimate(
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyPayEstimate {
+  if (profile.nursingTrainingTariff)
+    return calculateNursingTrainingMonth(
+      month,
+      shifts,
+      profile,
+      decision,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+    );
   if (profile.tariff === null && profile.manualMonthlyGrossCents != null) {
     return createManualMonthlyPayEstimate(month, profile.manualMonthlyGrossCents);
   }
@@ -569,8 +586,16 @@ export function calculateMonthlyTvoedAssessment(
   assessmentShifts: readonly ShiftEntry[],
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
-  profile?: Pick<UserProfile, "tariff" | "timeZone">,
+  profile?: Pick<UserProfile, "tariff" | "timeZone" | "nursingTrainingTariff">,
 ): MonthlyTvoedAssessmentResult {
+  if (profile?.nursingTrainingTariff)
+    return calculateNursingTrainingAssessment(
+      month,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+      profile,
+    );
   const first = Temporal.PlainDate.from(`${month}-01`);
   const dateKey = first.toString();
   const rulePackage = getTariffRulePackage(dateKey, ruleResolver);

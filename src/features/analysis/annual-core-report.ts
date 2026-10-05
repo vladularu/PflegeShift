@@ -1,3 +1,4 @@
+import { selectNursingTrainingAssessmentShifts } from "@/engine/simple-nursing-training-pay";
 import type {
   CalendarEntry,
   MonthlyComplianceResult,
@@ -321,9 +322,11 @@ function* calculateAvailableMonth(
 
   // Legacy callers remain supported until their UI hooks supply the dated snapshot.
   const allowanceShifts = captureRuleValue(() =>
-    profile.tariff === null
-      ? monthlyEntries.monthShifts
-      : selectAllowanceShifts(entries, month, ruleResolver),
+    profile.nursingTrainingTariff
+      ? selectNursingTrainingAssessmentShifts(entries, month)
+      : profile.tariff === null
+        ? monthlyEntries.monthShifts
+        : selectAllowanceShifts(entries, month, ruleResolver),
   );
   const payKey = annualInputKey([
     monthlyEntries.monthShifts,
@@ -458,7 +461,9 @@ export function* buildAnnualAvailableReportSteps(
         complianceComplete: compliance !== null && compliance.trainingComplete !== false,
         trainingTimeDays: compliance?.trainingTimeDays ?? [],
         timePremiumAmount:
-          payAvailable && profile.tariff !== null ? available.pay!.timePremiumAmount : null,
+          payAvailable && (profile.tariff !== null || profile.nursingTrainingTariff != null)
+            ? available.pay!.timePremiumAmount
+            : null,
         targetMinutes: available.summary?.targetMinutes ?? null,
         actualMinutes: available.summary?.actualMinutes ?? coreMonth.actualMinutes,
         balanceMinutes: available.summary?.balanceMinutes ?? null,
@@ -491,7 +496,7 @@ export function* buildAnnualAvailableReportSteps(
       ? combineShiftTypeAnalyses(shiftAnalyses)
       : core.shiftTypeAnalysis,
     salarySource:
-      profile.tariff !== null
+      profile.tariff !== null || profile.nursingTrainingTariff != null
         ? ("TARIFF" as const)
         : profile.manualMonthlyGrossCents != null
           ? ("MANUAL" as const)

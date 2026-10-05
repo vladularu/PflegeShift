@@ -1,3 +1,4 @@
+import { selectNursingTrainingAssessmentShifts } from "@/engine/simple-nursing-training-pay";
 import type {
   CalendarEntry,
   MonthlyPayEstimate,
@@ -54,8 +55,9 @@ export function calculateMonthlyAnalysis(
     complianceShifts,
     monthShifts: monthlyEntries.monthShifts,
     pay: captureRuleComputation(() => {
-      const allowanceShifts =
-        profile.tariff === null
+      const allowanceShifts = profile.nursingTrainingTariff
+        ? selectNursingTrainingAssessmentShifts(entries, month)
+        : profile.tariff === null
           ? monthlyEntries.monthShifts
           : selectAllowanceShifts(entries, month, ruleResolver);
       return calculateMonthlyPayEstimate(
