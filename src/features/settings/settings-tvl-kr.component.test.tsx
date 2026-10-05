@@ -1,11 +1,11 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { UserProfile } from "@/domain/types";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { act, fireEvent, render, within } from "@testing-library/react-native";
-import { ActionSheetIOS } from "react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SettingsEditorScreen } from "./settings-editor-screen";
+import { selectSettingsChoice as select } from "./settings-choice-test-helpers";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const mockUpdateProfile = jest.fn<() => Promise<void>>();
@@ -66,26 +66,6 @@ function editor() {
       <SettingsEditorScreen />
     </SafeAreaProvider>
   );
-}
-type Screen = Awaited<ReturnType<typeof render>>;
-async function select(screen: Screen, field: string, option: string) {
-  const picker = jest
-    .spyOn(ActionSheetIOS, "showActionSheetWithOptions")
-    .mockImplementation(() => {});
-  await fireEvent.press(screen.getByRole("button", { name: new RegExp(`^${field}:`) }));
-  if (field === "Berechnung") {
-    const dialog = within(screen.getByTestId("dropdown-modal-content"));
-    const choices = dialog
-      .getAllByRole("button")
-      .map((button) => button.props.accessibilityLabel as string)
-      .filter((label) => label !== "Auswahl abbrechen");
-    await fireEvent.press(dialog.getByRole("button", { name: option }));
-    return choices;
-  }
-  const [options, callback] = picker.mock.calls[picker.mock.calls.length - 1];
-  expect(options.options).toContain(option);
-  await act(() => callback(options.options.indexOf(option)));
-  return options.options;
 }
 
 const tvl = { payGroup: "KR8" as const, payLevel: 4 as const, universityRegion: "WEST" as const };
