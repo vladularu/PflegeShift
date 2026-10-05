@@ -22,7 +22,14 @@ export function resolveSalaryUpdate(
   if (salaryMode === "UNSET") {
     return { tariff: currentTariff, manualMonthlyGrossCents: currentManualMonthlyGrossCents };
   }
-  if (salaryMode === "TVAOED_PFLEGE") return { tariff: null, manualMonthlyGrossCents: null };
+  if (
+    salaryMode === "TVAOED_PFLEGE" ||
+    salaryMode === "TVOED_E" ||
+    salaryMode === "TVL_KR" ||
+    salaryMode === "TVUK_NURSING" ||
+    salaryMode === "TVH_KR"
+  )
+    return { tariff: null, manualMonthlyGrossCents: null };
   return salaryMode === "MANUAL"
     ? { tariff: null, manualMonthlyGrossCents }
     : { tariff: tariffDraft, manualMonthlyGrossCents: null };

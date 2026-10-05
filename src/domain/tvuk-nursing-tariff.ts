@@ -1,5 +1,7 @@
 import { UserFacingError } from "./errors";
 
+export const TVUK_NURSING_PREFERENCE_KEY = "salary_tvuk_nursing";
+
 export const TVUK_NURSING_GROUPS = [
   "PUK5",
   "PUK6",

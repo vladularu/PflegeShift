@@ -33,7 +33,15 @@ export function PremiumBreakdownList({
         emphasis="metric"
         title={formatEuro(pay.timePremiumAmount)}
         period={formatMonthTitle(pay.month)}
-        caption="Zeitzuschläge im gesamten Monat"
+        caption={
+          (pay.nightCompensatoryMinutes ?? 0) > 0
+            ? "Geldzuschläge im gesamten Monat. Zusätzlich " +
+              new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(
+                pay.nightCompensatoryMinutes!,
+              ) +
+              " Min. Freizeitausgleich für Nachtarbeit."
+            : "Zeitzuschläge im gesamten Monat"
+        }
       />
       {data.categories.length === 0 ? (
         <SurfaceCard>
@@ -171,7 +179,9 @@ export function PremiumBreakdownList({
                             style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
                           >
                             Berücksichtigte Zeit: {formatMinutes(line.minutes)} h{"\n"}
-                            {line.percentage} % · Stundenbasis {formatEuro(line.hourlyRate)}/h
+                            {line.ruleId === "tvl-saturday-fixed"
+                              ? `Fester Zuschlag ${formatEuro(line.hourlyRate)}/h`
+                              : `${line.percentage} % · Stundenbasis ${formatEuro(line.hourlyRate)}/h`}
                           </Text>
                         </View>
                         <Text

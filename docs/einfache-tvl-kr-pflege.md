@@ -37,3 +37,41 @@ Die vier Quellpakete behalten DRAFT und ihre Quellen-/Reviewmetadaten. Der lokal
 ## Prüfung dieses Rechenpakets
 
 Am 05.10.2026 bestanden: 326 gezielte TV-L-Prüffälle und `npm.cmd run verify:fast` (6.151 Unit-, 562 Komponententests sowie Vertrags-, Format-, Typ-, Lint- und Skriptprüfungen). Es sind genau die fünf oben beschriebenen neuen Dateien betroffen. Der Rechenkern ist noch nicht mit der App verbunden. Geräteabnahme folgt mit der App-Anbindung.
+
+## Paket 2: Auswahl speichern
+
+Scope: neun Dateien (dieser Beleg, domain/types.ts, domain/validation.ts, domain/tvl-kr-tariff.ts, database/simple-salary-profile.ts, database/simple-app-profile.ts, database/preferences-repository.ts, database/local-backup-validation.ts und neuer database/tvl-kr-profile.test.ts). Gruppe und Stufe werden als optionale lokale Gehaltsgrundlage gespeichert. Genau eine Grundlage ist erlaubt. Profiländerung und Tarifwechsel bleiben atomar; Neustart, Backup/Restore und ältere Backups sind Abnahmekriterien. Keine neue Datenbankspalte oder native Migration. Noch keine UI-Anbindung.
+
+Der Anbindungsbranch wurde von aktuellem master angelegt und enthält lokal die bereits freigegebenen E-/Azubi-Änderungen sowie den separaten TV-L-Rechenkern als Abhängigkeiten. PR #266 bleibt bis zur Geräteabnahme offen. Diese lokale Zusammenführung ist kein Merge nach master.
+
+TV-L besitzt unterschiedliche West-/Ost-Vollzeitbasen. Das bestehende Tarifgebiet-Feld erhält dafür die verständlichen Werte West/Ost; keine zusätzliche Einstellungsseite. Das Gebiet wird ausdrücklich gespeichert, damit die besondere Berliner Vertragssituation nicht blind aus der Geografie abgeleitet wird. Der reine Tabellenadapter behält Gruppe/Stufe und einen getrennten Gebietsparameter.
+
+Speicherprüfung: Typcheck und alle 844 Datenbanktests in 74 Dateien bestanden, einschließlich exklusiver Wechsel zwischen P/E/Azubi/manuell/TV-L, Ost-Gebiet im Backup, Rückkehr zu älterem Backup und Rollback bei Schreibfehler. Der gemeinsame aktuelle Pflichtcheck folgt vor der PR-Lieferung mit der App-Anbindung.
+
+## Paket 3: Einfachen Rechenweg anbinden
+
+Scope: fünf Dateien (dieser Beleg, engine/simple-tvl-kr-pay.ts, engine/simple-pay.ts und neuer engine/simple-tvl-kr-profile-pay.ts plus Test). Die vorhandene Monats- und Schichtzulagen-Schnittstelle erhält eine TV-L-Verzweigung. Das TV-L-Monatsmuster bleibt eine Schätzung; Beginnwechsel mindestens zwei Stunden und Betriebsspanne mindestens 13 Stunden werden zusätzlich geprüft. Explizite monatliche Zulagenentscheidung bleibt möglich. Samstags-Schichtbezug ergibt sich im Monatsweg aus dem Muster oder einer ausgewählten Schichtzulage. Der einzelne Dienstadapter benötigt diesen Zusammenhang ausdrücklich. Keine VKA-Satzübernahme. Der gemeinsame Pflichtcheck folgt vor PR-Lieferung.
+
+Adapterprüfung: 404 gezielte Fälle in fünf Dateien bestanden; P/E/Azubi bleiben im Vergleich grün.
+
+## Paket 4: Vertraute Auswertung
+
+Scope: zehn Dateien (dieser Beleg; analysis/monthly-analysis.ts, month-overview.tsx, premium-details-screen.tsx, premium-breakdown-list.tsx, annual-core-report.ts, tariff-assessment-screen.tsx, analysis-rule-coverage.component.test.tsx; salary/salary-screen.tsx; settings/settings-info-details-screen.tsx). TV-L erscheint in den bisherigen Monats-/Jahreskarten, der einfachen Zusammensetzung und gruppierten Dienstzuschlägen. Pflegezulage und fester Samstagszuschlag erhalten passende Beschriftung und Erklärung. Keine neuen Menüs oder historischen Eingabeflüsse. Nach Komponententests und gemeinsamem Pflichtcheck folgen PR-CI und echte iPhone-Abnahme.
+
+## Paket 5: Vorhandenes Gehaltsformular
+
+Scope: acht Dateien (dieser Beleg, settings/settings-form-values.ts samt Test, settings-editor-screen.tsx, profile-update.ts, work-profile-summary.ts, work-profile-screen.tsx und neuer settings-tvl-kr.component.test.tsx). Auswahl TV-L Pflege, KR5–KR17, gültige Stufe, Tarifgebiet West/Ost im bereits vorhandenen Feld. BT-K/BT-B und VKA-Gebiet sind für TV-L ausgeblendet. Vollzeit wird automatisch datiert eingesetzt. Abnahme: Speichern, Wiederöffnen, erlaubte Stufen, Moduswechsel, Ost-/West-Auswahl sowie anschließende reale iPhone-Abnahme.
+
+Paket 4 ergänzt im selben vorhandenen Informationsweg den optionalen Tarifparameter (navigation/routes.ts) und seinen bestehenden Informations-Komponententest. Damit zwölf Dateien; die TV-L-Pflegezulagenzeile öffnet eine TV-L-Erklärung. P behält seine vorhandene Erklärung.
+
+Paket 4 enthält außerdem den festen Jahresreferenzfall im bestehenden neuen Adaptertest; damit dreizehn Dateien. Die Jahressumme 2026 ohne Dienste beträgt für KR8/Stufe 4/West in Vollzeit 50.250,48 Euro aus zwölf Monatsgrundentgelten und Pflegezulagen; keine Jahressonderzahlung.
+
+## Gemeinsamer Abschluss der App-Anbindung
+
+Am 05.10.2026 bestand der gemeinsame `verify:fast`: 6.229 Unit-Tests in 381 Dateien, 594 Komponententests in 95 Dateien sowie Regelverträge, Typen, Lint, Format und alle Skriptprüfungen. Die vollständige Datenbanksuite umfasst 844 bestandene Tests; zusätzlich sind die 268 amtlichen Tabellenwerte unabhängig abgeglichen. `release:check` ist grün.
+
+Der reine Rechenkern wurde mit sieben erfolgreichen CI-Prüfungen als PR #267 nach master gemergt. Die UI-/Speicheranbindung wird separat geliefert und bleibt bis zur echten Geräteabnahme als Draft-PR offen; PR #266 ist ihre noch offene E-/Azubi-Abhängigkeit.
+
+Der am 05.10.2026 mit dem Preview-Buildprofil berechnete iOS-Fingerprint stimmt mit der installierten internen Preview Build 32 überein: `f2f4b99ba254b82ab22b99594d5228bd8c3774f7`. App-ID `com.pflegeshift.app.internal`, Kanal und Branch `preview`. Diese technische Kompatibilität ersetzt nicht den iPhone-Test.
+
+Geräteabnahme: TV-L Pflege wählen, West/Ost und KR-Gruppe/Stufe speichern, Gehalt sowie gruppierte Zeitzuschläge und Jahresansicht öffnen, anschließend Neustart und Auswahl prüfen. E-/Azubi-Auswahl bleibt ebenfalls zu prüfen, insbesondere das ausgeblendete Tarifgebiet bei TVAöD + Pflegeeinrichtung. Erst nach Geräteabnahme und grüner PR-CI wird die UI gemergt. TV-UK und TV-H folgen als eigene Pakete.

@@ -162,6 +162,37 @@ describe("simple TVAöD nursing salary", () => {
     );
     expect(pay.allowanceAmount).toBe(amount);
   });
+  it.each(["2025-06", "2026-04", "2026-07"])(
+    "has no trainee BT-B region difference across years and shift allowances in %s",
+    (month) => {
+      const shifts = [shift({ date: month + "-06" })];
+      for (const trainingYear of [1, 2, 3] as const) {
+        for (const status of [
+          "SHIFT_MONTHLY",
+          "ALTERNATING_MONTHLY",
+          "SHIFT_HOURLY",
+          "ALTERNATING_HOURLY",
+        ] as const) {
+          const run = (tariffRegion: "OTHER" | "KAV_BW") =>
+            calculateMonthlyPayEstimate(
+              month,
+              shifts,
+              {
+                ...profile,
+                weeklyMinutes: 1170,
+                nursingTrainingTariff: { trainingYear, sector: "BT_B", tariffRegion },
+              },
+              { ...decision(status), month },
+            );
+          const other = run("OTHER");
+          const bw = run("KAV_BW");
+          expect(other.available).toBe(true);
+          expect(other.allowanceAmount).toBeGreaterThan(0);
+          expect(bw).toEqual(other);
+        }
+      }
+    },
+  );
   it("uses the historical 75 percent shift rate before July 2025", () => {
     expect(
       calculateMonthlyPayEstimate("2025-06", [], profile, {

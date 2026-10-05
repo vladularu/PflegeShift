@@ -144,6 +144,54 @@ describe("simple nursing training salary form", () => {
       }),
     );
   });
+  it.each(["OTHER", "KAV_BW"] as const)(
+    "hides the trainee BT-B region %s and retains it when returning to BT-K",
+    async (tariffRegion) => {
+      const saved = { ...trainee, sector: "BT_B" as const, tariffRegion };
+      mockProfile = { ...baseProfile, nursingTrainingTariff: saved };
+      const screen = await render(editor());
+      expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Ausbildungsjahr: 2. Ausbildungsjahr" }),
+      ).toBeTruthy();
+      expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("39");
+      await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+      expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+        expect.objectContaining({ nursingTrainingTariff: saved }),
+      );
+      await select(screen, "Tarifbereich", "Krankenhaus · BT-K");
+      expect(screen.getByRole("button", { name: /^Tarifgebiet:/ })).toBeTruthy();
+      expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("38,5");
+      await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+      expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+        expect.objectContaining({ nursingTrainingTariff: { ...saved, sector: "BT_K" } }),
+      );
+      await select(screen, "Tarifbereich", "Pflege · BT-B");
+      expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    },
+  );
+  it("restores the saved BT-B region when changing a trainee to the P tariff", async () => {
+    mockProfile = {
+      ...baseProfile,
+      nursingTrainingTariff: { ...trainee, sector: "BT_B", tariffRegion: "KAV_BW" },
+    };
+    const screen = await render(editor());
+    expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    await select(screen, "Berechnung", "TVöD-P");
+    expect(screen.getByRole("button", { name: /^Tarifgebiet:/ })).toBeTruthy();
+    await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+    expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        nursingTrainingTariff: null,
+        tariff: expect.objectContaining({ sector: "BT_B", tariffRegion: "KAV_BW" }),
+      }),
+    );
+    await select(screen, "Berechnung", "TVAöD Pflege · Ausbildung");
+    expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Ausbildungsjahr: 2. Ausbildungsjahr" }),
+    ).toBeTruthy();
+  });
   it("returns to the original employee fields and clears the training choice", async () => {
     const screen = await render(editor());
     await select(screen, "Berechnung", "TVöD-P");

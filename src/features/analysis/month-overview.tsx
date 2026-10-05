@@ -33,10 +33,18 @@ export function MonthOverview({
   const manualSalary =
     profile.tariff === null &&
     profile.nursingTrainingTariff == null &&
+    profile.vkaETariff == null &&
+    profile.tvlKrTariff == null &&
+    profile.tvUkNursingTariff == null &&
+    profile.tvhKrTariff == null &&
     profile.manualMonthlyGrossCents != null;
   const salaryReady =
     profile.tariff !== null ||
     profile.nursingTrainingTariff != null ||
+    profile.vkaETariff != null ||
+    profile.tvlKrTariff != null ||
+    profile.tvUkNursingTariff != null ||
+    profile.tvhKrTariff != null ||
     profile.manualMonthlyGrossCents != null;
   const estimate = pay.ok && pay.value.available ? pay.value : null;
   return (

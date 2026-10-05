@@ -1,3 +1,24 @@
+import { createSimpleMonthlyPayCache } from "./simple-monthly-pay-cache";
+import {
+  calculateTvhKrAssessment,
+  calculateTvhKrProfileMonth,
+  calculateTvhKrProfileShift,
+} from "./simple-tvh-kr-profile-pay";
+import {
+  calculateTvUkNursingAssessment,
+  calculateTvUkNursingProfileMonth,
+  calculateTvUkNursingProfileShift,
+} from "./simple-tvuk-nursing-profile-pay";
+import {
+  calculateTvlKrAssessment,
+  calculateTvlKrProfileMonth,
+  calculateTvlKrProfileShift,
+} from "./simple-tvl-kr-profile-pay";
+import {
+  calculateVkaEShift,
+  calculateVkaEMonth,
+  calculateVkaEAssessment,
+} from "./simple-vka-e-pay";
 import {
   calculateNursingTrainingMonth,
   calculateNursingTrainingShift,
@@ -431,7 +452,15 @@ export function calculateShiftPremiumBreakdown(
   shift: ShiftEntry,
   profile: UserProfile,
   ruleResolver: RuleResolver = bundledRuleResolver,
+  tvlSaturdayShiftWork = false,
 ): ShiftPremiumBreakdown {
+  if (profile.tvhKrTariff)
+    return calculateTvhKrProfileShift(shift, profile, ruleResolver, tvlSaturdayShiftWork);
+  if (profile.tvUkNursingTariff)
+    return calculateTvUkNursingProfileShift(shift, profile, ruleResolver, tvlSaturdayShiftWork);
+  if (profile.tvlKrTariff)
+    return calculateTvlKrProfileShift(shift, profile, ruleResolver, tvlSaturdayShiftWork);
+  if (profile.vkaETariff) return calculateVkaEShift(shift, profile, ruleResolver);
   if (profile.nursingTrainingTariff)
     return calculateNursingTrainingShift(shift, profile, ruleResolver);
   const key = premiumCacheKey(shift, profile);
@@ -452,6 +481,8 @@ export function calculateShiftPremiumBreakdown(
   return result;
 }
 
+const cachedMonthlyPay = createSimpleMonthlyPayCache();
+
 export function calculateMonthlyPayEstimate(
   month: string,
   shifts: readonly ShiftEntry[],
@@ -461,6 +492,62 @@ export function calculateMonthlyPayEstimate(
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyPayEstimate {
+  return cachedMonthlyPay(
+    { month, shifts, profile, decision, assessmentShifts, workPatternSettings, ruleResolver },
+    () =>
+      calculateMonthlyPayEstimateUncached(
+        month,
+        shifts,
+        profile,
+        decision,
+        assessmentShifts,
+        workPatternSettings,
+        ruleResolver,
+      ),
+  );
+}
+
+function calculateMonthlyPayEstimateUncached(
+  month: string,
+  shifts: readonly ShiftEntry[],
+  profile: UserProfile,
+  decision: MonthlyTariffDecision | null,
+  assessmentShifts: readonly ShiftEntry[] = shifts,
+  workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
+  ruleResolver: RuleResolver = bundledRuleResolver,
+): MonthlyPayEstimate {
+  if (profile.tvhKrTariff)
+    return calculateTvhKrProfileMonth(
+      month,
+      shifts,
+      profile,
+      decision,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+    );
+  if (profile.tvUkNursingTariff)
+    return calculateTvUkNursingProfileMonth(month, shifts, profile, assessmentShifts, ruleResolver);
+  if (profile.tvlKrTariff)
+    return calculateTvlKrProfileMonth(
+      month,
+      shifts,
+      profile,
+      decision,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+    );
+  if (profile.vkaETariff)
+    return calculateVkaEMonth(
+      month,
+      shifts,
+      profile,
+      decision,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+    );
   if (profile.nursingTrainingTariff)
     return calculateNursingTrainingMonth(
       month,
@@ -586,8 +673,30 @@ export function calculateMonthlyTvoedAssessment(
   assessmentShifts: readonly ShiftEntry[],
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
-  profile?: Pick<UserProfile, "tariff" | "timeZone" | "nursingTrainingTariff">,
+  profile?: Pick<
+    UserProfile,
+    | "tariff"
+    | "timeZone"
+    | "nursingTrainingTariff"
+    | "vkaETariff"
+    | "tvlKrTariff"
+    | "tvUkNursingTariff"
+    | "tvhKrTariff"
+  >,
 ): MonthlyTvoedAssessmentResult {
+  if (profile?.tvhKrTariff)
+    return calculateTvhKrAssessment(month, assessmentShifts, workPatternSettings, profile.timeZone);
+  if (profile?.tvUkNursingTariff) return calculateTvUkNursingAssessment(month, assessmentShifts);
+  if (profile?.tvlKrTariff)
+    return calculateTvlKrAssessment(month, assessmentShifts, workPatternSettings, ruleResolver);
+  if (profile?.vkaETariff)
+    return calculateVkaEAssessment(
+      month,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+      profile,
+    );
   if (profile?.nursingTrainingTariff)
     return calculateNursingTrainingAssessment(
       month,

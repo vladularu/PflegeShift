@@ -32,4 +32,22 @@ Pflegezulage §43 Nr5a: nurKR5–12,138,04€ ab08/2025,142,22€ ab07/2026 (3,0
 
 Schicht/Wechselschicht §8(7)/(8): bis09/2026 monatlich40€/105€ oder stündlich0,24€/0,63€; ab01.10.2026 monatlich100€/200€ oder stündlich0,60€/1,19€ (Einigung AbschnittII). Monatliche Zulagen werden anteilig mit Vertragsstunden berechnet; stündliche folgen Arbeitsminuten und datierter Grenze.
 
-Stand dieses ersten Pakets: reine lokale Berechnung; noch keine App-Anbindung, keine OTA.
+Die reine Berechnung ist mit PR #272 nach sieben erfolgreichen CI-Prüfungen gemergt. Die App-Anbindung wird als eigener visueller PR geliefert; ihre Freigabe nach master wartet auf die iPhone-Abnahme.
+
+## App-Paket A: Speicherung
+
+Dateiscope (9 Dateien inklusive dieses Belegs): domain/tvh-kr-tariff.ts, domain/types.ts, domain/validation.ts, database/simple-salary-profile.ts, database/simple-app-profile.ts, database/preferences-repository.ts, database/local-backup-validation.ts, database/tvh-kr-profile.test.ts. Eigene validierte Preference mit exklusiver Gehaltsgrundlage, keine Schemaänderung. Backup, Wiederherstellung und atomarer Wechsel aus allen bestehenden Gehaltsarten werden geprüft.
+
+## App-Paket B: Auswertung
+
+Dateiscope (11 Dateien): engine/simple-pay.ts, engine/simple-tvh-kr-profile-pay.ts und Test; analysis/annual-core-report.ts, month-overview.tsx, monthly-analysis.ts, premium-details-screen.tsx, tariff-assessment-screen.tsx und analysis-rule-coverage.component.test.tsx; salary/salary-screen.tsx sowie dieser Beleg. Die bisherigen Karten, Gruppierung und optionalen Zulagenangaben bleiben der Nutzerfluss. TV-H-Muster benutzt die eigenen Definitionen (§7: mindestens2 Stunden Nachtarbeit, erneute Nacht spätestens nach einem Monat; Schichtbeginnwechsel mindestens2 Stunden und13 Stunden Spanne). Rund-um-die-Uhr-Betrieb und dauerhafte Zuordnung bleiben ausdrücklich vorhandene Zusatzangaben.
+
+## App-Paket C: vorhandenes Formular
+
+Dateiscope (10 Dateien): settings/settings-editor-screen.tsx, settings-form-values.ts und Test, profile-update.ts, work-profile-summary.ts, settings-info-details-screen.tsx und Test, settings-tvh-kr.component.test.tsx, navigation/routes.ts sowie dieser Beleg. TV-H hat eigene Gruppe/Stufe und den bereits vertrauten Vollzeitwert38,5/40; keine TVöD-Bereiche/-Regionen, kein Datum und kein Geburtsdatum. Tarifwechsel erhalten ihre jeweils eigenen Auswahlwerte.
+
+## Verifikation der App-Anbindung
+
+`verify:fast` ist am 05.10.2026 vollständig grün: 7.379 Unit-Tests und alle Komponententests sowie die Skriptprüfungen. Gezielt zusätzlich 1.608 Berechnungs-/Formwert-/Datenbanktests und 71 Komponententests bestanden. Die gespeicherte Auswahl wird exklusiv erhalten; 1a/1b und Wiederherstellung sind geprüft.
+
+Interne iOS-Konfiguration: `com.pflegeshift.app.internal`, Runtime `f2f4b99ba254b82ab22b99594d5228bd8c3774f7`, identisch zur installierten Preview Build 32. App-PR und kompatible Preview-OTA sind autorisiert; iPhone-Abnahme bleibt offen. Keine native Änderung.

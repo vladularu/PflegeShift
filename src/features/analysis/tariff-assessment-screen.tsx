@@ -1,3 +1,6 @@
+import { selectTvhKrAssessmentShifts } from "@/engine/simple-tvh-kr-profile-pay";
+import { selectTvlKrAssessmentShifts } from "@/engine/simple-tvl-kr-profile-pay";
+import { selectVkaEAssessmentShifts } from "@/engine/simple-vka-e-pay";
 import { selectNursingTrainingAssessmentShifts } from "@/engine/simple-nursing-training-pay";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -129,9 +132,15 @@ function TariffAssessmentForm({
     void ruleRetryRevision;
     return captureRuleComputation(() => {
       const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts = profile?.nursingTrainingTariff
-        ? selectNursingTrainingAssessmentShifts(entries, month)
-        : selectAllowanceShifts(entries, month, ruleResolver);
+      const allowanceShifts = profile?.tvhKrTariff
+        ? selectTvhKrAssessmentShifts(entries, month)
+        : profile?.tvlKrTariff
+          ? selectTvlKrAssessmentShifts(entries, month)
+          : profile?.vkaETariff
+            ? selectVkaEAssessmentShifts(entries, month)
+            : profile?.nursingTrainingTariff
+              ? selectNursingTrainingAssessmentShifts(entries, month)
+              : selectAllowanceShifts(entries, month, ruleResolver);
       return calculateMonthlyTvoedAssessment(
         month,
         monthlyEntries.monthShifts,

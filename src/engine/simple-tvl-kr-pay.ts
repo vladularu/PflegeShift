@@ -44,7 +44,7 @@ const active = (
   item: { readonly validFrom: string; readonly validTo: string | null },
 ) => item.validFrom <= date && (item.validTo === null || date <= item.validTo);
 
-function packageAt(date: string): RuleTariffPackage | null {
+export function getTvlKrRulePackage(date: string): RuleTariffPackage | null {
   const key = Temporal.PlainDate.from(date).toString();
   return packages.find((p) => active(key, p)) ?? null;
 }
@@ -54,7 +54,7 @@ export function getTvlKrUniversityFullTimeMinutes(
   region: TvlKrUniversityRegion,
 ): number | null {
   if (region !== "WEST" && region !== "EAST") return null;
-  const pkg = packageAt(date);
+  const pkg = getTvlKrRulePackage(date);
   const regionId = region === "WEST" ? "WEST_38_5" : "EAST_UNIVERSITY_HOSPITAL";
   const rules = pkg?.rules.employmentWorkingTimeRules?.filter(
     (r) => r.variantId === "SECTION_43" && r.regionId === regionId && active(date, r),
@@ -69,7 +69,7 @@ function context(
   weeklyMinutes: number,
 ) {
   const selected = requireTvlKrTariff(selection);
-  const pkg = packageAt(date);
+  const pkg = getTvlKrRulePackage(date);
   const fullTime = getTvlKrUniversityFullTimeMinutes(date, region);
   if (
     !selected ||

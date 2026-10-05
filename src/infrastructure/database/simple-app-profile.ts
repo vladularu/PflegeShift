@@ -17,7 +17,14 @@ export async function projectStoredSimpleProfile(
   date?: string,
 ): Promise<UserProfile | null> {
   if (profile === null) return null;
-  if (profile.nursingTrainingTariff) return profile;
+  if (
+    profile.nursingTrainingTariff ||
+    profile.vkaETariff ||
+    profile.tvlKrTariff ||
+    profile.tvUkNursingTariff ||
+    profile.tvhKrTariff
+  )
+    return profile;
   const selected = resolveRemunerationProfile(
     await listRemunerationProfiles(db),
     date ?? Temporal.Now.plainDateISO(profile.timeZone).toString(),
