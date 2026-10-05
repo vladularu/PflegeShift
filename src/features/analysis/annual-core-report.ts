@@ -1,3 +1,4 @@
+import { selectTvlKrAssessmentShifts } from "@/engine/simple-tvl-kr-profile-pay";
 import { selectVkaEAssessmentShifts } from "@/engine/simple-vka-e-pay";
 import { selectNursingTrainingAssessmentShifts } from "@/engine/simple-nursing-training-pay";
 import type {
@@ -323,13 +324,15 @@ function* calculateAvailableMonth(
 
   // Legacy callers remain supported until their UI hooks supply the dated snapshot.
   const allowanceShifts = captureRuleValue(() =>
-    profile.vkaETariff
-      ? selectVkaEAssessmentShifts(entries, month)
-      : profile.nursingTrainingTariff
-        ? selectNursingTrainingAssessmentShifts(entries, month)
-        : profile.tariff === null
-          ? monthlyEntries.monthShifts
-          : selectAllowanceShifts(entries, month, ruleResolver),
+    profile.tvlKrTariff
+      ? selectTvlKrAssessmentShifts(entries, month)
+      : profile.vkaETariff
+        ? selectVkaEAssessmentShifts(entries, month)
+        : profile.nursingTrainingTariff
+          ? selectNursingTrainingAssessmentShifts(entries, month)
+          : profile.tariff === null
+            ? monthlyEntries.monthShifts
+            : selectAllowanceShifts(entries, month, ruleResolver),
   );
   const payKey = annualInputKey([
     monthlyEntries.monthShifts,
@@ -467,7 +470,8 @@ export function* buildAnnualAvailableReportSteps(
           payAvailable &&
           (profile.tariff !== null ||
             profile.nursingTrainingTariff != null ||
-            profile.vkaETariff != null)
+            profile.vkaETariff != null ||
+            profile.tvlKrTariff != null)
             ? available.pay!.timePremiumAmount
             : null,
         targetMinutes: available.summary?.targetMinutes ?? null,
@@ -502,7 +506,10 @@ export function* buildAnnualAvailableReportSteps(
       ? combineShiftTypeAnalyses(shiftAnalyses)
       : core.shiftTypeAnalysis,
     salarySource:
-      profile.tariff !== null || profile.nursingTrainingTariff != null || profile.vkaETariff != null
+      profile.tariff !== null ||
+      profile.nursingTrainingTariff != null ||
+      profile.vkaETariff != null ||
+      profile.tvlKrTariff != null
         ? ("TARIFF" as const)
         : profile.manualMonthlyGrossCents != null
           ? ("MANUAL" as const)

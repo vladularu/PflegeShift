@@ -171,7 +171,9 @@ export function PremiumBreakdownList({
                             style={{ color: palette.textMuted, ...TYPOGRAPHY.caption }}
                           >
                             Berücksichtigte Zeit: {formatMinutes(line.minutes)} h{"\n"}
-                            {line.percentage} % · Stundenbasis {formatEuro(line.hourlyRate)}/h
+                            {line.ruleId === "tvl-saturday-fixed"
+                              ? `Fester Zuschlag ${formatEuro(line.hourlyRate)}/h`
+                              : `${line.percentage} % · Stundenbasis ${formatEuro(line.hourlyRate)}/h`}
                           </Text>
                         </View>
                         <Text

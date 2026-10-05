@@ -373,6 +373,56 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(screen.queryByText("0,00 €")).toBeNull();
   });
 
+  it("shows TV-L salary in the familiar overview without a manual caption", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvlKrTariff: { payGroup: "KR8", payLevel: 4, universityRegion: "WEST" },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 4\.052,74/)).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("navigates TV-L salary to grouped premiums and its own care-allowance explanation", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvlKrTariff: { payGroup: "KR8", payLevel: 4, universityRegion: "WEST" },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "tvl-night",
+        date: "2026-10-06",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+        breakMinutes: 60,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TV-L KR8 · Stufe 4")).toBeTruthy();
+    expect(salary.getByText(/36,67/)).toBeTruthy();
+    expect(salary.getByText("Pflegezulage TV-L")).toBeTruthy();
+    expect(salary.queryByText("Pflegezulage TVöD-P")).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Pflegezulage TV-L/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/info-details",
+      params: { section: "CARE_ALLOWANCE", tariff: "TVL" },
+    });
+    await fireEvent.press(salary.getByRole("button", { name: /Zeitzuschläge/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/premium-details",
+      params: { month: "2026-10" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/36,67/).length).toBeGreaterThan(0);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
   it("shows E salary composition in the familiar overview", async () => {
     mockRouteMonth = "2026-10";
     mockProfile = {

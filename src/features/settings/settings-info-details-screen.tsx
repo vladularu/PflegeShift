@@ -135,9 +135,29 @@ const INFO_CONTENT: Readonly<Record<SettingsInfoSection, InfoContent>> = {
   },
 };
 
+const TVL_CARE_INFO: InfoContent = {
+  title: "Pflegezulage TV-L",
+  intro: "Die allgemeine Pflegezulage für Pflegepersonen und Pflegehelfer an Universitätskliniken.",
+  items: [
+    {
+      title: "Automatische Höhe",
+      text: "Der im gewählten Monat gültige Vollzeitbetrag wird bei Teilzeit proportional zu deinen Wochenstunden und der tariflichen Vollzeit gerechnet.",
+    },
+    {
+      title: "Grundlage",
+      text: "TV-L Entgeltordnung Anlage A, Teil IV, Vorbemerkung Nr. 8 und Anlage F, Abschnitt IV Nr. 8. Besondere Funktions- oder Tätigkeitszulagen werden nicht automatisch angenommen.",
+    },
+    { title: "Quelle", text: "TdL: https://www.tdl-online.de/tarifvertraege/tv-l" },
+    {
+      title: "Schätzung",
+      text: "Der angezeigte Wert dient der Orientierung und ersetzt nicht die individuelle Entgeltabrechnung.",
+    },
+  ],
+};
+
 export function SettingsInfoDetailsScreen() {
   const palette = usePalette();
-  const params = useLocalSearchParams<{ section?: RouteParam }>();
+  const params = useLocalSearchParams<{ section?: RouteParam; tariff?: RouteParam }>();
   const parsedSection = parseEnumRouteParam(params.section, [
     "STORAGE",
     "CALCULATION",
@@ -145,7 +165,8 @@ export function SettingsInfoDetailsScreen() {
     "TVOED_ALLOWANCE",
     "CARE_ALLOWANCE",
   ] as const);
-  if (parsedSection.status !== "valid") {
+  const parsedTariff = parseEnumRouteParam(params.tariff, ["TVL"] as const);
+  if (parsedSection.status !== "valid" || parsedTariff.status === "invalid") {
     return (
       <LoadFailureView
         actionLabel="Schließen"
@@ -156,7 +177,10 @@ export function SettingsInfoDetailsScreen() {
     );
   }
   const section: SettingsInfoSection = parsedSection.value;
-  const content = INFO_CONTENT[section];
+  const content =
+    section === "CARE_ALLOWANCE" && parsedTariff.status === "valid"
+      ? TVL_CARE_INFO
+      : INFO_CONTENT[section];
 
   return (
     <ScrollView

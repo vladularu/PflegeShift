@@ -158,10 +158,10 @@ export function annualPaymentRoute(month: string) {
   });
 }
 
-export function settingsInfoRoute(section: SettingsInfoSection) {
+export function settingsInfoRoute(section: SettingsInfoSection, tariff?: "TVL") {
   return Object.freeze({
     pathname: "/info-details" as const,
-    params: Object.freeze({ section }),
+    params: Object.freeze({ section, ...(tariff ? { tariff } : {}) }),
   });
 }
 

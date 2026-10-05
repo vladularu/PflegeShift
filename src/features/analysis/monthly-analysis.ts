@@ -1,3 +1,4 @@
+import { selectTvlKrAssessmentShifts } from "@/engine/simple-tvl-kr-profile-pay";
 import { selectVkaEAssessmentShifts } from "@/engine/simple-vka-e-pay";
 import { selectNursingTrainingAssessmentShifts } from "@/engine/simple-nursing-training-pay";
 import type {
@@ -56,13 +57,15 @@ export function calculateMonthlyAnalysis(
     complianceShifts,
     monthShifts: monthlyEntries.monthShifts,
     pay: captureRuleComputation(() => {
-      const allowanceShifts = profile.vkaETariff
-        ? selectVkaEAssessmentShifts(entries, month)
-        : profile.nursingTrainingTariff
-          ? selectNursingTrainingAssessmentShifts(entries, month)
-          : profile.tariff === null
-            ? monthlyEntries.monthShifts
-            : selectAllowanceShifts(entries, month, ruleResolver);
+      const allowanceShifts = profile.tvlKrTariff
+        ? selectTvlKrAssessmentShifts(entries, month)
+        : profile.vkaETariff
+          ? selectVkaEAssessmentShifts(entries, month)
+          : profile.nursingTrainingTariff
+            ? selectNursingTrainingAssessmentShifts(entries, month)
+            : profile.tariff === null
+              ? monthlyEntries.monthShifts
+              : selectAllowanceShifts(entries, month, ruleResolver);
       return calculateMonthlyPayEstimate(
         month,
         monthlyEntries.monthShifts,

@@ -1,3 +1,5 @@
+import { buildAnnualAvailableReportSteps } from "@/features/analysis/annual-core-report";
+import { DEFAULT_TVOED_WORK_PATTERN_SETTINGS } from "./tvoed-pattern";
 import { describe, expect, it } from "vitest";
 import type {
   MonthlyTariffDecision,
@@ -74,6 +76,24 @@ const rotation = [
   shift({ date: "2026-07-16" }),
 ];
 describe("TV-L in the simple salary entry points", () => {
+  it("includes twelve independently valued TV-L months in the familiar annual report", () => {
+    const steps = buildAnnualAvailableReportSteps(
+      2026,
+      [],
+      profile,
+      [],
+      DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
+      "2026-10-05",
+      bundledRuleResolver,
+    );
+    let result = steps.next();
+    while (!result.done) result = steps.next();
+    expect(result.value.salarySource).toBe("TARIFF");
+    expect(result.value.availablePayMonthCount).toBe(12);
+    // Three months of 3942.35 + 159.06, nine months of 4052.74 + 163.51.
+    expect(result.value.estimatedGrossAmount).toBe(50250.48);
+    expect(result.value.months[4].timePremiumAmount).toBe(0);
+  });
   it("uses KR base and care allowance through the familiar monthly API", () => {
     const pay = calculateMonthlyPayEstimate("2026-07", [], profile, null);
     expect(pay.available).toBe(true);
