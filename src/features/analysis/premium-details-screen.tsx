@@ -1,3 +1,4 @@
+import { selectTvUkAssessmentShifts } from "@/engine/simple-tvuk-nursing-profile-pay";
 import { selectTvlKrAssessmentShifts } from "@/engine/simple-tvl-kr-profile-pay";
 import { selectVkaEAssessmentShifts } from "@/engine/simple-vka-e-pay";
 import { selectNursingTrainingAssessmentShifts } from "@/engine/simple-nursing-training-pay";
@@ -44,15 +45,17 @@ export function PremiumDetailsScreen() {
     if (parsedMonth.status !== "valid" || !ready || error || profile === null) return null;
     return captureRuleComputation(() => {
       const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts = profile.tvlKrTariff
-        ? selectTvlKrAssessmentShifts(entries, month)
-        : profile.vkaETariff
-          ? selectVkaEAssessmentShifts(entries, month)
-          : profile.nursingTrainingTariff
-            ? selectNursingTrainingAssessmentShifts(entries, month)
-            : profile.tariff === null
-              ? monthlyEntries.monthShifts
-              : selectAllowanceShifts(entries, month, ruleResolver);
+      const allowanceShifts = profile.tvUkNursingTariff
+        ? selectTvUkAssessmentShifts(entries, month)
+        : profile.tvlKrTariff
+          ? selectTvlKrAssessmentShifts(entries, month)
+          : profile.vkaETariff
+            ? selectVkaEAssessmentShifts(entries, month)
+            : profile.nursingTrainingTariff
+              ? selectNursingTrainingAssessmentShifts(entries, month)
+              : profile.tariff === null
+                ? monthlyEntries.monthShifts
+                : selectAllowanceShifts(entries, month, ruleResolver);
       const decision = tariffDecisions.find((item) => item.month === month) ?? null;
       return {
         monthShifts: monthlyEntries.monthShifts,
@@ -116,7 +119,8 @@ export function PremiumDetailsScreen() {
     profile.tariff === null &&
     profile.nursingTrainingTariff == null &&
     profile.vkaETariff == null &&
-    profile.tvlKrTariff == null
+    profile.tvlKrTariff == null &&
+    profile.tvUkNursingTariff == null
   )
     return (
       <ReportScrollView>
