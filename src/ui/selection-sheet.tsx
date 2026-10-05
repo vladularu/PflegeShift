@@ -51,7 +51,6 @@ export function SelectionSheet({
   const closeStarted = useSharedValue(false);
   const [closing, setClosing] = useState(false);
   const sheetHeight = useSharedValue(0);
-  const openingPending = useSharedValue(false);
   const translateY = useSharedValue(height + insets.bottom);
   const backdropProgress = useSharedValue(0);
   const scrollOffset = useSharedValue(0);
@@ -62,7 +61,6 @@ export function SelectionSheet({
     if (closeStarted.get()) return;
     closeStarted.set(true);
     setClosing(true);
-    openingPending.set(false);
     cancelAnimation(translateY);
     cancelAnimation(backdropProgress);
     backdropProgress.set(
@@ -85,21 +83,15 @@ export function SelectionSheet({
         },
       ),
     );
-  }, [
-    backdropProgress,
-    closeStarted,
-    maxHeight,
-    onClose,
-    openingPending,
-    reduceMotion,
-    sheetHeight,
-    translateY,
-  ]);
+  }, [backdropProgress, closeStarted, maxHeight, onClose, reduceMotion, sheetHeight, translateY]);
 
-  function animateOpen() {
-    if (!openingPending.get() || sheetHeight.get() <= 0 || closeStarted.get()) return;
-    openingPending.set(false);
-    translateY.set(sheetHeight.get() + SPACING.md);
+  function showSheet() {
+    closeStarted.set(false);
+    setClosing(false);
+    scrollOffset.set(0);
+    dragAllowed.set(false);
+    // Opening must never wait for an optional native layout event.
+    translateY.set((sheetHeight.get() || maxHeight) + SPACING.md);
     translateY.set(
       withTiming(0, {
         duration: reduceMotion ? 0 : MOTION.duration.normal,
@@ -114,15 +106,6 @@ export function SelectionSheet({
         reduceMotion: MOTION.reduceMotion,
       }),
     );
-  }
-
-  function showSheet() {
-    closeStarted.set(false);
-    setClosing(false);
-    scrollOffset.set(0);
-    dragAllowed.set(false);
-    openingPending.set(true);
-    animateOpen();
     scheduleAccessibilityFocus(findNodeHandle(headingRef.current));
   }
 
@@ -130,8 +113,7 @@ export function SelectionSheet({
     const measuredHeight = event.nativeEvent.layout.height;
     if (measuredHeight <= 0) return;
     sheetHeight.set(measuredHeight);
-    // Native layout and Modal.onShow can arrive in either order.
-    animateOpen();
+    // Measurement improves the exit distance; it cannot gate or restart opening.
   }
 
   const nativeScroll = Gesture.Native();

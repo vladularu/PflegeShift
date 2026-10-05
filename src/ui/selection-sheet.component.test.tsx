@@ -188,6 +188,69 @@ describe("shared dismissible selection sheet", () => {
       });
     }
 
+    it.each(["missing", "zero"])(
+      "opens and can be cancelled when the native layout callback is %s",
+      async (layout) => {
+        const onChange = jest.fn<(value: string) => void>();
+        const screen = await render(picker(onChange));
+        await fireEvent.press(screen.getByRole("button", { name: "Bundesland: Hessen" }));
+        const sheet = screen.getByTestId("dropdown-modal-content");
+        await fireEvent(sheet, "show");
+        if (layout === "zero")
+          await fireEvent(sheet, "layout", {
+            nativeEvent: { layout: { x: 0, y: 0, width: 393, height: 0 } },
+          });
+        await advance(300);
+        expect((getAnimatedStyle(sheet).transform as { translateY: number }[])[0].translateY).toBe(
+          0,
+        );
+        const backdrop = screen.getByTestId("selection-sheet-backdrop", {
+          includeHiddenElements: true,
+        }).parent!;
+        expect(getAnimatedStyle(backdrop).opacity).toBe(1);
+        await fireEvent.press(screen.getByRole("button", { name: "Auswahl abbrechen" }));
+        await advance(300);
+        expect(screen.queryByTestId("dropdown-modal-content")).toBeNull();
+        expect(onChange).not.toHaveBeenCalled();
+      },
+    );
+
+    it("does not restart opening when layout arrives after the sheet is already visible", async () => {
+      const screen = await render(picker(jest.fn()));
+      await fireEvent.press(screen.getByRole("button", { name: "Bundesland: Hessen" }));
+      const sheet = screen.getByTestId("dropdown-modal-content");
+      await fireEvent(sheet, "show");
+      await advance(300);
+      await fireEvent(sheet, "layout", {
+        nativeEvent: { layout: { x: 0, y: 0, width: 393, height: 240 } },
+      });
+      await advance(20);
+      expect((getAnimatedStyle(sheet).transform as { translateY: number }[])[0].translateY).toBe(0);
+    });
+
+    it("selects once and reopens without requiring any layout callback", async () => {
+      const onChange = jest.fn<(value: string) => void>();
+      const screen = await render(picker(onChange));
+      for (const select of [true, false]) {
+        await fireEvent.press(screen.getByRole("button", { name: "Bundesland: Hessen" }));
+        const sheet = screen.getByTestId("dropdown-modal-content");
+        await fireEvent(sheet, "show");
+        await advance(300);
+        expect((getAnimatedStyle(sheet).transform as { translateY: number }[])[0].translateY).toBe(
+          0,
+        );
+        await fireEvent.press(
+          select
+            ? within(sheet).getByRole("button", { name: "Baden-W\u00fcrttemberg" })
+            : screen.getByRole("button", { name: "Auswahl abbrechen" }),
+        );
+        await advance(300);
+        expect(screen.queryByTestId("dropdown-modal-content")).toBeNull();
+      }
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith("BW");
+    });
+
     it.each([240, 640])(
       "keeps a %i-point sheet and its backdrop visible until the exit finishes",
       async (height) => {
@@ -247,7 +310,7 @@ describe("shared dismissible selection sheet", () => {
     );
 
     it.each(["show-first", "layout-first"])(
-      "opens from its own measured height when %s",
+      "opens with a measured or safe fallback distance when %s",
       async (order) => {
         const screen = await render(picker(jest.fn()));
         await fireEvent.press(screen.getByRole("button", { name: "Bundesland: Hessen" }));
@@ -261,7 +324,7 @@ describe("shared dismissible selection sheet", () => {
         const initialPosition = (getAnimatedStyle(sheet).transform as { translateY: number }[])[0]
           .translateY;
         expect(initialPosition).toBeGreaterThan(0);
-        expect(initialPosition).toBeLessThan(280);
+        expect(initialPosition).toBeLessThan(order === "layout-first" ? 280 : 780);
         await advance(300);
         expect((getAnimatedStyle(sheet).transform as { translateY: number }[])[0].translateY).toBe(
           0,

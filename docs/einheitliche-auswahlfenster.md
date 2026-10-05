@@ -49,3 +49,15 @@ Vorhandene App-Bewegungstokens und Gesture-Handler-Bausteine werden wiederverwen
 - Referenz: https://docs.swmansion.com/react-native-reanimated/docs/guides/testing/ und https://reactnative.dev/docs/0.86/easing
 
 - Nachweise der Korrektur: 22 gezielte Komponententests und `verify:fast` bestanden (7.512 Unit-Tests, 670 Komponententests / 100 Suites sowie Skript-, Typen-, Lint-, Format- und Architekturprüfungen). iOS-Export erfolgreich; Runtime identisch mit Preview Build 32.
+
+## Regression: unsichtbarer Dialog
+
+- Geräterückmeldung zur Bewegungs-OTA: Tippen auf eine Auswahl blockiert die Seite, das Fenster erscheint nicht. Die Bewegungskorrektur ist damit auf dem iPhone nicht abgenommen.
+- Sofortmaßnahme: zuletzt funktional bestätigte interne Preview-OTA (`9aef8b6`, Gruppe `2d9f485b-1fdc-4d65-9fd4-0b8ae4989517`) wieder bereitgestellt. Keine Datenmigration.
+- Ziel: Fenster zuverlässig sichtbar und bedienbar öffnen, auch ohne native Höhenmessung; gleichmäßiges Schließen beibehalten. Plattform: iPhone Preview. Scope: genau SelectionSheet, seine Tests und dieser Beleg, auf bestehendem UI-Branch ab `121cdc5`.
+- Nachgewiesene Code-Lücke: Ohne `onLayout` oder bei Höhe null startet die Animation bisher nicht; ein transparentes Modal blockiert die Seite. Drei neue Tests schlagen auf dem fehlerhaften Stand fehl. Der bisherige Test hat immer eine Höhenmessung erzeugt und dieses Verhalten nicht erfasst.
+- Korrektur: Öffnen beginnt wieder direkt bei `Modal.onShow`, mit sicherem Weg aus maximaler Fensterhöhe, falls keine Messung vorhanden ist. `onLayout` verbessert lediglich den Schließweg; ein spätes Ereignis startet keine neue Öffnung.
+- Abnahme: Fenster ohne/leere/späte Messung sichtbar; Abbrechen löst die Sperre, Auswahl und erneutes Öffnen funktionieren. Volle Projektprüfung und erneuter realer iPhone-Test bleiben erforderlich.
+
+- Native Steuerung: `onShow` startet die Bewegung ohne SharedValue-Bedingung direkt. Das vermeidet auch die unmittelbare Abfrage nach asynchronen SharedValue-Schreibzugriffen auf dem JS-Thread; Referenz: https://docs.swmansion.com/react-native-reanimated/docs/core/useSharedValue/ .
+- Nachweise der dauerhaften Korrektur: 26 gezielte Tests und `verify:fast` grün (7.512 Unit-Tests, 674 Komponententests / 100 Suites plus Typen, Lint, Format, Architektur und Skripte). Neuer iOS-Export erfolgreich, Runtime weiterhin mit Preview Build 32 identisch. Erneute iPhone-Abnahme offen.
