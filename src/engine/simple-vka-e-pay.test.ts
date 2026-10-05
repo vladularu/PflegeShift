@@ -146,6 +146,36 @@ describe("simple nursing TVöD E table pay", () => {
       expect(pay.careAllowanceAmount).toBe(0);
     },
   );
+  it.each(["2026-04", "2026-07"])(
+    "has no region difference for any E BT-B shift allowance in %s",
+    (month) => {
+      const shifts = [shift({ date: month + "-06", overtimeMinutes: 60 })];
+      for (const status of [
+        "SHIFT_MONTHLY",
+        "ALTERNATING_MONTHLY",
+        "SHIFT_HOURLY",
+        "ALTERNATING_HOURLY",
+      ] as const) {
+        const run = (tariffRegion: "OTHER" | "KAV_BW") =>
+          calculateMonthlyPayEstimate(
+            month,
+            shifts,
+            {
+              ...profile,
+              weeklyMinutes: 1170,
+              vkaETariff: { ...profile.vkaETariff!, sector: "BT_B", tariffRegion },
+            },
+            { ...decision(status), month },
+          );
+        const other = run("OTHER");
+        const bw = run("KAV_BW");
+        expect(other.available).toBe(true);
+        expect(other.allowanceAmount).toBeGreaterThan(0);
+        expect(bw).toEqual(other);
+        expect(bw.tariffLabel).toBe("TVöD VKA · E-Tabelle");
+      }
+    },
+  );
   it("caps the personal overtime base at step4 and uses the E9b/E9c premium boundary", () => {
     const make = (payGroup: "E9b" | "E9c") =>
       calculateShiftPremiumBreakdown(shift({ date: "2026-07-06" }), {

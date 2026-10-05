@@ -338,7 +338,7 @@ function SettingsEditorForm({
             options={[
               { value: "UNSET", label: "Bitte wählen" },
               { value: "TVOED_P", label: "TVöD-P" },
-              { value: "TVOED_E", label: "TVöD · E-Tabelle" },
+              { value: "TVOED_E", label: "TVöD VKA · E-Tabelle" },
               { value: "TVAOED_PFLEGE", label: "TVAöD Pflege · Ausbildung" },
               { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
             ]}
@@ -358,7 +358,7 @@ function SettingsEditorForm({
               returnKeyType="done"
               value={manualMonthlyGross}
             />
-          ) : (
+          ) : salaryMode !== "UNSET" ? (
             <>
               <DropdownField
                 label="Tarifbereich"
@@ -369,15 +369,17 @@ function SettingsEditorForm({
                 ]}
                 value={sector}
               />
-              <DropdownField
-                label="Tarifgebiet"
-                onChange={setTariffRegion}
-                options={(["KAV_BW", "OTHER"] as const).map((region) => ({
-                  value: region,
-                  label: TARIFF_REGION_LABELS[region],
-                }))}
-                value={tariffRegion}
-              />
+              {(salaryMode !== "TVOED_E" || sector === "BT_K") && (
+                <DropdownField
+                  label="Tarifgebiet"
+                  onChange={setTariffRegion}
+                  options={(["KAV_BW", "OTHER"] as const).map((region) => ({
+                    value: region,
+                    label: TARIFF_REGION_LABELS[region],
+                  }))}
+                  value={tariffRegion}
+                />
+              )}
               {salaryMode === "TVAOED_PFLEGE" ? (
                 <DropdownField
                   label="Ausbildungsjahr"
@@ -435,7 +437,7 @@ function SettingsEditorForm({
               )}
               <Field editable={false} label="Tarifliche Vollzeit pro Woche" value={fullTimeHours} />
             </>
-          )}
+          ) : null}
         </FormSection>
       )}
 

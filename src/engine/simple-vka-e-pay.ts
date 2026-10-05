@@ -168,7 +168,7 @@ export function calculateVkaEAssessment(
 ) {
   const date = month + "-01";
   if (!ePackage(date))
-    return { available: false, assessment: null, tariffLabel: "TVöD · E-Tabelle" };
+    return { available: false, assessment: null, tariffLabel: "TVöD VKA · E-Tabelle" };
   const first = Temporal.PlainDate.from(date);
   const from = first.subtract({ months: 2 }).toString();
   const through = first.add({ months: 1 }).subtract({ days: 1 }).toString();
@@ -180,7 +180,7 @@ export function calculateVkaEAssessment(
     profile.vkaETariff?.sector === "BT_K"
       ? assessTvoedKCalendarMonth(month, relevant, settings, resolver, profile.timeZone)
       : { assessment: assessTvoedPattern(relevant, settings, resolver, date) };
-  return { ...assessed, available: true, tariffLabel: "TVöD · E-Tabelle" };
+  return { ...assessed, available: true, tariffLabel: "TVöD VKA · E-Tabelle" };
 }
 
 export function calculateVkaEShift(
@@ -328,7 +328,7 @@ export function calculateVkaEMonth(
   if (!context)
     return {
       ...empty,
-      tariffLabel: "TVöD · E-Tabelle",
+      tariffLabel: "TVöD VKA · E-Tabelle",
       available: false,
       fullTimeTableAmount: null,
       personalBaseAmount: null,
@@ -402,7 +402,7 @@ export function calculateVkaEMonth(
   return {
     ...empty,
     month,
-    tariffLabel: "TVöD · E-Tabelle",
+    tariffLabel: "TVöD VKA · E-Tabelle",
     available: true,
     fullTimeTableAmount: context.monthlyCents / 100,
     personalBaseAmount,

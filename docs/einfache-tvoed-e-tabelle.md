@@ -2,7 +2,7 @@
 
 ## Auftrag und Abnahme
 
-- Ziel: Auswahl „TVöD · E-Tabelle“, vertragliche Entgeltgruppe und Stufe, vertraute Monats-/Jahresauswertung und Zeitzuschlagskarten.
+- Ziel: Auswahl „TVöD VKA · E-Tabelle“, vertragliche Entgeltgruppe und Stufe, vertraute Monats-/Jahresauswertung und Zeitzuschlagskarten.
 - Plattform: iOS Preview, installiertes Build 32; reale iPhone-Abnahme vor Merge.
 - Scope A: domain/types, domain/vka-e-tariff, domain/validation, database/simple-salary-profile (ersetzt nursing-training-profile), profile-repository, preferences-repository, simple-app-profile, local-backup-validation und Persistenztests.
 - Scope B: lokale E-Tabellen-/Berechnungsadapter, simple-pay, fachliche Quellen-/Regressionstests.
@@ -29,3 +29,14 @@ Jahressonderzahlung bleibt ein getrenntes Folgepaket und wird nicht aus ungeprü
 verify:fast vollständig grün: 5.859 Vitest-Tests in378 Dateien,572 Komponententests in94 Suiten sowie sämtliche Werkzeug-/Regel-/Runtime-/Build-Abhängigkeitsprüfungen. Typen, Lint, Format und git diff --check grün. Geräteabnahme folgt nach Preview-OTA.
 
 VKA-PDF-SHA256 live verifiziert; beide Generator-Kandidatenchecks sowie202 Quellentabellenzellen bestanden. 31 Persistenz-,36 Berechnungs-/Regressionstests und50 fokussierte Komponententests grün. iOS-Fingerprint identisch mit installiertem Build32: f2f4b99ba254b82ab22b99594d5228bd8c3774f7.
+
+## Tarifabhängige Auswahl (Nutzerkorrektur, 5. Oktober 2026)
+
+- Ziel: korrekte Bezeichnung „TVöD VKA · E-Tabelle“ und nur für die gewählte Gehaltsgrundlage relevante Felder im vertrauten Formular.
+- Scope: settings-editor-screen, settings-vka-e.component.test, simple-vka-e-pay und dessen Regressionstest sowie dieses Dokument; iOS Preview auf bestehendem Branch/PR.
+- E: Entgeltgruppe und gültige Stufe aus dem Arbeitsvertrag. BT-K/BT-B bleiben für Wochenzeit und Zusatzregeln relevant. Tarifgebiet nur bei BT-K sichtbar; BT-B hat in der angebotenen E-Berechnung gleiche Regeln für beide gespeicherten Gebiete.
+- P: vorhandene P-Gruppen, gültige Stufen, Tarifbereich und Gebiet. Ausbildung: Ausbildungsjahr statt Gruppe/Stufe. Eigener Betrag und noch nicht gewählte Grundlage: keine Tarifdetailfelder.
+- Ein beim E-BT-B ausgeblendetes Gebiet bleibt gespeichert und erscheint beim Wechsel zu BT-K wieder. Kein Datenverlust, keine neue Eingruppierung, keine Datumspflicht, keine native Änderung.
+- Abnahme: Namens-/Feldwechsel, gültige Stufen und Wochenzeit; Regionserhalt beim Wechsel; fachlicher Vergleich aller vier Schichtzulagenentscheidungen in beiden Tabellenperioden für E-BT-B; verify:fast und PR-CI; danach iPhone-Abnahme vor Merge.
+
+Korrekturprüfung: 38 gezielte Berechnungs- und 55 Komponententests grün. verify:fast vollständig grün mit 5.861 Unit- und 577 Komponententests; Typen, Lint, Format und übrige Pflichtprüfungen bestanden. Der frisch erzeugte iOS-Fingerprint entspricht dem installierten Build32. Geräteabnahme der angepassten Auswahl bleibt offen.

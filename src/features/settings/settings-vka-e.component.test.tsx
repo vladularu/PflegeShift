@@ -98,7 +98,7 @@ describe("simple E table salary form", () => {
   });
   it("reopens the saved E choice in familiar group/step controls and saves no history/date", async () => {
     const screen = await render(editor());
-    expect(screen.getByRole("button", { name: "Berechnung: TVöD · E-Tabelle" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Berechnung: TVöD VKA · E-Tabelle" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Entgeltgruppe: E9b" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Stufe: Stufe 4" })).toBeTruthy();
     expect(
@@ -117,7 +117,7 @@ describe("simple E table salary form", () => {
   it("lets a trainee explicitly choose E12 and step6", async () => {
     mockProfile = { ...baseProfile, nursingTrainingTariff: trainee };
     const screen = await render(editor());
-    await select(screen, "Berechnung", "TVöD · E-Tabelle");
+    await select(screen, "Berechnung", "TVöD VKA · E-Tabelle");
     const groups = await select(screen, "Entgeltgruppe", "E12");
     expect(groups).toContain("E9c");
     expect(groups).toContain("E15");
@@ -171,6 +171,63 @@ describe("simple E table salary form", () => {
       expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe(hours);
     },
   );
+  it("hides the irrelevant E BT-B region while retaining it when returning to BT-K", async () => {
+    mockProfile = { ...baseProfile, vkaETariff: { ...e, tariffRegion: "KAV_BW" } };
+    const screen = await render(editor());
+    const savedRegion = screen.getByRole("button", { name: /^Tarifgebiet:/ }).props
+      .accessibilityLabel;
+    await select(screen, "Tarifbereich", "Pflege · BT-B");
+    expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("39");
+    await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+    expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+      expect.objectContaining({ vkaETariff: { ...e, sector: "BT_B", tariffRegion: "KAV_BW" } }),
+    );
+    await select(screen, "Tarifbereich", "Krankenhaus · BT-K");
+    expect(screen.getByRole("button", { name: /^Tarifgebiet:/ }).props.accessibilityLabel).toBe(
+      savedRegion,
+    );
+    await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+    expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+      expect.objectContaining({ vkaETariff: { ...e, tariffRegion: "KAV_BW" } }),
+    );
+  });
+  it("keeps the region for P BT-B, where its fixed allowance differs", async () => {
+    const screen = await render(editor());
+    await select(screen, "Tarifbereich", "Pflege · BT-B");
+    await select(screen, "Berechnung", "TVöD-P");
+    expect(screen.getByRole("button", { name: /^Tarifgebiet:/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Entgeltgruppe: P8" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Stufe: Stufe 4" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Ausbildungsjahr:/ })).toBeNull();
+  });
+  it("offers only a training year instead of E/P group and step in trainee mode", async () => {
+    mockProfile = { ...baseProfile, nursingTrainingTariff: trainee };
+    const screen = await render(editor());
+    expect(
+      screen.getByRole("button", { name: "Ausbildungsjahr: 2. Ausbildungsjahr" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Entgeltgruppe:/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Stufe:/ })).toBeNull();
+    expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("38,5");
+  });
+  it.each(["UNSET", "MANUAL"] as const)("omits tariff detail controls for %s", async (mode) => {
+    mockProfile = { ...baseProfile, manualMonthlyGrossCents: mode === "MANUAL" ? 345050 : null };
+    const screen = await render(editor());
+    for (const name of [
+      /^Tarifbereich:/,
+      /^Tarifgebiet:/,
+      /^Entgeltgruppe:/,
+      /^Stufe:/,
+      /^Ausbildungsjahr:/,
+    ]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+    expect(screen.queryByLabelText("Tarifliche Vollzeit pro Woche")).toBeNull();
+    if (mode === "MANUAL")
+      expect(screen.getByLabelText("Monatliches Brutto in Euro").props.value).toBe("3450,50");
+    else expect(screen.queryByLabelText("Monatliches Brutto in Euro")).toBeNull();
+  });
   it("retains E salary on work model changes", async () => {
     mockSection = "WORK";
     const screen = await render(editor());
