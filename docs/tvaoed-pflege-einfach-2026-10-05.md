@@ -29,3 +29,7 @@ Keine nativen Änderungen, kein neuer allgemeiner Tarifkatalog, keine Aktivierun
 Die bisherigen DRAFT-Quellenpakete bleiben erhalten. Es werden genau die geprüften TVAöD-Pflege-Daten gezielt für den neuen einfachen Modus verwendet. Der 31.03.2027 ist die derzeitige Datenabdeckung, keine behauptete Vertragsbeendigung oder angekündigte nächste Erhöhung.
 
 Jahressonderzahlung (§ 14, 90 Prozent der relevanten August–Oktober-Basis, Auszahlung November) und besondere Pflegeerschwerniszulagen benötigen eigenständige Anspruchs-/Referenzangaben. Dieses erste einfache Tarifpaket erfindet diese nicht; sie sind als Folgepaket offen. Eine Brutto-Schätzung ersetzt keine vollständige Lohnabrechnung.
+
+## Korrektur nach iPhone-Nachweis vom 05.10.2026
+
+Die drei Screenshots mit Uhrzeit 03:17 belegen die korrekte Ausbildungsvergütung in der Gehaltsdetailansicht, aber eine falsche manuelle Einordnung in Monatsübersicht und Zeitzuschlagsdetails. Ziel: dieselbe Tarifberechnung in diesen beiden vorhandenen Ansichten erkennen. Scope: month-overview.tsx, premium-details-screen.tsx, analysis-rule-coverage.component.test.tsx und dieser Beleg. Keine Formel-, Datenbank-, native oder Layoutänderung. Abnahme: Übersicht zeigt Grundgehalt, Zeitzuschläge und Brutto gesamt statt manuellem Monatsbrutto; Zuschlagsdetails zeigen die berechneten Dienste; echter manueller Modus und fehlende Tarifabdeckung behalten ihre bisherigen Meldungen. Neuer Preview-Nachweis auf dem iPhone vor Merge.

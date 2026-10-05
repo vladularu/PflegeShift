@@ -106,7 +106,7 @@ export function PremiumDetailsScreen() {
   if (!ready || profile === null || calculation === null) return <LoadingView />;
 
   const { monthShifts, pay } = calculation.value;
-  if (profile.tariff === null)
+  if (profile.tariff === null && profile.nursingTrainingTariff == null)
     return (
       <ReportScrollView>
         <AnalysisDetailSummaryCard
