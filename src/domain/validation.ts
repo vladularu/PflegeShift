@@ -1,3 +1,4 @@
+import { requireTvhKrTariff } from "./tvh-kr-tariff";
 import { requireTvUkNursingTariff } from "./tvuk-nursing-tariff";
 import { requireTvlKrSalaryTariff } from "./tvl-kr-tariff";
 import { requireVkaETariff } from "./vka-e-tariff";
@@ -182,7 +183,10 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
   const nursingTrainingTariff = requireNursingTrainingTariff(input.nursingTrainingTariff);
   const vkaETariff = requireVkaETariff(input.vkaETariff);
   const tvlKrTariff = requireTvlKrSalaryTariff(input.tvlKrTariff);
+  const tvhKrTariff = requireTvhKrTariff(input.tvhKrTariff);
   const tvUkNursingTariff = requireTvUkNursingTariff(input.tvUkNursingTariff);
+  if (tvhKrTariff && input.weeklyMinutes > tvhKrTariff.fullTimeWeeklyMinutes)
+    throw new ValidationError("Deine Wochenstunden liegen über der tariflichen Vollzeit.");
   const federalState = requireFederalState(input.federalState);
   const industry = requireIndustry(input.industry);
   const manualMonthlyGrossCents = requireManualMonthlyGrossCents(input.manualMonthlyGrossCents);
@@ -226,6 +230,7 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
       vkaETariff,
       tvlKrTariff,
       tvUkNursingTariff,
+      tvhKrTariff,
       tariff,
       manualMonthlyGrossCents,
     ].filter((value) => value != null).length > 1
@@ -253,6 +258,7 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
     ...(input.vkaETariff !== undefined ? { vkaETariff } : {}),
     ...(input.tvlKrTariff !== undefined ? { tvlKrTariff } : {}),
     ...(input.tvUkNursingTariff !== undefined ? { tvUkNursingTariff } : {}),
+    ...(input.tvhKrTariff !== undefined ? { tvhKrTariff } : {}),
   };
 }
 

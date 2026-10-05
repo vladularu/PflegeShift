@@ -41,3 +41,11 @@ describe("SettingsInfoDetailsScreen storage disclosure", () => {
     expect(screen.getByText(/vor dem Wiederherstellen prüfen/)).toBeTruthy();
   });
 });
+
+it("shows TV-H dates and eligible nursing groups via the existing info route", async () => {
+  mockParams = { section: "CARE_ALLOWANCE", tariff: "TVH" };
+  const screen = await render(<SettingsInfoDetailsScreen />);
+  expect(screen.getByText(/142,22/)).toBeTruthy();
+  expect(screen.getByText(/KR13 bis KR16/)).toBeTruthy();
+  expect(screen.queryByText(/200 € bei Vollzeit/)).toBeNull();
+});

@@ -1,3 +1,4 @@
+import type { TvhKrGroup, TvhKrPayLevel } from "@/domain/tvh-kr-tariff";
 import type { TvUkNursingGroup, TvUkPayLevel } from "@/domain/tvuk-nursing-tariff";
 import { Temporal } from "@js-temporal/polyfill";
 import type { TvlKrGroup, TvlKrUniversityRegion } from "@/domain/tvl-kr-tariff";
@@ -18,7 +19,14 @@ import type {
 export type EvidenceFormValue = "UNKNOWN" | "YES" | "NO";
 export type IndustryFormValue = Industry | "UNKNOWN";
 export type SalaryMode =
-  "UNSET" | "TVOED_P" | "TVOED_E" | "TVL_KR" | "TVUK_NURSING" | "TVAOED_PFLEGE" | "MANUAL";
+  | "UNSET"
+  | "TVOED_P"
+  | "TVOED_E"
+  | "TVL_KR"
+  | "TVUK_NURSING"
+  | "TVH_KR"
+  | "TVAOED_PFLEGE"
+  | "MANUAL";
 
 export interface SettingsFormValues {
   readonly federalState: FederalState;
@@ -32,6 +40,9 @@ export interface SettingsFormValues {
   readonly allEmploymentWorkRecorded: EvidenceFormValue;
   readonly trainingYear: 1 | 2 | 3 | "UNSET";
   readonly payGroup: PayGroup;
+  readonly tvhPayGroup: TvhKrGroup;
+  readonly tvhPayLevel: TvhKrPayLevel;
+  readonly tvhFullTimeWeeklyMinutes: 2310 | 2400;
   readonly tvUkPayGroup: TvUkNursingGroup;
   readonly tvUkPayLevel: TvUkPayLevel;
   readonly krPayGroup: TvlKrGroup;
@@ -79,25 +90,30 @@ export function settingsFormValues(profile: UserProfile): SettingsFormValues {
     holidayRegion: profile.holidayRegion,
     weeklyHours: formatHours(profile.weeklyMinutes),
     industry: profile.industry ?? "UNKNOWN",
-    salaryMode: profile.tvUkNursingTariff
-      ? "TVUK_NURSING"
-      : profile.tvlKrTariff
-        ? "TVL_KR"
-        : profile.vkaETariff
-          ? "TVOED_E"
-          : profile.nursingTrainingTariff
-            ? "TVAOED_PFLEGE"
-            : profile.manualMonthlyGrossCents != null
-              ? "MANUAL"
-              : profile.tariff !== null
-                ? "TVOED_P"
-                : "UNSET",
+    salaryMode: profile.tvhKrTariff
+      ? "TVH_KR"
+      : profile.tvUkNursingTariff
+        ? "TVUK_NURSING"
+        : profile.tvlKrTariff
+          ? "TVL_KR"
+          : profile.vkaETariff
+            ? "TVOED_E"
+            : profile.nursingTrainingTariff
+              ? "TVAOED_PFLEGE"
+              : profile.manualMonthlyGrossCents != null
+                ? "MANUAL"
+                : profile.tariff !== null
+                  ? "TVOED_P"
+                  : "UNSET",
     manualMonthlyGross: formatManualMonthlyGross(profile.manualMonthlyGrossCents),
     regularRotatingNightWork: evidenceFormValue(profile.regularRotatingNightWork),
     sundayHolidayWorkEligible: evidenceFormValue(profile.sundayHolidayWorkEligible),
     allEmploymentWorkRecorded: evidenceFormValue(profile.allEmploymentWorkRecorded),
     trainingYear: profile.nursingTrainingTariff?.trainingYear ?? "UNSET",
     payGroup: profile.tariff?.payGroup ?? "P8",
+    tvhPayGroup: profile.tvhKrTariff?.payGroup ?? "KR8",
+    tvhPayLevel: profile.tvhKrTariff?.payLevel ?? 4,
+    tvhFullTimeWeeklyMinutes: profile.tvhKrTariff?.fullTimeWeeklyMinutes ?? 2400,
     tvUkPayGroup: profile.tvUkNursingTariff?.payGroup ?? "PUK8",
     tvUkPayLevel: profile.tvUkNursingTariff?.payLevel ?? 4,
     krPayGroup: profile.tvlKrTariff?.payGroup ?? "KR8",
@@ -121,14 +137,16 @@ export function settingsFormValues(profile: UserProfile): SettingsFormValues {
       profile.tariff?.tariffRegion ??
       defaultTariffRegion(profile.federalState),
     fullTimeHours: formatHours(
-      (profile.tvUkNursingTariff
-        ? 2310
-        : profile.tvlKrTariff
-          ? getTvlKrUniversityFullTimeMinutes(
-              Temporal.Now.plainDateISO(profile.timeZone).toString(),
-              profile.tvlKrTariff.universityRegion,
-            )
-          : null) ??
+      (profile.tvhKrTariff
+        ? profile.tvhKrTariff.fullTimeWeeklyMinutes
+        : profile.tvUkNursingTariff
+          ? 2310
+          : profile.tvlKrTariff
+            ? getTvlKrUniversityFullTimeMinutes(
+                Temporal.Now.plainDateISO(profile.timeZone).toString(),
+                profile.tvlKrTariff.universityRegion,
+              )
+            : null) ??
         profile.tariff?.fullTimeWeeklyMinutes ??
         tariffFullTimeWeeklyMinutes("BT_K", defaultTariffRegion(profile.federalState)),
     ),

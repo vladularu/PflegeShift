@@ -1,3 +1,4 @@
+import { TVH_KR_PREFERENCE_KEY, requireTvhKrTariff } from "@/domain/tvh-kr-tariff";
 import {
   TVUK_NURSING_PREFERENCE_KEY,
   requireTvUkNursingTariff,
@@ -16,15 +17,18 @@ export async function loadSimpleSalaryForProfile(
   profile: UserProfile,
 ): Promise<UserProfile> {
   const rows = await db.getAllAsync<{ key: string; value: string }>(
-    "SELECT key,value FROM app_preferences WHERE key IN (?,?,?,?)",
+    "SELECT key,value FROM app_preferences WHERE key IN (?,?,?,?,?)",
     NURSING_TRAINING_PREFERENCE_KEY,
     VKA_E_PREFERENCE_KEY,
     TVL_KR_PREFERENCE_KEY,
     TVUK_NURSING_PREFERENCE_KEY,
+    TVH_KR_PREFERENCE_KEY,
   );
   const training = rows.find((r) => r.key === NURSING_TRAINING_PREFERENCE_KEY);
   const e = rows.find((r) => r.key === VKA_E_PREFERENCE_KEY);
   const tvl = rows.find((r) => r.key === TVL_KR_PREFERENCE_KEY);
+  const h = rows.find((r) => r.key === TVH_KR_PREFERENCE_KEY);
+  const tvhKrTariff = h ? requireTvhKrTariff(JSON.parse(h.value)) : null;
   const uk = rows.find((r) => r.key === TVUK_NURSING_PREFERENCE_KEY);
   const tvUkNursingTariff = uk ? requireTvUkNursingTariff(JSON.parse(uk.value)) : null;
   const nursingTrainingTariff = training
@@ -38,6 +42,7 @@ export async function loadSimpleSalaryForProfile(
       vkaETariff,
       tvlKrTariff,
       tvUkNursingTariff,
+      tvhKrTariff,
       profile.tariff,
       profile.manualMonthlyGrossCents,
     ].filter((v) => v != null).length > 1
@@ -49,6 +54,7 @@ export async function loadSimpleSalaryForProfile(
     ...(vkaETariff ? { vkaETariff } : {}),
     ...(tvlKrTariff ? { tvlKrTariff } : {}),
     ...(tvUkNursingTariff ? { tvUkNursingTariff } : {}),
+    ...(tvhKrTariff ? { tvhKrTariff } : {}),
   };
 }
 export function simpleSalaryProfileInput(
@@ -61,6 +67,7 @@ export function simpleSalaryProfileInput(
     nursingTrainingTariff:
       raw.nursingTrainingTariff === undefined
         ? other ||
+          raw.tvhKrTariff != null ||
           raw.tvUkNursingTariff != null ||
           raw.vkaETariff != null ||
           raw.tvlKrTariff != null
@@ -70,6 +77,7 @@ export function simpleSalaryProfileInput(
     vkaETariff:
       raw.vkaETariff === undefined
         ? other ||
+          raw.tvhKrTariff != null ||
           raw.tvUkNursingTariff != null ||
           raw.nursingTrainingTariff != null ||
           raw.tvlKrTariff != null
@@ -79,6 +87,7 @@ export function simpleSalaryProfileInput(
     tvlKrTariff:
       raw.tvlKrTariff === undefined
         ? other ||
+          raw.tvhKrTariff != null ||
           raw.tvUkNursingTariff != null ||
           raw.nursingTrainingTariff != null ||
           raw.vkaETariff != null
@@ -88,19 +97,31 @@ export function simpleSalaryProfileInput(
     tvUkNursingTariff:
       raw.tvUkNursingTariff === undefined
         ? other ||
+          raw.tvhKrTariff != null ||
           raw.nursingTrainingTariff != null ||
           raw.vkaETariff != null ||
           raw.tvlKrTariff != null
           ? null
           : (current?.tvUkNursingTariff ?? null)
         : raw.tvUkNursingTariff,
+    tvhKrTariff:
+      raw.tvhKrTariff === undefined
+        ? other ||
+          raw.nursingTrainingTariff != null ||
+          raw.vkaETariff != null ||
+          raw.tvlKrTariff != null ||
+          raw.tvUkNursingTariff != null
+          ? null
+          : (current?.tvhKrTariff ?? null)
+        : raw.tvhKrTariff,
     manualMonthlyGrossCents:
       raw.manualMonthlyGrossCents === undefined
         ? raw.tariff ||
           raw.nursingTrainingTariff ||
           raw.vkaETariff ||
           raw.tvlKrTariff ||
-          raw.tvUkNursingTariff
+          raw.tvUkNursingTariff ||
+          raw.tvhKrTariff
           ? null
           : (current?.manualMonthlyGrossCents ?? null)
         : raw.manualMonthlyGrossCents,
@@ -117,6 +138,7 @@ export async function storeSimpleSalaryForProfile(
     [VKA_E_PREFERENCE_KEY, input.vkaETariff],
     [TVL_KR_PREFERENCE_KEY, input.tvlKrTariff],
     [TVUK_NURSING_PREFERENCE_KEY, input.tvUkNursingTariff],
+    [TVH_KR_PREFERENCE_KEY, input.tvhKrTariff],
   ] as const) {
     if (value)
       await db.runAsync(

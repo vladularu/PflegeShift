@@ -44,3 +44,5 @@ export function requireTvhKrTariff(value: unknown): TvhKrTariff | null {
     fullTimeWeeklyMinutes: data.fullTimeWeeklyMinutes,
   };
 }
+
+export const TVH_KR_PREFERENCE_KEY = "simpleSalary.tvhKr";

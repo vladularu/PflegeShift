@@ -175,6 +175,29 @@ const TVUK_CARE_INFO: InfoContent = {
   ],
 };
 
+const TVH_CARE_INFO: InfoContent = {
+  title: "Pflegezulage TV-H",
+  intro: "TV-H: Pflegezulage für KR5 bis KR12, bei Teilzeit anteilig.",
+  items: [
+    {
+      title: "Tarifstand",
+      text: "138,04 € ab August 2025, 142,22 € ab Juli 2026 und 146,20 € ab Oktober 2027 bei Vollzeit. Die Auswertung verwendet den zum Monat passenden Betrag.",
+    },
+    {
+      title: "Berechtigte Gruppen",
+      text: "KR5 bis KR12. Für KR13 bis KR16 wird diese Pflegezulage nicht angenommen.",
+    },
+    {
+      title: "Grundlage",
+      text: "TV-H §43 Nr. 5a und Tarifeinigung vom 27.03.2026. Besondere Stations- und Tätigkeitszulagen werden nicht automatisch angenommen.",
+    },
+    {
+      title: "Quelle",
+      text: "Land Hessen: https://innen.hessen.de/buerger-staat/arbeits-und-dienstrecht/oeffentliches-dienst-und-arbeitsrecht/entgelt",
+    },
+  ],
+};
+
 export function SettingsInfoDetailsScreen() {
   const palette = usePalette();
   const params = useLocalSearchParams<{ section?: RouteParam; tariff?: RouteParam }>();
@@ -185,7 +208,7 @@ export function SettingsInfoDetailsScreen() {
     "TVOED_ALLOWANCE",
     "CARE_ALLOWANCE",
   ] as const);
-  const parsedTariff = parseEnumRouteParam(params.tariff, ["TVL", "TVUK"] as const);
+  const parsedTariff = parseEnumRouteParam(params.tariff, ["TVL", "TVUK", "TVH"] as const);
   if (parsedSection.status !== "valid" || parsedTariff.status === "invalid") {
     return (
       <LoadFailureView
@@ -199,9 +222,11 @@ export function SettingsInfoDetailsScreen() {
   const section: SettingsInfoSection = parsedSection.value;
   const content =
     section === "CARE_ALLOWANCE" && parsedTariff.status === "valid"
-      ? parsedTariff.value === "TVUK"
-        ? TVUK_CARE_INFO
-        : TVL_CARE_INFO
+      ? parsedTariff.value === "TVH"
+        ? TVH_CARE_INFO
+        : parsedTariff.value === "TVUK"
+          ? TVUK_CARE_INFO
+          : TVL_CARE_INFO
       : INFO_CONTENT[section];
 
   return (

@@ -21,7 +21,8 @@ export async function projectStoredSimpleProfile(
     profile.nursingTrainingTariff ||
     profile.vkaETariff ||
     profile.tvlKrTariff ||
-    profile.tvUkNursingTariff
+    profile.tvUkNursingTariff ||
+    profile.tvhKrTariff
   )
     return profile;
   const selected = resolveRemunerationProfile(

@@ -26,7 +26,8 @@ export function resolveSalaryUpdate(
     salaryMode === "TVAOED_PFLEGE" ||
     salaryMode === "TVOED_E" ||
     salaryMode === "TVL_KR" ||
-    salaryMode === "TVUK_NURSING"
+    salaryMode === "TVUK_NURSING" ||
+    salaryMode === "TVH_KR"
   )
     return { tariff: null, manualMonthlyGrossCents: null };
   return salaryMode === "MANUAL"

@@ -373,6 +373,18 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(screen.queryByText("0,00 €")).toBeNull();
   });
 
+  it("shows TV-H salary in the familiar overview as tariff pay", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvhKrTariff: { payGroup: "KR8", payLevel: 4, fullTimeWeeklyMinutes: 2310 },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 4\.108,81/)).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
   it("shows TV-UK salary in the familiar overview as tariff pay", async () => {
     mockRouteMonth = "2026-10";
     mockProfile = {
@@ -384,6 +396,39 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(screen.getByLabelText(/^Grundgehalt: 4\.352,00/)).toBeTruthy();
     expect(screen.getByText("Brutto gesamt")).toBeTruthy();
     expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("shows TV-H pay and familiar grouped premiums", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvhKrTariff: { payGroup: "KR8", payLevel: 4, fullTimeWeeklyMinutes: 2310 },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "uk-night",
+        date: "2026-10-05",
+        type: "NIGHT",
+        startTime: "20:00",
+        endTime: "06:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TV-H KR8 · Stufe 4")).toBeTruthy();
+    expect(salary.getByText("Pflegezulage TV-H")).toBeTruthy();
+    expect(salary.queryByText("Pflegezulage TVöD-P")).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Pflegezulage TV-H/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/info-details",
+      params: { section: "CARE_ALLOWANCE", tariff: "TVH" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/41,85/).length).toBeGreaterThan(0);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
   });
   it("shows TV-UK cash, compulsory time credit and familiar grouped premiums", async () => {
     mockRouteMonth = "2026-10";

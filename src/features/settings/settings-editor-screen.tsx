@@ -1,4 +1,10 @@
 import {
+  TVH_KR_GROUPS,
+  tvhKrLevelsForGroup,
+  type TvhKrGroup,
+  type TvhKrPayLevel,
+} from "@/domain/tvh-kr-tariff";
+import {
   TVUK_NURSING_GROUPS,
   tvUkLevelsForGroup,
   type TvUkNursingGroup,
@@ -121,6 +127,13 @@ function SettingsEditorForm({
   const [allEmploymentWorkRecorded, setAllEmploymentWorkRecorded] = useState<EvidenceFormValue>(
     initialValues.allEmploymentWorkRecorded,
   );
+  const [tvhPayGroup, setTvhPayGroup] = useState<TvhKrGroup>(initialValues.tvhPayGroup);
+  const [tvhPayLevel, setTvhPayLevel] = useState<TvhKrPayLevel | "UNSET">(
+    initialValues.tvhPayLevel,
+  );
+  const [tvhFullTimeWeeklyMinutes, setTvhFullTimeWeeklyMinutes] = useState<2310 | 2400>(
+    initialValues.tvhFullTimeWeeklyMinutes,
+  );
   const [tvUkPayGroup, setTvUkPayGroup] = useState<TvUkNursingGroup>(initialValues.tvUkPayGroup);
   const [tvUkPayLevel, setTvUkPayLevel] = useState<TvUkPayLevel | "UNSET">(
     initialValues.tvUkPayLevel,
@@ -142,18 +155,20 @@ function SettingsEditorForm({
   const weeklyHoursRef = useRef<TextInput>(null);
   const manualMonthlyGrossRef = useRef<TextInput>(null);
   const fullTimeWeeklyMinutes =
-    salaryMode === "TVUK_NURSING"
-      ? 2310
-      : salaryMode === "TVL_KR"
-        ? (getTvlKrUniversityFullTimeMinutes(
-            Temporal.Now.plainDateISO(profile.timeZone).toString(),
-            tvlUniversityRegion,
-          ) ?? 0)
-        : salaryMode === "TVAOED_PFLEGE"
-          ? sector === "BT_K"
-            ? 2310
-            : 2340
-          : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
+    salaryMode === "TVH_KR"
+      ? tvhFullTimeWeeklyMinutes
+      : salaryMode === "TVUK_NURSING"
+        ? 2310
+        : salaryMode === "TVL_KR"
+          ? (getTvlKrUniversityFullTimeMinutes(
+              Temporal.Now.plainDateISO(profile.timeZone).toString(),
+              tvlUniversityRegion,
+            ) ?? 0)
+          : salaryMode === "TVAOED_PFLEGE"
+            ? sector === "BT_K"
+              ? 2310
+              : 2340
+            : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
   const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
   const selectedLevels =
     salaryMode === "TVL_KR"
@@ -203,6 +218,11 @@ function SettingsEditorForm({
       setMessage(null);
       return;
     }
+    if (section === "TARIFF" && salaryMode === "TVH_KR" && tvhPayLevel === "UNSET") {
+      setError("Bitte eine gültige Stufe für die gewählte Gruppe wählen.");
+      setMessage(null);
+      return;
+    }
     if (section === "TARIFF" && salaryMode === "TVUK_NURSING" && tvUkPayLevel === "UNSET") {
       setError("Bitte eine gültige Stufe für die gewählte Gruppe wählen.");
       setMessage(null);
@@ -217,7 +237,8 @@ function SettingsEditorForm({
       section === "TARIFF" &&
       (salaryMode === "TVAOED_PFLEGE" ||
         salaryMode === "TVL_KR" ||
-        salaryMode === "TVUK_NURSING") &&
+        salaryMode === "TVUK_NURSING" ||
+        salaryMode === "TVH_KR") &&
       profile.weeklyMinutes > fullTimeWeeklyMinutes
     ) {
       setError(
@@ -262,6 +283,16 @@ function SettingsEditorForm({
             ? (profile.vkaETariff ?? null)
             : salaryMode === "TVOED_E" && payLevel !== "UNSET"
               ? { payGroup: ePayGroup, payLevel, sector, tariffRegion }
+              : null,
+        tvhKrTariff:
+          section === "WORK"
+            ? (profile.tvhKrTariff ?? null)
+            : salaryMode === "TVH_KR" && tvhPayLevel !== "UNSET"
+              ? {
+                  payGroup: tvhPayGroup,
+                  payLevel: tvhPayLevel,
+                  fullTimeWeeklyMinutes: tvhFullTimeWeeklyMinutes,
+                }
               : null,
         tvUkNursingTariff:
           section === "WORK"
@@ -370,11 +401,13 @@ function SettingsEditorForm({
       ) : (
         <FormSection
           caption={
-            salaryMode === "TVUK_NURSING"
-              ? "Für Pflege an den Unikliniken Freiburg, Heidelberg, Tübingen und Ulm."
-              : salaryMode === "TVL_KR"
-                ? "Für Pflege an Unikliniken. Wähle Gruppe und Stufe aus deinem Vertrag."
-                : "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
+            salaryMode === "TVH_KR"
+              ? "TV-H Pflege in Hessen. Wähle Gruppe, Stufe und tarifliche Vollzeit aus deinem Vertrag."
+              : salaryMode === "TVUK_NURSING"
+                ? "Für Pflege an den Unikliniken Freiburg, Heidelberg, Tübingen und Ulm."
+                : salaryMode === "TVL_KR"
+                  ? "Für Pflege an Unikliniken. Wähle Gruppe und Stufe aus deinem Vertrag."
+                  : "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
           }
           title="Gehaltsgrundlage"
         >
@@ -404,6 +437,7 @@ function SettingsEditorForm({
               { value: "TVOED_P", label: "TVöD-P" },
               { value: "TVOED_E", label: "TVöD VKA · E-Tabelle" },
               { value: "TVL_KR", label: "TV-L Pflege" },
+              { value: "TVH_KR", label: "TV-H Pflege · Hessen" },
               { value: "TVUK_NURSING", label: "TV-UK Pflege · Baden-Württemberg" },
               { value: "TVAOED_PFLEGE", label: "TVAöD Pflege · Ausbildung" },
               { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
@@ -426,7 +460,8 @@ function SettingsEditorForm({
             />
           ) : salaryMode !== "UNSET" ? (
             <>
-              {salaryMode === "TVUK_NURSING" ? null : salaryMode === "TVL_KR" ? (
+              {salaryMode === "TVH_KR" || salaryMode === "TVUK_NURSING" ? null : salaryMode ===
+                "TVL_KR" ? (
                 <DropdownField
                   label="Tarifgebiet"
                   value={tvlUniversityRegion}
@@ -460,7 +495,40 @@ function SettingsEditorForm({
                   )}
                 </>
               )}
-              {salaryMode === "TVUK_NURSING" ? (
+              {salaryMode === "TVH_KR" ? (
+                <>
+                  <DropdownField
+                    label="Entgeltgruppe"
+                    value={tvhPayGroup}
+                    onChange={(group) => {
+                      setTvhPayGroup(group);
+                      if (
+                        tvhPayLevel !== "UNSET" &&
+                        !tvhKrLevelsForGroup(group).includes(tvhPayLevel)
+                      )
+                        setTvhPayLevel("UNSET");
+                    }}
+                    options={TVH_KR_GROUPS.map((group) => ({
+                      value: group,
+                      label: group,
+                    }))}
+                  />
+                  <DropdownField
+                    label="Stufe"
+                    value={tvhPayLevel}
+                    onChange={setTvhPayLevel}
+                    options={[
+                      ...(tvhPayLevel === "UNSET"
+                        ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
+                        : []),
+                      ...tvhKrLevelsForGroup(tvhPayGroup).map((level) => ({
+                        value: level,
+                        label: "Stufe " + level,
+                      })),
+                    ]}
+                  />
+                </>
+              ) : salaryMode === "TVUK_NURSING" ? (
                 <>
                   <DropdownField
                     label="Entgeltgruppe"
@@ -559,7 +627,23 @@ function SettingsEditorForm({
                   />
                 </>
               )}
-              <Field editable={false} label="Tarifliche Vollzeit pro Woche" value={fullTimeHours} />
+              {salaryMode === "TVH_KR" ? (
+                <DropdownField
+                  label="Tarifliche Vollzeit pro Woche"
+                  value={tvhFullTimeWeeklyMinutes}
+                  onChange={setTvhFullTimeWeeklyMinutes}
+                  options={[
+                    { value: 2310 as const, label: "38,5" },
+                    { value: 2400 as const, label: "40" },
+                  ]}
+                />
+              ) : (
+                <Field
+                  editable={false}
+                  label="Tarifliche Vollzeit pro Woche"
+                  value={fullTimeHours}
+                />
+              )}
             </>
           ) : null}
         </FormSection>

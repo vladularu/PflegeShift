@@ -1,3 +1,4 @@
+import { selectTvhKrAssessmentShifts } from "@/engine/simple-tvh-kr-profile-pay";
 import { selectTvUkAssessmentShifts } from "@/engine/simple-tvuk-nursing-profile-pay";
 import { selectTvlKrAssessmentShifts } from "@/engine/simple-tvl-kr-profile-pay";
 import { selectVkaEAssessmentShifts } from "@/engine/simple-vka-e-pay";
@@ -85,17 +86,19 @@ export function SalaryScreen() {
     if (!ready || error !== null || profile === null) return null;
     return captureRuleComputation(() => {
       const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts = profile.tvUkNursingTariff
-        ? selectTvUkAssessmentShifts(entries, month)
-        : profile.tvlKrTariff
-          ? selectTvlKrAssessmentShifts(entries, month)
-          : profile.vkaETariff
-            ? selectVkaEAssessmentShifts(entries, month)
-            : profile.nursingTrainingTariff
-              ? selectNursingTrainingAssessmentShifts(entries, month)
-              : profile.tariff === null
-                ? monthlyEntries.monthShifts
-                : selectAllowanceShifts(entries, month, ruleResolver);
+      const allowanceShifts = profile.tvhKrTariff
+        ? selectTvhKrAssessmentShifts(entries, month)
+        : profile.tvUkNursingTariff
+          ? selectTvUkAssessmentShifts(entries, month)
+          : profile.tvlKrTariff
+            ? selectTvlKrAssessmentShifts(entries, month)
+            : profile.vkaETariff
+              ? selectVkaEAssessmentShifts(entries, month)
+              : profile.nursingTrainingTariff
+                ? selectNursingTrainingAssessmentShifts(entries, month)
+                : profile.tariff === null
+                  ? monthlyEntries.monthShifts
+                  : selectAllowanceShifts(entries, month, ruleResolver);
       const decision = tariffDecisions.find((item) => item.month === month) ?? null;
       return {
         monthShifts: monthlyEntries.monthShifts,
@@ -150,6 +153,7 @@ export function SalaryScreen() {
     profile.vkaETariff != null ||
     profile.tvlKrTariff != null ||
     profile.tvUkNursingTariff != null ||
+    profile.tvhKrTariff != null ||
     manualSalary;
 
   function moveMonth(delta: number) {
@@ -164,20 +168,22 @@ export function SalaryScreen() {
 
   const salaryProfileLabel = manualSalary
     ? "Manuell hinterlegt"
-    : profile.tvUkNursingTariff
-      ? "TV-UK " +
-        profile.tvUkNursingTariff.payGroup.replace("PUK", "P-UK") +
-        " · Stufe " +
-        profile.tvUkNursingTariff.payLevel
-      : profile.tvlKrTariff
-        ? `TV-L ${profile.tvlKrTariff.payGroup} · Stufe ${profile.tvlKrTariff.payLevel}`
-        : profile.vkaETariff
-          ? `TVöD ${profile.vkaETariff.payGroup} · Stufe ${profile.vkaETariff.payLevel}`
-          : profile.nursingTrainingTariff
-            ? `TVAöD Pflege · ${profile.nursingTrainingTariff.trainingYear}. Ausbildungsjahr`
-            : profile.tariff
-              ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
-              : null;
+    : profile.tvhKrTariff
+      ? `TV-H ${profile.tvhKrTariff.payGroup} · Stufe ${profile.tvhKrTariff.payLevel}`
+      : profile.tvUkNursingTariff
+        ? "TV-UK " +
+          profile.tvUkNursingTariff.payGroup.replace("PUK", "P-UK") +
+          " · Stufe " +
+          profile.tvUkNursingTariff.payLevel
+        : profile.tvlKrTariff
+          ? `TV-L ${profile.tvlKrTariff.payGroup} · Stufe ${profile.tvlKrTariff.payLevel}`
+          : profile.vkaETariff
+            ? `TVöD ${profile.vkaETariff.payGroup} · Stufe ${profile.vkaETariff.payLevel}`
+            : profile.nursingTrainingTariff
+              ? `TVAöD Pflege · ${profile.nursingTrainingTariff.trainingYear}. Ausbildungsjahr`
+              : profile.tariff
+                ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
+                : null;
   const compositionRows = manualSalary
     ? [{ key: "base", label: "Monatsbrutto", value: euro(pay.personalBaseAmount) }]
     : [
@@ -221,17 +227,25 @@ export function SalaryScreen() {
           ? [
               {
                 key: "care",
-                label: profile.tvUkNursingTariff
-                  ? "Pflegezulage TV-UK"
-                  : profile.tvlKrTariff
-                    ? "Pflegezulage TV-L"
-                    : "Pflegezulage TVöD-P",
+                label: profile.tvhKrTariff
+                  ? "Pflegezulage TV-H"
+                  : profile.tvUkNursingTariff
+                    ? "Pflegezulage TV-UK"
+                    : profile.tvlKrTariff
+                      ? "Pflegezulage TV-L"
+                      : "Pflegezulage TVöD-P",
                 value: euro(pay.careAllowanceAmount),
                 onPress: () =>
                   router.push(
                     settingsInfoRoute(
                       "CARE_ALLOWANCE",
-                      profile.tvUkNursingTariff ? "TVUK" : profile.tvlKrTariff ? "TVL" : undefined,
+                      profile.tvhKrTariff
+                        ? "TVH"
+                        : profile.tvUkNursingTariff
+                          ? "TVUK"
+                          : profile.tvlKrTariff
+                            ? "TVL"
+                            : undefined,
                     ),
                   ),
               },
