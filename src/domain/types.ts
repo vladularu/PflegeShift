@@ -1,3 +1,4 @@
+import type { TvUkNursingTariff } from "./tvuk-nursing-tariff";
 import type { TvlKrSalaryTariff } from "./tvl-kr-tariff";
 
 export const FEDERAL_STATES = [
@@ -187,6 +188,7 @@ export interface UserProfile {
   readonly nursingTrainingTariff?: NursingTrainingTariff | null;
   readonly vkaETariff?: VkaETariff | null;
   readonly tvlKrTariff?: TvlKrSalaryTariff | null;
+  readonly tvUkNursingTariff?: TvUkNursingTariff | null;
   readonly regularRotatingNightWork: boolean | null;
   readonly sundayHolidayWorkEligible: boolean | null;
   readonly allEmploymentWorkRecorded: boolean | null;
@@ -388,6 +390,7 @@ export interface SaveProfileInput {
   readonly nursingTrainingTariff?: NursingTrainingTariff | null;
   readonly vkaETariff?: VkaETariff | null;
   readonly tvlKrTariff?: TvlKrSalaryTariff | null;
+  readonly tvUkNursingTariff?: TvUkNursingTariff | null;
   readonly regularRotatingNightWork?: boolean | null;
   readonly sundayHolidayWorkEligible?: boolean | null;
   readonly allEmploymentWorkRecorded?: boolean | null;
@@ -480,6 +483,8 @@ export interface TvoedAssessmentCriterion {
 }
 
 export interface MonthlyPayEstimate {
+  /** TV-UK compulsory time credit; excluded from the salary estimate. */
+  readonly nightCompensatoryMinutes?: number;
   readonly month: string;
   readonly tariffLabel: string | null;
   readonly available: boolean;

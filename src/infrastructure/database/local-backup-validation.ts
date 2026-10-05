@@ -1,3 +1,7 @@
+import {
+  TVUK_NURSING_PREFERENCE_KEY,
+  requireTvUkNursingTariff,
+} from "@/domain/tvuk-nursing-tariff";
 import { TVL_KR_PREFERENCE_KEY, requireTvlKrSalaryTariff } from "@/domain/tvl-kr-tariff";
 import { VKA_E_PREFERENCE_KEY, requireVkaETariff } from "@/domain/vka-e-tariff";
 import {
@@ -649,6 +653,13 @@ function validateTariffDecisionRow(value: unknown): BackupRow {
 }
 
 function validatePreferenceValue(key: string, value: string): void {
+  if (key === TVUK_NURSING_PREFERENCE_KEY) {
+    try {
+      if (!requireTvUkNursingTariff(JSON.parse(value))) return invalid();
+    } catch {
+      return invalid();
+    }
+  }
   if (key === TVL_KR_PREFERENCE_KEY) {
     try {
       if (!requireTvlKrSalaryTariff(JSON.parse(value))) return invalid();
@@ -920,9 +931,12 @@ export async function validateLocalBackup(
     const preferences = Object.freeze(asArray(data.preferences).map(validatePreferenceRow));
     if (
       preferences.some((row) =>
-        [NURSING_TRAINING_PREFERENCE_KEY, VKA_E_PREFERENCE_KEY, TVL_KR_PREFERENCE_KEY].some(
-          (key) => key === row.key,
-        ),
+        [
+          NURSING_TRAINING_PREFERENCE_KEY,
+          VKA_E_PREFERENCE_KEY,
+          TVL_KR_PREFERENCE_KEY,
+          TVUK_NURSING_PREFERENCE_KEY,
+        ].some((key) => key === row.key),
       ) &&
       (!profile || profile.pay_group !== null || profile.manual_monthly_gross_cents !== null)
     )
@@ -930,9 +944,12 @@ export async function validateLocalBackup(
 
     if (
       preferences.filter((row) =>
-        [NURSING_TRAINING_PREFERENCE_KEY, VKA_E_PREFERENCE_KEY, TVL_KR_PREFERENCE_KEY].some(
-          (key) => key === row.key,
-        ),
+        [
+          NURSING_TRAINING_PREFERENCE_KEY,
+          VKA_E_PREFERENCE_KEY,
+          TVL_KR_PREFERENCE_KEY,
+          TVUK_NURSING_PREFERENCE_KEY,
+        ].some((key) => key === row.key),
       ).length > 1
     )
       return invalid();

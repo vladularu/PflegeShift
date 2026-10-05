@@ -1,3 +1,7 @@
+import {
+  TVUK_NURSING_PREFERENCE_KEY,
+  requireTvUkNursingTariff,
+} from "@/domain/tvuk-nursing-tariff";
 import type { SQLiteDatabase } from "expo-sqlite";
 import type { SaveProfileInput, UserProfile } from "@/domain/types";
 import {
@@ -12,14 +16,17 @@ export async function loadSimpleSalaryForProfile(
   profile: UserProfile,
 ): Promise<UserProfile> {
   const rows = await db.getAllAsync<{ key: string; value: string }>(
-    "SELECT key,value FROM app_preferences WHERE key IN (?,?,?)",
+    "SELECT key,value FROM app_preferences WHERE key IN (?,?,?,?)",
     NURSING_TRAINING_PREFERENCE_KEY,
     VKA_E_PREFERENCE_KEY,
     TVL_KR_PREFERENCE_KEY,
+    TVUK_NURSING_PREFERENCE_KEY,
   );
   const training = rows.find((r) => r.key === NURSING_TRAINING_PREFERENCE_KEY);
   const e = rows.find((r) => r.key === VKA_E_PREFERENCE_KEY);
   const tvl = rows.find((r) => r.key === TVL_KR_PREFERENCE_KEY);
+  const uk = rows.find((r) => r.key === TVUK_NURSING_PREFERENCE_KEY);
+  const tvUkNursingTariff = uk ? requireTvUkNursingTariff(JSON.parse(uk.value)) : null;
   const nursingTrainingTariff = training
     ? requireNursingTrainingTariff(JSON.parse(training.value))
     : null;
@@ -30,6 +37,7 @@ export async function loadSimpleSalaryForProfile(
       nursingTrainingTariff,
       vkaETariff,
       tvlKrTariff,
+      tvUkNursingTariff,
       profile.tariff,
       profile.manualMonthlyGrossCents,
     ].filter((v) => v != null).length > 1
@@ -40,6 +48,7 @@ export async function loadSimpleSalaryForProfile(
     ...(nursingTrainingTariff ? { nursingTrainingTariff } : {}),
     ...(vkaETariff ? { vkaETariff } : {}),
     ...(tvlKrTariff ? { tvlKrTariff } : {}),
+    ...(tvUkNursingTariff ? { tvUkNursingTariff } : {}),
   };
 }
 export function simpleSalaryProfileInput(
@@ -51,25 +60,47 @@ export function simpleSalaryProfileInput(
     ...raw,
     nursingTrainingTariff:
       raw.nursingTrainingTariff === undefined
-        ? other || raw.vkaETariff != null || raw.tvlKrTariff != null
+        ? other ||
+          raw.tvUkNursingTariff != null ||
+          raw.vkaETariff != null ||
+          raw.tvlKrTariff != null
           ? null
           : (current?.nursingTrainingTariff ?? null)
         : raw.nursingTrainingTariff,
     vkaETariff:
       raw.vkaETariff === undefined
-        ? other || raw.nursingTrainingTariff != null || raw.tvlKrTariff != null
+        ? other ||
+          raw.tvUkNursingTariff != null ||
+          raw.nursingTrainingTariff != null ||
+          raw.tvlKrTariff != null
           ? null
           : (current?.vkaETariff ?? null)
         : raw.vkaETariff,
     tvlKrTariff:
       raw.tvlKrTariff === undefined
-        ? other || raw.nursingTrainingTariff != null || raw.vkaETariff != null
+        ? other ||
+          raw.tvUkNursingTariff != null ||
+          raw.nursingTrainingTariff != null ||
+          raw.vkaETariff != null
           ? null
           : (current?.tvlKrTariff ?? null)
         : raw.tvlKrTariff,
+    tvUkNursingTariff:
+      raw.tvUkNursingTariff === undefined
+        ? other ||
+          raw.nursingTrainingTariff != null ||
+          raw.vkaETariff != null ||
+          raw.tvlKrTariff != null
+          ? null
+          : (current?.tvUkNursingTariff ?? null)
+        : raw.tvUkNursingTariff,
     manualMonthlyGrossCents:
       raw.manualMonthlyGrossCents === undefined
-        ? raw.tariff || raw.nursingTrainingTariff || raw.vkaETariff || raw.tvlKrTariff
+        ? raw.tariff ||
+          raw.nursingTrainingTariff ||
+          raw.vkaETariff ||
+          raw.tvlKrTariff ||
+          raw.tvUkNursingTariff
           ? null
           : (current?.manualMonthlyGrossCents ?? null)
         : raw.manualMonthlyGrossCents,
@@ -85,6 +116,7 @@ export async function storeSimpleSalaryForProfile(
     [NURSING_TRAINING_PREFERENCE_KEY, input.nursingTrainingTariff],
     [VKA_E_PREFERENCE_KEY, input.vkaETariff],
     [TVL_KR_PREFERENCE_KEY, input.tvlKrTariff],
+    [TVUK_NURSING_PREFERENCE_KEY, input.tvUkNursingTariff],
   ] as const) {
     if (value)
       await db.runAsync(

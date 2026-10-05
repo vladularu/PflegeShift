@@ -1,3 +1,4 @@
+import { TVUK_NURSING_PREFERENCE_KEY } from "@/domain/tvuk-nursing-tariff";
 import { TVL_KR_PREFERENCE_KEY } from "@/domain/tvl-kr-tariff";
 import { VKA_E_PREFERENCE_KEY } from "@/domain/vka-e-tariff";
 import { NURSING_TRAINING_PREFERENCE_KEY } from "@/domain/nursing-training";
@@ -94,6 +95,7 @@ export const USER_DATA_PREFERENCE_KEYS = Object.freeze([
   NURSING_TRAINING_PREFERENCE_KEY,
   VKA_E_PREFERENCE_KEY,
   TVL_KR_PREFERENCE_KEY,
+  TVUK_NURSING_PREFERENCE_KEY,
   ...Object.values(APPEARANCE_KEYS),
   PLANNING_HINTS_PREFERENCE_KEY,
   YOUTH_PROTECTION_PREFERENCE_KEY,

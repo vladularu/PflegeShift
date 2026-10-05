@@ -1,3 +1,4 @@
+import { requireTvUkNursingTariff } from "./tvuk-nursing-tariff";
 import { requireTvlKrSalaryTariff } from "./tvl-kr-tariff";
 import { requireVkaETariff } from "./vka-e-tariff";
 import { requireNursingTrainingTariff } from "./nursing-training";
@@ -181,6 +182,7 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
   const nursingTrainingTariff = requireNursingTrainingTariff(input.nursingTrainingTariff);
   const vkaETariff = requireVkaETariff(input.vkaETariff);
   const tvlKrTariff = requireTvlKrSalaryTariff(input.tvlKrTariff);
+  const tvUkNursingTariff = requireTvUkNursingTariff(input.tvUkNursingTariff);
   const federalState = requireFederalState(input.federalState);
   const industry = requireIndustry(input.industry);
   const manualMonthlyGrossCents = requireManualMonthlyGrossCents(input.manualMonthlyGrossCents);
@@ -219,9 +221,14 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
     throw new ValidationError("Bitte entweder manuelles Gehalt oder TVöD-P wählen.");
   }
   if (
-    [nursingTrainingTariff, vkaETariff, tvlKrTariff, tariff, manualMonthlyGrossCents].filter(
-      (value) => value != null,
-    ).length > 1
+    [
+      nursingTrainingTariff,
+      vkaETariff,
+      tvlKrTariff,
+      tvUkNursingTariff,
+      tariff,
+      manualMonthlyGrossCents,
+    ].filter((value) => value != null).length > 1
   ) {
     throw new ValidationError("Bitte nur eine Gehaltsgrundlage wählen.");
   }
@@ -245,6 +252,7 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
     ...(input.nursingTrainingTariff !== undefined ? { nursingTrainingTariff } : {}),
     ...(input.vkaETariff !== undefined ? { vkaETariff } : {}),
     ...(input.tvlKrTariff !== undefined ? { tvlKrTariff } : {}),
+    ...(input.tvUkNursingTariff !== undefined ? { tvUkNursingTariff } : {}),
   };
 }
 
