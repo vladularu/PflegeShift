@@ -11,9 +11,9 @@ import { ScreenScrollView } from "@/ui/screen-layout";
 
 export function CheckSettingsScreen() {
   const palette = usePalette();
-  const { enabled, error, saving, save, retry } = useCheckPreferences();
+  const { enabled, youthEnabled, error, saving, save, saveYouth, retry } = useCheckPreferences();
 
-  if (enabled === null)
+  if (enabled === null || youthEnabled === null)
     return error ? (
       <LoadFailureView message={error} onRetry={retry} />
     ) : (
@@ -25,12 +25,33 @@ export function CheckSettingsScreen() {
       <InlineNotice message="Deine Auswahl gilt für Monats- und Jahresauswertung sowie die Prüfungsdetails. Gesetzliche Hinweise bleiben immer sichtbar." />
       <SectionHeader title="Gesetzliche Prüfung" />
       <SurfaceCard>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: SPACING.md,
+            padding: SPACING.md,
+          }}
+        >
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_SCALE}
+            style={{ ...TYPOGRAPHY.body, color: palette.text, flex: 1 }}
+          >
+            Jugendlichenprüfung
+          </Text>
+          <LabeledSwitch
+            label="Jugendlichenprüfung"
+            value={youthEnabled}
+            disabled={saving}
+            onValueChange={(value) => void saveYouth(value)}
+          />
+        </View>
         <Text
           maxFontSizeMultiplier={TEXT_MAX_SCALE}
           style={{ ...TYPOGRAPHY.body, color: palette.text, padding: SPACING.md }}
         >
-          Gesetzliche Hinweise bleiben unabhängig von dieser Auswahl sichtbar. Die Prüfung und die
-          Gehaltsberechnung werden hier nicht verändert.
+          Für 15- bis 17-Jährige ohne Vollzeitschulpflicht. Prüft die erfassten Dienstzeiten nach
+          dem Jugendarbeitsschutzgesetz.
         </Text>
       </SurfaceCard>
       <SectionHeader title="Freiwillige Planung" />

@@ -7,6 +7,7 @@ import type {
   MonthlyComplianceResult,
   ShiftEntry,
 } from "@/domain/types";
+import { calculateSimpleYouthCompliance } from "@/engine/simple-youth-duty-time";
 import { checkEvidenceCompleteness } from "@/engine/compliance-evidence";
 import { createComplianceIssue as issue } from "@/engine/compliance-issue";
 import {
@@ -50,6 +51,7 @@ export interface ComplianceOptions {
   readonly allEmploymentWorkRecorded?: boolean | null;
   readonly ruleResolver?: RuleResolver;
   readonly sectorId?: string;
+  readonly youthProtection?: boolean;
 }
 
 function isRelevant(shift: ShiftEntry): boolean {
@@ -611,6 +613,13 @@ export function* calculateMonthlyComplianceSteps(
   const calculationShifts = shifts.filter(
     (shift) => shift.deletedAt === null && shift.date >= start && shift.date <= end,
   );
+  if (options.youthProtection === true) {
+    return calculateSimpleYouthCompliance(month, intervals, options, [
+      ...checkDuplicates(assessmentIntervals),
+      ...checkOverlaps(assessmentIntervals),
+      ...checkPlanningSeries(assessmentIntervals, rules),
+    ]);
+  }
   const nightWorkerQualification = qualifyAsNightWorkerIncrementally(
     intervals,
     rules,

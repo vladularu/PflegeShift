@@ -654,6 +654,7 @@ function validatePreferenceValue(key: string, value: string): void {
   if (key === APPEARANCE_KEYS.mode && !isAppearanceMode(value)) return invalid();
   const booleans = [
     "check_show_planning_hints",
+    "check_youth_protection",
     "calendar_show_shifts",
     "calendar_show_appointments",
     "calendar_show_holidays",

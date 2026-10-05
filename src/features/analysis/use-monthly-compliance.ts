@@ -3,12 +3,14 @@ import { useCallback, useEffect, useState } from "react";
 import type { MonthlyComplianceResult, ShiftEntry, UserProfile } from "@/domain/types";
 import { calculateMonthlyComplianceSteps } from "@/engine/compliance";
 import { useLocalReferenceDate } from "@/features/analysis/use-local-reference-date";
+import { useCheckPreferences } from "@/features/settings/check-preferences";
 import { recordDiagnostic } from "@/infrastructure/diagnostics";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 
 interface MonthlyComplianceState {
   readonly error: string | null;
+  readonly youthProtection: boolean;
   readonly month: string;
   readonly profile: UserProfile;
   readonly referenceDate: string;
@@ -36,13 +38,23 @@ export function useDeferredMonthlyCompliance({
   readonly ruleResolver?: RuleResolver;
   readonly shifts: readonly ShiftEntry[];
 }): DeferredMonthlyComplianceResult {
+  const {
+    youthEnabled = false,
+    error: preferenceError,
+    retry: retryPreferences,
+  } = useCheckPreferences();
   const [retryRevision, setRetryRevision] = useState(0);
   const [state, setState] = useState<MonthlyComplianceState | null>(null);
-  const retry = useCallback(() => setRetryRevision((value) => value + 1), []);
+  const retry = useCallback(() => {
+    if (youthEnabled === null) retryPreferences();
+    setRetryRevision((value) => value + 1);
+  }, [youthEnabled, retryPreferences]);
   const referenceDate = useLocalReferenceDate(profile?.timeZone ?? "Europe/Berlin");
   const matchesRequest =
     state !== null &&
     profile !== null &&
+    youthEnabled !== null &&
+    state.youthProtection === youthEnabled &&
     state.month === month &&
     state.profile === profile &&
     state.referenceDate === referenceDate &&
@@ -51,7 +63,7 @@ export function useDeferredMonthlyCompliance({
   const completedRequest = matchesRequest && state.result !== null && state.error === null;
 
   useEffect(() => {
-    if (!enabled || profile === null || completedRequest) return;
+    if (!enabled || profile === null || youthEnabled === null || completedRequest) return;
     let active = true;
     let cancelScheduledWork = () => {};
     const steps = calculateMonthlyComplianceSteps(month, shifts, profile.timeZone, {
@@ -63,6 +75,7 @@ export function useDeferredMonthlyCompliance({
       allEmploymentWorkRecorded: profile.allEmploymentWorkRecorded,
       referenceDate,
       ruleResolver,
+      youthProtection: youthEnabled,
     });
     const advance = () => {
       try {
@@ -72,6 +85,7 @@ export function useDeferredMonthlyCompliance({
           setState({
             error: null,
             month,
+            youthProtection: youthEnabled,
             profile,
             referenceDate,
             ruleResolver,
@@ -87,6 +101,7 @@ export function useDeferredMonthlyCompliance({
           setState({
             error: "Die Arbeitszeitprüfung konnte nicht berechnet werden.",
             month,
+            youthProtection: youthEnabled,
             profile,
             referenceDate,
             ruleResolver,
@@ -110,10 +125,11 @@ export function useDeferredMonthlyCompliance({
     retryRevision,
     ruleResolver,
     shifts,
+    youthEnabled,
   ]);
 
   return {
-    error: matchesRequest ? state.error : null,
+    error: youthEnabled === null ? preferenceError : matchesRequest ? state.error : null,
     result: matchesRequest ? state.result : null,
     retry,
   };

@@ -15,6 +15,7 @@ import type { AnnualReport } from "@/features/analysis/annual-report";
 import type { RuleComputationFailure } from "@/features/analysis/rule-computation";
 import { useLocalReferenceDate } from "@/features/analysis/use-local-reference-date";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
+import { useCheckPreferences } from "@/features/settings/check-preferences";
 import { scheduleIdleWork } from "@/ui/schedule-idle-work";
 
 interface AnnualReportState {
@@ -53,19 +54,27 @@ export function useSimpleAnnualReport({
   readonly workPatternSettings: TvoedWorkPatternSettings;
   readonly year: number;
 }): DeferredAnnualReportResult {
+  const {
+    youthEnabled = false,
+    error: preferenceError,
+    retry: retryPreferences,
+  } = useCheckPreferences();
   const [retryRevision, setRetryRevision] = useState(0);
   const [states, setStates] = useState<readonly AnnualReportState[]>([]);
   const [coreState, setCoreState] = useState<AnnualReportState | null>(null);
   const [computationCache] = useState(createAnnualAvailableReportCache);
   const requestRevision = useRef(0);
-  const retry = useCallback(() => setRetryRevision((value) => value + 1), []);
+  const retry = useCallback(() => {
+    if (youthEnabled === null) retryPreferences();
+    setRetryRevision((value) => value + 1);
+  }, [youthEnabled, retryPreferences]);
   const referenceDate = useLocalReferenceDate(profile?.timeZone ?? "Europe/Berlin");
   // Database reloads create new objects. Compare complete values, not identity or
   // revision alone: template joins and restores can change values at the same revision.
   // Keep this key in memory only; no diagnostic log or persistent cache.
   const inputKey = useMemo(
     () =>
-      enabled
+      enabled && youthEnabled !== null
         ? annualInputKey({
             entries,
             profile,
@@ -73,9 +82,19 @@ export function useSimpleAnnualReport({
             workPatternSettings,
             year,
             referenceDate,
+            youthEnabled,
           })
         : null,
-    [enabled, entries, profile, tariffDecisions, workPatternSettings, year, referenceDate],
+    [
+      enabled,
+      entries,
+      profile,
+      tariffDecisions,
+      workPatternSettings,
+      year,
+      referenceDate,
+      youthEnabled,
+    ],
   );
 
   const state = states.find(
@@ -103,6 +122,7 @@ export function useSimpleAnnualReport({
       ruleResolver,
       {
         cache: computationCache,
+        youthProtection: youthEnabled ?? false,
         onCore: (report) => {
           if (!active || requestRevision.current !== currentRequest) return;
           setCoreState({
@@ -185,6 +205,7 @@ export function useSimpleAnnualReport({
     tariffDecisions,
     workPatternSettings,
     year,
+    youthEnabled,
   ]);
 
   return {
@@ -192,7 +213,7 @@ export function useSimpleAnnualReport({
       coreState?.inputKey === inputKey && coreState?.ruleResolver === ruleResolver
         ? coreState.report
         : null,
-    error: state?.error ?? null,
+    error: youthEnabled === null ? preferenceError : (state?.error ?? null),
     fatalError: state?.fatalError ?? null,
     report: state?.report ?? null,
     ruleFailure: state?.ruleFailure ?? null,
