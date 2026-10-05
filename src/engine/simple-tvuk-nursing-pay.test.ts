@@ -215,6 +215,63 @@ describe("simple TV-UK nursing", () => {
     );
     expect(result.totalAmount).toBe(67.6);
   });
+  it.each([
+    ["2024-10-01", 30, 29.26],
+    ["2024-12-31", 30, 29.26],
+    ["2025-01-01", 35, 34.13],
+    ["2025-01-02", 35, 34.13],
+  ] as const)(
+    "dates core-night cash and mandatory time credit correctly on %s",
+    (date, percentage, amount) => {
+      const result = premium(shift({ date, startTime: "00:00", endTime: "04:00" }));
+      expect(result.premiumLines.find((p) => p.key === "night")).toMatchObject({
+        minutes: 240,
+        hourlyRate: 24.38,
+        percentage,
+        amount,
+      });
+      expect(result.nightCompensatoryMinutes).toBe(12);
+    },
+  );
+  it.each([
+    ["2024-12-29", 25, 12.19],
+    ["2025-01-05", 40, 19.5],
+  ] as const)("dates the Sunday increase correctly on %s", (date, percentage, amount) => {
+    const result = premium(shift({ date, startTime: "08:00", endTime: "10:00" }));
+    expect(result.premiumLines).toEqual([
+      expect.objectContaining({ key: "sunday", minutes: 120, percentage, amount }),
+    ]);
+    expect(result.nightCompensatoryMinutes).toBe(0);
+  });
+  it("keeps the historic outer night rate and fixed allowance in the monthly estimate", () => {
+    const result = calculateTvUkNursingMonth(
+      "2024-12",
+      [shift({ date: "2024-12-27" })],
+      work,
+      selection,
+      options,
+    );
+    expect(result).toMatchObject({
+      personalBaseAmount: 4082,
+      careAllowanceAmount: 200,
+      timePremiumAmount: 58.52,
+      estimatedGrossAmount: 4340.52,
+      nightCompensatoryMinutes: 30,
+    });
+    expect(result.shiftBreakdowns[0].premiumLines).toEqual([
+      expect.objectContaining({ key: "night", percentage: 20, minutes: 360, amount: 29.26 }),
+      expect.objectContaining({ key: "night", percentage: 30, minutes: 240, amount: 29.26 }),
+    ]);
+  });
+  it("applies the new rate at midnight across the 2024/2025 boundary", () => {
+    const result = premium(shift({ date: "2024-12-31", startTime: "23:00", endTime: "01:00" }));
+    expect(result.premiumLines.filter((p) => p.key === "night")).toEqual([
+      expect.objectContaining({ percentage: 20, hourlyRate: 24.38, minutes: 60, amount: 4.88 }),
+      expect.objectContaining({ percentage: 35, hourlyRate: 24.38, minutes: 60, amount: 8.53 }),
+    ]);
+    expect(result.nightCompensatoryMinutes).toBe(6);
+    expect(result.totalAmount).toBe(25.61);
+  });
   it("estimates the existing unpaid pause in the middle of the actual shift", () => {
     const result = premium(shift({ breakMinutes: 60 }));
     expect(result.netMinutes).toBe(540);
