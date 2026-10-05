@@ -5,6 +5,7 @@ import type {
   Industry,
   PayGroup,
   PayLevel,
+  VkaETariff,
   TariffRegion,
   TariffSector,
   UserProfile,
@@ -12,7 +13,7 @@ import type {
 
 export type EvidenceFormValue = "UNKNOWN" | "YES" | "NO";
 export type IndustryFormValue = Industry | "UNKNOWN";
-export type SalaryMode = "UNSET" | "TVOED_P" | "TVAOED_PFLEGE" | "MANUAL";
+export type SalaryMode = "UNSET" | "TVOED_P" | "TVOED_E" | "TVAOED_PFLEGE" | "MANUAL";
 
 export interface SettingsFormValues {
   readonly federalState: FederalState;
@@ -26,6 +27,7 @@ export interface SettingsFormValues {
   readonly allEmploymentWorkRecorded: EvidenceFormValue;
   readonly trainingYear: 1 | 2 | 3 | "UNSET";
   readonly payGroup: PayGroup;
+  readonly ePayGroup: VkaETariff["payGroup"];
   readonly payLevel: PayLevel;
   readonly sector: TariffSector;
   readonly tariffRegion: TariffRegion;
@@ -68,22 +70,30 @@ export function settingsFormValues(profile: UserProfile): SettingsFormValues {
     holidayRegion: profile.holidayRegion,
     weeklyHours: formatHours(profile.weeklyMinutes),
     industry: profile.industry ?? "UNKNOWN",
-    salaryMode: profile.nursingTrainingTariff
-      ? "TVAOED_PFLEGE"
-      : profile.manualMonthlyGrossCents != null
-        ? "MANUAL"
-        : profile.tariff !== null
-          ? "TVOED_P"
-          : "UNSET",
+    salaryMode: profile.vkaETariff
+      ? "TVOED_E"
+      : profile.nursingTrainingTariff
+        ? "TVAOED_PFLEGE"
+        : profile.manualMonthlyGrossCents != null
+          ? "MANUAL"
+          : profile.tariff !== null
+            ? "TVOED_P"
+            : "UNSET",
     manualMonthlyGross: formatManualMonthlyGross(profile.manualMonthlyGrossCents),
     regularRotatingNightWork: evidenceFormValue(profile.regularRotatingNightWork),
     sundayHolidayWorkEligible: evidenceFormValue(profile.sundayHolidayWorkEligible),
     allEmploymentWorkRecorded: evidenceFormValue(profile.allEmploymentWorkRecorded),
     trainingYear: profile.nursingTrainingTariff?.trainingYear ?? "UNSET",
     payGroup: profile.tariff?.payGroup ?? "P8",
-    payLevel: profile.tariff?.payLevel ?? 4,
-    sector: profile.nursingTrainingTariff?.sector ?? profile.tariff?.sector ?? "BT_K",
+    ePayGroup: profile.vkaETariff?.payGroup ?? "E9b",
+    payLevel: profile.vkaETariff?.payLevel ?? profile.tariff?.payLevel ?? 4,
+    sector:
+      profile.vkaETariff?.sector ??
+      profile.nursingTrainingTariff?.sector ??
+      profile.tariff?.sector ??
+      "BT_K",
     tariffRegion:
+      profile.vkaETariff?.tariffRegion ??
       profile.nursingTrainingTariff?.tariffRegion ??
       profile.tariff?.tariffRegion ??
       defaultTariffRegion(profile.federalState),

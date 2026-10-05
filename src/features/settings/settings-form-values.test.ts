@@ -46,6 +46,7 @@ describe("settings form values", () => {
       sundayHolidayWorkEligible: "YES",
       allEmploymentWorkRecorded: "YES",
       trainingYear: "UNSET",
+      ePayGroup: "E9b",
       payGroup: "P11",
       payLevel: 5,
       sector: "BT_B",

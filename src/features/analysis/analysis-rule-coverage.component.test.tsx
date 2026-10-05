@@ -373,6 +373,66 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(screen.queryByText("0,00 €")).toBeNull();
   });
 
+  it("shows E salary composition in the familiar overview", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      vkaETariff: { payGroup: "E9b", payLevel: 4, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 4\.690,55/)).toBeTruthy();
+    expect(screen.getByText("Zeitzuschläge")).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("navigates E salary to grouped calculated premium cards", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      vkaETariff: { payGroup: "E9b", payLevel: 4, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "e-night",
+        date: "2026-10-06",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+        breakMinutes: 60,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TVöD E9b · Stufe 4")).toBeTruthy();
+    expect(salary.getByText(/40,18/)).toBeTruthy();
+    expect(salary.queryByText("Pflegezulage TVöD-P")).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Zeitzuschläge/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/premium-details",
+      params: { month: "2026-10" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/40,18/).length).toBeGreaterThan(0);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
+  it("keeps an uncovered E period unavailable without treating it as manual salary", async () => {
+    mockRouteMonth = "2027-04";
+    mockRuleResolver = FUTURE_HOLIDAY_TARIFF_EXPIRY_RESOLVER;
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      vkaETariff: { payGroup: "E12", payLevel: 4, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    const screen = await render(<PremiumDetailsScreen />);
+    expect(
+      screen.getByText("Für diesen Zeitraum liegt kein geprüfter Tarifstand vor."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
+
   it("keeps missing rule coverage local in ComplianceDetailsScreen", async () => {
     await expectRuleCoverageDiagnostic(<ComplianceDetailsScreen />);
   });

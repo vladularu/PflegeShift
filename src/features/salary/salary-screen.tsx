@@ -1,3 +1,4 @@
+import { selectVkaEAssessmentShifts } from "@/engine/simple-vka-e-pay";
 import { selectNursingTrainingAssessmentShifts } from "@/engine/simple-nursing-training-pay";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
@@ -82,11 +83,13 @@ export function SalaryScreen() {
     if (!ready || error !== null || profile === null) return null;
     return captureRuleComputation(() => {
       const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts = profile.nursingTrainingTariff
-        ? selectNursingTrainingAssessmentShifts(entries, month)
-        : profile.tariff === null
-          ? monthlyEntries.monthShifts
-          : selectAllowanceShifts(entries, month, ruleResolver);
+      const allowanceShifts = profile.vkaETariff
+        ? selectVkaEAssessmentShifts(entries, month)
+        : profile.nursingTrainingTariff
+          ? selectNursingTrainingAssessmentShifts(entries, month)
+          : profile.tariff === null
+            ? monthlyEntries.monthShifts
+            : selectAllowanceShifts(entries, month, ruleResolver);
       const decision = tariffDecisions.find((item) => item.month === month) ?? null;
       return {
         monthShifts: monthlyEntries.monthShifts,
@@ -136,7 +139,10 @@ export function SalaryScreen() {
   const { monthShifts, pay } = calculation.value;
   const manualSalary = profile.tariff === null && profile.manualMonthlyGrossCents != null;
   const salaryReady =
-    profile.tariff !== null || profile.nursingTrainingTariff != null || manualSalary;
+    profile.tariff !== null ||
+    profile.nursingTrainingTariff != null ||
+    profile.vkaETariff != null ||
+    manualSalary;
 
   function moveMonth(delta: number) {
     const nextMonth = Temporal.PlainDate.from(`${month}-01`)
@@ -150,11 +156,13 @@ export function SalaryScreen() {
 
   const salaryProfileLabel = manualSalary
     ? "Manuell hinterlegt"
-    : profile.nursingTrainingTariff
-      ? `TVAöD Pflege · ${profile.nursingTrainingTariff.trainingYear}. Ausbildungsjahr`
-      : profile.tariff
-        ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
-        : null;
+    : profile.vkaETariff
+      ? `TVöD ${profile.vkaETariff.payGroup} · Stufe ${profile.vkaETariff.payLevel}`
+      : profile.nursingTrainingTariff
+        ? `TVAöD Pflege · ${profile.nursingTrainingTariff.trainingYear}. Ausbildungsjahr`
+        : profile.tariff
+          ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
+          : null;
   const compositionRows = manualSalary
     ? [{ key: "base", label: "Monatsbrutto", value: euro(pay.personalBaseAmount) }]
     : [

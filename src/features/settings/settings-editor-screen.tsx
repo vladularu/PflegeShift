@@ -1,3 +1,4 @@
+import { VKA_E_GROUPS, ePayLevels } from "@/domain/vka-e-tariff";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { TextInput } from "react-native";
@@ -20,6 +21,7 @@ import {
   type TariffRegion,
   type TariffSector,
   type UserProfile,
+  type VkaETariff,
 } from "@/domain/types";
 import {
   defaultHolidayRegion,
@@ -105,6 +107,7 @@ function SettingsEditorForm({
   const [allEmploymentWorkRecorded, setAllEmploymentWorkRecorded] = useState<EvidenceFormValue>(
     initialValues.allEmploymentWorkRecorded,
   );
+  const [ePayGroup, setEPayGroup] = useState<VkaETariff["payGroup"]>(initialValues.ePayGroup);
   const [payGroup, setPayGroup] = useState<PayGroup>(initialValues.payGroup);
   const [payLevel, setPayLevel] = useState<PayLevel | "UNSET">(initialValues.payLevel);
   const [sector, setSector] = useState<TariffSector>(initialValues.sector);
@@ -123,6 +126,8 @@ function SettingsEditorForm({
         : 2340
       : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
   const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
+  const selectedLevels =
+    salaryMode === "TVOED_E" ? ePayLevels(ePayGroup) : payLevelsForGroup(payGroup);
   const evidenceOptions = [
     { value: "UNKNOWN" as const, label: "Noch nicht bestätigt" },
     { value: "YES" as const, label: "Ja" },
@@ -156,7 +161,11 @@ function SettingsEditorForm({
       focusInvalidField(manualMonthlyGrossRef, salaryFieldError);
       return;
     }
-    if (section === "TARIFF" && salaryMode === "TVOED_P" && payLevel === "UNSET") {
+    if (
+      section === "TARIFF" &&
+      (salaryMode === "TVOED_P" || salaryMode === "TVOED_E") &&
+      payLevel === "UNSET"
+    ) {
       setError("Bitte eine gültige Stufe für die gewählte Gruppe wählen.");
       setMessage(null);
       return;
@@ -206,6 +215,12 @@ function SettingsEditorForm({
         sundayHolidayWorkEligible: evidenceBoolean(sundayHolidayWorkEligible),
         allEmploymentWorkRecorded: evidenceBoolean(allEmploymentWorkRecorded),
         tariff: salaryUpdate.tariff,
+        vkaETariff:
+          section === "WORK"
+            ? (profile.vkaETariff ?? null)
+            : salaryMode === "TVOED_E" && payLevel !== "UNSET"
+              ? { payGroup: ePayGroup, payLevel, sector, tariffRegion }
+              : null,
         nursingTrainingTariff:
           section === "WORK"
             ? (profile.nursingTrainingTariff ?? null)
@@ -300,7 +315,7 @@ function SettingsEditorForm({
         </FormSection>
       ) : (
         <FormSection
-          caption="TVöD-P, Pflege-Ausbildung oder einen eigenen Monatswert wählen."
+          caption="Tarif berechnen oder einen eigenen Monatswert hinterlegen."
           title="Gehaltsgrundlage"
         >
           <DropdownField<IndustryFormValue>
@@ -314,10 +329,16 @@ function SettingsEditorForm({
           />
           <DropdownField
             label="Berechnung"
-            onChange={setSalaryMode}
+            onChange={(value) => {
+              setSalaryMode(value);
+              const levels =
+                value === "TVOED_E" ? ePayLevels(ePayGroup) : payLevelsForGroup(payGroup);
+              if (payLevel !== "UNSET" && !levels.includes(payLevel)) setPayLevel("UNSET");
+            }}
             options={[
               { value: "UNSET", label: "Bitte wählen" },
               { value: "TVOED_P", label: "TVöD-P" },
+              { value: "TVOED_E", label: "TVöD · E-Tabelle" },
               { value: "TVAOED_PFLEGE", label: "TVAöD Pflege · Ausbildung" },
               { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
             ]}
@@ -372,17 +393,30 @@ function SettingsEditorForm({
                 />
               ) : (
                 <>
-                  <DropdownField
-                    label="Entgeltgruppe"
-                    onChange={(group) => {
-                      setPayGroup(group);
-                      if (payLevel !== "UNSET" && !payLevelsForGroup(group).includes(payLevel)) {
-                        setPayLevel("UNSET");
-                      }
-                    }}
-                    options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
-                    value={payGroup}
-                  />
+                  {salaryMode === "TVOED_E" ? (
+                    <DropdownField
+                      label="Entgeltgruppe"
+                      value={ePayGroup}
+                      onChange={(group) => {
+                        setEPayGroup(group);
+                        if (payLevel !== "UNSET" && !ePayLevels(group).includes(payLevel))
+                          setPayLevel("UNSET");
+                      }}
+                      options={VKA_E_GROUPS.map((group) => ({ value: group, label: group }))}
+                    />
+                  ) : (
+                    <DropdownField
+                      label="Entgeltgruppe"
+                      onChange={(group) => {
+                        setPayGroup(group);
+                        if (payLevel !== "UNSET" && !payLevelsForGroup(group).includes(payLevel)) {
+                          setPayLevel("UNSET");
+                        }
+                      }}
+                      options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
+                      value={payGroup}
+                    />
+                  )}
                   <DropdownField
                     label="Stufe"
                     onChange={setPayLevel}
@@ -390,7 +424,7 @@ function SettingsEditorForm({
                       ...(payLevel === "UNSET"
                         ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
                         : []),
-                      ...payLevelsForGroup(payGroup).map((level) => ({
+                      ...selectedLevels.map((level) => ({
                         value: level,
                         label: `Stufe ${level}`,
                       })),
