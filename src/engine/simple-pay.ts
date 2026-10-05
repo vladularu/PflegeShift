@@ -1,4 +1,9 @@
 import {
+  calculateVkaEShift,
+  calculateVkaEMonth,
+  calculateVkaEAssessment,
+} from "./simple-vka-e-pay";
+import {
   calculateNursingTrainingMonth,
   calculateNursingTrainingShift,
   calculateNursingTrainingAssessment,
@@ -432,6 +437,7 @@ export function calculateShiftPremiumBreakdown(
   profile: UserProfile,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): ShiftPremiumBreakdown {
+  if (profile.vkaETariff) return calculateVkaEShift(shift, profile, ruleResolver);
   if (profile.nursingTrainingTariff)
     return calculateNursingTrainingShift(shift, profile, ruleResolver);
   const key = premiumCacheKey(shift, profile);
@@ -461,6 +467,16 @@ export function calculateMonthlyPayEstimate(
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyPayEstimate {
+  if (profile.vkaETariff)
+    return calculateVkaEMonth(
+      month,
+      shifts,
+      profile,
+      decision,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+    );
   if (profile.nursingTrainingTariff)
     return calculateNursingTrainingMonth(
       month,
@@ -586,8 +602,16 @@ export function calculateMonthlyTvoedAssessment(
   assessmentShifts: readonly ShiftEntry[],
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
-  profile?: Pick<UserProfile, "tariff" | "timeZone" | "nursingTrainingTariff">,
+  profile?: Pick<UserProfile, "tariff" | "timeZone" | "nursingTrainingTariff" | "vkaETariff">,
 ): MonthlyTvoedAssessmentResult {
+  if (profile?.vkaETariff)
+    return calculateVkaEAssessment(
+      month,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+      profile,
+    );
   if (profile?.nursingTrainingTariff)
     return calculateNursingTrainingAssessment(
       month,
