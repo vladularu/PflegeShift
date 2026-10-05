@@ -144,3 +144,83 @@ it("centers a completed result in the available space", async () => {
   });
   expect(screen.getByRole("header", { name: "Prüfung abgeschlossen" })).toBeTruthy();
 });
+
+it.each([1, 3.1])(
+  "keeps a seven-day warning short and reveals every shift at text scale %s",
+  async (fontScale) => {
+    mockFontScale = fontScale;
+    const dates = [
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+    ];
+    const shifts = dates.map((date, index) => ({
+      ...shift,
+      id: `series-${index}`,
+      date,
+      title: index < 3 ? "Früh" : "Nacht",
+      startTime: index < 3 ? "07:00" : "21:00",
+      endTime: index < 3 ? "15:12" : "07:30",
+    }));
+    const series = {
+      ...issue("Sieben oder mehr Arbeitstage in Folge", "2026-10-04", "PLANNING"),
+      relatedShiftIds: shifts.map((item) => item.id).reverse(),
+    };
+    const screen = await render(
+      <ComplianceDayList
+        compliance={result([series])}
+        shifts={[...shifts].reverse()}
+        showPlanning
+      />,
+    );
+    expect(screen.queryByTestId(`check-details-${series.id}`)).toBeNull();
+    await fireEvent.press(screen.getByRole("button", { name: /Sieben oder mehr/ }));
+    expect(screen.getAllByTestId(/^check-shift-/)).toHaveLength(3);
+    expect(screen.getByText("28.09.2026")).toBeTruthy();
+    expect(screen.getByTestId("check-shift-series-0").props.accessibilityLabel).toBe(
+      "Früh, 28. September 2026, 07:00–15:12",
+    );
+    expect(screen.queryByText("01.10.2026")).toBeNull();
+    const expand = screen.getByRole("button", { name: "Alle 7 Dienste anzeigen" });
+    expect(expand.props.accessibilityState.expanded).toBe(false);
+    await fireEvent.press(expand);
+    expect(screen.getAllByTestId(/^check-shift-/).map((row) => row.props.testID)).toEqual(
+      shifts.map((item) => `check-shift-${item.id}`),
+    );
+    expect(screen.getByText("04.10.2026")).toBeTruthy();
+    expect(screen.getAllByText("21:00–07:30")).toHaveLength(4);
+    const collapse = screen.getByRole("button", { name: "Weniger Dienste anzeigen" });
+    expect(collapse.props.accessibilityState.expanded).toBe(true);
+    await fireEvent.press(collapse);
+    expect(screen.getAllByTestId(/^check-shift-/)).toHaveLength(3);
+    await fireEvent.press(screen.getByRole("button", { name: /Sieben oder mehr/ }));
+    await fireEvent.press(screen.getByRole("button", { name: /Sieben oder mehr/ }));
+    expect(screen.getAllByTestId(/^check-shift-/)).toHaveLength(3);
+  },
+);
+
+it("keeps short lists complete and explains deleted or missing shifts", async () => {
+  const allDay = { ...shift, id: "all-day", date: "2026-09-04", startTime: null, endTime: null };
+  const deleted = { ...shift, id: "deleted", deletedAt: "2026-09-05" };
+  const short = {
+    ...issue("Kurzer Hinweis", "2026-09-04"),
+    relatedShiftIds: [allDay.id, deleted.id, "missing", shift.id],
+  };
+  const screen = await render(
+    <ComplianceDayList
+      compliance={result([short])}
+      shifts={[allDay, deleted, shift]}
+      showPlanning
+    />,
+  );
+  await fireEvent.press(screen.getByRole("button", { name: /Kurzer Hinweis/ }));
+  expect(screen.getAllByTestId(/^check-shift-/)).toHaveLength(2);
+  expect(screen.getByText("Ganztägig")).toBeTruthy();
+  expect(screen.getByText("03.09.2026")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /Alle .* Dienste anzeigen/ })).toBeNull();
+  expect(screen.getByText("Einige zugehörige Dienste sind nicht mehr verfügbar.")).toBeTruthy();
+});
