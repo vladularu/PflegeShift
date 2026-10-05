@@ -1,4 +1,9 @@
 import {
+  calculateTvlKrAssessment,
+  calculateTvlKrProfileMonth,
+  calculateTvlKrProfileShift,
+} from "./simple-tvl-kr-profile-pay";
+import {
   calculateVkaEShift,
   calculateVkaEMonth,
   calculateVkaEAssessment,
@@ -436,7 +441,10 @@ export function calculateShiftPremiumBreakdown(
   shift: ShiftEntry,
   profile: UserProfile,
   ruleResolver: RuleResolver = bundledRuleResolver,
+  tvlSaturdayShiftWork = false,
 ): ShiftPremiumBreakdown {
+  if (profile.tvlKrTariff)
+    return calculateTvlKrProfileShift(shift, profile, ruleResolver, tvlSaturdayShiftWork);
   if (profile.vkaETariff) return calculateVkaEShift(shift, profile, ruleResolver);
   if (profile.nursingTrainingTariff)
     return calculateNursingTrainingShift(shift, profile, ruleResolver);
@@ -467,6 +475,16 @@ export function calculateMonthlyPayEstimate(
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
 ): MonthlyPayEstimate {
+  if (profile.tvlKrTariff)
+    return calculateTvlKrProfileMonth(
+      month,
+      shifts,
+      profile,
+      decision,
+      assessmentShifts,
+      workPatternSettings,
+      ruleResolver,
+    );
   if (profile.vkaETariff)
     return calculateVkaEMonth(
       month,
@@ -602,8 +620,13 @@ export function calculateMonthlyTvoedAssessment(
   assessmentShifts: readonly ShiftEntry[],
   workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
   ruleResolver: RuleResolver = bundledRuleResolver,
-  profile?: Pick<UserProfile, "tariff" | "timeZone" | "nursingTrainingTariff" | "vkaETariff">,
+  profile?: Pick<
+    UserProfile,
+    "tariff" | "timeZone" | "nursingTrainingTariff" | "vkaETariff" | "tvlKrTariff"
+  >,
 ): MonthlyTvoedAssessmentResult {
+  if (profile?.tvlKrTariff)
+    return calculateTvlKrAssessment(month, assessmentShifts, workPatternSettings, ruleResolver);
   if (profile?.vkaETariff)
     return calculateVkaEAssessment(
       month,

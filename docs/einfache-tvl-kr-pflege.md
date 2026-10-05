@@ -47,3 +47,17 @@ Der Anbindungsbranch wurde von aktuellem master angelegt und enthält lokal die 
 TV-L besitzt unterschiedliche West-/Ost-Vollzeitbasen. Das bestehende Tarifgebiet-Feld erhält dafür die verständlichen Werte West/Ost; keine zusätzliche Einstellungsseite. Das Gebiet wird ausdrücklich gespeichert, damit die besondere Berliner Vertragssituation nicht blind aus der Geografie abgeleitet wird. Der reine Tabellenadapter behält Gruppe/Stufe und einen getrennten Gebietsparameter.
 
 Speicherprüfung: Typcheck und alle 844 Datenbanktests in 74 Dateien bestanden, einschließlich exklusiver Wechsel zwischen P/E/Azubi/manuell/TV-L, Ost-Gebiet im Backup, Rückkehr zu älterem Backup und Rollback bei Schreibfehler. Der gemeinsame aktuelle Pflichtcheck folgt vor der PR-Lieferung mit der App-Anbindung.
+
+## Paket 3: Einfachen Rechenweg anbinden
+
+Scope: fünf Dateien (dieser Beleg, engine/simple-tvl-kr-pay.ts, engine/simple-pay.ts und neuer engine/simple-tvl-kr-profile-pay.ts plus Test). Die vorhandene Monats- und Schichtzulagen-Schnittstelle erhält eine TV-L-Verzweigung. Das TV-L-Monatsmuster bleibt eine Schätzung; Beginnwechsel mindestens zwei Stunden und Betriebsspanne mindestens 13 Stunden werden zusätzlich geprüft. Explizite monatliche Zulagenentscheidung bleibt möglich. Samstags-Schichtbezug ergibt sich im Monatsweg aus dem Muster oder einer ausgewählten Schichtzulage. Der einzelne Dienstadapter benötigt diesen Zusammenhang ausdrücklich. Keine VKA-Satzübernahme. Der gemeinsame Pflichtcheck folgt vor PR-Lieferung.
+
+Adapterprüfung: 404 gezielte Fälle in fünf Dateien bestanden; P/E/Azubi bleiben im Vergleich grün.
+
+## Paket 4: Vertraute Auswertung
+
+Scope: zehn Dateien (dieser Beleg; analysis/monthly-analysis.ts, month-overview.tsx, premium-details-screen.tsx, premium-breakdown-list.tsx, annual-core-report.ts, tariff-assessment-screen.tsx, analysis-rule-coverage.component.test.tsx; salary/salary-screen.tsx; settings/settings-info-details-screen.tsx). TV-L erscheint in den bisherigen Monats-/Jahreskarten, der einfachen Zusammensetzung und gruppierten Dienstzuschlägen. Pflegezulage und fester Samstagszuschlag erhalten passende Beschriftung und Erklärung. Keine neuen Menüs oder historischen Eingabeflüsse. Nach Komponententests und gemeinsamem Pflichtcheck folgen PR-CI und echte iPhone-Abnahme.
+
+## Paket 5: Vorhandenes Gehaltsformular
+
+Scope: acht Dateien (dieser Beleg, settings/settings-form-values.ts samt Test, settings-editor-screen.tsx, profile-update.ts, work-profile-summary.ts, work-profile-screen.tsx und neuer settings-tvl-kr.component.test.tsx). Auswahl TV-L Pflege, KR5–KR17, gültige Stufe, Tarifgebiet West/Ost im bereits vorhandenen Feld. BT-K/BT-B und VKA-Gebiet sind für TV-L ausgeblendet. Vollzeit wird automatisch datiert eingesetzt. Abnahme: Speichern, Wiederöffnen, erlaubte Stufen, Moduswechsel, Ost-/West-Auswahl sowie anschließende reale iPhone-Abnahme.
