@@ -80,3 +80,23 @@ Spezielle Zulagen werden nicht aus dem gewählten Gruppennamen abgeleitet.
 Rechenkern fertig: 373 gezielte Referenztests bestanden. verify:fast ist grün
 (6.524 Unit-Tests und 562 Komponententests einschließlich Datenbankprüfungen).
 Keine App-Anbindung oder Veröffentlichung in diesem Rechenkern-Paket.
+
+## App-Anbindung: getrennte Arbeitspakete
+
+Der App-Branch baut auf den noch zur Geräteabnahme offenen E-/TV-L-Formularen auf.
+Paket A (8 Dateien): optionaler Profilvertrag, exklusive Gehaltsgrundlagen, atomare
+Preference-Speicherung, Backupvalidierung und Datenbank-Regressionstests.
+Paket B (bis 10 Dateien): tarifgerechte Dienst-/Monats-/Jahresberechnung und
+Routing der bestehenden Auswertungen; Pflichtfreizeit als separater verständlicher
+Hinweis. Paket C (bis 10 Dateien): vorhandenes Gehaltsformular mit P-UK-Gruppe und
+eigener Stufe, feste Vollzeitbasis 38,5, ohne Tarifbereich oder Tarifgebiet;
+Komponentenabnahme für Auswahlwechsel und Neustart über persistierte Daten.
+Keine native Integration. Finale Pflichtprüfung über den gesamten App-Branch,
+Preview nur bei frisch bestätigtem passenden Runtime-Fingerprint; Merge erst nach
+Geräteabnahme gemäß AGENTS.md/WORKFLOW.md.
+
+App-Prüfstand: verify:fast vollständig grün (6.640 Unit-Tests, 608 Komponenten-
+tests). Gesamte Datenbanksuite 873 Tests; gezielte Fach-/Routingfälle 382 Tests.
+Preview-Fingerprint f2f4b99ba254b82ab22b99594d5228bd8c3774f7 passt zu Build 32.
+Rechenkern-PR #269 ist nach sieben grünen CI-Prüfungen gemergt (master 1b07fe0).
+Die App-Anbindung bleibt bis zur iPhone-Abnahme im Draft-PR. TV-H folgt danach.

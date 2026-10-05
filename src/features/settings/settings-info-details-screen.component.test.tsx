@@ -22,6 +22,14 @@ describe("SettingsInfoDetailsScreen storage disclosure", () => {
     expect(screen.getByText(/TV-L Entgeltordnung Anlage A/)).toBeTruthy();
     expect(screen.queryByText(/unterstütztes TVöD-P-Profil/)).toBeNull();
   });
+  it("shows the own fixed TV-UK nursing allowance explanation", async () => {
+    mockParams = { section: "CARE_ALLOWANCE", tariff: "TVUK" };
+    const screen = await render(<SettingsInfoDetailsScreen />);
+    expect(screen.getByText(/200 € bei Vollzeit/)).toBeTruthy();
+    expect(screen.getByText(/P-UK6 bis P-UK15 einschließlich P-UK9L/)).toBeTruthy();
+    expect(screen.getByText(/TV-UK-Entgelt, Anlage D Teil B/)).toBeTruthy();
+    expect(screen.queryByText(/TV-L Entgeltordnung Anlage A/)).toBeNull();
+  });
   it("makes the local deletion retention visible", async () => {
     const screen = await render(<SettingsInfoDetailsScreen />);
 

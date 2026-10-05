@@ -158,7 +158,7 @@ export function annualPaymentRoute(month: string) {
   });
 }
 
-export function settingsInfoRoute(section: SettingsInfoSection, tariff?: "TVL") {
+export function settingsInfoRoute(section: SettingsInfoSection, tariff?: "TVL" | "TVUK") {
   return Object.freeze({
     pathname: "/info-details" as const,
     params: Object.freeze({ section, ...(tariff ? { tariff } : {}) }),

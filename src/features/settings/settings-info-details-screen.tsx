@@ -155,6 +155,26 @@ const TVL_CARE_INFO: InfoContent = {
   ],
 };
 
+const TVUK_CARE_INFO: InfoContent = {
+  title: "Pflegezulage TV-UK",
+  intro: "200 € bei Vollzeit für Pflege- und Funktionsdienst nach TV-UK.",
+  items: [
+    {
+      title: "Teilzeit",
+      text: "Die Zulage wird entsprechend deinen Wochenstunden anteilig berechnet.",
+    },
+    {
+      title: "Berechtigte Gruppen",
+      text: "P-UK6 bis P-UK15 einschließlich P-UK9L. Für P-UK5 wird diese Zulage nicht angenommen.",
+    },
+    {
+      title: "Grundlage",
+      text: "TV-UK-Entgelt, Anlage D Teil B, Protokollerklärung 1. Besondere Stations- und Tätigkeitszulagen werden nicht automatisch angenommen.",
+    },
+    { title: "Quelle", text: "AGU: https://agu-uniklinika.de/tarifvertraege/" },
+  ],
+};
+
 export function SettingsInfoDetailsScreen() {
   const palette = usePalette();
   const params = useLocalSearchParams<{ section?: RouteParam; tariff?: RouteParam }>();
@@ -165,7 +185,7 @@ export function SettingsInfoDetailsScreen() {
     "TVOED_ALLOWANCE",
     "CARE_ALLOWANCE",
   ] as const);
-  const parsedTariff = parseEnumRouteParam(params.tariff, ["TVL"] as const);
+  const parsedTariff = parseEnumRouteParam(params.tariff, ["TVL", "TVUK"] as const);
   if (parsedSection.status !== "valid" || parsedTariff.status === "invalid") {
     return (
       <LoadFailureView
@@ -179,7 +199,9 @@ export function SettingsInfoDetailsScreen() {
   const section: SettingsInfoSection = parsedSection.value;
   const content =
     section === "CARE_ALLOWANCE" && parsedTariff.status === "valid"
-      ? TVL_CARE_INFO
+      ? parsedTariff.value === "TVUK"
+        ? TVUK_CARE_INFO
+        : TVL_CARE_INFO
       : INFO_CONTENT[section];
 
   return (

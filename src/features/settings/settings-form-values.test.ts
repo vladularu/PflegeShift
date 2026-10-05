@@ -47,6 +47,8 @@ describe("settings form values", () => {
       allEmploymentWorkRecorded: "YES",
       trainingYear: "UNSET",
       krPayGroup: "KR8",
+      tvUkPayGroup: "PUK8",
+      tvUkPayLevel: 4,
       tvlUniversityRegion: "WEST",
       ePayGroup: "E9b",
       payGroup: "P11",

@@ -1,3 +1,9 @@
+import {
+  TVUK_NURSING_GROUPS,
+  tvUkLevelsForGroup,
+  type TvUkNursingGroup,
+  type TvUkPayLevel,
+} from "@/domain/tvuk-nursing-tariff";
 import { Temporal } from "@js-temporal/polyfill";
 import {
   TVL_KR_GROUPS,
@@ -115,6 +121,10 @@ function SettingsEditorForm({
   const [allEmploymentWorkRecorded, setAllEmploymentWorkRecorded] = useState<EvidenceFormValue>(
     initialValues.allEmploymentWorkRecorded,
   );
+  const [tvUkPayGroup, setTvUkPayGroup] = useState<TvUkNursingGroup>(initialValues.tvUkPayGroup);
+  const [tvUkPayLevel, setTvUkPayLevel] = useState<TvUkPayLevel | "UNSET">(
+    initialValues.tvUkPayLevel,
+  );
   const [krPayGroup, setKrPayGroup] = useState<TvlKrGroup>(initialValues.krPayGroup);
   const [tvlUniversityRegion, setTvlUniversityRegion] = useState<TvlKrUniversityRegion>(
     initialValues.tvlUniversityRegion,
@@ -132,16 +142,18 @@ function SettingsEditorForm({
   const weeklyHoursRef = useRef<TextInput>(null);
   const manualMonthlyGrossRef = useRef<TextInput>(null);
   const fullTimeWeeklyMinutes =
-    salaryMode === "TVL_KR"
-      ? (getTvlKrUniversityFullTimeMinutes(
-          Temporal.Now.plainDateISO(profile.timeZone).toString(),
-          tvlUniversityRegion,
-        ) ?? 0)
-      : salaryMode === "TVAOED_PFLEGE"
-        ? sector === "BT_K"
-          ? 2310
-          : 2340
-        : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
+    salaryMode === "TVUK_NURSING"
+      ? 2310
+      : salaryMode === "TVL_KR"
+        ? (getTvlKrUniversityFullTimeMinutes(
+            Temporal.Now.plainDateISO(profile.timeZone).toString(),
+            tvlUniversityRegion,
+          ) ?? 0)
+        : salaryMode === "TVAOED_PFLEGE"
+          ? sector === "BT_K"
+            ? 2310
+            : 2340
+          : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
   const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
   const selectedLevels =
     salaryMode === "TVL_KR"
@@ -191,6 +203,11 @@ function SettingsEditorForm({
       setMessage(null);
       return;
     }
+    if (section === "TARIFF" && salaryMode === "TVUK_NURSING" && tvUkPayLevel === "UNSET") {
+      setError("Bitte eine gültige Stufe für die gewählte Gruppe wählen.");
+      setMessage(null);
+      return;
+    }
     if (section === "TARIFF" && salaryMode === "TVAOED_PFLEGE" && trainingYear === "UNSET") {
       setError("Bitte das Ausbildungsjahr wählen.");
       setMessage(null);
@@ -198,11 +215,13 @@ function SettingsEditorForm({
     }
     if (
       section === "TARIFF" &&
-      (salaryMode === "TVAOED_PFLEGE" || salaryMode === "TVL_KR") &&
+      (salaryMode === "TVAOED_PFLEGE" ||
+        salaryMode === "TVL_KR" ||
+        salaryMode === "TVUK_NURSING") &&
       profile.weeklyMinutes > fullTimeWeeklyMinutes
     ) {
       setError(
-        salaryMode === "TVL_KR"
+        salaryMode !== "TVAOED_PFLEGE"
           ? "Deine Wochenstunden liegen über der tariflichen Vollzeit. Bitte zuerst das Arbeitszeitmodell prüfen."
           : "Deine Wochenstunden liegen über der tariflichen Ausbildungszeit. Bitte zuerst das Arbeitszeitmodell prüfen.",
       );
@@ -243,6 +262,12 @@ function SettingsEditorForm({
             ? (profile.vkaETariff ?? null)
             : salaryMode === "TVOED_E" && payLevel !== "UNSET"
               ? { payGroup: ePayGroup, payLevel, sector, tariffRegion }
+              : null,
+        tvUkNursingTariff:
+          section === "WORK"
+            ? (profile.tvUkNursingTariff ?? null)
+            : salaryMode === "TVUK_NURSING" && tvUkPayLevel !== "UNSET"
+              ? { payGroup: tvUkPayGroup, payLevel: tvUkPayLevel }
               : null,
         tvlKrTariff:
           section === "WORK"
@@ -345,9 +370,11 @@ function SettingsEditorForm({
       ) : (
         <FormSection
           caption={
-            salaryMode === "TVL_KR"
-              ? "Für Pflege an Unikliniken. Wähle Gruppe und Stufe aus deinem Vertrag."
-              : "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
+            salaryMode === "TVUK_NURSING"
+              ? "Für Pflege an den Unikliniken Freiburg, Heidelberg, Tübingen und Ulm."
+              : salaryMode === "TVL_KR"
+                ? "Für Pflege an Unikliniken. Wähle Gruppe und Stufe aus deinem Vertrag."
+                : "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
           }
           title="Gehaltsgrundlage"
         >
@@ -377,6 +404,7 @@ function SettingsEditorForm({
               { value: "TVOED_P", label: "TVöD-P" },
               { value: "TVOED_E", label: "TVöD VKA · E-Tabelle" },
               { value: "TVL_KR", label: "TV-L Pflege" },
+              { value: "TVUK_NURSING", label: "TV-UK Pflege · Baden-Württemberg" },
               { value: "TVAOED_PFLEGE", label: "TVAöD Pflege · Ausbildung" },
               { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
             ]}
@@ -398,7 +426,7 @@ function SettingsEditorForm({
             />
           ) : salaryMode !== "UNSET" ? (
             <>
-              {salaryMode === "TVL_KR" ? (
+              {salaryMode === "TVUK_NURSING" ? null : salaryMode === "TVL_KR" ? (
                 <DropdownField
                   label="Tarifgebiet"
                   value={tvlUniversityRegion}
@@ -432,7 +460,40 @@ function SettingsEditorForm({
                   )}
                 </>
               )}
-              {salaryMode === "TVAOED_PFLEGE" ? (
+              {salaryMode === "TVUK_NURSING" ? (
+                <>
+                  <DropdownField
+                    label="Entgeltgruppe"
+                    value={tvUkPayGroup}
+                    onChange={(group) => {
+                      setTvUkPayGroup(group);
+                      if (
+                        tvUkPayLevel !== "UNSET" &&
+                        !tvUkLevelsForGroup(group).includes(tvUkPayLevel)
+                      )
+                        setTvUkPayLevel("UNSET");
+                    }}
+                    options={TVUK_NURSING_GROUPS.map((group) => ({
+                      value: group,
+                      label: group.replace("PUK", "P-UK"),
+                    }))}
+                  />
+                  <DropdownField
+                    label="Stufe"
+                    value={tvUkPayLevel}
+                    onChange={setTvUkPayLevel}
+                    options={[
+                      ...(tvUkPayLevel === "UNSET"
+                        ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
+                        : []),
+                      ...tvUkLevelsForGroup(tvUkPayGroup).map((level) => ({
+                        value: level,
+                        label: "Stufe " + level,
+                      })),
+                    ]}
+                  />
+                </>
+              ) : salaryMode === "TVAOED_PFLEGE" ? (
                 <DropdownField
                   label="Ausbildungsjahr"
                   value={trainingYear}
