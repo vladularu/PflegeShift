@@ -1,3 +1,4 @@
+import { getTvalPflegeFullTimeMinutes } from "@/engine/simple-tval-pflege-pay";
 import {
   TVH_KR_GROUPS,
   tvhKrLevelsForGroup,
@@ -155,20 +156,25 @@ function SettingsEditorForm({
   const weeklyHoursRef = useRef<TextInput>(null);
   const manualMonthlyGrossRef = useRef<TextInput>(null);
   const fullTimeWeeklyMinutes =
-    salaryMode === "TVH_KR"
-      ? tvhFullTimeWeeklyMinutes
-      : salaryMode === "TVUK_NURSING"
-        ? 2310
-        : salaryMode === "TVL_KR"
-          ? (getTvlKrUniversityFullTimeMinutes(
-              Temporal.Now.plainDateISO(profile.timeZone).toString(),
-              tvlUniversityRegion,
-            ) ?? 0)
-          : salaryMode === "TVAOED_PFLEGE"
-            ? sector === "BT_K"
-              ? 2310
-              : 2340
-            : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
+    salaryMode === "TVAL_PFLEGE"
+      ? (getTvalPflegeFullTimeMinutes(
+          Temporal.Now.plainDateISO(profile.timeZone).toString(),
+          tvlUniversityRegion,
+        ) ?? 0)
+      : salaryMode === "TVH_KR"
+        ? tvhFullTimeWeeklyMinutes
+        : salaryMode === "TVUK_NURSING"
+          ? 2310
+          : salaryMode === "TVL_KR"
+            ? (getTvlKrUniversityFullTimeMinutes(
+                Temporal.Now.plainDateISO(profile.timeZone).toString(),
+                tvlUniversityRegion,
+              ) ?? 0)
+            : salaryMode === "TVAOED_PFLEGE"
+              ? sector === "BT_K"
+                ? 2310
+                : 2340
+              : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
   const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
   const selectedLevels =
     salaryMode === "TVL_KR"
@@ -228,7 +234,11 @@ function SettingsEditorForm({
       setMessage(null);
       return;
     }
-    if (section === "TARIFF" && salaryMode === "TVAOED_PFLEGE" && trainingYear === "UNSET") {
+    if (
+      section === "TARIFF" &&
+      (salaryMode === "TVAOED_PFLEGE" || salaryMode === "TVAL_PFLEGE") &&
+      trainingYear === "UNSET"
+    ) {
       setError("Bitte das Ausbildungsjahr wählen.");
       setMessage(null);
       return;
@@ -236,13 +246,14 @@ function SettingsEditorForm({
     if (
       section === "TARIFF" &&
       (salaryMode === "TVAOED_PFLEGE" ||
+        salaryMode === "TVAL_PFLEGE" ||
         salaryMode === "TVL_KR" ||
         salaryMode === "TVUK_NURSING" ||
         salaryMode === "TVH_KR") &&
       profile.weeklyMinutes > fullTimeWeeklyMinutes
     ) {
       setError(
-        salaryMode !== "TVAOED_PFLEGE"
+        salaryMode !== "TVAOED_PFLEGE" && salaryMode !== "TVAL_PFLEGE"
           ? "Deine Wochenstunden liegen über der tariflichen Vollzeit. Bitte zuerst das Arbeitszeitmodell prüfen."
           : "Deine Wochenstunden liegen über der tariflichen Ausbildungszeit. Bitte zuerst das Arbeitszeitmodell prüfen.",
       );
@@ -305,6 +316,12 @@ function SettingsEditorForm({
             ? (profile.tvlKrTariff ?? null)
             : salaryMode === "TVL_KR" && payLevel !== "UNSET"
               ? { payGroup: krPayGroup, payLevel, universityRegion: tvlUniversityRegion }
+              : null,
+        tvalPflegeTariff:
+          section === "WORK"
+            ? (profile.tvalPflegeTariff ?? null)
+            : salaryMode === "TVAL_PFLEGE" && trainingYear !== "UNSET"
+              ? { trainingYear, universityRegion: tvlUniversityRegion }
               : null,
         nursingTrainingTariff:
           section === "WORK"
@@ -401,13 +418,15 @@ function SettingsEditorForm({
       ) : (
         <FormSection
           caption={
-            salaryMode === "TVH_KR"
-              ? "TV-H Pflege in Hessen. Wähle Gruppe, Stufe und tarifliche Vollzeit aus deinem Vertrag."
-              : salaryMode === "TVUK_NURSING"
-                ? "Für Pflege an den Unikliniken Freiburg, Heidelberg, Tübingen und Ulm."
-                : salaryMode === "TVL_KR"
-                  ? "Für Pflege an Unikliniken. Wähle Gruppe und Stufe aus deinem Vertrag."
-                  : "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
+            salaryMode === "TVAL_PFLEGE"
+              ? "Für die Pflegeausbildung an Unikliniken mit TVA-L. Wähle dein Ausbildungsjahr."
+              : salaryMode === "TVH_KR"
+                ? "TV-H Pflege in Hessen. Wähle Gruppe, Stufe und tarifliche Vollzeit aus deinem Vertrag."
+                : salaryMode === "TVUK_NURSING"
+                  ? "Für Pflege an den Unikliniken Freiburg, Heidelberg, Tübingen und Ulm."
+                  : salaryMode === "TVL_KR"
+                    ? "Für Pflege an Unikliniken. Wähle Gruppe und Stufe aus deinem Vertrag."
+                    : "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
           }
           title="Gehaltsgrundlage"
         >
@@ -440,6 +459,7 @@ function SettingsEditorForm({
               { value: "TVH_KR", label: "TV-H Pflege · Hessen" },
               { value: "TVUK_NURSING", label: "TV-UK Pflege · Baden-Württemberg" },
               { value: "TVAOED_PFLEGE", label: "TVAöD Pflege · Ausbildung" },
+              { value: "TVAL_PFLEGE", label: "TVA-L Pflege · Ausbildung" },
               { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
             ]}
             value={salaryMode}
@@ -461,7 +481,7 @@ function SettingsEditorForm({
           ) : salaryMode !== "UNSET" ? (
             <>
               {salaryMode === "TVH_KR" || salaryMode === "TVUK_NURSING" ? null : salaryMode ===
-                "TVL_KR" ? (
+                  "TVL_KR" || salaryMode === "TVAL_PFLEGE" ? (
                 <DropdownField
                   label="Tarifgebiet"
                   value={tvlUniversityRegion}
@@ -561,7 +581,7 @@ function SettingsEditorForm({
                     ]}
                   />
                 </>
-              ) : salaryMode === "TVAOED_PFLEGE" ? (
+              ) : salaryMode === "TVAOED_PFLEGE" || salaryMode === "TVAL_PFLEGE" ? (
                 <DropdownField
                   label="Ausbildungsjahr"
                   value={trainingYear}

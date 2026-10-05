@@ -37,6 +37,7 @@ export function MonthOverview({
     profile.tvlKrTariff == null &&
     profile.tvUkNursingTariff == null &&
     profile.tvhKrTariff == null &&
+    profile.tvalPflegeTariff == null &&
     profile.manualMonthlyGrossCents != null;
   const salaryReady =
     profile.tariff !== null ||
@@ -45,6 +46,7 @@ export function MonthOverview({
     profile.tvlKrTariff != null ||
     profile.tvUkNursingTariff != null ||
     profile.tvhKrTariff != null ||
+    profile.tvalPflegeTariff != null ||
     profile.manualMonthlyGrossCents != null;
   const estimate = pay.ok && pay.value.available ? pay.value : null;
   return (

@@ -1,3 +1,4 @@
+import { TVAL_PFLEGE_PREFERENCE_KEY, requireTvalPflegeTariff } from "@/domain/tval-pflege-tariff";
 import { TVH_KR_PREFERENCE_KEY, requireTvhKrTariff } from "@/domain/tvh-kr-tariff";
 import {
   TVUK_NURSING_PREFERENCE_KEY,
@@ -654,6 +655,13 @@ function validateTariffDecisionRow(value: unknown): BackupRow {
 }
 
 function validatePreferenceValue(key: string, value: string): void {
+  if (key === TVAL_PFLEGE_PREFERENCE_KEY) {
+    try {
+      if (!requireTvalPflegeTariff(JSON.parse(value))) return invalid();
+    } catch {
+      return invalid();
+    }
+  }
   if (key === TVH_KR_PREFERENCE_KEY) {
     try {
       if (!requireTvhKrTariff(JSON.parse(value))) return invalid();
@@ -951,6 +959,7 @@ export async function validateLocalBackup(
           TVL_KR_PREFERENCE_KEY,
           TVUK_NURSING_PREFERENCE_KEY,
           TVH_KR_PREFERENCE_KEY,
+          TVAL_PFLEGE_PREFERENCE_KEY,
         ].some((key) => key === row.key),
       ) &&
       (!profile || profile.pay_group !== null || profile.manual_monthly_gross_cents !== null)
@@ -965,6 +974,7 @@ export async function validateLocalBackup(
           TVL_KR_PREFERENCE_KEY,
           TVUK_NURSING_PREFERENCE_KEY,
           TVH_KR_PREFERENCE_KEY,
+          TVAL_PFLEGE_PREFERENCE_KEY,
         ].some((key) => key === row.key),
       ).length > 1
     )

@@ -134,7 +134,7 @@ function TariffAssessmentForm({
       const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
       const allowanceShifts = profile?.tvhKrTariff
         ? selectTvhKrAssessmentShifts(entries, month)
-        : profile?.tvlKrTariff
+        : profile?.tvlKrTariff || profile?.tvalPflegeTariff
           ? selectTvlKrAssessmentShifts(entries, month)
           : profile?.vkaETariff
             ? selectVkaEAssessmentShifts(entries, month)

@@ -373,6 +373,52 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(screen.queryByText("0,00 €")).toBeNull();
   });
 
+  it("shows TVA-L as training tariff salary in the familiar overview", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvalPflegeTariff: { trainingYear: 1, universityRegion: "WEST" },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 1\.440,70/)).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("keeps TVA-L training pay and grouped night premiums in the existing details", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvalPflegeTariff: { trainingYear: 1, universityRegion: "WEST" },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "tval-night",
+        date: "2026-10-06",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+        breakMinutes: 60,
+        overtimeMinutes: 0,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TVA-L Pflege · 1. Ausbildungsjahr")).toBeTruthy();
+    expect(salary.getByText("Ausbildungsentgelt")).toBeTruthy();
+    expect(salary.getByText(/13,76/)).toBeTruthy();
+    expect(salary.queryByText(/Pflegezulage TVöD-P|TVöD-Zulage/)).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Zeitzuschläge/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/premium-details",
+      params: { month: "2026-10" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/13,76/).length).toBeGreaterThan(0);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
   it("shows TV-H salary in the familiar overview as tariff pay", async () => {
     mockRouteMonth = "2026-10";
     mockProfile = {
