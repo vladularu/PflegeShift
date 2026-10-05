@@ -30,7 +30,14 @@ export function MonthOverview({
       : !visible
         ? "Wird geprüft …"
         : undefined;
-  const salaryReady = profile.tariff !== null || profile.manualMonthlyGrossCents != null;
+  const manualSalary =
+    profile.tariff === null &&
+    profile.nursingTrainingTariff == null &&
+    profile.manualMonthlyGrossCents != null;
+  const salaryReady =
+    profile.tariff !== null ||
+    profile.nursingTrainingTariff != null ||
+    profile.manualMonthlyGrossCents != null;
   const estimate = pay.ok && pay.value.available ? pay.value : null;
   return (
     <AnalysisDashboard
@@ -86,11 +93,11 @@ export function MonthOverview({
                 : undefined
             }
             gross={estimate?.estimatedGrossAmount}
-            manual={profile.tariff === null}
+            manual={manualSalary}
             caption={
               !salaryReady
                 ? "Tarif oder Monatsbrutto hinterlegen"
-                : profile.tariff === null
+                : manualSalary
                   ? "Manuell hinterlegtes Monatsbrutto"
                   : "Unverbindliche Brutto-Schätzung"
             }

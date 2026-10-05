@@ -1,5 +1,7 @@
 import { FEDERAL_STATE_LABELS, TARIFF_REGION_LABELS, type UserProfile } from "@/domain/types";
 export function profileSalaryLabel(profile: UserProfile): string {
+  if (profile.nursingTrainingTariff)
+    return `TVAöD Pflege · ${profile.nursingTrainingTariff.trainingYear}. Ausbildungsjahr`;
   if (profile.tariff)
     return `TVöD-P · ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel} · ${profile.tariff.sector === "BT_K" ? "BT-K" : "BT-B"} · ${TARIFF_REGION_LABELS[profile.tariff.tariffRegion]}`;
   if (profile.manualMonthlyGrossCents != null)

@@ -308,6 +308,71 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     expect(screen.queryByText("0,00 €")).toBeNull();
   });
 
+  it("shows nursing trainee salary components in the overview instead of manual salary", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      nursingTrainingTariff: { trainingYear: 1, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByText("Grundgehalt")).toBeTruthy();
+    expect(screen.getByLabelText(/^Grundgehalt: 1\.490,69/)).toBeTruthy();
+    expect(screen.getByText("Zeitzuschläge")).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.getByText("Unverbindliche Brutto-Schätzung")).toBeTruthy();
+    expect(screen.queryByText("Monatsbrutto")).toBeNull();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+
+  it("opens calculated nursing trainee time premiums from the salary detail view", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      nursingTrainingTariff: { trainingYear: 1, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "trainee-night",
+        date: "2026-10-06",
+        title: "Nachtdienst",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+        breakMinutes: 60,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText(/14,26/)).toBeTruthy();
+    await fireEvent.press(salary.getByRole("button", { name: /Zeitzuschläge/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/premium-details",
+      params: { month: "2026-10" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/14,26/).length).toBeGreaterThan(0);
+  });
+
+  it("shows uncovered nursing trainee months as unavailable rather than manual salary", async () => {
+    mockRouteMonth = "2027-04";
+    mockRuleResolver = FUTURE_HOLIDAY_TARIFF_EXPIRY_RESOLVER;
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      nursingTrainingTariff: { trainingYear: 1, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    const screen = await render(<PremiumDetailsScreen />);
+    expect(
+      screen.getByText("Für diesen Zeitraum liegt kein geprüfter Tarifstand vor."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Keine tarifliche Berechnung")).toBeNull();
+    expect(screen.queryByText("0,00 €")).toBeNull();
+  });
+
   it("keeps missing rule coverage local in ComplianceDetailsScreen", async () => {
     await expectRuleCoverageDiagnostic(<ComplianceDetailsScreen />);
   });

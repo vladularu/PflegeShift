@@ -45,6 +45,7 @@ describe("settings form values", () => {
       regularRotatingNightWork: "NO",
       sundayHolidayWorkEligible: "YES",
       allEmploymentWorkRecorded: "YES",
+      trainingYear: "UNSET",
       payGroup: "P11",
       payLevel: 5,
       sector: "BT_B",

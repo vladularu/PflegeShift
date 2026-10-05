@@ -1,3 +1,4 @@
+import { selectNursingTrainingAssessmentShifts } from "@/engine/simple-nursing-training-pay";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Temporal } from "@js-temporal/polyfill";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -81,8 +82,9 @@ export function SalaryScreen() {
     if (!ready || error !== null || profile === null) return null;
     return captureRuleComputation(() => {
       const monthlyEntries = selectMonthlyAnalysisEntries(entries, month);
-      const allowanceShifts =
-        profile.tariff === null
+      const allowanceShifts = profile.nursingTrainingTariff
+        ? selectNursingTrainingAssessmentShifts(entries, month)
+        : profile.tariff === null
           ? monthlyEntries.monthShifts
           : selectAllowanceShifts(entries, month, ruleResolver);
       const decision = tariffDecisions.find((item) => item.month === month) ?? null;
@@ -133,7 +135,8 @@ export function SalaryScreen() {
   if (!ready || profile === null || calculation === null) return <LoadingView />;
   const { monthShifts, pay } = calculation.value;
   const manualSalary = profile.tariff === null && profile.manualMonthlyGrossCents != null;
-  const salaryReady = profile.tariff !== null || manualSalary;
+  const salaryReady =
+    profile.tariff !== null || profile.nursingTrainingTariff != null || manualSalary;
 
   function moveMonth(delta: number) {
     const nextMonth = Temporal.PlainDate.from(`${month}-01`)
@@ -147,13 +150,19 @@ export function SalaryScreen() {
 
   const salaryProfileLabel = manualSalary
     ? "Manuell hinterlegt"
-    : profile.tariff
-      ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
-      : null;
+    : profile.nursingTrainingTariff
+      ? `TVAöD Pflege · ${profile.nursingTrainingTariff.trainingYear}. Ausbildungsjahr`
+      : profile.tariff
+        ? `TVöD-P ${profile.tariff.payGroup} · Stufe ${profile.tariff.payLevel}`
+        : null;
   const compositionRows = manualSalary
     ? [{ key: "base", label: "Monatsbrutto", value: euro(pay.personalBaseAmount) }]
     : [
-        { key: "base", label: "Grundentgelt", value: euro(pay.personalBaseAmount) },
+        {
+          key: "base",
+          label: profile.nursingTrainingTariff ? "Ausbildungsentgelt" : "Grundentgelt",
+          value: euro(pay.personalBaseAmount),
+        },
         {
           key: "premium",
           label: "Zeitzuschläge",

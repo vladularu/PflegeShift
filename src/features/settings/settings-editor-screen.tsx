@@ -94,6 +94,7 @@ function SettingsEditorForm({
   const [weeklyHours, setWeeklyHours] = useState(initialValues.weeklyHours);
   const [industry, setIndustry] = useState<IndustryFormValue>(initialValues.industry);
   const [salaryMode, setSalaryMode] = useState<SalaryMode>(initialValues.salaryMode);
+  const [trainingYear, setTrainingYear] = useState<1 | 2 | 3 | "UNSET">(initialValues.trainingYear);
   const [manualMonthlyGross, setManualMonthlyGross] = useState(initialValues.manualMonthlyGross);
   const [regularRotatingNightWork, setRegularRotatingNightWork] = useState<EvidenceFormValue>(
     initialValues.regularRotatingNightWork,
@@ -115,7 +116,12 @@ function SettingsEditorForm({
   const [saving, setSaving] = useState(false);
   const weeklyHoursRef = useRef<TextInput>(null);
   const manualMonthlyGrossRef = useRef<TextInput>(null);
-  const fullTimeWeeklyMinutes = tariffFullTimeWeeklyMinutes(sector, tariffRegion);
+  const fullTimeWeeklyMinutes =
+    salaryMode === "TVAOED_PFLEGE"
+      ? sector === "BT_K"
+        ? 2310
+        : 2340
+      : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
   const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
   const evidenceOptions = [
     { value: "UNKNOWN" as const, label: "Noch nicht bestätigt" },
@@ -155,6 +161,22 @@ function SettingsEditorForm({
       setMessage(null);
       return;
     }
+    if (section === "TARIFF" && salaryMode === "TVAOED_PFLEGE" && trainingYear === "UNSET") {
+      setError("Bitte das Ausbildungsjahr wählen.");
+      setMessage(null);
+      return;
+    }
+    if (
+      section === "TARIFF" &&
+      salaryMode === "TVAOED_PFLEGE" &&
+      profile.weeklyMinutes > fullTimeWeeklyMinutes
+    ) {
+      setError(
+        "Deine Wochenstunden liegen über der tariflichen Ausbildungszeit. Bitte zuerst das Arbeitszeitmodell prüfen.",
+      );
+      setMessage(null);
+      return;
+    }
     try {
       setSaving(true);
       setError(null);
@@ -184,6 +206,12 @@ function SettingsEditorForm({
         sundayHolidayWorkEligible: evidenceBoolean(sundayHolidayWorkEligible),
         allEmploymentWorkRecorded: evidenceBoolean(allEmploymentWorkRecorded),
         tariff: salaryUpdate.tariff,
+        nursingTrainingTariff:
+          section === "WORK"
+            ? (profile.nursingTrainingTariff ?? null)
+            : salaryMode === "TVAOED_PFLEGE" && trainingYear !== "UNSET"
+              ? { trainingYear, sector, tariffRegion }
+              : null,
       });
       setMessage("Einstellungen gespeichert.");
     } catch (submitError) {
@@ -272,7 +300,7 @@ function SettingsEditorForm({
         </FormSection>
       ) : (
         <FormSection
-          caption="TVöD-P berechnen oder einen eigenen Monatswert hinterlegen."
+          caption="TVöD-P, Pflege-Ausbildung oder einen eigenen Monatswert wählen."
           title="Gehaltsgrundlage"
         >
           <DropdownField<IndustryFormValue>
@@ -290,6 +318,7 @@ function SettingsEditorForm({
             options={[
               { value: "UNSET", label: "Bitte wählen" },
               { value: "TVOED_P", label: "TVöD-P" },
+              { value: "TVAOED_PFLEGE", label: "TVAöD Pflege · Ausbildung" },
               { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
             ]}
             value={salaryMode}
@@ -328,31 +357,48 @@ function SettingsEditorForm({
                 }))}
                 value={tariffRegion}
               />
-              <DropdownField
-                label="Entgeltgruppe"
-                onChange={(group) => {
-                  setPayGroup(group);
-                  if (payLevel !== "UNSET" && !payLevelsForGroup(group).includes(payLevel)) {
-                    setPayLevel("UNSET");
-                  }
-                }}
-                options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
-                value={payGroup}
-              />
-              <DropdownField
-                label="Stufe"
-                onChange={setPayLevel}
-                options={[
-                  ...(payLevel === "UNSET"
-                    ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
-                    : []),
-                  ...payLevelsForGroup(payGroup).map((level) => ({
-                    value: level,
-                    label: `Stufe ${level}`,
-                  })),
-                ]}
-                value={payLevel}
-              />
+              {salaryMode === "TVAOED_PFLEGE" ? (
+                <DropdownField
+                  label="Ausbildungsjahr"
+                  value={trainingYear}
+                  onChange={setTrainingYear}
+                  options={[
+                    { value: "UNSET" as const, label: "Bitte wählen" },
+                    ...([1, 2, 3] as const).map((year) => ({
+                      value: year,
+                      label: `${year}. Ausbildungsjahr`,
+                    })),
+                  ]}
+                />
+              ) : (
+                <>
+                  <DropdownField
+                    label="Entgeltgruppe"
+                    onChange={(group) => {
+                      setPayGroup(group);
+                      if (payLevel !== "UNSET" && !payLevelsForGroup(group).includes(payLevel)) {
+                        setPayLevel("UNSET");
+                      }
+                    }}
+                    options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
+                    value={payGroup}
+                  />
+                  <DropdownField
+                    label="Stufe"
+                    onChange={setPayLevel}
+                    options={[
+                      ...(payLevel === "UNSET"
+                        ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
+                        : []),
+                      ...payLevelsForGroup(payGroup).map((level) => ({
+                        value: level,
+                        label: `Stufe ${level}`,
+                      })),
+                    ]}
+                    value={payLevel}
+                  />
+                </>
+              )}
               <Field editable={false} label="Tarifliche Vollzeit pro Woche" value={fullTimeHours} />
             </>
           )}

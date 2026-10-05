@@ -12,7 +12,7 @@ import type {
 
 export type EvidenceFormValue = "UNKNOWN" | "YES" | "NO";
 export type IndustryFormValue = Industry | "UNKNOWN";
-export type SalaryMode = "UNSET" | "TVOED_P" | "MANUAL";
+export type SalaryMode = "UNSET" | "TVOED_P" | "TVAOED_PFLEGE" | "MANUAL";
 
 export interface SettingsFormValues {
   readonly federalState: FederalState;
@@ -24,6 +24,7 @@ export interface SettingsFormValues {
   readonly regularRotatingNightWork: EvidenceFormValue;
   readonly sundayHolidayWorkEligible: EvidenceFormValue;
   readonly allEmploymentWorkRecorded: EvidenceFormValue;
+  readonly trainingYear: 1 | 2 | 3 | "UNSET";
   readonly payGroup: PayGroup;
   readonly payLevel: PayLevel;
   readonly sector: TariffSector;
@@ -67,8 +68,9 @@ export function settingsFormValues(profile: UserProfile): SettingsFormValues {
     holidayRegion: profile.holidayRegion,
     weeklyHours: formatHours(profile.weeklyMinutes),
     industry: profile.industry ?? "UNKNOWN",
-    salaryMode:
-      profile.manualMonthlyGrossCents != null
+    salaryMode: profile.nursingTrainingTariff
+      ? "TVAOED_PFLEGE"
+      : profile.manualMonthlyGrossCents != null
         ? "MANUAL"
         : profile.tariff !== null
           ? "TVOED_P"
@@ -77,10 +79,14 @@ export function settingsFormValues(profile: UserProfile): SettingsFormValues {
     regularRotatingNightWork: evidenceFormValue(profile.regularRotatingNightWork),
     sundayHolidayWorkEligible: evidenceFormValue(profile.sundayHolidayWorkEligible),
     allEmploymentWorkRecorded: evidenceFormValue(profile.allEmploymentWorkRecorded),
+    trainingYear: profile.nursingTrainingTariff?.trainingYear ?? "UNSET",
     payGroup: profile.tariff?.payGroup ?? "P8",
     payLevel: profile.tariff?.payLevel ?? 4,
-    sector: profile.tariff?.sector ?? "BT_K",
-    tariffRegion: profile.tariff?.tariffRegion ?? defaultTariffRegion(profile.federalState),
+    sector: profile.nursingTrainingTariff?.sector ?? profile.tariff?.sector ?? "BT_K",
+    tariffRegion:
+      profile.nursingTrainingTariff?.tariffRegion ??
+      profile.tariff?.tariffRegion ??
+      defaultTariffRegion(profile.federalState),
     fullTimeHours: formatHours(
       profile.tariff?.fullTimeWeeklyMinutes ??
         tariffFullTimeWeeklyMinutes("BT_K", defaultTariffRegion(profile.federalState)),
