@@ -1,3 +1,4 @@
+import { createSimpleMonthlyPayCache } from "./simple-monthly-pay-cache";
 import {
   calculateTvhKrAssessment,
   calculateTvhKrProfileMonth,
@@ -480,7 +481,33 @@ export function calculateShiftPremiumBreakdown(
   return result;
 }
 
+const cachedMonthlyPay = createSimpleMonthlyPayCache();
+
 export function calculateMonthlyPayEstimate(
+  month: string,
+  shifts: readonly ShiftEntry[],
+  profile: UserProfile,
+  decision: MonthlyTariffDecision | null,
+  assessmentShifts: readonly ShiftEntry[] = shifts,
+  workPatternSettings: TvoedWorkPatternSettings = DEFAULT_TVOED_WORK_PATTERN_SETTINGS,
+  ruleResolver: RuleResolver = bundledRuleResolver,
+): MonthlyPayEstimate {
+  return cachedMonthlyPay(
+    { month, shifts, profile, decision, assessmentShifts, workPatternSettings, ruleResolver },
+    () =>
+      calculateMonthlyPayEstimateUncached(
+        month,
+        shifts,
+        profile,
+        decision,
+        assessmentShifts,
+        workPatternSettings,
+        ruleResolver,
+      ),
+  );
+}
+
+function calculateMonthlyPayEstimateUncached(
   month: string,
   shifts: readonly ShiftEntry[],
   profile: UserProfile,
