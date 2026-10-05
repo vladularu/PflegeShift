@@ -30,7 +30,10 @@ export function MonthOverview({
       : !visible
         ? "Wird geprüft …"
         : undefined;
-  const salaryReady = profile.tariff !== null || profile.manualMonthlyGrossCents != null;
+  const salaryReady =
+    profile.tariff !== null ||
+    profile.nursingTrainingTariff != null ||
+    profile.manualMonthlyGrossCents != null;
   const estimate = pay.ok && pay.value.available ? pay.value : null;
   return (
     <AnalysisDashboard
