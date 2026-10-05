@@ -63,6 +63,7 @@ import {
 } from "@/features/settings/settings-form-values";
 import { parseEnumRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
+import { SALARY_BASIS_OPTIONS } from "@/features/settings/salary-basis-options";
 import { DropdownField, Field } from "@/ui/form-controls";
 import { FormScreen, FormSection, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
@@ -451,17 +452,8 @@ function SettingsEditorForm({
                     : payLevelsForGroup(payGroup);
               if (payLevel !== "UNSET" && !levels.includes(payLevel)) setPayLevel("UNSET");
             }}
-            options={[
-              { value: "UNSET", label: "Bitte wählen" },
-              { value: "TVOED_P", label: "TVöD-P" },
-              { value: "TVOED_E", label: "TVöD VKA · E-Tabelle" },
-              { value: "TVL_KR", label: "TV-L Pflege" },
-              { value: "TVH_KR", label: "TV-H Pflege · Hessen" },
-              { value: "TVUK_NURSING", label: "TV-UK Pflege · Baden-Württemberg" },
-              { value: "TVAOED_PFLEGE", label: "TVAöD Pflege · Ausbildung" },
-              { value: "TVAL_PFLEGE", label: "TVA-L Pflege · Ausbildung" },
-              { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
-            ]}
+            modalTitle="Gehaltsgrundlage"
+            options={SALARY_BASIS_OPTIONS}
             value={salaryMode}
           />
           {salaryMode === "MANUAL" ? (

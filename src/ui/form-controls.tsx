@@ -1,14 +1,8 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
-import { Children, useId, useRef, useState, type PropsWithChildren, type Ref } from "react";
+import { Children, useId, type PropsWithChildren, type Ref } from "react";
 import {
-  ActionSheetIOS,
   ActivityIndicator,
-  findNodeHandle,
-  Modal,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
@@ -19,21 +13,15 @@ import {
   type ViewStyle,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
-import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
 import { usePressMotion } from "@/ui/press-motion";
 
 export { SegmentedButton } from "@/ui/segmented-button";
 export { ColorPicker } from "@/ui/color-picker";
-
-export interface DropdownOption<T extends string | number> {
-  readonly value: T;
-  readonly label: string;
-}
+export { DropdownField, type DropdownOption } from "@/ui/dropdown-field";
 
 export function ResponsiveFieldRow({
   children,
@@ -47,226 +35,6 @@ export function ResponsiveFieldRow({
       {Children.map(children, (child) => (
         <View style={{ flex: stacked ? undefined : 1 }}>{child}</View>
       ))}
-    </View>
-  );
-}
-
-export function DropdownField<T extends string | number>({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  readonly label: string;
-  readonly value: T;
-  readonly options: readonly DropdownOption<T>[];
-  readonly onChange: (value: T) => void;
-}) {
-  const palette = usePalette();
-  const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<View>(null);
-  const dialogHeadingRef = useRef<View>(null);
-  const selected = options.find((option) => option.value === value);
-
-  function closeSelection() {
-    setOpen(false);
-    scheduleAccessibilityFocus(findNodeHandle(triggerRef.current));
-  }
-
-  function openSelection() {
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          cancelButtonIndex: options.length,
-          options: [...options.map((option) => option.label), "Abbrechen"],
-          title: label,
-          userInterfaceStyle: palette.dark ? "dark" : "light",
-        },
-        (index) => {
-          const option = options[index];
-          if (option) onChange(option.value);
-        },
-      );
-      return;
-    }
-    setOpen(true);
-  }
-
-  return (
-    <View style={{ gap: SPACING.xs }}>
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        selectable
-        style={{ color: palette.textMuted, ...TYPOGRAPHY.label }}
-      >
-        {label}
-      </Text>
-      <Pressable
-        ref={triggerRef}
-        accessibilityHint="Öffnet eine Auswahlliste"
-        accessibilityLabel={`${label}: ${selected?.label ?? String(value)}`}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        onPress={openSelection}
-        style={({ pressed }) => ({
-          minHeight: CONTROL_HEIGHT.regular,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderWidth: 1,
-          borderColor: palette.border,
-          borderRadius: RADII.control,
-          borderCurve: "continuous",
-          backgroundColor: palette.surfaceRaised,
-          opacity: pressed ? 0.72 : 1,
-          paddingHorizontal: SPACING.md,
-        })}
-      >
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ flex: 1, color: palette.text, ...TYPOGRAPHY.bodyStrong }}
-        >
-          {selected?.label ?? String(value)}
-        </Text>
-        <Ionicons
-          accessibilityElementsHidden
-          color={palette.textMuted}
-          name="chevron-down"
-          size={18}
-        />
-      </Pressable>
-      <Modal
-        animationType="fade"
-        onRequestClose={closeSelection}
-        onShow={() => scheduleAccessibilityFocus(findNodeHandle(dialogHeadingRef.current))}
-        presentationStyle="overFullScreen"
-        statusBarTranslucent
-        transparent
-        visible={open}
-      >
-        <View style={{ flex: 1, justifyContent: "flex-end" }}>
-          <Pressable
-            accessible={false}
-            accessibilityElementsHidden
-            aria-hidden
-            importantForAccessibility="no-hide-descendants"
-            onPress={closeSelection}
-            style={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              backgroundColor: palette.overlay,
-            }}
-          />
-          <View
-            accessibilityViewIsModal
-            testID="dropdown-modal-content"
-            style={{
-              maxHeight: Math.min(height * 0.72, 560),
-              borderTopLeftRadius: 22,
-              borderTopRightRadius: 22,
-              borderCurve: "continuous",
-              backgroundColor: palette.surfaceRaised,
-              boxShadow: `0 -12px 32px ${palette.shadow}`,
-              paddingBottom: Math.max(insets.bottom, SPACING.md),
-            }}
-          >
-            <View
-              ref={dialogHeadingRef}
-              accessible
-              accessibilityLabel={`${label}, Auswahldialog`}
-              accessibilityRole="header"
-              style={{
-                minHeight: 58,
-                justifyContent: "center",
-                borderBottomWidth: 1,
-                borderBottomColor: palette.separator,
-                paddingHorizontal: SPACING.lg,
-              }}
-            >
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
-              >
-                {label}
-              </Text>
-            </View>
-            <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>
-              {options.map((option, index) => {
-                const isSelected = option.value === value;
-                return (
-                  <Pressable
-                    key={String(option.value)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isSelected }}
-                    onPress={() => {
-                      onChange(option.value);
-                      closeSelection();
-                    }}
-                    style={({ pressed }) => ({
-                      minHeight: CONTROL_HEIGHT.large,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      borderTopWidth: index === 0 ? 0 : 1,
-                      borderTopColor: palette.separator,
-                      backgroundColor: isSelected
-                        ? palette.primarySoft
-                        : pressed
-                          ? palette.surfaceMuted
-                          : "transparent",
-                      paddingHorizontal: SPACING.lg,
-                    })}
-                  >
-                    <Text
-                      maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                      style={{
-                        flex: 1,
-                        color: isSelected ? palette.primary : palette.text,
-                        ...(isSelected ? TYPOGRAPHY.bodyStrong : TYPOGRAPHY.body),
-                      }}
-                    >
-                      {option.label}
-                    </Text>
-                    {isSelected ? (
-                      <Ionicons
-                        accessibilityElementsHidden
-                        color={palette.primary}
-                        name="checkmark"
-                        size={20}
-                      />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-            <Pressable
-              accessibilityLabel="Auswahl abbrechen"
-              accessibilityRole="button"
-              onPress={closeSelection}
-              style={({ pressed }) => ({
-                minHeight: CONTROL_HEIGHT.large,
-                alignItems: "center",
-                justifyContent: "center",
-                borderTopWidth: 1,
-                borderTopColor: palette.separator,
-                opacity: pressed ? 0.65 : 1,
-              })}
-            >
-              <Text
-                maxFontSizeMultiplier={TEXT_MAX_SCALE}
-                style={{ color: palette.primary, ...TYPOGRAPHY.button }}
-              >
-                Abbrechen
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

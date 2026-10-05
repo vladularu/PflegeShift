@@ -1,6 +1,6 @@
 import type { UserProfile } from "@/domain/types";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { ActionSheetIOS } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -77,6 +77,15 @@ async function select(screen: Screen, field: string, option: string) {
     .spyOn(ActionSheetIOS, "showActionSheetWithOptions")
     .mockImplementation(() => {});
   await fireEvent.press(screen.getByRole("button", { name: new RegExp(`^${field}:`) }));
+  if (field === "Berechnung") {
+    const dialog = within(screen.getByTestId("dropdown-modal-content"));
+    const choices = dialog
+      .getAllByRole("button")
+      .map((button) => button.props.accessibilityLabel as string)
+      .filter((label) => label !== "Auswahl abbrechen");
+    await fireEvent.press(dialog.getByRole("button", { name: option }));
+    return choices;
+  }
   const [options, callback] = picker.mock.calls[picker.mock.calls.length - 1];
   expect(options.options).toContain(option);
   await act(() => callback(options.options.indexOf(option)));
