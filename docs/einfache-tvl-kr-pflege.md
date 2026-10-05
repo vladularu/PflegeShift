@@ -37,3 +37,13 @@ Die vier Quellpakete behalten DRAFT und ihre Quellen-/Reviewmetadaten. Der lokal
 ## Prüfung dieses Rechenpakets
 
 Am 05.10.2026 bestanden: 326 gezielte TV-L-Prüffälle und `npm.cmd run verify:fast` (6.151 Unit-, 562 Komponententests sowie Vertrags-, Format-, Typ-, Lint- und Skriptprüfungen). Es sind genau die fünf oben beschriebenen neuen Dateien betroffen. Der Rechenkern ist noch nicht mit der App verbunden. Geräteabnahme folgt mit der App-Anbindung.
+
+## Paket 2: Auswahl speichern
+
+Scope: neun Dateien (dieser Beleg, domain/types.ts, domain/validation.ts, domain/tvl-kr-tariff.ts, database/simple-salary-profile.ts, database/simple-app-profile.ts, database/preferences-repository.ts, database/local-backup-validation.ts und neuer database/tvl-kr-profile.test.ts). Gruppe und Stufe werden als optionale lokale Gehaltsgrundlage gespeichert. Genau eine Grundlage ist erlaubt. Profiländerung und Tarifwechsel bleiben atomar; Neustart, Backup/Restore und ältere Backups sind Abnahmekriterien. Keine neue Datenbankspalte oder native Migration. Noch keine UI-Anbindung.
+
+Der Anbindungsbranch wurde von aktuellem master angelegt und enthält lokal die bereits freigegebenen E-/Azubi-Änderungen sowie den separaten TV-L-Rechenkern als Abhängigkeiten. PR #266 bleibt bis zur Geräteabnahme offen. Diese lokale Zusammenführung ist kein Merge nach master.
+
+TV-L besitzt unterschiedliche West-/Ost-Vollzeitbasen. Das bestehende Tarifgebiet-Feld erhält dafür die verständlichen Werte West/Ost; keine zusätzliche Einstellungsseite. Das Gebiet wird ausdrücklich gespeichert, damit die besondere Berliner Vertragssituation nicht blind aus der Geografie abgeleitet wird. Der reine Tabellenadapter behält Gruppe/Stufe und einen getrennten Gebietsparameter.
+
+Speicherprüfung: Typcheck und alle 844 Datenbanktests in 74 Dateien bestanden, einschließlich exklusiver Wechsel zwischen P/E/Azubi/manuell/TV-L, Ost-Gebiet im Backup, Rückkehr zu älterem Backup und Rollback bei Schreibfehler. Der gemeinsame aktuelle Pflichtcheck folgt vor der PR-Lieferung mit der App-Anbindung.

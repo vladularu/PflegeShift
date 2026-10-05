@@ -1,3 +1,5 @@
+import type { TvlKrSalaryTariff } from "./tvl-kr-tariff";
+
 export const FEDERAL_STATES = [
   "BW",
   "BY",
@@ -184,6 +186,7 @@ export interface UserProfile {
   readonly manualMonthlyGrossCents?: number | null;
   readonly nursingTrainingTariff?: NursingTrainingTariff | null;
   readonly vkaETariff?: VkaETariff | null;
+  readonly tvlKrTariff?: TvlKrSalaryTariff | null;
   readonly regularRotatingNightWork: boolean | null;
   readonly sundayHolidayWorkEligible: boolean | null;
   readonly allEmploymentWorkRecorded: boolean | null;
@@ -384,6 +387,7 @@ export interface SaveProfileInput {
   readonly manualMonthlyGrossCents?: number | null;
   readonly nursingTrainingTariff?: NursingTrainingTariff | null;
   readonly vkaETariff?: VkaETariff | null;
+  readonly tvlKrTariff?: TvlKrSalaryTariff | null;
   readonly regularRotatingNightWork?: boolean | null;
   readonly sundayHolidayWorkEligible?: boolean | null;
   readonly allEmploymentWorkRecorded?: boolean | null;
