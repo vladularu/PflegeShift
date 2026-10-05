@@ -1,5 +1,7 @@
 import { FEDERAL_STATE_LABELS, TARIFF_REGION_LABELS, type UserProfile } from "@/domain/types";
 export function profileSalaryLabel(profile: UserProfile): string {
+  if (profile.tvlKrTariff)
+    return `TV-L ${profile.tvlKrTariff.payGroup} · Stufe ${profile.tvlKrTariff.payLevel}`;
   if (profile.vkaETariff)
     return `TVöD · ${profile.vkaETariff.payGroup} · Stufe ${profile.vkaETariff.payLevel}`;
   if (profile.nursingTrainingTariff)

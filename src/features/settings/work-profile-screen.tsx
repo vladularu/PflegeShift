@@ -119,7 +119,7 @@ function WorkProfileForm({ profile }: { readonly profile: UserProfile }) {
             subtitleBelow
             onPress={() => router.push(settingsEditorRoute("TARIFF"))}
           />
-          {profile.tariff || profile.vkaETariff ? (
+          {profile.tariff || profile.vkaETariff || profile.tvlKrTariff ? (
             <>
               <CardSeparator />
               <RowButton

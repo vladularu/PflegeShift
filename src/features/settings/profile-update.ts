@@ -22,7 +22,7 @@ export function resolveSalaryUpdate(
   if (salaryMode === "UNSET") {
     return { tariff: currentTariff, manualMonthlyGrossCents: currentManualMonthlyGrossCents };
   }
-  if (salaryMode === "TVAOED_PFLEGE" || salaryMode === "TVOED_E")
+  if (salaryMode === "TVAOED_PFLEGE" || salaryMode === "TVOED_E" || salaryMode === "TVL_KR")
     return { tariff: null, manualMonthlyGrossCents: null };
   return salaryMode === "MANUAL"
     ? { tariff: null, manualMonthlyGrossCents }

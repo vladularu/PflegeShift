@@ -1,3 +1,11 @@
+import { Temporal } from "@js-temporal/polyfill";
+import {
+  TVL_KR_GROUPS,
+  tvlKrLevelsForGroup,
+  type TvlKrGroup,
+  type TvlKrUniversityRegion,
+} from "@/domain/tvl-kr-tariff";
+import { getTvlKrUniversityFullTimeMinutes } from "@/engine/simple-tvl-kr-pay";
 import { VKA_E_GROUPS, ePayLevels } from "@/domain/vka-e-tariff";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
@@ -107,6 +115,10 @@ function SettingsEditorForm({
   const [allEmploymentWorkRecorded, setAllEmploymentWorkRecorded] = useState<EvidenceFormValue>(
     initialValues.allEmploymentWorkRecorded,
   );
+  const [krPayGroup, setKrPayGroup] = useState<TvlKrGroup>(initialValues.krPayGroup);
+  const [tvlUniversityRegion, setTvlUniversityRegion] = useState<TvlKrUniversityRegion>(
+    initialValues.tvlUniversityRegion,
+  );
   const [ePayGroup, setEPayGroup] = useState<VkaETariff["payGroup"]>(initialValues.ePayGroup);
   const [payGroup, setPayGroup] = useState<PayGroup>(initialValues.payGroup);
   const [payLevel, setPayLevel] = useState<PayLevel | "UNSET">(initialValues.payLevel);
@@ -120,14 +132,23 @@ function SettingsEditorForm({
   const weeklyHoursRef = useRef<TextInput>(null);
   const manualMonthlyGrossRef = useRef<TextInput>(null);
   const fullTimeWeeklyMinutes =
-    salaryMode === "TVAOED_PFLEGE"
-      ? sector === "BT_K"
-        ? 2310
-        : 2340
-      : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
+    salaryMode === "TVL_KR"
+      ? (getTvlKrUniversityFullTimeMinutes(
+          Temporal.Now.plainDateISO(profile.timeZone).toString(),
+          tvlUniversityRegion,
+        ) ?? 0)
+      : salaryMode === "TVAOED_PFLEGE"
+        ? sector === "BT_K"
+          ? 2310
+          : 2340
+        : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
   const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
   const selectedLevels =
-    salaryMode === "TVOED_E" ? ePayLevels(ePayGroup) : payLevelsForGroup(payGroup);
+    salaryMode === "TVL_KR"
+      ? tvlKrLevelsForGroup(krPayGroup)
+      : salaryMode === "TVOED_E"
+        ? ePayLevels(ePayGroup)
+        : payLevelsForGroup(payGroup);
   const evidenceOptions = [
     { value: "UNKNOWN" as const, label: "Noch nicht bestätigt" },
     { value: "YES" as const, label: "Ja" },
@@ -163,7 +184,7 @@ function SettingsEditorForm({
     }
     if (
       section === "TARIFF" &&
-      (salaryMode === "TVOED_P" || salaryMode === "TVOED_E") &&
+      (salaryMode === "TVOED_P" || salaryMode === "TVOED_E" || salaryMode === "TVL_KR") &&
       payLevel === "UNSET"
     ) {
       setError("Bitte eine gültige Stufe für die gewählte Gruppe wählen.");
@@ -177,11 +198,13 @@ function SettingsEditorForm({
     }
     if (
       section === "TARIFF" &&
-      salaryMode === "TVAOED_PFLEGE" &&
+      (salaryMode === "TVAOED_PFLEGE" || salaryMode === "TVL_KR") &&
       profile.weeklyMinutes > fullTimeWeeklyMinutes
     ) {
       setError(
-        "Deine Wochenstunden liegen über der tariflichen Ausbildungszeit. Bitte zuerst das Arbeitszeitmodell prüfen.",
+        salaryMode === "TVL_KR"
+          ? "Deine Wochenstunden liegen über der tariflichen Vollzeit. Bitte zuerst das Arbeitszeitmodell prüfen."
+          : "Deine Wochenstunden liegen über der tariflichen Ausbildungszeit. Bitte zuerst das Arbeitszeitmodell prüfen.",
       );
       setMessage(null);
       return;
@@ -220,6 +243,12 @@ function SettingsEditorForm({
             ? (profile.vkaETariff ?? null)
             : salaryMode === "TVOED_E" && payLevel !== "UNSET"
               ? { payGroup: ePayGroup, payLevel, sector, tariffRegion }
+              : null,
+        tvlKrTariff:
+          section === "WORK"
+            ? (profile.tvlKrTariff ?? null)
+            : salaryMode === "TVL_KR" && payLevel !== "UNSET"
+              ? { payGroup: krPayGroup, payLevel, universityRegion: tvlUniversityRegion }
               : null,
         nursingTrainingTariff:
           section === "WORK"
@@ -315,7 +344,11 @@ function SettingsEditorForm({
         </FormSection>
       ) : (
         <FormSection
-          caption="Tarif berechnen oder einen eigenen Monatswert hinterlegen."
+          caption={
+            salaryMode === "TVL_KR"
+              ? "Für Pflege an Unikliniken. Wähle Gruppe und Stufe aus deinem Vertrag."
+              : "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
+          }
           title="Gehaltsgrundlage"
         >
           <DropdownField<IndustryFormValue>
@@ -332,13 +365,18 @@ function SettingsEditorForm({
             onChange={(value) => {
               setSalaryMode(value);
               const levels =
-                value === "TVOED_E" ? ePayLevels(ePayGroup) : payLevelsForGroup(payGroup);
+                value === "TVL_KR"
+                  ? tvlKrLevelsForGroup(krPayGroup)
+                  : value === "TVOED_E"
+                    ? ePayLevels(ePayGroup)
+                    : payLevelsForGroup(payGroup);
               if (payLevel !== "UNSET" && !levels.includes(payLevel)) setPayLevel("UNSET");
             }}
             options={[
               { value: "UNSET", label: "Bitte wählen" },
               { value: "TVOED_P", label: "TVöD-P" },
               { value: "TVOED_E", label: "TVöD VKA · E-Tabelle" },
+              { value: "TVL_KR", label: "TV-L Pflege" },
               { value: "TVAOED_PFLEGE", label: "TVAöD Pflege · Ausbildung" },
               { value: "MANUAL", label: "Monatsbrutto selbst eintragen" },
             ]}
@@ -360,25 +398,39 @@ function SettingsEditorForm({
             />
           ) : salaryMode !== "UNSET" ? (
             <>
-              <DropdownField
-                label="Tarifbereich"
-                onChange={setSector}
-                options={[
-                  { value: "BT_K", label: "Krankenhaus · BT-K" },
-                  { value: "BT_B", label: "Pflege · BT-B" },
-                ]}
-                value={sector}
-              />
-              {(salaryMode === "TVOED_P" || sector === "BT_K") && (
+              {salaryMode === "TVL_KR" ? (
                 <DropdownField
                   label="Tarifgebiet"
-                  onChange={setTariffRegion}
-                  options={(["KAV_BW", "OTHER"] as const).map((region) => ({
-                    value: region,
-                    label: TARIFF_REGION_LABELS[region],
-                  }))}
-                  value={tariffRegion}
+                  value={tvlUniversityRegion}
+                  onChange={setTvlUniversityRegion}
+                  options={[
+                    { value: "WEST", label: "West" },
+                    { value: "EAST", label: "Ost" },
+                  ]}
                 />
+              ) : (
+                <>
+                  <DropdownField
+                    label="Tarifbereich"
+                    onChange={setSector}
+                    options={[
+                      { value: "BT_K", label: "Krankenhaus · BT-K" },
+                      { value: "BT_B", label: "Pflege · BT-B" },
+                    ]}
+                    value={sector}
+                  />
+                  {(salaryMode === "TVOED_P" || sector === "BT_K") && (
+                    <DropdownField
+                      label="Tarifgebiet"
+                      onChange={setTariffRegion}
+                      options={(["KAV_BW", "OTHER"] as const).map((region) => ({
+                        value: region,
+                        label: TARIFF_REGION_LABELS[region],
+                      }))}
+                      value={tariffRegion}
+                    />
+                  )}
+                </>
               )}
               {salaryMode === "TVAOED_PFLEGE" ? (
                 <DropdownField
@@ -395,7 +447,18 @@ function SettingsEditorForm({
                 />
               ) : (
                 <>
-                  {salaryMode === "TVOED_E" ? (
+                  {salaryMode === "TVL_KR" ? (
+                    <DropdownField
+                      label="Entgeltgruppe"
+                      value={krPayGroup}
+                      onChange={(group) => {
+                        setKrPayGroup(group);
+                        if (payLevel !== "UNSET" && !tvlKrLevelsForGroup(group).includes(payLevel))
+                          setPayLevel("UNSET");
+                      }}
+                      options={TVL_KR_GROUPS.map((group) => ({ value: group, label: group }))}
+                    />
+                  ) : salaryMode === "TVOED_E" ? (
                     <DropdownField
                       label="Entgeltgruppe"
                       value={ePayGroup}
