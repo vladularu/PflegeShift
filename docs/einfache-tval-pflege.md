@@ -28,3 +28,11 @@ Nicht Bestandteil dieses einfachen Monatsadapters: Pflegefachassistenz ab2027, i
 ## Prüfung des Rechenkerns
 
 Am 05.10.2026: 386 gezielte Tests (60 TVA-L-Fälle und 326 bestehende TV-L-Fälle) bestanden. Vollständiges `verify:fast` grün: 7.275 Unit-Tests plus die bestehenden Komponenten- und Skriptprüfungen. Genau sieben Code-/Test-/Belegdateien, keine App-Aktivierung in diesem Rechenpaket.
+
+## Speicherung
+
+- Ausbildungsjahr und West/Ost-Auswahl als eigene, strikt validierte Benutzerpraeferenz.
+- Profil und Tarifpraeferenzen werden in derselben Transaktion geschrieben; jeder andere Gehaltsmodus entfernt die TVA-L-Auswahl.
+- Arbeitszeitbearbeitung und Neustart erhalten die Auswahl. Backup/Restore nimmt sie auf, aeltere Backups entfernen spaeter gespeicherte TVA-L-Angaben.
+- Keine native Aenderung, neue DB-Migration, Geburtsdatum oder datierte Verguetungshistorie.
+- Gesamte Datenbanksuite: 943 Tests in 77 Dateien gruen, einschliesslich Fehler-Rollback und widerspruechlicher Backups.

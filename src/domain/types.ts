@@ -1,3 +1,4 @@
+import type { TvalPflegeTariff } from "./tval-pflege-tariff";
 import type { TvhKrTariff } from "./tvh-kr-tariff";
 import type { TvUkNursingTariff } from "./tvuk-nursing-tariff";
 import type { TvlKrSalaryTariff } from "./tvl-kr-tariff";
@@ -191,6 +192,7 @@ export interface UserProfile {
   readonly tvlKrTariff?: TvlKrSalaryTariff | null;
   readonly tvUkNursingTariff?: TvUkNursingTariff | null;
   readonly tvhKrTariff?: TvhKrTariff | null;
+  readonly tvalPflegeTariff?: TvalPflegeTariff | null;
   readonly regularRotatingNightWork: boolean | null;
   readonly sundayHolidayWorkEligible: boolean | null;
   readonly allEmploymentWorkRecorded: boolean | null;
@@ -394,6 +396,7 @@ export interface SaveProfileInput {
   readonly tvlKrTariff?: TvlKrSalaryTariff | null;
   readonly tvUkNursingTariff?: TvUkNursingTariff | null;
   readonly tvhKrTariff?: TvhKrTariff | null;
+  readonly tvalPflegeTariff?: TvalPflegeTariff | null;
   readonly regularRotatingNightWork?: boolean | null;
   readonly sundayHolidayWorkEligible?: boolean | null;
   readonly allEmploymentWorkRecorded?: boolean | null;

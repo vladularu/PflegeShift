@@ -1,3 +1,4 @@
+import { requireTvalPflegeTariff } from "./tval-pflege-tariff";
 import { requireTvhKrTariff } from "./tvh-kr-tariff";
 import { requireTvUkNursingTariff } from "./tvuk-nursing-tariff";
 import { requireTvlKrSalaryTariff } from "./tvl-kr-tariff";
@@ -183,6 +184,7 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
   const nursingTrainingTariff = requireNursingTrainingTariff(input.nursingTrainingTariff);
   const vkaETariff = requireVkaETariff(input.vkaETariff);
   const tvlKrTariff = requireTvlKrSalaryTariff(input.tvlKrTariff);
+  const tvalPflegeTariff = requireTvalPflegeTariff(input.tvalPflegeTariff);
   const tvhKrTariff = requireTvhKrTariff(input.tvhKrTariff);
   const tvUkNursingTariff = requireTvUkNursingTariff(input.tvUkNursingTariff);
   if (tvhKrTariff && input.weeklyMinutes > tvhKrTariff.fullTimeWeeklyMinutes)
@@ -231,6 +233,7 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
       tvlKrTariff,
       tvUkNursingTariff,
       tvhKrTariff,
+      tvalPflegeTariff,
       tariff,
       manualMonthlyGrossCents,
     ].filter((value) => value != null).length > 1
@@ -259,6 +262,7 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
     ...(input.tvlKrTariff !== undefined ? { tvlKrTariff } : {}),
     ...(input.tvUkNursingTariff !== undefined ? { tvUkNursingTariff } : {}),
     ...(input.tvhKrTariff !== undefined ? { tvhKrTariff } : {}),
+    ...(input.tvalPflegeTariff !== undefined ? { tvalPflegeTariff } : {}),
   };
 }
 
