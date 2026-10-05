@@ -127,6 +127,9 @@ export function calculateTvUkNursingShift(
       bounds.grossMinutes,
       Number(midnight.epochMilliseconds - start.epochMilliseconds) / 60000,
     );
+    // TV-UK Ä9 raises only core-night and Sunday rates from 1 January 2025.
+    const coreNightCashRate = date < "2025-01-01" ? 3000 : 3500;
+    const sundayRate = date < "2025-01-01" ? 2500 : 4000;
     const ctx = context(date, selection, work.weeklyMinutes);
     if (!ctx)
       throw new RuleResolutionError({
@@ -164,11 +167,11 @@ export function calculateTvUkNursingShift(
         continue;
       if (isNight(minute)) {
         nightMinutes++;
-        // 25% basic night premium minus compulsory 5% time credit; extra 15% is cash.
-        count("night", "Nacht", minute < 240 ? 3500 : 2000);
+        // Basic 25% minus compulsory 5% time credit; extra 10/15% is cash.
+        count("night", "Nacht", minute < 240 ? coreNightCashRate : 2000);
       } else if (options.regularShiftWork) count("shift", "Schichtdienst (6–20 Uhr)", 280);
       // §11(1)c/d/e: one calendar premium, choosing the greatest applicable rate.
-      if (sectionStart.dayOfWeek === 7) count("sunday", "Sonntag", 4000);
+      if (sectionStart.dayOfWeek === 7) count("sunday", "Sonntag", sundayRate);
       else if (holidays.holidays.has(date)) count("holiday", "Feiertag", 2500);
       else if (date.slice(5) === "12-24" || date.slice(5) === "12-31")
         count("preholiday", "24./31. Dezember", 2500);

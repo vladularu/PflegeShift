@@ -26,6 +26,13 @@ Paketen mit echtem iPhone-Nachweis. Kein neues Einstellungsmenü ist vorgesehen.
 
 Offizielle AGU-Verträge: https://agu-uniklinika.de/tarifvertraege/
 
+- Mantel TV-UK, Ä8, gültig vor 01.01.2025: § 11, PDF-Seiten 8/9.
+  https://agu-uniklinika.de/wp-content/uploads/2023/09/TV-UK_durchgeschriebene-Fassung_final_20230504_AGU-Version-002.pdf
+  SHA256: 98a9e0707ef792886844ed40880116a3e9e2924461ac8a0ddea52ad98bd56ebb
+- Unterschriebener Mantel-Ä9, § 1 Ziffer 2 und § 2: Erhöhungen ausdrücklich
+  erst ab 01.01.2025, unabhängig von der Entgelttabelle ab Oktober 2024.
+  https://agu-uniklinika.de/wp-content/uploads/2025/01/20241219_TV-UK-Ae9_unterschrieben.pdf
+  SHA256: 58213a2427970fd852d300a24cac33286a93817d1ca63cc13929bc278a5c39e6
 - Mantel TV-UK, Ä9, gültig ab 01.01.2025: §§ 8, 10, 11, 17.
   https://agu-uniklinika.de/wp-content/uploads/2025/07/01_TV-UK_durchgeschrieben-Fassung-Ae9-vom-03.07.2024.pdf
   SHA256: 55601f36409ab2fc27adf5f8f959d26b74258c0aff387a3267ebdfe863f394d3
@@ -56,11 +63,14 @@ Ablaufdatum für die ab 01.07.2028 veröffentlichte Tabelle.
 
 - Vollzeit 38,5 Stunden; persönlicher Tabellenbetrag und Pflegezulage anteilig.
 - Stundenbasis: eigene Gruppe und tatsächliche Stufe / (4,348 × 38,5).
-- Nacht 20–6 Uhr: 25 Prozent, 0–4 Uhr insgesamt 40 Prozent. Fünf Prozentpunkte
-  des Grundnachtzuschlags sind zwingend Freizeit. Die Geldschätzung berücksichtigt
-  deshalb 20 bzw. 35 Prozent; die Freizeitminuten werden separat ausgegeben.
-- Sonntag 40 Prozent; Feiertag und 24./31. Dezember ganztägig 25 Prozent.
-  Bei Überschneidung dieser Kalenderkategorien nur der höchste Zuschlag.
+- Nacht 20–6 Uhr: 25 Prozent, 0–4 Uhr bis 31.12.2024 insgesamt 35 Prozent,
+  ab 01.01.2025 insgesamt 40 Prozent. Fünf Prozentpunkte des Grundnachtzuschlags
+  sind zwingend Freizeit. Geld: außerhalb 0–4 Uhr 20 Prozent; im Kernfenster
+  bis Ende 2024 30 Prozent, danach 35 Prozent. Freizeitminuten bleiben separat.
+- Sonntag bis 31.12.2024 25 Prozent, danach 40 Prozent; Feiertag und
+  24./31. Dezember ganztägig 25 Prozent. Bei Überschneidung dieser
+  Kalenderkategorien nur der höchste Zuschlag. Ein Dienst über Mitternacht
+  verwendet für jeden Tag dessen gültige Zuschlagssätze.
 - Bei bestätigtem regelmäßigen Schichtdienst: 6–20 Uhr zusätzlich 2,8 Prozent.
   Keine monatliche VKA-/TV-L-Schichtpauschale und kein Samstagszuschlag.
 - Überstunden nur bei extern bestätigter zahlbarer Zuordnung: eigener
@@ -77,8 +87,9 @@ Spezielle Zulagen werden nicht aus dem gewählten Gruppennamen abgeleitet.
 
 ## Prüf- und Lieferstand
 
-Rechenkern fertig: 373 gezielte Referenztests bestanden. verify:fast ist grün
-(6.524 Unit-Tests und 562 Komponententests einschließlich Datenbankprüfungen).
+Rechenkern einschließlich historischem Zuschlagsabgleich: 381 gezielte
+Referenztests bestanden. verify:fast ist grün (6.532 Unit-Tests und
+562 Komponententests einschließlich Datenbankprüfungen).
 Keine App-Anbindung oder Veröffentlichung in diesem Rechenkern-Paket.
 
 ## App-Anbindung: getrennte Arbeitspakete
@@ -95,8 +106,18 @@ Keine native Integration. Finale Pflichtprüfung über den gesamten App-Branch,
 Preview nur bei frisch bestätigtem passenden Runtime-Fingerprint; Merge erst nach
 Geräteabnahme gemäß AGENTS.md/WORKFLOW.md.
 
-App-Prüfstand: verify:fast vollständig grün (6.640 Unit-Tests, 608 Komponenten-
-tests). Gesamte Datenbanksuite 873 Tests; gezielte Fach-/Routingfälle 382 Tests.
+App-Prüfstand: verify:fast vollständig grün (6.648 Unit-Tests, 608 Komponenten-
+tests). Gesamte Datenbanksuite 873 Tests; gezielte Fach-/Routingfälle 390 Tests.
 Preview-Fingerprint f2f4b99ba254b82ab22b99594d5228bd8c3774f7 passt zu Build 32.
 Rechenkern-PR #269 ist nach sieben grünen CI-Prüfungen gemergt (master 1b07fe0).
 Die App-Anbindung bleibt bis zur iPhone-Abnahme im Draft-PR. TV-H folgt danach.
+
+## Historischer Zuschlagsabgleich
+
+Eigenes Korrekturpaket auf master: genau Rechenkern, Referenztest und dieser Beleg.
+Ziel: richtige Sätze für Oktober bis Dezember 2024 und den Wechsel zum Januar 2025.
+Keine Tabellen-, Profil-, UI- oder native Änderung. Abnahme: historische Nacht und
+Sonntag, unveränderte Pflichtfreizeit und äußere Nachtzeit, Monatsbetrag und
+Jahreswechsel; gezielte Tests, verify:fast und sieben grüne PR-Prüfungen vor Merge.
+
+Gezielter historischer Abgleich: 381 Referenztests bestanden.
