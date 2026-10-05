@@ -369,7 +369,7 @@ function SettingsEditorForm({
                 ]}
                 value={sector}
               />
-              {(salaryMode !== "TVOED_E" || sector === "BT_K") && (
+              {(salaryMode === "TVOED_P" || sector === "BT_K") && (
                 <DropdownField
                   label="Tarifgebiet"
                   onChange={setTariffRegion}

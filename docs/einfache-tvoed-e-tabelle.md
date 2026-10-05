@@ -40,3 +40,13 @@ VKA-PDF-SHA256 live verifiziert; beide Generator-Kandidatenchecks sowie202 Quell
 - Abnahme: Namens-/Feldwechsel, gültige Stufen und Wochenzeit; Regionserhalt beim Wechsel; fachlicher Vergleich aller vier Schichtzulagenentscheidungen in beiden Tabellenperioden für E-BT-B; verify:fast und PR-CI; danach iPhone-Abnahme vor Merge.
 
 Korrekturprüfung: 38 gezielte Berechnungs- und 55 Komponententests grün. verify:fast vollständig grün mit 5.861 Unit- und 577 Komponententests; Typen, Lint, Format und übrige Pflichtprüfungen bestanden. Der frisch erzeugte iOS-Fingerprint entspricht dem installierten Build32. Geräteabnahme der angepassten Auswahl bleibt offen.
+
+## Ergänzung: Gebietsauswahl im Azubi-Tarif (5. Oktober 2026)
+
+- Ziel: Tarifgebiet bei TVAöD Pflege / BT-B ausblenden. Ausbildungsjahr und Tarifbereich bleiben im bisherigen Formular; bei BT-K erscheint das gespeicherte Gebiet wieder.
+- Scope: settings-editor-screen, settings-nursing-training.component.test, simple-nursing-training-pay.test und dieses Dokument auf dem bestehenden Branch codex/simple-tvoed-e / PR266.
+- Plattform: interner iOS Preview Build32. Bestehende Git-/Preview-OTA-Freigabe gilt; iPhone-Abnahme bleibt ein eigenes Gate vor Merge.
+- Nicht-Ziele: Änderung von Tabellenwerten, Berechnung, gespeicherten Profilen, Datenbank/Backup-Vertrag, zusätzlichen Menüs oder nativen Abhängigkeiten.
+- Abnahme: BT-B ohne Gebietssteuerung, BT-K mit zurückkehrender Auswahl; beide gespeicherten Gebiete bleiben beim Speichern/Moduswechsel erhalten; P/BT-B zeigt sein relevantes Gebiet weiter. Fachlicher Vergleich beider Gebiete für alle Ausbildungsjahre und Schichtzulagenentscheidungen über historische Zulagen und beide Tabellenperioden. verify:fast, aktuelle PR-CI und Geräteabnahme.
+
+Azubi-Korrekturprüfung: 58 gezielte Komponententests und 41 Berechnungsfälle grün; verify:fast vollständig grün mit 5.864 Unit- und 580 Komponententests. Der frisch erzeugte iOS-Fingerprint passt zu Build32. Geräteabnahme nach der aktualisierten Preview-OTA bleibt offen.
