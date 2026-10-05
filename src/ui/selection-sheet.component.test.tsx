@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals
 import { Platform } from "react-native";
 import { State } from "react-native-gesture-handler";
 import { fireGestureHandler, getByGestureTestId } from "react-native-gesture-handler/jest-utils";
+import { getAnimatedStyle } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { DropdownField } from "@/ui/form-controls";
@@ -33,6 +34,9 @@ function picker(onChange: (value: string) => void) {
 }
 async function open(screen: Awaited<ReturnType<typeof render>>) {
   await fireEvent.press(screen.getByRole("button", { name: "Bundesland: Hessen" }));
+  await fireEvent(screen.getByTestId("dropdown-modal-content"), "layout", {
+    nativeEvent: { layout: { x: 0, y: 0, width: 393, height: 640 } },
+  });
   await fireEvent(screen.getByTestId("dropdown-modal-content"), "show");
 }
 async function drag(
@@ -168,5 +172,101 @@ describe("shared dismissible selection sheet", () => {
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith("BW");
     await waitFor(() => expect(screen.queryByTestId("dropdown-modal-content")).toBeNull());
+  });
+
+  describe("matched opening and closing motion", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    async function advance(milliseconds: number) {
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(milliseconds);
+      });
+    }
+
+    it.each([240, 640])(
+      "keeps a %i-point sheet and its backdrop visible until the exit finishes",
+      async (height) => {
+        const screen = await render(picker(jest.fn()));
+        await open(screen);
+        const sheet = screen.getByTestId("dropdown-modal-content");
+        await fireEvent(sheet, "layout", {
+          nativeEvent: { layout: { x: 0, y: 0, width: 393, height } },
+        });
+        await advance(300);
+        await fireEvent.press(screen.getByRole("button", { name: "Auswahl abbrechen" }));
+        await advance(120);
+        const position = (getAnimatedStyle(sheet).transform as { translateY: number }[])[0]
+          .translateY;
+        const backdrop = screen.getByTestId("selection-sheet-backdrop", {
+          includeHiddenElements: true,
+        }).parent!;
+        const opacity = getAnimatedStyle(backdrop).opacity as number;
+        expect(position).toBeGreaterThan(0);
+        // Even a short picker must still be on screen halfway through dismissal.
+        expect(position).toBeLessThan(height / 2);
+        expect(opacity).toBeGreaterThan(0.5);
+        expect(screen.getByTestId("dropdown-modal-content")).toBeTruthy();
+        await advance(180);
+        expect(screen.queryByTestId("dropdown-modal-content")).toBeNull();
+      },
+    );
+
+    it.each(["cancel", "option", "backdrop", "back", "escape"])(
+      "finishes the animation before unmounting through %s",
+      async (action) => {
+        const onChange = jest.fn<(value: string) => void>();
+        const screen = await render(picker(onChange));
+        await open(screen);
+        await advance(300);
+        const sheet = screen.getByTestId("dropdown-modal-content");
+        if (action === "cancel")
+          await fireEvent.press(screen.getByRole("button", { name: "Auswahl abbrechen" }));
+        if (action === "option")
+          await fireEvent.press(
+            within(sheet).getByRole("button", { name: "Baden-W\u00fcrttemberg" }),
+          );
+        if (action === "backdrop")
+          await fireEvent.press(
+            screen.getByTestId("selection-sheet-backdrop", {
+              includeHiddenElements: true,
+            }),
+          );
+        if (action === "back") await fireEvent(sheet, "requestClose");
+        if (action === "escape") await fireEvent(sheet, "accessibilityEscape");
+        await advance(200);
+        expect(screen.getByTestId("dropdown-modal-content")).toBeTruthy();
+        await advance(100);
+        expect(screen.queryByTestId("dropdown-modal-content")).toBeNull();
+        expect(onChange).toHaveBeenCalledTimes(action === "option" ? 1 : 0);
+      },
+    );
+
+    it.each(["show-first", "layout-first"])(
+      "opens from its own measured height when %s",
+      async (order) => {
+        const screen = await render(picker(jest.fn()));
+        await fireEvent.press(screen.getByRole("button", { name: "Bundesland: Hessen" }));
+        const sheet = screen.getByTestId("dropdown-modal-content");
+        if (order === "show-first") await fireEvent(sheet, "show");
+        await fireEvent(sheet, "layout", {
+          nativeEvent: { layout: { x: 0, y: 0, width: 393, height: 240 } },
+        });
+        if (order === "layout-first") await fireEvent(sheet, "show");
+        await advance(20);
+        const initialPosition = (getAnimatedStyle(sheet).transform as { translateY: number }[])[0]
+          .translateY;
+        expect(initialPosition).toBeGreaterThan(0);
+        expect(initialPosition).toBeLessThan(280);
+        await advance(300);
+        expect((getAnimatedStyle(sheet).transform as { translateY: number }[])[0].translateY).toBe(
+          0,
+        );
+      },
+    );
   });
 });

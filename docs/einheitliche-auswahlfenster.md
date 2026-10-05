@@ -38,3 +38,14 @@ Vorhandene App-Bewegungstokens und Gesture-Handler-Bausteine werden wiederverwen
 - Abgebrochene Gesten werden anhand des Gesture-Handler-Erfolgssignals abgewiesen. Animationen verwenden compiler-kompatible SharedValue-Methoden.
 - Native Jest-Mocks werden aus dem installierten Gesture-Handler-Paket geladen. Die produktiven Gesten bleiben Bestandteil der Interaktionstests.
 - Neuer iPhone-Nachweis für die einheitliche Darstellung und Ziehgeste ist nach der OTA offen.
+
+## Korrektur: gleichmäßiges Schließen
+
+- Geräterückmeldung: Darstellung und Bedienung funktionieren; Abbrechen und Auswahl schließen zu abrupt.
+- Scope: genau dieser Beleg, `selection-sheet.tsx` und dessen Komponententests im bestehenden Branch/PR #278. iPhone Preview zuerst. Berechnung, Daten und andere Fenster bleiben außerhalb dieses Korrekturpakets.
+- Ursache: Der bisherige Schließweg entspricht der Bildschirmhöhe; besonders kleine Fenster verlassen mit der einbremsenden Öffnungskurve früh den sichtbaren Bereich. Der Hintergrund verschwindet zusätzlich schneller.
+- Korrektur: tatsächliche Fensterhöhe plus kleiner Schattenabstand für beide Wege, gespiegelte Öffnungskurve für das Schließen. Fenster und Hintergrund verwenden jeweils 240 ms. Das Modal bleibt bis zum Animationsende geöffnet.
+- Abnahme: Abbrechen, Optionswahl, Hintergrund, Zurück, VoiceOver-Escape und Herunterziehen gleiten flüssig aus; kleine und große Listen verhalten sich gleich. Reduzierte Bewegung und abgebrochene Gesten bleiben berücksichtigt. Erneute iPhone-Abnahme nach Preview-OTA offen.
+- Referenz: https://docs.swmansion.com/react-native-reanimated/docs/guides/testing/ und https://reactnative.dev/docs/0.86/easing
+
+- Nachweise der Korrektur: 22 gezielte Komponententests und `verify:fast` bestanden (7.512 Unit-Tests, 670 Komponententests / 100 Suites sowie Skript-, Typen-, Lint-, Format- und Architekturprüfungen). iOS-Export erfolgreich; Runtime identisch mit Preview Build 32.

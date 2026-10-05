@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import {
   findNodeHandle,
+  type LayoutChangeEvent,
   Modal,
   Pressable,
   ScrollView,
@@ -11,6 +12,7 @@ import {
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
   cancelAnimation,
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useReducedMotion,
@@ -25,6 +27,9 @@ import { usePalette } from "@/theme/palette";
 import { CONTROL_HEIGHT, RADII, SPACING } from "@/theme/tokens";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { scheduleAccessibilityFocus } from "@/ui/accessibility-focus";
+
+// Mirror the opening curve so dismissal does not accelerate out of view immediately.
+const closingEasing = Easing.bezier(0.64, 0, 0.78, 0);
 
 export function SelectionSheet({
   children,
@@ -41,12 +46,13 @@ export function SelectionSheet({
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
-  const closedOffset = height + insets.bottom;
   const maxHeight = Math.min(height * 0.85, height - insets.top - SPACING.md, 740);
   const headingRef = useRef<View>(null);
   const closeStarted = useSharedValue(false);
   const [closing, setClosing] = useState(false);
-  const translateY = useSharedValue(closedOffset);
+  const sheetHeight = useSharedValue(0);
+  const openingPending = useSharedValue(false);
+  const translateY = useSharedValue(height + insets.bottom);
   const backdropProgress = useSharedValue(0);
   const scrollOffset = useSharedValue(0);
   const dragAllowed = useSharedValue(false);
@@ -56,20 +62,22 @@ export function SelectionSheet({
     if (closeStarted.get()) return;
     closeStarted.set(true);
     setClosing(true);
+    openingPending.set(false);
     cancelAnimation(translateY);
     cancelAnimation(backdropProgress);
     backdropProgress.set(
       withTiming(0, {
-        duration: reduceMotion ? 0 : MOTION.duration.fast,
+        duration: reduceMotion ? 0 : MOTION.duration.normal,
+        easing: closingEasing,
         reduceMotion: MOTION.reduceMotion,
       }),
     );
     translateY.set(
       withTiming(
-        closedOffset,
+        (sheetHeight.get() || maxHeight) + SPACING.md,
         {
           duration: reduceMotion ? 0 : MOTION.duration.normal,
-          easing: MOTION.easing.standard,
+          easing: closingEasing,
           reduceMotion: MOTION.reduceMotion,
         },
         (finished) => {
@@ -77,14 +85,21 @@ export function SelectionSheet({
         },
       ),
     );
-  }, [backdropProgress, closeStarted, closedOffset, onClose, reduceMotion, translateY]);
+  }, [
+    backdropProgress,
+    closeStarted,
+    maxHeight,
+    onClose,
+    openingPending,
+    reduceMotion,
+    sheetHeight,
+    translateY,
+  ]);
 
-  function showSheet() {
-    closeStarted.set(false);
-    setClosing(false);
-    scrollOffset.set(0);
-    dragAllowed.set(false);
-    translateY.set(closedOffset);
+  function animateOpen() {
+    if (!openingPending.get() || sheetHeight.get() <= 0 || closeStarted.get()) return;
+    openingPending.set(false);
+    translateY.set(sheetHeight.get() + SPACING.md);
     translateY.set(
       withTiming(0, {
         duration: reduceMotion ? 0 : MOTION.duration.normal,
@@ -94,11 +109,29 @@ export function SelectionSheet({
     );
     backdropProgress.set(
       withTiming(1, {
-        duration: reduceMotion ? 0 : MOTION.duration.fast,
+        duration: reduceMotion ? 0 : MOTION.duration.normal,
+        easing: MOTION.easing.standard,
         reduceMotion: MOTION.reduceMotion,
       }),
     );
+  }
+
+  function showSheet() {
+    closeStarted.set(false);
+    setClosing(false);
+    scrollOffset.set(0);
+    dragAllowed.set(false);
+    openingPending.set(true);
+    animateOpen();
     scheduleAccessibilityFocus(findNodeHandle(headingRef.current));
+  }
+
+  function measureSheet(event: LayoutChangeEvent) {
+    const measuredHeight = event.nativeEvent.layout.height;
+    if (measuredHeight <= 0) return;
+    sheetHeight.set(measuredHeight);
+    // Native layout and Modal.onShow can arrive in either order.
+    animateOpen();
   }
 
   const nativeScroll = Gesture.Native();
@@ -119,7 +152,9 @@ export function SelectionSheet({
         if (!dragAllowed.get()) return;
         const offset = Math.max(0, dragOrigin.get() + event.translationY);
         translateY.set(offset);
-        backdropProgress.set(Math.max(0, 1 - offset / Math.max(closedOffset * 0.7, 1)));
+        backdropProgress.set(
+          Math.max(0, 1 - offset / Math.max((sheetHeight.get() || maxHeight) * 0.7, 1)),
+        );
       })
       .onEnd((event, success) => {
         if (!success || !dragAllowed.get()) return;
@@ -188,6 +223,7 @@ export function SelectionSheet({
         <Animated.View
           accessibilityViewIsModal
           onAccessibilityEscape={requestClose}
+          onLayout={measureSheet}
           testID="dropdown-modal-content"
           style={[
             {
