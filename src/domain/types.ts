@@ -143,6 +143,12 @@ export const SHIFT_TYPE_LABELS: Readonly<Record<ShiftType, string>> = {
   CUSTOM: "Dienst",
 };
 
+export interface NursingTrainingTariff {
+  readonly trainingYear: 1 | 2 | 3;
+  readonly sector: TariffSector;
+  readonly tariffRegion: TariffRegion;
+}
+
 export interface UserProfile {
   readonly displayName?: string | null;
   readonly employerName?: string | null;
@@ -152,6 +158,7 @@ export interface UserProfile {
   readonly timeZone: string;
   readonly industry?: Industry | null;
   readonly manualMonthlyGrossCents?: number | null;
+  readonly nursingTrainingTariff?: NursingTrainingTariff | null;
   readonly regularRotatingNightWork: boolean | null;
   readonly sundayHolidayWorkEligible: boolean | null;
   readonly allEmploymentWorkRecorded: boolean | null;
@@ -350,6 +357,7 @@ export interface SaveProfileInput {
   readonly timeZone: string;
   readonly industry?: Industry | null;
   readonly manualMonthlyGrossCents?: number | null;
+  readonly nursingTrainingTariff?: NursingTrainingTariff | null;
   readonly regularRotatingNightWork?: boolean | null;
   readonly sundayHolidayWorkEligible?: boolean | null;
   readonly allEmploymentWorkRecorded?: boolean | null;

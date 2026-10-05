@@ -1,3 +1,5 @@
+import { NURSING_TRAINING_PREFERENCE_KEY } from "@/domain/nursing-training";
+
 import type { SQLiteDatabase } from "expo-sqlite";
 import { APPEARANCE_KEYS } from "@/domain/appearance";
 import { ANALYSIS_VIEW_KEY } from "@/domain/analysis-view";
@@ -87,6 +89,7 @@ const CALENDAR_PREFERENCE_KEYS = {
 
 export const USER_DATA_PREFERENCE_KEYS = Object.freeze([
   ANALYSIS_VIEW_KEY,
+  NURSING_TRAINING_PREFERENCE_KEY,
   ...Object.values(APPEARANCE_KEYS),
   PLANNING_HINTS_PREFERENCE_KEY,
   YOUTH_PROTECTION_PREFERENCE_KEY,

@@ -1,4 +1,8 @@
 import {
+  NURSING_TRAINING_PREFERENCE_KEY,
+  requireNursingTrainingTariff,
+} from "@/domain/nursing-training";
+import {
   mapDrkTrainingMonthConfirmationRow,
   requireDrkTrainingMonthConfirmationParents,
 } from "./drk-training-month-confirmation-repository";
@@ -643,6 +647,13 @@ function validateTariffDecisionRow(value: unknown): BackupRow {
 }
 
 function validatePreferenceValue(key: string, value: string): void {
+  if (key === NURSING_TRAINING_PREFERENCE_KEY) {
+    try {
+      if (!requireNursingTrainingTariff(JSON.parse(value))) return invalid();
+    } catch {
+      return invalid();
+    }
+  }
   if (key === ANALYSIS_VIEW_KEY) {
     try {
       parseAnalysisView(value);
@@ -891,6 +902,11 @@ export async function validateLocalBackup(
       asArray(data.monthlyTariffDecisions).map(validateTariffDecisionRow),
     );
     const preferences = Object.freeze(asArray(data.preferences).map(validatePreferenceRow));
+    if (
+      preferences.some((row) => row.key === NURSING_TRAINING_PREFERENCE_KEY) &&
+      (!profile || profile.pay_group !== null || profile.manual_monthly_gross_cents !== null)
+    )
+      return invalid();
 
     const allowanceDecisions =
       root.version >= 3

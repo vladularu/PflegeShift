@@ -1,3 +1,4 @@
+import { requireNursingTrainingTariff } from "./nursing-training";
 import { Temporal } from "@js-temporal/polyfill";
 
 import {
@@ -175,6 +176,7 @@ export function requireProfileText(
 }
 
 export function validateProfile(input: SaveProfileInput): SaveProfileInput {
+  const nursingTrainingTariff = requireNursingTrainingTariff(input.nursingTrainingTariff);
   const federalState = requireFederalState(input.federalState);
   const industry = requireIndustry(input.industry);
   const manualMonthlyGrossCents = requireManualMonthlyGrossCents(input.manualMonthlyGrossCents);
@@ -209,6 +211,9 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
       );
     }
   }
+  if (nursingTrainingTariff && (tariff != null || manualMonthlyGrossCents != null)) {
+    throw new ValidationError("Bitte nur eine Gehaltsgrundlage wählen.");
+  }
   if (tariff !== null && tariff !== undefined && manualMonthlyGrossCents !== null) {
     throw new ValidationError("Bitte entweder manuelles Gehalt oder TVöD-P wählen.");
   }
@@ -229,6 +234,7 @@ export function validateProfile(input: SaveProfileInput): SaveProfileInput {
     sundayHolidayWorkEligible: input.sundayHolidayWorkEligible ?? null,
     allEmploymentWorkRecorded: input.allEmploymentWorkRecorded ?? null,
     tariff: tariff ?? null,
+    ...(input.nursingTrainingTariff !== undefined ? { nursingTrainingTariff } : {}),
   };
 }
 
