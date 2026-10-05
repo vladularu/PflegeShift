@@ -1,4 +1,4 @@
-import { act, fireEvent, render, within } from "@testing-library/react-native";
+import { fireEvent, render, waitFor, within } from "@testing-library/react-native";
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { ActionSheetIOS, Keyboard, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -30,7 +30,9 @@ function choice(value: SalaryMode, onChange: (value: SalaryMode) => void) {
 
 async function open(screen: Awaited<ReturnType<typeof render>>) {
   await fireEvent.press(screen.getByRole("button", { name: /^Berechnung:/ }));
-  return within(screen.getByTestId("dropdown-modal-content"));
+  const content = screen.getByTestId("dropdown-modal-content");
+  await fireEvent(content, "show");
+  return within(content);
 }
 
 describe("grouped salary choice on iPhone", () => {
@@ -78,11 +80,11 @@ describe("grouped salary choice on iPhone", () => {
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith("TVH_KR");
+    await waitFor(() => expect(screen.queryByTestId("dropdown-modal-content")).toBeNull());
     expect(screen.getByRole("button", { name: "Berechnung: TV-L Pflege" })).toHaveProp(
       "accessibilityState",
       { expanded: false },
     );
-    expect(screen.queryByTestId("dropdown-modal-content")).toBeNull();
 
     await screen.rerender(choice("TVH_KR", onChange));
     const reopened = await open(screen);
@@ -114,12 +116,12 @@ describe("grouped salary choice on iPhone", () => {
     const dialog = await open(screen);
     await fireEvent.press(dialog.getByRole("button", { name: "Auswahl abbrechen" }));
     expect(onChange).not.toHaveBeenCalled();
-    expect(screen.queryByTestId("dropdown-modal-content")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("dropdown-modal-content")).toBeNull());
 
     await open(screen);
     await fireEvent(screen.getByTestId("dropdown-modal-content"), "requestClose");
     expect(onChange).not.toHaveBeenCalled();
-    expect(screen.queryByTestId("dropdown-modal-content")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("dropdown-modal-content")).toBeNull());
     expect(
       screen.getByRole("button", { name: "Berechnung: TVA-L Pflege · Ausbildung" }),
     ).toHaveProp("accessibilityState", { expanded: false });
@@ -140,7 +142,7 @@ describe("grouped salary choice on iPhone", () => {
     expect(screen.getByTestId("dropdown-modal-content")).toHaveStyle({ paddingBottom: 34 });
   });
 
-  it("retains the native iOS picker for the ungrouped fields", async () => {
+  it("uses the same selection sheet for ungrouped iOS fields", async () => {
     const nativeSheet = jest
       .spyOn(ActionSheetIOS, "showActionSheetWithOptions")
       .mockImplementation(() => {});
@@ -159,13 +161,18 @@ describe("grouped salary choice on iPhone", () => {
       </SafeAreaProvider>,
     );
     await fireEvent.press(screen.getByRole("button", { name: "Tarifgebiet: West" }));
-    expect(nativeSheet.mock.calls[0][0]).toMatchObject({
-      title: "Tarifgebiet",
-      options: ["West", "Ost", "Abbrechen"],
-      cancelButtonIndex: 2,
+    expect(nativeSheet).not.toHaveBeenCalled();
+    const content = screen.getByTestId("dropdown-modal-content");
+    await fireEvent(content, "show");
+    const dialog = within(content);
+    expect(dialog.getByRole("button", { name: "West" })).toHaveProp("accessibilityState", {
+      selected: true,
     });
-    expect(screen.queryByTestId("dropdown-modal-content")).toBeNull();
-    await act(() => nativeSheet.mock.calls[0][1](1));
+    expect(dialog.getByRole("button", { name: "Ost" })).toHaveStyle({ minHeight: 48 });
+    expect(
+      screen.getByTestId("selection-sheet-grabber", { includeHiddenElements: true }),
+    ).toBeTruthy();
+    await fireEvent.press(dialog.getByRole("button", { name: "Ost" }));
     expect(onChange).toHaveBeenCalledWith("EAST");
   });
 });
