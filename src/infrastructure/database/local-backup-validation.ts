@@ -1,3 +1,4 @@
+import { VKA_E_PREFERENCE_KEY, requireVkaETariff } from "@/domain/vka-e-tariff";
 import {
   NURSING_TRAINING_PREFERENCE_KEY,
   requireNursingTrainingTariff,
@@ -647,6 +648,13 @@ function validateTariffDecisionRow(value: unknown): BackupRow {
 }
 
 function validatePreferenceValue(key: string, value: string): void {
+  if (key === VKA_E_PREFERENCE_KEY) {
+    try {
+      if (!requireVkaETariff(JSON.parse(value))) return invalid();
+    } catch {
+      return invalid();
+    }
+  }
   if (key === NURSING_TRAINING_PREFERENCE_KEY) {
     try {
       if (!requireNursingTrainingTariff(JSON.parse(value))) return invalid();
@@ -903,8 +911,16 @@ export async function validateLocalBackup(
     );
     const preferences = Object.freeze(asArray(data.preferences).map(validatePreferenceRow));
     if (
-      preferences.some((row) => row.key === NURSING_TRAINING_PREFERENCE_KEY) &&
+      preferences.some(
+        (row) => row.key === NURSING_TRAINING_PREFERENCE_KEY || row.key === VKA_E_PREFERENCE_KEY,
+      ) &&
       (!profile || profile.pay_group !== null || profile.manual_monthly_gross_cents !== null)
+    )
+      return invalid();
+
+    if (
+      preferences.some((row) => row.key === NURSING_TRAINING_PREFERENCE_KEY) &&
+      preferences.some((row) => row.key === VKA_E_PREFERENCE_KEY)
     )
       return invalid();
 
