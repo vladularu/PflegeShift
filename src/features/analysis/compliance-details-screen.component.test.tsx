@@ -95,16 +95,16 @@ describe("ComplianceDetailsScreen", () => {
 
   it("keeps the explanation reachable without repeating it in the summary", async () => {
     const screen = await render(<ComplianceDetailsScreen />);
-    expect(screen.queryByText(/ersetzen keine Rechtsberatung/)).toBeNull();
+    expect(screen.queryByText(/keine Rechtsberatung/)).toBeNull();
     const disclosure = screen.getByRole("button", { name: "Über die Prüfung" });
     expect(disclosure.props.accessibilityState.expanded).toBe(false);
     await fireEvent.press(disclosure);
     expect(
       screen.getByRole("button", { name: "Über die Prüfung" }).props.accessibilityState.expanded,
     ).toBe(true);
-    expect(screen.getByText(/ersetzen keine Rechtsberatung/)).toBeVisible();
+    expect(screen.getByText(/keine Rechtsberatung/)).toBeVisible();
     await fireEvent.press(disclosure);
-    expect(screen.queryByText(/ersetzen keine Rechtsberatung/)).toBeNull();
+    expect(screen.queryByText(/keine Rechtsberatung/)).toBeNull();
   });
 
   it("does not announce a clear check before the calculation has completed", async () => {

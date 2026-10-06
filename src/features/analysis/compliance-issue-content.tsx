@@ -7,6 +7,9 @@ import { MINIMUM_TOUCH_TARGET, SPACING } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
 import { ColorBadge } from "@/ui/design-system";
 import { selectionFeedback } from "@/ui/haptics";
+import { InfoDisclosure } from "@/ui/info-disclosure";
+import { complianceIssueSummary } from "./compliance-issue-summary";
+
 const MONTHS = [
   "Januar",
   "Februar",
@@ -69,9 +72,11 @@ export function ComplianceIssueContent({
       testID={"check-details-" + issue.id}
       style={{ gap: SPACING.sm, paddingBottom: SPACING.md }}
     >
-      <Text selectable style={{ color: p.textSecondary, ...TYPOGRAPHY.body }}>
-        {issue.description}
-      </Text>
+      <InfoDisclosure
+        summary={complianceIssueSummary(issue)}
+        details={issue.description}
+        label={`Erklärung zu ${issue.title}`}
+      />
       {related.length ? (
         <View style={{ gap: SPACING.xs }}>
           <Text accessibilityRole="header" style={{ color: p.textMuted, ...TYPOGRAPHY.label }}>

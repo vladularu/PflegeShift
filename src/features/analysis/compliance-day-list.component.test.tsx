@@ -224,3 +224,31 @@ it("keeps short lists complete and explains deleted or missing shifts", async ()
   expect(screen.queryByRole("button", { name: /Alle .* Dienste anzeigen/ })).toBeNull();
   expect(screen.getByText("Einige zugehörige Dienste sind nicht mehr verfügbar.")).toBeTruthy();
 });
+
+it("shows a short rest warning and keeps its full explanation available on demand", async () => {
+  const rest = {
+    ...issue("Ruhezeit unter 10 Stunden", "2026-08-05"),
+    rule: "ARBZG_5_REST_10H",
+    description:
+      "Zwischen den Diensten liegen nur 5.8 h Ruhezeit. Damit wird auch die für Krankenhäuser und Pflegeeinrichtungen mögliche Verkürzung auf 10 Stunden unterschritten.",
+  };
+  const screen = await render(
+    <ComplianceDayList compliance={result([rest])} shifts={[shift]} showPlanning />,
+  );
+  expect(screen.getByText("Nur 5,8 Std. Ruhezeit.")).toBeTruthy();
+  expect(screen.queryByText(rest.description)).toBeNull();
+  await fireEvent.press(
+    screen.getByRole("button", { name: /Ruhezeit unter 10 Stunden, Gesetzlich/ }),
+  );
+  expect(screen.queryByText(rest.description)).toBeNull();
+  expect(screen.getByText("Frühdienst")).toBeTruthy();
+  const explanation = screen.getByRole("button", {
+    name: "Erklärung zu Ruhezeit unter 10 Stunden. Nur 5,8 Std. Ruhezeit.",
+  });
+  expect(explanation.props.accessibilityState.expanded).toBe(false);
+  await fireEvent.press(explanation);
+  expect(screen.getByText(rest.description)).toBeTruthy();
+  await fireEvent.press(explanation);
+  expect(screen.queryByText(rest.description)).toBeNull();
+  expect(screen.getByText("Frühdienst")).toBeTruthy();
+});

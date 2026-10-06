@@ -420,14 +420,14 @@ function SettingsEditorForm({
         <FormSection
           caption={
             salaryMode === "TVAL_PFLEGE"
-              ? "Für die Pflegeausbildung an Unikliniken mit TVA-L. Wähle dein Ausbildungsjahr."
+              ? "TVA-L Pflege: Ausbildungsjahr auswählen."
               : salaryMode === "TVH_KR"
-                ? "TV-H Pflege in Hessen. Wähle Gruppe, Stufe und tarifliche Vollzeit aus deinem Vertrag."
+                ? "Hessen: Gruppe, Stufe und Vollzeit laut Vertrag."
                 : salaryMode === "TVUK_NURSING"
                   ? "Für Pflege an den Unikliniken Freiburg, Heidelberg, Tübingen und Ulm."
                   : salaryMode === "TVL_KR"
-                    ? "Für Pflege an Unikliniken. Wähle Gruppe und Stufe aus deinem Vertrag."
-                    : "Tarif berechnen oder einen eigenen Monatswert hinterlegen."
+                    ? "Gruppe und Stufe laut Vertrag wählen."
+                    : "Tarif wählen oder Monatsbrutto eintragen."
           }
           title="Gehaltsgrundlage"
         >

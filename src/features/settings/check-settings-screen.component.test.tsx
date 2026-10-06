@@ -31,11 +31,11 @@ beforeEach(() => {
   mockSave.mockReset().mockResolvedValue();
 });
 
-it("loads the saved choice and explains the shared display setting", async () => {
+it("loads the saved choice and keeps mandatory checks clearly visible", async () => {
   mockLoad.mockResolvedValue(false);
   const screen = await render(<CheckSettingsScreen />);
   await waitFor(() => expect(screen.getByLabelText("Planungshinweise").props.value).toBe(false));
-  expect(screen.getByText(/Deine Auswahl gilt für Monats- und Jahresauswertung/)).toBeTruthy();
+  expect(screen.getByText("Gesetzliche Hinweise bleiben immer sichtbar.")).toBeTruthy();
   expect(mockSave).not.toHaveBeenCalled();
 });
 
@@ -195,4 +195,24 @@ it("restores an enabled youth choice on opening and blocks on an unreadable pref
   await fireEvent.press(screen.getByText("Erneut versuchen"));
   await waitFor(() => expect(screen.getByLabelText("Jugendlichenprüfung").props.value).toBe(true));
   expect(mockSaveYouth).not.toHaveBeenCalled();
+});
+
+it("keeps the youth scope visible while extra explanation is optional", async () => {
+  const screen = await render(<CheckSettingsScreen />);
+  await waitFor(() => expect(screen.getByLabelText("Jugendlichenprüfung")).toBeTruthy());
+  expect(screen.getByText("Für 15–17-Jährige ohne Vollzeitschulpflicht.")).toBeTruthy();
+  expect(
+    screen.queryByText(/Prüft die erfassten Dienstzeiten nach dem Jugendarbeitsschutzgesetz/),
+  ).toBeNull();
+  await fireEvent.press(
+    screen.getByRole("button", {
+      name: "Über die Jugendlichenprüfung. Für 15–17-Jährige ohne Vollzeitschulpflicht.",
+    }),
+  );
+  expect(
+    screen.getByText(/Prüft die erfassten Dienstzeiten nach dem Jugendarbeitsschutzgesetz/),
+  ).toBeTruthy();
+  expect(screen.getByLabelText("Jugendlichenprüfung").props.value).toBe(false);
+  expect(mockSaveYouth).not.toHaveBeenCalled();
+  expect(mockSave).not.toHaveBeenCalled();
 });

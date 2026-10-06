@@ -17,6 +17,8 @@ import {
   checkDate,
 } from "./compliance-issue-content";
 
+import { complianceIssueSummary } from "./compliance-issue-summary";
+
 const PRIORITY = { critical: 0, warning: 1, info: 2 };
 
 export function ComplianceDayList({
@@ -133,11 +135,8 @@ export function ComplianceDayList({
                   <View style={{ flex: 1, minWidth: 0, gap: SPACING.xs }}>
                     <Text style={{ color: p.text, ...TYPOGRAPHY.bodyStrong }}>{issue.title}</Text>
                     {selectedId !== issue.id ? (
-                      <Text
-                        style={{ color: p.textSecondary, ...TYPOGRAPHY.caption }}
-                        numberOfLines={2}
-                      >
-                        {issue.description}
+                      <Text style={{ color: p.textSecondary, ...TYPOGRAPHY.body }}>
+                        {complianceIssueSummary(issue)}
                       </Text>
                     ) : null}
                     <Text style={{ color: p.textMuted, ...TYPOGRAPHY.caption }}>

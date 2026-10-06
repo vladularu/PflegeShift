@@ -8,6 +8,7 @@ import { InlineNotice, SectionHeader, SurfaceCard } from "@/ui/design-system";
 import { LabeledSwitch } from "@/ui/labeled-switch";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { ScreenScrollView } from "@/ui/screen-layout";
+import { InfoDisclosure } from "@/ui/info-disclosure";
 
 export function CheckSettingsScreen() {
   const palette = usePalette();
@@ -22,7 +23,7 @@ export function CheckSettingsScreen() {
 
   return (
     <ScreenScrollView surface="groupedBackground">
-      <InlineNotice message="Deine Auswahl gilt für Monats- und Jahresauswertung sowie die Prüfungsdetails. Gesetzliche Hinweise bleiben immer sichtbar." />
+      <InlineNotice message="Gesetzliche Hinweise bleiben immer sichtbar." />
       <SectionHeader title="Gesetzliche Prüfung" />
       <SurfaceCard>
         <View
@@ -46,13 +47,13 @@ export function CheckSettingsScreen() {
             onValueChange={(value) => void saveYouth(value)}
           />
         </View>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ ...TYPOGRAPHY.body, color: palette.text, padding: SPACING.md }}
-        >
-          Für 15- bis 17-Jährige ohne Vollzeitschulpflicht. Prüft die erfassten Dienstzeiten nach
-          dem Jugendarbeitsschutzgesetz.
-        </Text>
+        <View style={{ padding: SPACING.md, paddingTop: 0 }}>
+          <InfoDisclosure
+            summary="Für 15–17-Jährige ohne Vollzeitschulpflicht."
+            details="Prüft die erfassten Dienstzeiten nach dem Jugendarbeitsschutzgesetz."
+            label="Über die Jugendlichenprüfung"
+          />
+        </View>
       </SurfaceCard>
       <SectionHeader title="Freiwillige Planung" />
       <SurfaceCard>
@@ -77,18 +78,13 @@ export function CheckSettingsScreen() {
             onValueChange={(value) => void save(value)}
           />
         </View>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{
-            ...TYPOGRAPHY.body,
-            color: palette.textMuted,
-            padding: SPACING.md,
-            paddingTop: 0,
-          }}
-        >
-          Zum Beispiel Hinweise zu Dienstfolgen, Nachtserien und aufeinanderfolgenden Wochenenden.
-          Dies sind keine eigenständigen gesetzlichen Verstöße.
-        </Text>
+        <View style={{ padding: SPACING.md, paddingTop: 0 }}>
+          <InfoDisclosure
+            summary="Dienstfolgen, Nächte, Wochenenden – freiwillige Hinweise."
+            details="Zum Beispiel Hinweise zu Dienstfolgen, Nachtserien und aufeinanderfolgenden Wochenenden. Dies sind keine eigenständigen gesetzlichen Verstöße."
+            label="Über die Planungshinweise"
+          />
+        </View>
       </SurfaceCard>
       <Text
         accessibilityLiveRegion="polite"
