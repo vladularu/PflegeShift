@@ -96,7 +96,8 @@ export function AnalysisScreen({
   );
 
   const monthlyCalculation = useMemo(() => {
-    if (period !== "MONTH" || !ready || error !== null || profile === null) return null;
+    if (!isFocused || period !== "MONTH" || !ready || error !== null || profile === null)
+      return null;
     return calculateMonthlyAnalysis(
       month,
       entries,
@@ -108,6 +109,7 @@ export function AnalysisScreen({
   }, [
     entries,
     error,
+    isFocused,
     month,
     period,
     profile,

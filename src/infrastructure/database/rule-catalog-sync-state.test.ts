@@ -145,4 +145,72 @@ describe("rule catalog sync state", () => {
       "positive generation",
     );
   });
+
+  it("replaces a persisted legacy 24-hour schedule with the shorter automatic schedule", async () => {
+    const now = new Date("2026-10-06T10:00:00.000Z");
+    const interval = 15 * 60_000;
+    const retry = 5 * 60_000;
+    await completeRuleCatalogCheck(db, preview, 6, now, day);
+    const upgradedAt = new Date(now.getTime() + 60_000);
+    await expect(
+      claimRuleCatalogCheck(db, preview, upgradedAt, retry, false, null, interval),
+    ).resolves.toBe(true);
+    await completeRuleCatalogCheck(db, preview, 6, upgradedAt, interval);
+    await expect(
+      claimRuleCatalogCheck(
+        db,
+        preview,
+        new Date(upgradedAt.getTime() + interval - 1),
+        retry,
+        false,
+        null,
+        interval,
+      ),
+    ).resolves.toBe(false);
+    await expect(
+      claimRuleCatalogCheck(
+        db,
+        preview,
+        new Date(upgradedAt.getTime() + interval),
+        retry,
+        false,
+        null,
+        interval,
+      ),
+    ).resolves.toBe(true);
+  });
+
+  it("persists the five-minute retry without repeated foreground requests", async () => {
+    const now = new Date("2026-10-06T10:00:00.000Z");
+    const interval = 15 * 60_000;
+    const retry = 5 * 60_000;
+    const claims = await Promise.all(
+      Array.from({ length: 5 }, () =>
+        claimRuleCatalogCheck(db, preview, now, retry, false, null, interval),
+      ),
+    );
+    expect(claims.filter(Boolean)).toHaveLength(1);
+    await expect(
+      claimRuleCatalogCheck(
+        db,
+        preview,
+        new Date(now.getTime() + retry - 1),
+        retry,
+        false,
+        null,
+        interval,
+      ),
+    ).resolves.toBe(false);
+    await expect(
+      claimRuleCatalogCheck(
+        db,
+        preview,
+        new Date(now.getTime() + retry),
+        retry,
+        false,
+        null,
+        interval,
+      ),
+    ).resolves.toBe(true);
+  });
 });

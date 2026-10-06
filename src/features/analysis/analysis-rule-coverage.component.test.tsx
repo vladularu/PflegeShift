@@ -12,6 +12,7 @@ import futureHolidayPackageValue from "../../../rules/packages/reviewed/de-holid
 import legalPackageValue from "../../../rules/packages/reviewed/de-arbzg-care/2026-01.json";
 import tariffPackageValue from "../../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json";
 import type { MonthlyComplianceResult, ShiftEntry, UserProfile } from "@/domain/types";
+import * as monthlyAnalysis from "./monthly-analysis";
 import { AnalysisScreen } from "@/features/analysis/analysis-screen";
 import { buildAnnualCoreReport } from "@/features/analysis/annual-core-report";
 import type { AnnualReport } from "@/features/analysis/annual-report";
@@ -260,6 +261,23 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     mockActiveMonthCoordinator.setMonth.mockClear();
   });
 
+  it("does not calculate a hidden month and uses the latest month when focused again", async () => {
+    const calculate = jest.spyOn(monthlyAnalysis, "calculateMonthlyAnalysis");
+    mockFocused = false;
+    mockRouteMonth = "2026-09";
+    const screen = await render(<AnalysisScreen />);
+    expect(calculate).not.toHaveBeenCalled();
+    mockEntries = [januaryShift()];
+    mockRouteMonth = "2026-10";
+    await screen.rerender(<AnalysisScreen />);
+    expect(calculate).not.toHaveBeenCalled();
+    mockFocused = true;
+    await screen.rerender(<AnalysisScreen />);
+    expect(calculate).toHaveBeenCalled();
+    expect(calculate.mock.calls.at(-1)?.[0]).toBe("2026-10");
+    await screen.unmount();
+  });
+
   it.each([
     ["Prüfung", "/compliance-details"],
     ["Gehalt", "/salary"],
@@ -371,6 +389,254 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     ).toBeTruthy();
     expect(screen.queryByText("Keine tarifliche Berechnung")).toBeNull();
     expect(screen.queryByText("0,00 €")).toBeNull();
+  });
+
+  it("shows TVA-L as training tariff salary in the familiar overview", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvalPflegeTariff: { trainingYear: 1, universityRegion: "WEST" },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 1\.440,70/)).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("keeps TVA-L training pay and grouped night premiums in the existing details", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvalPflegeTariff: { trainingYear: 1, universityRegion: "WEST" },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "tval-night",
+        date: "2026-10-06",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+        breakMinutes: 60,
+        overtimeMinutes: 0,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TVA-L Pflege · 1. Ausbildungsjahr")).toBeTruthy();
+    expect(salary.getByText("Ausbildungsentgelt")).toBeTruthy();
+    expect(salary.getByText(/13,76/)).toBeTruthy();
+    expect(salary.queryByText(/Pflegezulage TVöD-P|TVöD-Zulage/)).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Zeitzuschläge/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/premium-details",
+      params: { month: "2026-10" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/13,76/).length).toBeGreaterThan(0);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
+  it("shows TV-H salary in the familiar overview as tariff pay", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvhKrTariff: { payGroup: "KR8", payLevel: 4, fullTimeWeeklyMinutes: 2310 },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 4\.108,81/)).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("shows TV-UK salary in the familiar overview as tariff pay", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvUkNursingTariff: { payGroup: "PUK8", payLevel: 4 },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 4\.352,00/)).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("shows TV-H pay and familiar grouped premiums", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvhKrTariff: { payGroup: "KR8", payLevel: 4, fullTimeWeeklyMinutes: 2310 },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "uk-night",
+        date: "2026-10-05",
+        type: "NIGHT",
+        startTime: "20:00",
+        endTime: "06:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TV-H KR8 · Stufe 4")).toBeTruthy();
+    expect(salary.getByText("Pflegezulage TV-H")).toBeTruthy();
+    expect(salary.queryByText("Pflegezulage TVöD-P")).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Pflegezulage TV-H/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/info-details",
+      params: { section: "CARE_ALLOWANCE", tariff: "TVH" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/41,85/).length).toBeGreaterThan(0);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
+  it("shows TV-UK cash, compulsory time credit and familiar grouped premiums", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvUkNursingTariff: { payGroup: "PUK8", payLevel: 4 },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "uk-night",
+        date: "2026-10-05",
+        type: "NIGHT",
+        startTime: "20:00",
+        endTime: "06:00",
+        breakMinutes: 0,
+        overtimeMinutes: 0,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TV-UK P-UK8 · Stufe 4")).toBeTruthy();
+    expect(salary.getByText("Pflegezulage TV-UK")).toBeTruthy();
+    expect(salary.getByText(/Zusätzlich 30 Min. Freizeitausgleich/)).toBeTruthy();
+    expect(salary.queryByText("Pflegezulage TVöD-P")).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Pflegezulage TV-UK/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/info-details",
+      params: { section: "CARE_ALLOWANCE", tariff: "TVUK" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/67,60/).length).toBeGreaterThan(0);
+    expect(premiums.getByText(/Zusätzlich 30 Min. Freizeitausgleich/)).toBeTruthy();
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
+  it("shows TV-L salary in the familiar overview without a manual caption", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvlKrTariff: { payGroup: "KR8", payLevel: 4, universityRegion: "WEST" },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 4\.052,74/)).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("navigates TV-L salary to grouped premiums and its own care-allowance explanation", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      tvlKrTariff: { payGroup: "KR8", payLevel: 4, universityRegion: "WEST" },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "tvl-night",
+        date: "2026-10-06",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+        breakMinutes: 60,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TV-L KR8 · Stufe 4")).toBeTruthy();
+    expect(salary.getByText(/36,67/)).toBeTruthy();
+    expect(salary.getByText("Pflegezulage TV-L")).toBeTruthy();
+    expect(salary.queryByText("Pflegezulage TVöD-P")).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Pflegezulage TV-L/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/info-details",
+      params: { section: "CARE_ALLOWANCE", tariff: "TVL" },
+    });
+    await fireEvent.press(salary.getByRole("button", { name: /Zeitzuschläge/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/premium-details",
+      params: { month: "2026-10" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/36,67/).length).toBeGreaterThan(0);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
+  it("shows E salary composition in the familiar overview", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      vkaETariff: { payGroup: "E9b", payLevel: 4, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    const screen = await render(<AnalysisScreen />);
+    expect(screen.getByLabelText(/^Grundgehalt: 4\.690,55/)).toBeTruthy();
+    expect(screen.getByText("Zeitzuschläge")).toBeTruthy();
+    expect(screen.getByText("Brutto gesamt")).toBeTruthy();
+    expect(screen.queryByText("Manuell hinterlegtes Monatsbrutto")).toBeNull();
+  });
+  it("navigates E salary to grouped calculated premium cards", async () => {
+    mockRouteMonth = "2026-10";
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      vkaETariff: { payGroup: "E9b", payLevel: 4, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    mockEntries = [
+      {
+        ...januaryShift(),
+        id: "e-night",
+        date: "2026-10-06",
+        type: "NIGHT",
+        startTime: "21:00",
+        endTime: "07:00",
+        breakMinutes: 60,
+      },
+    ];
+    const salary = await render(<SalaryScreen />);
+    expect(salary.getByText("TVöD E9b · Stufe 4")).toBeTruthy();
+    expect(salary.getByText(/40,18/)).toBeTruthy();
+    expect(salary.queryByText("Pflegezulage TVöD-P")).toBeNull();
+    await fireEvent.press(salary.getByRole("button", { name: /Zeitzuschläge/ }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: "/premium-details",
+      params: { month: "2026-10" },
+    });
+    const premiums = await render(<PremiumDetailsScreen />);
+    expect(premiums.getByText("Nach Zuschlagsart")).toBeTruthy();
+    expect(premiums.getAllByText(/40,18/).length).toBeGreaterThan(0);
+    expect(premiums.queryByText("Keine tarifliche Berechnung")).toBeNull();
+  });
+  it("keeps an uncovered E period unavailable without treating it as manual salary", async () => {
+    mockRouteMonth = "2027-04";
+    mockRuleResolver = FUTURE_HOLIDAY_TARIFF_EXPIRY_RESOLVER;
+    mockProfile = {
+      ...MOCK_TARIFF_PROFILE,
+      tariff: null,
+      vkaETariff: { payGroup: "E12", payLevel: 4, sector: "BT_K", tariffRegion: "OTHER" },
+    };
+    const screen = await render(<PremiumDetailsScreen />);
+    expect(
+      screen.getByText("Für diesen Zeitraum liegt kein geprüfter Tarifstand vor."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Keine tarifliche Berechnung")).toBeNull();
   });
 
   it("keeps missing rule coverage local in ComplianceDetailsScreen", async () => {

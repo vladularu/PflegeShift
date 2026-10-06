@@ -1,3 +1,8 @@
+import { TVAL_PFLEGE_PREFERENCE_KEY } from "@/domain/tval-pflege-tariff";
+import { TVH_KR_PREFERENCE_KEY } from "@/domain/tvh-kr-tariff";
+import { TVUK_NURSING_PREFERENCE_KEY } from "@/domain/tvuk-nursing-tariff";
+import { TVL_KR_PREFERENCE_KEY } from "@/domain/tvl-kr-tariff";
+import { VKA_E_PREFERENCE_KEY } from "@/domain/vka-e-tariff";
 import { NURSING_TRAINING_PREFERENCE_KEY } from "@/domain/nursing-training";
 
 import type { SQLiteDatabase } from "expo-sqlite";
@@ -90,6 +95,11 @@ const CALENDAR_PREFERENCE_KEYS = {
 export const USER_DATA_PREFERENCE_KEYS = Object.freeze([
   ANALYSIS_VIEW_KEY,
   NURSING_TRAINING_PREFERENCE_KEY,
+  VKA_E_PREFERENCE_KEY,
+  TVL_KR_PREFERENCE_KEY,
+  TVUK_NURSING_PREFERENCE_KEY,
+  TVH_KR_PREFERENCE_KEY,
+  TVAL_PFLEGE_PREFERENCE_KEY,
   ...Object.values(APPEARANCE_KEYS),
   PLANNING_HINTS_PREFERENCE_KEY,
   YOUTH_PROTECTION_PREFERENCE_KEY,

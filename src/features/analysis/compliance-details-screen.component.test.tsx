@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native";
+import { render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import type { MonthlyComplianceResult } from "@/domain/types";
@@ -90,21 +90,14 @@ describe("ComplianceDetailsScreen", () => {
     const screen = await render(<ComplianceDetailsScreen />);
     expect(screen.queryByRole("header", { name: "1 Meldung" })).toBeNull();
     expect(screen.queryByText("Gesetzliche Prüfung")).toBeNull();
-    expect(screen.getByRole("button", { name: /Hinweis, Planung, Warnung/ })).toBeVisible();
+    expect(screen.getByText("Planung")).toBeVisible();
   });
 
-  it("keeps the explanation reachable without repeating it in the summary", async () => {
+  it("has no general info section or nested explanation buttons", async () => {
     const screen = await render(<ComplianceDetailsScreen />);
-    expect(screen.queryByText(/ersetzen keine Rechtsberatung/)).toBeNull();
-    const disclosure = screen.getByRole("button", { name: "Über die Prüfung" });
-    expect(disclosure.props.accessibilityState.expanded).toBe(false);
-    await fireEvent.press(disclosure);
-    expect(
-      screen.getByRole("button", { name: "Über die Prüfung" }).props.accessibilityState.expanded,
-    ).toBe(true);
-    expect(screen.getByText(/ersetzen keine Rechtsberatung/)).toBeVisible();
-    await fireEvent.press(disclosure);
-    expect(screen.queryByText(/ersetzen keine Rechtsberatung/)).toBeNull();
+    expect(screen.queryByText("Über die Prüfung")).toBeNull();
+    expect(screen.queryByText(/keine Rechtsberatung/)).toBeNull();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
   it("does not announce a clear check before the calculation has completed", async () => {

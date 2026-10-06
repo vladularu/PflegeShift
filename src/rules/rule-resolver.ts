@@ -42,7 +42,13 @@ export interface RuleResolverPackageIds {
   readonly holiday: string;
 }
 
+export interface SimpleTariffData {
+  readonly tables: NonNullable<RuleTariffPackage["rules"]["simpleTariffTables"]>["tables"];
+  readonly sources: RuleTariffPackage["sources"];
+}
+
 export interface RuleResolver {
+  readonly simpleTariffData?: SimpleTariffData;
   /** Optional for legacy custom adapters; absence never authorizes a fallback. */
   readonly tariffPackageIds?: readonly string[];
   readonly annualTariffCandidates?: (
@@ -158,7 +164,19 @@ export function createRuleResolver(
   catalog: RuleResolverCatalog = BUNDLED_RULE_CATALOG,
   packageIds: RuleResolverPackageIds = LEGACY_RULE_PACKAGE_IDS,
 ): RuleResolver {
+  // Every reviewed carrier contains a complete snapshot, including historical periods.
+  const carrier = catalog.tariff
+    .filter((item) => item.engineContractVersion === 19 && item.rules.simpleTariffTables)
+    .sort((a, b) => b.validFrom.localeCompare(a.validFrom))[0];
   return Object.freeze({
+    ...(carrier
+      ? {
+          simpleTariffData: Object.freeze({
+            tables: carrier.rules.simpleTariffTables!.tables,
+            sources: carrier.sources,
+          }),
+        }
+      : {}),
     tariffPackageIds: Object.freeze([...new Set(catalog.tariff.map((item) => item.packageId))]),
     annualTariffCandidates: (packageId: string, year: number) =>
       Object.freeze(

@@ -4,6 +4,8 @@ import Database from "better-sqlite3";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import tableCarrier from "../../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05-r4.json";
+import { storedRuleCatalogRuntime } from "@/application/rule-catalog-runtime";
 import holidayPackageFixture from "../../../rules/examples/holiday-package.valid.json";
 import legalPackageFixture from "../../../rules/examples/legal-package.valid.json";
 import manifestFixture from "../../../rules/examples/manifest.valid.json";
@@ -58,7 +60,7 @@ const testCryptography: RuleCatalogCryptography = {
 };
 const testPolicy: RuleCatalogVerificationPolicy = {
   expectedChannel: "PREVIEW",
-  supportedEngineContractVersions: new Set([1]),
+  supportedEngineContractVersions: new Set([1, 19]),
   trustedPublicKeys: new Map([["test-key-2026", new Uint8Array(32)]]),
 };
 
@@ -69,13 +71,14 @@ function packageIdentity(value: Pick<RulePackage, "packageId" | "versionId">): s
 async function catalogArtifacts(
   generation: number,
   publishedAt = `2026-04-${String(19 + generation).padStart(2, "0")}T12:00:00Z`,
+  tariff: RulePackage = tariffPackageFixture as RulePackage,
 ): Promise<VerifiedRuleCatalogArtifacts> {
   const manifest = clone(manifestFixture) as RuleManifest;
   manifest.generation = generation;
   manifest.publishedAt = publishedAt;
   manifest.signing.keyId = "test-key-2026";
   const packages = [
-    clone(tariffPackageFixture),
+    clone(tariff),
     clone(legalPackageFixture),
     clone(holidayPackageFixture),
   ] as RulePackage[];
@@ -84,10 +87,19 @@ async function catalogArtifacts(
     packages.map((rulePackage, index) => [packageIdentity(rulePackage), packageJson[index]]),
   );
   manifest.packages = manifest.packages.map((descriptor) => {
-    const raw = rawByIdentity.get(packageIdentity(descriptor));
+    const raw = rawByIdentity.get(
+      packageIdentity(descriptor.kind === "TARIFF" ? tariff : descriptor),
+    );
     if (raw === undefined) throw new Error("Missing package test fixture.");
     return {
       ...descriptor,
+      ...(descriptor.kind === "TARIFF"
+        ? {
+            versionId: tariff.versionId,
+            engineContractVersion: tariff.engineContractVersion,
+            path: `packages/${tariff.packageId}/${tariff.versionId}.json`,
+          }
+        : {}),
       sha256: createHash("sha256").update(raw, "utf8").digest("hex"),
       sizeBytes: encoder.encode(raw).byteLength,
     };
@@ -126,6 +138,23 @@ describe("rule catalog repository", () => {
   });
 
   afterEach(() => adapter.database.close());
+
+  it("persists all six contract-19 table families for an offline runtime restart", async () => {
+    const tariff = clone(tableCarrier) as RulePackage;
+    tariff.status = "PUBLISHED";
+    tariff.review.status = "PUBLISHED";
+    const artifacts = await catalogArtifacts(6, "2026-10-06T03:00:00Z", tariff);
+    await activateRuleCatalog(db, artifacts);
+    const first = await loadActiveRuleCatalog(db);
+    const second = await loadActiveRuleCatalog(db);
+    expect(first?.generation).toBe(6);
+    const runtime = storedRuleCatalogRuntime(second!);
+    const tables = runtime.resolver.simpleTariffData!.tables;
+    expect(new Set(tables.map((t) => t.tariffId)).size).toBe(6);
+    expect(tables.reduce((sum, t) => sum + t.entries.length, 0)).toBe(998);
+    expect(tables).toEqual(tableCarrier.rules.simpleTariffTables.tables);
+    expect(runtime.diagnosis.source).toBe("STORED");
+  });
 
   it("returns no active catalog before the first activation", async () => {
     await expect(loadActiveRuleCatalog(db)).resolves.toBeNull();

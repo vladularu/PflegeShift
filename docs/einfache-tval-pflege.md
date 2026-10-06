@@ -28,3 +28,27 @@ Nicht Bestandteil dieses einfachen Monatsadapters: Pflegefachassistenz ab2027, i
 ## Prüfung des Rechenkerns
 
 Am 05.10.2026: 386 gezielte Tests (60 TVA-L-Fälle und 326 bestehende TV-L-Fälle) bestanden. Vollständiges `verify:fast` grün: 7.275 Unit-Tests plus die bestehenden Komponenten- und Skriptprüfungen. Genau sieben Code-/Test-/Belegdateien, keine App-Aktivierung in diesem Rechenpaket.
+
+## Speicherung
+
+- Ausbildungsjahr und West/Ost-Auswahl als eigene, strikt validierte Benutzerpräferenz.
+- Profil und Tarifpräferenzen werden in derselben Transaktion geschrieben; jeder andere Gehaltsmodus entfernt die TVA-L-Auswahl.
+- Arbeitszeitbearbeitung und Neustart erhalten die Auswahl. Backup/Restore nimmt sie auf, ältere Backups entfernen später gespeicherte TVA-L-Angaben.
+- Keine native Änderung, neue DB-Migration, Geburtsdatum oder datierte Verguetungshistorie.
+- Gesamte Datenbanksuite: 943 Tests in 77 Dateien grün, einschließlich Fehler-Rollback und widerspruechlicher Backups.
+
+## Auswertung
+
+- Einfache Monats- und Jahresauswertung liefern TVA-L als Tarifgehalt, mit Ausbildungsentgelt und gruppierten Zeitzuschlägen.
+- Zulagenmuster nutzt die TV-L-Definitionen des laufenden Monats; TVA-L-eigene 75-Prozent-Sätze bleiben im Rechenkern.
+- Keine Beschäftigten-Pflegezulage, TVoeD-Zulage oder TVAOeD-Nacht-Untergrenze.
+- Der gemeinsame Monatscache wird auch beim Wechsel von Auswertung zu Gehalt wiederverwendet.
+- 50 gezielte Adapter-, Jahres-, Muster- und Cacheprüfungen grün; Jahresbasis 2026 im 1. Ausbildungsjahr 17.108,40 Euro.
+
+## Formular und Lieferabnahme
+
+Im bisherigen Gehaltsformular: Berechnung TVA-L Pflege, Ausbildungsjahr und Tarifgebiet West/Ost. Keine Entgeltgruppe, Stufe oder VKA-Tarifbereich. Tarifliche Vollzeit wird automatisch aus dem aktuellen Datum bestimmt, die Monatsauswertung aus ihrem Auswertungsmonat. Persönliche Wochenstunden bleiben im bisherigen Arbeitszeitmodell. Jugendprüfung wird nicht aus dem Tarif abgeleitet.
+
+Gezielte Komponententests für Formular, Tarifwechsel, Pflichtjahr und tatsächliche Gehalts-/Zuschlagsansichten: 63 grün. UI-Merge bleibt bis zur echten iPhone-Abnahme offen. Interne Preview-Lieferung erst nach gemeinsamer Pflichtpruefung, PR-CI und Runtimevergleich.
+
+Gesamtprüfung auf dem kompletten App-Branch am 05.10.2026: `verify:fast` grün, 7.512 Unit-Tests (391 Dateien), 642 Komponententests (98 Suiten) und alle Skriptprüfungen. `release:check` grün. Interner iOS-Fingerprint, installierter Build32 und Preview-Kanal stimmen überein: `f2f4b99ba254b82ab22b99594d5228bd8c3774f7`. Echte TVA-L-iPhone-Abnahme noch ausstehend.

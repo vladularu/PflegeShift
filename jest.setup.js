@@ -1,3 +1,6 @@
+// Use the official native gesture mocks for roots presented inside a Modal.
+require("react-native-gesture-handler/jestSetup");
+
 jest.mock("react-native-worklets", () => require("react-native-worklets/lib/module/mock"));
 jest.mock("expo-notifications", () => ({
   IosAuthorizationStatus: {

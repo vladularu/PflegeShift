@@ -1,3 +1,8 @@
+import type { TvalPflegeTariff } from "./tval-pflege-tariff";
+import type { TvhKrTariff } from "./tvh-kr-tariff";
+import type { TvUkNursingTariff } from "./tvuk-nursing-tariff";
+import type { TvlKrSalaryTariff } from "./tvl-kr-tariff";
+
 export const FEDERAL_STATES = [
   "BW",
   "BY",
@@ -143,6 +148,30 @@ export const SHIFT_TYPE_LABELS: Readonly<Record<ShiftType, string>> = {
   CUSTOM: "Dienst",
 };
 
+export interface VkaETariff {
+  readonly payGroup:
+    | "E1"
+    | "E2"
+    | "E3"
+    | "E4"
+    | "E5"
+    | "E6"
+    | "E7"
+    | "E8"
+    | "E9a"
+    | "E9b"
+    | "E9c"
+    | "E10"
+    | "E11"
+    | "E12"
+    | "E13"
+    | "E14"
+    | "E15";
+  readonly payLevel: PayLevel;
+  readonly sector: TariffSector;
+  readonly tariffRegion: TariffRegion;
+}
+
 export interface NursingTrainingTariff {
   readonly trainingYear: 1 | 2 | 3;
   readonly sector: TariffSector;
@@ -159,6 +188,11 @@ export interface UserProfile {
   readonly industry?: Industry | null;
   readonly manualMonthlyGrossCents?: number | null;
   readonly nursingTrainingTariff?: NursingTrainingTariff | null;
+  readonly vkaETariff?: VkaETariff | null;
+  readonly tvlKrTariff?: TvlKrSalaryTariff | null;
+  readonly tvUkNursingTariff?: TvUkNursingTariff | null;
+  readonly tvhKrTariff?: TvhKrTariff | null;
+  readonly tvalPflegeTariff?: TvalPflegeTariff | null;
   readonly regularRotatingNightWork: boolean | null;
   readonly sundayHolidayWorkEligible: boolean | null;
   readonly allEmploymentWorkRecorded: boolean | null;
@@ -358,6 +392,11 @@ export interface SaveProfileInput {
   readonly industry?: Industry | null;
   readonly manualMonthlyGrossCents?: number | null;
   readonly nursingTrainingTariff?: NursingTrainingTariff | null;
+  readonly vkaETariff?: VkaETariff | null;
+  readonly tvlKrTariff?: TvlKrSalaryTariff | null;
+  readonly tvUkNursingTariff?: TvUkNursingTariff | null;
+  readonly tvhKrTariff?: TvhKrTariff | null;
+  readonly tvalPflegeTariff?: TvalPflegeTariff | null;
   readonly regularRotatingNightWork?: boolean | null;
   readonly sundayHolidayWorkEligible?: boolean | null;
   readonly allEmploymentWorkRecorded?: boolean | null;
@@ -450,6 +489,8 @@ export interface TvoedAssessmentCriterion {
 }
 
 export interface MonthlyPayEstimate {
+  /** TV-UK compulsory time credit; excluded from the salary estimate. */
+  readonly nightCompensatoryMinutes?: number;
   readonly month: string;
   readonly tariffLabel: string | null;
   readonly available: boolean;

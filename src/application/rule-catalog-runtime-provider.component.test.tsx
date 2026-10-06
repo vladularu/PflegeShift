@@ -1,6 +1,6 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
-import { describe, expect, it, jest } from "@jest/globals";
-import { Button, Text } from "react-native";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { AppState, Button, Text, type AppStateStatus } from "react-native";
 
 import holidayPackageFixture from "../../rules/examples/holiday-package.valid.json";
 import legalPackageFixture from "../../rules/examples/legal-package.valid.json";
@@ -84,6 +84,39 @@ function ManualRefreshHarness() {
 }
 
 describe("RuleCatalogRuntimeProvider", () => {
+  const appStateListeners = new Set<(state: AppStateStatus) => void>();
+  const originalAppState = AppState.currentState;
+  const removeListener = jest.fn();
+
+  beforeEach(() => {
+    AppState.currentState = "active";
+    appStateListeners.clear();
+    removeListener.mockClear();
+    jest.spyOn(AppState, "addEventListener").mockImplementation((event, listener) => {
+      expect(event).toBe("change");
+      const stateListener = listener as (state: AppStateStatus) => void;
+      appStateListeners.add(stateListener);
+      return {
+        remove: () => {
+          removeListener();
+          appStateListeners.delete(stateListener);
+        },
+      };
+    });
+  });
+
+  afterEach(() => {
+    AppState.currentState = originalAppState;
+    jest.restoreAllMocks();
+  });
+
+  async function changeAppState(state: AppStateStatus) {
+    await act(async () => {
+      AppState.currentState = state;
+      for (const listener of appStateListeners) listener(state);
+    });
+  }
+
   it("does not mount calculation consumers before the startup snapshot is selected", async () => {
     const pending = deferred<StoredRuleCatalogSnapshot | null>();
     const recordDiagnostic = jest.fn();
@@ -277,5 +310,153 @@ describe("RuleCatalogRuntimeProvider", () => {
       expect(recordDiagnostic).toHaveBeenCalledWith("RULE_CATALOG_REFRESH_FAILED", refreshError),
     );
     expect(screen.getByText("1:3675:Neujahr:600")).toBeTruthy();
+  });
+
+  it("automatically activates a new generation when returning from the background", async () => {
+    const initial = storedCatalog({
+      generation: 5,
+      monthlyCents: 367_500,
+      maxDailyMinutes: 600,
+      newYearName: "Neujahr",
+    });
+    const next = storedCatalog({
+      generation: 6,
+      monthlyCents: 400_000,
+      maxDailyMinutes: 540,
+      newYearName: "Jahresbeginn",
+    });
+    const loadStoredCatalog = jest
+      .fn<() => Promise<StoredRuleCatalogSnapshot | null>>()
+      .mockResolvedValueOnce(initial)
+      .mockResolvedValueOnce(next);
+    const synchronizeCatalog = jest
+      .fn<SynchronizeRuleCatalog>()
+      .mockResolvedValueOnce({ status: "UP_TO_DATE", generation: 5 })
+      .mockResolvedValueOnce({ status: "ACTIVATED", generation: 6, previousGeneration: 5 });
+    const screen = await render(
+      <RuleCatalogRuntimeProvider
+        loadStoredCatalog={loadStoredCatalog}
+        synchronizeCatalog={synchronizeCatalog}
+        recordDiagnostic={jest.fn()}
+      >
+        <CalculationHarness />
+      </RuleCatalogRuntimeProvider>,
+    );
+    await waitFor(() => expect(screen.getByText("5:3675:Neujahr:600")).toBeTruthy());
+    await changeAppState("inactive");
+    await changeAppState("background");
+    expect(synchronizeCatalog).toHaveBeenCalledTimes(1);
+    await changeAppState("active");
+    await waitFor(() => expect(screen.getByText("6:4000:Jahresbeginn:540")).toBeTruthy());
+    expect(synchronizeCatalog).toHaveBeenNthCalledWith(2, 5);
+    await changeAppState("active");
+    expect(synchronizeCatalog).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares a pending startup check with foreground and manual checks", async () => {
+    const initial = storedCatalog({
+      generation: 5,
+      monthlyCents: 367_500,
+      maxDailyMinutes: 600,
+      newYearName: "Neujahr",
+    });
+    const pending = deferred<RuleCatalogSyncResult>();
+    const synchronizeCatalog = jest.fn<SynchronizeRuleCatalog>(() => pending.promise);
+    const screen = await render(
+      <RuleCatalogRuntimeProvider
+        loadStoredCatalog={async () => initial}
+        synchronizeCatalog={synchronizeCatalog}
+        recordDiagnostic={jest.fn()}
+      >
+        <ManualRefreshHarness />
+      </RuleCatalogRuntimeProvider>,
+    );
+    await waitFor(() => expect(screen.getByText("Generation 5")).toBeTruthy());
+    await changeAppState("background");
+    await changeAppState("active");
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Jetzt prüfen" }));
+    });
+    expect(synchronizeCatalog).toHaveBeenCalledTimes(1);
+    await act(async () => pending.resolve({ status: "UP_TO_DATE", generation: 5 }));
+    expect(screen.getByText("Generation 5")).toBeTruthy();
+  });
+
+  it("keeps the offline resolver usable after a foreground download failure", async () => {
+    const initial = storedCatalog({
+      generation: 6,
+      monthlyCents: 400_000,
+      maxDailyMinutes: 540,
+      newYearName: "Jahresbeginn",
+    });
+    const error = new Error("offline");
+    const recordDiagnostic = jest.fn();
+    const synchronizeCatalog = jest
+      .fn<SynchronizeRuleCatalog>()
+      .mockResolvedValueOnce({ status: "UP_TO_DATE", generation: 6 })
+      .mockRejectedValueOnce(error);
+    const screen = await render(
+      <RuleCatalogRuntimeProvider
+        loadStoredCatalog={async () => initial}
+        synchronizeCatalog={synchronizeCatalog}
+        recordDiagnostic={recordDiagnostic}
+      >
+        <CalculationHarness />
+      </RuleCatalogRuntimeProvider>,
+    );
+    await waitFor(() => expect(screen.getByText("6:4000:Jahresbeginn:540")).toBeTruthy());
+    await changeAppState("background");
+    await changeAppState("active");
+    expect(recordDiagnostic).toHaveBeenCalledWith("RULE_CATALOG_SYNC_FAILED", error);
+    expect(screen.getByText("6:4000:Jahresbeginn:540")).toBeTruthy();
+  });
+
+  it("defers startup download while backgrounded and removes the lifecycle listener on unmount", async () => {
+    AppState.currentState = "background";
+    const synchronizeCatalog = jest
+      .fn<SynchronizeRuleCatalog>()
+      .mockResolvedValue({ status: "THROTTLED" });
+    const screen = await render(
+      <RuleCatalogRuntimeProvider
+        loadStoredCatalog={async () => null}
+        synchronizeCatalog={synchronizeCatalog}
+        recordDiagnostic={jest.fn()}
+      >
+        <Harness />
+      </RuleCatalogRuntimeProvider>,
+    );
+    await waitFor(() => expect(screen.getByText("LEGACY_EMBEDDED:NO_STORED_CATALOG")).toBeTruthy());
+    expect(synchronizeCatalog).not.toHaveBeenCalled();
+    await changeAppState("active");
+    expect(synchronizeCatalog).toHaveBeenCalledTimes(1);
+    await screen.unmount();
+    expect(removeListener).toHaveBeenCalledTimes(1);
+    await changeAppState("background");
+    await changeAppState("active");
+    expect(synchronizeCatalog).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reload a completed download after its provider has unmounted", async () => {
+    const pending = deferred<RuleCatalogSyncResult>();
+    const loadStoredCatalog = jest
+      .fn<() => Promise<StoredRuleCatalogSnapshot | null>>()
+      .mockResolvedValue(null);
+    const recordDiagnostic = jest.fn();
+    const screen = await render(
+      <RuleCatalogRuntimeProvider
+        loadStoredCatalog={loadStoredCatalog}
+        synchronizeCatalog={() => pending.promise}
+        recordDiagnostic={recordDiagnostic}
+      >
+        <Harness />
+      </RuleCatalogRuntimeProvider>,
+    );
+    await waitFor(() => expect(screen.getByText("LEGACY_EMBEDDED:NO_STORED_CATALOG")).toBeTruthy());
+    await screen.unmount();
+    await act(async () =>
+      pending.resolve({ status: "ACTIVATED", generation: 6, previousGeneration: null }),
+    );
+    expect(loadStoredCatalog).toHaveBeenCalledTimes(1);
+    expect(recordDiagnostic).not.toHaveBeenCalled();
   });
 });

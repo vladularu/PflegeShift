@@ -1,3 +1,9 @@
+import { getTvalPflegeFullTimeMinutes } from "@/engine/simple-tval-pflege-pay";
+import type { TvhKrGroup, TvhKrPayLevel } from "@/domain/tvh-kr-tariff";
+import type { TvUkNursingGroup, TvUkPayLevel } from "@/domain/tvuk-nursing-tariff";
+import { Temporal } from "@js-temporal/polyfill";
+import type { TvlKrGroup, TvlKrUniversityRegion } from "@/domain/tvl-kr-tariff";
+import { getTvlKrUniversityFullTimeMinutes } from "@/engine/simple-tvl-kr-pay";
 import { defaultTariffRegion, tariffFullTimeWeeklyMinutes } from "@/domain/employment-profile";
 import type {
   FederalState,
@@ -5,6 +11,7 @@ import type {
   Industry,
   PayGroup,
   PayLevel,
+  VkaETariff,
   TariffRegion,
   TariffSector,
   UserProfile,
@@ -12,7 +19,16 @@ import type {
 
 export type EvidenceFormValue = "UNKNOWN" | "YES" | "NO";
 export type IndustryFormValue = Industry | "UNKNOWN";
-export type SalaryMode = "UNSET" | "TVOED_P" | "TVAOED_PFLEGE" | "MANUAL";
+export type SalaryMode =
+  | "UNSET"
+  | "TVOED_P"
+  | "TVOED_E"
+  | "TVL_KR"
+  | "TVUK_NURSING"
+  | "TVH_KR"
+  | "TVAOED_PFLEGE"
+  | "TVAL_PFLEGE"
+  | "MANUAL";
 
 export interface SettingsFormValues {
   readonly federalState: FederalState;
@@ -26,6 +42,14 @@ export interface SettingsFormValues {
   readonly allEmploymentWorkRecorded: EvidenceFormValue;
   readonly trainingYear: 1 | 2 | 3 | "UNSET";
   readonly payGroup: PayGroup;
+  readonly tvhPayGroup: TvhKrGroup;
+  readonly tvhPayLevel: TvhKrPayLevel;
+  readonly tvhFullTimeWeeklyMinutes: 2310 | 2400;
+  readonly tvUkPayGroup: TvUkNursingGroup;
+  readonly tvUkPayLevel: TvUkPayLevel;
+  readonly krPayGroup: TvlKrGroup;
+  readonly tvlUniversityRegion: TvlKrUniversityRegion;
+  readonly ePayGroup: VkaETariff["payGroup"];
   readonly payLevel: PayLevel;
   readonly sector: TariffSector;
   readonly tariffRegion: TariffRegion;
@@ -68,27 +92,75 @@ export function settingsFormValues(profile: UserProfile): SettingsFormValues {
     holidayRegion: profile.holidayRegion,
     weeklyHours: formatHours(profile.weeklyMinutes),
     industry: profile.industry ?? "UNKNOWN",
-    salaryMode: profile.nursingTrainingTariff
-      ? "TVAOED_PFLEGE"
-      : profile.manualMonthlyGrossCents != null
-        ? "MANUAL"
-        : profile.tariff !== null
-          ? "TVOED_P"
-          : "UNSET",
+    salaryMode: profile.tvalPflegeTariff
+      ? "TVAL_PFLEGE"
+      : profile.tvhKrTariff
+        ? "TVH_KR"
+        : profile.tvUkNursingTariff
+          ? "TVUK_NURSING"
+          : profile.tvlKrTariff
+            ? "TVL_KR"
+            : profile.vkaETariff
+              ? "TVOED_E"
+              : profile.nursingTrainingTariff
+                ? "TVAOED_PFLEGE"
+                : profile.manualMonthlyGrossCents != null
+                  ? "MANUAL"
+                  : profile.tariff !== null
+                    ? "TVOED_P"
+                    : "UNSET",
     manualMonthlyGross: formatManualMonthlyGross(profile.manualMonthlyGrossCents),
     regularRotatingNightWork: evidenceFormValue(profile.regularRotatingNightWork),
     sundayHolidayWorkEligible: evidenceFormValue(profile.sundayHolidayWorkEligible),
     allEmploymentWorkRecorded: evidenceFormValue(profile.allEmploymentWorkRecorded),
-    trainingYear: profile.nursingTrainingTariff?.trainingYear ?? "UNSET",
+    trainingYear:
+      profile.tvalPflegeTariff?.trainingYear ??
+      profile.nursingTrainingTariff?.trainingYear ??
+      "UNSET",
     payGroup: profile.tariff?.payGroup ?? "P8",
-    payLevel: profile.tariff?.payLevel ?? 4,
-    sector: profile.nursingTrainingTariff?.sector ?? profile.tariff?.sector ?? "BT_K",
+    tvhPayGroup: profile.tvhKrTariff?.payGroup ?? "KR8",
+    tvhPayLevel: profile.tvhKrTariff?.payLevel ?? 4,
+    tvhFullTimeWeeklyMinutes: profile.tvhKrTariff?.fullTimeWeeklyMinutes ?? 2400,
+    tvUkPayGroup: profile.tvUkNursingTariff?.payGroup ?? "PUK8",
+    tvUkPayLevel: profile.tvUkNursingTariff?.payLevel ?? 4,
+    krPayGroup: profile.tvlKrTariff?.payGroup ?? "KR8",
+    tvlUniversityRegion:
+      profile.tvalPflegeTariff?.universityRegion ??
+      profile.tvlKrTariff?.universityRegion ??
+      (["BB", "MV", "SN", "ST", "TH"].includes(profile.federalState) ? "EAST" : "WEST"),
+    ePayGroup: profile.vkaETariff?.payGroup ?? "E9b",
+    payLevel:
+      profile.tvlKrTariff?.payLevel ??
+      profile.vkaETariff?.payLevel ??
+      profile.tariff?.payLevel ??
+      4,
+    sector:
+      profile.vkaETariff?.sector ??
+      profile.nursingTrainingTariff?.sector ??
+      profile.tariff?.sector ??
+      "BT_K",
     tariffRegion:
+      profile.vkaETariff?.tariffRegion ??
       profile.nursingTrainingTariff?.tariffRegion ??
       profile.tariff?.tariffRegion ??
       defaultTariffRegion(profile.federalState),
     fullTimeHours: formatHours(
-      profile.tariff?.fullTimeWeeklyMinutes ??
+      (profile.tvalPflegeTariff
+        ? getTvalPflegeFullTimeMinutes(
+            Temporal.Now.plainDateISO(profile.timeZone).toString(),
+            profile.tvalPflegeTariff.universityRegion,
+          )
+        : profile.tvhKrTariff
+          ? profile.tvhKrTariff.fullTimeWeeklyMinutes
+          : profile.tvUkNursingTariff
+            ? 2310
+            : profile.tvlKrTariff
+              ? getTvlKrUniversityFullTimeMinutes(
+                  Temporal.Now.plainDateISO(profile.timeZone).toString(),
+                  profile.tvlKrTariff.universityRegion,
+                )
+              : null) ??
+        profile.tariff?.fullTimeWeeklyMinutes ??
         tariffFullTimeWeeklyMinutes("BT_K", defaultTariffRegion(profile.federalState)),
     ),
   });
