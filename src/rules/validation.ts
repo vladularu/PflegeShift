@@ -1,3 +1,4 @@
+import { simpleTariffTableIssues } from "./simple-tariff-table-validation";
 import type {
   PackageDescriptor,
   RuleCatalogPublicationRequest,
@@ -881,6 +882,7 @@ function packageSemanticIssues(rulePackage: RulePackage): ValidationIssue[] {
   switch (rulePackage.kind) {
     case "TARIFF":
       validateTariffPackage(rulePackage, sourceIds, issues);
+      issues.push(...simpleTariffTableIssues(rulePackage));
       break;
     case "LEGAL":
       validateLegalPackage(rulePackage, sourceIds, issues);

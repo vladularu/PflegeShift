@@ -6,12 +6,12 @@ export function tariffSelectionIssues(rulePackage: RuleTariffPackage): Validatio
   const selection = rulePackage.rules.selection;
   const issues: ValidationIssue[] = [];
   const add = (code: string, path: string, message: string) => issues.push({ code, path, message });
-  if (![8, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(rulePackage.engineContractVersion)) {
+  if (![8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].includes(rulePackage.engineContractVersion)) {
     if (selection !== undefined)
       add(
         "UNSUPPORTED_TARIFF_SELECTION",
         "/rules/selection",
-        "Selection metadata requires tariff contract 8, 10, 11, 12, 13, 14, 15, 16, 17 or 18.",
+        "Selection metadata requires tariff contract 8, 10, 11, 12, 13, 14, 15, 16, 17, 18 or 19.",
       );
     return issues;
   }
@@ -57,10 +57,13 @@ export function tariffSelectionIssues(rulePackage: RuleTariffPackage): Validatio
       add(
         "UNSUPPORTED_TARIFF_SELECTION",
         "/rules/selection",
-        "Training contracts 10 and 11 require explicit TVAöD-Pflege VKA BT-K/BT-B identity and capabilities.",
+        "Training contracts 10 and 11 require explicit TVAÃ¶D-Pflege VKA BT-K/BT-B identity and capabilities.",
       );
   }
-  if (rulePackage.engineContractVersion === 11 && selection.employmentKind !== "APPRENTICE") {
+  if (
+    (rulePackage.engineContractVersion === 11 && selection.employmentKind !== "APPRENTICE") ||
+    rulePackage.engineContractVersion === 19
+  ) {
     const expectedParts = new Map([
       ["BT_K", "bt-k"],
       ["BT_B", "bt-b"],
@@ -89,7 +92,7 @@ export function tariffSelectionIssues(rulePackage: RuleTariffPackage): Validatio
       add(
         "UNSUPPORTED_TARIFF_SELECTION",
         "/rules/selection",
-        "This app supports contract 11 only for TVöD-VKA BT-K/BT-B employees with one pay table.",
+        "This app supports contract 11 only for TVÃ¶D-VKA BT-K/BT-B employees with one pay table.",
       );
   }
   const sources = new Set(rulePackage.sources.map((source) => source.id));

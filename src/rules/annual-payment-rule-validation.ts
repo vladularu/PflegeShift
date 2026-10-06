@@ -10,7 +10,7 @@ export function annualPaymentRuleIssues(pkg: RuleTariffPackage): ValidationIssue
   const contractVersion: number = pkg.engineContractVersion;
   const tvl = contractVersion === 12;
   const tval = contractVersion === 13;
-  if (pkg.engineContractVersion !== 11 && !tvl && !tval) {
+  if (pkg.engineContractVersion !== 11 && pkg.engineContractVersion !== 19 && !tvl && !tval) {
     if (rules !== undefined)
       add("UNSUPPORTED_ANNUAL_PAYMENT", root, "Annual payment rules require contract 11 or 12.");
     return issues;
