@@ -13,6 +13,7 @@ import type {
 } from "@/domain/types";
 import type { RuleTimeWindow } from "@/rules/contracts.generated";
 import { bundledRuleResolver, RuleResolutionError, type RuleResolver } from "@/rules/rule-resolver";
+import { selectSimpleTariffTable, simpleTariffTableAmount } from "./simple-tariff-table-overlay";
 import { resolveHolidayMapForMonth } from "./holidays";
 import { createManualMonthlyPayEstimate } from "./pay-fallback";
 import { roundRemunerationCents } from "./remuneration-money";
@@ -24,9 +25,18 @@ const inWindow = (minute: number, window: RuleTimeWindow) =>
   window.startMinute < window.endMinute
     ? minute >= window.startMinute && minute < window.endMinute
     : minute >= window.startMinute || minute < window.endMinute;
-export function getTvhKrTable(date: string) {
+export function getTvhKrTable(date: string, resolver: RuleResolver = bundledRuleResolver) {
   const key = Temporal.PlainDate.from(date).toString();
-  return tables.find((p) => p.validFrom <= key && (p.validTo === null || key <= p.validTo)) ?? null;
+  const local = tables.find((p) => p.validFrom <= key && (p.validTo === null || key <= p.validTo));
+  const update = selectSimpleTariffTable(resolver, "TVH_KR", key);
+  if (!local || !update) return local ?? null;
+  const monthlyCents = { ...local.monthlyCents };
+  for (const group of Object.keys(monthlyCents) as (keyof typeof monthlyCents)[]) {
+    monthlyCents[group] = tvhKrLevelsForGroup(group).map((step) =>
+      simpleTariffTableAmount(update, group, String(step)),
+    );
+  }
+  return { ...local, validFrom: update.validFrom, validTo: update.validTo, monthlyCents };
 }
 export function getTvhKrAllowanceRates(date: string) {
   Temporal.PlainDate.from(date);
@@ -44,9 +54,14 @@ export function getTvhKrAllowanceRates(date: string) {
         shiftHourlyCents: 60,
       };
 }
-function context(date: string, selection: TvhKrTariff, weeklyMinutes: number) {
+function context(
+  date: string,
+  selection: TvhKrTariff,
+  weeklyMinutes: number,
+  resolver: RuleResolver,
+) {
   const selected = requireTvhKrTariff(selection);
-  const table = getTvhKrTable(date);
+  const table = getTvhKrTable(date, resolver);
   if (
     !selected ||
     !table ||
@@ -178,7 +193,7 @@ export function calculateTvhKrShift(
       bounds.grossMinutes,
       Number(midnight.epochMilliseconds - start.epochMilliseconds) / 60000,
     );
-    const ctx = context(date, selection, work.weeklyMinutes);
+    const ctx = context(date, selection, work.weeklyMinutes, resolver);
     if (!ctx)
       throw new RuleResolutionError({
         code: "RULE_PACKAGE_NOT_FOUND",
@@ -363,7 +378,7 @@ export function calculateTvhKrMonth(
   )
     throw new Error("Ungültige TV-H-Monatsangaben.");
   const date = Temporal.PlainYearMonth.from(month).toPlainDate({ day: 1 }).toString();
-  const ctx = context(date, selection, work.weeklyMinutes);
+  const ctx = context(date, selection, work.weeklyMinutes, resolver);
   const empty = { ...createManualMonthlyPayEstimate(month, 0), tariffLabel: "TV-H Pflege" };
   if (!ctx)
     return {
