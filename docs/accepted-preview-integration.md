@@ -14,6 +14,10 @@ Der Dateiscope umfasst die 74 bisher uncommitteten, gemeinsam geprüften Dateipf
 
 Keine Änderungen an Tarifberechnung, Zuschlagslogik, Feiertagsberechnung oder Dienstplanprüfung. Keine neue Datenbankschema-Migration. Die vorhandenen Profil-/Präferenzschlüssel werden weiterverwendet; Fotos bleiben lokal und außerhalb des JSON-Backups.
 
+## Notwendige Reparatur des CI-Sicherheitschecks
+
+Der Produktionsaudit der PR erkannte am 7. Oktober 2026 die am Vortag in die GitHub Advisory Database aufgenommene Schwachstelle [GHSA-pqg4-j6r4-53mv](https://github.com/advisories/GHSA-pqg4-j6r4-53mv) in der indirekten Abhängigkeit `shell-quote` 1.10.0 (`react-devtools-core` → `react-native`). Der vorhandene Override-Mechanismus pinnt ausschließlich dieses Paket auf die vom Maintainer reparierte Version 1.11.0; die Lockdatei übernimmt diese Version. Die übrigen Pakete, der SDK-Stand und der abgenommene App-Code bleiben unverändert. Die Prüfung wird auf dem aktualisierten PR-Head erneut durchgeführt; der Audit wird nicht abgeschwächt. Diese Reparatur veröffentlicht keine weitere OTA und führt keine Datenmigration ein.
+
 ## Technische Nachweise
 
 - `verify:fast` auf dem endgültigen App-Code bestanden: 400 Unit-Suiten / 7.656 Tests und 105 Komponentensuiten / 748 Tests, TypeScript, Lint ohne Warnungen, Formatierung und zusätzliche Projektgates.
