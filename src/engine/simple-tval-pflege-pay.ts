@@ -16,12 +16,13 @@ import type {
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { validateRulePackage } from "@/rules/validation";
+import { overlaySimpleTariffPackage, selectSimpleTariffTable } from "./simple-tariff-table-overlay";
 import { createManualMonthlyPayEstimate } from "./pay-fallback";
 import { roundRemunerationCents } from "./remuneration-money";
 import { calculateTvlFamilyShift } from "./simple-tvl-family-shift";
 import { isPayWorkShift } from "./tvoed-pattern";
 
-// Explicit local nursing-at-university adapter. Source packages and remote activation stay separate.
+// Reviewed table amounts overlay the dated local university nursing policy template.
 const packages = [old, current, january, march, future].map((raw) => {
   const result = validateRulePackage(raw);
   if (
@@ -38,25 +39,43 @@ const active = (
   item: { readonly validFrom: string; readonly validTo: string | null },
 ) => item.validFrom <= date && (item.validTo === null || date <= item.validTo);
 const money = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
-export function getTvalPflegeRulePackage(date: string): RuleTariffPackage | null {
+export function getTvalPflegeRulePackage(
+  date: string,
+  resolver: RuleResolver = bundledRuleResolver,
+): RuleTariffPackage | null {
   const key = Temporal.PlainDate.from(date).toString();
-  return packages.find((p) => active(key, p)) ?? null;
+  const local = packages.find((p) => active(key, p));
+  return local
+    ? overlaySimpleTariffPackage(
+        local,
+        selectSimpleTariffTable(resolver, "TVAL_PFLEGE", key),
+        resolver,
+      )
+    : null;
 }
 export function getTvalPflegeFullTimeMinutes(
   date: string,
   region: TvalPflegeTariff["universityRegion"],
+  resolver: RuleResolver = bundledRuleResolver,
 ): number | null {
   if (region !== "WEST" && region !== "EAST") return null;
   const regionId = region === "WEST" ? "WEST_38_5" : "EAST_UNIVERSITY_HOSPITAL";
-  const rows = getTvalPflegeRulePackage(date)?.rules.employmentWorkingTimeRules?.filter(
+  const rows = getTvalPflegeRulePackage(date, resolver)?.rules.employmentWorkingTimeRules?.filter(
     (r) => r.variantId === "CARE" && r.regionId === regionId && active(date, r),
   );
   return rows?.length === 1 ? rows[0].fullTimeWeeklyMinutes : null;
 }
-function context(date: string, tariff: TvalPflegeTariff, weeklyMinutes: number) {
+function context(
+  date: string,
+  tariff: TvalPflegeTariff,
+  weeklyMinutes: number,
+  resolver: RuleResolver,
+) {
   const selected = requireTvalPflegeTariff(tariff);
-  const pkg = getTvalPflegeRulePackage(date);
-  const fullTime = selected ? getTvalPflegeFullTimeMinutes(date, selected.universityRegion) : null;
+  const pkg = getTvalPflegeRulePackage(date, resolver);
+  const fullTime = selected
+    ? getTvalPflegeFullTimeMinutes(date, selected.universityRegion, resolver)
+    : null;
   if (
     !selected ||
     !pkg ||
@@ -105,7 +124,7 @@ export function calculateTvalPflegeShift(
     roundHourlyPremium: true,
     failureMessage:
       "F\u00fcr einen Dienst fehlt eine g\u00fcltige TVA-L-Ausbildungstabelle oder Vollzeitbasis.",
-    context: (date) => context(date, selection, work.weeklyMinutes),
+    context: (date) => context(date, selection, work.weeklyMinutes, resolver),
   });
 }
 export interface TvalPflegeCalculationOptions {
@@ -130,7 +149,7 @@ export function calculateTvalPflegeMonth(
   )
     throw new Error("Ung\u00fcltige TVA-L-Monatsangaben.");
   const date = Temporal.PlainYearMonth.from(month).toPlainDate({ day: 1 }).toString();
-  const ctx = context(date, selection, work.weeklyMinutes);
+  const ctx = context(date, selection, work.weeklyMinutes, resolver);
   const empty = { ...createManualMonthlyPayEstimate(month, 0), tariffLabel: "TVA-L Pflege" };
   const allowancePolicy = ctx?.pkg.rules.tvalShiftAllowancePolicy;
   const periods = allowancePolicy?.scopes

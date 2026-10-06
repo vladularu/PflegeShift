@@ -15,6 +15,7 @@ import type {
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
 import { validateRulePackage } from "@/rules/validation";
 import { RuleResolutionError, bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
+import { overlaySimpleTariffPackage, selectSimpleTariffTable } from "./simple-tariff-table-overlay";
 import { conditionsMatch } from "./pay-conditions";
 import { createManualMonthlyPayEstimate } from "./pay-fallback";
 import { countPremiumMinutes } from "./pay-premium-minutes";
@@ -35,13 +36,18 @@ const packages = [table2025, table2026].map((value) => {
 const overlays = new WeakMap<RuleResolver, RuleResolver>();
 const money = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 
-function ePackage(date: string): RuleTariffPackage | null {
+function ePackage(date: string, source: RuleResolver): RuleTariffPackage | null {
   const key = Temporal.PlainDate.from(date).toString();
-  const table = packages.find(
+  const update = selectSimpleTariffTable(source, "TVOED_VKA_E", key);
+  const local = packages.find(
     (p) => p.validFrom <= key && (p.validTo === null || key <= p.validTo),
   );
-  if (!table) return null;
-  const base = bundledRuleResolver.resolveTariff(key);
+  // Only use a policy template whose dated rules already cover this day.
+  if (!local) return null;
+  const table = overlaySimpleTariffPackage(local, update, source);
+  let base = source.resolveTariff(key);
+  if (!base.ok && base.error.code === "RULE_PACKAGE_NOT_FOUND")
+    base = bundledRuleResolver.resolveTariff(key);
   if (!base.ok) return null;
   return {
     ...table,
@@ -72,7 +78,7 @@ function eResolver(source: RuleResolver): RuleResolver {
     resolveTariff: (date, packageId) => {
       if (packageId && packageId !== "tvoed-vka-anlage-a")
         return source.resolveTariff(date, packageId);
-      const value = ePackage(date);
+      const value = ePackage(date, source);
       return value
         ? { ok: true, value }
         : {
@@ -91,9 +97,13 @@ function eResolver(source: RuleResolver): RuleResolver {
   return overlay;
 }
 
-function eContext(date: string, profile: Pick<UserProfile, "vkaETariff" | "weeklyMinutes">) {
+function eContext(
+  date: string,
+  profile: Pick<UserProfile, "vkaETariff" | "weeklyMinutes">,
+  source: RuleResolver,
+) {
   const selection = profile.vkaETariff;
-  const rulePackage = ePackage(date);
+  const rulePackage = ePackage(date, source);
   if (!selection || !rulePackage) return null;
   const entries = rulePackage.rules.payTables
     .filter((t) => t.id === rulePackage.rules.selector.payTableId)
@@ -167,7 +177,7 @@ export function calculateVkaEAssessment(
   profile: Pick<UserProfile, "vkaETariff" | "timeZone">,
 ) {
   const date = month + "-01";
-  if (!ePackage(date))
+  if (!ePackage(date, source))
     return { available: false, assessment: null, tariffLabel: "TVöD VKA · E-Tabelle" };
   const first = Temporal.PlainDate.from(date);
   const from = first.subtract({ months: 2 }).toString();
@@ -223,7 +233,7 @@ export function calculateVkaEShift(
       bounds.grossMinutes,
       Number(tomorrow.epochMilliseconds - zonedStart.epochMilliseconds) / 60000,
     );
-    const context = eContext(start.toPlainDate().toString(), profile);
+    const context = eContext(start.toPlainDate().toString(), profile, source);
     if (!context)
       throw new RuleResolutionError({
         code: "RULE_PACKAGE_NOT_FOUND",
@@ -323,7 +333,7 @@ export function calculateVkaEMonth(
   resolver: RuleResolver,
 ): MonthlyPayEstimate {
   const date = month + "-01";
-  const context = eContext(date, profile);
+  const context = eContext(date, profile, resolver);
   const empty = createManualMonthlyPayEstimate(month, 0);
   if (!context)
     return {

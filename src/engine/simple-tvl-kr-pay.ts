@@ -20,13 +20,13 @@ import type {
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
 import { bundledRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
 import { validateRulePackage } from "@/rules/validation";
+import { overlaySimpleTariffPackage, selectSimpleTariffTable } from "./simple-tariff-table-overlay";
 import { createManualMonthlyPayEstimate } from "./pay-fallback";
 import { roundRemunerationCents } from "./remuneration-money";
 import { isPayWorkShift } from "./tvoed-pattern";
 import { calculateTvlFamilyShift } from "./simple-tvl-family-shift";
 
-// A bounded local adapter for the explicitly selected nursing table. The raw
-// packages retain DRAFT; this does not extend the remote catalog's contracts.
+// Reviewed table amounts overlay the dated local nursing policy template.
 const packages = [kr2025, kr2026, kr2027, kr2028].map((raw) => {
   const result = validateRulePackage(raw);
   if (
@@ -44,17 +44,24 @@ const active = (
   item: { readonly validFrom: string; readonly validTo: string | null },
 ) => item.validFrom <= date && (item.validTo === null || date <= item.validTo);
 
-export function getTvlKrRulePackage(date: string): RuleTariffPackage | null {
+export function getTvlKrRulePackage(
+  date: string,
+  resolver: RuleResolver = bundledRuleResolver,
+): RuleTariffPackage | null {
   const key = Temporal.PlainDate.from(date).toString();
-  return packages.find((p) => active(key, p)) ?? null;
+  const local = packages.find((p) => active(key, p));
+  return local
+    ? overlaySimpleTariffPackage(local, selectSimpleTariffTable(resolver, "TVL_KR", key), resolver)
+    : null;
 }
 
 export function getTvlKrUniversityFullTimeMinutes(
   date: string,
   region: TvlKrUniversityRegion,
+  resolver: RuleResolver = bundledRuleResolver,
 ): number | null {
   if (region !== "WEST" && region !== "EAST") return null;
-  const pkg = getTvlKrRulePackage(date);
+  const pkg = getTvlKrRulePackage(date, resolver);
   const regionId = region === "WEST" ? "WEST_38_5" : "EAST_UNIVERSITY_HOSPITAL";
   const rules = pkg?.rules.employmentWorkingTimeRules?.filter(
     (r) => r.variantId === "SECTION_43" && r.regionId === regionId && active(date, r),
@@ -67,10 +74,11 @@ function context(
   selection: TvlKrTariff,
   region: TvlKrUniversityRegion,
   weeklyMinutes: number,
+  resolver: RuleResolver,
 ) {
   const selected = requireTvlKrTariff(selection);
-  const pkg = getTvlKrRulePackage(date);
-  const fullTime = getTvlKrUniversityFullTimeMinutes(date, region);
+  const pkg = getTvlKrRulePackage(date, resolver);
+  const fullTime = getTvlKrUniversityFullTimeMinutes(date, region, resolver);
   if (
     !selected ||
     !pkg ||
@@ -142,7 +150,7 @@ export function calculateTvlKrShift(
     roundHourlyPremium: false,
     failureMessage:
       "F\u00fcr einen Dienst fehlt eine g\u00fcltige TV-L-Pflegetabelle oder Vollzeitbasis.",
-    context: (date) => context(date, selection, region, work.weeklyMinutes),
+    context: (date) => context(date, selection, region, work.weeklyMinutes, resolver),
   });
 }
 
@@ -163,7 +171,7 @@ export function calculateTvlKrMonth(
   )
     throw new Error("Ungültige TV-L-Monatsangaben.");
   const date = Temporal.PlainYearMonth.from(month).toPlainDate({ day: 1 }).toString();
-  const ctx = context(date, selection, region, work.weeklyMinutes);
+  const ctx = context(date, selection, region, work.weeklyMinutes, resolver);
   const empty = { ...createManualMonthlyPayEstimate(month, 0), tariffLabel: "TV-L Pflege" };
   if (!ctx)
     return {
