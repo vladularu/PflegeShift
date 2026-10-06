@@ -1,14 +1,11 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useMemo } from "react";
+import { Text, View } from "react-native";
 import type { MonthlyComplianceResult, ShiftEntry } from "@/domain/types";
 import { usePalette } from "@/theme/palette";
 import { SPACING } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
-import { selectionFeedback } from "@/ui/haptics";
 import { AnalysisCoverageNote } from "./analysis-coverage-note";
-import Animated, { FadeIn, LinearTransition } from "react-native-reanimated";
-import { MOTION } from "@/theme/motion";
 import { PLANNING_HIDDEN_NOTICE, selectVisibleCompliance } from "./check-visibility";
 import {
   ComplianceIssueContent,
@@ -16,22 +13,21 @@ import {
   issueSeverity,
   checkDate,
 } from "./compliance-issue-content";
-
-import { complianceIssueSummary } from "./compliance-issue-summary";
-
+import { complianceTimeline } from "./compliance-timeline";
 const PRIORITY = { critical: 0, warning: 1, info: 2 };
 
 export function ComplianceDayList({
   compliance,
   shifts,
   showPlanning,
+  timeZone,
 }: {
   readonly compliance: MonthlyComplianceResult;
   readonly shifts: readonly ShiftEntry[];
   readonly showPlanning: boolean;
+  readonly timeZone: string;
 }) {
-  const p = usePalette();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const palette = usePalette();
   const issues = useMemo(
     () =>
       [...selectVisibleCompliance(compliance, showPlanning).issues].sort(
@@ -42,12 +38,9 @@ export function ComplianceDayList({
       ),
     [compliance, showPlanning],
   );
-  useEffect(() => {
-    if (selectedId && !issues.some((issue) => issue.id === selectedId)) setSelectedId(null);
-  }, [issues, selectedId]);
   const days = [...new Set(issues.map((issue) => issue.date))];
   return (
-    <View style={{ gap: SPACING.xl, flexGrow: issues.length ? 0 : 1 }}>
+    <View style={{ gap: SPACING.xxl, flexGrow: issues.length ? undefined : 1 }}>
       {!showPlanning ? <AnalysisCoverageNote message={PLANNING_HIDDEN_NOTICE} /> : null}
       {!issues.length ? (
         <View
@@ -55,115 +48,106 @@ export function ComplianceDayList({
           style={{
             flexGrow: 1,
             minHeight: 280,
-            alignItems: "center",
             justifyContent: "center",
-            gap: SPACING.lg,
-            paddingVertical: SPACING.xxl,
+            alignItems: "center",
+            gap: SPACING.md,
           }}
         >
           <Ionicons
             name="checkmark-circle-outline"
+            color={palette.success}
             size={104}
-            color={p.success}
             accessibilityElementsHidden
             importantForAccessibility="no"
           />
           <Text
             accessibilityRole="header"
-            style={{ color: p.text, textAlign: "center", ...TYPOGRAPHY.sectionTitle }}
+            style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
           >
             {showPlanning ? "Prüfung abgeschlossen" : "Gesetzliche Prüfung"}
           </Text>
-          <Text style={{ color: p.textSecondary, textAlign: "center", ...TYPOGRAPHY.body }}>
+          <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
             Keine Auffälligkeiten
           </Text>
         </View>
       ) : null}
-      {days.map((date) => (
-        <View key={date} style={{ gap: SPACING.xs }}>
-          <Text accessibilityRole="header" style={{ color: p.text, ...TYPOGRAPHY.sectionTitle }}>
-            {checkDate(date, false)}
-          </Text>
-          {issues
-            .filter((issue) => issue.date === date)
-            .map((issue, index) => (
-              <Animated.View
-                key={issue.id}
-                layout={LinearTransition.duration(MOTION.duration.normal).reduceMotion(
-                  MOTION.reduceMotion,
-                )}
+      {days.map((date) => {
+        const dayIssues = issues.filter((issue) => issue.date === date);
+        const sharedCategory = dayIssues.every((issue) => issue.kind === dayIssues[0].kind);
+        return (
+          <View key={date} style={{ gap: SPACING.md }}>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                gap: SPACING.sm,
+              }}
+            >
+              <Text
+                accessibilityRole="header"
+                style={{ color: palette.text, ...TYPOGRAPHY.sectionTitle }}
               >
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`${checkDate(date)}, ${issue.title}, ${issueCategory(issue)}, ${issueSeverity(issue)}`}
-                  accessibilityState={{ expanded: selectedId === issue.id }}
-                  accessibilityHint="Klappt Erklärung und betroffene Dienste auf oder zu"
-                  onPress={() => {
-                    selectionFeedback();
-                    setSelectedId((current) => (current === issue.id ? null : issue.id));
-                  }}
-                  style={({ pressed }) => ({
-                    minHeight: 72,
-                    paddingVertical: SPACING.md,
-                    gap: SPACING.md,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    borderTopWidth: index ? 1 : 0,
-                    borderTopColor: p.separator,
-                    opacity: pressed ? 0.6 : 1,
-                  })}
-                >
-                  <Ionicons
-                    name={
-                      issue.severity === "critical"
-                        ? "alert-circle-outline"
-                        : issue.severity === "warning"
-                          ? "warning-outline"
-                          : "information-circle-outline"
-                    }
-                    size={20}
-                    color={
-                      issue.severity === "critical"
-                        ? p.danger
-                        : issue.severity === "warning"
-                          ? p.warning
-                          : p.info
-                    }
-                    accessibilityElementsHidden
-                    importantForAccessibility="no"
-                  />
-                  <View style={{ flex: 1, minWidth: 0, gap: SPACING.xs }}>
-                    <Text style={{ color: p.text, ...TYPOGRAPHY.bodyStrong }}>{issue.title}</Text>
-                    {selectedId !== issue.id ? (
-                      <Text style={{ color: p.textSecondary, ...TYPOGRAPHY.body }}>
-                        {complianceIssueSummary(issue)}
-                      </Text>
-                    ) : null}
-                    <Text style={{ color: p.textMuted, ...TYPOGRAPHY.caption }}>
-                      {issueCategory(issue)}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={selectedId === issue.id ? "chevron-up" : "chevron-down"}
-                    size={18}
-                    color={p.textMuted}
-                    accessibilityElementsHidden
-                    importantForAccessibility="no"
-                  />
-                </Pressable>
-                {selectedId === issue.id ? (
-                  <Animated.View
-                    entering={FadeIn.duration(MOTION.duration.fast).reduceMotion(
-                      MOTION.reduceMotion,
-                    )}
-                  >
-                    <ComplianceIssueContent issue={issue} shifts={shifts} />
-                  </Animated.View>
-                ) : null}
-              </Animated.View>
-            ))}
-        </View>
-      ))}
+                {checkDate(date, false)}
+              </Text>
+              {sharedCategory ? (
+                <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+                  {issueCategory(dayIssues[0])}
+                </Text>
+              ) : null}
+            </View>
+            {dayIssues.map((issue) => {
+              const model = complianceTimeline(issue, shifts, timeZone);
+              return (
+                <View key={issue.id} style={{ gap: SPACING.md }}>
+                  {!model.series || !sharedCategory ? (
+                    <View
+                      style={{ flexDirection: "row", alignItems: "flex-start", gap: SPACING.sm }}
+                    >
+                      <Ionicons
+                        name={
+                          issue.severity === "critical"
+                            ? "alert-circle-outline"
+                            : issue.severity === "warning"
+                              ? "warning-outline"
+                              : "information-circle-outline"
+                        }
+                        size={20}
+                        color={
+                          issue.severity === "critical"
+                            ? palette.danger
+                            : issue.severity === "warning"
+                              ? palette.warning
+                              : palette.primary
+                        }
+                        accessibilityElementsHidden
+                        importantForAccessibility="no"
+                      />
+                      <View style={{ flex: 1, minWidth: 0, gap: SPACING.xxs }}>
+                        {!model.series ? (
+                          <Text
+                            accessibilityLabel={`${model.title}, ${issueCategory(issue)}, ${issueSeverity(issue)}`}
+                            style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+                          >
+                            {model.title}
+                          </Text>
+                        ) : null}
+                        {!sharedCategory ? (
+                          <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+                            {issueCategory(issue)}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </View>
+                  ) : null}
+                  <ComplianceIssueContent issue={issue} shifts={shifts} timeZone={timeZone} />
+                </View>
+              );
+            })}
+          </View>
+        );
+      })}
     </View>
   );
 }

@@ -17,7 +17,7 @@ import { useDeferredMonthlyCompliance } from "@/features/analysis/use-monthly-co
 import { useCheckPreferences } from "@/features/settings/check-preferences";
 import { selectVisibleCompliance } from "./check-visibility";
 import { AnalysisCoverageNote } from "./analysis-coverage-note";
-import { CheckExplanation, CheckPeriod } from "./check-summary-card";
+import { CheckPeriod } from "./check-summary-card";
 import { parseMonthRouteParam, type RouteParam } from "@/navigation/route-params";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { ScreenScrollView } from "@/ui/screen-layout";
@@ -107,8 +107,8 @@ export function ComplianceDetailsScreen() {
         compliance={sourceCompliance!}
         showPlanning={preferences.enabled !== false}
         shifts={window?.ok ? window.value : EMPTY_SHIFTS}
+        timeZone={profile.timeZone}
       />
-      <CheckExplanation />
     </ScreenScrollView>
   );
 }

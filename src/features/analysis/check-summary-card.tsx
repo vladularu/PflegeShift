@@ -3,7 +3,6 @@ import { Text, View } from "react-native";
 import { usePalette } from "@/theme/palette";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
 import { SPACING } from "@/theme/tokens";
-import { InfoDisclosure } from "@/ui/info-disclosure";
 
 export function CheckClearStatus({ title }: { readonly title: string }) {
   const palette = usePalette();
@@ -31,19 +30,6 @@ export function CheckClearStatus({ title }: { readonly title: string }) {
         </Text>
       </View>
     </View>
-  );
-}
-
-export function CheckExplanation() {
-  return (
-    <InfoDisclosure
-      summary="Über die Prüfung"
-      details={[
-        "Gesetzliche Regeln: immer sichtbar.",
-        "Planungshinweise: freiwillig.",
-        "Orientierung, keine Rechtsberatung.",
-      ]}
-    />
   );
 }
 
