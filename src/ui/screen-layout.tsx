@@ -66,6 +66,7 @@ export function TabScreenHeader({
   titleColor,
   titleKey,
   stableTitle = false,
+  transparent = false,
   toolbar,
 }: {
   readonly accessory?: ReactNode;
@@ -77,6 +78,7 @@ export function TabScreenHeader({
   readonly titleColor?: string;
   readonly titleKey?: Key;
   readonly stableTitle?: boolean;
+  readonly transparent?: boolean;
   readonly toolbar?: ReactNode;
 }) {
   const palette = usePalette();
@@ -95,7 +97,7 @@ export function TabScreenHeader({
       testID={testID}
       style={{
         minHeight: safeTop + SCREEN_LAYOUT.headerMinHeight,
-        backgroundColor: palette[surface],
+        backgroundColor: transparent ? "transparent" : palette[surface],
         paddingTop: safeTop + SCREEN_LAYOUT.headerTopPadding,
         paddingHorizontal: SCREEN_LAYOUT.horizontalPadding,
         paddingBottom: SCREEN_LAYOUT.headerBottomPadding,

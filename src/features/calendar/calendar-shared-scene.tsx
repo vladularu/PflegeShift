@@ -17,6 +17,7 @@ import type { PrototypeDisplay } from "./prototype-entry-content";
 import { useCalendarHolidayResolution } from "./calendar-holidays";
 import { stampDayAccessibilityHint } from "./stamp-accessibility";
 import { useCalendarController, type CalendarController } from "./use-calendar-controller";
+import { CalendarMonthBackground } from "./calendar-background";
 
 interface SceneValue {
   progress: SharedValue<number>;
@@ -34,6 +35,7 @@ type SharedCalendarSceneProps = {
   viewMode: CalendarViewMode;
   active: boolean;
   bottomReserve: number;
+  showBackground?: boolean;
   onSelectMonth: (month: string) => void;
   onTransitionStart?: (mode: CalendarViewMode) => void;
   onTransitionComplete?: () => void;
@@ -64,6 +66,7 @@ function StandaloneCalendarScene(props: SharedCalendarSceneProps) {
 
 function CalendarSceneContent({
   bottomReserve,
+  showBackground = true,
   onSelectMonth,
   children,
   controller,
@@ -97,6 +100,7 @@ function CalendarSceneContent({
           );
         }}
       >
+        {showBackground ? <CalendarMonthBackground progress={progress} /> : null}
         <View
           testID="calendar-year-overview-shell"
           style={[StyleSheet.absoluteFill, { opacity: yearVisible ? 1 : 0 }]}

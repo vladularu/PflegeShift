@@ -21,8 +21,8 @@ import {
 import { getTvlKrUniversityFullTimeMinutes } from "@/engine/simple-tvl-kr-pay";
 import { VKA_E_GROUPS, ePayLevels } from "@/domain/vka-e-tariff";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useRef, useState } from "react";
-import { TextInput } from "react-native";
+import { Children, Fragment, isValidElement, useEffect, useRef, useState } from "react";
+import { Text, TextInput, View, useWindowDimensions } from "react-native";
 
 import { usePflegeShiftProfile, usePflegeShiftStatus } from "@/application/pflegeshift-provider";
 import {
@@ -36,7 +36,6 @@ import {
   TARIFF_REGION_LABELS,
   type FederalState,
   type HolidayRegion,
-  type Industry,
   type PayGroup,
   type PayLevel,
   type TariffRegion,
@@ -57,6 +56,7 @@ import {
   manualMonthlyGrossFieldError,
   parseManualMonthlyGrossCents,
   settingsFormValues,
+  settingsFormValuesForSalaryMode,
   type EvidenceFormValue,
   type IndustryFormValue,
   type SalaryMode,
@@ -64,17 +64,34 @@ import {
 import { parseEnumRouteParam, type RouteParam } from "@/navigation/route-params";
 import { usePalette } from "@/theme/palette";
 import { SALARY_BASIS_OPTIONS } from "@/features/settings/salary-basis-options";
-import { DropdownField, Field } from "@/ui/form-controls";
-import { FormScreen, FormSection, FormStatus, HeaderSaveAction } from "@/ui/form-layout";
+import { Field } from "@/ui/form-controls";
+import { FormStatus, HeaderSaveAction } from "@/ui/form-layout";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { focusInvalidField, weeklyHoursFieldError } from "@/ui/form-validation";
-import { SheetBackFooter } from "@/ui/sheet-back-footer";
+import { ProfileChoice, ProfileEditorBusyContext, useProfileSelection } from "./profile-selection";
+import { useProfileLeaveGuard } from "./use-profile-leave-guard";
+import { ProfilePage } from "./profile-page";
+import { requireProfileText } from "@/domain/validation";
+import {
+  CardSeparator,
+  SectionHeader,
+  SegmentedControl,
+  SurfaceCard,
+  RowButton,
+} from "@/ui/design-system";
+import { SPACING } from "@/theme/tokens";
+import { TYPOGRAPHY, TEXT_MAX_SCALE } from "@/theme/typography";
+import type { PropsWithChildren } from "react";
 
-type SettingsSection = "WORK" | "TARIFF";
+type SettingsSection = "WORK" | "TARIFF" | "PERSONAL";
 
 export function SettingsEditorScreen() {
   const params = useLocalSearchParams<{ section?: RouteParam }>();
-  const parsedSection = parseEnumRouteParam(params.section, ["WORK", "TARIFF"] as const);
+  const parsedSection = parseEnumRouteParam(params.section, [
+    "WORK",
+    "TARIFF",
+    "PERSONAL",
+  ] as const);
   const section: SettingsSection = parsedSection.status === "valid" ? parsedSection.value : "WORK";
   const { ready, error: dataError, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
@@ -111,8 +128,40 @@ function SettingsEditorForm({
   readonly section: SettingsSection;
 }) {
   const palette = usePalette();
+  const { width, fontScale } = useWindowDimensions();
+  const compactHeader = width < 390 || fontScale > 1.15;
+  const pageTitle =
+    section === "WORK"
+      ? "Arbeitszeit"
+      : section === "PERSONAL"
+        ? "Persönliche Angaben"
+        : "Tarif & Gehalt";
   const { updateProfile } = usePflegeShiftProfile();
-  const initialValues = settingsFormValues(profile);
+  const { clear: clearSelection } = useProfileSelection();
+  useEffect(() => () => clearSelection(), [clearSelection]);
+  const [initialValues] = useState(() => settingsFormValues(profile));
+  const [displayName, setDisplayName] = useState(profile.displayName ?? "");
+  const [employerName, setEmployerName] = useState(profile.employerName ?? "");
+  const [confirmedGroups, setConfirmedGroups] = useState<readonly SalaryMode[]>(() => {
+    const bases = profile.salaryBasisConflict ?? profile;
+    return (
+      [
+        ["TVOED_P", bases.tariff],
+        ["TVOED_E", bases.vkaETariff],
+        ["TVL_KR", bases.tvlKrTariff],
+        ["TVH_KR", bases.tvhKrTariff],
+        ["TVUK_NURSING", bases.tvUkNursingTariff],
+      ] as const
+    )
+      .filter((entry) => entry[1] != null)
+      .map((entry) => entry[0]);
+  });
+  const [lastTariffMode, setLastTariffMode] = useState<SalaryMode>(
+    initialValues.salaryMode === "MANUAL" ? "UNSET" : initialValues.salaryMode,
+  );
+  const [pFullTimeOverride, setPFullTimeOverride] = useState<number | null>(
+    profile.tariff?.fullTimeWeeklyMinutes ?? null,
+  );
   const [federalState, setFederalState] = useState<FederalState>(initialValues.federalState);
   const [holidayRegion, setHolidayRegion] = useState<HolidayRegion>(initialValues.holidayRegion);
   const [weeklyHours, setWeeklyHours] = useState(initialValues.weeklyHours);
@@ -156,7 +205,7 @@ function SettingsEditorForm({
   const [saving, setSaving] = useState(false);
   const weeklyHoursRef = useRef<TextInput>(null);
   const manualMonthlyGrossRef = useRef<TextInput>(null);
-  const fullTimeWeeklyMinutes =
+  const derivedFullTimeWeeklyMinutes =
     salaryMode === "TVAL_PFLEGE"
       ? (getTvalPflegeFullTimeMinutes(
           Temporal.Now.plainDateISO(profile.timeZone).toString(),
@@ -176,6 +225,10 @@ function SettingsEditorForm({
                 ? 2310
                 : 2340
               : tariffFullTimeWeeklyMinutes(sector, tariffRegion);
+  const fullTimeWeeklyMinutes =
+    salaryMode === "TVOED_P"
+      ? (pFullTimeOverride ?? derivedFullTimeWeeklyMinutes)
+      : derivedFullTimeWeeklyMinutes;
   const fullTimeHours = String(fullTimeWeeklyMinutes / 60).replace(".", ",");
   const selectedLevels =
     salaryMode === "TVL_KR"
@@ -189,7 +242,205 @@ function SettingsEditorForm({
     { value: "NO" as const, label: "Nein" },
   ];
 
+  const busyRef = useRef(false);
+  const draft =
+    section === "PERSONAL"
+      ? [displayName, employerName]
+      : section === "WORK"
+        ? [
+            federalState,
+            holidayRegion,
+            weeklyHours,
+            regularRotatingNightWork,
+            sundayHolidayWorkEligible,
+            allEmploymentWorkRecorded,
+          ]
+        : [
+            industry,
+            salaryMode,
+            trainingYear,
+            manualMonthlyGross,
+            tvhPayGroup,
+            tvhPayLevel,
+            tvhFullTimeWeeklyMinutes,
+            tvUkPayGroup,
+            tvUkPayLevel,
+            krPayGroup,
+            tvlUniversityRegion,
+            ePayGroup,
+            payGroup,
+            payLevel,
+            sector,
+            tariffRegion,
+            pFullTimeOverride,
+            confirmedGroups,
+          ];
+  const [snapshot] = useState(() => JSON.stringify(draft));
+  const leave = useProfileLeaveGuard(JSON.stringify(draft) !== snapshot, saving);
+  const isTraining = salaryMode === "TVAOED_PFLEGE" || salaryMode === "TVAL_PFLEGE";
+  const activeGroup =
+    salaryMode === "TVH_KR"
+      ? tvhPayGroup
+      : salaryMode === "TVUK_NURSING"
+        ? tvUkPayGroup
+        : salaryMode === "TVL_KR"
+          ? krPayGroup
+          : salaryMode === "TVOED_E"
+            ? ePayGroup
+            : payGroup;
+  const groupValues =
+    salaryMode === "TVH_KR"
+      ? TVH_KR_GROUPS
+      : salaryMode === "TVUK_NURSING"
+        ? TVUK_NURSING_GROUPS
+        : salaryMode === "TVL_KR"
+          ? TVL_KR_GROUPS
+          : salaryMode === "TVOED_E"
+            ? VKA_E_GROUPS
+            : PAY_GROUPS;
+  const activeLevels =
+    salaryMode === "TVH_KR"
+      ? tvhKrLevelsForGroup(tvhPayGroup)
+      : salaryMode === "TVUK_NURSING"
+        ? tvUkLevelsForGroup(tvUkPayGroup)
+        : selectedLevels;
+  const activeLevel =
+    salaryMode === "TVH_KR" ? tvhPayLevel : salaryMode === "TVUK_NURSING" ? tvUkPayLevel : payLevel;
+  function selectGroup(group: string) {
+    if (!groupValues.some((value) => value === group)) return;
+    setConfirmedGroups((current) =>
+      current.includes(salaryMode) ? current : [...current, salaryMode],
+    );
+    if (salaryMode === "TVH_KR") {
+      const next = group as TvhKrGroup;
+      setTvhPayGroup(next);
+      if (tvhPayLevel !== "UNSET" && !tvhKrLevelsForGroup(next).includes(tvhPayLevel))
+        setTvhPayLevel("UNSET");
+    } else if (salaryMode === "TVUK_NURSING") {
+      const next = group as TvUkNursingGroup;
+      setTvUkPayGroup(next);
+      if (tvUkPayLevel !== "UNSET" && !tvUkLevelsForGroup(next).includes(tvUkPayLevel))
+        setTvUkPayLevel("UNSET");
+    } else {
+      const levels =
+        salaryMode === "TVL_KR"
+          ? tvlKrLevelsForGroup(group as TvlKrGroup)
+          : salaryMode === "TVOED_E"
+            ? ePayLevels(group as VkaETariff["payGroup"])
+            : payLevelsForGroup(group as PayGroup);
+      if (salaryMode === "TVL_KR") setKrPayGroup(group as TvlKrGroup);
+      else if (salaryMode === "TVOED_E") setEPayGroup(group as VkaETariff["payGroup"]);
+      else setPayGroup(group as PayGroup);
+      if (payLevel !== "UNSET" && !levels.includes(payLevel)) setPayLevel("UNSET");
+    }
+  }
+  const salaryDraft = {
+    trainingYear,
+    manualMonthlyGross,
+    payGroup,
+    payLevel,
+    sector,
+    tariffRegion,
+    ePayGroup,
+    krPayGroup,
+    tvlUniversityRegion,
+    tvhPayGroup,
+    tvhPayLevel,
+    tvhFullTimeWeeklyMinutes,
+    tvUkPayGroup,
+    tvUkPayLevel,
+    pFullTimeOverride,
+  };
+  const salaryDrafts = useRef(new Map<SalaryMode, typeof salaryDraft>());
+  function changeSalaryMode(value: SalaryMode) {
+    if (value === salaryMode) return;
+    salaryDrafts.current.set(salaryMode, salaryDraft);
+    const cached = salaryDrafts.current.get(value);
+    const restored =
+      cached ??
+      (profile.salaryBasisConflict
+        ? settingsFormValuesForSalaryMode(profile, value)
+        : {
+            ...settingsFormValuesForSalaryMode(profile, value),
+            sector,
+            tariffRegion,
+            tvlUniversityRegion,
+          });
+    setSalaryMode(value);
+    if (value !== "MANUAL") setLastTariffMode(value);
+    setManualMonthlyGross(restored.manualMonthlyGross);
+    setTrainingYear(restored.trainingYear);
+    setPayGroup(restored.payGroup);
+    setPayLevel(restored.payLevel);
+    setSector(restored.sector);
+    setTariffRegion(restored.tariffRegion);
+    setEPayGroup(restored.ePayGroup);
+    setKrPayGroup(restored.krPayGroup);
+    setTvlUniversityRegion(restored.tvlUniversityRegion);
+    setTvhPayGroup(restored.tvhPayGroup);
+    setTvhPayLevel(restored.tvhPayLevel);
+    setTvhFullTimeWeeklyMinutes(restored.tvhFullTimeWeeklyMinutes);
+    setTvUkPayGroup(restored.tvUkPayGroup);
+    setTvUkPayLevel(restored.tvUkPayLevel);
+    const bases = profile.salaryBasisConflict ?? profile;
+    setPFullTimeOverride(
+      cached ? cached.pFullTimeOverride : (bases.tariff?.fullTimeWeeklyMinutes ?? null),
+    );
+    if (!cached && !confirmedGroups.includes(value) && value !== "MANUAL") {
+      if (value === "TVH_KR") setTvhPayLevel("UNSET");
+      else if (value === "TVUK_NURSING") setTvUkPayLevel("UNSET");
+      else setPayLevel("UNSET");
+    }
+    if (
+      !cached &&
+      ((value === "TVAOED_PFLEGE" && !bases.nursingTrainingTariff) ||
+        (value === "TVAL_PFLEGE" && !bases.tvalPflegeTariff))
+    )
+      setTrainingYear("UNSET");
+  }
+
   async function submit() {
+    if (busyRef.current) return;
+    if (section === "PERSONAL") {
+      try {
+        const name = requireProfileText(displayName, "Name", 80);
+        const employer = requireProfileText(employerName, "Arbeitgeber", 160);
+        busyRef.current = true;
+        setSaving(true);
+        setError(null);
+        await updateProfile({ ...profile, displayName: name, employerName: employer });
+        leave.saved();
+      } catch (submitError) {
+        setError(userFacingErrorMessage(submitError, "Profil konnte nicht gespeichert werden."));
+      } finally {
+        busyRef.current = false;
+        setSaving(false);
+      }
+      return;
+    }
+    if (
+      section === "TARIFF" &&
+      salaryMode !== "MANUAL" &&
+      salaryMode !== "UNSET" &&
+      !isTraining &&
+      !confirmedGroups.includes(salaryMode)
+    ) {
+      setError(
+        "Bitte eine gültige Entgeltgruppe für den gewählten Tarif wählen. Gruppe und Stufe werden nicht automatisch ersetzt.",
+      );
+      return;
+    }
+    if (
+      section === "TARIFF" &&
+      !isTraining &&
+      salaryMode !== "MANUAL" &&
+      salaryMode !== "UNSET" &&
+      activeLevel !== "UNSET" &&
+      !(activeLevels as readonly (string | number)[]).includes(activeLevel)
+    ) {
+      setError("Bitte eine gültige Stufe für die gewählte Gruppe wählen.");
+      return;
+    }
     const fieldError = section === "WORK" ? weeklyHoursFieldError(weeklyHours) : null;
     const salaryModeError =
       section === "TARIFF" && salaryMode === "UNSET" ? "Bitte eine Gehaltsgrundlage wählen." : null;
@@ -262,6 +513,7 @@ function SettingsEditorForm({
       return;
     }
     try {
+      busyRef.current = true;
       setSaving(true);
       setError(null);
       setMessage(null);
@@ -331,338 +583,373 @@ function SettingsEditorForm({
               ? { trainingYear, sector, tariffRegion }
               : null,
       });
-      setMessage("Einstellungen gespeichert.");
+      leave.saved();
     } catch (submitError) {
       setError(userFacingErrorMessage(submitError, "Speichern fehlgeschlagen."));
     } finally {
+      busyRef.current = false;
       setSaving(false);
     }
   }
 
   return (
-    <FormScreen>
-      <Stack.Screen
-        options={{
-          title: section === "WORK" ? "Arbeitszeitmodell" : "Gehalt",
-          headerStyle: { backgroundColor: palette.background },
-          headerTintColor: palette.text,
-          headerTitleStyle: { color: palette.text },
-          statusBarStyle: palette.dark ? "light" : "dark",
-          headerRight: () => (
-            <HeaderSaveAction
-              busy={saving}
-              closes={false}
-              label="Speichern"
-              onPress={() => void submit()}
-            />
-          ),
-        }}
-      />
-
-      {section === "WORK" ? (
-        <FormSection
-          caption="Bestimmt Feiertage, Sollstunden und deinen Monatssaldo."
-          title="Arbeitszeit"
-        >
-          <DropdownField
-            label="Bundesland"
-            onChange={(value) => {
-              setFederalState(value);
-              setHolidayRegion(defaultHolidayRegion(value));
-            }}
-            options={FEDERAL_STATES.map((state) => ({
-              value: state,
-              label: FEDERAL_STATE_LABELS[state],
-            }))}
-            value={federalState}
-          />
-          <DropdownField
-            label="Regionale Feiertage am Arbeitsort"
-            onChange={setHolidayRegion}
-            options={holidayRegionsForState(federalState).map((region) => ({
-              value: region,
-              label: HOLIDAY_REGION_LABELS[region],
-            }))}
-            value={holidayRegion}
-          />
-          <Field
-            error={weeklyHoursError}
-            inputRef={weeklyHoursRef}
-            keyboardType="decimal-pad"
-            label="Wochenarbeitszeit in Stunden"
-            onChangeText={(value) => {
-              setWeeklyHours(value);
-              if (weeklyHoursError) setWeeklyHoursError(null);
-            }}
-            returnKeyType="done"
-            value={weeklyHours}
-          />
-          <DropdownField
-            label="Regelmäßige Nacht- oder Wechselschichtarbeit"
-            onChange={setRegularRotatingNightWork}
-            options={evidenceOptions}
-            value={regularRotatingNightWork}
-          />
-          <DropdownField
-            label="Sonn- und Feiertagsarbeit nach § 10 ArbZG zulässig"
-            onChange={setSundayHolidayWorkEligible}
-            options={evidenceOptions}
-            value={sundayHolidayWorkEligible}
-          />
-          <DropdownField
-            label="Arbeitszeit aus allen Arbeitsverhältnissen erfasst"
-            onChange={setAllEmploymentWorkRecorded}
-            options={evidenceOptions}
-            value={allEmploymentWorkRecorded}
-          />
-        </FormSection>
-      ) : (
-        <FormSection
-          caption={
-            salaryMode === "TVAL_PFLEGE"
-              ? "TVA-L Pflege: Ausbildungsjahr auswählen."
-              : salaryMode === "TVH_KR"
-                ? "Hessen: Gruppe, Stufe und Vollzeit laut Vertrag."
-                : salaryMode === "TVUK_NURSING"
-                  ? "Für Pflege an den Unikliniken Freiburg, Heidelberg, Tübingen und Ulm."
-                  : salaryMode === "TVL_KR"
-                    ? "Gruppe und Stufe laut Vertrag wählen."
-                    : "Tarif wählen oder Monatsbrutto eintragen."
-          }
-          title="Gehaltsgrundlage"
-        >
-          <DropdownField<IndustryFormValue>
-            label="Berufsbereich"
-            onChange={setIndustry}
-            options={[
-              { value: "UNKNOWN", label: "Nicht angegeben" },
-              ...INDUSTRIES.map((value: Industry) => ({ value, label: INDUSTRY_LABELS[value] })),
-            ]}
-            value={industry}
-          />
-          <DropdownField
-            label="Berechnung"
-            onChange={(value) => {
-              setSalaryMode(value);
-              const levels =
-                value === "TVL_KR"
-                  ? tvlKrLevelsForGroup(krPayGroup)
-                  : value === "TVOED_E"
-                    ? ePayLevels(ePayGroup)
-                    : payLevelsForGroup(payGroup);
-              if (payLevel !== "UNSET" && !levels.includes(payLevel)) setPayLevel("UNSET");
-            }}
-            modalTitle="Gehaltsgrundlage"
-            options={SALARY_BASIS_OPTIONS}
-            value={salaryMode}
-          />
-          {salaryMode === "MANUAL" ? (
-            <Field
-              accessibilityHint="Betrag in Euro, zum Beispiel 3450 Komma 50"
-              error={manualMonthlyGrossError}
-              inputRef={manualMonthlyGrossRef}
-              keyboardType="decimal-pad"
-              label="Monatliches Brutto in Euro"
-              onChangeText={(value) => {
-                setManualMonthlyGross(value);
-                if (manualMonthlyGrossError) setManualMonthlyGrossError(null);
-              }}
-              returnKeyType="done"
-              value={manualMonthlyGross}
-            />
-          ) : salaryMode !== "UNSET" ? (
-            <>
-              {salaryMode === "TVH_KR" || salaryMode === "TVUK_NURSING" ? null : salaryMode ===
-                  "TVL_KR" || salaryMode === "TVAL_PFLEGE" ? (
-                <DropdownField
-                  label="Tarifgebiet"
-                  value={tvlUniversityRegion}
-                  onChange={setTvlUniversityRegion}
-                  options={[
-                    { value: "WEST", label: "West" },
-                    { value: "EAST", label: "Ost" },
-                  ]}
-                />
-              ) : (
-                <>
-                  <DropdownField
-                    label="Tarifbereich"
-                    onChange={setSector}
-                    options={[
-                      { value: "BT_K", label: "Krankenhaus · BT-K" },
-                      { value: "BT_B", label: "Pflege · BT-B" },
-                    ]}
-                    value={sector}
-                  />
-                  {(salaryMode === "TVOED_P" || sector === "BT_K") && (
-                    <DropdownField
-                      label="Tarifgebiet"
-                      onChange={setTariffRegion}
-                      options={(["KAV_BW", "OTHER"] as const).map((region) => ({
-                        value: region,
-                        label: TARIFF_REGION_LABELS[region],
-                      }))}
-                      value={tariffRegion}
-                    />
-                  )}
-                </>
-              )}
-              {salaryMode === "TVH_KR" ? (
-                <>
-                  <DropdownField
-                    label="Entgeltgruppe"
-                    value={tvhPayGroup}
-                    onChange={(group) => {
-                      setTvhPayGroup(group);
-                      if (
-                        tvhPayLevel !== "UNSET" &&
-                        !tvhKrLevelsForGroup(group).includes(tvhPayLevel)
-                      )
-                        setTvhPayLevel("UNSET");
-                    }}
-                    options={TVH_KR_GROUPS.map((group) => ({
-                      value: group,
-                      label: group,
-                    }))}
-                  />
-                  <DropdownField
-                    label="Stufe"
-                    value={tvhPayLevel}
-                    onChange={setTvhPayLevel}
-                    options={[
-                      ...(tvhPayLevel === "UNSET"
-                        ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
-                        : []),
-                      ...tvhKrLevelsForGroup(tvhPayGroup).map((level) => ({
-                        value: level,
-                        label: "Stufe " + level,
-                      })),
-                    ]}
-                  />
-                </>
-              ) : salaryMode === "TVUK_NURSING" ? (
-                <>
-                  <DropdownField
-                    label="Entgeltgruppe"
-                    value={tvUkPayGroup}
-                    onChange={(group) => {
-                      setTvUkPayGroup(group);
-                      if (
-                        tvUkPayLevel !== "UNSET" &&
-                        !tvUkLevelsForGroup(group).includes(tvUkPayLevel)
-                      )
-                        setTvUkPayLevel("UNSET");
-                    }}
-                    options={TVUK_NURSING_GROUPS.map((group) => ({
-                      value: group,
-                      label: group.replace("PUK", "P-UK"),
-                    }))}
-                  />
-                  <DropdownField
-                    label="Stufe"
-                    value={tvUkPayLevel}
-                    onChange={setTvUkPayLevel}
-                    options={[
-                      ...(tvUkPayLevel === "UNSET"
-                        ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
-                        : []),
-                      ...tvUkLevelsForGroup(tvUkPayGroup).map((level) => ({
-                        value: level,
-                        label: "Stufe " + level,
-                      })),
-                    ]}
-                  />
-                </>
-              ) : salaryMode === "TVAOED_PFLEGE" || salaryMode === "TVAL_PFLEGE" ? (
-                <DropdownField
-                  label="Ausbildungsjahr"
-                  value={trainingYear}
-                  onChange={setTrainingYear}
-                  options={[
-                    { value: "UNSET" as const, label: "Bitte wählen" },
-                    ...([1, 2, 3] as const).map((year) => ({
-                      value: year,
-                      label: `${year}. Ausbildungsjahr`,
-                    })),
-                  ]}
-                />
-              ) : (
-                <>
-                  {salaryMode === "TVL_KR" ? (
-                    <DropdownField
-                      label="Entgeltgruppe"
-                      value={krPayGroup}
-                      onChange={(group) => {
-                        setKrPayGroup(group);
-                        if (payLevel !== "UNSET" && !tvlKrLevelsForGroup(group).includes(payLevel))
-                          setPayLevel("UNSET");
-                      }}
-                      options={TVL_KR_GROUPS.map((group) => ({ value: group, label: group }))}
-                    />
-                  ) : salaryMode === "TVOED_E" ? (
-                    <DropdownField
-                      label="Entgeltgruppe"
-                      value={ePayGroup}
-                      onChange={(group) => {
-                        setEPayGroup(group);
-                        if (payLevel !== "UNSET" && !ePayLevels(group).includes(payLevel))
-                          setPayLevel("UNSET");
-                      }}
-                      options={VKA_E_GROUPS.map((group) => ({ value: group, label: group }))}
-                    />
-                  ) : (
-                    <DropdownField
-                      label="Entgeltgruppe"
-                      onChange={(group) => {
-                        setPayGroup(group);
-                        if (payLevel !== "UNSET" && !payLevelsForGroup(group).includes(payLevel)) {
-                          setPayLevel("UNSET");
-                        }
-                      }}
-                      options={PAY_GROUPS.map((group) => ({ value: group, label: group }))}
-                      value={payGroup}
-                    />
-                  )}
-                  <DropdownField
-                    label="Stufe"
-                    onChange={setPayLevel}
-                    options={[
-                      ...(payLevel === "UNSET"
-                        ? [{ value: "UNSET" as const, label: "Bitte auswählen" }]
-                        : []),
-                      ...selectedLevels.map((level) => ({
-                        value: level,
-                        label: `Stufe ${level}`,
-                      })),
-                    ]}
-                    value={payLevel}
-                  />
-                </>
-              )}
-              {salaryMode === "TVH_KR" ? (
-                <DropdownField
-                  label="Tarifliche Vollzeit pro Woche"
-                  value={tvhFullTimeWeeklyMinutes}
-                  onChange={setTvhFullTimeWeeklyMinutes}
-                  options={[
-                    { value: 2310 as const, label: "38,5" },
-                    { value: 2400 as const, label: "40" },
-                  ]}
-                />
-              ) : (
+    <ProfileEditorBusyContext.Provider value={saving}>
+      <ProfilePage
+        title={pageTitle}
+        backLabel="Zurück zum Arbeitsprofil"
+        onBack={() => router.back()}
+        backDisabled={saving}
+        testID="profile-editor-content"
+      >
+        <Stack.Screen
+          options={{
+            title: pageTitle,
+            headerTitle: compactHeader ? "" : pageTitle,
+            presentation: "card",
+            headerBackVisible: false,
+            headerLeft: () => (
+              <HeaderSaveAction
+                busy={saving}
+                label="Abbrechen"
+                closes={false}
+                onPress={leave.cancel}
+              />
+            ),
+            headerRight: () => (
+              <HeaderSaveAction busy={saving} label="Speichern" onPress={() => void submit()} />
+            ),
+            headerStyle: { backgroundColor: palette.background },
+            headerTintColor: palette.text,
+            headerTitleStyle: { color: palette.text },
+            statusBarStyle: palette.dark ? "light" : "dark",
+          }}
+        />
+        {compactHeader ? <SectionHeader title={pageTitle} /> : null}
+        {section === "PERSONAL" ? (
+          <ProfileGroup title="Persönliche Angaben">
+            <InputInset>
+              <Field
+                label="Name"
+                value={displayName}
+                onChangeText={setDisplayName}
+                maxLength={80}
+                editable={!saving}
+                autoCapitalize="words"
+                textContentType="name"
+              />
+            </InputInset>
+            <InputInset>
+              <Field
+                label="Arbeitgeber"
+                value={employerName}
+                onChangeText={setEmployerName}
+                maxLength={160}
+                editable={!saving}
+                autoCapitalize="words"
+              />
+            </InputInset>
+          </ProfileGroup>
+        ) : section === "WORK" ? (
+          <>
+            <ProfileGroup title="Vertrag">
+              <InputInset>
                 <Field
-                  editable={false}
-                  label="Tarifliche Vollzeit pro Woche"
-                  value={fullTimeHours}
+                  inputRef={weeklyHoursRef}
+                  error={weeklyHoursError}
+                  keyboardType="decimal-pad"
+                  label="Deine Wochenstunden (Std.)"
+                  editable={!saving}
+                  value={weeklyHours}
+                  onChangeText={(value) => {
+                    setWeeklyHours(value);
+                    setWeeklyHoursError(null);
+                  }}
                 />
-              )}
-            </>
-          ) : null}
-        </FormSection>
-      )}
+              </InputInset>
+            </ProfileGroup>
+            <ProfileGroup
+              title="Arbeitsort"
+              caption="Feiertage richten sich nach deinem Arbeitsort."
+            >
+              <ProfileChoice
+                label="Bundesland"
+                value={federalState}
+                options={FEDERAL_STATES.map((value) => ({
+                  value,
+                  label: FEDERAL_STATE_LABELS[value],
+                }))}
+                onChange={(value) => {
+                  setFederalState(value);
+                  if (value !== federalState) setHolidayRegion(defaultHolidayRegion(value));
+                }}
+              />
+              {holidayRegionsForState(federalState).length > 1 ? (
+                <ProfileChoice
+                  label="Regionale Feiertage"
+                  value={holidayRegion}
+                  options={holidayRegionsForState(federalState).map((value) => ({
+                    value,
+                    label: HOLIDAY_REGION_LABELS[value],
+                  }))}
+                  onChange={setHolidayRegion}
+                />
+              ) : null}
+            </ProfileGroup>
+            <ProfileGroup
+              title="Angaben für die Dienstplanprüfung"
+              caption="Unbestätigte Angaben bleiben als Prüfannahmen offen."
+            >
+              <ProfileChoice
+                label="Regelmäßige Nacht- oder Wechselschichtarbeit"
+                value={regularRotatingNightWork}
+                options={evidenceOptions}
+                onChange={setRegularRotatingNightWork}
+              />
+              <ProfileChoice
+                label="Sonn- und Feiertagsarbeit nach § 10 ArbZG zulässig"
+                value={sundayHolidayWorkEligible}
+                options={evidenceOptions}
+                onChange={setSundayHolidayWorkEligible}
+              />
+              <ProfileChoice
+                label="Arbeitszeit aus allen Arbeitsverhältnissen erfasst"
+                value={allEmploymentWorkRecorded}
+                options={evidenceOptions}
+                onChange={setAllEmploymentWorkRecorded}
+              />
+            </ProfileGroup>
+          </>
+        ) : (
+          <>
+            <ProfileGroup title="Gehaltsgrundlage">
+              <InputInset>
+                <SegmentedControl
+                  value={salaryMode === "MANUAL" ? "MANUAL" : "TARIFF"}
+                  items={[
+                    { value: "TARIFF", label: "Nach Tarif" },
+                    { value: "MANUAL", label: "Eigenes Brutto" },
+                  ]}
+                  onChange={(value) => {
+                    if (!saving) changeSalaryMode(value === "MANUAL" ? "MANUAL" : lastTariffMode);
+                  }}
+                />
+              </InputInset>
+              {profile.salaryBasisConflict ? (
+                <InputInset>
+                  <Hint>
+                    Mehrere Gehaltsgrundlagen sind gespeichert. Bitte eine wählen; die übrigen
+                    werden erst beim Speichern abgelöst.
+                  </Hint>
+                </InputInset>
+              ) : null}
+            </ProfileGroup>
+            {salaryMode === "MANUAL" ? (
+              <ProfileGroup title="Eigenes Brutto">
+                <InputInset>
+                  <Field
+                    inputRef={manualMonthlyGrossRef}
+                    error={manualMonthlyGrossError}
+                    editable={!saving}
+                    keyboardType="decimal-pad"
+                    label="Monatliches Brutto in Euro"
+                    value={manualMonthlyGross}
+                    onChangeText={(value) => {
+                      setManualMonthlyGross(value);
+                      setManualMonthlyGrossError(null);
+                    }}
+                  />
+                </InputInset>
+              </ProfileGroup>
+            ) : (
+              <>
+                <ProfileGroup title="Tarif">
+                  <ProfileChoice
+                    label="Berufsbereich"
+                    value={industry}
+                    options={[
+                      { value: "UNKNOWN", label: "Noch nicht angegeben" },
+                      ...INDUSTRIES.map((value) => ({ value, label: INDUSTRY_LABELS[value] })),
+                    ]}
+                    onChange={setIndustry}
+                  />
+                  <ProfileChoice
+                    label="Tarifvertrag"
+                    value={salaryMode}
+                    options={SALARY_BASIS_OPTIONS.filter((option) => option.value !== "MANUAL")}
+                    onChange={changeSalaryMode}
+                  />
+                  {salaryMode === "TVH_KR" || salaryMode === "TVUK_NURSING" ? (
+                    <InputInset>
+                      <Hint>
+                        {salaryMode === "TVH_KR"
+                          ? "TV-H Pflege · Hessen"
+                          : "TV-UK Pflege · Baden-Württemberg"}
+                      </Hint>
+                    </InputInset>
+                  ) : null}
+                  {salaryMode === "TVL_KR" || salaryMode === "TVAL_PFLEGE" ? (
+                    <ProfileChoice
+                      label="Tarifregion"
+                      value={tvlUniversityRegion}
+                      options={[
+                        { value: "WEST", label: "West" },
+                        { value: "EAST", label: "Ost" },
+                      ]}
+                      onChange={setTvlUniversityRegion}
+                    />
+                  ) : null}
+                  {salaryMode === "TVOED_P" ||
+                  salaryMode === "TVOED_E" ||
+                  salaryMode === "TVAOED_PFLEGE" ? (
+                    <>
+                      <ProfileChoice
+                        label="Einrichtung"
+                        value={sector}
+                        options={[
+                          { value: "BT_K", label: "Krankenhaus (BT-K)" },
+                          { value: "BT_B", label: "Pflegeeinrichtung (BT-B)" },
+                        ]}
+                        onChange={(value) => {
+                          setSector(value);
+                          setPFullTimeOverride(null);
+                        }}
+                      />
+                      {salaryMode === "TVOED_P" || sector === "BT_K" ? (
+                        <ProfileChoice
+                          label="Tarifregion"
+                          value={tariffRegion}
+                          options={[
+                            { value: "KAV_BW", label: TARIFF_REGION_LABELS.KAV_BW },
+                            { value: "OTHER", label: TARIFF_REGION_LABELS.OTHER },
+                          ]}
+                          onChange={(value) => {
+                            setTariffRegion(value);
+                            setPFullTimeOverride(null);
+                          }}
+                        />
+                      ) : null}
+                    </>
+                  ) : null}
+                </ProfileGroup>
+                {salaryMode !== "UNSET" ? (
+                  <ProfileGroup title={isTraining ? "Ausbildung" : "Eingruppierung"}>
+                    {isTraining ? (
+                      <ProfileChoice
+                        label="Ausbildungsjahr"
+                        value={trainingYear}
+                        options={[1, 2, 3].map((value) => ({
+                          value: value as 1 | 2 | 3,
+                          label: `${value}. Ausbildungsjahr`,
+                        }))}
+                        onChange={setTrainingYear}
+                      />
+                    ) : (
+                      <>
+                        <ProfileChoice
+                          label="Entgeltgruppe"
+                          value={confirmedGroups.includes(salaryMode) ? activeGroup : "UNSET"}
+                          options={groupValues.map((value) => ({
+                            value,
+                            label: value.replace("PUK", "P-UK"),
+                          }))}
+                          onChange={selectGroup}
+                        />
+                        <ProfileChoice
+                          label="Stufe"
+                          disabled={!confirmedGroups.includes(salaryMode)}
+                          value={activeLevel}
+                          options={activeLevels.map((value) => ({
+                            value,
+                            label: `Stufe ${value}`,
+                          }))}
+                          onChange={(value) => {
+                            if (salaryMode === "TVH_KR") setTvhPayLevel(value as TvhKrPayLevel);
+                            else if (salaryMode === "TVUK_NURSING")
+                              setTvUkPayLevel(value as TvUkPayLevel);
+                            else setPayLevel(value as PayLevel);
+                          }}
+                        />
+                        {!confirmedGroups.includes(salaryMode) || activeLevel === "UNSET" ? (
+                          <InputInset>
+                            <Hint>
+                              Bitte wähle eine gültige Gruppe und Stufe für diesen Tarif. Es werden
+                              keine Ersatzwerte gespeichert.
+                            </Hint>
+                          </InputInset>
+                        ) : null}
+                      </>
+                    )}
+                  </ProfileGroup>
+                ) : null}
+                {salaryMode !== "UNSET" ? (
+                  <ProfileGroup title="Arbeitszeitbasis">
+                    <RowButton
+                      title="Deine Wochenstunden"
+                      subtitle={`${initialValues.weeklyHours} Std.`}
+                    />
+                    {salaryMode === "TVH_KR" ? (
+                      <ProfileChoice
+                        label="Vollzeit laut Tarif"
+                        value={tvhFullTimeWeeklyMinutes}
+                        options={[
+                          { value: 2310, label: "38,5 Std." },
+                          { value: 2400, label: "40 Std." },
+                        ]}
+                        onChange={setTvhFullTimeWeeklyMinutes}
+                      />
+                    ) : (
+                      <RowButton title="Vollzeit laut Tarif" subtitle={`${fullTimeHours} Std.`} />
+                    )}
+                  </ProfileGroup>
+                ) : null}
+              </>
+            )}
+          </>
+        )}
+        <FormStatus message={message} error={error} />
+      </ProfilePage>
+    </ProfileEditorBusyContext.Provider>
+  );
+}
+function ProfileGroup({
+  title,
+  caption,
+  children,
+}: PropsWithChildren<{ readonly title: string; readonly caption?: string }>) {
+  const rows = flattenRows(children);
+  return (
+    <View style={{ gap: SPACING.sm }}>
+      <SectionHeader title={title} caption={caption} />
+      <SurfaceCard>
+        {rows.map((child, index) => (
+          <Fragment key={index}>
+            {index ? <CardSeparator /> : null}
+            {child}
+          </Fragment>
+        ))}
+      </SurfaceCard>
+    </View>
+  );
+}
+function InputInset({ children }: PropsWithChildren) {
+  return <View style={{ padding: SPACING.md }}>{children}</View>;
+}
+function Hint({ children }: PropsWithChildren) {
+  const palette = usePalette();
+  return (
+    <Text
+      maxFontSizeMultiplier={TEXT_MAX_SCALE}
+      style={{ color: palette.textMuted, ...TYPOGRAPHY.footnote }}
+    >
+      {children}
+    </Text>
+  );
+}
 
-      <FormStatus error={error} message={message} />
-      <SheetBackFooter disabled={saving} onPress={() => router.back()} />
-    </FormScreen>
+function flattenRows(children: import("react").ReactNode): import("react").ReactNode[] {
+  return Children.toArray(children).flatMap((child) =>
+    isValidElement<PropsWithChildren>(child) && child.type === Fragment
+      ? flattenRows(child.props.children)
+      : [child],
   );
 }

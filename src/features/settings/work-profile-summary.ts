@@ -1,5 +1,6 @@
 import { FEDERAL_STATE_LABELS, TARIFF_REGION_LABELS, type UserProfile } from "@/domain/types";
 export function profileSalaryLabel(profile: UserProfile): string {
+  if (profile.salaryBasisConflict) return "Gehaltsgrundlage prüfen";
   if (profile.tvalPflegeTariff)
     return `TVA-L Pflege · ${profile.tvalPflegeTariff.trainingYear}. Ausbildungsjahr`;
   if (profile.tvhKrTariff)

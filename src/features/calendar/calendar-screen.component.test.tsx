@@ -6,12 +6,29 @@ import { Pressable as MockPressable, Text as MockText, View as MockView } from "
 
 import { addMonths, today } from "@/engine/calendar";
 import { CalendarScreen } from "@/features/calendar/calendar-screen";
+import { CalendarBackgroundContext } from "@/features/settings/calendar-background-context";
 import {
   BUNDLED_HOLIDAY_RULES,
   BUNDLED_LEGAL_RULES,
   BUNDLED_TARIFF_RULES,
 } from "@/rules/bundled-rules";
 import { bundledRuleResolver, createRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
+
+const photoBackground = {
+  uri: null as string | null,
+  strength: "medium" as const,
+  setStrength: async () => {},
+  ready: true,
+  busy: false,
+  error: null,
+  supported: true,
+  choose: async () => {},
+  remove: async () => {},
+  canUndoRemoval: false,
+  undoRemove: async () => {},
+  reset: async () => true,
+  retry: () => {},
+};
 
 const mockPreferences = {
   error: null,
@@ -208,6 +225,43 @@ describe("CalendarScreen quick-entry navigation", () => {
     });
   });
 
+  it("covers the header and month with one non-interactive fixed photo layer", async () => {
+    const uri = "file:///calendar-photo.jpg";
+    const screen = await render(
+      <CalendarBackgroundContext value={{ ...photoBackground, uri }}>
+        <CalendarScreen />
+      </CalendarBackgroundContext>,
+    );
+    const hidden = { includeHiddenElements: true };
+    expect(
+      within(screen.getByTestId("calendar-screen")).getAllByTestId(
+        "calendar-custom-background-image",
+        hidden,
+      ),
+    ).toHaveLength(1);
+    expect(screen.getByTestId("calendar-custom-background-image", hidden)).toHaveProp(
+      "resizeMode",
+      "cover",
+    );
+    expect(screen.getByTestId("calendar-month-custom-background", hidden)).toHaveStyle({
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    });
+    expect(screen.getByTestId("calendar-month-custom-background", hidden)).toHaveProp(
+      "pointerEvents",
+      "none",
+    );
+    expect(
+      within(screen.getByTestId("calendar-shared-scene")).queryByTestId(
+        "calendar-custom-background-image",
+        hidden,
+      ),
+    ).toBeNull();
+    expect(screen.getByTestId("header-state")).toBeVisible();
+  });
   it("synchronizes another tab's month while hidden, without replacing the pager", async () => {
     const screen = await render(<CalendarScreen />);
     await fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {

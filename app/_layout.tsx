@@ -1,3 +1,4 @@
+import { ProfileSelectionProvider } from "@/features/settings/profile-selection";
 import { AnalysisViewProvider } from "@/features/analysis/analysis-view-preferences";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -20,6 +21,7 @@ import {
   useAppearancePreferences,
 } from "@/features/settings/appearance-preferences";
 import { LoadingView } from "@/ui/loading-view";
+import { CalendarBackgroundProvider } from "@/features/settings/calendar-background-preferences";
 
 SplashScreen.setOptions({ duration: 300, fade: true });
 
@@ -36,7 +38,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SecureDatabaseProvider>
         <AppearancePreferencesProvider>
-          <ThemedApp />
+          <CalendarBackgroundProvider>
+            <ThemedApp />
+          </CalendarBackgroundProvider>
         </AppearancePreferencesProvider>
       </SecureDatabaseProvider>
     </GestureHandlerRootView>
@@ -74,171 +78,174 @@ function ThemedApp() {
                   >
                     <FeedbackProvider>
                       <NotificationFeedbackBridge />
-                      <Stack
-                        screenOptions={{
-                          headerBackButtonDisplayMode: "minimal",
-                          headerShadowVisible: false,
-                          headerStyle: { backgroundColor: palette.background },
-                          headerTintColor: palette.text,
-                          headerTitleStyle: { color: palette.text },
-                          statusBarStyle: dark ? "light" : "dark",
-                          headerTransparent: false,
-                        }}
-                      >
-                        <Stack.Screen
-                          name="(tabs)"
-                          options={{
-                            headerShown: false,
+                      <ProfileSelectionProvider>
+                        <Stack
+                          screenOptions={{
+                            headerBackButtonDisplayMode: "minimal",
+                            headerShadowVisible: false,
+                            headerStyle: { backgroundColor: palette.background },
+                            headerTintColor: palette.text,
+                            headerTitleStyle: { color: palette.text },
                             statusBarStyle: dark ? "light" : "dark",
+                            headerTransparent: false,
                           }}
-                        />
-                        <Stack.Screen
-                          name="onboarding"
-                          options={{
-                            headerShown: false,
-                            presentation: "fullScreenModal",
-                          }}
-                        />
-                        <Stack.Screen name="appearance" options={{ presentation: "card" }} />
-                        <Stack.Screen name="work-profile" options={{ presentation: "card" }} />
-                        <Stack.Screen name="day-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
-                        <Stack.Screen name="shift-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
-                        <Stack.Screen
-                          name="appointment-editor"
-                          options={ENTRY_EDITOR_SCREEN_OPTIONS}
-                        />
-                        <Stack.Screen
-                          name="day-details"
-                          options={{
-                            title: "Tagesdetails",
-                            presentation: "formSheet",
-                            contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [1],
-                            sheetGrabberVisible: true,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="quick-add"
-                          options={{
-                            headerShown: false,
-                            presentation: "card",
-                            animation: "slide_from_bottom",
-                            animationDuration: MOTION.duration.scene,
-                            contentStyle: { backgroundColor: palette.background },
-                          }}
-                        />
-                        <Stack.Screen
-                          name="calendar-view"
-                          options={{
-                            title: "Anzeigeoptionen",
-                            presentation: "card",
-                            contentStyle: { backgroundColor: palette.background },
-                          }}
-                        />
-                        <Stack.Screen
-                          name="info-details"
-                          options={{
-                            title: "Information",
-                            presentation: "formSheet",
-                            contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [1],
-                            sheetGrabberVisible: true,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="data-backup"
-                          options={{
-                            title: "Datensicherung",
-                            presentation: "card",
-                            contentStyle: { backgroundColor: palette.groupedBackground },
-                          }}
-                        />
-                        <Stack.Screen
-                          name="premium-details"
-                          options={{
-                            title: "Zeitzuschläge",
-                            presentation: "card",
-                            contentStyle: { backgroundColor: palette.groupedBackground },
-                          }}
-                        />
-                        <Stack.Screen
-                          name="compliance-details"
-                          options={{
-                            title: "Prüfung",
-                            presentation: "card",
-                            contentStyle: { backgroundColor: palette.groupedBackground },
-                          }}
-                        />
-                        <Stack.Screen
-                          name="tariff-assessment"
-                          options={{
-                            title: "Schichtzulage",
-                            presentation: "formSheet",
-                            contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [1],
-                            sheetGrabberVisible: true,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="settings-editor"
-                          options={{
-                            title: "Einstellungen",
-                            presentation: "formSheet",
-                            contentStyle: { backgroundColor: "transparent" },
-                            sheetAllowedDetents: [1],
-                            sheetGrabberVisible: true,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="shift-selection"
-                          options={{
-                            headerShown: false,
-                            presentation: "formSheet",
-                            sheetAllowedDetents: [1],
-                            sheetGrabberVisible: true,
-                            contentStyle: { backgroundColor: palette.background },
-                          }}
-                        />
-                        <Stack.Screen
-                          name="template-editor"
-                          options={{
-                            title: "Schicht",
-                            presentation: "card",
-                            contentStyle: { backgroundColor: palette.background },
-                          }}
-                        />
-                        <Stack.Screen
-                          name="location-picker"
-                          options={{
-                            headerShown: false,
-                            presentation: "formSheet",
-                            contentStyle: { backgroundColor: palette.surface },
-                            sheetAllowedDetents: [1],
-                            sheetCornerRadius: 28,
-                            sheetExpandsWhenScrolledToEdge: false,
-                            sheetGrabberVisible: false,
-                            sheetInitialDetentIndex: 0,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="salary"
-                          options={{ title: "Gehalt", presentation: "card" }}
-                        />
-                        <Stack.Screen
-                          name="worktime-details"
-                          options={{ title: "Stunden", presentation: "card" }}
-                        />
-                        <Stack.Screen
-                          name="annual-details"
-                          options={{ title: "Jahresdetails", presentation: "card" }}
-                        />
-                        {DEV_TOOLS_AVAILABLE ? (
+                        >
                           <Stack.Screen
-                            name="dev-tools"
-                            options={{ title: "Testlabor", presentation: "fullScreenModal" }}
+                            name="(tabs)"
+                            options={{
+                              headerShown: false,
+                              statusBarStyle: dark ? "light" : "dark",
+                            }}
                           />
-                        ) : null}
-                      </Stack>
+                          <Stack.Screen
+                            name="onboarding"
+                            options={{
+                              headerShown: false,
+                              presentation: "fullScreenModal",
+                            }}
+                          />
+                          <Stack.Screen name="appearance" options={{ presentation: "card" }} />
+                          <Stack.Screen name="work-profile" options={{ presentation: "card" }} />
+                          <Stack.Screen name="day-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
+                          <Stack.Screen name="shift-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
+                          <Stack.Screen
+                            name="appointment-editor"
+                            options={ENTRY_EDITOR_SCREEN_OPTIONS}
+                          />
+                          <Stack.Screen
+                            name="day-details"
+                            options={{
+                              title: "Tagesdetails",
+                              presentation: "formSheet",
+                              contentStyle: { backgroundColor: "transparent" },
+                              sheetAllowedDetents: [1],
+                              sheetGrabberVisible: true,
+                            }}
+                          />
+                          <Stack.Screen
+                            name="quick-add"
+                            options={{
+                              headerShown: false,
+                              presentation: "card",
+                              animation: "slide_from_bottom",
+                              animationDuration: MOTION.duration.scene,
+                              contentStyle: { backgroundColor: palette.background },
+                            }}
+                          />
+                          <Stack.Screen
+                            name="calendar-view"
+                            options={{
+                              title: "Anzeigeoptionen",
+                              presentation: "card",
+                              contentStyle: { backgroundColor: palette.background },
+                            }}
+                          />
+                          <Stack.Screen
+                            name="info-details"
+                            options={{
+                              title: "Information",
+                              presentation: "formSheet",
+                              contentStyle: { backgroundColor: "transparent" },
+                              sheetAllowedDetents: [1],
+                              sheetGrabberVisible: true,
+                            }}
+                          />
+                          <Stack.Screen
+                            name="data-backup"
+                            options={{
+                              title: "Datensicherung",
+                              presentation: "card",
+                              contentStyle: { backgroundColor: palette.groupedBackground },
+                            }}
+                          />
+                          <Stack.Screen
+                            name="premium-details"
+                            options={{
+                              title: "Zeitzuschläge",
+                              presentation: "card",
+                              contentStyle: { backgroundColor: palette.groupedBackground },
+                            }}
+                          />
+                          <Stack.Screen
+                            name="compliance-details"
+                            options={{
+                              title: "Prüfung",
+                              presentation: "card",
+                              contentStyle: { backgroundColor: palette.groupedBackground },
+                            }}
+                          />
+                          <Stack.Screen
+                            name="tariff-assessment"
+                            options={{
+                              title: "Schichtzulage",
+                              presentation: "formSheet",
+                              contentStyle: { backgroundColor: "transparent" },
+                              sheetAllowedDetents: [1],
+                              sheetGrabberVisible: true,
+                            }}
+                          />
+                          <Stack.Screen
+                            name="profile-selection"
+                            options={{ title: "Auswahl", presentation: "card" }}
+                          />
+                          <Stack.Screen
+                            name="settings-editor"
+                            options={{
+                              title: "Arbeitsprofil",
+                              presentation: "card",
+                            }}
+                          />
+                          <Stack.Screen
+                            name="shift-selection"
+                            options={{
+                              headerShown: false,
+                              presentation: "formSheet",
+                              sheetAllowedDetents: [1],
+                              sheetGrabberVisible: true,
+                              contentStyle: { backgroundColor: palette.background },
+                            }}
+                          />
+                          <Stack.Screen
+                            name="template-editor"
+                            options={{
+                              title: "Schicht",
+                              presentation: "card",
+                              contentStyle: { backgroundColor: palette.background },
+                            }}
+                          />
+                          <Stack.Screen
+                            name="location-picker"
+                            options={{
+                              headerShown: false,
+                              presentation: "formSheet",
+                              contentStyle: { backgroundColor: palette.surface },
+                              sheetAllowedDetents: [1],
+                              sheetCornerRadius: 28,
+                              sheetExpandsWhenScrolledToEdge: false,
+                              sheetGrabberVisible: false,
+                              sheetInitialDetentIndex: 0,
+                            }}
+                          />
+                          <Stack.Screen
+                            name="salary"
+                            options={{ title: "Gehalt", presentation: "card" }}
+                          />
+                          <Stack.Screen
+                            name="worktime-details"
+                            options={{ title: "Stunden", presentation: "card" }}
+                          />
+                          <Stack.Screen
+                            name="annual-details"
+                            options={{ title: "Jahresdetails", presentation: "card" }}
+                          />
+                          {DEV_TOOLS_AVAILABLE ? (
+                            <Stack.Screen
+                              name="dev-tools"
+                              options={{ title: "Testlabor", presentation: "fullScreenModal" }}
+                            />
+                          ) : null}
+                        </Stack>
+                      </ProfileSelectionProvider>
                     </FeedbackProvider>
                     <StatusBar
                       animated

@@ -3,6 +3,8 @@ import { today } from "@/engine/calendar";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, type SharedValue } from "react-native-reanimated";
 import { usePalette } from "@/theme/palette";
+import { calendarImageLabelColor } from "@/theme/calendar-image";
+import { useCalendarBackground } from "@/features/settings/calendar-background-context";
 import { CALENDAR_METRICS, RADII } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
 import type { CalendarEntry } from "@/domain/types";
@@ -194,6 +196,10 @@ export function PrototypeMonthContent({
   visible: boolean;
 }) {
   const palette = usePalette();
+  const background = useCalendarBackground();
+  const labelColor = background.uri
+    ? calendarImageLabelColor(palette, background.strength)
+    : palette.textMuted;
   const motion = useAnimatedStyle(() => ({ opacity: Math.max(0, (progress.value - 0.4) / 0.6) }));
   return (
     <Animated.View
@@ -202,12 +208,9 @@ export function PrototypeMonthContent({
       importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
       style={[StyleSheet.absoluteFill, motion]}
     >
-      <View style={styles.weekdays}>
+      <View testID="calendar-month-weekdays" style={styles.weekdays}>
         {["M", "D", "M", "D", "F", "S", "S"].map((label, i) => (
-          <Text
-            key={i}
-            style={{ width: layout.cellWidth, textAlign: "center", color: palette.textMuted }}
-          >
+          <Text key={i} style={{ width: layout.cellWidth, textAlign: "center", color: labelColor }}>
             {label}
           </Text>
         ))}
@@ -249,7 +252,7 @@ export function PrototypeMonthContent({
                 paddingLeft: 5,
                 paddingTop: 5,
                 fontSize: CALENDAR_METRICS.dayNumberFontSize,
-                color: palette.textMuted,
+                color: labelColor,
                 opacity: 0.5,
               }}
             >
@@ -331,7 +334,7 @@ export function PrototypeMonthContent({
                     allowFontScaling={false}
                     style={{
                       height: CALENDAR_METRICS.entryRowHeight,
-                      color: palette.textMuted,
+                      color: labelColor,
                       fontSize: CALENDAR_METRICS.entryFontSize,
                     }}
                   >{`+${preview.overflowCount}`}</Text>
@@ -343,7 +346,7 @@ export function PrototypeMonthContent({
                     allowFontScaling={false}
                     style={{
                       height: CALENDAR_METRICS.entryRowHeight,
-                      color: palette.textMuted,
+                      color: labelColor,
                       fontSize: CALENDAR_METRICS.entryFontSize,
                     }}
                   >

@@ -5,9 +5,26 @@ import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { CalendarHeader } from "@/features/calendar/calendar-header";
+import { CalendarBackgroundContext } from "@/features/settings/calendar-background-context";
 import { CALENDAR_VIEW_ZOOM } from "@/features/calendar/calendar-view-transition";
 import { MOTION } from "@/theme/motion";
 import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
+
+const photoBackground = {
+  uri: null as string | null,
+  strength: "medium" as const,
+  setStrength: async () => {},
+  ready: true,
+  busy: false,
+  error: null,
+  supported: true,
+  choose: async () => {},
+  remove: async () => {},
+  canUndoRemoval: false,
+  undoRemove: async () => {},
+  reset: async () => true,
+  retry: () => {},
+};
 
 function PlannerHeader({
   direction = "NEXT",
@@ -55,6 +72,27 @@ function PlannerHeader({
 }
 
 describe("CalendarHeader", () => {
+  it("reveals the same photo behind the title and safe top while keeping controls accessible", async () => {
+    const screen = await render(<PlannerHeader plannerActive={false} />);
+    const initial = StyleSheet.flatten(screen.getByTestId("calendar-header").props.style);
+    expect(initial.backgroundColor).not.toBe("transparent");
+    await screen.rerender(
+      <CalendarBackgroundContext value={{ ...photoBackground, uri: "file:///calendar-photo.jpg" }}>
+        <PlannerHeader plannerActive={false} />
+      </CalendarBackgroundContext>,
+    );
+    expect(screen.getByTestId("calendar-header")).toHaveStyle({
+      backgroundColor: "transparent",
+      paddingTop: initial.paddingTop,
+      minHeight: initial.minHeight,
+    });
+    expect(screen.getByRole("header", { name: "August" })).toBeVisible();
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+    await screen.rerender(<PlannerHeader plannerActive={false} />);
+    expect(screen.getByTestId("calendar-header")).toHaveStyle({
+      backgroundColor: initial.backgroundColor,
+    });
+  });
   it("updates the controlled title in place and keeps the full warning accessible", async () => {
     const notice = "Feiertagsregeln für diesen Zeitraum noch nicht verfügbar.";
     const screen = await render(

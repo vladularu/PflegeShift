@@ -16,10 +16,9 @@ export async function loadAppearancePreferences(
     APPEARANCE_KEYS.mode,
   );
   const values = new Map(rows.map((row) => [row.key, row.value]));
-  const themeId = values.get(APPEARANCE_KEYS.themeId);
   const mode = values.get(APPEARANCE_KEYS.mode);
   return Object.freeze({
-    themeId: isThemeId(themeId) ? themeId : DEFAULT_APPEARANCE.themeId,
+    themeId: DEFAULT_APPEARANCE.themeId,
     mode: isAppearanceMode(mode) ? mode : DEFAULT_APPEARANCE.mode,
   });
 }

@@ -17,7 +17,11 @@ import {
   type CalendarEntryRange,
   type PflegeShiftSnapshot,
 } from "@/application/pflegeshift-snapshot";
-import { DATA_LOAD_FAILURE_MESSAGE } from "@/domain/errors";
+import {
+  dataLoadFailureCode,
+  dataLoadFailureMessage,
+  withDataLoadFailureCode,
+} from "@/domain/data-load-failure";
 import type { CalendarEntry } from "@/domain/types";
 import { calendarPerformance } from "./calendar-performance";
 
@@ -90,7 +94,9 @@ export function usePflegeShiftLoading(
               );
           });
         } else {
-          const loaded = await repository.listCalendarEntries(range.startDate, range.endDate);
+          const loaded = await withDataLoadFailureCode("LOAD_CALENDAR_FAILED", () =>
+            repository.listCalendarEntries(range.startDate, range.endDate),
+          );
           if (revision !== sequence.current) {
             calendarPerformance.record("load-discard", { load: revision });
             return;
@@ -101,8 +107,12 @@ export function usePflegeShiftLoading(
       } catch (loadError) {
         calendarPerformance.record("load-error", { load: revision });
         if (revision !== sequence.current) return;
-        diagnostics.record("provider", "PROVIDER_RELOAD_FAILED", loadError);
-        setError(DATA_LOAD_FAILURE_MESSAGE);
+        diagnostics.record(
+          "provider",
+          dataLoadFailureCode(loadError) ?? "PROVIDER_RELOAD_FAILED",
+          loadError,
+        );
+        setError(dataLoadFailureMessage(loadError));
       } finally {
         finishTiming();
         if (revision === sequence.current) setLoadedKey(rangeKey);

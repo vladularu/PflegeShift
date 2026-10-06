@@ -252,7 +252,7 @@ describe("local backup restore", () => {
       await destinationDb.getFirstAsync("SELECT display_name,employer_name FROM user_profile"),
     ).toEqual({ display_name: "Alex", employer_name: "Klinikum am Park" });
     expect(await loadAppearancePreferences(destinationDb)).toEqual({
-      themeId: "sea",
+      themeId: "standard",
       mode: "dark",
     });
   });

@@ -19,6 +19,7 @@ import {
   calendarHeaderFadeOut,
 } from "@/features/calendar/calendar-view-transition";
 import { usePalette } from "@/theme/palette";
+import { useCalendarBackground } from "@/features/settings/calendar-background-context";
 import { MOTION } from "@/theme/motion";
 import { CONTROL_HEIGHT, RADII } from "@/theme/tokens";
 import { TabScreenHeader } from "@/ui/screen-layout";
@@ -79,6 +80,7 @@ export const CalendarHeader = memo(function CalendarHeader({
   readonly notice?: string;
 }) {
   const palette = usePalette();
+  const background = useCalendarBackground();
   const year = month.slice(0, 4);
   const monthName = formatMonthTitle(month).replace(/\s+\d{4}$/, "");
   const title =
@@ -113,6 +115,8 @@ export const CalendarHeader = memo(function CalendarHeader({
 
   return (
     <TabScreenHeader
+      testID="calendar-header"
+      transparent={Boolean(background.uri)}
       surface="calendarBackground"
       accessory={
         <Animated.View

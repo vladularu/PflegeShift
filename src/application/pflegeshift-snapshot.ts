@@ -1,3 +1,4 @@
+import { readPflegeShiftSnapshot } from "./pflegeshift-snapshot-reader";
 import { Temporal } from "@js-temporal/polyfill";
 
 import type { PflegeShiftRepositoryPort } from "@/application/pflegeshift-ports";
@@ -52,13 +53,5 @@ export async function loadPflegeShiftSnapshot(
   repository: PflegeShiftSnapshotRepository,
   range: CalendarEntryRange,
 ): Promise<PflegeShiftSnapshot> {
-  const [profile, templates, entries, tariffDecisions, workPatternSettings] = await Promise.all([
-    repository.loadProfile(),
-    repository.listTemplates(),
-    repository.listCalendarEntries(range.startDate, range.endDate),
-    repository.listMonthlyTariffDecisions(),
-    repository.loadTvoedWorkPatternSettings(),
-  ]);
-
-  return Object.freeze({ profile, templates, entries, tariffDecisions, workPatternSettings });
+  return readPflegeShiftSnapshot(repository, range);
 }
