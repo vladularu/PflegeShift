@@ -1,10 +1,10 @@
 import type { UserProfile } from "@/domain/types";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { act, fireEvent, render } from "@testing-library/react-native";
-import { ActionSheetIOS } from "react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SettingsEditorScreen } from "./settings-editor-screen";
+import { selectSettingsChoice as select } from "./settings-choice-test-helpers";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const mockUpdateProfile = jest.fn<() => Promise<void>>();
@@ -71,17 +71,6 @@ function editor() {
     </SafeAreaProvider>
   );
 }
-type Screen = Awaited<ReturnType<typeof render>>;
-async function select(screen: Screen, field: string, option: string) {
-  const picker = jest
-    .spyOn(ActionSheetIOS, "showActionSheetWithOptions")
-    .mockImplementation(() => {});
-  await fireEvent.press(screen.getByRole("button", { name: new RegExp(`^${field}:`) }));
-  const [options, callback] = picker.mock.calls[picker.mock.calls.length - 1];
-  expect(options.options).toContain(option);
-  await act(() => callback(options.options.indexOf(option)));
-  return options.options;
-}
 
 describe("simple nursing training salary form", () => {
   it("uses the trainee full-time basis for Baden-Württemberg when reopening a saved selection", async () => {
@@ -143,6 +132,54 @@ describe("simple nursing training salary form", () => {
         nursingTrainingTariff: { ...trainee, trainingYear: 3 },
       }),
     );
+  });
+  it.each(["OTHER", "KAV_BW"] as const)(
+    "hides the trainee BT-B region %s and retains it when returning to BT-K",
+    async (tariffRegion) => {
+      const saved = { ...trainee, sector: "BT_B" as const, tariffRegion };
+      mockProfile = { ...baseProfile, nursingTrainingTariff: saved };
+      const screen = await render(editor());
+      expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Ausbildungsjahr: 2. Ausbildungsjahr" }),
+      ).toBeTruthy();
+      expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("39");
+      await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+      expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+        expect.objectContaining({ nursingTrainingTariff: saved }),
+      );
+      await select(screen, "Tarifbereich", "Krankenhaus · BT-K");
+      expect(screen.getByRole("button", { name: /^Tarifgebiet:/ })).toBeTruthy();
+      expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("38,5");
+      await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+      expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+        expect.objectContaining({ nursingTrainingTariff: { ...saved, sector: "BT_K" } }),
+      );
+      await select(screen, "Tarifbereich", "Pflege · BT-B");
+      expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    },
+  );
+  it("restores the saved BT-B region when changing a trainee to the P tariff", async () => {
+    mockProfile = {
+      ...baseProfile,
+      nursingTrainingTariff: { ...trainee, sector: "BT_B", tariffRegion: "KAV_BW" },
+    };
+    const screen = await render(editor());
+    expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    await select(screen, "Berechnung", "TVöD-P");
+    expect(screen.getByRole("button", { name: /^Tarifgebiet:/ })).toBeTruthy();
+    await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
+    expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        nursingTrainingTariff: null,
+        tariff: expect.objectContaining({ sector: "BT_B", tariffRegion: "KAV_BW" }),
+      }),
+    );
+    await select(screen, "Berechnung", "TVAöD Pflege · Ausbildung");
+    expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Ausbildungsjahr: 2. Ausbildungsjahr" }),
+    ).toBeTruthy();
   });
   it("returns to the original employee fields and clears the training choice", async () => {
     const screen = await render(editor());

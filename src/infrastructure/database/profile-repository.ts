@@ -1,8 +1,8 @@
 import {
-  loadNursingTrainingForProfile,
-  nursingTrainingProfileInput,
-  storeNursingTrainingForProfile,
-} from "./nursing-training-profile";
+  loadSimpleSalaryForProfile,
+  simpleSalaryProfileInput,
+  storeSimpleSalaryForProfile,
+} from "./simple-salary-profile";
 import { withImmediateTransaction } from "./transaction";
 import type { SQLiteDatabase } from "expo-sqlite";
 
@@ -20,7 +20,7 @@ export async function loadProfile(db: SQLiteDatabase): Promise<UserProfile | nul
      FROM user_profile WHERE id='singleton'`,
   );
   if (row === null) return null;
-  return loadNursingTrainingForProfile(db, mapProfileRow(row));
+  return loadSimpleSalaryForProfile(db, mapProfileRow(row));
 }
 
 export async function saveProfile(
@@ -30,7 +30,7 @@ export async function saveProfile(
   return withImmediateTransaction(db, async () => {
     const current = await loadProfile(db);
     const input = validateProfile({
-      ...nursingTrainingProfileInput(rawInput, current),
+      ...simpleSalaryProfileInput(rawInput, current),
       displayName:
         rawInput.displayName === undefined ? (current?.displayName ?? null) : rawInput.displayName,
       employerName:
@@ -84,7 +84,7 @@ export async function saveProfile(
       now,
       now,
     );
-    await storeNursingTrainingForProfile(db, input, now);
+    await storeSimpleSalaryForProfile(db, input, now);
     const profile = await loadProfile(db);
     if (profile === null) throw new Error("Profil konnte nicht gespeichert werden.");
     return profile;

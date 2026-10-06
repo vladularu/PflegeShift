@@ -1,6 +1,8 @@
 import { UserFacingError } from "./errors";
 import type { PayLevel } from "./types";
 
+export const TVL_KR_PREFERENCE_KEY = "salary_tvl_kr";
+
 export const TVL_KR_GROUPS = [
   "KR5",
   "KR6",
@@ -39,4 +41,24 @@ export function requireTvlKrTariff(value: unknown): TvlKrTariff | null {
   )
     throw new UserFacingError("Bitte eine gültige TV-L-Pflegegruppe und Stufe wählen.");
   return { payGroup: data.payGroup as TvlKrGroup, payLevel: data.payLevel as PayLevel };
+}
+
+export interface TvlKrSalaryTariff extends TvlKrTariff {
+  readonly universityRegion: TvlKrUniversityRegion;
+}
+
+export function requireTvlKrSalaryTariff(value: unknown): TvlKrSalaryTariff | null {
+  if (value == null) return null;
+  if (typeof value !== "object" || Array.isArray(value))
+    throw new UserFacingError(
+      "Bitte eine gültige TV-L-Pflegegruppe, Stufe und ein Tarifgebiet wählen.",
+    );
+  const row = value as Record<string, unknown>;
+  if (
+    Object.keys(row).sort().join(",") !== "payGroup,payLevel,universityRegion" ||
+    (row.universityRegion !== "WEST" && row.universityRegion !== "EAST")
+  )
+    throw new UserFacingError("Bitte das TV-L-Tarifgebiet West oder Ost wählen.");
+  const selection = requireTvlKrTariff({ payGroup: row.payGroup, payLevel: row.payLevel })!;
+  return { ...selection, universityRegion: row.universityRegion };
 }

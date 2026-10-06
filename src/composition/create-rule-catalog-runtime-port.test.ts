@@ -205,6 +205,7 @@ describe("createRuleCatalogRuntimePort", () => {
       remoteConfig.failureRetryMilliseconds,
       false,
       null,
+      Math.max(remoteConfig.checkIntervalMilliseconds, remoteConfig.failureRetryMilliseconds),
     );
     expect(stateMocks.completeRuleCatalogCheck).toHaveBeenCalledWith(
       database,
@@ -232,6 +233,7 @@ describe("createRuleCatalogRuntimePort", () => {
       remoteConfig.failureRetryMilliseconds,
       false,
       5,
+      Math.max(remoteConfig.checkIntervalMilliseconds, remoteConfig.failureRetryMilliseconds),
     );
 
     await port.synchronizeCatalog(null);
@@ -243,6 +245,7 @@ describe("createRuleCatalogRuntimePort", () => {
       remoteConfig.failureRetryMilliseconds,
       false,
       5,
+      Math.max(remoteConfig.checkIntervalMilliseconds, remoteConfig.failureRetryMilliseconds),
     );
 
     await port.synchronizeCatalog(5, { force: true });
@@ -254,6 +257,7 @@ describe("createRuleCatalogRuntimePort", () => {
       remoteConfig.failureRetryMilliseconds,
       true,
       null,
+      Math.max(remoteConfig.checkIntervalMilliseconds, remoteConfig.failureRetryMilliseconds),
     );
   });
 
@@ -280,6 +284,9 @@ describe("createRuleCatalogRuntimePort", () => {
     expect(disabled.remote).toBeNull();
     expect(previewRemote.baseUrl).toBe(PREVIEW_RULE_CATALOG_TRUST.baseUrl);
     expect(previewRemote.requiredGeneration).toBe(PREVIEW_REQUIRED_CATALOG_GENERATION);
+    expect(previewRemote.requiredGeneration).toBe(6);
+    expect(previewRemote.checkIntervalMilliseconds).toBe(15 * 60_000);
+    expect(previewRemote.failureRetryMilliseconds).toBe(5 * 60_000);
     expect([...previewPolicy.supportedEngineContractVersions]).toEqual([
       ...RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS,
     ]);

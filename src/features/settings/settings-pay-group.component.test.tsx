@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { act, fireEvent, render } from "@testing-library/react-native";
-import { ActionSheetIOS } from "react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SettingsEditorScreen } from "./settings-editor-screen";
+import { selectSettingsChoice as select } from "./settings-choice-test-helpers";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const mockUpdateProfile = jest.fn<() => Promise<void>>();
@@ -67,17 +67,6 @@ function editor() {
     </SafeAreaProvider>
   );
 }
-type Screen = Awaited<ReturnType<typeof render>>;
-async function select(screen: Screen, field: string, option: string) {
-  const picker = jest
-    .spyOn(ActionSheetIOS, "showActionSheetWithOptions")
-    .mockImplementation(() => {});
-  await fireEvent.press(screen.getByRole("button", { name: new RegExp(`^${field}:`) }));
-  const [options, callback] = picker.mock.calls[picker.mock.calls.length - 1];
-  expect(options.options).toContain(option);
-  await act(() => callback(options.options.indexOf(option)));
-  return options.options;
-}
 
 describe("settings pay group selection", () => {
   beforeEach(() => {
@@ -92,15 +81,7 @@ describe("settings pay group selection", () => {
     const screen = await render(editor());
     expect(screen.getByRole("button", { name: "Stufe: Stufe 1" })).toBeTruthy();
     const options = await select(screen, "Stufe", "Stufe 1");
-    expect(options).toEqual([
-      "Stufe 1",
-      "Stufe 2",
-      "Stufe 3",
-      "Stufe 4",
-      "Stufe 5",
-      "Stufe 6",
-      "Abbrechen",
-    ]);
+    expect(options).toEqual(["Stufe 1", "Stufe 2", "Stufe 3", "Stufe 4", "Stufe 5", "Stufe 6"]);
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -14,6 +14,7 @@ import type {
 import type { RuleTariffPackage } from "@/rules/contracts.generated";
 import { validateRulePackage } from "@/rules/validation";
 import { RuleResolutionError, type RuleResolver } from "@/rules/rule-resolver";
+import { overlaySimpleTariffPackage, selectSimpleTariffTable } from "./simple-tariff-table-overlay";
 import { conditionsMatch } from "./pay-conditions";
 import { createManualMonthlyPayEstimate } from "./pay-fallback";
 import { countPremiumMinutes } from "./pay-premium-minutes";
@@ -22,8 +23,7 @@ import { assessTvoedKCalendarMonth } from "./tvoed-k-calendar-assessment";
 import { assessTvoedPattern, isPayWorkShift } from "./tvoed-pattern";
 import { calculateTimedShiftBounds, calculateTimedShiftMinutes } from "./working-time";
 
-// Explicitly approved, local nursing category b. Other DRAFT families and the remote
-// catalog remain untouched. Raw packages keep their review metadata and sources.
+// Nursing category b uses reviewed table updates with the existing local policy template.
 const packages = [training2025, training2026].map((value) => {
   const checked = validateRulePackage(value);
   if (!checked.ok || checked.value.kind !== "TARIFF")
@@ -33,11 +33,18 @@ const packages = [training2025, training2026].map((value) => {
 const overlays = new WeakMap<RuleResolver, RuleResolver>();
 const money = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 
-function trainingPackage(date: string): RuleTariffPackage | null {
+function trainingPackage(date: string, source: RuleResolver): RuleTariffPackage | null {
   const key = Temporal.PlainDate.from(date).toString();
-  return (
-    packages.find((p) => p.validFrom <= key && (p.validTo === null || key <= p.validTo)) ?? null
+  const local = packages.find(
+    (p) => p.validFrom <= key && (p.validTo === null || key <= p.validTo),
   );
+  return local
+    ? overlaySimpleTariffPackage(
+        local,
+        selectSimpleTariffTable(source, "TVAOED_PFLEGE", key),
+        source,
+      )
+    : null;
 }
 
 function trainingResolver(source: RuleResolver): RuleResolver {
@@ -48,7 +55,7 @@ function trainingResolver(source: RuleResolver): RuleResolver {
     resolveTariff: (date, packageId) => {
       if (packageId && packageId !== "tvaoed-pflege-vka")
         return source.resolveTariff(date, packageId);
-      const value = trainingPackage(date);
+      const value = trainingPackage(date, source);
       return value
         ? { ok: true, value }
         : {
@@ -70,9 +77,10 @@ function trainingResolver(source: RuleResolver): RuleResolver {
 function trainingContext(
   date: string,
   profile: Pick<UserProfile, "nursingTrainingTariff" | "weeklyMinutes">,
+  source: RuleResolver,
 ) {
   const selection = profile.nursingTrainingTariff;
-  const rulePackage = trainingPackage(date);
+  const rulePackage = trainingPackage(date, source);
   if (!selection || !rulePackage) return null;
   const entries = rulePackage.rules.payTables
     .filter((t) => t.id === rulePackage.rules.selector.payTableId)
@@ -118,7 +126,7 @@ export function calculateNursingTrainingAssessment(
   profile: Pick<UserProfile, "nursingTrainingTariff" | "timeZone">,
 ) {
   const date = month + "-01";
-  if (!trainingPackage(date))
+  if (!trainingPackage(date, source))
     return { available: false, assessment: null, tariffLabel: "TVAöD Pflege" };
   const first = Temporal.PlainDate.from(date);
   const from = first.subtract({ months: 2 }).toString();
@@ -174,7 +182,7 @@ export function calculateNursingTrainingShift(
       bounds.grossMinutes,
       Number(tomorrow.epochMilliseconds - zonedStart.epochMilliseconds) / 60000,
     );
-    const context = trainingContext(start.toPlainDate().toString(), profile);
+    const context = trainingContext(start.toPlainDate().toString(), profile, source);
     if (!context)
       throw new RuleResolutionError({
         code: "RULE_PACKAGE_NOT_FOUND",
@@ -279,7 +287,7 @@ export function calculateNursingTrainingMonth(
   resolver: RuleResolver,
 ): MonthlyPayEstimate {
   const date = month + "-01";
-  const context = trainingContext(date, profile);
+  const context = trainingContext(date, profile, resolver);
   const empty = createManualMonthlyPayEstimate(month, 0);
   if (!context)
     return {

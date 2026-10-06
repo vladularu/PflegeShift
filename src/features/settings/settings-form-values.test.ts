@@ -46,6 +46,14 @@ describe("settings form values", () => {
       sundayHolidayWorkEligible: "YES",
       allEmploymentWorkRecorded: "YES",
       trainingYear: "UNSET",
+      krPayGroup: "KR8",
+      tvhPayGroup: "KR8",
+      tvhPayLevel: 4,
+      tvhFullTimeWeeklyMinutes: 2400,
+      tvUkPayGroup: "PUK8",
+      tvUkPayLevel: 4,
+      tvlUniversityRegion: "WEST",
+      ePayGroup: "E9b",
       payGroup: "P11",
       payLevel: 5,
       sector: "BT_B",
@@ -80,5 +88,32 @@ describe("settings form values", () => {
     expect(manualMonthlyGrossFieldError("3450,50")).toBeNull();
     expect(manualMonthlyGrossFieldError("0")).toMatch(/0,01 € und 100.000 €/);
     expect(manualMonthlyGrossFieldError("3.450,50")).not.toBeNull();
+  });
+});
+
+describe("TV-H settings projection", () => {
+  it.each(["1a", "1b"] as const)("preserves entry step %s and full-time basis", (payLevel) => {
+    const values = settingsFormValues({
+      ...baseProfile,
+      tvhKrTariff: { payGroup: "KR5", payLevel, fullTimeWeeklyMinutes: 2400 },
+    });
+    expect(values.salaryMode).toBe("TVH_KR");
+    expect(values.tvhPayGroup).toBe("KR5");
+    expect(values.tvhPayLevel).toBe(payLevel);
+    expect(values.fullTimeHours).toBe("40");
+  });
+});
+
+describe("TVA-L training settings projection", () => {
+  it("restores the training year and explicit East selection", () => {
+    const values = settingsFormValues({
+      ...baseProfile,
+      tvalPflegeTariff: { trainingYear: 3, universityRegion: "EAST" },
+    });
+    expect(values).toMatchObject({
+      salaryMode: "TVAL_PFLEGE",
+      trainingYear: 3,
+      tvlUniversityRegion: "EAST",
+    });
   });
 });

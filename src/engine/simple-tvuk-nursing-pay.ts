@@ -9,6 +9,7 @@ import type {
   UserProfile,
 } from "@/domain/types";
 import { bundledRuleResolver, RuleResolutionError, type RuleResolver } from "@/rules/rule-resolver";
+import { selectSimpleTariffTable, simpleTariffTableAmount } from "./simple-tariff-table-overlay";
 import { resolveHolidayMapForMonth } from "./holidays";
 import { createManualMonthlyPayEstimate } from "./pay-fallback";
 import { roundRemunerationCents } from "./remuneration-money";
@@ -26,13 +27,32 @@ interface TvUkTable {
 }
 const tables: readonly TvUkTable[] = sourceTables;
 const money = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
-export function getTvUkNursingTable(date: string): TvUkTable | null {
+export function getTvUkNursingTable(
+  date: string,
+  resolver: RuleResolver = bundledRuleResolver,
+): TvUkTable | null {
   const day = Temporal.PlainDate.from(date).toString();
-  return tables.find((t) => t.validFrom <= day && (t.validTo === null || day <= t.validTo)) ?? null;
+  const local = tables.find((t) => t.validFrom <= day && (t.validTo === null || day <= t.validTo));
+  const update = selectSimpleTariffTable(resolver, "TVUK_PUK", day);
+  if (!local || !update) return local ?? null;
+  const groups = Object.fromEntries(
+    Object.entries(local.groups).map(([group, steps]) => [
+      group,
+      Object.fromEntries(
+        Object.keys(steps).map((step) => [step, simpleTariffTableAmount(update, group, step)]),
+      ),
+    ]),
+  );
+  return { ...local, validFrom: update.validFrom, validTo: update.validTo, groups };
 }
-function context(date: string, selection: TvUkNursingTariff, weeklyMinutes: number) {
+function context(
+  date: string,
+  selection: TvUkNursingTariff,
+  weeklyMinutes: number,
+  resolver: RuleResolver,
+) {
   const selected = requireTvUkNursingTariff(selection);
-  const table = getTvUkNursingTable(date);
+  const table = getTvUkNursingTable(date, resolver);
   if (
     !selected ||
     !table ||
@@ -130,7 +150,7 @@ export function calculateTvUkNursingShift(
     // TV-UK Ä9 raises only core-night and Sunday rates from 1 January 2025.
     const coreNightCashRate = date < "2025-01-01" ? 3000 : 3500;
     const sundayRate = date < "2025-01-01" ? 2500 : 4000;
-    const ctx = context(date, selection, work.weeklyMinutes);
+    const ctx = context(date, selection, work.weeklyMinutes, resolver);
     if (!ctx)
       throw new RuleResolutionError({
         code: "RULE_PACKAGE_NOT_FOUND",
@@ -226,7 +246,7 @@ export function calculateTvUkNursingMonth(
   requireOptions(options);
   if (!/^\d{4}-\d{2}$/.test(month)) throw new Error("Ungültiger TV-UK-Monat.");
   const date = Temporal.PlainYearMonth.from(month).toPlainDate({ day: 1 }).toString();
-  const ctx = context(date, selection, work.weeklyMinutes);
+  const ctx = context(date, selection, work.weeklyMinutes, resolver);
   const empty: TvUkMonthlyEstimate = {
     ...createManualMonthlyPayEstimate(month, 0),
     tariffLabel: "TV-UK Pflege (Baden-Württemberg)",

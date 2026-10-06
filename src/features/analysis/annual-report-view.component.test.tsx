@@ -177,7 +177,7 @@ describe("annual report view", () => {
     expect(screen.queryByRole("header", { name: "3 Meldungen" })).toBeNull();
     expect(screen.queryByText("Monate mit Meldungen")).toBeNull();
     expect(screen.queryByText("Keine sichtbaren Auffälligkeiten")).toBeNull();
-    expect(screen.getByRole("button", { name: "Über die Prüfung" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Über die Prüfung" })).toBeNull();
   });
 
   it("shows the existing year salary sum and all twelve month destinations", async () => {

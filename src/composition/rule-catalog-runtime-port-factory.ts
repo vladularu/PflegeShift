@@ -71,6 +71,10 @@ export function buildRuleCatalogRuntimePort(
           activeRemoteConfig.failureRetryMilliseconds,
           syncOptions.force === true,
           requiredGeneration,
+          Math.max(
+            activeRemoteConfig.checkIntervalMilliseconds,
+            activeRemoteConfig.failureRetryMilliseconds,
+          ),
         ),
       completeCheck: (generation) =>
         completeRuleCatalogCheck(

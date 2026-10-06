@@ -74,6 +74,7 @@ export async function claimRuleCatalogCheck(
   failureRetryMilliseconds: number,
   force = false,
   requiredGeneration: number | null = null,
+  maximumScheduleDelayMilliseconds = MAXIMUM_REASONABLE_SCHEDULE_DELAY_MS,
 ): Promise<boolean> {
   if (!Number.isSafeInteger(failureRetryMilliseconds) || failureRetryMilliseconds <= 0) {
     throw new Error("The rule catalog failure retry interval must be positive.");
@@ -83,6 +84,12 @@ export async function claimRuleCatalogCheck(
     (!Number.isSafeInteger(requiredGeneration) || requiredGeneration <= 0)
   ) {
     throw new Error("The required rule catalog generation must be positive.");
+  }
+  if (
+    !Number.isSafeInteger(maximumScheduleDelayMilliseconds) ||
+    maximumScheduleDelayMilliseconds <= 0
+  ) {
+    throw new Error("The maximum rule catalog schedule delay must be positive.");
   }
   const stateKey = ruleCatalogSyncStateKey(channel);
   const upgradeKey =
@@ -106,7 +113,7 @@ export async function claimRuleCatalogCheck(
     const firstUpgradeClaim = upgradeKey !== null && upgradeClaim === null;
     const nextCheck = state === null ? null : Date.parse(state.nextCheckAt);
     const implausiblyFuture =
-      nextCheck !== null && nextCheck > now.getTime() + MAXIMUM_REASONABLE_SCHEDULE_DELAY_MS;
+      nextCheck !== null && nextCheck > now.getTime() + maximumScheduleDelayMilliseconds;
     if (
       !force &&
       !firstUpgradeClaim &&
