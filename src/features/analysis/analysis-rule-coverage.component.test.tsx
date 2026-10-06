@@ -12,6 +12,7 @@ import futureHolidayPackageValue from "../../../rules/packages/reviewed/de-holid
 import legalPackageValue from "../../../rules/packages/reviewed/de-arbzg-care/2026-01.json";
 import tariffPackageValue from "../../../rules/packages/reviewed/tvoed-vka-bt-k/2026-05.json";
 import type { MonthlyComplianceResult, ShiftEntry, UserProfile } from "@/domain/types";
+import * as monthlyAnalysis from "./monthly-analysis";
 import { AnalysisScreen } from "@/features/analysis/analysis-screen";
 import { buildAnnualCoreReport } from "@/features/analysis/annual-core-report";
 import type { AnnualReport } from "@/features/analysis/annual-report";
@@ -258,6 +259,23 @@ describe("reviewed Generation 1 rule coverage in analysis screens", () => {
     mockAnnualRuleFailure = null;
     mockProfile = MOCK_TARIFF_PROFILE;
     mockActiveMonthCoordinator.setMonth.mockClear();
+  });
+
+  it("does not calculate a hidden month and uses the latest month when focused again", async () => {
+    const calculate = jest.spyOn(monthlyAnalysis, "calculateMonthlyAnalysis");
+    mockFocused = false;
+    mockRouteMonth = "2026-09";
+    const screen = await render(<AnalysisScreen />);
+    expect(calculate).not.toHaveBeenCalled();
+    mockEntries = [januaryShift()];
+    mockRouteMonth = "2026-10";
+    await screen.rerender(<AnalysisScreen />);
+    expect(calculate).not.toHaveBeenCalled();
+    mockFocused = true;
+    await screen.rerender(<AnalysisScreen />);
+    expect(calculate).toHaveBeenCalled();
+    expect(calculate.mock.calls.at(-1)?.[0]).toBe("2026-10");
+    await screen.unmount();
   });
 
   it.each([
