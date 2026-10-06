@@ -1,3 +1,3 @@
 export const RULE_CATALOG_SUPPORTED_ENGINE_CONTRACT_VERSIONS = Object.freeze([
-  1, 2, 3, 4, 5, 6, 7, 10, 11,
+  1, 2, 3, 4, 5, 6, 7, 10, 11, 19,
 ] as const);

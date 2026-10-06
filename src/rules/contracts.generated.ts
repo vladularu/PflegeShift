@@ -43,7 +43,8 @@ export interface PackageDescriptor {
   packageId: Identifier;
   versionId: VersionIdentifier;
   kind: Kind;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+  engineContractVersion:
+    1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19;
   validFrom: IsoDate;
   validTo: null | IsoDate;
   path: string;
@@ -65,7 +66,7 @@ export interface Signing {
  */
 export type PflegeShiftRulePackage = RuleTariffPackage | RuleLegalPackage | RuleHolidayPackage;
 export type RuleTariffPackage = RulePackageBase & {
-  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+  engineContractVersion?: 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19;
   kind: "TARIFF";
   rules: RuleTariffRules;
 };
@@ -139,7 +140,8 @@ export type RuleHolidayPackage = RulePackageBase & {
 
 export interface RulePackageBase {
   schemaVersion: 1;
-  engineContractVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+  engineContractVersion:
+    1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19;
   packageId: RuleIdentifier;
   versionId: RuleVersionIdentifier;
   kind: "TARIFF" | "LEGAL" | "HOLIDAY";
@@ -489,6 +491,7 @@ export interface RuleTariffRules {
   tvoedAnnexAOvertimePolicy?: RuleTvoedAnnexAOvertimePolicy;
   tvoedAnnexATimePremiumPolicy?: RuleTvoedAnnexATimePremiumPolicy;
   tvoedSueAllowancePolicy?: RuleTvoedSueAllowancePolicy;
+  simpleTariffTables?: RuleSimpleTariffTables;
 }
 export interface RuleTariffSelection {
   familyId: RuleIdentifier;
@@ -2630,7 +2633,7 @@ export interface RuleAnnualPaymentRule {
   lastEntitlementYear: number;
   rateBasisPoints: number;
   /**
-   * Three reference months, or November only for TVA-L Pflege §16; semantic validation enforces the policy.
+   * Three reference months, or November only for TVA-L Pflege Â§16; semantic validation enforces the policy.
    *
    * @minItems 1
    * @maxItems 3
@@ -25535,7 +25538,7 @@ export interface RuleTvalCareAllowancePolicy {
   sourceIds: RuleSourceIds;
 }
 /**
- * Contract 14: published federal baseline for Anlage 31/32 § 4(5), § 6(1). Local increases, individual eligibility, time-off choice and cash payment are not inferred by this record.
+ * Contract 14: published federal baseline for Anlage 31/32 Â§ 4(5), Â§ 6(1). Local increases, individual eligibility, time-off choice and cash payment are not inferred by this record.
  */
 export interface RuleCaritasTimePremiumPolicy {
   validFrom: RuleIsoDate;
@@ -26926,7 +26929,7 @@ export interface RuleAvrddHourlyRate {
   sourceIds: RuleSourceIds;
 }
 /**
- * Contract 15 DRAFT: AVR.DD § 20a regular active-work time windows and premium competition. Printed Anlage 9 cents remain independent per group.
+ * Contract 15 DRAFT: AVR.DD Â§ 20a regular active-work time windows and premium competition. Printed Anlage 9 cents remain independent per group.
  */
 export interface RuleAvrddTimePremiumPolicy {
   nightWindow: RuleTimeWindow;
@@ -26936,7 +26939,7 @@ export interface RuleAvrddTimePremiumPolicy {
   sourceIds: RuleSourceIds;
 }
 /**
- * Contract 15 DRAFT: AVR.DD § 9b(8), § 9c(4), § 20a(1)(a),(3). Monthly account classification and the personal hourly basis must be independently confirmed.
+ * Contract 15 DRAFT: AVR.DD Â§ 9b(8), Â§ 9c(4), Â§ 20a(1)(a),(3). Monthly account classification and the personal hourly basis must be independently confirmed.
  */
 export interface RuleAvrddOvertimePolicy {
   fullTimePlusThresholdMinutes: 1800;
@@ -26944,7 +26947,7 @@ export interface RuleAvrddOvertimePolicy {
   sourceIds: RuleSourceIds;
 }
 /**
- * Contract 15 DRAFT: AVR.DD § 20 monthly employee rates. Qualification is never inferred from shifts alone.
+ * Contract 15 DRAFT: AVR.DD Â§ 20 monthly employee rates. Qualification is never inferred from shifts alone.
  */
 export interface RuleAvrddShiftAllowanceRate {
   validFrom: RuleIsoDate;
@@ -26954,7 +26957,7 @@ export interface RuleAvrddShiftAllowanceRate {
   sourceIds: RuleSourceIds;
 }
 /**
- * Contract 15 DRAFT: AVR.DD § 14(2)(c), EG 3/4 care and support only; personal eligibility is independently confirmed.
+ * Contract 15 DRAFT: AVR.DD Â§ 14(2)(c), EG 3/4 care and support only; personal eligibility is independently confirmed.
  */
 export interface RuleAvrddCareAllowanceRate {
   validFrom: RuleIsoDate;
@@ -26963,7 +26966,7 @@ export interface RuleAvrddCareAllowanceRate {
   sourceIds: RuleSourceIds;
 }
 /**
- * Contract 15 DRAFT: AVR.DD § 14(2) practice instruction, palliative/wound, intensive care and specialist monthly allowance rules; personal eligibility and offsets remain external facts.
+ * Contract 15 DRAFT: AVR.DD Â§ 14(2) practice instruction, palliative/wound, intensive care and specialist monthly allowance rules; personal eligibility and offsets remain external facts.
  */
 export interface RuleAvrddAdvancedAllowancePolicy {
   validFrom: RuleIsoDate;
@@ -26977,7 +26980,7 @@ export interface RuleAvrddAdvancedAllowancePolicy {
   sourceIds: RuleSourceIds;
 }
 /**
- * Contract 16 draft-only TVöD-AT §§ 7(7-8), 8(1)a overtime cash facts for VKA Anlage A. No plus-hour or payout-month inference.
+ * Contract 16 draft-only TVÃ¶D-AT Â§Â§ 7(7-8), 8(1)a overtime cash facts for VKA Anlage A. No plus-hour or payout-month inference.
  */
 export interface RuleTvoedAnnexAOvertimePolicy {
   validFrom: RuleIsoDate;
@@ -27123,7 +27126,7 @@ export interface RuleTvoedAnnexAOvertimePolicy {
   sourceIds: RuleSourceIds;
 }
 /**
- * Contract 16 draft-only TVöD-AT § 8(1) b-f baseline for VKA Anlage A, with BT-K § 50(1) and BT-B § 49a(1) Saturday exceptions. Overtime, local increases and time-credit arrangements are not inferred.
+ * Contract 16 draft-only TVÃ¶D-AT Â§ 8(1) b-f baseline for VKA Anlage A, with BT-K Â§ 50(1) and BT-B Â§ 49a(1) Saturday exceptions. Overtime, local increases and time-credit arrangements are not inferred.
  */
 export interface RuleTvoedAnnexATimePremiumPolicy {
   validFrom: RuleIsoDate;
@@ -27636,6 +27639,44 @@ export interface RuleTvoedSueAllowancePolicy {
   partTimeProRata: true;
   conversionDaysRequireSeparateCalculation: true;
   sourceIds: RuleSourceIds;
+}
+export interface RuleSimpleTariffTables {
+  contractVersion: 1;
+  sourceCommit: string;
+  /**
+   * @minItems 6
+   * @maxItems 120
+   */
+  tables: [
+    RuleSimpleTariffTable,
+    RuleSimpleTariffTable,
+    RuleSimpleTariffTable,
+    RuleSimpleTariffTable,
+    RuleSimpleTariffTable,
+    RuleSimpleTariffTable,
+    ...RuleSimpleTariffTable[],
+  ];
+}
+export interface RuleSimpleTariffTable {
+  tariffId: "TVOED_VKA_E" | "TVAOED_PFLEGE" | "TVL_KR" | "TVAL_PFLEGE" | "TVH_KR" | "TVUK_PUK";
+  validFrom: RuleIsoDate;
+  validTo: RuleNullableDate;
+  sourceIds: RuleSourceIds;
+  /**
+   * @minItems 3
+   * @maxItems 200
+   */
+  entries: [
+    RuleSimpleTariffTableEntry,
+    RuleSimpleTariffTableEntry,
+    RuleSimpleTariffTableEntry,
+    ...RuleSimpleTariffTableEntry[],
+  ];
+}
+export interface RuleSimpleTariffTableEntry {
+  groupId: string;
+  stepId: string;
+  monthlyCents: number;
 }
 export interface RuleLegalRules {
   workingTime: {
