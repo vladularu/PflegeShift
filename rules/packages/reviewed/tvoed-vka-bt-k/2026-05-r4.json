@@ -5,7 +5,7 @@
   "versionId": "2026-05-r4",
   "kind": "TARIFF",
   "label": "TVöD-VKA BT-K/BT-B Pflege · P5/P6 und Tarifregion · 01.05.2026–31.03.2027 · Jahresregeln 2026",
-  "status": "DRAFT",
+  "status": "REVIEWED",
   "validFrom": "2026-05-01",
   "validTo": "2027-03-31",
   "jurisdiction": {
@@ -311,10 +311,10 @@
     }
   ],
   "review": {
-    "status": "DRAFT",
-    "reviewedBy": null,
-    "reviewedAt": null,
-    "gitCommit": null
+    "status": "REVIEWED",
+    "reviewedBy": "owner-authorized-accepted-data-preservation",
+    "reviewedAt": "2026-10-06T02:50:23Z",
+    "gitCommit": "f1a10f00c0ec0bb97cf2a30ed6bf5936c212d5b0"
   },
   "rounding": {
     "moneyScale": 2,
