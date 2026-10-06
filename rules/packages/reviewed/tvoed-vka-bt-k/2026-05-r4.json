@@ -1,0 +1,6418 @@
+{
+  "schemaVersion": 1,
+  "engineContractVersion": 19,
+  "packageId": "tvoed-vka-bt-k",
+  "versionId": "2026-05-r4",
+  "kind": "TARIFF",
+  "label": "TVöD-VKA BT-K/BT-B Pflege · P5/P6 und Tarifregion · 01.05.2026–31.03.2027 · Jahresregeln 2026",
+  "status": "REVIEWED",
+  "validFrom": "2026-05-01",
+  "validTo": "2027-03-31",
+  "jurisdiction": {
+    "country": "DE",
+    "federalStates": null
+  },
+  "sources": [
+    {
+      "id": "vka-tvoed-hospitals-2026",
+      "title": "VKA Lesefassung TVöD Krankenhäuser einschließlich BT-K",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7, 8, 24; BT-K §§ 44, 48, 50, 52; Anlage E Entgelttabelle Pflege",
+      "sha256": "00e831fefffb833b689c1355c58e87cf25bdd6c585ab4693f41a187604b0ef6e"
+    },
+    {
+      "id": "vka-tvoed-care-2026",
+      "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7, 8, 24; BT-B §§ 6, 49a, 51a; Anlage E Entgelttabelle Pflege",
+      "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
+    },
+    {
+      "id": "pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "vka-tvoed-annual-bt-k-2026",
+      "title": "VKA Lesefassung TVöD Krankenhäuser einschließlich BT-K",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT § 20 (VKA) und § 39 Abs. 4 j; BT-K § 54 Abs. 1 und 3, Anspruchsjahr 2026",
+      "sha256": "00e831fefffb833b689c1355c58e87cf25bdd6c585ab4693f41a187604b0ef6e"
+    },
+    {
+      "id": "vka-tvoed-annual-bt-b-2026",
+      "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT § 20 (VKA) und § 39 Abs. 4 j; BT-B § 52a, Anspruchsjahr 2026",
+      "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
+    },
+    {
+      "id": "tvoed-vka-e-vka-tvoed-annex-a-2025-2026",
+      "title": "VKA, TVöD Krankenhäuser einschließlich TVöD-AT und Anlage A",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7(5,7,8), 8(1), 24(3), 38(5), BT-K § 50(1), Anlage A S. 67–68",
+      "sha256": "00e831fefffb833b689c1355c58e87cf25bdd6c585ab4693f41a187604b0ef6e"
+    },
+    {
+      "id": "tvoed-vka-e-vka-tvoed-care-2026",
+      "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7(5,7,8), 8(1), 24(3), 38(5), BT-B § 49a(1), Anlage A S. 65–66",
+      "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
+    },
+    {
+      "id": "tvoed-vka-e-pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "tvaoed-pflege-dbb-tariff-round-2025-10",
+      "title": "dbb Rundschreiben Nr. 10/2025: Redaktionsverhandlungen abgeschlossen",
+      "url": "https://www.vbb.dbb.de/fileadmin/user_upload/www_vbb-bund_de/images/2025/Einkommensrunde_2025_mit_Bund_und_Kommunen_-_Redaktionsverhandlungen_abgeschlossen.pdf",
+      "documentDate": "2025-07-15",
+      "section": "Seite 3: Schicht- und Wechselschichtzulagen, alte Beträge bis 30.06.2025 und Erhöhung ab 01.07.2025",
+      "sha256": "50cfdbd51983f5a18099d98d77c6c727e8e3f3b52d1fc3ff893794f87b512426"
+    },
+    {
+      "id": "tvaoed-pflege-vka-tvaoed-pflege-2025",
+      "title": "VKA TVAöD-Pflege, Stand 01.07.2025",
+      "url": "https://vka.de/wp-content/uploads/2026/04/TVAOED_BT-Pflege_AETV_18_Lesefassung_Stand_01_07_2025.pdf",
+      "documentDate": "2025-07-01",
+      "section": "§§ 7, 8, 8b, 14 und 20a",
+      "sha256": "477a4a2127a848de4d973b45fb893520a113e170d054440d4fcee5555146a48b"
+    },
+    {
+      "id": "tvaoed-pflege-vka-tvaoed-at-2025",
+      "title": "VKA TVAöD Allgemeiner Teil, Stand 01.08.2025",
+      "url": "https://vka.de/wp-content/uploads/2026/04/TVAOED_AT_AETV_14_Lesefassung_Stand_01_08_2025.pdf",
+      "documentDate": "2025-08-01",
+      "section": "§ 1 Abs. 1 Buchst. b und c; § 8a",
+      "sha256": "352a1bf20827ad32ceacb3efdaf49712fb7bb4728a6e5a3de3bb105ff1a73f9c"
+    },
+    {
+      "id": "tvaoed-pflege-vka-tvoed-hospitals-2026",
+      "title": "VKA Lesefassung TVöD Krankenhäuser einschließlich BT-K",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Krankenhaeuser_TV-Aerzte-VKA.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7, 8, 24; BT-K §§ 44, 48, 50, 52; Anlage E; Entgeltordnung Teil B XI.1 Protokollerklärung 1",
+      "sha256": "00e831fefffb833b689c1355c58e87cf25bdd6c585ab4693f41a187604b0ef6e"
+    },
+    {
+      "id": "tvaoed-pflege-vka-tvoed-care-2026",
+      "title": "VKA Lesefassung TVöD Pflege- und Betreuungseinrichtungen einschließlich BT-B",
+      "url": "https://vka.de/wp-content/uploads/2026/04/250406_TVoeD_Pflege_u_Betreuungseinrichtungen.pdf",
+      "documentDate": "2025-04-06",
+      "section": "TVöD-AT §§ 7, 8, 24; BT-B §§ 6, 49a, 51a; Anlage E; Entgeltordnung Teil B XI.1 Protokollerklärung 1",
+      "sha256": "0240e0d5430f94756f31e0ccc2ac2b7833ad1d1dae8a0911d21ea61ddcf26fd8"
+    },
+    {
+      "id": "tvaoed-pflege-pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "tvaoed-pflege-vka-tvaoed-annual-2025",
+      "title": "VKA TVAöD-Pflege, Stand 01.07.2025",
+      "url": "https://vka.de/wp-content/uploads/2026/04/TVAOED_BT-Pflege_AETV_18_Lesefassung_Stand_01_07_2025.pdf",
+      "documentDate": "2025-07-01",
+      "section": "§ 14 Abs. 1–4, Niederschriftserklärung zu § 14 Abs. 2; § 20a Abs. 3 b",
+      "sha256": "477a4a2127a848de4d973b45fb893520a113e170d054440d4fcee5555146a48b"
+    },
+    {
+      "id": "tvl-kr-tdl-tvl-annual-2026",
+      "title": "TdL TV-L ÄTV 14 · Jahressonderzahlung und KR-Zuordnung",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/260812_TV-L__i.d.F._des_%C3%84TV_Nr._14_VT.pdf",
+      "documentDate": "2026-02-14",
+      "section": "§20 Abs.1–6 und Protokollerklärung zu Abs.3 (S.30–32); §43 Nr.9 (S.90); Sätze gemäß §20 Abs.2 seit 2022",
+      "sha256": "05de64ee356df189690875a491e5d52d8ac8171328b43f7fd401d8b0c04f94f9"
+    },
+    {
+      "id": "tvl-kr-tdl-tvl-annex-a-care",
+      "title": "TdL Entgeltordnung Anlage A, ÄTV 13; Abrufstand 22.09.2026",
+      "url": "https://www.tdl-online.de/fileadmin/user_upload/Anlage_A_i.d.F._des_%C3%84TV_Nr._13_Homepage.pdf",
+      "documentDate": "2026-09-22",
+      "section": "Teil IV Abschnitt 1 Vorbemerkungen 8–11, Protokollerklärung 3; Abschnitt 2 Vorbemerkungen 7–9 (S. 324–325, 328–330); Datum = Abrufstand",
+      "sha256": "e33de71f9abb6c1762a1288a0f742da5e2fc2d860282660c1dfe14b4f3e25bcf"
+    },
+    {
+      "id": "tvl-kr-tdl-tvl-annex-f-care",
+      "title": "TdL Anlage F, Pflegezulagen 2025–2028; Abrufstand 22.09.2026",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/TV-L_Anlagen/TV-L_Anlage_F_neu.pdf",
+      "documentDate": "2026-09-22",
+      "section": "Abschnitt IV Nrn. 1–9, S. 4; Datum = Abrufstand, Gültigkeit laut Tabellenspalten",
+      "sha256": "800f80cbd4adfbd255a154df891b3049da3c8d2100b5855f8e2875115a019495"
+    },
+    {
+      "id": "tvl-kr-tdl-tv-l-2026",
+      "title": "TdL TV-L, Fassung des Änderungstarifvertrags Nr. 14 vom 14.02.2026",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/260812_TV-L__i.d.F._des_%C3%84TV_Nr._14_VT.pdf",
+      "documentDate": "2026-02-14",
+      "section": "§ 6 Abs. 1 b/c; § 7 Abs. 5, 7–8; § 8 Abs. 2; § 24 Abs. 2–4; § 38 Abs. 5; § 43 Nr. 1, Nr. 5, Nr. 5a, Nr. 8 und Nr. 9",
+      "sha256": "05de64ee356df189690875a491e5d52d8ac8171328b43f7fd401d8b0c04f94f9"
+    },
+    {
+      "id": "tvl-kr-tdl-kr-2025-11",
+      "title": "TdL Anlage C · KR-Monatsentgelte ab 2025-11-01",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/TV-L_Anlagen/Entgelttabelle_f%C3%BCr_Pflegekr%C3%A4fte__Anlage_C___g%C3%BCltig_vom_01.11.2025_bis_31.03.2026.pdf",
+      "documentDate": "2025-11-01",
+      "section": "Anlage C · KR5–KR17, Monatsbeträge und Stufen; Datum bezeichnet Tabellenbeginn",
+      "sha256": "19aa5deb44e804c4b9df2667cac248ef63d62f289ecae8ddd8cd59a937aa021a"
+    },
+    {
+      "id": "tvl-kr-pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "tvl-kr-tdl-kr-2026-04",
+      "title": "TdL Anlage C · KR-Monatsentgelte ab 2026-04-01",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/TV-L_Anlagen/Entgelttabelle_f%C3%BCr_Pflegekr%C3%A4fte__Anlage_C___g%C3%BCltig_vom_01.04.2026_bis_28.02.2027.pdf",
+      "documentDate": "2026-04-01",
+      "section": "Anlage C · KR5–KR17, Monatsbeträge und Stufen; Datum bezeichnet Tabellenbeginn",
+      "sha256": "8f35594396b5e27cc27726b2516e7ee6900d8eafb88d1a99cec0a575803353e1"
+    },
+    {
+      "id": "tvl-kr-tdl-kr-2027-03",
+      "title": "TdL Anlage C · KR-Monatsentgelte ab 2027-03-01",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/TV-L_Anlagen/Entgelttabelle_f%C3%BCr_Pflegekr%C3%A4fte__Anlage_C___g%C3%BCltig_vom_01.03.2027_bis_31.12.2027.pdf",
+      "documentDate": "2027-03-01",
+      "section": "Anlage C · KR5–KR17, Monatsbeträge und Stufen; Datum bezeichnet Tabellenbeginn",
+      "sha256": "4916baca03e39947d5f8b9414add0f9d1ece52576efbe8d7bd4eb0f86587471c"
+    },
+    {
+      "id": "tvl-kr-tdl-kr-2028-01",
+      "title": "TdL Anlage C · KR-Monatsentgelte ab 2028-01-01",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/TV-L_Anlagen/Entgelttabelle_f%C3%BCr_Pflegekr%C3%A4fte__Anlage_C___g%C3%BCltig_ab_01.01.2028.pdf",
+      "documentDate": "2028-01-01",
+      "section": "Anlage C · KR5–KR17, Monatsbeträge und Stufen; Datum bezeichnet Tabellenbeginn",
+      "sha256": "37ea44991934622906c4b7eef49bac371662a30c4f2416231353d495c3b71f41"
+    },
+    {
+      "id": "tval-pflege-tdl-tvl-annex-a-care",
+      "title": "TdL Entgeltordnung Anlage A, ÄTV 13; Abrufstand 22.09.2026",
+      "url": "https://www.tdl-online.de/fileadmin/user_upload/Anlage_A_i.d.F._des_%C3%84TV_Nr._13_Homepage.pdf",
+      "documentDate": "2026-09-22",
+      "section": "Teil IV Abschnitt 1 Vorbemerkungen 9–11 (S. 324–325), via TVA-L Pflege § 8 Abs. 5 a; Datum = Abrufstand",
+      "sha256": "e33de71f9abb6c1762a1288a0f742da5e2fc2d860282660c1dfe14b4f3e25bcf"
+    },
+    {
+      "id": "tval-pflege-tdl-tvl-annex-f-care",
+      "title": "TdL Anlage F, Schwerbrandpflege 2025–2028; Abrufstand 22.09.2026",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/TV-L_Anlagen/TV-L_Anlage_F_neu.pdf",
+      "documentDate": "2026-09-22",
+      "section": "Abschnitt IV Nr. 1, S. 4; Beschäftigtenbetrag vor Ausbildungsanteil; Datum = Abrufstand",
+      "sha256": "800f80cbd4adfbd255a154df891b3049da3c8d2100b5855f8e2875115a019495"
+    },
+    {
+      "id": "tval-pflege-tdl-tval-pflege-2026",
+      "title": "TdL TVA-L Pflege, Änderungstarifvertrag 13 vom 14.02.2026",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-Ausbildung/TVA-L-Pflege/260804_TVA-L_Pflege_i.d.F._des_%C3%84TV_Nr._13.pdf",
+      "documentDate": "2026-02-14",
+      "section": "§§ 1, 7, 8 und 16; Kategorieerweiterung ab 01.01.2027; vollständige Zulagen-/Jahresanbindung noch offen",
+      "sha256": "0d6e0db4974150534f96cc5745a93330c8b4f6524629753cb09607e4e80eb1c4"
+    },
+    {
+      "id": "tval-pflege-tdl-tv-l-2026",
+      "title": "TdL TV-L, Fassung des Änderungstarifvertrags Nr. 14 vom 14.02.2026",
+      "url": "https://www.tdl-online.de/fileadmin/downloads/TV-L/260812_TV-L__i.d.F._des_%C3%84TV_Nr._14_VT.pdf",
+      "documentDate": "2026-02-14",
+      "section": "§ 6 Abs. 1 b/c; § 7 Abs. 5, 7–8; § 8 Abs. 2; § 24 Abs. 2–4; § 38 Abs. 5; § 43 Nr. 1, Nr. 5, Nr. 5a, Nr. 8 und Nr. 9",
+      "sha256": "05de64ee356df189690875a491e5d52d8ac8171328b43f7fd401d8b0c04f94f9"
+    },
+    {
+      "id": "tval-pflege-pflegeshift-tariff-assessment-v1",
+      "title": "PflegeShift Legacy-Auslegungslogik für Schichtmuster",
+      "url": "https://github.com/vladularu/PflegeShift/blob/fea614ca2fa448776e9363fb752904698a65c4bb/src/engine/pay.ts",
+      "documentDate": "2026-08-28",
+      "section": "Produktheuristik vor WP2; keine normative Tarifquelle",
+      "sha256": "174d62dca8a7914e37fa1d5d7adf1e7b7d799ecf851b4a8216a480d95a272681"
+    },
+    {
+      "id": "tvh-kr-2025-08-01",
+      "title": "Land Hessen: Entgelttabelle Pflege",
+      "url": "https://innen.hessen.de/sites/innen.hessen.de/files/2026-06/entgelte_zulagen_und_zuschlaege_fuer_pflegekraefte_ab_1-august_2025.pdf",
+      "sha256": "964a7bfb18873318a04f4c454fbbb5b61b5146e8107df212f2fd494c69a537c2",
+      "documentDate": "2025-08-01",
+      "section": "Monatstabelle, Tabellenstand 2025-08-01, PDF-Seite 1"
+    },
+    {
+      "id": "tvh-kr-2026-07-01",
+      "title": "Land Hessen: Entgelttabelle Pflege",
+      "url": "https://innen.hessen.de/sites/innen.hessen.de/files/2026-06/entgelte_zulagen_und_zuschlaege_fuer_pflegekraefte_ab_1-juli_2026.pdf",
+      "sha256": "2a33ed4075eb9b083058785fba7ef3972a1ba3b1f112c9b3add949fe5b46c3b7",
+      "documentDate": "2026-07-01",
+      "section": "Monatstabelle, Tabellenstand 2026-07-01, PDF-Seite 1"
+    },
+    {
+      "id": "tvh-kr-2027-10-01",
+      "title": "Land Hessen: Entgelttabelle Pflege",
+      "url": "https://innen.hessen.de/sites/innen.hessen.de/files/2026-06/entgelte_zulagen_und_zuschlaege_fuer_pflegekraefte_ab_1-oktober_2027.pdf",
+      "sha256": "649965f15af4edc02334f5e33ffd448f598f10d0fa51c211df1d744c950ab90d",
+      "documentDate": "2027-10-01",
+      "section": "Monatstabelle, Tabellenstand 2027-10-01, PDF-Seite 1"
+    },
+    {
+      "id": "tvuk-puk-2024-10-01",
+      "title": "AGU Baden-Wuerttemberg: Entgelttabelle Pflege",
+      "url": "https://agu-uniklinika.de/wp-content/uploads/2024/11/18_Entgelt-Pflegetabelle-ab-1.-Oktober-2024-bzw.-1.-Oktober-2025.pdf",
+      "sha256": "8f41283a72a59d4bc8ea0d238b57abc76f58e74d8db98f8d23b4d21d0e587b24",
+      "documentDate": "2024-10-01",
+      "section": "Anlage B, Tabellenstand 2024-10-01, PDF-Seite 3"
+    },
+    {
+      "id": "tvuk-puk-2025-10-01",
+      "title": "AGU Baden-Wuerttemberg: Entgelttabelle Pflege",
+      "url": "https://agu-uniklinika.de/wp-content/uploads/2024/11/18_Entgelt-Pflegetabelle-ab-1.-Oktober-2024-bzw.-1.-Oktober-2025.pdf",
+      "sha256": "8f41283a72a59d4bc8ea0d238b57abc76f58e74d8db98f8d23b4d21d0e587b24",
+      "documentDate": "2025-10-01",
+      "section": "Anlage B, Tabellenstand 2025-10-01, PDF-Seite 4"
+    },
+    {
+      "id": "tvuk-puk-2026-10-01",
+      "title": "AGU Baden-Wuerttemberg: Entgelttabelle Pflege",
+      "url": "https://agu-uniklinika.de/wp-content/uploads/2026/10/19_Entgelt-Pflegetabelle-ab-1.-Oktober-2026-bzw.-01.-Dezember-2027-bzw.-01.-Juli-2028.pdf",
+      "sha256": "82b86dc7a985f2ddbe80d1865e74d5b6cb7f47cd6df5c11eebf92ff93d0b422e",
+      "documentDate": "2026-10-01",
+      "section": "Anlage B, Tabellenstand 2026-10-01, PDF-Seite 4"
+    },
+    {
+      "id": "tvuk-puk-2027-12-01",
+      "title": "AGU Baden-Wuerttemberg: Entgelttabelle Pflege",
+      "url": "https://agu-uniklinika.de/wp-content/uploads/2026/10/19_Entgelt-Pflegetabelle-ab-1.-Oktober-2026-bzw.-01.-Dezember-2027-bzw.-01.-Juli-2028.pdf",
+      "sha256": "82b86dc7a985f2ddbe80d1865e74d5b6cb7f47cd6df5c11eebf92ff93d0b422e",
+      "documentDate": "2027-12-01",
+      "section": "Anlage B, Tabellenstand 2027-12-01, PDF-Seite 5"
+    },
+    {
+      "id": "tvuk-puk-2028-07-01",
+      "title": "AGU Baden-Wuerttemberg: Entgelttabelle Pflege",
+      "url": "https://agu-uniklinika.de/wp-content/uploads/2026/10/19_Entgelt-Pflegetabelle-ab-1.-Oktober-2026-bzw.-01.-Dezember-2027-bzw.-01.-Juli-2028.pdf",
+      "sha256": "82b86dc7a985f2ddbe80d1865e74d5b6cb7f47cd6df5c11eebf92ff93d0b422e",
+      "documentDate": "2028-07-01",
+      "section": "Anlage B, Tabellenstand 2028-07-01, PDF-Seite 6"
+    }
+  ],
+  "review": {
+    "status": "REVIEWED",
+    "reviewedBy": "owner-authorized-accepted-data-preservation",
+    "reviewedAt": "2026-10-06T02:50:23Z",
+    "gitCommit": "f1a10f00c0ec0bb97cf2a30ed6bf5936c212d5b0"
+  },
+  "rounding": {
+    "moneyScale": 2,
+    "mode": "HALF_UP",
+    "stage": "PER_LINE"
+  },
+  "rules": {
+    "selection": {
+      "familyId": "tvoed-p",
+      "engineId": "tvoed-p-v3",
+      "employmentKind": "EMPLOYEE",
+      "variants": [
+        {
+          "id": "BT_K",
+          "label": "Krankenhaus · BT-K",
+          "specialPartId": "bt-k",
+          "sourceIds": ["vka-tvoed-hospitals-2026"],
+          "regions": [
+            {
+              "id": "OTHER",
+              "label": "Übrige VKA-Tarifgebiete",
+              "sourceIds": ["vka-tvoed-hospitals-2026"]
+            },
+            {
+              "id": "KAV_BW",
+              "label": "KAV Baden-Württemberg",
+              "sourceIds": ["vka-tvoed-hospitals-2026"]
+            }
+          ]
+        },
+        {
+          "id": "BT_B",
+          "label": "Pflege und Betreuung · BT-B",
+          "specialPartId": "bt-b",
+          "sourceIds": ["vka-tvoed-care-2026"],
+          "regions": [
+            {
+              "id": "OTHER",
+              "label": "Übrige VKA-Tarifgebiete",
+              "sourceIds": ["vka-tvoed-care-2026"]
+            },
+            {
+              "id": "KAV_BW",
+              "label": "KAV Baden-Württemberg",
+              "sourceIds": ["vka-tvoed-care-2026"]
+            }
+          ]
+        }
+      ],
+      "capabilities": {
+        "basePay": "SUPPORTED",
+        "timePremiums": "SUPPORTED",
+        "allowances": "SUPPORTED",
+        "overtime": "SUPPORTED",
+        "annualPayment": "SUPPORTED"
+      }
+    },
+    "selector": {
+      "agreementId": "tvoed-vka",
+      "specialPartIds": ["bt-k", "bt-b"],
+      "payTableId": "p-2026-05"
+    },
+    "payTables": [
+      {
+        "id": "p-2026-05",
+        "entries": [
+          {
+            "groupId": "p5",
+            "stepId": "s1",
+            "monthlyCents": 290718
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s2",
+            "monthlyCents": 314633
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s3",
+            "monthlyCents": 321662
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s4",
+            "monthlyCents": 333409
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s5",
+            "monthlyCents": 342222
+          },
+          {
+            "groupId": "p5",
+            "stepId": "s6",
+            "monthlyCents": 362925
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s1",
+            "monthlyCents": 301249
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s2",
+            "monthlyCents": 318741
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s3",
+            "monthlyCents": 336347
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s4",
+            "monthlyCents": 373795
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s5",
+            "monthlyCents": 383341
+          },
+          {
+            "groupId": "p6",
+            "stepId": "s6",
+            "monthlyCents": 401341
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s2",
+            "monthlyCents": 351030
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s3",
+            "monthlyCents": 370121
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s4",
+            "monthlyCents": 399833
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s5",
+            "monthlyCents": 414959
+          },
+          {
+            "groupId": "p7",
+            "stepId": "s6",
+            "monthlyCents": 430540
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s2",
+            "monthlyCents": 370121
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s3",
+            "monthlyCents": 386280
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s4",
+            "monthlyCents": 407558
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s5",
+            "monthlyCents": 424792
+          },
+          {
+            "groupId": "p8",
+            "stepId": "s6",
+            "monthlyCents": 448898
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s2",
+            "monthlyCents": 399239
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s3",
+            "monthlyCents": 418440
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s4",
+            "monthlyCents": 431238
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s5",
+            "monthlyCents": 455859
+          },
+          {
+            "groupId": "p9",
+            "stepId": "s6",
+            "monthlyCents": 466242
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s2",
+            "monthlyCents": 418440
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s3",
+            "monthlyCents": 431238
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s4",
+            "monthlyCents": 467542
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s5",
+            "monthlyCents": 485063
+          },
+          {
+            "groupId": "p10",
+            "stepId": "s6",
+            "monthlyCents": 496096
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s2",
+            "monthlyCents": 441971
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s3",
+            "monthlyCents": 455730
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s4",
+            "monthlyCents": 490127
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s5",
+            "monthlyCents": 512969
+          },
+          {
+            "groupId": "p11",
+            "stepId": "s6",
+            "monthlyCents": 523354
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s2",
+            "monthlyCents": 465722
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s3",
+            "monthlyCents": 480261
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s4",
+            "monthlyCents": 516604
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s5",
+            "monthlyCents": 538929
+          },
+          {
+            "groupId": "p12",
+            "stepId": "s6",
+            "monthlyCents": 549313
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s2",
+            "monthlyCents": 489478
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s3",
+            "monthlyCents": 504794
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s4",
+            "monthlyCents": 543082
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s5",
+            "monthlyCents": 570728
+          },
+          {
+            "groupId": "p13",
+            "stepId": "s6",
+            "monthlyCents": 577868
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s2",
+            "monthlyCents": 501353
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s3",
+            "monthlyCents": 517059
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s4",
+            "monthlyCents": 556322
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s5",
+            "monthlyCents": 609668
+          },
+          {
+            "groupId": "p14",
+            "stepId": "s6",
+            "monthlyCents": 619402
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s2",
+            "monthlyCents": 513229
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s3",
+            "monthlyCents": 529323
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s4",
+            "monthlyCents": 569560
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s5",
+            "monthlyCents": 617716
+          },
+          {
+            "groupId": "p15",
+            "stepId": "s6",
+            "monthlyCents": 636106
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s2",
+            "monthlyCents": 524004
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s3",
+            "monthlyCents": 541590
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s4",
+            "monthlyCents": 598376
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s5",
+            "monthlyCents": 664571
+          },
+          {
+            "groupId": "p16",
+            "stepId": "s6",
+            "monthlyCents": 693770
+          }
+        ],
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      }
+    ],
+    "overtimeBaseRule": {
+      "maximumStepId": "s4",
+      "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+    },
+    "premiumRules": [
+      {
+        "id": "night",
+        "label": "Nacht",
+        "premiumType": "NIGHT",
+        "percentageBasisPoints": 2000,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": {
+          "startMinute": 1260,
+          "endMinute": 360
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "sunday",
+        "label": "Sonntag",
+        "premiumType": "SUNDAY",
+        "percentageBasisPoints": 2500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "holiday-with-time-off",
+        "label": "Feiertag mit Freizeitausgleich",
+        "premiumType": "HOLIDAY_WITH_TIME_OFF",
+        "percentageBasisPoints": 3500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": ["WITH_TIME_OFF"],
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "holiday-without-time-off",
+        "label": "Feiertag ohne Freizeitausgleich",
+        "premiumType": "HOLIDAY_WITHOUT_TIME_OFF",
+        "percentageBasisPoints": 13500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": ["WITHOUT_TIME_OFF"],
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "saturday",
+        "label": "Samstag 13–21 Uhr",
+        "premiumType": "SATURDAY",
+        "percentageBasisPoints": 2000,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": {
+          "startMinute": 780,
+          "endMinute": 1260
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "pre-holiday",
+        "label": "24./31. Dezember",
+        "premiumType": "PRE_HOLIDAY",
+        "percentageBasisPoints": 3500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": {
+          "startMinute": 360,
+          "endMinute": 0
+        },
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": ["12-24", "12-31"]
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "overtime-p5-p11",
+        "label": "Ueberstunden P5-P11",
+        "premiumType": "OVERTIME",
+        "percentageBasisPoints": 3000,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": ["p5", "p6", "p7", "p8", "p9", "p10", "p11"],
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "overtime-p12-p16",
+        "label": "Ueberstunden P12-P16",
+        "premiumType": "OVERTIME",
+        "percentageBasisPoints": 1500,
+        "rateBasis": "TABLE_STEP",
+        "referenceStepId": "s3",
+        "timeWindow": null,
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": ["p12", "p13", "p14", "p15", "p16"],
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      }
+    ],
+    "allowanceRules": [
+      {
+        "id": "shift-monthly-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 10000,
+        "prorateByPartTime": true,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "alternating-monthly-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 25000,
+        "prorateByPartTime": true,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_MONTHLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "shift-hourly-bt-k-non-bw-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 60,
+        "prorateByPartTime": false,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": null,
+          "tariffRegions": ["OTHER"],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "shift-hourly-other-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 59,
+        "prorateByPartTime": false,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": null,
+          "tariffRegions": ["KAV_BW"],
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "shift-hourly-bt-b-current",
+        "allowanceType": "shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 59,
+        "prorateByPartTime": false,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["SHIFT_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-care-2026"]
+      },
+      {
+        "id": "alternating-hourly-bt-k-non-bw-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 149,
+        "prorateByPartTime": false,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null,
+          "tariffRegions": ["OTHER"]
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "alternating-hourly-other-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 147,
+        "prorateByPartTime": false,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_K"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null,
+          "tariffRegions": ["KAV_BW"]
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "alternating-hourly-bt-b-current",
+        "allowanceType": "alternating-shift",
+        "amountKind": "FIXED_HOURLY",
+        "amountCents": 147,
+        "prorateByPartTime": false,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": ["BT_B"],
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": ["ALTERNATING_HOURLY"],
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-care-2026"]
+      },
+      {
+        "id": "care-monthly",
+        "allowanceType": "care",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 14182,
+        "prorateByPartTime": true,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "tvoed-monthly-bw",
+        "allowanceType": "tvoed",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 3500,
+        "prorateByPartTime": true,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null,
+          "tariffRegions": ["KAV_BW"]
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      },
+      {
+        "id": "tvoed-monthly-other",
+        "allowanceType": "tvoed",
+        "amountKind": "FIXED_MONTHLY",
+        "amountCents": 2500,
+        "prorateByPartTime": true,
+        "validFrom": "2026-05-01",
+        "validTo": "2027-03-31",
+        "conditions": {
+          "requiresShiftTypes": [],
+          "excludesShiftTypes": [],
+          "payGroups": null,
+          "sectors": null,
+          "federalStates": null,
+          "holidayPremiumModes": null,
+          "allowanceStatuses": null,
+          "monthDays": null,
+          "tariffRegions": ["OTHER"]
+        },
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      }
+    ],
+    "combinationRules": [
+      {
+        "id": "calendar-day-priority",
+        "memberRuleIds": [
+          "holiday-without-time-off",
+          "holiday-with-time-off",
+          "pre-holiday",
+          "sunday",
+          "saturday"
+        ],
+        "mode": "PRIORITY",
+        "priorityRuleIds": [
+          "holiday-without-time-off",
+          "holiday-with-time-off",
+          "pre-holiday",
+          "sunday",
+          "saturday"
+        ],
+        "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+      }
+    ],
+    "workPatternRules": [],
+    "workPatternPolicy": {
+      "nightWindow": {
+        "startMinute": 1260,
+        "endMinute": 360
+      },
+      "nightQualificationMinutes": 120,
+      "recurringNightShiftCount": 3,
+      "recurringWindowMonths": 1,
+      "regularChangeCount": 2,
+      "shiftWorkMinimumShifts": 4,
+      "shiftWorkMinimumWindows": 2,
+      "alternatingMinimumShifts": 5,
+      "alternatingMinimumWindows": 3,
+      "assessmentLookbackMonths": 2,
+      "shiftWindowBoundaries": {
+        "nightEndMinute": 360,
+        "earlyEndMinute": 660,
+        "dayEndMinute": 900,
+        "nightStartMinute": 1200
+      },
+      "sourceIds": [
+        "vka-tvoed-hospitals-2026",
+        "vka-tvoed-care-2026",
+        "pflegeshift-tariff-assessment-v1"
+      ]
+    },
+    "weeklyWorkingTimeRules": [
+      {
+        "id": "bt-k-kav-bw",
+        "sectors": ["BT_K"],
+        "tariffRegions": ["KAV_BW"],
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "bt-k-other",
+        "sectors": ["BT_K"],
+        "tariffRegions": ["OTHER"],
+        "fullTimeWeeklyMinutes": 2310,
+        "sourceIds": ["vka-tvoed-hospitals-2026"]
+      },
+      {
+        "id": "bt-b",
+        "sectors": ["BT_B"],
+        "tariffRegions": ["KAV_BW", "OTHER"],
+        "fullTimeWeeklyMinutes": 2340,
+        "sourceIds": ["vka-tvoed-care-2026"]
+      }
+    ],
+    "hourlyCalculation": {
+      "monthlyFactorThousandths": 4348,
+      "rounding": "HALF_UP",
+      "sourceIds": ["vka-tvoed-hospitals-2026", "vka-tvoed-care-2026"]
+    },
+    "annualPaymentRules": [
+      {
+        "id": "bt-k-annual-0",
+        "variantId": "BT_K",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["p5", "p6", "p7", "p8"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 9000,
+        "referenceMonths": [7, 8, 9],
+        "lateEntryAfterMonth": 9,
+        "basisPolicy": "TVOED_VKA_20",
+        "eligibilityPolicy": "BT_K_EARLY_EXIT",
+        "reductionPolicy": "TVOED_VKA_20",
+        "earlyExitBasis": "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvoed-annual-bt-k-2026"]
+      },
+      {
+        "id": "bt-k-annual-1",
+        "variantId": "BT_K",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 8500,
+        "referenceMonths": [7, 8, 9],
+        "lateEntryAfterMonth": 9,
+        "basisPolicy": "TVOED_VKA_20",
+        "eligibilityPolicy": "BT_K_EARLY_EXIT",
+        "reductionPolicy": "TVOED_VKA_20",
+        "earlyExitBasis": "LAST_FULL_MONTH_TABLE_AND_FIXED_ALLOWANCES",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvoed-annual-bt-k-2026"]
+      },
+      {
+        "id": "bt-b-annual-0",
+        "variantId": "BT_B",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["p5", "p6", "p7", "p8"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 9000,
+        "referenceMonths": [7, 8, 9],
+        "lateEntryAfterMonth": 9,
+        "basisPolicy": "TVOED_VKA_20",
+        "eligibilityPolicy": "EMPLOYED_DECEMBER_1",
+        "reductionPolicy": "TVOED_VKA_20",
+        "earlyExitBasis": "NONE",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvoed-annual-bt-b-2026"]
+      },
+      {
+        "id": "bt-b-annual-1",
+        "variantId": "BT_B",
+        "regionIds": ["OTHER", "KAV_BW"],
+        "payGroups": ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"],
+        "firstEntitlementYear": 2026,
+        "lastEntitlementYear": 2026,
+        "rateBasisPoints": 8500,
+        "referenceMonths": [7, 8, 9],
+        "lateEntryAfterMonth": 9,
+        "basisPolicy": "TVOED_VKA_20",
+        "eligibilityPolicy": "EMPLOYED_DECEMBER_1",
+        "reductionPolicy": "TVOED_VKA_20",
+        "earlyExitBasis": "NONE",
+        "payoutMonth": 11,
+        "sourceIds": ["vka-tvoed-annual-bt-b-2026"]
+      }
+    ],
+    "simpleTariffTables": {
+      "contractVersion": 1,
+      "sourceCommit": "22aebac2b20d8dc6bde471f59e0827adea30541c",
+      "tables": [
+        {
+          "tariffId": "TVOED_VKA_E",
+          "validFrom": "2025-04-01",
+          "validTo": "2026-04-30",
+          "sourceIds": [
+            "tvoed-vka-e-vka-tvoed-annex-a-2025-2026",
+            "tvoed-vka-e-vka-tvoed-care-2026"
+          ],
+          "entries": [
+            {
+              "groupId": "eg1",
+              "stepId": "s2",
+              "monthlyCents": 246552
+            },
+            {
+              "groupId": "eg1",
+              "stepId": "s3",
+              "monthlyCents": 249886
+            },
+            {
+              "groupId": "eg1",
+              "stepId": "s4",
+              "monthlyCents": 254055
+            },
+            {
+              "groupId": "eg1",
+              "stepId": "s5",
+              "monthlyCents": 257942
+            },
+            {
+              "groupId": "eg1",
+              "stepId": "s6",
+              "monthlyCents": 267947
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s1",
+              "monthlyCents": 401219
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s2",
+              "monthlyCents": 431728
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s3",
+              "monthlyCents": 466410
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s4",
+              "monthlyCents": 504024
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s5",
+              "monthlyCents": 545910
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s6",
+              "monthlyCents": 559664
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s1",
+              "monthlyCents": 415335
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s2",
+              "monthlyCents": 454272
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s3",
+              "monthlyCents": 490859
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s4",
+              "monthlyCents": 530554
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s5",
+              "monthlyCents": 584879
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s6",
+              "monthlyCents": 615445
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s1",
+              "monthlyCents": 429543
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s2",
+              "monthlyCents": 471878
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s3",
+              "monthlyCents": 521352
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s4",
+              "monthlyCents": 576247
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s5",
+              "monthlyCents": 640661
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s6",
+              "monthlyCents": 671224
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s1",
+              "monthlyCents": 476762
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s2",
+              "monthlyCents": 513553
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s3",
+              "monthlyCents": 555435
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s4",
+              "monthlyCents": 600906
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s5",
+              "monthlyCents": 654414
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s6",
+              "monthlyCents": 683450
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s1",
+              "monthlyCents": 515396
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s2",
+              "monthlyCents": 548964
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s3",
+              "monthlyCents": 592803
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s4",
+              "monthlyCents": 641451
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s5",
+              "monthlyCents": 695678
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s6",
+              "monthlyCents": 734609
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s1",
+              "monthlyCents": 566912
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s2",
+              "monthlyCents": 603984
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s3",
+              "monthlyCents": 645336
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s4",
+              "monthlyCents": 701789
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s5",
+              "monthlyCents": 759861
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s6",
+              "monthlyCents": 798065
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s1",
+              "monthlyCents": 269216
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s2",
+              "monthlyCents": 289428
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s3",
+              "monthlyCents": 294467
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s4",
+              "monthlyCents": 301658
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s5",
+              "monthlyCents": 317463
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s6",
+              "monthlyCents": 333997
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s1",
+              "monthlyCents": 287269
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s2",
+              "monthlyCents": 307802
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s3",
+              "monthlyCents": 312799
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s4",
+              "monthlyCents": 324221
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s5",
+              "monthlyCents": 332792
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s6",
+              "monthlyCents": 340643
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s1",
+              "monthlyCents": 291262
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s2",
+              "monthlyCents": 310355
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s3",
+              "monthlyCents": 326375
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s4",
+              "monthlyCents": 336348
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s5",
+              "monthlyCents": 346320
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s6",
+              "monthlyCents": 352160
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s1",
+              "monthlyCents": 303899
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s2",
+              "monthlyCents": 322767
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s3",
+              "monthlyCents": 335511
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s4",
+              "monthlyCents": 349006
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s5",
+              "monthlyCents": 361547
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s6",
+              "monthlyCents": 368028
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s1",
+              "monthlyCents": 315204
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s2",
+              "monthlyCents": 334655
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s3",
+              "monthlyCents": 348294
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s4",
+              "monthlyCents": 361792
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s5",
+              "monthlyCents": 375049
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s6",
+              "monthlyCents": 381926
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s1",
+              "monthlyCents": 320523
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s2",
+              "monthlyCents": 344158
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s3",
+              "monthlyCents": 358238
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s4",
+              "monthlyCents": 372447
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s5",
+              "monthlyCents": 386094
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s6",
+              "monthlyCents": 393506
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s1",
+              "monthlyCents": 339144
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s2",
+              "monthlyCents": 359659
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s3",
+              "monthlyCents": 373868
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s4",
+              "monthlyCents": 388366
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s5",
+              "monthlyCents": 404037
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s6",
+              "monthlyCents": 411573
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s1",
+              "monthlyCents": 355896
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s2",
+              "monthlyCents": 377232
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s3",
+              "monthlyCents": 398606
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s4",
+              "monthlyCents": 446184
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s5",
+              "monthlyCents": 456948
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s6",
+              "monthlyCents": 484433
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s1",
+              "monthlyCents": 367689
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s2",
+              "monthlyCents": 392900
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s3",
+              "monthlyCents": 408907
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s4",
+              "monthlyCents": 456279
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s5",
+              "monthlyCents": 484349
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s6",
+              "monthlyCents": 516865
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s1",
+              "monthlyCents": 390148
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s2",
+              "monthlyCents": 417364
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s3",
+              "monthlyCents": 446961
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s4",
+              "monthlyCents": 478853
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s5",
+              "monthlyCents": 513137
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s6",
+              "monthlyCents": 537714
+            }
+          ]
+        },
+        {
+          "tariffId": "TVOED_VKA_E",
+          "validFrom": "2026-05-01",
+          "validTo": "2027-03-31",
+          "sourceIds": [
+            "tvoed-vka-e-vka-tvoed-annex-a-2025-2026",
+            "tvoed-vka-e-vka-tvoed-care-2026"
+          ],
+          "entries": [
+            {
+              "groupId": "eg1",
+              "stepId": "s2",
+              "monthlyCents": 253455
+            },
+            {
+              "groupId": "eg1",
+              "stepId": "s3",
+              "monthlyCents": 256883
+            },
+            {
+              "groupId": "eg1",
+              "stepId": "s4",
+              "monthlyCents": 261169
+            },
+            {
+              "groupId": "eg1",
+              "stepId": "s5",
+              "monthlyCents": 265164
+            },
+            {
+              "groupId": "eg1",
+              "stepId": "s6",
+              "monthlyCents": 275450
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s1",
+              "monthlyCents": 412453
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s2",
+              "monthlyCents": 443816
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s3",
+              "monthlyCents": 479469
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s4",
+              "monthlyCents": 518137
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s5",
+              "monthlyCents": 561195
+            },
+            {
+              "groupId": "eg10",
+              "stepId": "s6",
+              "monthlyCents": 575335
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s1",
+              "monthlyCents": 426964
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s2",
+              "monthlyCents": 466992
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s3",
+              "monthlyCents": 504603
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s4",
+              "monthlyCents": 545410
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s5",
+              "monthlyCents": 601256
+            },
+            {
+              "groupId": "eg11",
+              "stepId": "s6",
+              "monthlyCents": 632677
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s1",
+              "monthlyCents": 441570
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s2",
+              "monthlyCents": 485091
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s3",
+              "monthlyCents": 535950
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s4",
+              "monthlyCents": 592382
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s5",
+              "monthlyCents": 658600
+            },
+            {
+              "groupId": "eg12",
+              "stepId": "s6",
+              "monthlyCents": 690018
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s1",
+              "monthlyCents": 490111
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s2",
+              "monthlyCents": 527932
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s3",
+              "monthlyCents": 570987
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s4",
+              "monthlyCents": 617731
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s5",
+              "monthlyCents": 672738
+            },
+            {
+              "groupId": "eg13",
+              "stepId": "s6",
+              "monthlyCents": 702587
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s1",
+              "monthlyCents": 529827
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s2",
+              "monthlyCents": 564335
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s3",
+              "monthlyCents": 609401
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s4",
+              "monthlyCents": 659412
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s5",
+              "monthlyCents": 715157
+            },
+            {
+              "groupId": "eg14",
+              "stepId": "s6",
+              "monthlyCents": 755178
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s1",
+              "monthlyCents": 582786
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s2",
+              "monthlyCents": 620896
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s3",
+              "monthlyCents": 663405
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s4",
+              "monthlyCents": 721439
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s5",
+              "monthlyCents": 781137
+            },
+            {
+              "groupId": "eg15",
+              "stepId": "s6",
+              "monthlyCents": 820411
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s1",
+              "monthlyCents": 276754
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s2",
+              "monthlyCents": 297532
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s3",
+              "monthlyCents": 302712
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s4",
+              "monthlyCents": 310104
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s5",
+              "monthlyCents": 326352
+            },
+            {
+              "groupId": "eg2",
+              "stepId": "s6",
+              "monthlyCents": 343349
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s1",
+              "monthlyCents": 295313
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s2",
+              "monthlyCents": 316420
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s3",
+              "monthlyCents": 321557
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s4",
+              "monthlyCents": 333299
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s5",
+              "monthlyCents": 342110
+            },
+            {
+              "groupId": "eg3",
+              "stepId": "s6",
+              "monthlyCents": 350181
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s1",
+              "monthlyCents": 299417
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s2",
+              "monthlyCents": 319045
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s3",
+              "monthlyCents": 335514
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s4",
+              "monthlyCents": 345766
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s5",
+              "monthlyCents": 356017
+            },
+            {
+              "groupId": "eg4",
+              "stepId": "s6",
+              "monthlyCents": 362020
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s1",
+              "monthlyCents": 312408
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s2",
+              "monthlyCents": 331804
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s3",
+              "monthlyCents": 344905
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s4",
+              "monthlyCents": 358778
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s5",
+              "monthlyCents": 371670
+            },
+            {
+              "groupId": "eg5",
+              "stepId": "s6",
+              "monthlyCents": 378333
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s1",
+              "monthlyCents": 324030
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s2",
+              "monthlyCents": 344025
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s3",
+              "monthlyCents": 358046
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s4",
+              "monthlyCents": 371922
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s5",
+              "monthlyCents": 385550
+            },
+            {
+              "groupId": "eg6",
+              "stepId": "s6",
+              "monthlyCents": 392620
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s1",
+              "monthlyCents": 329498
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s2",
+              "monthlyCents": 353794
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s3",
+              "monthlyCents": 368269
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s4",
+              "monthlyCents": 382876
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s5",
+              "monthlyCents": 396905
+            },
+            {
+              "groupId": "eg7",
+              "stepId": "s6",
+              "monthlyCents": 404524
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s1",
+              "monthlyCents": 348640
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s2",
+              "monthlyCents": 369729
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s3",
+              "monthlyCents": 384336
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s4",
+              "monthlyCents": 399240
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s5",
+              "monthlyCents": 415350
+            },
+            {
+              "groupId": "eg8",
+              "stepId": "s6",
+              "monthlyCents": 423097
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s1",
+              "monthlyCents": 365861
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s2",
+              "monthlyCents": 387794
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s3",
+              "monthlyCents": 409767
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s4",
+              "monthlyCents": 458677
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s5",
+              "monthlyCents": 469743
+            },
+            {
+              "groupId": "eg9a",
+              "stepId": "s6",
+              "monthlyCents": 497997
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s1",
+              "monthlyCents": 377984
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s2",
+              "monthlyCents": 403901
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s3",
+              "monthlyCents": 420356
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s4",
+              "monthlyCents": 469055
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s5",
+              "monthlyCents": 497911
+            },
+            {
+              "groupId": "eg9b",
+              "stepId": "s6",
+              "monthlyCents": 531337
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s1",
+              "monthlyCents": 401072
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s2",
+              "monthlyCents": 429050
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s3",
+              "monthlyCents": 459476
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s4",
+              "monthlyCents": 492261
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s5",
+              "monthlyCents": 527505
+            },
+            {
+              "groupId": "eg9c",
+              "stepId": "s6",
+              "monthlyCents": 552770
+            }
+          ]
+        },
+        {
+          "tariffId": "TVAOED_PFLEGE",
+          "validFrom": "2025-04-01",
+          "validTo": "2026-04-30",
+          "sourceIds": ["tvaoed-pflege-vka-tvaoed-pflege-2025"],
+          "entries": [
+            {
+              "groupId": "b",
+              "stepId": "s1",
+              "monthlyCents": 141569
+            },
+            {
+              "groupId": "b",
+              "stepId": "s2",
+              "monthlyCents": 147707
+            },
+            {
+              "groupId": "b",
+              "stepId": "s3",
+              "monthlyCents": 157838
+            }
+          ]
+        },
+        {
+          "tariffId": "TVAOED_PFLEGE",
+          "validFrom": "2026-05-01",
+          "validTo": "2027-03-31",
+          "sourceIds": ["tvaoed-pflege-vka-tvaoed-pflege-2025"],
+          "entries": [
+            {
+              "groupId": "b",
+              "stepId": "s1",
+              "monthlyCents": 149069
+            },
+            {
+              "groupId": "b",
+              "stepId": "s2",
+              "monthlyCents": 155207
+            },
+            {
+              "groupId": "b",
+              "stepId": "s3",
+              "monthlyCents": 165338
+            }
+          ]
+        },
+        {
+          "tariffId": "TVL_KR",
+          "validFrom": "2025-11-01",
+          "validTo": "2026-03-31",
+          "sourceIds": ["tvl-kr-tdl-kr-2025-11"],
+          "entries": [
+            {
+              "groupId": "kr10",
+              "stepId": "2",
+              "monthlyCents": 404933
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "3",
+              "monthlyCents": 417515
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "4",
+              "monthlyCents": 452753
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "5",
+              "monthlyCents": 469743
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "6",
+              "monthlyCents": 480440
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "2",
+              "monthlyCents": 427962
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "3",
+              "monthlyCents": 441300
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "4",
+              "monthlyCents": 474652
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "5",
+              "monthlyCents": 496800
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "6",
+              "monthlyCents": 506866
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "2",
+              "monthlyCents": 450990
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "3",
+              "monthlyCents": 465087
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "4",
+              "monthlyCents": 500322
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "5",
+              "monthlyCents": 521969
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "6",
+              "monthlyCents": 532035
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "2",
+              "monthlyCents": 474023
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "3",
+              "monthlyCents": 488873
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "4",
+              "monthlyCents": 525996
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "5",
+              "monthlyCents": 552801
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "6",
+              "monthlyCents": 559723
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "2",
+              "monthlyCents": 485537
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "3",
+              "monthlyCents": 500765
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "4",
+              "monthlyCents": 538835
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "5",
+              "monthlyCents": 590555
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "6",
+              "monthlyCents": 599993
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "2",
+              "monthlyCents": 497052
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "3",
+              "monthlyCents": 512656
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "4",
+              "monthlyCents": 551668
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "5",
+              "monthlyCents": 598357
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "6",
+              "monthlyCents": 616189
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "2",
+              "monthlyCents": 507499
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "3",
+              "monthlyCents": 524549
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "4",
+              "monthlyCents": 579609
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "5",
+              "monthlyCents": 643787
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "6",
+              "monthlyCents": 672098
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "2",
+              "monthlyCents": 519014
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "3",
+              "monthlyCents": 536441
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "4",
+              "monthlyCents": 592443
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "5",
+              "monthlyCents": 651590
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "6",
+              "monthlyCents": 688294
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "1",
+              "monthlyCents": 275229
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "2",
+              "monthlyCents": 300514
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "3",
+              "monthlyCents": 307823
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "4",
+              "monthlyCents": 319719
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "5",
+              "monthlyCents": 328642
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "6",
+              "monthlyCents": 349608
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "1",
+              "monthlyCents": 286358
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "2",
+              "monthlyCents": 304853
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "3",
+              "monthlyCents": 322692
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "4",
+              "monthlyCents": 360614
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "5",
+              "monthlyCents": 370280
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "6",
+              "monthlyCents": 388124
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "2",
+              "monthlyCents": 337561
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "3",
+              "monthlyCents": 356895
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "4",
+              "monthlyCents": 386641
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "5",
+              "monthlyCents": 401510
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "6",
+              "monthlyCents": 416829
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "2",
+              "monthlyCents": 356895
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "3",
+              "monthlyCents": 373257
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "4",
+              "monthlyCents": 394235
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "5",
+              "monthlyCents": 411179
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "6",
+              "monthlyCents": 434676
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "2",
+              "monthlyCents": 386055
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "3",
+              "monthlyCents": 404933
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "4",
+              "monthlyCents": 417515
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "5",
+              "monthlyCents": 441427
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "6",
+              "monthlyCents": 451495
+            }
+          ]
+        },
+        {
+          "tariffId": "TVL_KR",
+          "validFrom": "2026-04-01",
+          "validTo": "2027-02-28",
+          "sourceIds": ["tvl-kr-tdl-kr-2026-04"],
+          "entries": [
+            {
+              "groupId": "kr10",
+              "stepId": "2",
+              "monthlyCents": 416271
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "3",
+              "monthlyCents": 429205
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "4",
+              "monthlyCents": 465430
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "5",
+              "monthlyCents": 482896
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "6",
+              "monthlyCents": 493892
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "2",
+              "monthlyCents": 439945
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "3",
+              "monthlyCents": 453656
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "4",
+              "monthlyCents": 487942
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "5",
+              "monthlyCents": 510710
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "6",
+              "monthlyCents": 521058
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "2",
+              "monthlyCents": 463618
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "3",
+              "monthlyCents": 478109
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "4",
+              "monthlyCents": 514331
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "5",
+              "monthlyCents": 536584
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "6",
+              "monthlyCents": 546932
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "2",
+              "monthlyCents": 487296
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "3",
+              "monthlyCents": 502561
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "4",
+              "monthlyCents": 540724
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "5",
+              "monthlyCents": 568279
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "6",
+              "monthlyCents": 575395
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "2",
+              "monthlyCents": 499132
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "3",
+              "monthlyCents": 514786
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "4",
+              "monthlyCents": 553922
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "5",
+              "monthlyCents": 607091
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "6",
+              "monthlyCents": 616793
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "2",
+              "monthlyCents": 510969
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "3",
+              "monthlyCents": 527010
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "4",
+              "monthlyCents": 567115
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "5",
+              "monthlyCents": 615111
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "6",
+              "monthlyCents": 633442
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "2",
+              "monthlyCents": 521709
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "3",
+              "monthlyCents": 539236
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "4",
+              "monthlyCents": 595838
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "5",
+              "monthlyCents": 661813
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "6",
+              "monthlyCents": 690917
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "2",
+              "monthlyCents": 533546
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "3",
+              "monthlyCents": 551461
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "4",
+              "monthlyCents": 609031
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "5",
+              "monthlyCents": 669835
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "6",
+              "monthlyCents": 707566
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "1",
+              "monthlyCents": 285229
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "2",
+              "monthlyCents": 310514
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "3",
+              "monthlyCents": 317823
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "4",
+              "monthlyCents": 329719
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "5",
+              "monthlyCents": 338642
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "6",
+              "monthlyCents": 359608
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "1",
+              "monthlyCents": 296358
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "2",
+              "monthlyCents": 314853
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "3",
+              "monthlyCents": 332692
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "4",
+              "monthlyCents": 370711
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "5",
+              "monthlyCents": 380648
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "6",
+              "monthlyCents": 398991
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "2",
+              "monthlyCents": 347561
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "3",
+              "monthlyCents": 366895
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "4",
+              "monthlyCents": 397467
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "5",
+              "monthlyCents": 412752
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "6",
+              "monthlyCents": 428500
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "2",
+              "monthlyCents": 366895
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "3",
+              "monthlyCents": 383708
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "4",
+              "monthlyCents": 405274
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "5",
+              "monthlyCents": 422692
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "6",
+              "monthlyCents": 446847
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "2",
+              "monthlyCents": 396865
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "3",
+              "monthlyCents": 416271
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "4",
+              "monthlyCents": 429205
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "5",
+              "monthlyCents": 453787
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "6",
+              "monthlyCents": 464137
+            }
+          ]
+        },
+        {
+          "tariffId": "TVL_KR",
+          "validFrom": "2027-03-01",
+          "validTo": "2027-12-31",
+          "sourceIds": ["tvl-kr-tdl-kr-2027-03"],
+          "entries": [
+            {
+              "groupId": "kr10",
+              "stepId": "2",
+              "monthlyCents": 424596
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "3",
+              "monthlyCents": 437789
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "4",
+              "monthlyCents": 474739
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "5",
+              "monthlyCents": 492554
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "6",
+              "monthlyCents": 503770
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "2",
+              "monthlyCents": 448744
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "3",
+              "monthlyCents": 462729
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "4",
+              "monthlyCents": 497701
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "5",
+              "monthlyCents": 520924
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "6",
+              "monthlyCents": 531479
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "2",
+              "monthlyCents": 472890
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "3",
+              "monthlyCents": 487671
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "4",
+              "monthlyCents": 524618
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "5",
+              "monthlyCents": 547316
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "6",
+              "monthlyCents": 557871
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "2",
+              "monthlyCents": 497042
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "3",
+              "monthlyCents": 512612
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "4",
+              "monthlyCents": 551538
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "5",
+              "monthlyCents": 579645
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "6",
+              "monthlyCents": 586903
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "2",
+              "monthlyCents": 509115
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "3",
+              "monthlyCents": 525082
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "4",
+              "monthlyCents": 565000
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "5",
+              "monthlyCents": 619233
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "6",
+              "monthlyCents": 629129
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "2",
+              "monthlyCents": 521188
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "3",
+              "monthlyCents": 537550
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "4",
+              "monthlyCents": 578457
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "5",
+              "monthlyCents": 627413
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "6",
+              "monthlyCents": 646111
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "2",
+              "monthlyCents": 532143
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "3",
+              "monthlyCents": 550021
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "4",
+              "monthlyCents": 607755
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "5",
+              "monthlyCents": 675049
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "6",
+              "monthlyCents": 704735
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "2",
+              "monthlyCents": 544217
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "3",
+              "monthlyCents": 562490
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "4",
+              "monthlyCents": 621212
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "5",
+              "monthlyCents": 683232
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "6",
+              "monthlyCents": 721717
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "1",
+              "monthlyCents": 290934
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "2",
+              "monthlyCents": 316724
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "3",
+              "monthlyCents": 324179
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "4",
+              "monthlyCents": 336313
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "5",
+              "monthlyCents": 345415
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "6",
+              "monthlyCents": 366800
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "1",
+              "monthlyCents": 302285
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "2",
+              "monthlyCents": 321150
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "3",
+              "monthlyCents": 339346
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "4",
+              "monthlyCents": 378125
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "5",
+              "monthlyCents": 388261
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "6",
+              "monthlyCents": 406971
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "2",
+              "monthlyCents": 354512
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "3",
+              "monthlyCents": 374233
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "4",
+              "monthlyCents": 405416
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "5",
+              "monthlyCents": 421007
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "6",
+              "monthlyCents": 437070
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "2",
+              "monthlyCents": 374233
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "3",
+              "monthlyCents": 391382
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "4",
+              "monthlyCents": 413379
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "5",
+              "monthlyCents": 431146
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "6",
+              "monthlyCents": 455784
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "2",
+              "monthlyCents": 404802
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "3",
+              "monthlyCents": 424596
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "4",
+              "monthlyCents": 437789
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "5",
+              "monthlyCents": 462863
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "6",
+              "monthlyCents": 473420
+            }
+          ]
+        },
+        {
+          "tariffId": "TVL_KR",
+          "validFrom": "2028-01-01",
+          "validTo": null,
+          "sourceIds": ["tvl-kr-tdl-kr-2028-01"],
+          "entries": [
+            {
+              "groupId": "kr10",
+              "stepId": "2",
+              "monthlyCents": 428842
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "3",
+              "monthlyCents": 442167
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "4",
+              "monthlyCents": 479486
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "5",
+              "monthlyCents": 497480
+            },
+            {
+              "groupId": "kr10",
+              "stepId": "6",
+              "monthlyCents": 508808
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "2",
+              "monthlyCents": 453231
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "3",
+              "monthlyCents": 467356
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "4",
+              "monthlyCents": 502678
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "5",
+              "monthlyCents": 526133
+            },
+            {
+              "groupId": "kr11",
+              "stepId": "6",
+              "monthlyCents": 536794
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "2",
+              "monthlyCents": 477619
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "3",
+              "monthlyCents": 492548
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "4",
+              "monthlyCents": 529864
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "5",
+              "monthlyCents": 552789
+            },
+            {
+              "groupId": "kr12",
+              "stepId": "6",
+              "monthlyCents": 563450
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "2",
+              "monthlyCents": 502012
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "3",
+              "monthlyCents": 517738
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "4",
+              "monthlyCents": 557053
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "5",
+              "monthlyCents": 585441
+            },
+            {
+              "groupId": "kr13",
+              "stepId": "6",
+              "monthlyCents": 592772
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "2",
+              "monthlyCents": 514206
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "3",
+              "monthlyCents": 530333
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "4",
+              "monthlyCents": 570650
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "5",
+              "monthlyCents": 625425
+            },
+            {
+              "groupId": "kr14",
+              "stepId": "6",
+              "monthlyCents": 635420
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "2",
+              "monthlyCents": 526400
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "3",
+              "monthlyCents": 542926
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "4",
+              "monthlyCents": 584242
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "5",
+              "monthlyCents": 633687
+            },
+            {
+              "groupId": "kr15",
+              "stepId": "6",
+              "monthlyCents": 652572
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "2",
+              "monthlyCents": 537464
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "3",
+              "monthlyCents": 555521
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "4",
+              "monthlyCents": 613833
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "5",
+              "monthlyCents": 681799
+            },
+            {
+              "groupId": "kr16",
+              "stepId": "6",
+              "monthlyCents": 711782
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "2",
+              "monthlyCents": 549659
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "3",
+              "monthlyCents": 568115
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "4",
+              "monthlyCents": 627424
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "5",
+              "monthlyCents": 690064
+            },
+            {
+              "groupId": "kr17",
+              "stepId": "6",
+              "monthlyCents": 728934
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "1",
+              "monthlyCents": 293843
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "2",
+              "monthlyCents": 319891
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "3",
+              "monthlyCents": 327421
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "4",
+              "monthlyCents": 339676
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "5",
+              "monthlyCents": 348869
+            },
+            {
+              "groupId": "kr5",
+              "stepId": "6",
+              "monthlyCents": 370468
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "1",
+              "monthlyCents": 305308
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "2",
+              "monthlyCents": 324362
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "3",
+              "monthlyCents": 342739
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "4",
+              "monthlyCents": 381906
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "5",
+              "monthlyCents": 392144
+            },
+            {
+              "groupId": "kr6",
+              "stepId": "6",
+              "monthlyCents": 411041
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "2",
+              "monthlyCents": 358057
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "3",
+              "monthlyCents": 377975
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "4",
+              "monthlyCents": 409470
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "5",
+              "monthlyCents": 425217
+            },
+            {
+              "groupId": "kr7",
+              "stepId": "6",
+              "monthlyCents": 441441
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "2",
+              "monthlyCents": 377975
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "3",
+              "monthlyCents": 395296
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "4",
+              "monthlyCents": 417513
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "5",
+              "monthlyCents": 435457
+            },
+            {
+              "groupId": "kr8",
+              "stepId": "6",
+              "monthlyCents": 460342
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "2",
+              "monthlyCents": 408850
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "3",
+              "monthlyCents": 428842
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "4",
+              "monthlyCents": 442167
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "5",
+              "monthlyCents": 467492
+            },
+            {
+              "groupId": "kr9",
+              "stepId": "6",
+              "monthlyCents": 478154
+            }
+          ]
+        },
+        {
+          "tariffId": "TVAL_PFLEGE",
+          "validFrom": "2025-11-01",
+          "validTo": "2026-03-31",
+          "sourceIds": ["tval-pflege-tdl-tval-pflege-2026"],
+          "entries": [
+            {
+              "groupId": "regular",
+              "stepId": "1",
+              "monthlyCents": 138070
+            },
+            {
+              "groupId": "regular",
+              "stepId": "2",
+              "monthlyCents": 144670
+            },
+            {
+              "groupId": "regular",
+              "stepId": "3",
+              "monthlyCents": 155300
+            }
+          ]
+        },
+        {
+          "tariffId": "TVAL_PFLEGE",
+          "validFrom": "2026-04-01",
+          "validTo": "2026-12-31",
+          "sourceIds": ["tval-pflege-tdl-tval-pflege-2026"],
+          "entries": [
+            {
+              "groupId": "regular",
+              "stepId": "1",
+              "monthlyCents": 144070
+            },
+            {
+              "groupId": "regular",
+              "stepId": "2",
+              "monthlyCents": 150670
+            },
+            {
+              "groupId": "regular",
+              "stepId": "3",
+              "monthlyCents": 161300
+            }
+          ]
+        },
+        {
+          "tariffId": "TVAL_PFLEGE",
+          "validFrom": "2027-01-01",
+          "validTo": "2027-02-28",
+          "sourceIds": ["tval-pflege-tdl-tval-pflege-2026"],
+          "entries": [
+            {
+              "groupId": "regular",
+              "stepId": "1",
+              "monthlyCents": 144070
+            },
+            {
+              "groupId": "regular",
+              "stepId": "2",
+              "monthlyCents": 150670
+            },
+            {
+              "groupId": "regular",
+              "stepId": "3",
+              "monthlyCents": 161300
+            }
+          ]
+        },
+        {
+          "tariffId": "TVAL_PFLEGE",
+          "validFrom": "2027-03-01",
+          "validTo": "2027-12-31",
+          "sourceIds": ["tval-pflege-tdl-tval-pflege-2026"],
+          "entries": [
+            {
+              "groupId": "regular",
+              "stepId": "1",
+              "monthlyCents": 150070
+            },
+            {
+              "groupId": "regular",
+              "stepId": "2",
+              "monthlyCents": 156670
+            },
+            {
+              "groupId": "regular",
+              "stepId": "3",
+              "monthlyCents": 167300
+            }
+          ]
+        },
+        {
+          "tariffId": "TVAL_PFLEGE",
+          "validFrom": "2028-01-01",
+          "validTo": null,
+          "sourceIds": ["tval-pflege-tdl-tval-pflege-2026"],
+          "entries": [
+            {
+              "groupId": "regular",
+              "stepId": "1",
+              "monthlyCents": 153070
+            },
+            {
+              "groupId": "regular",
+              "stepId": "2",
+              "monthlyCents": 159670
+            },
+            {
+              "groupId": "regular",
+              "stepId": "3",
+              "monthlyCents": 170300
+            }
+          ]
+        },
+        {
+          "tariffId": "TVH_KR",
+          "validFrom": "2025-08-01",
+          "validTo": "2026-06-30",
+          "sourceIds": ["tvh-kr-2025-08-01"],
+          "entries": [
+            {
+              "groupId": "KR10",
+              "stepId": "2",
+              "monthlyCents": 409563
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "3",
+              "monthlyCents": 422298
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "4",
+              "monthlyCents": 457960
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "5",
+              "monthlyCents": 475153
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "6",
+              "monthlyCents": 485978
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "2",
+              "monthlyCents": 432868
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "3",
+              "monthlyCents": 446368
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "4",
+              "monthlyCents": 480121
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "5",
+              "monthlyCents": 502538
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "6",
+              "monthlyCents": 512727
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "2",
+              "monthlyCents": 456175
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "3",
+              "monthlyCents": 470440
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "4",
+              "monthlyCents": 506104
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "5",
+              "monthlyCents": 528010
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "6",
+              "monthlyCents": 538199
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "2",
+              "monthlyCents": 479484
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "3",
+              "monthlyCents": 494513
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "4",
+              "monthlyCents": 532084
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "5",
+              "monthlyCents": 559215
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "6",
+              "monthlyCents": 566216
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "2",
+              "monthlyCents": 491137
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "3",
+              "monthlyCents": 506550
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "4",
+              "monthlyCents": 545076
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "5",
+              "monthlyCents": 597422
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "6",
+              "monthlyCents": 606974
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "2",
+              "monthlyCents": 502791
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "3",
+              "monthlyCents": 518582
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "4",
+              "monthlyCents": 558068
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "5",
+              "monthlyCents": 605319
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "6",
+              "monthlyCents": 623365
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "2",
+              "monthlyCents": 513363
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "3",
+              "monthlyCents": 530622
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "4",
+              "monthlyCents": 586343
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "5",
+              "monthlyCents": 651298
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "6",
+              "monthlyCents": 679950
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "1a",
+              "monthlyCents": 280605
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "1b",
+              "monthlyCents": 293173
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "2",
+              "monthlyCents": 305740
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "3",
+              "monthlyCents": 313007
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "4",
+              "monthlyCents": 324831
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "5",
+              "monthlyCents": 333707
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "6",
+              "monthlyCents": 354549
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "1a",
+              "monthlyCents": 291668
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "1b",
+              "monthlyCents": 300862
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "2",
+              "monthlyCents": 310055
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "3",
+              "monthlyCents": 327791
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "4",
+              "monthlyCents": 365490
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "5",
+              "monthlyCents": 375100
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "6",
+              "monthlyCents": 392840
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "2",
+              "monthlyCents": 342572
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "3",
+              "monthlyCents": 361793
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "4",
+              "monthlyCents": 391365
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "5",
+              "monthlyCents": 406148
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "6",
+              "monthlyCents": 421601
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "2",
+              "monthlyCents": 361793
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "3",
+              "monthlyCents": 378060
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "4",
+              "monthlyCents": 398914
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "5",
+              "monthlyCents": 415884
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "6",
+              "monthlyCents": 439664
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "2",
+              "monthlyCents": 390783
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "3",
+              "monthlyCents": 409563
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "4",
+              "monthlyCents": 422298
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "5",
+              "monthlyCents": 446496
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "6",
+              "monthlyCents": 456685
+            }
+          ]
+        },
+        {
+          "tariffId": "TVH_KR",
+          "validFrom": "2026-07-01",
+          "validTo": "2027-09-30",
+          "sourceIds": ["tvh-kr-2026-07-01"],
+          "entries": [
+            {
+              "groupId": "KR10",
+              "stepId": "2",
+              "monthlyCents": 421850
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "3",
+              "monthlyCents": 434967
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "4",
+              "monthlyCents": 471699
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "5",
+              "monthlyCents": 489408
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "6",
+              "monthlyCents": 500557
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "2",
+              "monthlyCents": 445854
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "3",
+              "monthlyCents": 459759
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "4",
+              "monthlyCents": 494525
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "5",
+              "monthlyCents": 517614
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "6",
+              "monthlyCents": 528109
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "2",
+              "monthlyCents": 469860
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "3",
+              "monthlyCents": 484553
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "4",
+              "monthlyCents": 521287
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "5",
+              "monthlyCents": 543850
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "6",
+              "monthlyCents": 554345
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "2",
+              "monthlyCents": 493869
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "3",
+              "monthlyCents": 509348
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "4",
+              "monthlyCents": 548047
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "5",
+              "monthlyCents": 575991
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "6",
+              "monthlyCents": 583202
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "2",
+              "monthlyCents": 505871
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "3",
+              "monthlyCents": 521747
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "4",
+              "monthlyCents": 561428
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "5",
+              "monthlyCents": 615345
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "6",
+              "monthlyCents": 625183
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "2",
+              "monthlyCents": 517875
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "3",
+              "monthlyCents": 534139
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "4",
+              "monthlyCents": 574810
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "5",
+              "monthlyCents": 623479
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "6",
+              "monthlyCents": 642066
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "2",
+              "monthlyCents": 528764
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "3",
+              "monthlyCents": 546541
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "4",
+              "monthlyCents": 603933
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "5",
+              "monthlyCents": 670837
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "6",
+              "monthlyCents": 700349
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "1a",
+              "monthlyCents": 291605
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "1b",
+              "monthlyCents": 304173
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "2",
+              "monthlyCents": 316740
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "3",
+              "monthlyCents": 324007
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "4",
+              "monthlyCents": 335831
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "5",
+              "monthlyCents": 344707
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "6",
+              "monthlyCents": 365549
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "1a",
+              "monthlyCents": 302668
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "1b",
+              "monthlyCents": 311862
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "2",
+              "monthlyCents": 321055
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "3",
+              "monthlyCents": 338791
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "4",
+              "monthlyCents": 376490
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "5",
+              "monthlyCents": 386353
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "6",
+              "monthlyCents": 404625
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "2",
+              "monthlyCents": 353572
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "3",
+              "monthlyCents": 372793
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "4",
+              "monthlyCents": 403106
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "5",
+              "monthlyCents": 418332
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "6",
+              "monthlyCents": 434249
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "2",
+              "monthlyCents": 372793
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "3",
+              "monthlyCents": 389402
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "4",
+              "monthlyCents": 410881
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "5",
+              "monthlyCents": 428361
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "6",
+              "monthlyCents": 452854
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "2",
+              "monthlyCents": 402506
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "3",
+              "monthlyCents": 421850
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "4",
+              "monthlyCents": 434967
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "5",
+              "monthlyCents": 459891
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "6",
+              "monthlyCents": 470386
+            }
+          ]
+        },
+        {
+          "tariffId": "TVH_KR",
+          "validFrom": "2027-10-01",
+          "validTo": null,
+          "sourceIds": ["tvh-kr-2027-10-01"],
+          "entries": [
+            {
+              "groupId": "KR10",
+              "stepId": "2",
+              "monthlyCents": 433662
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "3",
+              "monthlyCents": 447146
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "4",
+              "monthlyCents": 484907
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "5",
+              "monthlyCents": 503111
+            },
+            {
+              "groupId": "KR10",
+              "stepId": "6",
+              "monthlyCents": 514573
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "2",
+              "monthlyCents": 458338
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "3",
+              "monthlyCents": 472632
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "4",
+              "monthlyCents": 508372
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "5",
+              "monthlyCents": 532107
+            },
+            {
+              "groupId": "KR11",
+              "stepId": "6",
+              "monthlyCents": 542896
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "2",
+              "monthlyCents": 483016
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "3",
+              "monthlyCents": 498120
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "4",
+              "monthlyCents": 535883
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "5",
+              "monthlyCents": 559078
+            },
+            {
+              "groupId": "KR12",
+              "stepId": "6",
+              "monthlyCents": 569867
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "2",
+              "monthlyCents": 507697
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "3",
+              "monthlyCents": 523610
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "4",
+              "monthlyCents": 563392
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "5",
+              "monthlyCents": 592119
+            },
+            {
+              "groupId": "KR13",
+              "stepId": "6",
+              "monthlyCents": 599532
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "2",
+              "monthlyCents": 520035
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "3",
+              "monthlyCents": 536356
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "4",
+              "monthlyCents": 577148
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "5",
+              "monthlyCents": 632575
+            },
+            {
+              "groupId": "KR14",
+              "stepId": "6",
+              "monthlyCents": 642688
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "2",
+              "monthlyCents": 532376
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "3",
+              "monthlyCents": 549095
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "4",
+              "monthlyCents": 590905
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "5",
+              "monthlyCents": 640936
+            },
+            {
+              "groupId": "KR15",
+              "stepId": "6",
+              "monthlyCents": 660044
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "2",
+              "monthlyCents": 543569
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "3",
+              "monthlyCents": 561844
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "4",
+              "monthlyCents": 620843
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "5",
+              "monthlyCents": 689620
+            },
+            {
+              "groupId": "KR16",
+              "stepId": "6",
+              "monthlyCents": 719959
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "1a",
+              "monthlyCents": 299770
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "1b",
+              "monthlyCents": 312690
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "2",
+              "monthlyCents": 325609
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "3",
+              "monthlyCents": 333079
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "4",
+              "monthlyCents": 345234
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "5",
+              "monthlyCents": 354359
+            },
+            {
+              "groupId": "KR5",
+              "stepId": "6",
+              "monthlyCents": 375784
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "1a",
+              "monthlyCents": 311143
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "1b",
+              "monthlyCents": 320594
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "2",
+              "monthlyCents": 330045
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "3",
+              "monthlyCents": 348277
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "4",
+              "monthlyCents": 387032
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "5",
+              "monthlyCents": 397171
+            },
+            {
+              "groupId": "KR6",
+              "stepId": "6",
+              "monthlyCents": 415955
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "2",
+              "monthlyCents": 363472
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "3",
+              "monthlyCents": 383231
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "4",
+              "monthlyCents": 414393
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "5",
+              "monthlyCents": 430045
+            },
+            {
+              "groupId": "KR7",
+              "stepId": "6",
+              "monthlyCents": 446408
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "2",
+              "monthlyCents": 383231
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "3",
+              "monthlyCents": 400305
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "4",
+              "monthlyCents": 422386
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "5",
+              "monthlyCents": 440355
+            },
+            {
+              "groupId": "KR8",
+              "stepId": "6",
+              "monthlyCents": 465534
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "2",
+              "monthlyCents": 413776
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "3",
+              "monthlyCents": 433662
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "4",
+              "monthlyCents": 447146
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "5",
+              "monthlyCents": 472768
+            },
+            {
+              "groupId": "KR9",
+              "stepId": "6",
+              "monthlyCents": 483557
+            }
+          ]
+        },
+        {
+          "tariffId": "TVUK_PUK",
+          "validFrom": "2024-10-01",
+          "validTo": "2025-09-30",
+          "sourceIds": ["tvuk-puk-2024-10-01"],
+          "entries": [
+            {
+              "groupId": "PUK10",
+              "stepId": "3",
+              "monthlyCents": 448800
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "4",
+              "monthlyCents": 481800
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "5",
+              "monthlyCents": 505900
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "6",
+              "monthlyCents": 521800
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "2",
+              "monthlyCents": 465300
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "3",
+              "monthlyCents": 484300
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "4",
+              "monthlyCents": 503200
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "5",
+              "monthlyCents": 522000
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "6",
+              "monthlyCents": 547600
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "2",
+              "monthlyCents": 487200
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "3",
+              "monthlyCents": 510000
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "4",
+              "monthlyCents": 532800
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "5",
+              "monthlyCents": 555600
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "6",
+              "monthlyCents": 578300
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "2",
+              "monthlyCents": 509200
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "3",
+              "monthlyCents": 531900
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "4",
+              "monthlyCents": 554800
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "5",
+              "monthlyCents": 577500
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "6",
+              "monthlyCents": 600400
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "2",
+              "monthlyCents": 531200
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "3",
+              "monthlyCents": 559500
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "4",
+              "monthlyCents": 587700
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "5",
+              "monthlyCents": 616000
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "6",
+              "monthlyCents": 644300
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "2",
+              "monthlyCents": 553100
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "3",
+              "monthlyCents": 581400
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "4",
+              "monthlyCents": 609700
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "5",
+              "monthlyCents": 637900
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "6",
+              "monthlyCents": 666300
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "1",
+              "monthlyCents": 291800
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "2",
+              "monthlyCents": 314700
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "3",
+              "monthlyCents": 321300
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "4",
+              "monthlyCents": 331700
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "5",
+              "monthlyCents": 339500
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "6",
+              "monthlyCents": 358300
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "1",
+              "monthlyCents": 318500
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "2",
+              "monthlyCents": 334400
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "3",
+              "monthlyCents": 351300
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "4",
+              "monthlyCents": 368200
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "5",
+              "monthlyCents": 376600
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "6",
+              "monthlyCents": 392900
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "2",
+              "monthlyCents": 359000
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "3",
+              "monthlyCents": 383100
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "4",
+              "monthlyCents": 396300
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "5",
+              "monthlyCents": 414300
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "6",
+              "monthlyCents": 436700
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "7",
+              "monthlyCents": 454300
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "2",
+              "monthlyCents": 383000
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "3",
+              "monthlyCents": 396200
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "4",
+              "monthlyCents": 408200
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "5",
+              "monthlyCents": 430900
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "6",
+              "monthlyCents": 453600
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "7",
+              "monthlyCents": 470800
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "3",
+              "monthlyCents": 434900
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "4",
+              "monthlyCents": 451700
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "5",
+              "monthlyCents": 469400
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "6",
+              "monthlyCents": 491800
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "7",
+              "monthlyCents": 508900
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "2",
+              "monthlyCents": 390600
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "3",
+              "monthlyCents": 402500
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "4",
+              "monthlyCents": 414200
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "5",
+              "monthlyCents": 436700
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "6",
+              "monthlyCents": 459300
+            }
+          ]
+        },
+        {
+          "tariffId": "TVUK_PUK",
+          "validFrom": "2025-10-01",
+          "validTo": "2026-09-30",
+          "sourceIds": ["tvuk-puk-2025-10-01"],
+          "entries": [
+            {
+              "groupId": "PUK10",
+              "stepId": "3",
+              "monthlyCents": 465400
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "4",
+              "monthlyCents": 499600
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "5",
+              "monthlyCents": 524600
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "6",
+              "monthlyCents": 541100
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "2",
+              "monthlyCents": 482500
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "3",
+              "monthlyCents": 502200
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "4",
+              "monthlyCents": 521800
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "5",
+              "monthlyCents": 541300
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "6",
+              "monthlyCents": 567900
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "2",
+              "monthlyCents": 505200
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "3",
+              "monthlyCents": 528900
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "4",
+              "monthlyCents": 552500
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "5",
+              "monthlyCents": 576200
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "6",
+              "monthlyCents": 599700
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "2",
+              "monthlyCents": 528000
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "3",
+              "monthlyCents": 551600
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "4",
+              "monthlyCents": 575300
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "5",
+              "monthlyCents": 598900
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "6",
+              "monthlyCents": 622600
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "2",
+              "monthlyCents": 550900
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "3",
+              "monthlyCents": 580200
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "4",
+              "monthlyCents": 609400
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "5",
+              "monthlyCents": 638800
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "6",
+              "monthlyCents": 668100
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "2",
+              "monthlyCents": 573600
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "3",
+              "monthlyCents": 602900
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "4",
+              "monthlyCents": 632300
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "5",
+              "monthlyCents": 661500
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "6",
+              "monthlyCents": 691000
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "1",
+              "monthlyCents": 302600
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "2",
+              "monthlyCents": 326300
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "3",
+              "monthlyCents": 333200
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "4",
+              "monthlyCents": 344000
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "5",
+              "monthlyCents": 352100
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "6",
+              "monthlyCents": 371600
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "1",
+              "monthlyCents": 330300
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "2",
+              "monthlyCents": 346800
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "3",
+              "monthlyCents": 364300
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "4",
+              "monthlyCents": 381800
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "5",
+              "monthlyCents": 390500
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "6",
+              "monthlyCents": 407400
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "2",
+              "monthlyCents": 372300
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "3",
+              "monthlyCents": 397300
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "4",
+              "monthlyCents": 411000
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "5",
+              "monthlyCents": 429600
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "6",
+              "monthlyCents": 452900
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "7",
+              "monthlyCents": 471100
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "2",
+              "monthlyCents": 397200
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "3",
+              "monthlyCents": 410900
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "4",
+              "monthlyCents": 423300
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "5",
+              "monthlyCents": 446800
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "6",
+              "monthlyCents": 470400
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "7",
+              "monthlyCents": 488200
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "3",
+              "monthlyCents": 451000
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "4",
+              "monthlyCents": 468400
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "5",
+              "monthlyCents": 486800
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "6",
+              "monthlyCents": 510000
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "7",
+              "monthlyCents": 527700
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "2",
+              "monthlyCents": 405100
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "3",
+              "monthlyCents": 417400
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "4",
+              "monthlyCents": 429500
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "5",
+              "monthlyCents": 452900
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "6",
+              "monthlyCents": 476300
+            }
+          ]
+        },
+        {
+          "tariffId": "TVUK_PUK",
+          "validFrom": "2026-10-01",
+          "validTo": "2027-11-30",
+          "sourceIds": ["tvuk-puk-2026-10-01"],
+          "entries": [
+            {
+              "groupId": "PUK10",
+              "stepId": "3",
+              "monthlyCents": 478400
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "4",
+              "monthlyCents": 513600
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "5",
+              "monthlyCents": 539300
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "6",
+              "monthlyCents": 556300
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "2",
+              "monthlyCents": 496000
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "3",
+              "monthlyCents": 516300
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "4",
+              "monthlyCents": 536400
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "5",
+              "monthlyCents": 556500
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "6",
+              "monthlyCents": 583800
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "2",
+              "monthlyCents": 519300
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "3",
+              "monthlyCents": 543700
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "4",
+              "monthlyCents": 568000
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "5",
+              "monthlyCents": 592300
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "6",
+              "monthlyCents": 616500
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "2",
+              "monthlyCents": 542800
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "3",
+              "monthlyCents": 567000
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "4",
+              "monthlyCents": 591400
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "5",
+              "monthlyCents": 615700
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "6",
+              "monthlyCents": 640000
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "2",
+              "monthlyCents": 566300
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "3",
+              "monthlyCents": 596400
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "4",
+              "monthlyCents": 626500
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "5",
+              "monthlyCents": 656700
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "6",
+              "monthlyCents": 686800
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "2",
+              "monthlyCents": 589700
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "3",
+              "monthlyCents": 619800
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "4",
+              "monthlyCents": 650000
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "5",
+              "monthlyCents": 680000
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "6",
+              "monthlyCents": 710300
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "1",
+              "monthlyCents": 312600
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "2",
+              "monthlyCents": 336300
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "3",
+              "monthlyCents": 343200
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "4",
+              "monthlyCents": 354000
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "5",
+              "monthlyCents": 362100
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "6",
+              "monthlyCents": 382000
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "1",
+              "monthlyCents": 340300
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "2",
+              "monthlyCents": 356800
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "3",
+              "monthlyCents": 374500
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "4",
+              "monthlyCents": 392500
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "5",
+              "monthlyCents": 401400
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "6",
+              "monthlyCents": 418800
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "2",
+              "monthlyCents": 382700
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "3",
+              "monthlyCents": 408400
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "4",
+              "monthlyCents": 422500
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "5",
+              "monthlyCents": 441600
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "6",
+              "monthlyCents": 465600
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "7",
+              "monthlyCents": 484300
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "2",
+              "monthlyCents": 408300
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "3",
+              "monthlyCents": 422400
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "4",
+              "monthlyCents": 435200
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "5",
+              "monthlyCents": 459300
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "6",
+              "monthlyCents": 483600
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "7",
+              "monthlyCents": 501900
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "3",
+              "monthlyCents": 463600
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "4",
+              "monthlyCents": 481500
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "5",
+              "monthlyCents": 500400
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "6",
+              "monthlyCents": 524300
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "7",
+              "monthlyCents": 542500
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "2",
+              "monthlyCents": 416400
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "3",
+              "monthlyCents": 429100
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "4",
+              "monthlyCents": 441500
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "5",
+              "monthlyCents": 465600
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "6",
+              "monthlyCents": 489600
+            }
+          ]
+        },
+        {
+          "tariffId": "TVUK_PUK",
+          "validFrom": "2027-12-01",
+          "validTo": "2028-06-30",
+          "sourceIds": ["tvuk-puk-2027-12-01"],
+          "entries": [
+            {
+              "groupId": "PUK10",
+              "stepId": "3",
+              "monthlyCents": 484600
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "4",
+              "monthlyCents": 520300
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "5",
+              "monthlyCents": 546300
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "6",
+              "monthlyCents": 563500
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "2",
+              "monthlyCents": 502400
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "3",
+              "monthlyCents": 523000
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "4",
+              "monthlyCents": 543400
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "5",
+              "monthlyCents": 563700
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "6",
+              "monthlyCents": 591400
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "2",
+              "monthlyCents": 526100
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "3",
+              "monthlyCents": 550800
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "4",
+              "monthlyCents": 575400
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "5",
+              "monthlyCents": 600000
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "6",
+              "monthlyCents": 624500
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "2",
+              "monthlyCents": 549900
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "3",
+              "monthlyCents": 574400
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "4",
+              "monthlyCents": 599100
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "5",
+              "monthlyCents": 623700
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "6",
+              "monthlyCents": 648300
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "2",
+              "monthlyCents": 573700
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "3",
+              "monthlyCents": 604200
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "4",
+              "monthlyCents": 634600
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "5",
+              "monthlyCents": 665200
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "6",
+              "monthlyCents": 695700
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "2",
+              "monthlyCents": 597400
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "3",
+              "monthlyCents": 627900
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "4",
+              "monthlyCents": 658500
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "5",
+              "monthlyCents": 688800
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "6",
+              "monthlyCents": 719500
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "1",
+              "monthlyCents": 316700
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "2",
+              "monthlyCents": 340700
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "3",
+              "monthlyCents": 347700
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "4",
+              "monthlyCents": 358600
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "5",
+              "monthlyCents": 366800
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "6",
+              "monthlyCents": 387000
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "1",
+              "monthlyCents": 344700
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "2",
+              "monthlyCents": 361400
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "3",
+              "monthlyCents": 379400
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "4",
+              "monthlyCents": 397600
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "5",
+              "monthlyCents": 406600
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "6",
+              "monthlyCents": 424200
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "2",
+              "monthlyCents": 387700
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "3",
+              "monthlyCents": 413700
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "4",
+              "monthlyCents": 428000
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "5",
+              "monthlyCents": 447300
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "6",
+              "monthlyCents": 471700
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "7",
+              "monthlyCents": 490600
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "2",
+              "monthlyCents": 413600
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "3",
+              "monthlyCents": 427900
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "4",
+              "monthlyCents": 440900
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "5",
+              "monthlyCents": 465300
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "6",
+              "monthlyCents": 489900
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "7",
+              "monthlyCents": 508400
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "3",
+              "monthlyCents": 469600
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "4",
+              "monthlyCents": 487800
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "5",
+              "monthlyCents": 506900
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "6",
+              "monthlyCents": 531100
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "7",
+              "monthlyCents": 549600
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "2",
+              "monthlyCents": 421800
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "3",
+              "monthlyCents": 434700
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "4",
+              "monthlyCents": 447200
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "5",
+              "monthlyCents": 471700
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "6",
+              "monthlyCents": 496000
+            }
+          ]
+        },
+        {
+          "tariffId": "TVUK_PUK",
+          "validFrom": "2028-07-01",
+          "validTo": null,
+          "sourceIds": ["tvuk-puk-2028-07-01"],
+          "entries": [
+            {
+              "groupId": "PUK10",
+              "stepId": "3",
+              "monthlyCents": 490900
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "4",
+              "monthlyCents": 527100
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "5",
+              "monthlyCents": 553400
+            },
+            {
+              "groupId": "PUK10",
+              "stepId": "6",
+              "monthlyCents": 570800
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "2",
+              "monthlyCents": 508900
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "3",
+              "monthlyCents": 529800
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "4",
+              "monthlyCents": 550500
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "5",
+              "monthlyCents": 571000
+            },
+            {
+              "groupId": "PUK11",
+              "stepId": "6",
+              "monthlyCents": 599100
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "2",
+              "monthlyCents": 532900
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "3",
+              "monthlyCents": 558000
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "4",
+              "monthlyCents": 582900
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "5",
+              "monthlyCents": 607800
+            },
+            {
+              "groupId": "PUK12",
+              "stepId": "6",
+              "monthlyCents": 632600
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "2",
+              "monthlyCents": 557000
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "3",
+              "monthlyCents": 581900
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "4",
+              "monthlyCents": 606900
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "5",
+              "monthlyCents": 631800
+            },
+            {
+              "groupId": "PUK13",
+              "stepId": "6",
+              "monthlyCents": 656700
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "2",
+              "monthlyCents": 581200
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "3",
+              "monthlyCents": 612100
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "4",
+              "monthlyCents": 642800
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "5",
+              "monthlyCents": 673800
+            },
+            {
+              "groupId": "PUK14",
+              "stepId": "6",
+              "monthlyCents": 704700
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "2",
+              "monthlyCents": 605200
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "3",
+              "monthlyCents": 636100
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "4",
+              "monthlyCents": 667100
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "5",
+              "monthlyCents": 697800
+            },
+            {
+              "groupId": "PUK15",
+              "stepId": "6",
+              "monthlyCents": 728900
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "1",
+              "monthlyCents": 320800
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "2",
+              "monthlyCents": 345100
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "3",
+              "monthlyCents": 352200
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "4",
+              "monthlyCents": 363300
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "5",
+              "monthlyCents": 371600
+            },
+            {
+              "groupId": "PUK5",
+              "stepId": "6",
+              "monthlyCents": 392000
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "1",
+              "monthlyCents": 349200
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "2",
+              "monthlyCents": 366100
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "3",
+              "monthlyCents": 384300
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "4",
+              "monthlyCents": 402800
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "5",
+              "monthlyCents": 411900
+            },
+            {
+              "groupId": "PUK6",
+              "stepId": "6",
+              "monthlyCents": 429700
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "2",
+              "monthlyCents": 392700
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "3",
+              "monthlyCents": 419100
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "4",
+              "monthlyCents": 433600
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "5",
+              "monthlyCents": 453100
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "6",
+              "monthlyCents": 477800
+            },
+            {
+              "groupId": "PUK7",
+              "stepId": "7",
+              "monthlyCents": 497000
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "2",
+              "monthlyCents": 419000
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "3",
+              "monthlyCents": 433500
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "4",
+              "monthlyCents": 446600
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "5",
+              "monthlyCents": 471300
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "6",
+              "monthlyCents": 496300
+            },
+            {
+              "groupId": "PUK8",
+              "stepId": "7",
+              "monthlyCents": 515000
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "3",
+              "monthlyCents": 475700
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "4",
+              "monthlyCents": 494100
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "5",
+              "monthlyCents": 513500
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "6",
+              "monthlyCents": 538000
+            },
+            {
+              "groupId": "PUK9",
+              "stepId": "7",
+              "monthlyCents": 556700
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "2",
+              "monthlyCents": 427300
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "3",
+              "monthlyCents": 440400
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "4",
+              "monthlyCents": 453000
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "5",
+              "monthlyCents": 477800
+            },
+            {
+              "groupId": "PUK9L",
+              "stepId": "6",
+              "monthlyCents": 502400
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

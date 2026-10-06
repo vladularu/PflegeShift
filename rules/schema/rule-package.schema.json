@@ -266,7 +266,7 @@
           "const": 1
         },
         "engineContractVersion": {
-          "enum": [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+          "enum": [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
         },
         "packageId": {
           "$ref": "#/$defs/identifier"
@@ -1306,7 +1306,7 @@
           "maximum": 10000
         },
         "referenceMonths": {
-          "description": "Three reference months, or November only for TVA-L Pflege §16; semantic validation enforces the policy.",
+          "description": "Three reference months, or November only for TVA-L Pflege \u00c2\u00a716; semantic validation enforces the policy.",
           "type": "array",
           "minItems": 1,
           "maxItems": 3,
@@ -1590,6 +1590,9 @@
         },
         "tvoedSueAllowancePolicy": {
           "$ref": "#/$defs/tvoedSueAllowancePolicy"
+        },
+        "simpleTariffTables": {
+          "$ref": "#/$defs/simpleTariffTables"
         }
       }
     },
@@ -1603,7 +1606,7 @@
           "required": ["kind", "rules"],
           "properties": {
             "engineContractVersion": {
-              "enum": [1, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+              "enum": [1, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
             },
             "kind": {
               "const": "TARIFF"
@@ -2749,7 +2752,7 @@
       }
     },
     "caritasTimePremiumPolicy": {
-      "description": "Contract 14: published federal baseline for Anlage 31/32 § 4(5), § 6(1). Local increases, individual eligibility, time-off choice and cash payment are not inferred by this record.",
+      "description": "Contract 14: published federal baseline for Anlage 31/32 \u00c2\u00a7 4(5), \u00c2\u00a7 6(1). Local increases, individual eligibility, time-off choice and cash payment are not inferred by this record.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -3128,7 +3131,7 @@
       }
     },
     "avrddTimePremiumPolicy": {
-      "description": "Contract 15 DRAFT: AVR.DD § 20a regular active-work time windows and premium competition. Printed Anlage 9 cents remain independent per group.",
+      "description": "Contract 15 DRAFT: AVR.DD \u00c2\u00a7 20a regular active-work time windows and premium competition. Printed Anlage 9 cents remain independent per group.",
       "type": "object",
       "additionalProperties": false,
       "required": ["nightWindow", "saturdayWindow", "competition", "nightStacks", "sourceIds"],
@@ -3151,7 +3154,7 @@
       }
     },
     "avrddOvertimePolicy": {
-      "description": "Contract 15 DRAFT: AVR.DD § 9b(8), § 9c(4), § 20a(1)(a),(3). Monthly account classification and the personal hourly basis must be independently confirmed.",
+      "description": "Contract 15 DRAFT: AVR.DD \u00c2\u00a7 9b(8), \u00c2\u00a7 9c(4), \u00c2\u00a7 20a(1)(a),(3). Monthly account classification and the personal hourly basis must be independently confirmed.",
       "type": "object",
       "additionalProperties": false,
       "required": ["fullTimePlusThresholdMinutes", "monthlyFactorThousandths", "sourceIds"],
@@ -3168,7 +3171,7 @@
       }
     },
     "avrddShiftAllowanceRate": {
-      "description": "Contract 15 DRAFT: AVR.DD § 20 monthly employee rates. Qualification is never inferred from shifts alone.",
+      "description": "Contract 15 DRAFT: AVR.DD \u00c2\u00a7 20 monthly employee rates. Qualification is never inferred from shifts alone.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -3199,7 +3202,7 @@
       }
     },
     "avrddCareAllowanceRate": {
-      "description": "Contract 15 DRAFT: AVR.DD § 14(2)(c), EG 3/4 care and support only; personal eligibility is independently confirmed.",
+      "description": "Contract 15 DRAFT: AVR.DD \u00c2\u00a7 14(2)(c), EG 3/4 care and support only; personal eligibility is independently confirmed.",
       "type": "object",
       "additionalProperties": false,
       "required": ["validFrom", "validTo", "monthlyCents", "sourceIds"],
@@ -3220,7 +3223,7 @@
       }
     },
     "avrddAdvancedAllowancePolicy": {
-      "description": "Contract 15 DRAFT: AVR.DD § 14(2) practice instruction, palliative/wound, intensive care and specialist monthly allowance rules; personal eligibility and offsets remain external facts.",
+      "description": "Contract 15 DRAFT: AVR.DD \u00c2\u00a7 14(2) practice instruction, palliative/wound, intensive care and specialist monthly allowance rules; personal eligibility and offsets remain external facts.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -3275,7 +3278,7 @@
       }
     },
     "tvoedAnnexAOvertimePolicy": {
-      "description": "Contract 16 draft-only TVöD-AT §§ 7(7-8), 8(1)a overtime cash facts for VKA Anlage A. No plus-hour or payout-month inference.",
+      "description": "Contract 16 draft-only TV\u00c3\u00b6D-AT \u00c2\u00a7\u00c2\u00a7 7(7-8), 8(1)a overtime cash facts for VKA Anlage A. No plus-hour or payout-month inference.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -3347,7 +3350,7 @@
       }
     },
     "tvoedAnnexATimePremiumPolicy": {
-      "description": "Contract 16 draft-only TVöD-AT § 8(1) b-f baseline for VKA Anlage A, with BT-K § 50(1) and BT-B § 49a(1) Saturday exceptions. Overtime, local increases and time-credit arrangements are not inferred.",
+      "description": "Contract 16 draft-only TV\u00c3\u00b6D-AT \u00c2\u00a7 8(1) b-f baseline for VKA Anlage A, with BT-K \u00c2\u00a7 50(1) and BT-B \u00c2\u00a7 49a(1) Saturday exceptions. Overtime, local increases and time-credit arrangements are not inferred.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -3829,6 +3832,80 @@
             "sourceIds": {
               "$ref": "#/$defs/sourceIds"
             }
+          }
+        }
+      }
+    },
+    "simpleTariffTableEntry": {
+      "title": "RuleSimpleTariffTableEntry",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["groupId", "stepId", "monthlyCents"],
+      "properties": {
+        "groupId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "stepId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8
+        },
+        "monthlyCents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        }
+      }
+    },
+    "simpleTariffTable": {
+      "title": "RuleSimpleTariffTable",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tariffId", "validFrom", "validTo", "sourceIds", "entries"],
+      "properties": {
+        "tariffId": {
+          "enum": ["TVOED_VKA_E", "TVAOED_PFLEGE", "TVL_KR", "TVAL_PFLEGE", "TVH_KR", "TVUK_PUK"]
+        },
+        "validFrom": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "validTo": {
+          "$ref": "#/$defs/nullableDate"
+        },
+        "sourceIds": {
+          "$ref": "#/$defs/sourceIds"
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/$defs/simpleTariffTableEntry"
+          }
+        }
+      }
+    },
+    "simpleTariffTables": {
+      "title": "RuleSimpleTariffTables",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "sourceCommit", "tables"],
+      "properties": {
+        "contractVersion": {
+          "const": 1
+        },
+        "sourceCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "tables": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 120,
+          "items": {
+            "$ref": "#/$defs/simpleTariffTable"
           }
         }
       }
