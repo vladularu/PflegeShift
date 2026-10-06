@@ -3,12 +3,12 @@ import { Pressable, Text, View } from "react-native";
 import { Temporal } from "@js-temporal/polyfill";
 import type { ComplianceIssue, ShiftEntry } from "@/domain/types";
 import { usePalette } from "@/theme/palette";
-import { MINIMUM_TOUCH_TARGET, SPACING } from "@/theme/tokens";
+import { MINIMUM_TOUCH_TARGET, RADII, SPACING } from "@/theme/tokens";
 import { TYPOGRAPHY } from "@/theme/typography";
 import { ColorBadge } from "@/ui/design-system";
 import { selectionFeedback } from "@/ui/haptics";
-import { InfoDisclosure } from "@/ui/info-disclosure";
-import { complianceIssueSummary } from "./compliance-issue-summary";
+import { SelectionSheet } from "@/ui/selection-sheet";
+import { complianceTimeline, restDuration } from "./compliance-timeline";
 
 const MONTHS = [
   "Januar",
@@ -37,8 +37,6 @@ export const issueCategory = (issue: ComplianceIssue) =>
 export const issueSeverity = (issue: ComplianceIssue) =>
   issue.severity === "critical" ? "Kritisch" : issue.severity === "warning" ? "Warnung" : "Hinweis";
 
-const VISIBLE_SHIFT_COUNT = 3;
-
 function compactShiftDate(date: string): string {
   try {
     const day = Temporal.PlainDate.from(date);
@@ -51,124 +49,237 @@ function compactShiftDate(date: string): string {
 export function ComplianceIssueContent({
   issue,
   shifts,
+  timeZone,
 }: {
   readonly issue: ComplianceIssue;
   readonly shifts: readonly ShiftEntry[];
+  readonly timeZone: string;
 }) {
-  const p = usePalette();
-  const [showAllShifts, setShowAllShifts] = useState(false);
-  const ids = new Set(issue.relatedShiftIds);
-  const related = shifts
-    .filter((shift) => ids.has(shift.id) && shift.deletedAt === null)
-    .sort(
-      (a, b) =>
-        a.date.localeCompare(b.date) ||
-        (a.startTime ?? "").localeCompare(b.startTime ?? "") ||
-        a.id.localeCompare(b.id),
-    );
-  const visibleShifts = showAllShifts ? related : related.slice(0, VISIBLE_SHIFT_COUNT);
+  const palette = usePalette();
+  const [showShifts, setShowShifts] = useState(false);
+  const model = complianceTimeline(issue, shifts, timeZone);
+  const { rest, series } = model;
+  const color =
+    issue.severity === "critical"
+      ? palette.danger
+      : issue.severity === "warning"
+        ? palette.warning
+        : palette.primary;
   return (
     <View
-      testID={"check-details-" + issue.id}
-      style={{ gap: SPACING.sm, paddingBottom: SPACING.md }}
+      testID={`check-details-${issue.id}`}
+      style={{
+        gap: SPACING.md,
+        backgroundColor: palette.surfaceRaised,
+        borderRadius: RADII.card,
+        padding: SPACING.lg,
+      }}
     >
-      <InfoDisclosure
-        summary={complianceIssueSummary(issue)}
-        details={issue.description}
-        label={`Erklärung zu ${issue.title}`}
-      />
-      {related.length ? (
-        <View style={{ gap: SPACING.xs }}>
-          <Text accessibilityRole="header" style={{ color: p.textMuted, ...TYPOGRAPHY.label }}>
-            Betroffene Dienste · {related.length}
-          </Text>
-          {visibleShifts.map((shift, index) => {
-            const time = shift.startTime
-              ? `${shift.startTime}${shift.endTime ? `–${shift.endTime}` : ""}`
-              : "Ganztägig";
-            return (
-              <View
-                key={shift.id}
-                testID={"check-shift-" + shift.id}
-                accessible
-                accessibilityLabel={`${shift.title}, ${checkDate(shift.date)}, ${time}`}
-                style={{
-                  minHeight: 48,
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  gap: SPACING.sm,
-                  paddingVertical: SPACING.xs,
-                  borderTopWidth: index > 0 ? 1 : 0,
-                  borderTopColor: p.separator,
-                }}
+      {rest ? (
+        <View style={{ gap: SPACING.sm }} testID={`check-timeline-${issue.id}`}>
+          <TimelineEndpoint
+            shift={rest.previous}
+            date={rest.endDate}
+            time={rest.previous.endTime!}
+            action="endet"
+            includeYear={rest.endDate.slice(0, 4) !== rest.startDate.slice(0, 4)}
+          />
+          <View
+            style={{ flexDirection: "row", alignItems: "center", gap: SPACING.md, paddingLeft: 11 }}
+          >
+            <View
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={{ width: 2, height: 38, backgroundColor: palette.separator }}
+            />
+            <View style={{ flex: 1, gap: SPACING.xxs }}>
+              <Text
+                style={{ color, ...TYPOGRAPHY.highlightCount }}
+                accessibilityLabel={`${restDuration(rest.minutes)} Ruhezeit`}
               >
-                <ColorBadge color={shift.color} label={shift.symbol} size={24} />
-                <View style={{ flex: 1, minWidth: 0, gap: SPACING.xxs }}>
-                  <Text style={{ color: p.text, ...TYPOGRAPHY.label }}>{shift.title}</Text>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      flexWrap: "wrap",
-                      justifyContent: "space-between",
-                      columnGap: SPACING.md,
-                      rowGap: SPACING.xxs,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: p.textMuted,
-                        ...TYPOGRAPHY.caption,
-                        maxWidth: "100%",
-                        fontVariant: ["tabular-nums"],
-                      }}
-                    >
-                      {compactShiftDate(shift.date)}
-                    </Text>
-                    <Text
-                      style={{
-                        color: p.textSecondary,
-                        ...TYPOGRAPHY.caption,
-                        maxWidth: "100%",
-                        fontVariant: ["tabular-nums"],
-                      }}
-                    >
-                      {time}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-          {related.length > VISIBLE_SHIFT_COUNT ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded: showAllShifts }}
-              onPress={() => {
-                selectionFeedback();
-                setShowAllShifts((current) => !current);
-              }}
-              style={({ pressed }) => ({
-                minHeight: MINIMUM_TOUCH_TARGET,
-                justifyContent: "center",
-                paddingVertical: SPACING.xs,
-                opacity: pressed ? 0.6 : 1,
-              })}
-            >
-              <Text style={{ color: p.primary, ...TYPOGRAPHY.label }}>
-                {showAllShifts
-                  ? "Weniger Dienste anzeigen"
-                  : `Alle ${related.length} Dienste anzeigen`}
+                {restDuration(rest.minutes)}
               </Text>
-            </Pressable>
-          ) : null}
+              <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+                Ruhezeit dazwischen
+              </Text>
+            </View>
+          </View>
+          <TimelineEndpoint
+            shift={rest.next}
+            date={rest.startDate}
+            time={rest.next.startTime!}
+            action="beginnt"
+            includeYear={rest.endDate.slice(0, 4) !== rest.startDate.slice(0, 4)}
+          />
+        </View>
+      ) : series ? (
+        <View style={{ gap: SPACING.md }} testID={`check-series-${issue.id}`}>
+          <Text
+            accessibilityLabel={`${model.title}, ${issueCategory(issue)}, ${issueSeverity(issue)}`}
+            style={{ color: palette.text, ...TYPOGRAPHY.value }}
+          >
+            {model.title}
+          </Text>
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={{ flexDirection: "row", gap: 3 }}
+          >
+            {Array.from({ length: Math.min(series.count, 31) }, (_, index) => (
+              <View
+                key={index}
+                style={{ height: 18, flex: 1, borderRadius: RADII.pill, backgroundColor: color }}
+              />
+            ))}
+          </View>
+          {series.from && series.until ? (
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                gap: SPACING.sm,
+              }}
+            >
+              <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+                {checkDate(series.from, series.from.slice(0, 4) !== series.until.slice(0, 4))}
+              </Text>
+              <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+                {checkDate(series.until, series.from.slice(0, 4) !== series.until.slice(0, 4))}
+              </Text>
+            </View>
+          ) : (
+            <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+              Zeitraum nicht vollständig verfügbar.
+            </Text>
+          )}
         </View>
       ) : null}
-      {related.length < ids.size ? (
-        <Text style={{ color: p.textMuted, ...TYPOGRAPHY.caption }}>
+      {!series ? (
+        <Text style={{ color: palette.text, ...TYPOGRAPHY.body }}>{model.note}</Text>
+      ) : null}
+      {model.missing ? (
+        <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
           Einige zugehörige Dienste sind nicht mehr verfügbar.
         </Text>
       ) : null}
+      {model.related.length ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Dienste ansehen: ${issue.title}, ${model.related.length} Dienste`}
+          accessibilityHint="Öffnet die betroffenen Dienste in einem Fenster von unten"
+          onPress={() => {
+            selectionFeedback();
+            setShowShifts(true);
+          }}
+          style={({ pressed }) => ({
+            minHeight: MINIMUM_TOUCH_TARGET,
+            justifyContent: "center",
+            opacity: pressed ? 0.65 : 1,
+          })}
+        >
+          <Text style={{ color: palette.primary, ...TYPOGRAPHY.button }}>Dienste ansehen →</Text>
+        </Pressable>
+      ) : null}
+      {showShifts ? (
+        <SelectionSheet
+          title="Betroffene Dienste"
+          visible={showShifts}
+          onClose={() => setShowShifts(false)}
+        >
+          {() => (
+            <View style={{ paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md }}>
+              {model.related.map((shift) => {
+                const time =
+                  shift.allDay || !shift.startTime || !shift.endTime
+                    ? "Ganztägig"
+                    : `${shift.startTime}–${shift.endTime}`;
+                return (
+                  <View
+                    key={shift.id}
+                    testID={`check-shift-${shift.id}`}
+                    accessible
+                    accessibilityLabel={`${shift.title}, ${checkDate(shift.date)}, ${time}`}
+                    style={{
+                      minHeight: 56,
+                      paddingVertical: SPACING.md,
+                      borderBottomWidth: 1,
+                      borderBottomColor: palette.separator,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: SPACING.md,
+                    }}
+                  >
+                    <ColorBadge color={shift.color} label={shift.symbol} size={24} />
+                    <View style={{ flex: 1, minWidth: 0, gap: SPACING.xxs }}>
+                      <Text style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
+                        {shift.title}
+                      </Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          flexWrap: "wrap",
+                          justifyContent: "space-between",
+                          gap: SPACING.sm,
+                        }}
+                      >
+                        <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+                          {compactShiftDate(shift.date)}
+                        </Text>
+                        <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>{time}</Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </SelectionSheet>
+      ) : null}
+    </View>
+  );
+}
+
+function TimelineEndpoint({
+  shift,
+  date,
+  time,
+  action,
+  includeYear,
+}: {
+  readonly shift: ShiftEntry;
+  readonly date: string;
+  readonly time: string;
+  readonly action: "endet" | "beginnt";
+  readonly includeYear: boolean;
+}) {
+  const palette = usePalette();
+  return (
+    <View
+      accessible
+      accessibilityLabel={`${shift.title} ${action}, ${time}, ${checkDate(date)}`}
+      style={{ flexDirection: "row", gap: SPACING.md, alignItems: "center" }}
+    >
+      <ColorBadge color={shift.color} label={shift.symbol} size={24} />
+      <View style={{ flex: 1, minWidth: 0, gap: SPACING.xxs }}>
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: SPACING.sm,
+          }}
+        >
+          <Text style={{ flexShrink: 1, color: palette.text, ...TYPOGRAPHY.bodyStrong }}>
+            {shift.title} {action}
+          </Text>
+          <Text style={{ color: palette.text, ...TYPOGRAPHY.value }}>{time}</Text>
+        </View>
+        <Text style={{ color: palette.textMuted, ...TYPOGRAPHY.body }}>
+          {checkDate(date, includeYear)}
+        </Text>
+      </View>
     </View>
   );
 }

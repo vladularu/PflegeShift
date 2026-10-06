@@ -24,7 +24,7 @@ import { AnalysisListCard, AnalysisValueRow } from "./analysis-list-card";
 import { AnnualPremiumReport } from "./annual-premium-report";
 import { AnnualOverview } from "./annual-overview";
 import { AnalysisDetailSummaryCard } from "./analysis-detail-layout";
-import { CheckExplanation, CheckPeriod } from "./check-summary-card";
+import { CheckPeriod } from "./check-summary-card";
 import type { AnnualDetailSection } from "@/navigation/routes";
 import { SHIFT_TYPE_COLORS, usePalette } from "@/theme/palette";
 import { MOTION } from "@/theme/motion";
@@ -230,7 +230,6 @@ export function AnnualReportDetails({
             )}
           </>
         )}
-        {section === "CHECK" ? <CheckExplanation /> : null}
       </ReportPeriodContent>
     </ReportScrollView>
   );
