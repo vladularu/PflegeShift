@@ -25,18 +25,37 @@ const inWindow = (minute: number, window: RuleTimeWindow) =>
   window.startMinute < window.endMinute
     ? minute >= window.startMinute && minute < window.endMinute
     : minute >= window.startMinute || minute < window.endMinute;
+const catalogTables = new WeakMap<
+  RuleResolver,
+  WeakMap<object, WeakMap<object, (typeof tables)[number]>>
+>();
+
 export function getTvhKrTable(date: string, resolver: RuleResolver = bundledRuleResolver) {
   const key = Temporal.PlainDate.from(date).toString();
   const local = tables.find((p) => p.validFrom <= key && (p.validTo === null || key <= p.validTo));
   const update = selectSimpleTariffTable(resolver, "TVH_KR", key);
   if (!local || !update) return local ?? null;
+  const cached = catalogTables.get(resolver)?.get(local)?.get(update);
+  if (cached) return cached;
   const monthlyCents = { ...local.monthlyCents };
   for (const group of Object.keys(monthlyCents) as (keyof typeof monthlyCents)[]) {
     monthlyCents[group] = tvhKrLevelsForGroup(group).map((step) =>
       simpleTariffTableAmount(update, group, String(step)),
     );
+    Object.freeze(monthlyCents[group]);
   }
-  return { ...local, validFrom: update.validFrom, validTo: update.validTo, monthlyCents };
+  const snapshot = Object.freeze({
+    ...local,
+    validFrom: update.validFrom,
+    validTo: update.validTo,
+    monthlyCents: Object.freeze(monthlyCents),
+  });
+  const byLocal = catalogTables.get(resolver) ?? new WeakMap();
+  const byTable = byLocal.get(local) ?? new WeakMap();
+  byTable.set(update, snapshot);
+  byLocal.set(local, byTable);
+  catalogTables.set(resolver, byLocal);
+  return snapshot;
 }
 export function getTvhKrAllowanceRates(date: string) {
   Temporal.PlainDate.from(date);
@@ -211,6 +230,9 @@ export function calculateTvhKrShift(
     if (holidays.status !== "AVAILABLE") throw new RuleResolutionError(holidays.failure);
     const transition =
       sectionStart.offsetNanoseconds !== start.add({ minutes: until - 1 }).offsetNanoseconds;
+    // Temporal zoned getters resolve the time zone; read each once per dated section.
+    const sectionStartMinute = sectionStart.hour * 60 + sectionStart.minute;
+    const dayOfWeek = sectionStart.dayOfWeek;
     const percentage = (key: string, label: string, basisPoints: number): PremiumCandidate => ({
       key,
       label,
@@ -231,13 +253,11 @@ export function calculateTvhKrShift(
     for (let offset = from; offset < until; offset++) {
       if (offset >= pauseFrom && offset < pauseFrom + pause) continue;
       const cursor = transition ? start.add({ minutes: offset }) : null;
-      const minute = cursor
-        ? cursor.hour * 60 + cursor.minute
-        : sectionStart.hour * 60 + sectionStart.minute + offset - from;
+      const minute = cursor ? cursor.hour * 60 + cursor.minute : sectionStartMinute + offset - from;
       if (inWindow(minute, ctx.policy.nightWindow))
         count(percentage("night", "Nacht", ctx.policy.nightBasisPoints));
       const competing: PremiumCandidate[] = [];
-      if (sectionStart.dayOfWeek === 7)
+      if (dayOfWeek === 7)
         competing.push(percentage("sunday", "Sonntag", ctx.policy.sundayBasisPoints));
       if (holidays.holidays.has(date))
         competing.push(
@@ -260,7 +280,7 @@ export function calculateTvhKrShift(
         );
       // Ordinary salaried nursing: no Saturday premium during shift/alternating shift work.
       if (
-        sectionStart.dayOfWeek === 6 &&
+        dayOfWeek === 6 &&
         inWindow(minute, ctx.policy.saturdayWindow) &&
         !options.saturdayShiftWork
       )

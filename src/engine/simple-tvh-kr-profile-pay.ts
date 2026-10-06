@@ -59,11 +59,12 @@ export function calculateTvhKrAssessment(
     const pauseFrom = Math.floor((bounds.grossMinutes - pause) / 2);
     const transition =
       start.offsetNanoseconds !== start.add({ minutes: bounds.grossMinutes - 1 }).offsetNanoseconds;
+    const startMinute = start.hour * 60 + start.minute;
     let count = 0;
     for (let i = 0; i < bounds.grossMinutes; i++) {
       if (i >= pauseFrom && i < pauseFrom + pause) continue;
       const t = transition ? start.add({ minutes: i }) : null;
-      const m = t ? t.hour * 60 + t.minute : (start.hour * 60 + start.minute + i) % 1440;
+      const m = t ? t.hour * 60 + t.minute : (startMinute + i) % 1440;
       if (m >= 1260 || m < 360) count++;
     }
     return count >= 120;
