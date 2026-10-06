@@ -3,9 +3,11 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from "react";
+import { AppState } from "react-native";
 
 import {
   loadRuleCatalogRuntime,
@@ -37,14 +39,85 @@ export function RuleCatalogRuntimeProvider({
   recordDiagnostic,
 }: RuleCatalogRuntimeProviderProps) {
   const [runtime, setRuntime] = useState<RuleCatalogRuntimeSnapshot | null>(null);
+  const selectedRuntime = useRef<RuleCatalogRuntimeSnapshot | null>(null);
+  const pendingSync = useRef<Promise<RuleCatalogSyncResult> | null>(null);
+  const lifecycle = useRef(0);
   const selectRuntime = useCallback((next: RuleCatalogRuntimeSnapshot | null) => {
+    selectedRuntime.current = next;
     setRuntime(next);
   }, []);
 
+  const synchronizeCurrentRuntime = useCallback(
+    (force = false): Promise<RuleCatalogSyncResult> => {
+      if (pendingSync.current !== null) return pendingSync.current;
+      const current = selectedRuntime.current;
+      if (current === null)
+        return Promise.reject(new Error("Der Regelkatalog ist noch nicht bereit."));
+      const currentLifecycle = lifecycle.current;
+      const check = async (): Promise<RuleCatalogSyncResult> => {
+        let syncResult: RuleCatalogSyncResult;
+        try {
+          syncResult = force
+            ? await synchronizeCatalog(current.diagnosis.activeGeneration, { force: true })
+            : await synchronizeCatalog(current.diagnosis.activeGeneration);
+        } catch (error) {
+          if (currentLifecycle === lifecycle.current) {
+            recordDiagnostic(
+              force ? "RULE_CATALOG_MANUAL_SYNC_FAILED" : "RULE_CATALOG_SYNC_FAILED",
+              error,
+            );
+          }
+          throw error;
+        }
+        if (currentLifecycle !== lifecycle.current) return syncResult;
+        try {
+          const refresh = await reconcileRuleCatalogRuntimeAfterSync(
+            current,
+            syncResult,
+            loadStoredCatalog,
+          );
+          if (currentLifecycle !== lifecycle.current) return syncResult;
+          if (refresh.status === "FAILED") throw refresh.refreshError;
+          if (refresh.status === "REPLACED") selectRuntime(refresh.runtime);
+        } catch (error) {
+          if (currentLifecycle === lifecycle.current) {
+            recordDiagnostic(
+              force ? "RULE_CATALOG_MANUAL_REFRESH_FAILED" : "RULE_CATALOG_REFRESH_FAILED",
+              error,
+            );
+          }
+          throw error;
+        }
+        return syncResult;
+      };
+      const pending = check();
+      pendingSync.current = pending;
+      const clearPending = () => {
+        if (pendingSync.current === pending) pendingSync.current = null;
+      };
+      void pending.then(clearPending, clearPending);
+      return pending;
+    },
+    [loadStoredCatalog, recordDiagnostic, selectRuntime, synchronizeCatalog],
+  );
+
   useEffect(() => {
     let active = true;
+    lifecycle.current += 1;
+    pendingSync.current = null;
     selectRuntime(null);
-    void loadRuleCatalogRuntime(loadStoredCatalog).then(async (result) => {
+    let previousAppState = AppState.currentState;
+    const checkAutomatically = () => {
+      if (active && selectedRuntime.current !== null) {
+        void synchronizeCurrentRuntime().catch(() => undefined);
+      }
+    };
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      const returningToApp = previousAppState !== "active" && nextAppState === "active";
+      previousAppState = nextAppState;
+      if (returningToApp) checkAutomatically();
+    });
+    void loadRuleCatalogRuntime(loadStoredCatalog).then((result) => {
       if (!active) return;
       if (result.loadError !== null) {
         recordDiagnostic("RULE_CATALOG_LOAD_FAILED", result.loadError);
@@ -55,68 +128,26 @@ export function RuleCatalogRuntimeProvider({
         );
       }
       selectRuntime(result.runtime);
-      let syncResult: RuleCatalogSyncResult;
-      try {
-        syncResult = await synchronizeCatalog(result.runtime.diagnosis.activeGeneration);
-      } catch (error) {
-        if (active) recordDiagnostic("RULE_CATALOG_SYNC_FAILED", error);
-        return;
-      }
-      if (!active) return;
-      try {
-        const refresh = await reconcileRuleCatalogRuntimeAfterSync(
-          result.runtime,
-          syncResult,
-          loadStoredCatalog,
-        );
-        if (!active) return;
-        if (refresh.status === "FAILED") {
-          recordDiagnostic("RULE_CATALOG_REFRESH_FAILED", refresh.refreshError);
-        } else if (refresh.status === "REPLACED") {
-          selectRuntime(refresh.runtime);
-        }
-      } catch (error) {
-        if (active) recordDiagnostic("RULE_CATALOG_REFRESH_FAILED", error);
-      }
+      if (previousAppState !== "background" && previousAppState !== "inactive")
+        checkAutomatically();
     });
     return () => {
       active = false;
+      lifecycle.current += 1;
+      subscription.remove();
     };
-  }, [loadStoredCatalog, recordDiagnostic, selectRuntime, synchronizeCatalog]);
+  }, [loadStoredCatalog, recordDiagnostic, selectRuntime, synchronizeCurrentRuntime]);
 
-  const synchronizeNow = useCallback(async () => {
-    const current = runtime;
-    if (current === null) throw new Error("Der Regelkatalog ist noch nicht bereit.");
-
-    let syncResult: RuleCatalogSyncResult;
-    try {
-      syncResult = await synchronizeCatalog(current.diagnosis.activeGeneration, { force: true });
-    } catch (error) {
-      recordDiagnostic("RULE_CATALOG_MANUAL_SYNC_FAILED", error);
-      throw error;
-    }
-
-    let refresh;
-    try {
-      refresh = await reconcileRuleCatalogRuntimeAfterSync(current, syncResult, loadStoredCatalog);
-    } catch (error) {
-      recordDiagnostic("RULE_CATALOG_MANUAL_REFRESH_FAILED", error);
-      throw error;
-    }
-    if (refresh.status === "FAILED") {
-      recordDiagnostic("RULE_CATALOG_MANUAL_REFRESH_FAILED", refresh.refreshError);
-      throw refresh.refreshError;
-    }
-    if (refresh.status === "REPLACED") selectRuntime(refresh.runtime);
-    return syncResult;
-  }, [loadStoredCatalog, recordDiagnostic, runtime, selectRuntime, synchronizeCatalog]);
-
+  const synchronizeNow = useCallback(
+    () => synchronizeCurrentRuntime(true),
+    [synchronizeCurrentRuntime],
+  );
   const contextValue = useMemo<RuleCatalogRuntimeContextValue | null>(
-    () => (runtime === null ? null : Object.freeze({ ...runtime, synchronizeNow })),
+    () => (runtime === null ? null : { ...runtime, synchronizeNow }),
     [runtime, synchronizeNow],
   );
 
-  if (contextValue === null) return null;
+  if (runtime === null) return null;
   return <RuleCatalogRuntimeContext value={contextValue}>{children}</RuleCatalogRuntimeContext>;
 }
 

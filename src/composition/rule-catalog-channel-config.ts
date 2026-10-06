@@ -8,9 +8,9 @@ import type { RuleCatalogVerificationPolicy } from "@/rules/rule-catalog-verific
 import type { ValidatedRuleCatalog } from "@/rules/validation";
 import { isRuleCatalogRuntimeCompatible } from "@/rules/rule-resolver";
 
-export const RULE_CATALOG_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1_000;
-export const RULE_CATALOG_FAILURE_RETRY_MS = 60 * 60 * 1_000;
-export const PREVIEW_REQUIRED_CATALOG_GENERATION = 5;
+export const RULE_CATALOG_CHECK_INTERVAL_MS = 15 * 60 * 1_000;
+export const RULE_CATALOG_FAILURE_RETRY_MS = 5 * 60 * 1_000;
+export const PREVIEW_REQUIRED_CATALOG_GENERATION = 6;
 
 export interface RuleCatalogRemoteConfig {
   readonly baseUrl: string;
