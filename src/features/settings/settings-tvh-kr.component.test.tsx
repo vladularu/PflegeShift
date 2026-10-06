@@ -3,8 +3,11 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { fireEvent, render } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { SettingsEditorScreen } from "./settings-editor-screen";
-import { selectSettingsChoice as select } from "./settings-choice-test-helpers";
+import {
+  SettingsEditorTestFlow,
+  chooseTariffGroup,
+  selectSettingsChoice as select,
+} from "./settings-choice-test-helpers";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const mockUpdateProfile = jest.fn<() => Promise<void>>();
@@ -26,8 +29,10 @@ const baseProfile: UserProfile = {
   updatedAt: "2026-01-01T00:00:00Z",
 };
 
+jest.mock("expo-router/react-navigation", () => ({ usePreventRemove: jest.fn() }));
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn() },
+  useNavigation: () => ({ dispatch: jest.fn() }),
   useLocalSearchParams: () => ({ section: mockSection }),
   Stack: {
     Screen: ({ options }: { options: { headerRight?: () => React.ReactNode } }) =>
@@ -62,7 +67,7 @@ function editor() {
         insets: { top: 59, right: 0, bottom: 34, left: 0 },
       }}
     >
-      <SettingsEditorScreen />
+      <SettingsEditorTestFlow />
     </SafeAreaProvider>
   );
 }
@@ -81,13 +86,11 @@ describe("TV-H in the existing simple salary form", () => {
   });
   it("reopens the exact entry step without unrelated fields or dates", async () => {
     const screen = await render(editor());
-    expect(screen.getByRole("button", { name: "Berechnung: TV-H Pflege · Hessen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Tarifvertrag: TV-H Pflege · Hessen" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Entgeltgruppe: KR5" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Stufe: Stufe 1b" })).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Tarifliche Vollzeit pro Woche: 38,5" }),
-    ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^Tarifbereich:|^Tarifgebiet:/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Vollzeit laut Tarif: 38,5 Std." })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Einrichtung:|^Tarifregion:/ })).toBeNull();
     expect(screen.queryByText(/Geburtsdatum|Gültig ab|Vergütungsstände/)).toBeNull();
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
@@ -141,6 +144,7 @@ describe("TV-H in the existing simple salary form", () => {
     async (name) => {
       const screen = await render(editor());
       await select(screen, "Berechnung", name);
+      await chooseTariffGroup(screen, name);
       const levels = await select(screen, "Stufe", "Stufe 4");
       expect(levels).not.toContain("Stufe 1a");
       expect(levels).not.toContain("Stufe 1b");
@@ -159,7 +163,7 @@ describe("TV-H in the existing simple salary form", () => {
   it("preserves TV-H selection on a work-hours edit", async () => {
     mockSection = "WORK";
     const screen = await render(editor());
-    await fireEvent.changeText(screen.getByLabelText("Wochenarbeitszeit in Stunden"), "30");
+    await fireEvent.changeText(screen.getByLabelText("Deine Wochenstunden (Std.)"), "30");
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ tvhKrTariff: h, weeklyMinutes: 1800 }),

@@ -4,8 +4,11 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { fireEvent, render } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { SettingsEditorScreen } from "./settings-editor-screen";
-import { selectSettingsChoice as select } from "./settings-choice-test-helpers";
+import {
+  SettingsEditorTestFlow,
+  chooseTariffDetails,
+  selectSettingsChoice as select,
+} from "./settings-choice-test-helpers";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const mockUpdateProfile = jest.fn<() => Promise<void>>();
@@ -27,8 +30,10 @@ const baseProfile: UserProfile = {
   updatedAt: "2026-01-01T00:00:00Z",
 };
 
+jest.mock("expo-router/react-navigation", () => ({ usePreventRemove: jest.fn() }));
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn() },
+  useNavigation: () => ({ dispatch: jest.fn() }),
   useLocalSearchParams: () => ({ section: mockSection }),
   Stack: {
     Screen: ({ options }: { options: { headerRight?: () => React.ReactNode } }) =>
@@ -63,7 +68,7 @@ function editor() {
         insets: { top: 59, right: 0, bottom: 34, left: 0 },
       }}
     >
-      <SettingsEditorScreen />
+      <SettingsEditorTestFlow />
     </SafeAreaProvider>
   );
 }
@@ -80,13 +85,13 @@ describe("TVA-L in the familiar salary form", () => {
   it("reopens training year and region with no group, level, VKA or history fields", async () => {
     const screen = await render(editor());
     expect(
-      screen.getByRole("button", { name: "Berechnung: TVA-L Pflege · Ausbildung" }),
+      screen.getByRole("button", { name: "Tarifvertrag: TVA-L Pflege · Ausbildung" }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Ausbildungsjahr: 1. Ausbildungsjahr" }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Tarifgebiet: West" })).toBeTruthy();
-    expect(screen.getByDisplayValue("38,5")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Tarifregion: West" })).toBeTruthy();
+    expect(screen.getAllByText("38,5 Std.")).toBeTruthy();
     for (const field of ["Entgeltgruppe", "Stufe", "Tarifbereich"])
       expect(screen.queryByRole("button", { name: new RegExp(`^${field}:`) })).toBeNull();
     expect(
@@ -129,7 +134,7 @@ describe("TVA-L in the familiar salary form", () => {
   it("saves East and determines its 40-hour basis automatically", async () => {
     const screen = await render(editor());
     await select(screen, "Tarifgebiet", "Ost");
-    expect(screen.getByDisplayValue("40")).toBeTruthy();
+    expect(screen.getAllByText("40 Std.")).toBeTruthy();
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ tvalPflegeTariff: { ...tval, universityRegion: "EAST" } }),
@@ -139,12 +144,12 @@ describe("TVA-L in the familiar salary form", () => {
     jest.spyOn(Temporal.Now, "plainDateISO").mockReturnValue(Temporal.PlainDate.from("2027-01-05"));
     mockProfile = { ...baseProfile, tvalPflegeTariff: { ...tval, universityRegion: "EAST" } };
     const screen = await render(editor());
-    expect(screen.getByDisplayValue("39,5")).toBeTruthy();
+    expect(screen.getAllByText("39,5 Std.")).toBeTruthy();
   });
   it("preserves the selection when editing personal weekly hours", async () => {
     mockSection = "WORK";
     const screen = await render(editor());
-    await fireEvent.changeText(screen.getByLabelText("Wochenarbeitszeit in Stunden"), "30");
+    await fireEvent.changeText(screen.getByLabelText("Deine Wochenstunden (Std.)"), "30");
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ tvalPflegeTariff: tval, weeklyMinutes: 1800, tariff: null }),
@@ -160,6 +165,7 @@ describe("TVA-L in the familiar salary form", () => {
   ])("switches to %s and removes TVA-L", async (label, key) => {
     const screen = await render(editor());
     await select(screen, "Berechnung", label);
+    await chooseTariffDetails(screen, label);
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ tvalPflegeTariff: null, [key]: expect.any(Object) }),
@@ -169,7 +175,7 @@ describe("TVA-L in the familiar salary form", () => {
     const screen = await render(editor());
     await select(screen, "Berechnung", "Monatsbrutto selbst eintragen");
     await fireEvent.changeText(screen.getByLabelText("Monatliches Brutto in Euro"), "1800");
-    expect(screen.queryByRole("button", { name: /^Ausbildungsjahr:|^Tarifgebiet:/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Ausbildungsjahr:|^Tarifregion:/ })).toBeNull();
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ tvalPflegeTariff: null, manualMonthlyGrossCents: 180000 }),
@@ -183,7 +189,7 @@ describe("TVA-L in the familiar salary form", () => {
     const screen = await render(editor());
     await select(screen, "Berechnung", "TVöD VKA · E-Tabelle");
     await select(screen, "Berechnung", "TVA-L Pflege · Ausbildung");
-    expect(screen.getByRole("button", { name: "Tarifgebiet: Ost" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Tarifregion: Ost" })).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Ausbildungsjahr: 3. Ausbildungsjahr" }),
     ).toBeTruthy();

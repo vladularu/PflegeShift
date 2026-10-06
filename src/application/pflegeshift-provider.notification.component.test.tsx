@@ -1,3 +1,4 @@
+import { DataLoadFailure } from "@/domain/data-load-failure";
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { describe, expect, it, jest } from "@jest/globals";
 import { Pressable, Text } from "react-native";
@@ -596,6 +597,28 @@ describe("PflegeShiftProvider notification feedback", () => {
     },
   );
 
+  it.each(["PROFILE_SALARY_CONFLICT", "PROFILE_SALARY_INVALID"] as const)(
+    "shows a safe %s code while the main data snapshot is unavailable and allows retry",
+    async (code) => {
+      jest.mocked(repository.loadProfile).mockRejectedValueOnce(new DataLoadFailure(code));
+      const screen = await render(
+        <PflegeShiftProvider activeMonth="2026-12" ports={ports}>
+          <RangeHarness month="2026-12" />
+        </PflegeShiftProvider>,
+      );
+      await waitFor(() => expect(screen.getByText(new RegExp("Fehlercode: " + code))).toBeTruthy());
+      expect(diagnostics.record).toHaveBeenCalledWith(
+        "provider",
+        code,
+        expect.any(DataLoadFailure),
+      );
+      await fireEvent.press(screen.getByText("Neu laden"));
+      await waitFor(() => expect(screen.queryByText(/Fehlercode:/)).toBeNull());
+      expect(repository.loadProfile).toHaveBeenCalledTimes(2);
+      expect(screen.getByText("Kalender bereit")).toBeTruthy();
+    },
+  );
+
   it("reports background failures and retries with a full snapshot", async () => {
     const pending = deferred<readonly CalendarEntry[]>();
     jest
@@ -616,7 +639,7 @@ describe("PflegeShiftProvider notification feedback", () => {
     await act(async () => pending.reject(new Error("read failed")));
     expect(diagnostics.record).toHaveBeenCalledWith(
       "provider",
-      "PROVIDER_RELOAD_FAILED",
+      "LOAD_CALENDAR_FAILED",
       expect.any(Error),
     );
     expect(screen.getByText("Intensivstation")).toBeTruthy();

@@ -8,7 +8,8 @@ import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { SaveProfileInput, UserProfile } from "@/domain/types";
 import { defaultHolidayRegion } from "@/domain/employment-profile";
-import { validateProfile } from "@/domain/validation";
+import { validateProfile, ValidationError } from "@/domain/validation";
+import { salaryBasisCount } from "@/domain/salary-basis-conflict";
 import { mapProfileRow, type ProfileRow } from "@/infrastructure/database/profile-row";
 
 export async function loadProfile(db: SQLiteDatabase): Promise<UserProfile | null> {
@@ -29,6 +30,8 @@ export async function saveProfile(
 ): Promise<UserProfile> {
   return withImmediateTransaction(db, async () => {
     const current = await loadProfile(db);
+    if (current?.salaryBasisConflict && salaryBasisCount(rawInput) !== 1)
+      throw new ValidationError("Bitte zuerst eine Gehaltsgrundlage wählen.");
     const input = validateProfile({
       ...simpleSalaryProfileInput(rawInput, current),
       displayName:

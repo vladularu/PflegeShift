@@ -117,9 +117,9 @@ describe("SQLite repository", () => {
   it("persists independent appearance selections and defaults older databases to LUNA/system", async () => {
     expect(await loadAppearancePreferences(db)).toEqual({ themeId: "standard", mode: "system" });
     await saveAppearancePreferences(db, { themeId: "mint", mode: "dark" });
-    expect(await loadAppearancePreferences(db)).toEqual({ themeId: "mint", mode: "dark" });
+    expect(await loadAppearancePreferences(db)).toEqual({ themeId: "standard", mode: "dark" });
     await saveAppearancePreferences(db, { themeId: "mint", mode: "system" });
-    expect(await loadAppearancePreferences(db)).toEqual({ themeId: "mint", mode: "system" });
+    expect(await loadAppearancePreferences(db)).toEqual({ themeId: "standard", mode: "system" });
   });
 
   it("recovers unsupported appearance values without overwriting other preferences", async () => {

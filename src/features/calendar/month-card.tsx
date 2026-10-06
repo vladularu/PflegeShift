@@ -44,6 +44,7 @@ import { CALENDAR_METRICS, SPACING } from "@/theme/tokens";
 import { usePressMotion } from "@/ui/press-motion";
 import { ShiftSymbol } from "@/ui/shift-symbol";
 import { useMorphDayStyle, useCalendarMorphMeasurement } from "./calendar-morph-measurement";
+import { CalendarBackground } from "./calendar-background";
 
 const WEEKDAYS = ["M", "D", "M", "D", "F", "S", "S"];
 const EMPTY_ENTRIES: readonly CalendarEntry[] = Object.freeze([]);
@@ -533,8 +534,8 @@ export const MonthCard = memo(function MonthCard({
   showShiftDuration = false,
 }: MonthCardProps) {
   const palette = usePalette();
-  const backgroundColor = palette.calendarBackground;
   const internalStampProgress = useSharedValue(stampMode ? 1 : 0);
+  const backgroundColor = palette.calendarBackground;
   const stampProgress = stampTransitionProgress ?? internalStampProgress;
   const { width } = useWindowDimensions();
   useEffect(() => {
@@ -577,11 +578,11 @@ export const MonthCard = memo(function MonthCard({
       importantForAccessibility={accessibilityVisible ? "auto" : "no-hide-descendants"}
       style={{ height: pageHeight, alignItems: "center", backgroundColor }}
     >
+      <CalendarBackground />
       <View
         style={{
           width: contentWidth,
           overflow: "hidden",
-          backgroundColor,
           marginTop: 0,
         }}
       >

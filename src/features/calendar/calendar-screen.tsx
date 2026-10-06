@@ -20,6 +20,7 @@ import { addMonths, currentMonth, today } from "@/engine/calendar";
 import { calendarPerformance } from "@/application/calendar-performance";
 import { useCalendarPerformance, useMeasuredCalendarEntries } from "./use-calendar-performance";
 import { CalendarHeader } from "@/features/calendar/calendar-header";
+import { CalendarMonthBackground } from "./calendar-background";
 import { SharedCalendarScene, SharedCalendarMonth } from "./calendar-shared-scene";
 import { CalendarStablePager } from "./calendar-stable-pager";
 import { useCalendarController } from "./use-calendar-controller";
@@ -507,7 +508,8 @@ export function CalendarScreen() {
   if (profile === null) return <LoadingView />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: palette.calendarBackground }}>
+    <View testID="calendar-screen" style={{ flex: 1, backgroundColor: palette.calendarBackground }}>
+      <CalendarMonthBackground progress={controller.progress} />
       <CalendarHeader
         synchronized
         notice={
@@ -553,6 +555,7 @@ export function CalendarScreen() {
         </View>
       ) : null}
       <SharedCalendarScene
+        showBackground={false}
         controller={controller}
         entriesByDate={entriesByDate}
         referenceMonth={currentMonth(profile?.timeZone ?? "Europe/Berlin")}

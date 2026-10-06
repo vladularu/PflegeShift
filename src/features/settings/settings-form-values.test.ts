@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { profileSalaryLabel } from "./work-profile-summary";
 import type { UserProfile } from "@/domain/types";
 import {
   manualMonthlyGrossFieldError,
   parseManualMonthlyGrossCents,
   settingsFormValues,
+  settingsFormValuesForSalaryMode,
 } from "@/features/settings/settings-form-values";
 
 const baseProfile: UserProfile = {
@@ -115,5 +117,49 @@ describe("TVA-L training settings projection", () => {
       trainingYear: 3,
       tvlUniversityRegion: "EAST",
     });
+  });
+});
+
+describe("conflicting salary drafts", () => {
+  const profile: UserProfile = {
+    ...baseProfile,
+    salaryBasisConflict: {
+      tariff: {
+        payGroup: "P11",
+        payLevel: 5,
+        sector: "BT_B",
+        tariffRegion: "OTHER",
+        fullTimeWeeklyMinutes: 2340,
+      },
+      vkaETariff: { payGroup: "E9b", payLevel: 3, sector: "BT_K", tariffRegion: "OTHER" },
+      nursingTrainingTariff: { trainingYear: 3, sector: "BT_K", tariffRegion: "OTHER" },
+      manualMonthlyGrossCents: 345050,
+    },
+  };
+  it("keeps salary unselected and shows the selected basis's own stored values", () => {
+    expect(settingsFormValues(profile).salaryMode).toBe("UNSET");
+    expect(profileSalaryLabel(profile)).toBe("Gehaltsgrundlage prüfen");
+    expect(settingsFormValuesForSalaryMode(profile, "TVOED_P")).toMatchObject({
+      salaryMode: "TVOED_P",
+      payGroup: "P11",
+      payLevel: 5,
+      sector: "BT_B",
+    });
+    expect(settingsFormValuesForSalaryMode(profile, "TVOED_E")).toMatchObject({
+      salaryMode: "TVOED_E",
+      ePayGroup: "E9b",
+      payLevel: 3,
+      sector: "BT_K",
+    });
+    expect(settingsFormValuesForSalaryMode(profile, "TVAOED_PFLEGE")).toMatchObject({
+      salaryMode: "TVAOED_PFLEGE",
+      trainingYear: 3,
+    });
+    expect(settingsFormValuesForSalaryMode(profile, "MANUAL")).toMatchObject({
+      salaryMode: "MANUAL",
+      manualMonthlyGross: "3450,50",
+    });
+    expect(settingsFormValuesForSalaryMode(profile, "UNSET").salaryMode).toBe("UNSET");
+    expect(profile.salaryBasisConflict?.tariff?.payLevel).toBe(5);
   });
 });

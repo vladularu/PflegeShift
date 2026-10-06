@@ -1,9 +1,18 @@
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { AppState } from "react-native";
+import { getAnimatedStyle } from "react-native-reanimated";
+import { CalendarBackgroundContext } from "@/features/settings/calendar-background-context";
 import type { CalendarEntry, CalendarViewMode, UserProfile } from "@/domain/types";
 import { bundledRuleResolver } from "@/rules/rule-resolver";
 import { SharedCalendarMonth, SharedCalendarScene } from "./calendar-shared-scene";
+
+import {
+  CALENDAR_IMAGE_STRENGTH_OPTIONS,
+  DEFAULT_CALENDAR_IMAGE_STRENGTH,
+  type CalendarImageStrength,
+} from "@/theme/calendar-image";
+import { LIGHT_PALETTE } from "@/theme/palette";
 
 const profile = {
   federalState: "HE",
@@ -65,6 +74,38 @@ function Tree({
     </SharedCalendarScene>
   );
 }
+function BackgroundTree({
+  uri,
+  mode = "MONTH",
+  strength = DEFAULT_CALENDAR_IMAGE_STRENGTH,
+}: {
+  uri: string | null;
+  mode?: CalendarViewMode;
+  strength?: CalendarImageStrength;
+}) {
+  return (
+    <CalendarBackgroundContext
+      value={{
+        uri,
+        strength,
+        setStrength: async () => {},
+        ready: true,
+        busy: false,
+        error: null,
+        supported: true,
+        choose: async () => {},
+        remove: async () => {},
+        canUndoRemoval: false,
+        undoRemove: async () => {},
+        reset: async () => true,
+        retry: () => {},
+      }}
+    >
+      <Tree mode={mode} />
+    </CalendarBackgroundContext>
+  );
+}
+
 describe("shared live calendar scene", () => {
   it("keeps selected day accessible but removes its full-cell outline", async () => {
     const screen = await render(<Tree />);
@@ -133,5 +174,90 @@ describe("shared live calendar scene", () => {
     await screen.rerender(<Tree entries={[]} />);
     expect(screen.queryByText("• Termin neu", { includeHiddenElements: true })).toBeNull();
     expect(screen.getByTestId("shared-month-2026-01")).toBe(month);
+  });
+  it("shows a saved photo in the real calendar and updates it without remounting the month", async () => {
+    const hidden = { includeHiddenElements: true };
+    const screen = await render(<BackgroundTree uri={null} />);
+    const month = screen.getByTestId("shared-month-2026-01");
+    const marker = screen.getByTestId("calendar-date-marker-2026-01-08", hidden);
+    expect(screen.queryByTestId("calendar-custom-background", hidden)).toBeNull();
+    await screen.rerender(<BackgroundTree uri="file:///documents/calendar-first.jpg" />);
+    await fireEvent(screen.getByTestId("calendar-shared-scene"), "layout", {
+      nativeEvent: { layout: { width: 420, height: 700 } },
+    });
+    await fireEvent.press(screen.getByTestId("calendar-day-2026-01-08"), {
+      nativeEvent: { pageX: 220, pageY: 350, locationX: 10, locationY: 20 },
+    });
+    expect(onSelectDate).toHaveBeenCalledWith("2026-01-08", {
+      x: 210,
+      y: 330,
+      width: 60,
+      height: (700 - 55 - 32) / 6,
+    });
+    expect(screen.getByTestId("calendar-custom-background", hidden)).toBeTruthy();
+    expect(screen.getByTestId("calendar-custom-background-image", hidden).props.source).toEqual({
+      uri: "file:///documents/calendar-first.jpg",
+    });
+    expect(screen.getByTestId("calendar-month-custom-background", hidden).props.pointerEvents).toBe(
+      "none",
+    );
+    await screen.rerender(<BackgroundTree uri="file:///documents/calendar-second.jpg" />);
+    expect(screen.getByTestId("calendar-custom-background-image", hidden).props.source).toEqual({
+      uri: "file:///documents/calendar-second.jpg",
+    });
+    await screen.rerender(<BackgroundTree uri={null} />);
+    expect(screen.queryByTestId("calendar-custom-background", hidden)).toBeNull();
+    expect(screen.getByTestId("shared-month-2026-01")).toBe(month);
+    expect(screen.getByTestId("calendar-date-marker-2026-01-08", hidden)).toBe(marker);
+  });
+  it("applies every saved strength to the live month without remounting its photo or date glyphs", async () => {
+    const hidden = { includeHiddenElements: true };
+    const uri = "file:///documents/calendar-first.jpg";
+    const screen = await render(<BackgroundTree uri={uri} />);
+    const photo = screen.getByTestId("calendar-custom-background-image", hidden);
+    const marker = screen.getByTestId("calendar-date-marker-2026-01-08", hidden);
+    for (const option of CALENDAR_IMAGE_STRENGTH_OPTIONS) {
+      await screen.rerender(<BackgroundTree uri={uri} strength={option.value} />);
+      expect(screen.getByTestId("calendar-custom-background-overlay", hidden)).toHaveStyle({
+        opacity: option.overlayOpacity,
+      });
+      const weekday = within(screen.getByTestId("calendar-month-weekdays", hidden)).getAllByText(
+        "M",
+        hidden,
+      )[0];
+      expect(weekday).toHaveStyle({
+        color: option.value === "subtle" ? LIGHT_PALETTE.textMuted : LIGHT_PALETTE.text,
+      });
+      expect(screen.getByTestId("calendar-custom-background-image", hidden)).toBe(photo);
+      expect(screen.getByTestId("calendar-date-marker-2026-01-08", hidden)).toBe(marker);
+    }
+  });
+  it("fades the photo out in the year view and retains it when returning to the month", async () => {
+    jest.useFakeTimers();
+    const hidden = { includeHiddenElements: true };
+    const uri = "file:///documents/calendar-first.jpg";
+    const screen = await render(<BackgroundTree uri={uri} />);
+    const photo = screen.getByTestId("calendar-custom-background", hidden);
+    expect(
+      getAnimatedStyle(screen.getByTestId("calendar-month-custom-background", hidden)),
+    ).toMatchObject({
+      opacity: 1,
+    });
+    await screen.rerender(<BackgroundTree uri={uri} mode="YEAR" />);
+    await act(async () => jest.advanceTimersByTime(500));
+    expect(
+      getAnimatedStyle(screen.getByTestId("calendar-month-custom-background", hidden)),
+    ).toMatchObject({
+      opacity: 0,
+    });
+    expect(screen.getByTestId("calendar-year-overview-shell", hidden)).toHaveStyle({ opacity: 1 });
+    await screen.rerender(<BackgroundTree uri={uri} />);
+    await act(async () => jest.advanceTimersByTime(500));
+    expect(
+      getAnimatedStyle(screen.getByTestId("calendar-month-custom-background", hidden)),
+    ).toMatchObject({
+      opacity: 1,
+    });
+    expect(screen.getByTestId("calendar-custom-background", hidden)).toBe(photo);
   });
 });

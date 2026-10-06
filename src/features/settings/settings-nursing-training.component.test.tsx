@@ -3,8 +3,11 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { fireEvent, render } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { SettingsEditorScreen } from "./settings-editor-screen";
-import { selectSettingsChoice as select } from "./settings-choice-test-helpers";
+import {
+  SettingsEditorTestFlow,
+  chooseTariffDetails,
+  selectSettingsChoice as select,
+} from "./settings-choice-test-helpers";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const mockUpdateProfile = jest.fn<() => Promise<void>>();
@@ -31,8 +34,10 @@ const trainee = {
   tariffRegion: "OTHER" as const,
 };
 
+jest.mock("expo-router/react-navigation", () => ({ usePreventRemove: jest.fn() }));
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn() },
+  useNavigation: () => ({ dispatch: jest.fn() }),
   useLocalSearchParams: () => ({ section: mockSection }),
   Stack: {
     Screen: ({ options }: { options: { headerRight?: () => React.ReactNode } }) =>
@@ -67,7 +72,7 @@ function editor() {
         insets: { top: 59, right: 0, bottom: 34, left: 0 },
       }}
     >
-      <SettingsEditorScreen />
+      <SettingsEditorTestFlow />
     </SafeAreaProvider>
   );
 }
@@ -80,7 +85,7 @@ describe("simple nursing training salary form", () => {
       nursingTrainingTariff: { ...trainee, tariffRegion: "KAV_BW" },
     };
     const screen = await render(editor());
-    expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("38,5");
+    expect(screen.getAllByText("38,5 Std.").length).toBeGreaterThan(0);
   });
   beforeEach(() => {
     jest.clearAllMocks();
@@ -139,24 +144,24 @@ describe("simple nursing training salary form", () => {
       const saved = { ...trainee, sector: "BT_B" as const, tariffRegion };
       mockProfile = { ...baseProfile, nursingTrainingTariff: saved };
       const screen = await render(editor());
-      expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: /^Tarifregion:/ })).toBeNull();
       expect(
         screen.getByRole("button", { name: "Ausbildungsjahr: 2. Ausbildungsjahr" }),
       ).toBeTruthy();
-      expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("39");
+      expect(screen.getAllByText("39 Std.").length).toBeGreaterThan(0);
       await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
       expect(mockUpdateProfile).toHaveBeenLastCalledWith(
         expect.objectContaining({ nursingTrainingTariff: saved }),
       );
       await select(screen, "Tarifbereich", "Krankenhaus · BT-K");
-      expect(screen.getByRole("button", { name: /^Tarifgebiet:/ })).toBeTruthy();
-      expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("38,5");
+      expect(screen.getByRole("button", { name: /^Tarifregion:/ })).toBeTruthy();
+      expect(screen.getAllByText("38,5 Std.").length).toBeGreaterThan(0);
       await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
       expect(mockUpdateProfile).toHaveBeenLastCalledWith(
         expect.objectContaining({ nursingTrainingTariff: { ...saved, sector: "BT_K" } }),
       );
       await select(screen, "Tarifbereich", "Pflege · BT-B");
-      expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: /^Tarifregion:/ })).toBeNull();
     },
   );
   it("restores the saved BT-B region when changing a trainee to the P tariff", async () => {
@@ -165,9 +170,10 @@ describe("simple nursing training salary form", () => {
       nursingTrainingTariff: { ...trainee, sector: "BT_B", tariffRegion: "KAV_BW" },
     };
     const screen = await render(editor());
-    expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Tarifregion:/ })).toBeNull();
     await select(screen, "Berechnung", "TVöD-P");
-    expect(screen.getByRole("button", { name: /^Tarifgebiet:/ })).toBeTruthy();
+    await chooseTariffDetails(screen, "TVöD-P");
+    expect(screen.getByRole("button", { name: /^Tarifregion:/ })).toBeTruthy();
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -176,7 +182,7 @@ describe("simple nursing training salary form", () => {
       }),
     );
     await select(screen, "Berechnung", "TVAöD Pflege · Ausbildung");
-    expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Tarifregion:/ })).toBeNull();
     expect(
       screen.getByRole("button", { name: "Ausbildungsjahr: 2. Ausbildungsjahr" }),
     ).toBeTruthy();
@@ -184,6 +190,7 @@ describe("simple nursing training salary form", () => {
   it("returns to the original employee fields and clears the training choice", async () => {
     const screen = await render(editor());
     await select(screen, "Berechnung", "TVöD-P");
+    await chooseTariffDetails(screen, "TVöD-P");
     expect(screen.getByRole("button", { name: "Entgeltgruppe: P8" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Stufe: Stufe 4" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Ausbildungsjahr:/ })).toBeNull();
@@ -198,7 +205,7 @@ describe("simple nursing training salary form", () => {
   it("preserves the trainee salary choice when editing the work model", async () => {
     mockSection = "WORK";
     const screen = await render(editor());
-    await fireEvent.changeText(screen.getByLabelText("Wochenarbeitszeit in Stunden"), "30");
+    await fireEvent.changeText(screen.getByLabelText("Deine Wochenstunden (Std.)"), "30");
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({

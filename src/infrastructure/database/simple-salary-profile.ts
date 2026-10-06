@@ -1,3 +1,5 @@
+import { withDataLoadFailureCode } from "@/domain/data-load-failure";
+import { salaryBasisCount, unresolvedSalaryProfile } from "@/domain/salary-basis-conflict";
 import { TVAL_PFLEGE_PREFERENCE_KEY, requireTvalPflegeTariff } from "@/domain/tval-pflege-tariff";
 import { TVH_KR_PREFERENCE_KEY, requireTvhKrTariff } from "@/domain/tvh-kr-tariff";
 import {
@@ -26,42 +28,32 @@ export async function loadSimpleSalaryForProfile(
     TVH_KR_PREFERENCE_KEY,
     TVAL_PFLEGE_PREFERENCE_KEY,
   );
-  const training = rows.find((r) => r.key === NURSING_TRAINING_PREFERENCE_KEY);
-  const e = rows.find((r) => r.key === VKA_E_PREFERENCE_KEY);
-  const tvl = rows.find((r) => r.key === TVL_KR_PREFERENCE_KEY);
-  const tval = rows.find((r) => r.key === TVAL_PFLEGE_PREFERENCE_KEY);
-  const tvalPflegeTariff = tval ? requireTvalPflegeTariff(JSON.parse(tval.value)) : null;
-  const h = rows.find((r) => r.key === TVH_KR_PREFERENCE_KEY);
-  const tvhKrTariff = h ? requireTvhKrTariff(JSON.parse(h.value)) : null;
-  const uk = rows.find((r) => r.key === TVUK_NURSING_PREFERENCE_KEY);
-  const tvUkNursingTariff = uk ? requireTvUkNursingTariff(JSON.parse(uk.value)) : null;
-  const nursingTrainingTariff = training
-    ? requireNursingTrainingTariff(JSON.parse(training.value))
-    : null;
-  const vkaETariff = e ? requireVkaETariff(JSON.parse(e.value)) : null;
-  const tvlKrTariff = tvl ? requireTvlKrSalaryTariff(JSON.parse(tvl.value)) : null;
-  if (
-    [
-      nursingTrainingTariff,
-      vkaETariff,
-      tvlKrTariff,
-      tvUkNursingTariff,
-      tvhKrTariff,
-      tvalPflegeTariff,
-      profile.tariff,
-      profile.manualMonthlyGrossCents,
-    ].filter((v) => v != null).length > 1
-  )
-    throw new Error("Mehrere Gehaltsgrundlagen gespeichert.");
-  return {
-    ...profile,
-    ...(nursingTrainingTariff ? { nursingTrainingTariff } : {}),
-    ...(vkaETariff ? { vkaETariff } : {}),
-    ...(tvlKrTariff ? { tvlKrTariff } : {}),
-    ...(tvUkNursingTariff ? { tvUkNursingTariff } : {}),
-    ...(tvhKrTariff ? { tvhKrTariff } : {}),
-    ...(tvalPflegeTariff ? { tvalPflegeTariff } : {}),
-  };
+  return withDataLoadFailureCode("PROFILE_SALARY_INVALID", () => {
+    const training = rows.find((r) => r.key === NURSING_TRAINING_PREFERENCE_KEY);
+    const e = rows.find((r) => r.key === VKA_E_PREFERENCE_KEY);
+    const tvl = rows.find((r) => r.key === TVL_KR_PREFERENCE_KEY);
+    const tval = rows.find((r) => r.key === TVAL_PFLEGE_PREFERENCE_KEY);
+    const tvalPflegeTariff = tval ? requireTvalPflegeTariff(JSON.parse(tval.value)) : null;
+    const h = rows.find((r) => r.key === TVH_KR_PREFERENCE_KEY);
+    const tvhKrTariff = h ? requireTvhKrTariff(JSON.parse(h.value)) : null;
+    const uk = rows.find((r) => r.key === TVUK_NURSING_PREFERENCE_KEY);
+    const tvUkNursingTariff = uk ? requireTvUkNursingTariff(JSON.parse(uk.value)) : null;
+    const nursingTrainingTariff = training
+      ? requireNursingTrainingTariff(JSON.parse(training.value))
+      : null;
+    const vkaETariff = e ? requireVkaETariff(JSON.parse(e.value)) : null;
+    const tvlKrTariff = tvl ? requireTvlKrSalaryTariff(JSON.parse(tvl.value)) : null;
+    const loaded: UserProfile = {
+      ...profile,
+      ...(nursingTrainingTariff ? { nursingTrainingTariff } : {}),
+      ...(vkaETariff ? { vkaETariff } : {}),
+      ...(tvlKrTariff ? { tvlKrTariff } : {}),
+      ...(tvUkNursingTariff ? { tvUkNursingTariff } : {}),
+      ...(tvhKrTariff ? { tvhKrTariff } : {}),
+      ...(tvalPflegeTariff ? { tvalPflegeTariff } : {}),
+    };
+    return salaryBasisCount(loaded) > 1 ? unresolvedSalaryProfile(loaded) : loaded;
+  });
 }
 export function simpleSalaryProfileInput(
   raw: SaveProfileInput,

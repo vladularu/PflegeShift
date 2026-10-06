@@ -178,7 +178,21 @@ export interface NursingTrainingTariff {
   readonly tariffRegion: TariffRegion;
 }
 
+export type SalaryBasisDrafts = Pick<
+  SaveProfileInput,
+  | "tariff"
+  | "manualMonthlyGrossCents"
+  | "nursingTrainingTariff"
+  | "vkaETariff"
+  | "tvlKrTariff"
+  | "tvUkNursingTariff"
+  | "tvhKrTariff"
+  | "tvalPflegeTariff"
+>;
+
 export interface UserProfile {
+  /** Read-only recovery drafts; no salary is active until an explicit selection is saved. */
+  readonly salaryBasisConflict?: SalaryBasisDrafts;
   readonly displayName?: string | null;
   readonly employerName?: string | null;
   readonly federalState: FederalState;

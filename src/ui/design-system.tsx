@@ -209,6 +209,8 @@ export function RowButton({
   onLongPress,
   delayLongPress,
   accessibilityHint,
+  accessibilityLabel,
+  accessibilityState,
   subtitleBelow = false,
 }: {
   readonly title: string;
@@ -221,6 +223,8 @@ export function RowButton({
   readonly onLongPress?: () => void;
   readonly delayLongPress?: number;
   readonly accessibilityHint?: string;
+  readonly accessibilityLabel?: string;
+  readonly accessibilityState?: import("react-native").AccessibilityState;
   readonly subtitleBelow?: boolean;
 }) {
   const palette = usePalette();
@@ -300,6 +304,8 @@ export function RowButton({
     <Animated.View style={[{ minHeight: 56 }, pressMotion.animatedStyle]}>
       <Pressable
         accessibilityHint={accessibilityHint}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ ...accessibilityState, disabled }}
         accessibilityRole="button"
         delayLongPress={delayLongPress}
         disabled={disabled}

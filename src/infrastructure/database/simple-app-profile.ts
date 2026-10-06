@@ -17,6 +17,7 @@ export async function projectStoredSimpleProfile(
   date?: string,
 ): Promise<UserProfile | null> {
   if (profile === null) return null;
+  if (profile.salaryBasisConflict) return profile;
   if (
     profile.nursingTrainingTariff ||
     profile.vkaETariff ||

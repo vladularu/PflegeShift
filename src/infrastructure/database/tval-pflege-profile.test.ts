@@ -176,17 +176,33 @@ describe("simple TVA-L Pflege persistence", () => {
   it.each([
     [VKA_E_PREFERENCE_KEY, e],
     [NURSING_TRAINING_PREFERENCE_KEY, trainee],
-  ] as const)("rejects conflicting %s on load and backup restore", async (key, value) => {
-    await saveProfile(memory.db, { ...work, tvalPflegeTariff: selected });
-    await memory.db.runAsync(
-      "INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)",
-      key,
-      JSON.stringify(value),
-      new Date().toISOString(),
-    );
-    await expect(loadProfile(memory.db)).rejects.toThrow();
-    await expect(restore((await backup()).serialized)).rejects.toThrow();
-  });
+  ] as const)(
+    "loads conflicting %s as inactive drafts while backup restore still rejects the conflict",
+    async (key, value) => {
+      await saveProfile(memory.db, { ...work, tvalPflegeTariff: selected });
+      await memory.db.runAsync(
+        "INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)",
+        key,
+        JSON.stringify(value),
+        new Date().toISOString(),
+      );
+      const before = await loadLocalBackupSnapshot(memory.db);
+      await expect(loadProfile(memory.db)).resolves.toMatchObject({
+        tariff: null,
+        tvalPflegeTariff: null,
+        vkaETariff: null,
+        nursingTrainingTariff: null,
+        salaryBasisConflict: {
+          tvalPflegeTariff: selected,
+          ...(key === VKA_E_PREFERENCE_KEY
+            ? { vkaETariff: value }
+            : { nursingTrainingTariff: value }),
+        },
+      });
+      expect(await loadLocalBackupSnapshot(memory.db)).toEqual(before);
+      await expect(restore((await backup()).serialized)).rejects.toThrow();
+    },
+  );
   it("rejects corrupted training data during load and backup restore", async () => {
     await saveProfile(memory.db, { ...work, tvalPflegeTariff: selected });
     await memory.db.runAsync(

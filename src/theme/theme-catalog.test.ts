@@ -3,8 +3,36 @@ import { THEME_IDS } from "@/domain/appearance";
 import { colorContrastRatio } from "./color-contrast";
 import { LIGHT_PALETTE, DARK_PALETTE } from "./palette-values";
 import { resolvePalette, THEME_OPTIONS } from "./theme-catalog";
+import { CALENDAR_IMAGE_STRENGTH_OPTIONS, calendarImageLabelColor } from "./calendar-image";
 
 describe("theme catalog", () => {
+  it("keeps neutral calendar labels readable over extreme photos at every image strength", () => {
+    for (const dark of [false, true]) {
+      const palette = resolvePalette("standard", dark);
+      const photo = dark ? 255 : 0;
+      for (const option of CALENDAR_IMAGE_STRENGTH_OPTIONS) {
+        const hex = palette.calendarBackground.slice(1);
+        const background =
+          "#" +
+          [0, 2, 4]
+            .map((offset) =>
+              Math.round(
+                parseInt(hex.slice(offset, offset + 2), 16) * option.overlayOpacity +
+                  photo * (1 - option.overlayOpacity),
+              )
+                .toString(16)
+                .padStart(2, "0"),
+            )
+            .join("");
+        for (const color of [palette.text, calendarImageLabelColor(palette, option.value)]) {
+          expect(
+            colorContrastRatio(color, background),
+            `${dark ? "dark" : "light"}: ${option.label}`,
+          ).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    }
+  });
   it.each(THEME_IDS)("%s keeps content neutral while retaining themed actions", (id) => {
     for (const dark of [false, true]) {
       const palette = resolvePalette(id, dark);
@@ -35,20 +63,14 @@ describe("theme catalog", () => {
       expect(colorContrastRatio(palette.text, palette.calendarBackground)).toBeGreaterThanOrEqual(
         4.5,
       );
-      if (id !== "standard") expect(palette.accent).not.toBe(standard.accent);
+      expect(palette.accent).toBe(standard.accent);
     }
   });
-  it("retains the current LUNA default and offers the four agreed themes", () => {
+  it("retains only LUNA Standard and maps legacy themes to it", () => {
     expect(resolvePalette("standard", false)).toBe(LIGHT_PALETTE);
     expect(resolvePalette("standard", true)).toBe(DARK_PALETTE);
     expect(resolvePalette("standard", false).secondarySoft).toBe("#E5E5E5");
-    expect(THEME_OPTIONS.map((theme) => theme.name)).toEqual([
-      "LUNA Standard",
-      "Minzbrise",
-      "Lavendelruhe",
-      "Rosenleinen",
-      "Meeresluft",
-    ]);
+    expect(THEME_OPTIONS.map((theme) => theme.name)).toEqual(["LUNA Standard"]);
   });
   it.each(THEME_IDS)(
     "%s supports readable light and dark surfaces without changing semantic status colors",

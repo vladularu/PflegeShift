@@ -7,15 +7,17 @@ import { RADII, SPACING } from "@/theme/tokens";
 
 export function SheetBackFooter({
   disabled = false,
+  label = "Zurück",
   onPress,
 }: {
   readonly disabled?: boolean;
+  readonly label?: string;
   readonly onPress: () => void;
 }) {
   const palette = usePalette();
   return (
     <Pressable
-      accessibilityLabel="Zurück"
+      accessibilityLabel={label}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
@@ -26,6 +28,9 @@ export function SheetBackFooter({
         alignItems: "center",
         justifyContent: "center",
         gap: SPACING.sm,
+        ...(label !== "Zurück"
+          ? { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm }
+          : {}),
         borderRadius: RADII.control,
         borderWidth: 1,
         borderColor: palette.separator,
@@ -36,9 +41,14 @@ export function SheetBackFooter({
       <Ionicons accessibilityElementsHidden name="arrow-back" size={18} color={palette.text} />
       <Text
         maxFontSizeMultiplier={TEXT_MAX_SCALE}
-        style={{ color: palette.text, ...TYPOGRAPHY.bodyStrong }}
+        style={{
+          color: palette.text,
+          ...TYPOGRAPHY.bodyStrong,
+          flexShrink: 1,
+          textAlign: "center",
+        }}
       >
-        Zurück
+        {label}
       </Text>
     </Pressable>
   );

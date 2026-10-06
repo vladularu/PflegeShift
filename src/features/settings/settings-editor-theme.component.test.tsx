@@ -1,7 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { SettingsEditorTestFlow } from "./settings-choice-test-helpers";
 
-import { SettingsEditorScreen } from "./settings-editor-screen";
 import { DARK_PALETTE, LIGHT_PALETTE } from "@/theme/palette-values";
 
 let mockPalette = LIGHT_PALETTE;
@@ -9,8 +9,10 @@ let mockSection = "WORK";
 let mockOptions: Record<string, unknown> = {};
 const mockUpdateProfile = jest.fn();
 
+jest.mock("expo-router/react-navigation", () => ({ usePreventRemove: jest.fn() }));
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn() },
+  useNavigation: () => ({ dispatch: jest.fn() }),
   useLocalSearchParams: () => ({ section: mockSection }),
   Stack: {
     Screen: ({ options }: { options: Record<string, unknown> }) => {
@@ -68,11 +70,11 @@ describe("settings native header theme", () => {
     "updates %s header in both directions without saving",
     async (section) => {
       mockSection = section;
-      const screen = await render(<SettingsEditorScreen />);
+      const screen = await render(<SettingsEditorTestFlow />);
       expect(mockOptions.headerStyle).toEqual({ backgroundColor: LIGHT_PALETTE.background });
       for (const palette of [DARK_PALETTE, LIGHT_PALETTE]) {
         mockPalette = palette;
-        await screen.rerender(<SettingsEditorScreen />);
+        await screen.rerender(<SettingsEditorTestFlow />);
         expect(mockOptions.headerStyle).toEqual({ backgroundColor: palette.background });
         expect(mockOptions.headerTintColor).toBe(palette.text);
         expect(mockOptions.headerTitleStyle).toEqual({ color: palette.text });
@@ -84,11 +86,11 @@ describe("settings native header theme", () => {
 
   it("preserves an unsaved field through a theme change", async () => {
     mockSection = "WORK";
-    const screen = await render(<SettingsEditorScreen />);
+    const screen = await render(<SettingsEditorTestFlow />);
     const input = screen.getByDisplayValue("38,5");
     await fireEvent.changeText(input, "32");
     mockPalette = DARK_PALETTE;
-    await screen.rerender(<SettingsEditorScreen />);
+    await screen.rerender(<SettingsEditorTestFlow />);
     expect(screen.getByDisplayValue("32")).toBeTruthy();
     expect(mockUpdateProfile).not.toHaveBeenCalled();
   });

@@ -1,3 +1,4 @@
+import { EMPTY_SALARY_BASES } from "@/domain/salary-basis-conflict";
 import { getTvalPflegeFullTimeMinutes } from "@/engine/simple-tval-pflege-pay";
 import type { TvhKrGroup, TvhKrPayLevel } from "@/domain/tvh-kr-tariff";
 import type { TvUkNursingGroup, TvUkPayLevel } from "@/domain/tvuk-nursing-tariff";
@@ -15,6 +16,7 @@ import type {
   TariffRegion,
   TariffSector,
   UserProfile,
+  SalaryBasisDrafts,
 } from "@/domain/types";
 
 export type EvidenceFormValue = "UNKNOWN" | "YES" | "NO";
@@ -87,6 +89,7 @@ export function manualMonthlyGrossFieldError(value: string): string | null {
 }
 
 export function settingsFormValues(profile: UserProfile): SettingsFormValues {
+  if (profile.salaryBasisConflict) return settingsFormValuesForSalaryMode(profile, "UNSET");
   return Object.freeze({
     federalState: profile.federalState,
     holidayRegion: profile.holidayRegion,
@@ -164,4 +167,32 @@ export function settingsFormValues(profile: UserProfile): SettingsFormValues {
         tariffFullTimeWeeklyMinutes("BT_K", defaultTariffRegion(profile.federalState)),
     ),
   });
+}
+
+const salaryModeField = {
+  TVOED_P: "tariff",
+  TVOED_E: "vkaETariff",
+  TVL_KR: "tvlKrTariff",
+  TVUK_NURSING: "tvUkNursingTariff",
+  TVH_KR: "tvhKrTariff",
+  TVAOED_PFLEGE: "nursingTrainingTariff",
+  TVAL_PFLEGE: "tvalPflegeTariff",
+  MANUAL: "manualMonthlyGrossCents",
+} as const satisfies Record<Exclude<SalaryMode, "UNSET">, keyof SalaryBasisDrafts>;
+
+/** Shared fields such as stage belong to the chosen draft, not another stored tariff. */
+export function settingsFormValuesForSalaryMode(
+  profile: UserProfile,
+  mode: SalaryMode,
+): SettingsFormValues {
+  const { salaryBasisConflict, ...workProfile } = profile;
+  const field = mode === "UNSET" ? null : salaryModeField[mode];
+  const selectedProfile = salaryBasisConflict
+    ? {
+        ...workProfile,
+        ...EMPTY_SALARY_BASES,
+        ...(field ? { [field]: salaryBasisConflict[field] ?? null } : {}),
+      }
+    : workProfile;
+  return { ...settingsFormValues(selectedProfile), salaryMode: mode };
 }

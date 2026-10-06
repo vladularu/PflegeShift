@@ -3,8 +3,11 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { fireEvent, render } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { SettingsEditorScreen } from "./settings-editor-screen";
-import { selectSettingsChoice as select } from "./settings-choice-test-helpers";
+import {
+  SettingsEditorTestFlow,
+  chooseTariffDetails,
+  selectSettingsChoice as select,
+} from "./settings-choice-test-helpers";
 import { LIGHT_PALETTE } from "@/theme/palette-values";
 
 const mockUpdateProfile = jest.fn<() => Promise<void>>();
@@ -31,8 +34,10 @@ const trainee = {
   tariffRegion: "OTHER" as const,
 };
 
+jest.mock("expo-router/react-navigation", () => ({ usePreventRemove: jest.fn() }));
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn() },
+  useNavigation: () => ({ dispatch: jest.fn() }),
   useLocalSearchParams: () => ({ section: mockSection }),
   Stack: {
     Screen: ({ options }: { options: { headerRight?: () => React.ReactNode } }) =>
@@ -67,7 +72,7 @@ function editor() {
         insets: { top: 59, right: 0, bottom: 34, left: 0 },
       }}
     >
-      <SettingsEditorScreen />
+      <SettingsEditorTestFlow />
     </SafeAreaProvider>
   );
 }
@@ -87,7 +92,7 @@ describe("simple E table salary form", () => {
   });
   it("reopens the saved E choice in familiar group/step controls and saves no history/date", async () => {
     const screen = await render(editor());
-    expect(screen.getByRole("button", { name: "Berechnung: TVöD VKA · E-Tabelle" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Tarifvertrag: TVöD VKA · E-Tabelle" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Entgeltgruppe: E9b" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Stufe: Stufe 4" })).toBeTruthy();
     expect(
@@ -140,7 +145,7 @@ describe("simple E table salary form", () => {
     await select(screen, "Berechnung", "TVöD-P");
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).not.toHaveBeenCalled();
-    await select(screen, "Stufe", "Stufe 4");
+    await chooseTariffDetails(screen, "TVöD-P");
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -157,23 +162,23 @@ describe("simple E table salary form", () => {
     async (sector, tariffRegion, hours) => {
       mockProfile = { ...baseProfile, vkaETariff: { ...e, sector, tariffRegion } };
       const screen = await render(editor());
-      expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe(hours);
+      expect(screen.getAllByText(`${hours} Std.`).length).toBeGreaterThan(0);
     },
   );
   it("hides the irrelevant E BT-B region while retaining it when returning to BT-K", async () => {
     mockProfile = { ...baseProfile, vkaETariff: { ...e, tariffRegion: "KAV_BW" } };
     const screen = await render(editor());
-    const savedRegion = screen.getByRole("button", { name: /^Tarifgebiet:/ }).props
+    const savedRegion = screen.getByRole("button", { name: /^Tarifregion:/ }).props
       .accessibilityLabel;
     await select(screen, "Tarifbereich", "Pflege · BT-B");
-    expect(screen.queryByRole("button", { name: /^Tarifgebiet:/ })).toBeNull();
-    expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("39");
+    expect(screen.queryByRole("button", { name: /^Tarifregion:/ })).toBeNull();
+    expect(screen.getAllByText("39 Std.").length).toBeGreaterThan(0);
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenLastCalledWith(
       expect.objectContaining({ vkaETariff: { ...e, sector: "BT_B", tariffRegion: "KAV_BW" } }),
     );
     await select(screen, "Tarifbereich", "Krankenhaus · BT-K");
-    expect(screen.getByRole("button", { name: /^Tarifgebiet:/ }).props.accessibilityLabel).toBe(
+    expect(screen.getByRole("button", { name: /^Tarifregion:/ }).props.accessibilityLabel).toBe(
       savedRegion,
     );
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
@@ -185,7 +190,8 @@ describe("simple E table salary form", () => {
     const screen = await render(editor());
     await select(screen, "Tarifbereich", "Pflege · BT-B");
     await select(screen, "Berechnung", "TVöD-P");
-    expect(screen.getByRole("button", { name: /^Tarifgebiet:/ })).toBeTruthy();
+    await chooseTariffDetails(screen, "TVöD-P");
+    expect(screen.getByRole("button", { name: /^Tarifregion:/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Entgeltgruppe: P8" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Stufe: Stufe 4" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Ausbildungsjahr:/ })).toBeNull();
@@ -198,14 +204,14 @@ describe("simple E table salary form", () => {
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Entgeltgruppe:/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Stufe:/ })).toBeNull();
-    expect(screen.getByLabelText("Tarifliche Vollzeit pro Woche").props.value).toBe("38,5");
+    expect(screen.getAllByText("38,5 Std.").length).toBeGreaterThan(0);
   });
   it.each(["UNSET", "MANUAL"] as const)("omits tariff detail controls for %s", async (mode) => {
     mockProfile = { ...baseProfile, manualMonthlyGrossCents: mode === "MANUAL" ? 345050 : null };
     const screen = await render(editor());
     for (const name of [
-      /^Tarifbereich:/,
-      /^Tarifgebiet:/,
+      /^Einrichtung:/,
+      /^Tarifregion:/,
       /^Entgeltgruppe:/,
       /^Stufe:/,
       /^Ausbildungsjahr:/,
@@ -220,7 +226,7 @@ describe("simple E table salary form", () => {
   it("retains E salary on work model changes", async () => {
     mockSection = "WORK";
     const screen = await render(editor());
-    await fireEvent.changeText(screen.getByLabelText("Wochenarbeitszeit in Stunden"), "30");
+    await fireEvent.changeText(screen.getByLabelText("Deine Wochenstunden (Std.)"), "30");
     await fireEvent.press(screen.getByRole("button", { name: "Speichern" }));
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ weeklyMinutes: 1800, vkaETariff: e, tariff: null }),

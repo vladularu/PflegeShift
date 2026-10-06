@@ -214,7 +214,23 @@ describe("simple TV-H nursing salary persistence", () => {
       JSON.stringify({ ...tvh, payLevel: 1 }),
       TVH_KR_PREFERENCE_KEY,
     );
-    await expect(loadProfile(memory.db)).rejects.toThrow();
+    await expect(loadProfile(memory.db)).rejects.toMatchObject({ code: "PROFILE_SALARY_INVALID" });
     await expect(restore((await backup()).serialized)).rejects.toThrow();
+  });
+  it("identifies a stale additional salary basis without changing stored data", async () => {
+    await saveProfile(memory.db, { ...work, tariff: p });
+    await memory.db.runAsync(
+      "INSERT INTO app_preferences(key,value,updated_at) VALUES(?,?,?)",
+      TVH_KR_PREFERENCE_KEY,
+      JSON.stringify(tvh),
+      "2026-10-01T09:00:00.000Z",
+    );
+    const before = memory.raw.prepare("SELECT * FROM app_preferences ORDER BY key").all();
+    await expect(loadProfile(memory.db)).resolves.toMatchObject({
+      tariff: null,
+      tvhKrTariff: null,
+      salaryBasisConflict: { tariff: p, tvhKrTariff: tvh },
+    });
+    expect(memory.raw.prepare("SELECT * FROM app_preferences ORDER BY key").all()).toEqual(before);
   });
 });
