@@ -104,6 +104,10 @@ function ThemedApp() {
                               presentation: "fullScreenModal",
                             }}
                           />
+                          <Stack.Screen
+                            name="calendar-design"
+                            options={{ presentation: "card", title: "Kalender gestalten" }}
+                          />
                           <Stack.Screen name="appearance" options={{ presentation: "card" }} />
                           <Stack.Screen name="work-profile" options={{ presentation: "card" }} />
                           <Stack.Screen name="day-editor" options={ENTRY_EDITOR_SCREEN_OPTIONS} />
@@ -135,7 +139,7 @@ function ThemedApp() {
                           <Stack.Screen
                             name="calendar-view"
                             options={{
-                              title: "Anzeigeoptionen",
+                              title: "Kalender gestalten",
                               presentation: "card",
                               contentStyle: { backgroundColor: palette.background },
                             }}

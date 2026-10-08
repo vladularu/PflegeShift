@@ -455,17 +455,24 @@ export function SegmentedControl({
   items,
   value,
   onChange,
+  disabled = false,
+  stacked = false,
+  accessibilityLabel,
 }: {
   readonly items: readonly { readonly value: string; readonly label: string }[];
   readonly value: string;
   readonly onChange: (value: string) => void;
+  readonly disabled?: boolean;
+  readonly stacked?: boolean;
+  readonly accessibilityLabel?: string;
 }) {
   const palette = usePalette();
   return (
     <View
       accessibilityRole="tablist"
+      accessibilityLabel={accessibilityLabel}
       style={{
-        flexDirection: "row",
+        flexDirection: stacked ? "column" : "row",
         gap: SPACING.xxs,
         borderRadius: RADII.control,
         borderCurve: "continuous",
@@ -479,11 +486,14 @@ export function SegmentedControl({
           <Pressable
             key={item.value}
             accessibilityRole="tab"
-            accessibilityState={{ selected }}
+            accessibilityState={{ selected, disabled }}
+            disabled={disabled}
             onPress={() => onChange(item.value)}
             style={({ pressed }) => ({
               minHeight: CONTROL_HEIGHT.compact,
-              flex: 1,
+              flex: stacked ? undefined : 1,
+              paddingVertical: stacked ? SPACING.sm : SPACING.xxs,
+              paddingHorizontal: SPACING.xs,
               alignItems: "center",
               justifyContent: "center",
               borderWidth: selected ? 1 : 0,
@@ -491,7 +501,7 @@ export function SegmentedControl({
               borderRadius: RADII.small,
               borderCurve: "continuous",
               backgroundColor: "transparent",
-              opacity: pressed ? 0.72 : 1,
+              opacity: disabled ? 0.5 : pressed ? 0.72 : 1,
             })}
           >
             {selected ? (

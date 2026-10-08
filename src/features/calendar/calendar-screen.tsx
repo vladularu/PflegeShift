@@ -1,3 +1,4 @@
+import { calendarDesignRoute } from "@/navigation/calendar-design-route";
 import { router, useFocusEffect, useIsFocused, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, View, type LayoutChangeEvent } from "react-native";
@@ -53,13 +54,14 @@ import { usePalette } from "@/theme/palette";
 import { SCREEN_LAYOUT, SPACING } from "@/theme/tokens";
 import { InlineNotice } from "@/ui/design-system";
 import { PrimaryButton } from "@/ui/form-controls";
-import { planningModeFeedback, selectionFeedback } from "@/ui/haptics";
+import { selectionFeedback } from "@/ui/haptics";
 import { LoadFailureView, LoadingView } from "@/ui/loading-view";
 import { useThemeStatusBar } from "@/ui/use-theme-status-bar";
 
 const [MONTHS_BEFORE, MONTHS_AFTER] = [24, 36] as const;
 
 interface QuickPopupState {
+  readonly revision: number;
   readonly date: string;
   readonly anchor: CalendarAnchorRect;
 }
@@ -124,6 +126,7 @@ export function CalendarScreen() {
   const [plannerError, setPlannerError] = useState<string | null>(null);
   const [stampTool, setStampTool] = useState<QuickEntryStampAction | null>(null);
   const [quickPopup, setQuickPopup] = useState<QuickPopupState | null>(null);
+  const popupRevision = useRef(0);
   const pendingSelectedDate = useRef<string | null>(null);
   const settledMonth = useRef(targetMonth);
 
@@ -206,13 +209,11 @@ export function CalendarScreen() {
         AccessibilityInfo.announceForAccessibility(
           "Wähle unten zuerst eine Vorlage für den Schnelleintrag aus.",
         );
-        selectionFeedback();
         return;
       }
       setSelectedDate(date);
       setSelectionVisible(true);
-      setQuickPopup({ date, anchor });
-      selectionFeedback();
+      setQuickPopup({ date, anchor, revision: ++popupRevision.current });
     },
     [calendarReady, error, plannerMode, stampDate, stampTool],
   );
@@ -348,7 +349,7 @@ export function CalendarScreen() {
       : visibleHolidayResolution.status !== "AVAILABLE"
         ? "holidays"
         : undefined;
-    router.push(notice ? { pathname: "/calendar-view", params: { notice } } : "/calendar-view");
+    router.push(calendarDesignRoute("calendar", notice));
     selectionFeedback();
   }, [calendarReady, visibleHolidayResolution.status]);
 
@@ -389,7 +390,6 @@ export function CalendarScreen() {
     AccessibilityInfo.announceForAccessibility(
       "Planungsmodus geöffnet. Wähle unten eine Vorlage aus.",
     );
-    planningModeFeedback();
   }, []);
 
   const closePlanning = useCallback(() => {
@@ -604,6 +604,8 @@ export function CalendarScreen() {
       </SharedCalendarScene>
       {quickPopup ? (
         <QuickEntryPopup
+          key={quickPopup.revision}
+          active={isFocused}
           actions={quickActions}
           anchor={quickPopup.anchor}
           busy={plannerBusy}

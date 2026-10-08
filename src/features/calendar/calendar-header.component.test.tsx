@@ -107,7 +107,7 @@ describe("CalendarHeader", () => {
     expect(screen.getByRole("header", { name: "September" })).toBe(title);
     await fireEvent.press(
       screen.getByRole("button", {
-        name: `Kalenderdarstellung öffnen. Hinweis: ${notice}`,
+        name: `Kalender gestalten öffnen. Hinweis: ${notice}`,
         includeHiddenElements: true,
       }),
     );

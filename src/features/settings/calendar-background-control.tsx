@@ -6,7 +6,7 @@ import { useCalendarBackground } from "./calendar-background-context";
 import { usePalette } from "@/theme/palette";
 import { CONTROL_HEIGHT, SPACING, RADII } from "@/theme/tokens";
 import { TEXT_MAX_SCALE, TYPOGRAPHY } from "@/theme/typography";
-import { CardSeparator, InlineNotice, RowButton } from "@/ui/design-system";
+import { CardSeparator, InlineNotice, RowButton, SegmentedControl } from "@/ui/design-system";
 import { selectionFeedback } from "@/ui/haptics";
 
 export function CalendarBackgroundControl() {
@@ -15,43 +15,35 @@ export function CalendarBackgroundControl() {
   const { width, fontScale } = useWindowDimensions();
   const stacked = width < 360 || fontScale > 1.2;
   const disabled = !background.supported || !background.ready || background.busy;
-  const label = background.uri ? "Eigenes Foto" : "LUNA Standard";
   useEffect(() => {
     if (background.canUndoRemoval)
       AccessibilityInfo.announceForAccessibility("Foto entfernt. Rückgängig ist verfügbar.");
   }, [background.canUndoRemoval]);
   return (
     <>
-      <CardSeparator inset={0} />
-      <View
-        accessible
-        accessibilityLabel={`Hintergrund, ${label}`}
-        style={{
-          minHeight: CONTROL_HEIGHT.regular,
-          padding: SPACING.lg,
-          flexDirection: stacked ? "column" : "row",
-          alignItems: stacked ? "flex-start" : "center",
-          justifyContent: "space-between",
-          gap: SPACING.xxs,
-        }}
-      >
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ ...TYPOGRAPHY.bodyStrong, color: palette.text }}
-        >
-          Hintergrund
-        </Text>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_SCALE}
-          style={{ ...TYPOGRAPHY.body, color: palette.textMuted }}
-        >
-          {label}
-        </Text>
+      <View style={{ padding: SPACING.md }}>
+        <SegmentedControl
+          accessibilityLabel="Kalenderhintergrund"
+          items={[
+            { value: "standard", label: "LUNA Standard" },
+            { value: "photo", label: "Eigenes Foto" },
+          ]}
+          value={background.uri ? "photo" : "standard"}
+          stacked={stacked}
+          disabled={disabled}
+          onChange={(value) => {
+            if (value === "standard" && background.uri) void background.remove();
+            if (value === "photo" && !background.uri) {
+              if (background.canUndoRemoval) void background.undoRemove();
+              else void background.choose();
+            }
+          }}
+        />
       </View>
       {background.uri ? (
         <>
           <CardSeparator inset={0} />
-          <View style={{ padding: SPACING.lg, gap: SPACING.md }}>
+          <View style={{ padding: SPACING.md, gap: SPACING.sm }}>
             <Text
               maxFontSizeMultiplier={TEXT_MAX_SCALE}
               style={{ ...TYPOGRAPHY.bodyStrong, color: palette.text }}
@@ -117,6 +109,7 @@ export function CalendarBackgroundControl() {
         title={background.uri ? "Foto ändern" : "Foto auswählen"}
         disabled={disabled}
         onPress={() => void background.choose()}
+        accessibilityHint="Das Kalenderfoto bleibt nur auf diesem Gerät."
         leading={
           <Ionicons name="image-outline" size={24} color={palette.primary} accessible={false} />
         }
@@ -140,15 +133,6 @@ export function CalendarBackgroundControl() {
       {background.canUndoRemoval ? (
         <>
           <CardSeparator inset={0} />
-          <View style={{ paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm }}>
-            <Text
-              accessibilityLiveRegion="polite"
-              maxFontSizeMultiplier={TEXT_MAX_SCALE}
-              style={{ ...TYPOGRAPHY.caption, color: palette.textMuted }}
-            >
-              Foto entfernt.
-            </Text>
-          </View>
           <RowButton
             title="Rückgängig"
             disabled={disabled}

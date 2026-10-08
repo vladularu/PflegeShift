@@ -28,6 +28,8 @@ interface CalendarPreferencesValue {
   readonly showShiftDuration: boolean;
   readonly error: string | null;
   readonly saving: boolean;
+  readonly ready: boolean;
+  readonly resetDisplay: () => void;
   readonly retry: () => void;
   readonly setViewMode: (mode: CalendarViewMode) => void;
   readonly setShowShifts: (value: boolean) => void;
@@ -53,6 +55,8 @@ export function CalendarPreferencesProvider({ children }: PropsWithChildren) {
   const mountedRef = useRef(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [ready, setReady] = useState(false);
+  const readyRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -69,6 +73,8 @@ export function CalendarPreferencesProvider({ children }: PropsWithChildren) {
       preferencesRef.current = loaded;
       persistedPreferencesRef.current = loaded;
       failedPreferencesRef.current = null;
+      readyRef.current = true;
+      setReady(true);
       setPreferences(loaded);
       setError(null);
     } catch (loadError) {
@@ -113,6 +119,7 @@ export function CalendarPreferencesProvider({ children }: PropsWithChildren) {
 
   const update = useCallback(
     (patch: Partial<CalendarPreferencesData>) => {
+      if (!readyRef.current) return;
       updateVersionRef.current += 1;
       const next = Object.freeze({ ...preferencesRef.current, ...patch });
       preferencesRef.current = next;
@@ -133,6 +140,11 @@ export function CalendarPreferencesProvider({ children }: PropsWithChildren) {
     setPreferences(failed);
     persist(failed);
   }, [load, persist]);
+
+  const resetDisplay = useCallback(() => {
+    if (!readyRef.current) return;
+    update({ ...DEFAULT_CALENDAR_PREFERENCES, viewMode: preferencesRef.current.viewMode });
+  }, [update]);
 
   const setViewMode = useCallback((viewMode: CalendarViewMode) => update({ viewMode }), [update]);
   const setShowShifts = useCallback((showShifts: boolean) => update({ showShifts }), [update]);
@@ -162,6 +174,8 @@ export function CalendarPreferencesProvider({ children }: PropsWithChildren) {
       ...preferences,
       error,
       saving,
+      ready,
+      resetDisplay,
       retry,
       setViewMode,
       setShowShifts,
@@ -173,6 +187,8 @@ export function CalendarPreferencesProvider({ children }: PropsWithChildren) {
     }),
     [
       error,
+      ready,
+      resetDisplay,
       preferences,
       retry,
       saving,

@@ -15,9 +15,11 @@ const MODES = [
 export function AppearanceModeControl({
   value,
   onChange,
+  disabled = false,
 }: {
   readonly value: AppearanceMode;
   readonly onChange: (mode: AppearanceMode) => void;
+  readonly disabled?: boolean;
 }) {
   const palette = usePalette();
   const { width, fontScale } = useWindowDimensions();
@@ -42,7 +44,8 @@ export function AppearanceModeControl({
             key={mode.id}
             accessibilityRole="radio"
             accessibilityLabel={mode.label}
-            accessibilityState={{ checked: selected }}
+            accessibilityState={{ checked: selected, disabled }}
+            disabled={disabled}
             accessibilityHint={
               mode.id === "system" ? "Folgt der Darstellung deines Geräts" : undefined
             }
@@ -66,7 +69,7 @@ export function AppearanceModeControl({
               borderWidth: 1,
               borderColor: selected ? palette.separator : "transparent",
               backgroundColor: selected ? palette.surfaceRaised : "transparent",
-              opacity: pressed ? 0.72 : 1,
+              opacity: disabled ? 0.5 : pressed ? 0.72 : 1,
             })}
           >
             <Ionicons

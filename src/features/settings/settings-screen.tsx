@@ -17,7 +17,7 @@ import { CalendarPerformanceControls } from "@/features/calendar/calendar-perfor
 import { localBackupRoute, settingsInfoRoute } from "@/navigation/routes";
 import { usePalette } from "@/theme/palette";
 import { AppearanceContext } from "@/theme/appearance-context";
-import { THEME_OPTIONS } from "@/theme/theme-catalog";
+import { calendarDesignRoute } from "@/navigation/calendar-design-route";
 import { WorkProfileCard } from "./work-profile-card";
 import { RADII, SPACING } from "@/theme/tokens";
 import { CardSeparator, RowButton, SectionHeader, SurfaceCard } from "@/ui/design-system";
@@ -36,9 +36,6 @@ export function SettingsScreen() {
   const { error, ready, reload } = usePflegeShiftStatus();
   const { profile } = usePflegeShiftProfile();
   const appearance = useContext(AppearanceContext);
-  const themeName = THEME_OPTIONS.find(
-    (theme) => theme.id === (appearance?.themeId ?? "standard"),
-  )?.name;
   const modeName =
     appearance?.mode === "light" ? "Hell" : appearance?.mode === "dark" ? "Dunkel" : "System";
   const calendarPreferences = useCalendarPreferences();
@@ -95,17 +92,9 @@ export function SettingsScreen() {
             <RowButton
               subtitleBelow={subtitleBelow}
               leading={<SettingsIcon name="color-palette-outline" />}
-              title="Darstellung"
-              subtitle={themeName + " · " + modeName}
-              onPress={() => router.push("/appearance")}
-            />
-            <CardSeparator />
-            <RowButton
-              subtitleBelow={subtitleBelow}
-              leading={<SettingsIcon name="calendar-outline" />}
-              title="Kalenderdarstellung"
-              subtitle={calendarDisplayLabel}
-              onPress={() => router.push("/calendar-view")}
+              title="Kalender gestalten"
+              subtitle={modeName + " · " + calendarDisplayLabel}
+              onPress={() => router.push(calendarDesignRoute("settings"))}
             />
             <CardSeparator />
             <RowButton

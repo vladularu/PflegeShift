@@ -153,8 +153,8 @@ export const CalendarHeader = memo(function CalendarHeader({
                 <HeaderIconButton
                   label={
                     notice
-                      ? `Kalenderdarstellung öffnen. Hinweis: ${notice}`
-                      : "Kalenderdarstellung öffnen"
+                      ? `Kalender gestalten öffnen. Hinweis: ${notice}`
+                      : "Kalender gestalten öffnen"
                   }
                   name="options-outline"
                   onPress={onOpenDisplay}
