@@ -5,11 +5,14 @@ import {
   requestCalendarTodayOnReselect,
   useActiveMonthCoordinator,
 } from "@/navigation/active-month";
+import { useCalendarTabDate } from "@/navigation/calendar-tab-date";
+import { calendarTabIconSource } from "@/navigation/calendar-tab-icon";
 import { usePalette } from "@/theme/palette";
 import { TYPOGRAPHY } from "@/theme/typography";
 
 export function AppTabs() {
   const palette = usePalette();
+  const today = useCalendarTabDate();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   return (
     <NativeTabs
@@ -38,12 +41,10 @@ export function AppTabs() {
           },
         })}
         name="(calendar)"
+        accessibilityLabel={today.accessibilityLabel}
       >
         <NativeTabs.Trigger.Label>Kalender</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf="calendar"
-          src={<NativeTabs.Trigger.VectorIcon family={Ionicons} name="calendar-outline" />}
-        />
+        <NativeTabs.Trigger.Icon src={calendarTabIconSource(today.day)} renderingMode="template" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(analysis)">
         <NativeTabs.Trigger.Label>Auswertung</NativeTabs.Trigger.Label>

@@ -7,11 +7,14 @@ import {
   useActiveMonthCoordinator,
 } from "@/navigation/active-month";
 import { appTabMotionOptions } from "@/navigation/app-tabs-motion";
+import { useCalendarTabDate } from "@/navigation/calendar-tab-date";
+import { CalendarTabIcon } from "@/navigation/calendar-tab-icon";
 import { usePalette } from "@/theme/palette";
 import { TYPOGRAPHY } from "@/theme/typography";
 
 export function AppTabs() {
   const palette = usePalette();
+  const today = useCalendarTabDate();
   const activeMonthCoordinator = useActiveMonthCoordinator();
   const reduceMotion = useReducedMotion();
 
@@ -39,15 +42,11 @@ export function AppTabs() {
         name="(calendar)"
         options={{
           title: "Kalender",
+          tabBarAccessibilityLabel: today.accessibilityLabel,
           // Keep external month changes positioned before this tab is revealed.
           freezeOnBlur: false,
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              accessible={false}
-              color={focused ? palette.accent : color}
-              name="calendar-outline"
-              size={size}
-            />
+            <CalendarTabIcon day={today.day} color={focused ? palette.accent : color} size={size} />
           ),
         }}
       />

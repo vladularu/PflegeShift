@@ -32,7 +32,6 @@ const LEGACY_COLOR_LITERAL_FILES = ["src/features/calendar/quick-planner-appeara
 
 const LEGACY_TYPOGRAPHY_LITERAL_FILES = [
   "src/features/analysis/annual-report-view.tsx",
-  "src/features/calendar/calendar-view-screen.tsx",
   "src/features/calendar/month-card.tsx",
   "src/features/calendar/quick-entry-action-tile.tsx",
   "src/features/calendar/quick-entry-popup.tsx",
@@ -53,7 +52,6 @@ const LEGACY_TYPOGRAPHY_LITERAL_FILES = [
 
 const LEGACY_RADIUS_LITERAL_FILES = [
   "src/features/analysis/annual-report-view.tsx",
-  "src/features/calendar/calendar-view-screen.tsx",
   "src/features/calendar/month-card.tsx",
   "src/features/calendar/quick-entry-popup.tsx",
   "src/features/calendar/shift-selection-panel.tsx",

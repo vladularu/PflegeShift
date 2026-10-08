@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FullWindowOverlay } from "react-native-screens";
@@ -12,6 +12,7 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withSequence,
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
@@ -22,6 +23,8 @@ import {
 } from "@/features/calendar/calendar-layout";
 import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { QuickEntryActionStrip } from "@/features/calendar/quick-entry-action-strip";
+import { quickEntryTransitionDuration } from "./quick-entry-motion";
+import { quickPlannerControlMotion } from "./quick-planner-control-motion";
 import { QUICK_PLANNER_METRICS } from "@/features/calendar/quick-planner-appearance";
 import { MOTION } from "@/theme/motion";
 import { useInversePalette, usePalette } from "@/theme/palette";
@@ -37,15 +40,12 @@ const CLOSE_INNER_INSET =
 const CLOSE_TARGET_GAP = QUICK_PLANNER_METRICS.closeVisualGap - CLOSE_INNER_INSET;
 const CONTROL_HEIGHT =
   QUICK_PLANNER_METRICS.closeTargetSize + CLOSE_TARGET_GAP + QUICK_PLANNER_METRICS.dockHeight;
-const CLOSE_TARGET_BOTTOM = QUICK_PLANNER_METRICS.dockHeight + CLOSE_TARGET_GAP;
 const CLOSED_TARGET_SIZE = Math.max(44, CALENDAR_METRICS.floatingActionSize + 8);
 const CLOSED_TARGET_INSET = (CLOSED_TARGET_SIZE - CALENDAR_METRICS.floatingActionSize) / 2;
 const CLOSED_TARGET_RIGHT = CLOSED_SCREEN_RIGHT - CONTROL_SIDE_INSET - CLOSED_TARGET_INSET;
+const CLOSE_CENTER_OFFSET = (CLOSED_TARGET_SIZE - QUICK_PLANNER_METRICS.closeTargetSize) / 2;
 
-export function quickPlannerTransitionDuration(open: boolean, reduceMotion: boolean): number {
-  if (reduceMotion) return MOTION.duration.instant;
-  return open ? MOTION.duration.scene : MOTION.duration.deliberate;
-}
+export const quickPlannerTransitionDuration = quickEntryTransitionDuration;
 
 export const QuickPlannerDock = memo(function QuickPlannerDock({
   actions,
@@ -74,6 +74,8 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   const [closing, setClosing] = useState(false);
   const internalProgress = useSharedValue(open ? 1 : 0);
   const progress = transitionProgress ?? internalProgress;
+  const controlProgress = useSharedValue(open ? 1 : 0);
+  const controlTarget = useRef(open);
   const pencilPressMotion = usePressMotion(1, MOTION.scale.press);
   const closePressMotion = usePressMotion(1, MOTION.scale.press);
   const baseOpenBottom = Platform.OS === "web" ? 8 : Math.max(insets.bottom - 16, 8);
@@ -82,12 +84,43 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   const overlaidTabBarInset =
     Platform.OS === "ios" ? insets.bottom + IOS_NATIVE_TAB_OVERLAY_CLEARANCE : insets.bottom;
   const { floatingActionBottom } = calculateCalendarBottomLayout(overlaidTabBarInset);
-  const closedVisualBottom = Math.max(openBottom, floatingActionBottom);
+  const minimumVisualBottom =
+    openBottom +
+    QUICK_PLANNER_METRICS.dockHeight +
+    QUICK_PLANNER_METRICS.closeVisualGap +
+    Math.max(0, (QUICK_PLANNER_METRICS.closeVisualSize - CALENDAR_METRICS.floatingActionSize) / 2);
+  const closedVisualBottom = Math.max(floatingActionBottom, minimumVisualBottom);
   const closedBottomWithinControl = closedVisualBottom - openBottom;
   const { tileWidth } = calculateQuickPlannerLayout(width);
 
+  const animateControls = useCallback(
+    (nextOpen: boolean) => {
+      if (controlTarget.current === nextOpen) return;
+      controlTarget.current = nextOpen;
+      cancelAnimation(controlProgress);
+      const duration = quickPlannerTransitionDuration(nextOpen, reduceMotion);
+      const destination = nextOpen ? 1 : 0;
+      if (reduceMotion) {
+        controlProgress.set(withTiming(destination, { duration, easing: MOTION.easing.standard }));
+        return;
+      }
+      const leg = { duration: duration / 2, easing: MOTION.easing.calm };
+      const current = controlProgress.get();
+      const crossesMiddle = nextOpen ? current < 0.5 : current > 0.5;
+      controlProgress.set(
+        crossesMiddle
+          ? withSequence(MOTION.reduceMotion, withTiming(0.5, leg), withTiming(destination, leg))
+          : withTiming(destination, leg),
+      );
+    },
+    [controlProgress, reduceMotion],
+  );
+
+  useEffect(() => () => cancelAnimation(controlProgress), [controlProgress]);
+
   useEffect(() => {
     if (closing) return;
+    animateControls(open);
     cancelAnimation(progress);
     if (reduceMotion) {
       progress.value = withTiming(open ? 1 : 0, {
@@ -100,7 +133,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
       duration: quickPlannerTransitionDuration(open, false),
       easing: MOTION.easing.calm,
     });
-  }, [closing, open, progress, reduceMotion]);
+  }, [animateControls, closing, open, progress, reduceMotion]);
 
   const finishClose = useCallback(() => {
     setClosing(false);
@@ -110,6 +143,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   const requestClose = useCallback(() => {
     if (!open || closing) return;
     setClosing(true);
+    animateControls(false);
     cancelAnimation(progress);
     progress.value = withTiming(
       0,
@@ -121,7 +155,7 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
         if (finished) runOnJS(finishClose)();
       },
     );
-  }, [closing, finishClose, open, progress, reduceMotion]);
+  }, [animateControls, closing, finishClose, open, progress, reduceMotion]);
 
   const dockMotionStyle = useAnimatedStyle(() => {
     const value = progress.value;
@@ -145,42 +179,14 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
   }, [openBottom, reduceMotion]);
 
   const pencilMorphStyle = useAnimatedStyle(
-    () => ({
-      opacity: interpolate(progress.value, [0, 0.52], [1, 0], Extrapolation.CLAMP),
-      transform: reduceMotion
-        ? []
-        : [
-            {
-              translateY: interpolate(
-                progress.value,
-                [0, 0.62],
-                [0, MOTION.distance.subtle],
-                Extrapolation.CLAMP,
-              ),
-            },
-          ],
-    }),
-    [openBottom, reduceMotion],
+    () => quickPlannerControlMotion(controlProgress.get(), "add", reduceMotion),
+    [reduceMotion],
   );
 
-  const closeMorphStyle = useAnimatedStyle(() => {
-    const reveal = interpolate(progress.value, [0.08, 0.48], [0, 1], Extrapolation.CLAMP);
-    return {
-      opacity: reveal,
-      transform: reduceMotion
-        ? []
-        : [
-            {
-              translateY: interpolate(
-                progress.value,
-                [0, 1],
-                [MOTION.distance.scene, 0],
-                Extrapolation.CLAMP,
-              ),
-            },
-          ],
-    };
-  }, [openBottom, reduceMotion]);
+  const closeMorphStyle = useAnimatedStyle(
+    () => quickPlannerControlMotion(controlProgress.get(), "close", reduceMotion),
+    [reduceMotion],
+  );
 
   const control = (
     <Animated.View
@@ -197,6 +203,8 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
         testID="quick-planner-stack"
       >
         <Animated.View
+          accessibilityElementsHidden={!open || closing}
+          importantForAccessibility={open && !closing ? "auto" : "no-hide-descendants"}
           pointerEvents={open && !closing ? "auto" : "none"}
           style={[
             styles.dockSurface,
@@ -219,6 +227,8 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
         </Animated.View>
 
         <Animated.View
+          accessibilityElementsHidden={open || closing}
+          importantForAccessibility={!open && !closing ? "auto" : "no-hide-descendants"}
           pointerEvents={!open && !closing ? "auto" : "none"}
           style={[
             styles.pencilAnchor,
@@ -255,8 +265,17 @@ export const QuickPlannerDock = memo(function QuickPlannerDock({
         </Animated.View>
 
         <Animated.View
+          accessibilityElementsHidden={!open || closing}
+          importantForAccessibility={open && !closing ? "auto" : "no-hide-descendants"}
           pointerEvents={open && !closing ? "auto" : "none"}
-          style={[styles.closeAnchor, closeMorphStyle]}
+          style={[
+            styles.closeAnchor,
+            {
+              right: CLOSED_TARGET_RIGHT + CLOSE_CENTER_OFFSET,
+              bottom: closedBottomWithinControl - CLOSED_TARGET_INSET + CLOSE_CENTER_OFFSET,
+            },
+            closeMorphStyle,
+          ]}
           testID="quick-planner-close-row"
         >
           <AnimatedPressable
@@ -343,8 +362,6 @@ const styles = StyleSheet.create({
   },
   closeAnchor: {
     position: "absolute",
-    right: 2,
-    bottom: CLOSE_TARGET_BOTTOM,
     width: QUICK_PLANNER_METRICS.closeTargetSize,
     height: QUICK_PLANNER_METRICS.closeTargetSize,
   },

@@ -82,8 +82,13 @@ describe("SettingsScreen production gates", () => {
     const screen = await render(<SettingsScreen />);
     await fireEvent.press(screen.getByRole("button", { name: "Arbeitsprofil bearbeiten" }));
     expect(router.push).toHaveBeenCalledWith("/work-profile");
-    await fireEvent.press(screen.getByText("Darstellung"));
-    expect(router.push).toHaveBeenCalledWith("/appearance");
+    await fireEvent.press(screen.getByText("Kalender gestalten"));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: "/calendar-design",
+      params: { origin: "settings" },
+    });
+    expect(screen.queryByText("Darstellung")).toBeNull();
+    expect(screen.queryByText("Kalenderdarstellung")).toBeNull();
   });
   beforeEach(() => {
     mockProfile = { ...mockBaseProfile };

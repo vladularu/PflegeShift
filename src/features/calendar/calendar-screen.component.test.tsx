@@ -6,6 +6,7 @@ import { Pressable as MockPressable, Text as MockText, View as MockView } from "
 
 import { addMonths, today } from "@/engine/calendar";
 import { CalendarScreen } from "@/features/calendar/calendar-screen";
+import type { QuickEntryAction } from "@/features/calendar/quick-entry-actions";
 import { CalendarBackgroundContext } from "@/features/settings/calendar-background-context";
 import {
   BUNDLED_HOLIDAY_RULES,
@@ -13,6 +14,40 @@ import {
   BUNDLED_TARIFF_RULES,
 } from "@/rules/bundled-rules";
 import { bundledRuleResolver, createRuleResolver, type RuleResolver } from "@/rules/rule-resolver";
+
+const mockSelectionFeedback = jest.fn();
+const mockPlanningModeFeedback = jest.fn();
+const mockUpsertShift = jest.fn(async () => ({
+  kind: "SHIFT",
+  id: "saved-shift",
+  date: "2026-08-14",
+}));
+const mockService: QuickEntryAction = {
+  kind: "TEMPLATE",
+  key: "template:early",
+  label: "Früh",
+  color: "#62B94C",
+  symbol: "F",
+  template: {
+    id: "early",
+    name: "Früh",
+    type: "EARLY",
+    startTime: "06:00",
+    endTime: "14:12",
+    breakMinutes: 30,
+    color: "#62B94C",
+    symbol: "F",
+    sortOrder: 10,
+    revision: 1,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    deletedAt: null,
+  },
+};
+jest.mock("@/ui/haptics", () => ({
+  selectionFeedback: () => mockSelectionFeedback(),
+  planningModeFeedback: () => mockPlanningModeFeedback(),
+}));
 
 const photoBackground = {
   uri: null as string | null,
@@ -85,7 +120,7 @@ jest.mock("@/application/pflegeshift-provider", () => ({
   usePflegeShiftEntries: () => ({
     entries: [],
     removeEntry: jest.fn(),
-    upsertShift: jest.fn(),
+    upsertShift: mockUpsertShift,
   }),
   usePflegeShiftProfile: () => ({
     profile: {
@@ -122,16 +157,23 @@ jest.mock("@/features/calendar/calendar-header", () => ({
     month,
     viewMode,
     notice,
+    onOpenDisplay,
   }: {
     month: string;
     viewMode: string;
     notice?: string;
+    onOpenDisplay: () => void;
   }) =>
     MockReact.createElement(
       MockReact.Fragment,
       null,
       MockReact.createElement(MockText, { testID: "header-state" }, `${viewMode}:${month}`),
       notice ? MockReact.createElement(MockText, null, notice) : null,
+      MockReact.createElement(MockPressable, {
+        accessibilityRole: "button",
+        accessibilityLabel: "Kalender gestalten öffnen",
+        onPress: onOpenDisplay,
+      }),
     ),
 }));
 
@@ -167,7 +209,31 @@ jest.mock("@/features/calendar/calendar-shared-scene", () => ({
 }));
 
 jest.mock("@/features/calendar/quick-planner-dock", () => ({
-  QuickPlannerDock: () => MockReact.createElement(MockView, { testID: "quick-planner-dock" }),
+  QuickPlannerDock: ({
+    open,
+    onOpen,
+    onSelectAction,
+  }: {
+    open: boolean;
+    onOpen: () => void;
+    onSelectAction: (action: QuickEntryAction) => void;
+  }) =>
+    MockReact.createElement(
+      MockView,
+      { testID: "quick-planner-dock" },
+      MockReact.createElement(MockPressable, {
+        accessibilityRole: "button",
+        accessibilityLabel: "Dienstplan bearbeiten",
+        onPress: onOpen,
+      }),
+      open
+        ? MockReact.createElement(MockPressable, {
+            accessibilityRole: "button",
+            accessibilityLabel: "Früh auswählen",
+            onPress: () => onSelectAction(mockService),
+          })
+        : null,
+    ),
 }));
 jest.mock("@/features/calendar/quick-entry-popup", () => ({
   QuickEntryPopup: ({
@@ -199,13 +265,13 @@ jest.mock("@/features/calendar/year-overview", () => ({
       onPress: () => onSelectMonth("2026-01"),
     }),
 }));
-jest.mock("@/features/calendar/use-quick-stamp-action", () => ({
-  useQuickStampAction: () => jest.fn(),
-}));
 jest.mock("@/ui/use-theme-status-bar", () => ({ useThemeStatusBar: () => undefined }));
 
 describe("CalendarScreen quick-entry navigation", () => {
   beforeEach(() => {
+    mockSelectionFeedback.mockClear();
+    mockPlanningModeFeedback.mockClear();
+    mockUpsertShift.mockClear();
     mockActiveMonth = "2026-08";
     mockFocused = true;
     mockMonthListeners.clear();
@@ -223,6 +289,48 @@ describe("CalendarScreen quick-entry navigation", () => {
       callback(0);
       return 1;
     });
+  });
+
+  it("opens the day popup without haptics", async () => {
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+      nativeEvent: { layout: { height: 700 } },
+    });
+    await fireEvent.press(screen.getByTestId("calendar-day"));
+    expect(screen.getByTestId("mounted-quick-entry-popup")).toBeTruthy();
+    expect(mockSelectionFeedback).not.toHaveBeenCalled();
+    expect(mockPlanningModeFeedback).not.toHaveBeenCalled();
+  });
+
+  it("starts a fresh popup instance when the same date is pressed again", async () => {
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+      nativeEvent: { layout: { height: 700 } },
+    });
+    await fireEvent.press(screen.getByTestId("calendar-day"));
+    const previous = screen.getByTestId("mounted-quick-entry-popup");
+    await fireEvent.press(screen.getByTestId("calendar-day"));
+    expect(screen.getByTestId("mounted-quick-entry-popup")).not.toBe(previous);
+    expect(mockSelectionFeedback).not.toHaveBeenCalled();
+  });
+
+  it("is silent on opening and an empty planner tap, retaining service and stamp feedback", async () => {
+    const screen = await render(<CalendarScreen />);
+    await fireEvent(screen.getByTestId("calendar-month-pager-shell"), "layout", {
+      nativeEvent: { layout: { height: 700 } },
+    });
+    await fireEvent.press(screen.getByRole("button", { name: "Dienstplan bearbeiten" }));
+    await fireEvent.press(screen.getByTestId("calendar-day"));
+    expect(mockPlanningModeFeedback).not.toHaveBeenCalled();
+    expect(mockSelectionFeedback).not.toHaveBeenCalled();
+    expect(mockUpsertShift).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole("button", { name: "Früh auswählen" }));
+    expect(mockSelectionFeedback).toHaveBeenCalledTimes(1);
+    await fireEvent.press(screen.getByTestId("calendar-day"));
+    expect(mockUpsertShift).toHaveBeenCalledWith(
+      expect.objectContaining({ date: "2026-08-14", templateId: "early", title: "Früh" }),
+    );
+    expect(mockSelectionFeedback).toHaveBeenCalledTimes(2);
   });
 
   it("covers the header and month with one non-interactive fixed photo layer", async () => {
@@ -666,5 +774,38 @@ describe("CalendarScreen quick-entry navigation", () => {
     expect(screen.getByTestId(`month-card-selection-${currentMonth}`).props.children).toBe(
       currentDate,
     );
+  });
+  it("opens the shared design route from the calendar menu with its entry context", async () => {
+    const screen = await render(<CalendarScreen />);
+    await fireEvent.press(screen.getByRole("button", { name: "Kalender gestalten öffnen" }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: "/calendar-design",
+      params: { origin: "calendar" },
+    });
+  });
+  it("forwards a loading notice to the same route instead of opening a second settings page", async () => {
+    mockReady = false;
+    const screen = await render(<CalendarScreen />);
+    await fireEvent.press(screen.getByRole("button", { name: "Kalender gestalten öffnen" }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: "/calendar-design",
+      params: { origin: "calendar", notice: "loading" },
+    });
+  });
+  it("forwards unavailable holiday metadata without changing calendar preferences", async () => {
+    const holidayPackage = BUNDLED_HOLIDAY_RULES[0];
+    mockActiveMonth = "2027-01";
+    mockRuleResolver = createRuleResolver({
+      tariff: BUNDLED_TARIFF_RULES,
+      legal: BUNDLED_LEGAL_RULES,
+      holiday: [{ ...holidayPackage, validTo: "2026-12-31" }],
+    });
+    const screen = await render(<CalendarScreen />);
+    await fireEvent.press(screen.getByRole("button", { name: "Kalender gestalten öffnen" }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: "/calendar-design",
+      params: { origin: "calendar", notice: "holidays" },
+    });
+    expect(mockPreferences.setViewMode).not.toHaveBeenCalled();
   });
 });
